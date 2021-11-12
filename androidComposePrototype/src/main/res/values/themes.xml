@@ -1,0 +1,27 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.WebMessaging" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/genesys_dark_blue</item>
+        <item name="colorPrimaryVariant">@color/genesys_blue</item>
+        <item name="colorOnPrimary">@color/genesys_off_white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/genesys_grey_1</item>
+        <item name="colorSecondaryVariant">@color/genesys_grey_2</item>
+        <item name="colorOnSecondary">@color/genesys_off_white</item>
+        <item name="background">@color/genesys_off_white</item>
+        <item name="colorOnBackground">@color/genesys_grey_1</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorSecondaryVariant</item>
+        <!-- Customize your theme here. -->
+    </style>
+
+    <style name="Theme.WebMessaging.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="Theme.WebMessaging.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="Theme.WebMessaging.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+</resources>
