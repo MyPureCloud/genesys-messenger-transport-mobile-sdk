@@ -15,7 +15,14 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
-import com.genesys.cloud.messenger.transport.shyrka.send.*
+import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.EchoRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
+import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
+import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
+import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlin.test.Test
