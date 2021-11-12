@@ -3,6 +3,16 @@ def isMainBranch() { env.BRANCH_NAME == 'main' }
 def isReleaseBranch() { env.BRANCH_NAME.startsWith('release/') }
 def isFeatureBranch() { env.BRANCH_NAME.startsWith('feature/') }
 
+void setBuildStatus(String message, String state) {
+  step([
+      $class: "GitHubCommitStatusSetter",
+      reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk"],
+      contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
+      errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+      statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
+  ]);
+}
+
 pipeline{
     agent{
         label "mmsdk"
@@ -17,7 +27,7 @@ pipeline{
     stages{
         stage("Prepare"){
             steps{
-                bitbucketStatusNotify(buildState: 'INPROGRESS')
+                setBuildStatus("Preparing", "PENDING")
             }
         }
         stage("CI Static Analysis"){
@@ -75,10 +85,10 @@ pipeline{
     }
     post{
         success{
-            bitbucketStatusNotify(buildState: 'SUCCESSFUL')
+            setBuildStatus("Build complete.", "SUCCESS")
         }
         failure{
-            bitbucketStatusNotify(buildState: 'FAILED')
+            setBuildStatus("Build complete.", "FAILURE")
             emailext attachLog: false, body: "Build Job: ${BUILD_URL}", recipientProviders: [culprits(), requestor(), brokenBuildSuspects()], subject: "Build failed: ${JOB_NAME}-${BUILD_NUMBER}"
         }
         always{

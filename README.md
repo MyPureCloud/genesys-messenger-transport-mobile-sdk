@@ -2,7 +2,21 @@
 
 This library provides methods for connecting to Genesys Cloud Messenger chat APIs and WebSockets from iOS and Android native applications. 
 
+## IMPORTANT NOTE ## 
+
+The Messenger product is in beta currently. Functionality and methods could change. 
+
 See `com.genesys.cloud.messenger.transport.MessagingClient` for the exposed interface.
+
+## Generating the deployment.properties file
+
+First rename the `deployment.properites.example`.
+
+```
+mv deployment.properties.example deployment.properties
+```
+
+Open the resultant file and replace the `INSERT_DEPLOYMENT_ID_HERE` with your deployment id from your messenger deployment.
 
 ### Android Studio Settings
 
