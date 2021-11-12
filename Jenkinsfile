@@ -45,7 +45,7 @@ pipeline{
                 jacoco classPattern: '**/kotlin-classes/debug,**/kotlin-classes/release', inclusionPattern: '**/*.class', sourcePattern: '**/src/*main/kotlin'
             }
         }
-        stage("CI Build - transport Module"){
+        stage("CI Build - transport Module debug"){
             steps{
                 sh './gradlew :transport:assembleDebug'
             }
@@ -53,6 +53,16 @@ pipeline{
         stage("CI Build - Android Testbed"){
             steps{
                 sh './gradlew :androidComposePrototype:assembleDebug'
+            }
+        }
+        stage("CI Build - transport Module release"){
+            steps{
+                sh './gradlew :transport:assembleRelease'
+            }
+        }
+        stage("CI Build - transport POM creation"){
+            steps{
+                sh './gradlew :transport:generatePomFileForMavenPublication'
             }
         }
         stage("CI Build - iOS Testbed"){
@@ -92,7 +102,7 @@ pipeline{
             emailext attachLog: false, body: "Build Job: ${BUILD_URL}", recipientProviders: [culprits(), requestor(), brokenBuildSuspects()], subject: "Build failed: ${JOB_NAME}-${BUILD_NUMBER}"
         }
         always{
-            cleanWs()
+            //cleanWs()
         }
     }
 }
