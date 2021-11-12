@@ -122,15 +122,10 @@ class MessagingClientImplTest {
     @Test
     fun whenConnectAndThenConfigureSession() {
         val expectedConfigureMessage =
-            """{"token":"00000000-0000-0000-0000-000000000000","deploymentId":"deploymentId","guestInformation":{"email":"peter.parker@marvel.com","phoneNumber":"911","firstName":"Peter","lastName":"Parker"},"action":"configureSession"}"""
+            """{"token":"00000000-0000-0000-0000-000000000000","deploymentId":"deploymentId","journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"action":"configureSession"}"""
         subject.connect()
 
-        subject.configureSession(
-            email = "peter.parker@marvel.com",
-            phoneNumber = "911",
-            firstName = "Peter",
-            lastName = "Parker"
-        )
+        subject.configureSession()
 
         verifySequence {
             connectSequence()
@@ -220,12 +215,7 @@ class MessagingClientImplTest {
     @Test
     fun whenNotConnectedAndConfigureVerifyIllegalStateExceptionThrown() {
         assertFailsWith<IllegalStateException> {
-            subject.configureSession(
-                email = "local@domain.com",
-                phoneNumber = "555-555-5555",
-                firstName = "Foo",
-                lastName = "Bar"
-            )
+            subject.configureSession()
         }
     }
 
@@ -337,7 +327,10 @@ class MessagingClientImplTest {
     @Test
     fun whenSocketListenerInvokeOnMessageWithSessionExpiredStringMessage() {
         val expectedErrorState =
-            MessagingClient.State.Error(ErrorCode.SessionHasExpired, "session expired error message")
+            MessagingClient.State.Error(
+                ErrorCode.SessionHasExpired,
+                "session expired error message"
+            )
         val givenRawMessage =
             """
             {
@@ -360,7 +353,10 @@ class MessagingClientImplTest {
     @Test
     fun whenSocketListenerInvokeOnMessageWithSessionNotFoundStringMessage() {
         val expectedErrorState =
-            MessagingClient.State.Error(ErrorCode.SessionNotFound, "session not found error message")
+            MessagingClient.State.Error(
+                ErrorCode.SessionNotFound,
+                "session not found error message"
+            )
         val givenRawMessage =
             """
             {
@@ -438,7 +434,7 @@ class MessagingClientImplTest {
             }
             """
         subject.connect()
-        subject.configureSession(null, null, null, null)
+        subject.configureSession()
         slot.captured.onMessage(sessionResponseMessage)
     }
 
