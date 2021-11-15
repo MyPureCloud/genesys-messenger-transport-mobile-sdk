@@ -95,6 +95,7 @@ kotlin {
                 implementation("io.ktor:ktor-client-json:$ktorVersion")
                 implementation("io.ktor:ktor-client-logging:$ktorVersion")
                 implementation("ch.qos.logback:logback-classic:1.2.3")
+                implementation("com.liftric:kvault:1.7.0")
                 api("co.touchlab:kermit:$kermitVersion")
             }
         }
