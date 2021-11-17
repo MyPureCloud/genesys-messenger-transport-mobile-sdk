@@ -39,17 +39,12 @@ android {
     }
 }
 
-// CocoaPods requires the podspec to have a version.
-val buildNumber = System.getenv("BUILD_NUMBER") ?: "0"
-val snapshot = System.getenv("SNAPSHOT_BUILD") ?: ""
-version = "1.1.${buildNumber}${snapshot}"
 
 val kermitVersion = "0.1.9"
 val configuration: String? by project
 val sdk: String? by project
 val bitcode: String = if ("release".equals(configuration, true)) "bitcode" else "marker"
-
-val group = "com.genesys.messenger.transport"
+version = project.rootProject.version
 
 kotlin {
     android {
@@ -157,21 +152,9 @@ publishing {
             artifact(File("build/outputs/aar/transport-release.aar"))
             artifact(tasks["kotlinSourcesJar"])
             artifact(tasks["fakeJavadocJar"])
-            groupId = group
-            artifactId = "library"
+            groupId = group as String?
+            artifactId = "messenger-transport-mobile-sdk"
             version = version
-
-            repositories {
-                maven {
-                    credentials {
-                        username = System.getenv("SONATYPE_USERNAME")
-                        password = System.getenv("SONATYPE_PASSWORD")
-                    }
-                    val releasesRepoUrl = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-                    val snapshotsRepoUrl = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-                    url = if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl
-                }
-            }
 
             pom {
                 name.set("Genesys Cloud Mobile Messenger Transport SDK")
@@ -218,7 +201,7 @@ publishing {
 // Don't publish the default iOS and Kotlin Multiplatform publications
 tasks.withType<PublishToMavenRepository>().all {
     onlyIf {
-        name == "publishMavenPublicationToMavenRepository"
+        name == "publishMavenPublicationToSonatypeRepository"
     }
 }
 
