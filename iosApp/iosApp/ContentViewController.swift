@@ -228,7 +228,7 @@ extension ContentViewController : UITextFieldDelegate {
             disconnect()
         case ("configure", _):
             do {
-                try client.configureSession(email: "peter.parker@marvel.com", phoneNumber: nil, firstName: "Peter", lastName: "Parker")
+                try client.configureSession()
             } catch {
                 print(error)
                 self.info.text = "<\(error.localizedDescription)>"

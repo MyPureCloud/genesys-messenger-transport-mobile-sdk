@@ -55,26 +55,10 @@ interface MessagingClient {
     fun connect()
 
     /**
-     * Configure a new Web Messaging session.
-     *
-     * @param email the guest's email address.
-     * @param phoneNumber the guest's phone number.
-     * @param firstName the guest's first name.
-     * @param lastName the guest's last.
+     * Configure a Web Messaging session.
      */
     @Throws(IllegalStateException::class)
-    fun configureNewSession(email: String?, phoneNumber: String?, firstName: String?, lastName: String?)
-
-    /**
-     * Configure a Web Messaging session for a given token.
-     *
-     * @param email the guest's email address.
-     * @param phoneNumber the guest's phone number.
-     * @param firstName the guest's first name.
-     * @param lastName the guest's last.
-     */
-    @Throws(IllegalStateException::class)
-    fun configureSession(email: String?, phoneNumber: String?, firstName: String?, lastName: String?)
+    fun configureSession()
 
     /**
      * Send a message to the conversation as plain text.

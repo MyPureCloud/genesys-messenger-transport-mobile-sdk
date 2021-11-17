@@ -51,14 +51,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope, MessageListener {
     val regions = listOf("inindca")
 
     suspend fun init(context: Context) {
-        val defaultDeploymentId = BuildConfig.DEPLOYMENT_ID
-
-        val deploymentIdToUse = if (deploymentId.isNotBlank()) {
-            deploymentId
-        } else defaultDeploymentId
-
         val mmsdkConfiguration = Configuration(
-            deploymentId = deploymentIdToUse,
+            deploymentId = BuildConfig.DEPLOYMENT_ID,
             domain = BuildConfig.DEPLOYMENT_DOMAIN,
             tokenStoreKey = "com.genesys.cloud.messenger",
             logging = true
@@ -142,12 +136,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope, MessageListener {
 
     private suspend fun doConfigureSession() {
         try {
-            client.configureSession(
-                email = "peter.parker@marvel.com",
-                phoneNumber = null,
-                firstName = "Peter",
-                lastName = "Parker"
-            )
+            client.configureSession()
         } catch (t: Throwable) {
             handleException(t, "configure session")
         }

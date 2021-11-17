@@ -17,7 +17,9 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.EchoRequest
-import com.genesys.cloud.messenger.transport.shyrka.send.GuestInformation
+import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
+import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
+import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
@@ -30,28 +32,20 @@ class SerializationTest {
 
     @Test
     fun whenConfigureSessionRequestThenEncodes() {
-        val noGuestInfoConfig = ConfigureSessionRequest("<token>", "<deploymentId>")
+        val journeyContext = JourneyContext(
+            JourneyCustomer("00000000-0000-0000-0000-000000000000", "cookie"),
+            JourneyCustomerSession("", "web"),
+        )
+        val encodedString = WebMessagingJson.json.encodeToString(
+            ConfigureSessionRequest(
+                "<token>",
+                "<deploymentId>",
+                journeyContext,
+            )
+        )
 
-        var encodedString = WebMessagingJson.json.encodeToString(noGuestInfoConfig)
-
-        assertThat(encodedString, "encoded ConfigureSessionRequest with no GuestInformation")
-            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","action":"configureSession"}""")
-
-        val partialInfo = GuestInformation("foo@bar.com", null, "Foo", null)
-        val partialConfig = ConfigureSessionRequest("<token>", "<deploymentId>", partialInfo)
-
-        encodedString = WebMessagingJson.json.encodeToString(partialConfig)
-
-        assertThat(encodedString, "encoded ConfigureSessionRequest with partial GuestInformation")
-            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","guestInformation":{"email":"foo@bar.com","firstName":"Foo"},"action":"configureSession"}""")
-
-        val fullInfo = GuestInformation("foo@bar.com", "+15555555555", "Foo", "Bar")
-        val fullConfig = ConfigureSessionRequest("<token>", "<deploymentId>", fullInfo)
-
-        encodedString = WebMessagingJson.json.encodeToString(fullConfig)
-
-        assertThat(encodedString, "encoded ConfigureSessionRequest with full GuestInformation")
-            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","guestInformation":{"email":"foo@bar.com","phoneNumber":"+15555555555","firstName":"Foo","lastName":"Bar"},"action":"configureSession"}""")
+        assertThat(encodedString, "encoded ConfigureSessionRequest")
+            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"action":"configureSession"}""")
     }
 
     @Test
