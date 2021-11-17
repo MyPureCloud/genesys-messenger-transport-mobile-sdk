@@ -8,6 +8,7 @@ plugins {
     id("org.jetbrains.dokka") version "1.4.30"
     id("org.jmailen.kotlinter")
     id("maven-publish")
+    id("signing")
 }
 
 
@@ -38,16 +39,12 @@ android {
     }
 }
 
-// CocoaPods requires the podspec to have a version.
-val buildNumber = System.getenv("BUILD_NUMBER") ?: "0"
-version = "1.1.${buildNumber}"
 
 val kermitVersion = "0.1.9"
 val configuration: String? by project
 val sdk: String? by project
 val bitcode: String = if ("release".equals(configuration, true)) "bitcode" else "marker"
-
-val group = "com.genesys.cloud.messenger.transport"
+version = project.rootProject.version
 
 kotlin {
     android {
@@ -85,6 +82,7 @@ kotlin {
     sourceSets {
         val ktorVersion = "1.6.0"
         val assertkVersion = "0.23.1"
+
         commonMain {
             dependencies {
                 implementation(kotlin("stdlib-common"))
@@ -135,15 +133,51 @@ kotlin {
     }
 }
 
+tasks {
+    create<Jar>("kotlinSourcesJar") {
+        archiveClassifier.set("sources")
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        from("./src/androidMain", "./src/commonMain")
+    }
+
+    create<Jar>("fakeJavadocJar") {
+        archiveClassifier.set("javadoc")
+        from("./deployment")
+    }
+}
+
 publishing {
     publications {
         create<MavenPublication>("maven") {
             artifact(File("build/outputs/aar/transport-release.aar"))
-            groupId = group
-            artifactId = "library"
+            artifact(tasks["kotlinSourcesJar"])
+            artifact(tasks["fakeJavadocJar"])
+            groupId = group as String?
+            artifactId = "messenger-transport-mobile-sdk"
             version = version
 
             pom {
+                name.set("Genesys Cloud Mobile Messenger Transport SDK")
+                description.set("This library provides methods for connecting to Genesys Cloud Messenger chat APIs and WebSockets from Android native applications.")
+
+                licenses {
+                    license {
+                        name.set("MIT License")
+                        url.set("http://www.opensource.org/licenses/mit-license.php")
+                    }
+                }
+
+                developers {
+                    developer {
+                        name.set("Genesys Cloud Mobile Dev")
+                        email.set("GenesysCloudMobileDev@genesys.com")
+                    }
+                }
+
+                scm {
+                    url.set("https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk.git")
+                }
+
                 withXml {
                     asNode().appendNode("dependencies").let { dependenciesNode ->
                         listOf("androidMainImplementation", "commonMainImplementation").forEach {
@@ -162,6 +196,28 @@ publishing {
             }
         }
     }
+}
+
+// Don't publish the default iOS and Kotlin Multiplatform publications
+tasks.withType<PublishToMavenRepository>().all {
+    onlyIf {
+        name == "publishMavenPublicationToSonatypeRepository"
+    }
+}
+
+// Don't publish the default iOS and Kotlin Multiplatform publications
+tasks.withType<PublishToMavenLocal>().all {
+    onlyIf {
+        name == "publishMavenPublicationToMavenLocal"
+    }
+}
+
+signing {
+    // Signing configuration is setup in the ~/.gradle/gradle.properties file on the Jenkins machine
+    isRequired = true
+    sign(tasks["kotlinSourcesJar"])
+    sign(tasks["fakeJavadocJar"])
+    sign(publishing.publications["maven"])
 }
 
 apply(from = "${rootDir}/jacoco.gradle.kts")
