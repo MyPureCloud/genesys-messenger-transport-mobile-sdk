@@ -16,7 +16,9 @@ import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.EchoRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.GetAttachmentRequest
-import com.genesys.cloud.messenger.transport.shyrka.send.GuestInformation
+import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
+import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
+import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.util.ErrorCode
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.PlatformSocket
@@ -73,44 +75,13 @@ internal class MessagingClientImpl(
     }
 
     @Throws(IllegalStateException::class)
-    override fun configureNewSession(
-        email: String?,
-        phoneNumber: String?,
-        firstName: String?,
-        lastName: String?,
-    ) {
-        val guestInfo = GuestInformation(
-            email = email,
-            phoneNumber = phoneNumber,
-            firstName = firstName,
-            lastName = lastName
-        )
-        configureSession(guestInformation = guestInfo)
-    }
-
-    @Throws(IllegalStateException::class)
-    override fun configureSession(
-        email: String?,
-        phoneNumber: String?,
-        firstName: String?,
-        lastName: String?,
-    ) {
-        val guestInfo = GuestInformation(
-            email = email,
-            phoneNumber = phoneNumber,
-            firstName = firstName,
-            lastName = lastName
-        )
-        configureSession(guestInformation = guestInfo)
-    }
-
-    private fun configureSession(guestInformation: GuestInformation) {
-        log.i { "configureNewSession(token = $token, guestInformation: $guestInformation)" }
+    override fun configureSession() {
+        log.i { "configureSession(token = $token)" }
         if (currentState !is State.Connected) throw IllegalStateException("WebMessaging client is not connected.")
         val request = ConfigureSessionRequest(
             token = token,
             deploymentId = configuration.deploymentId,
-            guestInformation = guestInformation
+            journeyContext = JourneyContext(JourneyCustomer(token, "cookie"), JourneyCustomerSession("", "web"))
         )
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         webSocket.sendMessage(encodedJson)
