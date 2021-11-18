@@ -181,7 +181,7 @@ publishing {
 
                 withXml {
                     asNode().appendNode("dependencies").let { dependenciesNode ->
-                        listOf("androidMainImplementation", "commonMainImplementation").forEach {
+                        listOf("androidMainImplementation", "commonMainImplementation" , "commonMainApi").forEach {
                             for (dependency in configurations[it].dependencies) {
                                 if (dependency.name != "unspecified") {
                                     dependenciesNode.appendNode("dependency").let { node ->
