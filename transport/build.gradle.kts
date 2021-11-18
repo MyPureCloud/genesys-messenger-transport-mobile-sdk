@@ -152,13 +152,14 @@ publishing {
             artifact(File("build/outputs/aar/transport-release.aar"))
             artifact(tasks["kotlinSourcesJar"])
             artifact(tasks["fakeJavadocJar"])
-            groupId = group as String?
+            groupId = rootProject.group as String?
             artifactId = "messenger-transport-mobile-sdk"
             version = version
 
             pom {
                 name.set("Genesys Cloud Mobile Messenger Transport SDK")
                 description.set("This library provides methods for connecting to Genesys Cloud Messenger chat APIs and WebSockets from Android native applications.")
+                url.set("https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk")
 
                 licenses {
                     license {
@@ -195,20 +196,6 @@ publishing {
                 }
             }
         }
-    }
-}
-
-// Don't publish the default iOS and Kotlin Multiplatform publications
-tasks.withType<PublishToMavenRepository>().all {
-    onlyIf {
-        name == "publishMavenPublicationToSonatypeRepository"
-    }
-}
-
-// Don't publish the default iOS and Kotlin Multiplatform publications
-tasks.withType<PublishToMavenLocal>().all {
-    onlyIf {
-        name == "publishMavenPublicationToMavenLocal"
     }
 }
 
