@@ -152,7 +152,7 @@ publishing {
             artifact(File("build/outputs/aar/transport-release.aar"))
             artifact(tasks["kotlinSourcesJar"])
             artifact(tasks["fakeJavadocJar"])
-            groupId = group as String?
+            groupId = rootProject.group as String?
             artifactId = "messenger-transport-mobile-sdk"
             version = version
 
