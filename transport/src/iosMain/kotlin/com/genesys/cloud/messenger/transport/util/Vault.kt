@@ -1,5 +1,10 @@
 package com.genesys.cloud.messenger.transport.util
 
+/**
+ * Portions of this file are copyright of their respective authors and license:
+ * KVault, Copyright 2021 Liftric, MIT license
+ */
+
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
