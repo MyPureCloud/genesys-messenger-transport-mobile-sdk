@@ -7,4 +7,5 @@ internal object LogTag {
     const val OKHTTP = "MMSDKOkHttp"
     const val ATTACHMENT_HANDLER = "MMSDKAttachmentHandler"
     const val MESSAGE_STORE = "MMSDKMessageStore"
+    const val TOKEN_STORE = "MMSDKTokenStore"
 }
