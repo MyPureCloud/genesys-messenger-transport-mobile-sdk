@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
 plugins {
     kotlin("multiplatform")
@@ -10,7 +11,6 @@ plugins {
     id("maven-publish")
     id("signing")
 }
-
 
 android {
     compileSdk = 30
@@ -39,12 +39,12 @@ android {
     }
 }
 
-
 val kermitVersion = "0.1.9"
 val configuration: String? by project
 val sdk: String? by project
 val bitcode: String = if ("release".equals(configuration, true)) "bitcode" else "marker"
 version = project.rootProject.version
+val iosFrameworkName = "MessengerTransport"
 
 kotlin {
     android {
@@ -55,13 +55,24 @@ kotlin {
         }
     }
 
-    val iosTarget: (String, KotlinNativeTarget.() -> Unit) -> KotlinNativeTarget = when {
-        System.getenv("SDK_NAME")?.startsWith("iphoneos") == true -> ::iosArm64
-        System.getenv("NATIVE_ARCH")?.startsWith("arm") == true -> ::iosSimulatorArm64
-        else -> ::iosX64
+    if (properties.containsKey("android.injected.invoked.from.ide")) {
+        // When running from Android Studio, the shared iOS source set needs this workaround for IDE features like code-completion/highlighting with 3rd party iOS libs
+        // https://kotlinlang.org/docs/kmm-add-dependencies.html#workaround-to-enable-ide-support-for-the-shared-ios-source-set
+        val iosTarget: (String, KotlinNativeTarget.() -> Unit) -> KotlinNativeTarget = when {
+            System.getenv("SDK_NAME")?.startsWith("iphoneos") == true -> ::iosArm64
+            System.getenv("NATIVE_ARCH")?.startsWith("arm") == true -> ::iosSimulatorArm64
+            else -> ::iosX64
+        }
+        iosTarget("ios") {}
+    } else {
+        val xcf = XCFramework(iosFrameworkName)
+        ios {
+            binaries.framework {
+                baseName = iosFrameworkName
+                xcf.add(this)
+            }
+        }
     }
-
-    iosTarget("ios") {}
 
     cocoapods {
         summary = "Genesys Cloud Messenger Transport Framework"
@@ -70,7 +81,7 @@ kotlin {
         podfile = project.file("../iosApp/Podfile")
         framework {
             // The default name for an iOS framework is `<project name>.framework`. To set a custom name, use the `baseName` option. This will also set the module name.
-            baseName = "MessengerTransport"
+            baseName = iosFrameworkName
             // To specify a custom Objective-C prefix/name for the Kotlin framework, use the `-module-name` compiler option or matching Gradle DSL statement.
             freeCompilerArgs += listOf("-module-name", "GCM")
             export("co.touchlab:kermit:$kermitVersion")

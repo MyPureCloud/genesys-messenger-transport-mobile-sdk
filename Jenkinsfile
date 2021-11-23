@@ -86,10 +86,7 @@ pipeline{
         }
         stage("CI Build - iOS XCFramework"){
             steps{
-                sh '''
-                    ./make-iOS-framework.sh
-                    test -e transport/build/xcframework/MessengerTransport.xcframework
-                '''
+                sh './gradlew :transport:assembleMessengerTransportReleaseXCFramework'
             }
         }
     }
