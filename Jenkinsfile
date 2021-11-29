@@ -86,7 +86,10 @@ pipeline{
         }
         stage("CI Build - iOS XCFramework"){
             steps{
-                sh './gradlew :transport:assembleMessengerTransportReleaseXCFramework'
+                sh '''
+                    if [ -z "$HOME" ]; then export HOME=/Users/$(whoami); fi
+                    ./gradlew :transport:assembleMessengerTransportReleaseXCFramework'
+                '''
             }
         }
     }
