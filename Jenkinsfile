@@ -39,7 +39,6 @@ pipeline{
                 }
             }
         }
-/*
         stage("CI Unit Tests"){
             steps{
                 sh './gradlew :transport:test :transport:jacocoTestReportDebug :transport:jacocoTestReportRelease'
@@ -66,6 +65,14 @@ pipeline{
                 sh './gradlew :transport:generatePomFileForMavenPublication'
             }
         }
+        stage("CI Build - iOS XCFramework"){
+            steps{
+                sh '''
+                    if [ -z "$HOME" ]; then export HOME=/Users/$(whoami); fi
+                    ./gradlew :transport:assembleMessengerTransportReleaseXCFramework'
+                '''
+            }
+        }
         stage("CI Build - iOS Testbed"){
             steps{
                 sh '''
@@ -80,19 +87,6 @@ pipeline{
                     cd iosApp
                     pod install --verbose
                     xcodebuild clean build -verbose -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug CODE_SIGNING_ALLOWED=NO EXCLUDED_ARCHS=armv7
-                '''
-            }
-        }
-*/
-        stage("CI Build - iOS XCFramework"){
-            steps{
-                sh '''
-                    if [ -z "$HOME" ]; then export HOME=/Users/$(whoami); fi
-                    cd iosApp
-                    pod install --verbose
-                    xcodebuild clean build -verbose -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug CODE_SIGNING_ALLOWED=NO EXCLUDED_ARCHS=armv7
-                    cd ..
-                    ./gradlew :transport:assembleMessengerTransportReleaseXCFramework'
                 '''
             }
         }
