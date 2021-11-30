@@ -76,8 +76,6 @@ pipeline{
                       echo "deploymentId=${DEPLOYMENT_ID}" >> deployment.properties
                       echo "deploymentDomain=${DEPLOYMENT_DOMAIN}" >> deployment.properties
                     fi
-                    echo "iosApp will use the following deployment.properties:"
-                    cat deployment.properties
                     cd iosApp
                     pod install --verbose
                     xcodebuild clean build -verbose -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug CODE_SIGNING_ALLOWED=NO EXCLUDED_ARCHS=armv7
@@ -88,6 +86,10 @@ pipeline{
             steps{
                 sh '''
                     if [ -z "$HOME" ]; then export HOME=/Users/$(whoami); fi
+                    cd iosApp
+                    pod install --verbose
+                    xcodebuild clean build -verbose -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug CODE_SIGNING_ALLOWED=NO EXCLUDED_ARCHS=armv7
+                    cd ..
                     ./gradlew :transport:assembleMessengerTransportReleaseXCFramework'
                 '''
             }
