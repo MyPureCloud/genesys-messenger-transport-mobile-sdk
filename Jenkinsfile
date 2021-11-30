@@ -69,7 +69,7 @@ pipeline{
             steps{
                 sh '''
                     if [ -z "$HOME" ]; then export HOME=/Users/$(whoami); fi
-                    ./gradlew :transport:assembleMessengerTransportReleaseXCFramework'
+                    ./gradlew :transport:assembleMessengerTransportReleaseXCFramework
                 '''
             }
         }
