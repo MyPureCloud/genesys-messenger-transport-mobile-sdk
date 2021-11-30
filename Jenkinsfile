@@ -39,6 +39,7 @@ pipeline{
                 }
             }
         }
+/*
         stage("CI Unit Tests"){
             steps{
                 sh './gradlew :transport:test :transport:jacocoTestReportDebug :transport:jacocoTestReportRelease'
@@ -82,6 +83,7 @@ pipeline{
                 '''
             }
         }
+*/
         stage("CI Build - iOS XCFramework"){
             steps{
                 sh '''
