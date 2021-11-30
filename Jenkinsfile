@@ -44,6 +44,53 @@ pipeline{
                 }
             }
         }
+        stage("CI Unit Tests"){
+            steps{
+                sh './gradlew :transport:test :transport:jacocoTestReportDebug :transport:jacocoTestReportRelease'
+                jacoco classPattern: '**/kotlin-classes/debug,**/kotlin-classes/release', inclusionPattern: '**/*.class', sourcePattern: '**/src/*main/kotlin'
+            }
+        }
+        stage("CI Build - transport Module debug"){
+            steps{
+                sh './gradlew :transport:assembleDebug'
+            }
+        }
+        stage("CI Build - Android Testbed"){
+            steps{
+                sh './gradlew :androidComposePrototype:assembleDebug'
+            }
+        }
+        stage("CI Build - transport Module release"){
+            steps{
+                sh './gradlew :transport:assembleRelease'
+            }
+        }
+        stage("CI Build - transport POM creation"){
+            steps{
+                sh './gradlew :transport:generatePomFileForMavenPublication'
+            }
+        }
+        stage("CI Build - iOS Testbed"){
+            steps{
+                sh '''
+                    if [ -e deployment.properties ]; then
+                      echo "deployment.properties file already exists"
+                    else
+                      echo "creating deployment.properties file based on environment variables"
+                      echo "deploymentId=${DEPLOYMENT_ID}" >> deployment.properties
+                      echo "deploymentDomain=${DEPLOYMENT_DOMAIN}" >> deployment.properties
+                    fi
+                    cd iosApp
+                    pod install --verbose
+                    xcodebuild clean build -verbose -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug CODE_SIGNING_ALLOWED=NO EXCLUDED_ARCHS=armv7
+                '''
+            }
+        }
+        stage("CI Build - iOS XCFramework"){
+            steps{
+                sh './gradlew :transport:assembleMessengerTransportReleaseXCFramework'
+            }
+        }
     }
     post{
         success{
@@ -51,6 +98,7 @@ pipeline{
         }
         failure{
             setBuildStatus("Build complete.", "FAILURE")
+            emailext attachLog: false, body: "Build Job: ${BUILD_URL}", recipientProviders: [culprits(), requestor(), brokenBuildSuspects()], subject: "Build failed: ${JOB_NAME}-${BUILD_NUMBER}"
         }
         always{
             cleanWs()
