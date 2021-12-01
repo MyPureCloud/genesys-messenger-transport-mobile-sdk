@@ -23,10 +23,15 @@ pipeline{
     environment {
         DEPLOYMENT_ID = credentials("messenger-mobile-sdk-deployment-id")
         DEPLOYMENT_DOMAIN = 'inindca.com'
+        HOME = """${sh(
+            returnStdout: true,
+            script: 'if [ -z "$HOME" ]; then echo "/Users/$(whoami)"; else echo "$HOME"; fi'
+        ).trim()}"""
     }
     stages{
         stage("Prepare"){
             steps{
+                sh 'printenv | sort'
                 setBuildStatus("Preparing", "PENDING")
             }
         }
@@ -68,7 +73,6 @@ pipeline{
         stage("CI Build - iOS Testbed"){
             steps{
                 sh '''
-                    if [ -z "$HOME" ]; then export HOME=/Users/$(whoami); fi
                     if [ -e deployment.properties ]; then
                       echo "deployment.properties file already exists"
                     else
@@ -76,8 +80,6 @@ pipeline{
                       echo "deploymentId=${DEPLOYMENT_ID}" >> deployment.properties
                       echo "deploymentDomain=${DEPLOYMENT_DOMAIN}" >> deployment.properties
                     fi
-                    echo "iosApp will use the following deployment.properties:"
-                    cat deployment.properties
                     cd iosApp
                     pod install --verbose
                     xcodebuild clean build -verbose -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug CODE_SIGNING_ALLOWED=NO EXCLUDED_ARCHS=armv7
@@ -86,10 +88,7 @@ pipeline{
         }
         stage("CI Build - iOS XCFramework"){
             steps{
-                sh '''
-                    ./make-iOS-framework.sh
-                    test -e transport/build/xcframework/MessengerTransport.xcframework
-                '''
+                sh './gradlew :transport:assembleMessengerTransportReleaseXCFramework'
             }
         }
     }
