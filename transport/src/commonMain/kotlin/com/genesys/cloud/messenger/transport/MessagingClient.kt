@@ -17,6 +17,7 @@ interface MessagingClient {
     sealed class State {
         object Idle : State()
         object Connecting : State()
+        object Reconnecting : State()
         object Connected : State()
         data class Configured(val connected: Boolean, val newSession: Boolean?) : State()
         data class Closing(val code: Int, val reason: String) : State()
@@ -59,6 +60,17 @@ interface MessagingClient {
      */
     @Throws(IllegalStateException::class)
     fun configureSession()
+
+    /**
+     * Simplify commonly used api to start a new chat. Calling this function will execute a series of action:
+     * 1. Connect to the websocket.
+     * 2. Configure a Web Messaging session.
+     * 3. Fetch first page of the history.
+     *
+     * @throws IllegalStateException
+     */
+    @Throws(IllegalStateException::class)
+    fun startSessionWithHistory()
 
     /**
      * Send a message to the conversation as plain text.

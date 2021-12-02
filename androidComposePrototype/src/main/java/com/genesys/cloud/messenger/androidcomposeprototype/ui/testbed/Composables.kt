@@ -59,7 +59,7 @@ fun TestBedContent(
             style = typography.h5
         )
         Text(
-            "Commands: connect, configure, send <msg>, history, attach, detach, delete <attachmentId> , deployment, bye, ping",
+            "Commands: connect, quickConnect, configure, send <msg>, history, attach, detach, delete <attachmentId>, deployment, bye, ping",
             style = typography.caption,
             softWrap = true
         )

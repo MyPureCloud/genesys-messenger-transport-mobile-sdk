@@ -22,12 +22,17 @@ import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.util.ErrorCode
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.PlatformSocket
+import com.genesys.cloud.messenger.transport.util.ReconnectionManager
 import com.genesys.cloud.messenger.transport.util.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.util.SocketCloseCode
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 
@@ -40,10 +45,14 @@ internal class MessagingClientImpl(
     private val token: String,
     private val attachmentHandler: AttachmentHandler,
     private val messageStore: MessageStore,
+    private val reconnectionManager: ReconnectionManager,
 ) : MessagingClient {
+    private var configureWithHistory: Boolean = false
+    private val dispatcher = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     override var currentState: State = State.Idle
         private set(value) {
+            if(field == value) return
             field = value
             stateListener?.invoke(value)
         }
@@ -58,16 +67,16 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun connect() {
-        log.i { "connect()" }
-        check(currentState is State.Closed || currentState is State.Idle || currentState is State.Error) { "MessagingClient must be in closed, idle or error state" }
-        currentState = State.Connecting
-        webSocket.openSocket(socketListener)
+        log.i { "connect() + current state = $currentState" }
+        currentState.checkIfAllowedToConnect()
+        if (currentState !is State.Reconnecting) currentState = State.Connecting
+        webSocket.openSocket(getSocketListener())
     }
 
     @Throws(IllegalStateException::class)
     override fun disconnect() {
         log.i { "disconnect()" }
-        check(currentState !is State.Closed && currentState !is State.Idle) { "MessagingClient must not already be closed or idle" }
+        currentState.checkIfAllowedToDisconnect()
         val code = SocketCloseCode.NORMAL_CLOSURE.value
         val reason = "The user has closed the connection."
         currentState = State.Closing(code, reason)
@@ -81,10 +90,19 @@ internal class MessagingClientImpl(
         val request = ConfigureSessionRequest(
             token = token,
             deploymentId = configuration.deploymentId,
-            journeyContext = JourneyContext(JourneyCustomer(token, "cookie"), JourneyCustomerSession("", "web"))
+            journeyContext = JourneyContext(
+                JourneyCustomer(token, "cookie"),
+                JourneyCustomerSession("", "web")
+            )
         )
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         webSocket.sendMessage(encodedJson)
+    }
+
+    override fun startSessionWithHistory() {
+        log.i { "Start session with history" }
+        configureWithHistory = true
+        connect()
     }
 
     @Throws(IllegalStateException::class)
@@ -175,12 +193,15 @@ internal class MessagingClientImpl(
     private fun handleError(code: ErrorCode, message: String? = null) {
         if (code == ErrorCode.SessionHasExpired || code == ErrorCode.SessionNotFound) {
             currentState = State.Error(code, message)
-        } else if (code == ErrorCode.MessageTooLong) {
+        } else if (
+            code == ErrorCode.MessageTooLong
+            || code is ErrorCode.ClientResponseError
+            || code is ErrorCode.ServerResponseError) {
             messageStore.onMessageError(code, message)
         }
     }
 
-    private val socketListener = SocketListener(
+    private fun getSocketListener() = SocketListener(
         log = log.withTag(LogTag.WEBSOCKET)
     )
 
@@ -191,12 +212,18 @@ internal class MessagingClientImpl(
         override fun onOpen() {
             log.i { "onOpen()" }
             currentState = State.Connected
+            reconnectionManager.resetAttempts()
+            if (configureWithHistory) configureSession()
         }
 
         override fun onFailure(t: Throwable) {
             log.e(throwable = t) { "onFailure(message: ${t.message})" }
-            currentState = State.Error(ErrorCode.WebsocketError, t.message)
-            webSocket.closeSocket(SocketCloseCode.GOING_AWAY.value, "Going away.")
+            currentState = if (reconnectionManager.canReconnect()) {
+                reconnectionManager.reconnect { startSessionWithHistory() }
+                State.Reconnecting
+            } else {
+                State.Error(ErrorCode.WebsocketError, t.message)
+            }
         }
 
         override fun onMessage(text: String) {
@@ -209,6 +236,12 @@ internal class MessagingClientImpl(
                     is SessionResponse -> {
                         decoded.body.run {
                             currentState = State.Configured(connected, newSession)
+                            if (configureWithHistory) {
+                                dispatcher.launch {
+                                    fetchNextPage()
+                                    configureWithHistory = false
+                                }
+                            }
                         }
                     }
                     is JwtResponse ->
@@ -254,7 +287,16 @@ internal class MessagingClientImpl(
 
         override fun onClosed(code: Int, reason: String) {
             log.i { "onClosed(code = $code, reason = $reason)" }
+            configureWithHistory = false
             currentState = State.Closed(code, reason)
         }
     }
+}
+
+private fun State.checkIfAllowedToConnect() {
+    check(this is State.Closed || this is State.Idle || this is State.Error || this is State.Reconnecting) { "MessagingClient must be in closed, idle. reconnecting or error state" }
+}
+
+private fun State.checkIfAllowedToDisconnect() {
+    check(this !is State.Closed || this !is State.Idle) { "MessagingClient must not already be closed or idle" }
 }

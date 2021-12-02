@@ -19,7 +19,8 @@ object MobileMessenger {
         val log = Log(configuration.logging, LogTag.MESSAGING_CLIENT)
         val api = WebMessagingApi(log.withTag(LogTag.API), configuration)
         val webSocket = PlatformSocket(log.withTag(LogTag.WEBSOCKET), configuration, 300000)
-        val token = TokenStoreImpl(configuration.tokenStoreKey, log.withTag(LogTag.TOKEN_STORE)).token
+        val token =
+            TokenStoreImpl(configuration.tokenStoreKey, log.withTag(LogTag.TOKEN_STORE)).token
         val messageStore =
             MessageStore(MessageDispatcher(listener), token, log.withTag(LogTag.MESSAGE_STORE))
         val attachmentHandler =
@@ -38,6 +39,10 @@ object MobileMessenger {
             jwtHandler = JwtHandler(webSocket, token),
             attachmentHandler = attachmentHandler,
             messageStore = messageStore,
+            reconnectionManager = ReconnectionManager(
+                configuration.maxReconnectAttempts,
+                log.withTag(LogTag.RECONNECTION_HANDLER),
+            )
         )
     }
 }
