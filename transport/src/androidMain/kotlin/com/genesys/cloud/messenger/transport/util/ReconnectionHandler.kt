@@ -8,7 +8,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-internal actual class ReconnectionManager(
+internal actual class ReconnectionHandler(
     private val maxReconnectionAttempts: Int,
     private val log: Log
 ) {
@@ -34,7 +34,7 @@ internal actual class ReconnectionManager(
     }
 
     /**
-     * @return true if [ReconnectionManager] has room for another reconnect attempt, false otherwise.
+     * @return true if [ReconnectionHandler] has room for another reconnect attempt, false otherwise.
      */
     actual fun canReconnect(): Boolean = attempts < maxReconnectionAttempts
 }

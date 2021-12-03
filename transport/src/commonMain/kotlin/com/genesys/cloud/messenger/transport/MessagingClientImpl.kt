@@ -22,7 +22,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.util.ErrorCode
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.PlatformSocket
-import com.genesys.cloud.messenger.transport.util.ReconnectionManager
+import com.genesys.cloud.messenger.transport.util.ReconnectionHandler
 import com.genesys.cloud.messenger.transport.util.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.util.SocketCloseCode
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
@@ -45,7 +45,7 @@ internal class MessagingClientImpl(
     private val token: String,
     private val attachmentHandler: AttachmentHandler,
     private val messageStore: MessageStore,
-    private val reconnectionManager: ReconnectionManager,
+    private val reconnectionHandler: ReconnectionHandler,
 ) : MessagingClient {
     private var configureWithHistory: Boolean = false
     private val dispatcher = CoroutineScope(Dispatchers.Main + SupervisorJob())
@@ -212,19 +212,19 @@ internal class MessagingClientImpl(
         override fun onOpen() {
             log.i { "onOpen()" }
             currentState = State.Connected
-            reconnectionManager.resetAttempts()
+            reconnectionHandler.resetAttempts()
             if (configureWithHistory) configureSession()
         }
 
         override fun onFailure(t: Throwable) {
             log.e(throwable = t) { "onFailure(message: ${t.message})" }
-            currentState = if (reconnectionManager.canReconnect()) {
+            currentState = if (reconnectionHandler.canReconnect()) {
                 State.Reconnecting
             } else {
                 State.Error(ErrorCode.WebsocketError, t.message)
             }
             messageStore.reset()
-            if (currentState == State.Reconnecting) reconnectionManager.reconnect { startSessionWithHistory() }
+            if (currentState == State.Reconnecting) reconnectionHandler.reconnect { startSessionWithHistory() }
         }
 
         override fun onMessage(text: String) {
@@ -299,5 +299,5 @@ private fun State.checkIfAllowedToConnect() {
 }
 
 private fun State.checkIfAllowedToDisconnect() {
-    check(this !is State.Closed || this !is State.Idle) { "MessagingClient must not already be closed or idle, but is in $this state" }
+    check(this !is State.Closed && this !is State.Idle) { "MessagingClient must not already be closed or idle, but is in $this state" }
 }

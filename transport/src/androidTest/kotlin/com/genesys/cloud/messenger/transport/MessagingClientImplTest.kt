@@ -8,7 +8,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.ErrorCode
 import com.genesys.cloud.messenger.transport.util.PlatformSocket
 import com.genesys.cloud.messenger.transport.util.PlatformSocketListener
-import com.genesys.cloud.messenger.transport.util.SocketCloseCode
+import com.genesys.cloud.messenger.transport.util.ReconnectionHandler
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import io.mockk.MockKVerificationScope
 import io.mockk.clearAllMocks
@@ -78,6 +78,11 @@ class MessagingClientImplTest {
         coEvery { fetchDeploymentConfig() } returns TestWebMessagingApiResponses.testDeploymentConfig
     }
 
+    private val mockReconnectionHandler: ReconnectionHandler = mockk {
+        every { resetAttempts() } answers { nothing }
+        every { canReconnect() } returns true
+        every { reconnect(any()) } answers { nothing }
+    }
     private val subject = MessagingClientImpl(
         log = log,
         configuration = configuration,
@@ -87,7 +92,7 @@ class MessagingClientImplTest {
         jwtHandler = mockk(),
         attachmentHandler = mockAttachmentHandler,
         messageStore = mockMessageStore,
-        reconnectionManager = mockk(),
+        reconnectionHandler = mockReconnectionHandler,
     ).also {
         it.stateListener = mockStateListener
     }
@@ -256,25 +261,19 @@ class MessagingClientImplTest {
     }
 
     @Test
-    fun whenConfigureFailsAndSocketListenerRespondWithOnFailure() {
-        val expectedException = Exception("Some error message")
-        val expectedErrorState =
-            MessagingClient.State.Error(ErrorCode.WebsocketError, "Some error message")
-        val expectedState =
-            MessagingClient.State.Closed(SocketCloseCode.GOING_AWAY.value, "Going away.")
-        every { mockPlatformSocket.closeSocket(any(), any()) } answers {
-            slot.captured.onClosed(1001, "Going away.")
-        }
+    fun whenSocketOnFailureAndCanReconnectIsTrue() {
+        val expectedState = MessagingClient.State.Reconnecting
         subject.connect()
 
-        slot.captured.onFailure(expectedException)
+        slot.captured.onFailure(Exception("Some error message"))
 
-        assertThat(subject).isClosed(expectedState.code, expectedState.reason)
+        assertThat(subject).isReconnecting()
         verifySequence {
             connectSequence()
-            mockStateListener(expectedErrorState)
-            mockPlatformSocket.closeSocket(expectedState.code, expectedState.reason)
+            mockReconnectionHandler.canReconnect()
             mockStateListener(expectedState)
+            mockMessageStore.reset()
+            mockReconnectionHandler.reconnect(any())
         }
     }
 
@@ -449,6 +448,7 @@ class MessagingClientImplTest {
         mockStateListener(MessagingClient.State.Connecting)
         mockPlatformSocket.openSocket(any())
         mockStateListener(MessagingClient.State.Connected)
+        mockReconnectionHandler.resetAttempts()
     }
 
     private fun MockKVerificationScope.disconnectSequence(

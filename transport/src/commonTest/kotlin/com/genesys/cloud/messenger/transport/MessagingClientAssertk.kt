@@ -19,3 +19,6 @@ fun Assert<MessagingClient>.isClosing(code: Int, reason: String) =
 
 fun Assert<MessagingClient>.isConfigured(connected: Boolean, newSession: Boolean?) =
     currentState().isEqualTo(MessagingClient.State.Configured(connected, newSession))
+
+fun Assert<MessagingClient>.isReconnecting() =
+    currentState().isEqualTo(MessagingClient.State.Reconnecting)

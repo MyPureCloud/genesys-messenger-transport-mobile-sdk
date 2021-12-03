@@ -15,7 +15,7 @@ import platform.Foundation.NSThread
 import platform.darwin.dispatch_get_main_queue
 import platform.darwin.dispatch_sync_f
 
-internal actual class ReconnectionManager(
+internal actual class ReconnectionHandler(
     private val maxReconnectionAttempts: Int,
     private val log: Log
 ) {
@@ -25,7 +25,7 @@ internal actual class ReconnectionManager(
     /**
      * Reconnects to the web socket every [attempts] * [DELAY_DELTA_IN_MILLISECONDS] milliseconds.
      *
-     * @return true if [ReconnectionManager] has room for another reconnect attempt, false otherwise.
+     * @return true if [ReconnectionHandler] has room for another reconnect attempt, false otherwise.
      */
     actual fun reconnect(reconnectFun: () -> Unit) {
         val wrappedReconnectFun = wrapReconnectFunWithContinuation(reconnectFun)
@@ -44,7 +44,7 @@ internal actual class ReconnectionManager(
     }
 
     /**
-     * @return true if [ReconnectionManager] has room for another reconnect attempt, false otherwise.
+     * @return true if [ReconnectionHandler] has room for another reconnect attempt, false otherwise.
      */
     actual fun canReconnect(): Boolean = attempts.value < maxReconnectionAttempts
 
