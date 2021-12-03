@@ -70,7 +70,7 @@ internal class MessagingClientImpl(
         log.i { "connect() + current state = $currentState" }
         currentState.checkIfAllowedToConnect()
         if (currentState !is State.Reconnecting) currentState = State.Connecting
-        webSocket.openSocket(getSocketListener())
+        webSocket.openSocket(socketListener)
     }
 
     @Throws(IllegalStateException::class)
@@ -201,7 +201,7 @@ internal class MessagingClientImpl(
         }
     }
 
-    private fun getSocketListener() = SocketListener(
+    private val socketListener = SocketListener(
         log = log.withTag(LogTag.WEBSOCKET)
     )
 
@@ -219,11 +219,12 @@ internal class MessagingClientImpl(
         override fun onFailure(t: Throwable) {
             log.e(throwable = t) { "onFailure(message: ${t.message})" }
             currentState = if (reconnectionManager.canReconnect()) {
-                reconnectionManager.reconnect { startSessionWithHistory() }
                 State.Reconnecting
             } else {
                 State.Error(ErrorCode.WebsocketError, t.message)
             }
+            messageStore.reset()
+            if (currentState == State.Reconnecting) reconnectionManager.reconnect { startSessionWithHistory() }
         }
 
         override fun onMessage(text: String) {
@@ -294,9 +295,9 @@ internal class MessagingClientImpl(
 }
 
 private fun State.checkIfAllowedToConnect() {
-    check(this is State.Closed || this is State.Idle || this is State.Error || this is State.Reconnecting) { "MessagingClient must be in closed, idle. reconnecting or error state" }
+    check(this is State.Closed || this is State.Idle || this is State.Error || this is State.Reconnecting) { "MessagingClient must be in closed, idle. reconnecting or error state, but was in: $this state " }
 }
 
 private fun State.checkIfAllowedToDisconnect() {
-    check(this !is State.Closed || this !is State.Idle) { "MessagingClient must not already be closed or idle" }
+    check(this !is State.Closed || this !is State.Idle) { "MessagingClient must not already be closed or idle, but is in $this state" }
 }

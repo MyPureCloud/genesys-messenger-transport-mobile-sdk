@@ -87,6 +87,7 @@ class MessagingClientImplTest {
         jwtHandler = mockk(),
         attachmentHandler = mockAttachmentHandler,
         messageStore = mockMessageStore,
+        reconnectionManager = mockk(),
     ).also {
         it.stateListener = mockStateListener
     }
