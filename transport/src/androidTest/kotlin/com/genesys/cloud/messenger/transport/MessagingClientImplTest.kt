@@ -25,10 +25,10 @@ import io.mockk.verify
 import io.mockk.verifySequence
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestCoroutineDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
-import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -305,7 +305,12 @@ class MessagingClientImplTest {
         verifySequence {
             connectSequence()
             mockReconnectionHandler.shouldReconnect()
-            mockStateListener(MessagingClient.State.Error(ErrorCode.WebsocketError, "Some error message"))
+            mockStateListener(
+                MessagingClient.State.Error(
+                    ErrorCode.WebsocketError,
+                    "Some error message"
+                )
+            )
         }
     }
 

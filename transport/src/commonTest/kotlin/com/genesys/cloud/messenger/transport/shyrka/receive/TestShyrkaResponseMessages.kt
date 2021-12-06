@@ -1,6 +1,5 @@
 package com.genesys.cloud.messenger.transport.shyrka.receive
 
-
 object TestShyrkaResponseMessages {
     fun sessionResponseOk(connected: Boolean = true, newSession: Boolean = true) = """
             {

@@ -22,8 +22,8 @@ import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.util.ErrorCode
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.PlatformSocket
-import com.genesys.cloud.messenger.transport.util.ReconnectionHandler
 import com.genesys.cloud.messenger.transport.util.PlatformSocketListener
+import com.genesys.cloud.messenger.transport.util.ReconnectionHandler
 import com.genesys.cloud.messenger.transport.util.SocketCloseCode
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
@@ -52,7 +52,7 @@ internal class MessagingClientImpl(
 
     override var currentState: State = State.Idle
         private set(value) {
-            if(field == value) return
+            if (field == value) return
             field = value
             stateListener?.invoke(value)
         }
@@ -194,9 +194,10 @@ internal class MessagingClientImpl(
         if (code == ErrorCode.SessionHasExpired || code == ErrorCode.SessionNotFound) {
             currentState = State.Error(code, message)
         } else if (
-            code == ErrorCode.MessageTooLong
-            || code is ErrorCode.ClientResponseError
-            || code is ErrorCode.ServerResponseError) {
+            code == ErrorCode.MessageTooLong ||
+            code is ErrorCode.ClientResponseError ||
+            code is ErrorCode.ServerResponseError
+        ) {
             messageStore.onMessageError(code, message)
         }
     }

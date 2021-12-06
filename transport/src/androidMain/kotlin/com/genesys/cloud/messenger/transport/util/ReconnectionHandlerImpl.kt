@@ -15,7 +15,7 @@ internal class ReconnectionHandlerImpl(
     private val dispatcher = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     override fun reconnect(reconnectFun: () -> Unit) {
-        if(!shouldReconnect()) return
+        if (!shouldReconnect()) return
         dispatcher.launch {
             log.i { "Trying to reconnect. Attempts: $attempts" }
             delay(attempts * DELAY_DELTA_IN_MILLISECONDS)
