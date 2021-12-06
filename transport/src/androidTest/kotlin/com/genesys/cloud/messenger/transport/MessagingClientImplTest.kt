@@ -2,8 +2,10 @@ package com.genesys.cloud.messenger.transport
 
 import assertk.assertThat
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.TestShyrkaResponseMessages
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.TestShyrkaSendMessages
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.ErrorCode
 import com.genesys.cloud.messenger.transport.util.PlatformSocket
@@ -14,6 +16,7 @@ import io.mockk.MockKVerificationScope
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifySequence
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -21,8 +24,13 @@ import io.mockk.spyk
 import io.mockk.verify
 import io.mockk.verifySequence
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.TestCoroutineDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -30,7 +38,7 @@ import kotlin.test.assertFailsWith
 class MessagingClientImplTest {
     private val configuration = configuration()
     private val log: Log = Log(configuration.logging, "Log")
-    private val slot = slot<PlatformSocketListener>()
+    private val platformSocketListenerSlot = slot<PlatformSocketListener>()
     private val mockStateListener: (MessagingClient.State) -> Unit = spyk()
     private val mockMessageStore: MessageStore = mockk(relaxed = true) {
         every { prepareMessage(any()) } returns OnMessageRequest(
@@ -55,14 +63,17 @@ class MessagingClientImplTest {
         )
     }
     private val mockPlatformSocket: PlatformSocket = mockk {
-        every { openSocket(capture(slot)) } answers {
-            slot.captured.onOpen()
+        every { openSocket(capture(platformSocketListenerSlot)) } answers {
+            platformSocketListenerSlot.captured.onOpen()
         }
         every { closeSocket(any(), any()) } answers {
-            slot.captured.onClosed(1000, "The user has closed the connection.")
+            platformSocketListenerSlot.captured.onClosed(
+                1000,
+                "The user has closed the connection."
+            )
         }
         every { sendMessage(any()) } answers {
-            slot.captured.onMessage("")
+            platformSocketListenerSlot.captured.onMessage("")
         }
     }
 
@@ -80,9 +91,10 @@ class MessagingClientImplTest {
 
     private val mockReconnectionHandler: ReconnectionHandler = mockk {
         every { resetAttempts() } answers { nothing }
-        every { canReconnect() } returns true
-        every { reconnect(any()) } answers { nothing }
+        every { shouldReconnect() } returns true
+        every { reconnect(captureLambda()) } answers { firstArg<() -> Unit>().invoke() }
     }
+    private val testDispatcher = TestCoroutineDispatcher()
     private val subject = MessagingClientImpl(
         log = log,
         configuration = configuration,
@@ -97,8 +109,16 @@ class MessagingClientImplTest {
         it.stateListener = mockStateListener
     }
 
+    @BeforeTest
+    fun before() {
+        Dispatchers.setMain(testDispatcher)
+    }
+
     @AfterTest
-    fun after() = clearAllMocks()
+    fun after() {
+        Dispatchers.resetMain()
+        clearAllMocks()
+    }
 
     @Test
     fun whenConnect() {
@@ -127,15 +147,13 @@ class MessagingClientImplTest {
 
     @Test
     fun whenConnectAndThenConfigureSession() {
-        val expectedConfigureMessage =
-            """{"token":"00000000-0000-0000-0000-000000000000","deploymentId":"deploymentId","journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"action":"configureSession"}"""
         subject.connect()
 
         subject.configureSession()
 
         verifySequence {
             connectSequence()
-            mockPlatformSocket.sendMessage(expectedConfigureMessage)
+            mockPlatformSocket.sendMessage(TestShyrkaSendMessages.configureMessage())
         }
     }
 
@@ -261,40 +279,42 @@ class MessagingClientImplTest {
     }
 
     @Test
-    fun whenSocketOnFailureAndCanReconnectIsTrue() {
-        val expectedState = MessagingClient.State.Reconnecting
+    fun whenSocketOnFailureAndShouldReconnectIsTrue() {
         subject.connect()
 
-        slot.captured.onFailure(Exception("Some error message"))
+        platformSocketListenerSlot.captured.onFailure(Exception("Some error message"))
 
-        assertThat(subject).isReconnecting()
         verifySequence {
             connectSequence()
-            mockReconnectionHandler.canReconnect()
-            mockStateListener(expectedState)
-            mockMessageStore.reset()
-            mockReconnectionHandler.reconnect(any())
+            reconnectSequence()
+            mockPlatformSocket.openSocket(any())
+            mockStateListener(MessagingClient.State.Connected)
+            mockReconnectionHandler.resetAttempts()
+            mockPlatformSocket.sendMessage(TestShyrkaSendMessages.configureMessage())
+        }
+    }
+
+    @Test
+    fun whenSocketOnFailureAndShouldReconnectIsFalse() {
+        every { mockReconnectionHandler.shouldReconnect() } returns false
+        subject.connect()
+
+        platformSocketListenerSlot.captured.onFailure(Exception("Some error message"))
+
+        assertThat(subject).isError(ErrorCode.WebsocketError, "Some error message")
+        verifySequence {
+            connectSequence()
+            mockReconnectionHandler.shouldReconnect()
+            mockStateListener(MessagingClient.State.Error(ErrorCode.WebsocketError, "Some error message"))
         }
     }
 
     @Test
     fun whenSocketListenerInvokeOnMessageWithProperlyStructuredMessage() {
         val expectedSessionResponse = SessionResponse(connected = true, newSession = true)
-        val expectedRawMessage =
-            """
-            {
-              "type": "response",
-              "class": "SessionResponse",
-              "code": 200,
-              "body": {
-                "connected": true,
-                "newSession": true
-              }
-            }
-            """
         subject.connect()
 
-        slot.captured.onMessage(expectedRawMessage)
+        platformSocketListenerSlot.captured.onMessage(TestShyrkaResponseMessages.sessionResponseOk())
 
         assertThat(subject).isConfigured(
             expectedSessionResponse.connected,
@@ -331,18 +351,14 @@ class MessagingClientImplTest {
                 ErrorCode.SessionHasExpired,
                 "session expired error message"
             )
-        val givenRawMessage =
-            """
-            {
-              "type": "response",
-              "class": "string",
-              "code": 4006,
-              "body": "session expired error message"
-            }
-            """
         subject.connect()
 
-        slot.captured.onMessage(givenRawMessage)
+        platformSocketListenerSlot.captured.onMessage(
+            TestShyrkaResponseMessages.stringResponseOk(
+                4006,
+                "session expired error message"
+            )
+        )
 
         verifySequence {
             connectSequence()
@@ -357,18 +373,14 @@ class MessagingClientImplTest {
                 ErrorCode.SessionNotFound,
                 "session not found error message"
             )
-        val givenRawMessage =
-            """
-            {
-              "type": "response",
-              "class": "string",
-              "code": 4007,
-              "body": "session not found error message"
-            }
-            """
         subject.connect()
 
-        slot.captured.onMessage(givenRawMessage)
+        platformSocketListenerSlot.captured.onMessage(
+            TestShyrkaResponseMessages.stringResponseOk(
+                4007,
+                "session not found error message"
+            )
+        )
 
         verifySequence {
             connectSequence()
@@ -378,18 +390,14 @@ class MessagingClientImplTest {
 
     @Test
     fun whenSocketListenerInvokeOnMessageWithMessageTooLongStringMessage() {
-        val givenRawMessage =
-            """
-            {
-              "type": "response",
-              "class": "string",
-              "code": 4011,
-              "body": "message too long"
-            }
-            """
         subject.connect()
 
-        slot.captured.onMessage(givenRawMessage)
+        platformSocketListenerSlot.captured.onMessage(
+            TestShyrkaResponseMessages.stringResponseOk(
+                4011,
+                "message too long"
+            )
+        )
 
         verifySequence {
             connectSequence()
@@ -401,18 +409,9 @@ class MessagingClientImplTest {
     fun whenSocketListenerInvokeOnMessageWitSessionExpiredEvent() {
         val expectedErrorState =
             MessagingClient.State.Error(ErrorCode.SessionHasExpired, null)
-        val givenRawMessage =
-            """
-            {
-              "type": "response",
-              "class": "SessionExpiredEvent",
-              "code": 200,
-              "body": {}
-            }
-            """
         subject.connect()
 
-        slot.captured.onMessage(givenRawMessage)
+        platformSocketListenerSlot.captured.onMessage(TestShyrkaResponseMessages.sessionExpiredResponseOk)
 
         verifySequence {
             connectSequence()
@@ -420,22 +419,53 @@ class MessagingClientImplTest {
         }
     }
 
+    @Test
+    fun whenCurrentStateUpdatedMultipleTimesWithSameState() {
+        subject.connect()
+        doNotOpenSocket()
+
+        platformSocketListenerSlot.captured.onFailure(Exception("Some error message"))
+        platformSocketListenerSlot.captured.onFailure(Exception("Some other error message"))
+
+        verify(exactly = 1) {
+            mockStateListener(MessagingClient.State.Reconnecting)
+        }
+    }
+
+    @Test
+    fun whenConnectDuringReconnection() {
+        subject.connect()
+        doNotOpenSocket()
+        platformSocketListenerSlot.captured.onFailure(Exception("Some error message"))
+
+        assertThat(subject).isReconnecting()
+    }
+
+    @Test
+    fun whenStartSessionWithHistoryCalled() {
+        every { mockPlatformSocket.sendMessage(TestShyrkaSendMessages.configureMessage()) } answers {
+            platformSocketListenerSlot.captured.onMessage(
+                TestShyrkaResponseMessages.sessionResponseOk()
+            )
+        }
+
+        subject.startSessionWithHistory()
+
+        coVerifySequence {
+            connectSequence()
+            configureSequence()
+            // jwtHandler.withJwt { } is expected to be invoked,
+            // but Inline functions cannot be mocked: see the discussion on this issue: https://github.com/mockk/mockk/issues/27
+        }
+    }
+
+    private fun doNotOpenSocket() =
+        every { mockPlatformSocket.openSocket(any()) } answers { nothing }
+
     private fun connectAndConfigure() {
-        val sessionResponseMessage =
-            """
-            {
-              "type": "response",
-              "class": "SessionResponse",
-              "code": 200,
-              "body": {
-                "connected": true,
-                "newSession": true
-              }
-            }
-            """
         subject.connect()
         subject.configureSession()
-        slot.captured.onMessage(sessionResponseMessage)
+        platformSocketListenerSlot.captured.onMessage(TestShyrkaResponseMessages.sessionResponseOk())
     }
 
     private fun configuration(): Configuration = Configuration(
@@ -463,5 +493,12 @@ class MessagingClientImplTest {
     private fun MockKVerificationScope.configureSequence(expected: String = any()) {
         mockPlatformSocket.sendMessage(expected)
         mockStateListener(MessagingClient.State.Configured(connected = true, newSession = true))
+    }
+
+    private fun MockKVerificationScope.reconnectSequence() {
+        mockReconnectionHandler.shouldReconnect()
+        mockStateListener(MessagingClient.State.Reconnecting)
+        mockMessageStore.reset()
+        mockReconnectionHandler.reconnect(any())
     }
 }

@@ -122,6 +122,7 @@ kotlin {
                 implementation("com.squareup.okhttp3:logging-interceptor:$okhttpVersion")
                 api("io.ktor:ktor-client-android:$ktorVersion")
                 implementation("io.ktor:ktor-client-logging-jvm:$ktorVersion")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.3-native-mt")
             }
         }
         val androidTest by getting {

@@ -15,19 +15,15 @@ import platform.Foundation.NSThread
 import platform.darwin.dispatch_get_main_queue
 import platform.darwin.dispatch_sync_f
 
-internal actual class ReconnectionHandler(
+internal class ReconnectionHandlerImpl(
     private val maxReconnectionAttempts: Int,
     private val log: Log
-) {
+): ReconnectionHandler {
     private var attempts = AtomicInt(0)
     private val dispatcher = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
-    /**
-     * Reconnects to the web socket every [attempts] * [DELAY_DELTA_IN_MILLISECONDS] milliseconds.
-     *
-     * @return true if [ReconnectionHandler] has room for another reconnect attempt, false otherwise.
-     */
-    actual fun reconnect(reconnectFun: () -> Unit) {
+    override fun reconnect(reconnectFun: () -> Unit) {
+        if(!shouldReconnect()) return
         val wrappedReconnectFun = wrapReconnectFunWithContinuation(reconnectFun)
         dispatcher.launch {
             log.i { "Trying to reconnect. Attempts: $attempts" }
@@ -39,14 +35,11 @@ internal actual class ReconnectionHandler(
         }
     }
 
-    actual fun resetAttempts() {
+    override fun resetAttempts() {
         attempts.value = 0
     }
 
-    /**
-     * @return true if [ReconnectionHandler] has room for another reconnect attempt, false otherwise.
-     */
-    actual fun canReconnect(): Boolean = attempts.value < maxReconnectionAttempts
+    override fun shouldReconnect(): Boolean = attempts.value < maxReconnectionAttempts
 
     private inline fun wrapReconnectFunWithContinuation(noinline reconnectFun: () -> Unit): () -> Unit =
         Continuation0(

@@ -218,7 +218,7 @@ internal class MessagingClientImpl(
 
         override fun onFailure(t: Throwable) {
             log.e(throwable = t) { "onFailure(message: ${t.message})" }
-            currentState = if (reconnectionHandler.canReconnect()) {
+            currentState = if (reconnectionHandler.shouldReconnect()) {
                 State.Reconnecting
             } else {
                 State.Error(ErrorCode.WebsocketError, t.message)

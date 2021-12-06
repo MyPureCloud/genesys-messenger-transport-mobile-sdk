@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport
 import assertk.Assert
 import assertk.assertions.isEqualTo
 import assertk.assertions.prop
+import com.genesys.cloud.messenger.transport.util.ErrorCode
 
 fun Assert<MessagingClient>.currentState() = prop(MessagingClient::currentState)
 fun Assert<MessagingClient>.isClosed(code: Int, reason: String) =
@@ -22,3 +23,6 @@ fun Assert<MessagingClient>.isConfigured(connected: Boolean, newSession: Boolean
 
 fun Assert<MessagingClient>.isReconnecting() =
     currentState().isEqualTo(MessagingClient.State.Reconnecting)
+
+fun Assert<MessagingClient>.isError(errorCode: ErrorCode, message: String?) =
+    currentState().isEqualTo(MessagingClient.State.Error(errorCode, message))
