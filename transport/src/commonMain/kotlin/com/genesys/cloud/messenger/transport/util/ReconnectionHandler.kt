@@ -6,8 +6,6 @@ internal const val DELAY_DELTA_IN_MILLISECONDS = 1500L
 internal interface ReconnectionHandler {
     /**
      * Reconnects to the web socket every attempts * [DELAY_DELTA_IN_MILLISECONDS] milliseconds.
-     *
-     * @return true if [ReconnectionHandler] has room for another reconnect attempt, false otherwise.
      */
     fun reconnect(reconnectFun: () -> Unit)
 
