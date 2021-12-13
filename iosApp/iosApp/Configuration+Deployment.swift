@@ -9,7 +9,7 @@
 import MessengerTransport
 
 extension Configuration {
-    convenience init?(deployment: Deployment, tokenStoreKey: String, logging: Bool) {
+    convenience init?(deployment: Deployment, tokenStoreKey: String, logging: Bool, maxReconnectAttempts: Int32) {
         guard let deploymentId = deployment.deploymentId,
               let domain = deployment.domain else {
             return nil
@@ -17,6 +17,7 @@ extension Configuration {
         self.init(deploymentId: deploymentId,
                   domain: domain,
                   tokenStoreKey: tokenStoreKey,
-                  logging: logging)
+                  logging: logging,
+                  maxReconnectAttempts: maxReconnectAttempts)
     }
 }

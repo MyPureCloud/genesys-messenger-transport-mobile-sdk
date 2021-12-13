@@ -33,8 +33,10 @@ internal actual class PlatformSocket actual constructor(
             socketRequest,
             object : okhttp3.WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) = listener.onOpen()
-                override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) =
+                override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                    this@PlatformSocket.closeSocket(SocketCloseCode.GOING_AWAY.value, "Going away.")
                     listener.onFailure(t)
+                }
 
                 override fun onMessage(webSocket: WebSocket, text: String) =
                     listener.onMessage(text)

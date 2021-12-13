@@ -290,6 +290,15 @@ internal class MessageStoreTest {
         )
     }
 
+    @Test
+    fun whenReset() {
+        subject.updateMessageHistory(emptyList(), 0)
+
+        subject.reset()
+
+        assertFalse { subject.startOfConversation }
+    }
+
     private fun outboundMessage(messageId: Int = 0): Message = Message(
         id = "$messageId",
         direction = Message.Direction.Outbound,

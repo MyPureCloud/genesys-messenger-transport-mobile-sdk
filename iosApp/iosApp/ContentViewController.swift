@@ -18,7 +18,7 @@ class ContentViewController: UIViewController {
     private var byteArray: [UInt8]? = nil
 
     init(deployment: Deployment) {
-        self.config = Configuration(deployment: deployment, tokenStoreKey: "com.genesys.cloud.messenger", logging: true)!
+        self.config = Configuration(deployment: deployment, tokenStoreKey: "com.genesys.cloud.messenger", logging: true, maxReconnectAttempts: 30)!
         let messageListener = Listener()
         self.client = MobileMessenger().createMessagingClient(configuration: self.config, listener: messageListener)
 
@@ -54,6 +54,7 @@ class ContentViewController: UIViewController {
         view.text = """
         Commands:
             'connect'
+            'quickConnect'
             'configure'
             'send <msg>'
             'history'
@@ -186,6 +187,15 @@ class ContentViewController: UIViewController {
         }
     }
 
+    private func quickConnect() {
+        do {
+            try client.startSessionWithHistory()
+        } catch {
+            print(error)
+            info.text = "<\(error.localizedDescription)>"
+        }
+    }
+
     private func disconnect() {
         do {
             try client.disconnect()
@@ -224,6 +234,8 @@ extension ContentViewController : UITextFieldDelegate {
         switch userInput {
         case ("connect", _):
             connect()
+        case ("quickConnect", _):
+            quickConnect()
         case ("bye", _):
             disconnect()
         case ("configure", _):

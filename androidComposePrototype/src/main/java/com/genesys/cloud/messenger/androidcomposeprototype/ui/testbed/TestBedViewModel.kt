@@ -92,6 +92,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope, MessageListener {
         val components = command.split(" ", limit = 2)
         when (components.firstOrNull()) {
             "connect" -> doConnect()
+            "quickConnect" -> doQuickConnect()
             "bye" -> doDisconnect()
             "configure" -> doConfigureSession()
             "send" -> doSendMessage(components)
@@ -107,6 +108,14 @@ class TestBedViewModel : ViewModel(), CoroutineScope, MessageListener {
                     commandWaiting = false
                 }
             }
+        }
+    }
+
+    private suspend fun doQuickConnect() {
+        try {
+            client.startSessionWithHistory()
+        } catch (t: Throwable) {
+            handleException(t, "QuickConnect")
         }
     }
 

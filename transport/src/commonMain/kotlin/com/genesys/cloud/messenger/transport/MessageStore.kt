@@ -83,6 +83,10 @@ internal class MessageStore(
         }
     }
 
+    fun reset() {
+        startOfConversation = false
+    }
+
     private fun Message.getIndex(): Int = activeConversation.indexOf(this)
 
     private fun <E> MutableList<E>.getNextPage(): Int = (this.size / DEFAULT_PAGE_SIZE) + 1
