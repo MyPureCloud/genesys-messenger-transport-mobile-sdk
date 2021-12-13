@@ -40,11 +40,8 @@ android {
 }
 
 val kermitVersion = "0.1.9"
-val configuration: String? by project
-val sdk: String? by project
-val bitcode: String = if ("release".equals(configuration, true)) "bitcode" else "marker"
-version = project.rootProject.version
 val iosFrameworkName = "MessengerTransport"
+version = project.rootProject.version
 
 kotlin {
     android {
@@ -85,7 +82,6 @@ kotlin {
             // To specify a custom Objective-C prefix/name for the Kotlin framework, use the `-module-name` compiler option or matching Gradle DSL statement.
             freeCompilerArgs += listOf("-module-name", "GCM")
             export("co.touchlab:kermit:$kermitVersion")
-            embedBitcode(bitcode)
         }
         pod("jetfire", "~> 0.1.5")
     }
