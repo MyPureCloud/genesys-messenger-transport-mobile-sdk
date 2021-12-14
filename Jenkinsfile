@@ -50,6 +50,11 @@ pipeline{
                 jacoco classPattern: '**/kotlin-classes/debug,**/kotlin-classes/release', inclusionPattern: '**/*.class', sourcePattern: '**/src/*main/kotlin'
             }
         }
+        stage("Dependency validation") {
+            steps {
+                sh './gradlew :transport:checkForAndroidxDependencies'
+            }
+        }
         stage("CI Build - transport Module debug"){
             steps{
                 sh './gradlew :transport:assembleDebug'
