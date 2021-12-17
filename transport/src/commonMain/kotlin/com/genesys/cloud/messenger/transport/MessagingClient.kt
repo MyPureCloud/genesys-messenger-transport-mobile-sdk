@@ -130,7 +130,7 @@ interface MessagingClient {
      *
      * @throws CancellationException
      */
-    @Throws(CancellationException::class, ResponseException::class, IllegalArgumentException::class)
+    @Throws(Exception::class)
     suspend fun fetchNextPage()
 
     /**
@@ -144,6 +144,6 @@ interface MessagingClient {
     /**
      *  Fetch deployment configuration based on deployment id.
      */
-    @Throws(CancellationException::class, ResponseException::class, IllegalArgumentException::class)
+    @Throws(Exception::class)
     suspend fun fetchDeploymentConfig(): DeploymentConfig
 }
