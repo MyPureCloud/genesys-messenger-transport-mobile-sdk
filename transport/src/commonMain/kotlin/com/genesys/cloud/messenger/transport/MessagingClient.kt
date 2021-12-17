@@ -2,8 +2,6 @@ package com.genesys.cloud.messenger.transport
 
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.util.ErrorCode
-import io.ktor.client.features.ResponseException
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * WebMessagingClient provides bi-directional communication between a guest and Genesys Cloud via
@@ -128,9 +126,9 @@ interface MessagingClient {
     /**
      * Get message history for a conversation.
      *
-     * @throws CancellationException
+     * @throws Exception
      */
-    @Throws(CancellationException::class, ResponseException::class, IllegalArgumentException::class)
+    @Throws(Exception::class)
     suspend fun fetchNextPage()
 
     /**
@@ -143,7 +141,9 @@ interface MessagingClient {
 
     /**
      *  Fetch deployment configuration based on deployment id.
+     *
+     *  @throws Exception
      */
-    @Throws(CancellationException::class, ResponseException::class, IllegalArgumentException::class)
+    @Throws(Exception::class)
     suspend fun fetchDeploymentConfig(): DeploymentConfig
 }
