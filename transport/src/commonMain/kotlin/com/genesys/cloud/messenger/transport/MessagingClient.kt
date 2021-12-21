@@ -31,18 +31,18 @@ interface MessagingClient {
         /**
          * Session was successfully configured.
          *
-         * @property connected true if configuration were established and session open.
+         * @property connected true if session has been configured and connection is established.
          * @property newSession indicates if configured session is new. When configuring an existing session [newSession] will be false.
          */
         data class Configured(val connected: Boolean, val newSession: Boolean?) : State()
 
         /**
-         * Invoked when the remote peer has indicated that no more incoming messages will be transmitted.
+         * State when the remote peer has indicated that no more incoming messages will be transmitted.
          */
         data class Closing(val code: Int, val reason: String) : State()
 
         /**
-         * Invoked when both peers have indicated that no more messages will be transmitted and the connection has been successfully released.
+         * State when both peers have indicated that no more messages will be transmitted and the connection has been successfully released.
          */
         data class Closed(val code: Int, val reason: String) : State()
 
