@@ -9,6 +9,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.LauncherButton
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageEntityList
 import com.genesys.cloud.messenger.transport.shyrka.receive.Messenger
 import com.genesys.cloud.messenger.transport.shyrka.receive.Mode
+import com.genesys.cloud.messenger.transport.shyrka.receive.Status
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.Styles
 
@@ -60,7 +61,7 @@ object TestWebMessagingApiResponses {
             )
         ),
         journeyEvents = JourneyEvents(enabled = true),
-        status = "Active",
+        status = Status.Active,
     )
 
     private fun buildEntities(): List<StructuredMessage> =
