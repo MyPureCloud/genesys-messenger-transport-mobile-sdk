@@ -60,7 +60,7 @@ object TestWebMessagingApiResponses {
             )
         ),
         journeyEvents = JourneyEvents(enabled = true),
-        status = "Active",
+        status = DeploymentConfig.Status.Active,
     )
 
     private fun buildEntities(): List<StructuredMessage> =
