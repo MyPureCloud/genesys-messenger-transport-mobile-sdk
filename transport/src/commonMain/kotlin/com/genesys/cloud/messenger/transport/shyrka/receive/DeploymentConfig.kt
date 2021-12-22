@@ -13,7 +13,14 @@ data class DeploymentConfig(
     val messenger: Messenger,
     val journeyEvents: JourneyEvents,
     val status: Status,
-)
+) {
+    enum class Status {
+        @SerialName("Active")
+        Active,
+        @SerialName("Inactive")
+        Inactive,
+    }
+}
 
 @Serializable
 data class Messenger(
@@ -47,10 +54,3 @@ data class Mode(
 
 @Serializable
 data class JourneyEvents(val enabled: Boolean)
-
-enum class Status {
-    @SerialName("Active")
-    Active,
-    @SerialName("Inactive")
-    Inactive,
-}
