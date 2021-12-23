@@ -13,15 +13,12 @@ import com.genesys.cloud.messenger.transport.util.logs.Log
 import io.mockk.MockKVerificationScope
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.spyk
 import io.mockk.verify
 import io.mockk.verifySequence
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -74,8 +71,6 @@ class MessagingClientImplTest {
                 any()
             )
         } returns TestWebMessagingApiResponses.testMessageEntityList
-
-        coEvery { fetchDeploymentConfig() } returns TestWebMessagingApiResponses.testDeploymentConfig
     }
 
     private val subject = MessagingClientImpl(
@@ -303,24 +298,6 @@ class MessagingClientImplTest {
         verifySequence {
             connectSequence()
             mockStateListener(MessagingClient.State.Configured(connected = true, newSession = true))
-        }
-    }
-
-    @Test
-    fun whenFetchDeploymentConfig() {
-        runBlocking { subject.fetchDeploymentConfig() }
-
-        coVerify { mockWebMessagingApi.fetchDeploymentConfig() }
-    }
-
-    @Test
-    fun whenFetchDeploymentConfigThrowsCancellationException() {
-        coEvery {
-            mockWebMessagingApi.fetchDeploymentConfig()
-        } throws CancellationException()
-
-        runBlocking {
-            assertFailsWith<CancellationException> { subject.fetchDeploymentConfig() }
         }
     }
 

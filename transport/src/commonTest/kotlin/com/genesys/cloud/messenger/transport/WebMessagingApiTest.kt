@@ -1,6 +1,5 @@
 package com.genesys.cloud.messenger.transport
 
-import com.genesys.cloud.messenger.transport.util.logs.Log
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -18,16 +17,12 @@ private const val EMPTY_MESSAGE_ENTITY_RESPONSE_PATH =
     "/api/v2/webmessaging/messages?pageNumber=0&pageSize=0"
 private const val BASIC_MESSAGE_ENTITY_RESPONSE_PATH =
     "/api/v2/webmessaging/messages?pageNumber=1&pageSize=25"
-private const val BASIC_DEPLOYMENT_CONFIG_RESPONSE_PATH =
-    "/webdeployments/v1/deployments/deploymentId/config.json"
-private const val DEFAULT_TIMEOUT = 10000L
 
 class WebMessagingApiTest {
     private val subject: WebMessagingApi
         get() {
             val configuration = configuration()
             return WebMessagingApi(
-                log = Log(configuration.logging, "Log"),
                 configuration = configuration,
                 client = mockHttpClient()
             )
@@ -44,19 +39,6 @@ class WebMessagingApiTest {
         }
 
         assertEquals(expectedEntityList, result)
-    }
-
-    @Test
-    fun whenFetchDeploymentConfig() {
-        val expectedTestDeploymentConfig = TestWebMessagingApiResponses.testDeploymentConfig
-
-        val result = runBlocking {
-            withTimeout(DEFAULT_TIMEOUT) {
-                subject.fetchDeploymentConfig()
-            }
-        }
-
-        assertEquals(expectedTestDeploymentConfig, result)
     }
 
     @Test
@@ -97,12 +79,6 @@ class WebMessagingApiTest {
                     EMPTY_MESSAGE_ENTITY_RESPONSE_PATH -> {
                         respond(
                             TestWebMessagingApiResponses.messageEntityListResponseWithoutMessages,
-                            headers = responseHeaders
-                        )
-                    }
-                    BASIC_DEPLOYMENT_CONFIG_RESPONSE_PATH -> {
-                        respond(
-                            TestWebMessagingApiResponses.deploymentConfigResponse,
                             headers = responseHeaders
                         )
                     }

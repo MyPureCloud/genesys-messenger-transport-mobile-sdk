@@ -3,7 +3,6 @@ package com.genesys.cloud.messenger.transport
 import com.genesys.cloud.messenger.transport.MessagingClient.State
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.AttachmentDeletedResponse
-import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
@@ -81,7 +80,10 @@ internal class MessagingClientImpl(
         val request = ConfigureSessionRequest(
             token = token,
             deploymentId = configuration.deploymentId,
-            journeyContext = JourneyContext(JourneyCustomer(token, "cookie"), JourneyCustomerSession("", "web"))
+            journeyContext = JourneyContext(
+                JourneyCustomer(token, "cookie"),
+                JourneyCustomerSession("", "web")
+            )
         )
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         webSocket.sendMessage(encodedJson)
@@ -166,10 +168,6 @@ internal class MessagingClientImpl(
                     it.total,
                 )
             }
-    }
-
-    override suspend fun fetchDeploymentConfig(): DeploymentConfig {
-        return api.fetchDeploymentConfig()
     }
 
     private fun handleError(code: ErrorCode, message: String? = null) {

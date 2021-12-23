@@ -112,7 +112,13 @@ class TestBedViewModel : ViewModel(), CoroutineScope, MessageListener {
 
     private suspend fun doDeployment() {
         try {
-            onSocketMessageReceived(client.fetchDeploymentConfig().toString())
+            onSocketMessageReceived(
+                MobileMessenger.fetchDeploymentConfig(
+                    BuildConfig.DEPLOYMENT_DOMAIN,
+                    BuildConfig.DEPLOYMENT_ID,
+                    true,
+                ).toString()
+            )
         } catch (t: Throwable) {
             handleException(t, "fetch deployment config")
         }
