@@ -1,6 +1,5 @@
 package com.genesys.cloud.messenger.transport
 
-import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.util.ErrorCode
 
 /**
@@ -171,12 +170,4 @@ interface MessagingClient {
      */
     @Throws(IllegalStateException::class)
     fun disconnect()
-
-    /**
-     *  Fetch deployment configuration based on deployment id.
-     *
-     *  @throws Exception
-     */
-    @Throws(Exception::class)
-    suspend fun fetchDeploymentConfig(): DeploymentConfig
 }

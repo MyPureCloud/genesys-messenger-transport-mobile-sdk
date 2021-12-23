@@ -14,6 +14,7 @@ data class DeploymentConfig(
     val journeyEvents: JourneyEvents,
     val status: Status,
 ) {
+    @Serializable
     enum class Status {
         @SerialName("Active")
         Active,
