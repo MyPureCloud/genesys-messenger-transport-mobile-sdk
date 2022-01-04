@@ -4,9 +4,13 @@ This library provides methods for connecting to Genesys Cloud Messenger chat API
 
 To import Transport library:
 ### Android: ###
-` implementation 'cloud.genesys:messenger-transport-mobile-sdk:<version>' `
+```
+ implementation 'cloud.genesys:messenger-transport-mobile-sdk:<version>' 
+ ```
 ### iOS ###
-` TODO `
+```
+ TODO
+```
 
 ## IMPORTANT NOTE ## 
 
