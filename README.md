@@ -2,6 +2,12 @@
 
 This library provides methods for connecting to Genesys Cloud Messenger chat APIs and WebSockets from iOS and Android native applications. 
 
+To import Transport library:
+### Android: ###
+` implementation 'cloud.genesys:messenger-transport-mobile-sdk:<version>' `
+### iOS ###
+` TODO `
+
 ## IMPORTANT NOTE ## 
 
 The Messenger product is in beta currently. Functionality and methods could change. 
@@ -26,7 +32,7 @@ File -> Manage IDE Settings -> Import Settings -> `./android-studio-settings.zip
 
 ### Xcode Version Dependency
 
-Currently, Xcode 12 is required to build the iOS dependencies correctly. This KMM Application uses CocoaPods to manage its iOS dependencies. There is currently a known issue with Kotlin versions 1.5, CocoaPods for dependency managment, and Xcode 13. This issue results in the execution of the cinterop tasks for the dependent pods producing a fatal `TaskExecutionException` as discovered here: https://kotlinlang.slack.com/archives/C3SGXARS6/p1635262123074100.
+Currently, Xcode 12 is required to build the iOS dependencies correctly. This KMM Application uses CocoaPods to manage its iOS dependencies. There is currently a known issue with Kotlin versions 1.5, CocoaPods for dependency management, and Xcode 13. This issue results in the execution of the cinterop tasks for the dependent pods producing a fatal `TaskExecutionException` as discovered here: https://kotlinlang.slack.com/archives/C3SGXARS6/p1635262123074100.
 
 ## Region Code Generator
 
