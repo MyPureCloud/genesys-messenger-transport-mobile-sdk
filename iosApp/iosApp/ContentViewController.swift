@@ -12,12 +12,14 @@ import MessengerTransport
 class ContentViewController: UIViewController {
 
     private let client: MessagingClient
+    private let deployment: Deployment
     let config: Configuration
     private var attachImageName = ""
     private let attachmentName = "image"
     private var byteArray: [UInt8]? = nil
 
     init(deployment: Deployment) {
+        self.deployment = deployment
         self.config = Configuration(deployment: deployment, tokenStoreKey: "com.genesys.cloud.messenger", logging: true)!
         let messageListener = Listener()
         self.client = MobileMessenger().createMessagingClient(configuration: self.config, listener: messageListener)
@@ -284,7 +286,8 @@ extension ContentViewController : UITextFieldDelegate {
         case ("detach", let attachId?):
             client.detach(attachmentId: attachId)
         case ("deployment", _):
-            client.fetchDeploymentConfig(completionHandler: { deploymentConfig, error in
+            MobileMessenger().fetchDeploymentConfig(domain: deployment.domain!, deploymentId: deployment.deploymentId!, logging: true,
+                completionHandler: { deploymentConfig, error in
                 if let error = error {
                     self.info.text = "<\(error.localizedDescription)>"
                     return

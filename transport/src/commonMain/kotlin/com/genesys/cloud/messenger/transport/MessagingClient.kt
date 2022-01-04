@@ -1,9 +1,6 @@
 package com.genesys.cloud.messenger.transport
 
-import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.util.ErrorCode
-import io.ktor.client.features.ResponseException
-import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * WebMessagingClient provides bi-directional communication between a guest and Genesys Cloud via
@@ -12,15 +9,48 @@ import kotlin.coroutines.cancellation.CancellationException
 interface MessagingClient {
 
     /**
-     * MessagingClient state.
+     * Container that holds all possible MessagingClient states.
      */
     sealed class State {
+        /**
+         * MessagingClient was instantiated, but never attempted to connect.
+         */
         object Idle : State()
+
+        /**
+         * Trying to establish secure connection via WebSocket.
+         */
         object Connecting : State()
+
+        /**
+         * Secure connection with WebSocket was opened.
+         */
         object Connected : State()
+
+        /**
+         * Session was successfully configured.
+         *
+         * @property connected true if session has been configured and connection is established.
+         * @property newSession indicates if configured session is new. When configuring an existing session [newSession] will be false.
+         */
         data class Configured(val connected: Boolean, val newSession: Boolean?) : State()
+
+        /**
+         * State when the remote peer has indicated that no more incoming messages will be transmitted.
+         */
         data class Closing(val code: Int, val reason: String) : State()
+
+        /**
+         * State when both peers have indicated that no more messages will be transmitted and the connection has been successfully released.
+         */
         data class Closed(val code: Int, val reason: String) : State()
+
+        /**
+         * In case of fatal, unrecoverable errors MessagingClient will transition into this state.
+         *
+         * @property code the [ErrorCode.WebsocketError] for websocket errors.
+         * @property message is an optional message.
+         */
         data class Error(val code: ErrorCode, val message: String?) : State()
     }
 
@@ -128,9 +158,9 @@ interface MessagingClient {
     /**
      * Get message history for a conversation.
      *
-     * @throws CancellationException
+     * @throws Exception
      */
-    @Throws(CancellationException::class, ResponseException::class, IllegalArgumentException::class)
+    @Throws(Exception::class)
     suspend fun fetchNextPage()
 
     /**
@@ -140,10 +170,4 @@ interface MessagingClient {
      */
     @Throws(IllegalStateException::class)
     fun disconnect()
-
-    /**
-     *  Fetch deployment configuration based on deployment id.
-     */
-    @Throws(CancellationException::class, ResponseException::class, IllegalArgumentException::class)
-    suspend fun fetchDeploymentConfig(): DeploymentConfig
 }

@@ -7,6 +7,7 @@ import io.ktor.http.Url
  * @param deploymentId the ID of the deployment containing configuration and routing information.
  * @param domain the regional base domain address for a Genesys Cloud Web Messaging service. For example, "mypurecloud.com".
  * @param tokenStoreKey the key to access local storage.
+ * @param logging indicates if logging should be enabled.
  */
 data class Configuration(
     val deploymentId: String,
