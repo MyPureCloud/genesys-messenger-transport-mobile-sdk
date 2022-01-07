@@ -1,9 +1,5 @@
-package com.genesys.cloud.messenger.transport.util
+package com.genesys.cloud.messenger.transport.core
 
-import com.genesys.cloud.messenger.transport.core.Message
-import com.genesys.cloud.messenger.transport.core.MessageDispatcher
-import com.genesys.cloud.messenger.transport.core.MessageEvent
-import com.genesys.cloud.messenger.transport.core.MessageListener
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Test
