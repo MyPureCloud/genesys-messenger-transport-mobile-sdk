@@ -2,7 +2,7 @@ package com.genesys.cloud.messenger.transport.util
 
 import com.genesys.cloud.messenger.transport.MessageEvent
 
-expect class MessageDispatcher {
+internal expect class MessageDispatcher {
     fun dispatch(event: MessageEvent)
 }
 
