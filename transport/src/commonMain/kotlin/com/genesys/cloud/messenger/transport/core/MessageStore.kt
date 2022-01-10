@@ -9,11 +9,9 @@ import com.genesys.cloud.messenger.transport.util.logs.Log
 internal const val DEFAULT_PAGE_SIZE = 25
 
 internal class MessageStore(
-    private val listener: MessageDispatcher,
     private val token: String,
     private val log: Log,
 ) {
-
     var nextPage: Int = 1
         private set
     var startOfConversation = false
@@ -22,12 +20,13 @@ internal class MessageStore(
         private set
     private val activeConversation = mutableListOf<Message>()
     val updateAttachmentStateWith = { attachment: Attachment -> update(attachment) }
+    var messageListener: ((MessageEvent) -> Unit)? = null
 
     fun prepareMessage(text: String): OnMessageRequest {
         val messageToSend = pendingMessage.copy(text = text, state = Message.State.Sending).also {
             log.i { "Message prepared to send: $it" }
             activeConversation.add(0, it)
-            listener.dispatch(MessageEvent.MessageInserted(it))
+            messageListener?.invoke(MessageEvent.MessageInserted(it))
             pendingMessage = Message()
         }
         return OnMessageRequest(
@@ -43,12 +42,12 @@ internal class MessageStore(
             Direction.Inbound -> {
                 activeConversation.find { it.id == message.id }?.let {
                     activeConversation[it.getIndex()] = message
-                    listener.dispatch(MessageEvent.MessageUpdated(message))
+                    messageListener?.invoke(MessageEvent.MessageUpdated(message))
                 }
             }
             Direction.Outbound -> {
                 activeConversation.add(0, message)
-                listener.dispatch(MessageEvent.MessageInserted(message))
+                messageListener?.invoke(MessageEvent.MessageInserted(message))
             }
         }
         nextPage = activeConversation.getNextPage()
@@ -60,7 +59,7 @@ internal class MessageStore(
             it[attachment.id] = attachment
         }
         pendingMessage = pendingMessage.copy(attachments = attachments)
-        listener.dispatch(MessageEvent.AttachmentUpdated(attachment))
+        messageListener?.invoke(MessageEvent.AttachmentUpdated(attachment))
     }
 
     fun updateMessageHistory(historyPage: List<Message>, total: Int) {
@@ -69,7 +68,7 @@ internal class MessageStore(
             log.i { "Message history updated with: $this." }
             activeConversation.addAll(this)
             nextPage = activeConversation.getNextPage()
-            listener.dispatch(MessageEvent.HistoryFetched(this, startOfConversation))
+            messageListener?.invoke(MessageEvent.HistoryFetched(this, startOfConversation))
         }
     }
 

@@ -21,9 +21,7 @@ class ContentViewController: UIViewController {
     init(deployment: Deployment) {
         self.deployment = deployment
         self.config = Configuration(deployment: deployment, tokenStoreKey: "com.genesys.cloud.messenger", logging: true)!
-        let messageListener = Listener()
-        self.client = MobileMessenger().createMessagingClient(configuration: self.config, listener: messageListener)
-
+        self.client = MobileMessenger().createMessagingClient(configuration: self.config)
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -70,7 +68,7 @@ class ContentViewController: UIViewController {
         return view
     }()
 
-    lazy private var input: UITextField = {
+    private lazy var input: UITextField = {
         let view = UITextField()
         view.font = UIFont.preferredFont(forTextStyle: .body)
         view.borderStyle = .line
@@ -105,6 +103,7 @@ class ContentViewController: UIViewController {
         configureAutoLayout()
 
         setupSocketListeners()
+        setupMessageListener()
 
         NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { [weak self] notification in
             guard let self = self,
@@ -178,6 +177,23 @@ class ContentViewController: UIViewController {
             }
         }
     }
+    
+    private func setupMessageListener() {
+        client.messageListener = { [weak self] event in
+            switch event {
+            case let messageInserted as MessageEvent.MessageInserted:
+                self?.info.text = "Message Inserted: <\(messageInserted.message.description)>"
+            case let messageUpdated as MessageEvent.MessageUpdated:
+                self?.info.text = "Message Updated: <\(messageUpdated.message.description)>"
+            case let attachmentUpdated as MessageEvent.AttachmentUpdated:
+                self?.info.text = "Attachment Updated: <\(attachmentUpdated.attachment.description)>"
+            case let history as MessageEvent.HistoryFetched:
+                self?.info.text = "start of conversation: <\(history.startOfConversation.description)>, messages: <\(history.messages.description)> "
+            default:
+                break
+            }
+        }        
+    }
 
     private func connect() {
         do {
@@ -212,7 +228,6 @@ class ContentViewController: UIViewController {
 }
 
 // MARK: UITextFieldDelegate
-
 extension ContentViewController : UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         guard let message = textField.text else {
@@ -300,11 +315,5 @@ extension ContentViewController : UITextFieldDelegate {
         self.input.text = ""
         textField.resignFirstResponder()
         return true
-    }
-}
-
-class Listener:  MessageListener {
-    func onEvent(event: MessageEvent) {
-        print(event)
     }
 }
