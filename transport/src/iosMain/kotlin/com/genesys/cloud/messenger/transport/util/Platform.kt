@@ -8,6 +8,9 @@ import platform.UIKit.UIDevice
 import platform.posix.gettimeofday
 import platform.posix.timeval
 
+/**
+ * Actual iOS implementation of common, platform specific utility functions.
+ */
 actual class Platform {
     actual val platform: String =
         UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
