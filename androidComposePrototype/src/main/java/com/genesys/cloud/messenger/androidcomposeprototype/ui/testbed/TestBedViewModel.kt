@@ -12,7 +12,6 @@ import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessageEvent.AttachmentUpdated
-import com.genesys.cloud.messenger.transport.core.MessageListener
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.MobileMessenger
@@ -25,7 +24,7 @@ import kotlinx.coroutines.withContext
 
 private const val ATTACHMENT_FILE_NAME = "test_asset.png"
 
-class TestBedViewModel : ViewModel(), CoroutineScope, MessageListener {
+class TestBedViewModel : ViewModel(), CoroutineScope {
 
     override val coroutineContext = Dispatchers.IO + Job()
 
@@ -60,10 +59,10 @@ class TestBedViewModel : ViewModel(), CoroutineScope, MessageListener {
         client = MobileMessenger.createMessagingClient(
             context = context,
             configuration = mmsdkConfiguration,
-            listener = this,
         )
         with(client) {
             stateListener = { runBlocking { onClientState(it) } }
+            messageListener = { onEvent(it) }
             clientState = client.currentState
         }
         withContext(Dispatchers.IO) {
@@ -249,7 +248,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope, MessageListener {
         }
     }
 
-    override fun onEvent(event: MessageEvent) {
+    private fun onEvent(event: MessageEvent) {
         val eventMessage = when (event) {
             is MessageEvent.MessageUpdated -> event.message.toString()
             is MessageEvent.MessageInserted -> event.message.toString()

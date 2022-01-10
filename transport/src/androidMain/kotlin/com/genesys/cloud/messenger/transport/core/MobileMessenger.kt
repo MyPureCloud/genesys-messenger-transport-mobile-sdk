@@ -13,18 +13,13 @@ object MobileMessenger {
     fun createMessagingClient(
         context: Context,
         configuration: Configuration,
-        listener: MessageListener
     ): MessagingClient {
         val log = Log(configuration.logging, LogTag.MESSAGING_CLIENT)
         val token =
             TokenStoreImpl(context = context, configuration.tokenStoreKey).token
         val api = WebMessagingApi(configuration)
         val webSocket = PlatformSocket(log.withTag(LogTag.WEBSOCKET), configuration, 300000)
-        val messageStore = MessageStore(
-            MessageDispatcher(listener = listener),
-            token,
-            log.withTag(LogTag.MESSAGE_STORE)
-        )
+        val messageStore = MessageStore(token, log.withTag(LogTag.MESSAGE_STORE))
         val attachmentHandler = AttachmentHandler(
             api,
             token,
