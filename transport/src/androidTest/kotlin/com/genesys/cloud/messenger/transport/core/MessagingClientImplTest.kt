@@ -398,6 +398,17 @@ class MessagingClientImplTest {
         }
     }
 
+    @Test
+    fun whenMessageListenerSet() {
+        val givenMessageListener: (MessageEvent) -> Unit = {}
+
+        subject.messageListener = givenMessageListener
+
+        verify {
+            mockMessageStore.messageListener = givenMessageListener
+        }
+    }
+
     private fun connectAndConfigure() {
         val sessionResponseMessage =
             """

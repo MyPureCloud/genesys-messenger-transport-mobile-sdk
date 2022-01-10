@@ -63,6 +63,11 @@ interface MessagingClient {
     var stateListener: ((State) -> Unit)?
 
     /**
+     * Listener for Message related events.
+     */
+    var messageListener: ((MessageEvent) -> Unit)?
+
+    /**
      * Message object that is currently under construct.
      * [sendMessage] command dispatch message based on the values stored in pending message.
      */

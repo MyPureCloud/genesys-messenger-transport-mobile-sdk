@@ -49,6 +49,12 @@ internal class MessagingClientImpl(
 
     override var stateListener: ((State) -> Unit)? = null
 
+    override var messageListener: ((MessageEvent) -> Unit)? = null
+        set(value) {
+            messageStore.messageListener = value
+            field = value
+        }
+
     override val pendingMessage: Message
         get() = messageStore.pendingMessage
 
