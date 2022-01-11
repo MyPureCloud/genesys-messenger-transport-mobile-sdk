@@ -13,7 +13,7 @@ import platform.posix.timeval
  */
 actual class Platform {
     /**
-     * The name of the iOS version currently running on this device.
+     * The device name and system version currently running on this device.
      */
     actual val platform: String =
         UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
