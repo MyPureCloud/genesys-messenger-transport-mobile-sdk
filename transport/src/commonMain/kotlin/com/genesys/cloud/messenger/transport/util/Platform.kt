@@ -10,7 +10,7 @@ expect class Platform() {
     val platform: String
 
     /**
-     * Generate a random UUID string.
+     * Generate a random UUID.
      *
      * @return a random UUID string.
      */

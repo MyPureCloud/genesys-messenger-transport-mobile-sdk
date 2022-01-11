@@ -12,7 +12,7 @@ actual class Platform {
     actual val platform: String = "Android ${android.os.Build.VERSION.SDK_INT}"
 
     /**
-     * Generate a random UUID string.
+     * Generate a random UUID.
      *
      * @return a random UUID string.
      */

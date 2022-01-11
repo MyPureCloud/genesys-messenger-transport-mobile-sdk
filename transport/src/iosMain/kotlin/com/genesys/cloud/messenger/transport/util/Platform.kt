@@ -19,7 +19,7 @@ actual class Platform {
         UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
 
     /**
-     * Generate a random UUID string.
+     * Generate a random UUID.
      *
      * @return a random UUID string.
      */
