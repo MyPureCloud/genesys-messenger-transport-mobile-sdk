@@ -7,7 +7,7 @@ import java.util.UUID
  */
 actual class Platform {
     /**
-     * Get current platform name on Android.
+     * The name of the Android SDK version currently running on this device.
      */
     actual val platform: String = "Android ${android.os.Build.VERSION.SDK_INT}"
 

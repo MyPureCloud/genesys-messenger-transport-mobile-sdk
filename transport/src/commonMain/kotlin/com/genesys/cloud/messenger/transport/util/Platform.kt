@@ -5,7 +5,7 @@ package com.genesys.cloud.messenger.transport.util
  */
 expect class Platform() {
     /**
-     * Get current platform name.
+     * The name of the OS version currently running on this device.
      */
     val platform: String
 
