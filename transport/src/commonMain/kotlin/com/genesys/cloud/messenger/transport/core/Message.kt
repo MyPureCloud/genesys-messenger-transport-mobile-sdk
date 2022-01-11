@@ -21,6 +21,7 @@ data class Message(
      * @property Inbound when message sent by User.
      * @property Outbound when message was sent by Agent.
      */
+    @Serializable
     enum class Direction {
         Inbound,
         Outbound
