@@ -39,7 +39,7 @@ data class Message(
         object Idle : State()
 
         /**
-         * Message was sent, but there were no confirmation of delivery or failure.
+         * Message was sent, but there were no confirmation of delivery or failure yet.
          */
         object Sending : State()
 
