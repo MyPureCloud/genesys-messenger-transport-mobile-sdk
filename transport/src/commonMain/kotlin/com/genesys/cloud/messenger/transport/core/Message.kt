@@ -44,7 +44,7 @@ data class Message(
         object Sending : State()
 
         /**
-         * Message was successfully received by the other party.
+         * Message was successfully sent.
          */
         object Sent : State()
 
