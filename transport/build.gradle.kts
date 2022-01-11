@@ -73,8 +73,10 @@ kotlin {
     }
 
     cocoapods {
-        summary = "Genesys Cloud Messenger Transport Framework"
-        homepage = "https://www.genesys.com"
+        summary = "Genesys Cloud Messenger Transport Framework - Development podspec for use with local testbed app."
+        homepage = "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk"
+        license = "MIT"
+        authors = "Genesys Cloud Services, Inc."
         ios.deploymentTarget = "11.0"
         podfile = project.file("../iosApp/Podfile")
         framework {

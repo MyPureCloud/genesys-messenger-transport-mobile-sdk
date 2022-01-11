@@ -1,11 +1,11 @@
 Pod::Spec.new do |spec|
     spec.name                     = 'transport'
     spec.version                  = '1.1.0'
-    spec.homepage                 = 'https://www.genesys.com'
+    spec.homepage                 = 'https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk'
     spec.source                   = { :git => "Not Published", :tag => "Cocoapods/#{spec.name}/#{spec.version}" }
-    spec.authors                  = ''
-    spec.license                  = ''
-    spec.summary                  = 'Genesys Cloud Messenger Transport Framework'
+    spec.authors                  = 'Genesys Cloud Services, Inc.'
+    spec.license                  = 'MIT'
+    spec.summary                  = 'Genesys Cloud Messenger Transport Framework - Development podspec for use with local testbed app.'
 
     spec.vendored_frameworks      = "build/cocoapods/framework/MessengerTransport.framework"
     spec.libraries                = "c++"
