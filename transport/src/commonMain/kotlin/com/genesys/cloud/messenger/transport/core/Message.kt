@@ -18,6 +18,7 @@ data class Message(
 ) {
     /**
      * Direction of the message.
+     *
      * @property Inbound when message sent by User.
      * @property Outbound when message was sent by Agent.
      */
