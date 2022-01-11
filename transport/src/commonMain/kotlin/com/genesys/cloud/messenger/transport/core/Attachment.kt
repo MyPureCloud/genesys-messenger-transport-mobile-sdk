@@ -37,7 +37,7 @@ data class Attachment(
         object Uploading : State()
 
         /**
-         * Attachment was successfully uploaded to the server, and is ready to be sent with the message.
+         * Attachment was successfully uploaded to the server and is ready to be sent with the message.
          *
          * @param downloadUrl is a url pointing to uploaded attachment.
          */

@@ -12,12 +12,16 @@ actual class Platform {
     actual val platform: String = "Android ${android.os.Build.VERSION.SDK_INT}"
 
     /**
-     * Generates a random UUID string.
+     * Generate a random UUID string.
+     *
+     * @return a random UUID string.
      */
     actual fun randomUUID() = UUID.randomUUID().toString()
 
     /**
-     * @return the current time in milliseconds.
+     * Get the current time in milliseconds.
+     *
+     * @return the difference, in milliseconds, between current time and midnight January 1, 1970 UTC.
      */
     actual fun epochMillis(): Long = System.currentTimeMillis()
 }

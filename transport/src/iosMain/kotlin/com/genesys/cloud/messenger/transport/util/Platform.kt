@@ -19,12 +19,16 @@ actual class Platform {
         UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
 
     /**
-     * Generates a random UUID string.
+     * Generate a random UUID string.
+     *
+     * @return a random UUID string.
      */
     actual fun randomUUID(): String = NSUUID().UUIDString()
 
     /**
-     * @return the current time in milliseconds.
+     * Get the current time in milliseconds.
+     *
+     * @return the difference, in milliseconds, between current time and midnight January 1, 1970 UTC.
      */
     actual fun epochMillis(): Long = memScoped {
         val timeVal = alloc<timeval>()

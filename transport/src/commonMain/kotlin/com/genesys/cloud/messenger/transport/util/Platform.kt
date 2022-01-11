@@ -10,12 +10,16 @@ expect class Platform() {
     val platform: String
 
     /**
-     * Generates a random UUID string.
+     * Generate a random UUID string.
+     *
+     * @return a random UUID string.
      */
     fun randomUUID(): String
 
     /**
-     * @return the current time in milliseconds.
+     * Get the current time in milliseconds.
+     *
+     * @return the difference, in milliseconds, between current time and midnight January 1, 1970 UTC.
      */
     fun epochMillis(): Long
 }
