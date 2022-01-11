@@ -3,7 +3,7 @@ package com.genesys.cloud.messenger.transport.util
 import java.util.UUID
 
 /**
- * Actual Android implementation of common, platform specific utility functions.
+ * Android platform-specific implementations of common utility functions.
  */
 actual class Platform {
     /**

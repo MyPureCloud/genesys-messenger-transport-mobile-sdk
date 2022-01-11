@@ -27,7 +27,7 @@ data class Attachment(
         object Detached : State()
 
         /**
-         * Obtaining the presign url for the attachment.
+         * Obtaining the presigned url for the attachment.
          */
         object Presigning : State()
 
@@ -37,7 +37,7 @@ data class Attachment(
         object Uploading : State()
 
         /**
-         * Attachment was successfully uploaded
+         * Attachment was successfully uploaded to the server, and is ready to be sent with the message.
          *
          * @param downloadUrl is a url pointing to uploaded attachment.
          */
@@ -53,7 +53,7 @@ data class Attachment(
         /**
          * Attachment process failed.
          *
-         * @param errorCode is an error code representing reason of the failure
+         * @param errorCode is an error code representing reason of the failure.
          * @param errorMessage is a detail error message.
          */
         data class Error(val errorCode: ErrorCode, val errorMessage: String) : State()

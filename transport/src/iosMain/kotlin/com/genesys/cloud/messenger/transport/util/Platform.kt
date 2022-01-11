@@ -9,7 +9,7 @@ import platform.posix.gettimeofday
 import platform.posix.timeval
 
 /**
- * Actual iOS implementation of common, platform specific utility functions.
+ * iOS platform-specific implementations of common utility functions.
  */
 actual class Platform {
     /**

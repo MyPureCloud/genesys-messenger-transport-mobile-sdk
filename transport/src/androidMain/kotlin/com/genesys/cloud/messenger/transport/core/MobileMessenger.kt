@@ -9,15 +9,15 @@ import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 
 /**
- * Transport entry point.
+ * Client entry point for the Mobile Messenger Transport SDK.
  */
 object MobileMessenger {
 
     /**
-     * Creates an instance of [MessagingClient] based on the provided configurations.
+     * Creates an instance of [MessagingClient] based on the provided configuration.
      *
-     * @param context is an application context.
-     * @param configuration to rely on when setup the messenger.
+     * @param context an application context.
+     * @param configuration the configuration parameters for setting up the client.
      */
     fun createMessagingClient(
         context: Context,
