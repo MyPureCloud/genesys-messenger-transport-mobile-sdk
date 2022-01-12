@@ -3,7 +3,7 @@ package com.genesys.cloud.messenger.transport.util
 /**
  * Expect declaration of common utility functions.
  */
-expect class Platform() {
+internal expect class Platform() {
     /**
      * The name of the OS version currently running on this device.
      */

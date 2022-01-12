@@ -5,7 +5,7 @@ import java.util.UUID
 /**
  * Android platform-specific implementations of common utility functions.
  */
-actual class Platform {
+internal actual class Platform {
     /**
      * The name of the Android SDK version currently running on this device.
      */

@@ -5,9 +5,9 @@ object Deps {
     private const val kermitVersion = "0.1.9"
     private const val kotlinxSerializationJsonVersion = "1.1.0"
     private const val ktorVersion = "1.6.0"
-    private const val logbackVersion = "1.2.8"
+    private const val logbackVersion = "1.2.10"
     private const val mockWebServerVersion = "4.9.0"
-    private const val mockkVersion = "1.11.0"
+    private const val mockkVersion = "1.12.2"
     private const val okhttpVersion = "4.9.1"
 
     object Libs {
