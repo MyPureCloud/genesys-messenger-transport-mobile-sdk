@@ -8,8 +8,17 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 
+/**
+ * Client entry point for the Mobile Messenger Transport SDK.
+ */
 object MobileMessenger {
 
+    /**
+     * Creates an instance of [MessagingClient] based on the provided configuration.
+     *
+     * @param context an application context.
+     * @param configuration the configuration parameters for setting up the client.
+     */
     fun createMessagingClient(
         context: Context,
         configuration: Configuration,

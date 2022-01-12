@@ -1,5 +1,8 @@
 package com.genesys.cloud.messenger.transport.core
 
+/**
+ * List of all error codes used to report transport errors.
+ */
 sealed class ErrorCode(val code: Int) {
     object FeatureUnavailable : ErrorCode(4000)
     object FileTypeInvalid : ErrorCode(4001)
