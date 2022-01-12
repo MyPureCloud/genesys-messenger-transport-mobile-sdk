@@ -12,6 +12,7 @@ Pod::Spec.new do |spec|
     spec.source                   = { :http => '<SOURCE_HTTP_URL>' }
 
     spec.vendored_frameworks      = 'MessengerTransport.xcframework'
+    spec.libraries                = "c++"
 
     spec.ios.deployment_target    = '11.0'
     spec.pod_target_xcconfig      = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64' }
