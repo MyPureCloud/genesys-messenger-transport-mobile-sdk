@@ -141,15 +141,6 @@ internal class MessagingClientImpl(
     }
 
     @Throws(IllegalStateException::class)
-    override fun generateDownloadUrl(attachmentId: String) {
-        log.i { "generateDownloadUrl(attachmentId = $attachmentId)" }
-        val request = GetAttachmentRequest(
-            token = token,
-            attachmentId = attachmentId
-        )
-    }
-
-    @Throws(IllegalStateException::class)
     override fun deleteAttachment(attachmentId: String) {
         log.i { "deleteAttachment(attachmentId = $attachmentId)" }
         val request = DeleteAttachmentRequest(

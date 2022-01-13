@@ -139,16 +139,6 @@ interface MessagingClient {
     fun detach(attachmentId: String)
 
     /**
-     * Request a new and valid URL to download an attachment that was previously uploaded. Download
-     * URLs expire.
-     *
-     * @param attachmentId the ID of the attachment
-     * @throws IllegalStateException
-     */
-    @Throws(IllegalStateException::class)
-    fun generateDownloadUrl(attachmentId: String)
-
-    /**
      * Attachments typically expire 72 hours after being uploaded. This method can be used to
      * immediately delete the file prior to that expiration.
      *

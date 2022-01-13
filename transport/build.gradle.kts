@@ -40,7 +40,6 @@ android {
     }
 }
 
-val kermitVersion = "0.1.9"
 val iosFrameworkName = "MessengerTransport"
 version = project.rootProject.version
 
