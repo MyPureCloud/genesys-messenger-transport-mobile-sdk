@@ -1,6 +1,6 @@
 package com.genesys.cloud.messenger.transport.network
 
-interface PlatformSocketListener {
+internal interface PlatformSocketListener {
     fun onOpen()
     fun onFailure(t: Throwable)
     fun onMessage(text: String)

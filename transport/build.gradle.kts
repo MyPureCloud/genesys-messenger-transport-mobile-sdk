@@ -82,7 +82,6 @@ kotlin {
             baseName = iosFrameworkName
             // To specify a custom Objective-C prefix/name for the Kotlin framework, use the `-module-name` compiler option or matching Gradle DSL statement.
             freeCompilerArgs += listOf("-module-name", "GCM")
-            export(Deps.Libs.kermit)
         }
         pod("jetfire", "~> 0.1.5")
     }

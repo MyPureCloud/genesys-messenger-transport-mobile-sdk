@@ -3,7 +3,7 @@ package com.genesys.cloud.messenger.transport.util.logs
 import co.touchlab.kermit.Logger
 import co.touchlab.kermit.Severity
 
-class ConfigurableKermitLogger(
+internal class ConfigurableKermitLogger(
     private val enabled: Boolean,
     private val delegate: Logger,
 ) : Logger() {

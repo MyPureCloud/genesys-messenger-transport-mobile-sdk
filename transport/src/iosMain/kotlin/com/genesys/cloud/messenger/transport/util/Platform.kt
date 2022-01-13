@@ -11,7 +11,7 @@ import platform.posix.timeval
 /**
  * iOS platform-specific implementations of common utility functions.
  */
-actual class Platform {
+internal actual class Platform {
     /**
      * The device name and system version currently running on this device.
      */
