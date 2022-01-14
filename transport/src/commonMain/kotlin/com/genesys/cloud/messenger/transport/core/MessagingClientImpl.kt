@@ -18,7 +18,6 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.EchoRequest
-import com.genesys.cloud.messenger.transport.shyrka.send.GetAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
