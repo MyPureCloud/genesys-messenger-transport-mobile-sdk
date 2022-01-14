@@ -173,7 +173,7 @@ class ContentViewController: UIViewController {
                 print("Socket <error>. code: <\(error.code.description)> , message: <\(error.message ?? "No message")>")
                 self?.info.text = "Socket <error>. code: <\(error.code.description)> , message: <\(error.message ?? "No message")>"
             default:
-                break
+                print("Unexpected stateListener state: \(state)")
             }
         }
     }
@@ -190,7 +190,7 @@ class ContentViewController: UIViewController {
             case let history as MessageEvent.HistoryFetched:
                 self?.info.text = "start of conversation: <\(history.startOfConversation.description)>, messages: <\(history.messages.description)> "
             default:
-                break
+                print("Unexpected messageListener event: \(event)")
             }
         }        
     }
