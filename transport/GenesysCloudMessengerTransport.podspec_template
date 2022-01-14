@@ -1,0 +1,24 @@
+Pod::Spec.new do |s|
+  s.name                   = 'GenesysCloudMessengerTransport'
+  s.version                = '<VERSION>'
+  s.summary                = 'Genesys Cloud Messenger Transport SDK'
+
+  s.description            = <<-DESC
+The Genesys Cloud Messenger Transport SDK is a framework that provides methods for connecting to Genesys Cloud Messenger chat APIs and WebSockets from iOS.
+                             DESC
+
+  s.homepage               = 'https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk'
+  s.license                = 'MIT'
+  s.author                 = 'Genesys Cloud Services, Inc.'
+  s.source                 = { :http => '<SOURCE_HTTP_URL>' }
+
+  s.ios.deployment_target  = '11.0'
+
+  s.vendored_frameworks    = 'MessengerTransport.xcframework'
+  s.libraries              = 'c++'
+
+  s.pod_target_xcconfig    = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64' }
+  s.user_target_xcconfig   = { 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64' }
+
+  s.dependency 'jetfire', '0.1.5'
+end

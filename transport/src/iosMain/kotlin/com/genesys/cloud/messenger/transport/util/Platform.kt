@@ -8,12 +8,28 @@ import platform.UIKit.UIDevice
 import platform.posix.gettimeofday
 import platform.posix.timeval
 
-actual class Platform {
+/**
+ * iOS platform-specific implementations of common utility functions.
+ */
+internal actual class Platform {
+    /**
+     * The device name and system version currently running on this device.
+     */
     actual val platform: String =
         UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
 
+    /**
+     * Generate a random UUID.
+     *
+     * @return a random UUID string.
+     */
     actual fun randomUUID(): String = NSUUID().UUIDString()
 
+    /**
+     * Get the current time in milliseconds.
+     *
+     * @return the difference, in milliseconds, between current time and midnight January 1, 1970 UTC.
+     */
     actual fun epochMillis(): Long = memScoped {
         val timeVal = alloc<timeval>()
         gettimeofday(timeVal.ptr, null)

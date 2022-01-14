@@ -2,6 +2,7 @@ package com.genesys.cloud.messenger.transport
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import com.genesys.cloud.messenger.transport.core.Configuration
 import io.ktor.http.Url
 import kotlin.test.Test
 

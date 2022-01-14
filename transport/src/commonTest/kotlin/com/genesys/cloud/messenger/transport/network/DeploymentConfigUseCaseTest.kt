@@ -1,6 +1,6 @@
-package com.genesys.cloud.messenger.transport
+package com.genesys.cloud.messenger.transport.network
 
-import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
+import com.genesys.cloud.messenger.transport.DEFAULT_TIMEOUT
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond

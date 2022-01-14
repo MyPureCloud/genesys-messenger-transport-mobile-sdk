@@ -23,7 +23,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.theme.WebMessagingTheme
-import com.genesys.cloud.messenger.transport.MessagingClient
+import com.genesys.cloud.messenger.transport.core.MessagingClient
 
 @Composable
 fun TestBedScreen(testBedViewModel: TestBedViewModel) {

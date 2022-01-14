@@ -1,9 +1,25 @@
 package com.genesys.cloud.messenger.transport.util
 
-expect class Platform() {
+/**
+ * Expect declaration of common utility functions.
+ */
+internal expect class Platform() {
+    /**
+     * The name of the OS version currently running on this device.
+     */
     val platform: String
 
+    /**
+     * Generate a random UUID.
+     *
+     * @return a random UUID string.
+     */
     fun randomUUID(): String
 
+    /**
+     * Get the current time in milliseconds.
+     *
+     * @return the difference, in milliseconds, between current time and midnight January 1, 1970 UTC.
+     */
     fun epochMillis(): Long
 }

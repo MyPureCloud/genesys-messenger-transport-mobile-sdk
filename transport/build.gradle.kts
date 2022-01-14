@@ -40,7 +40,6 @@ android {
     }
 }
 
-val kermitVersion = "0.1.9"
 val iosFrameworkName = "MessengerTransport"
 version = project.rootProject.version
 
@@ -73,8 +72,10 @@ kotlin {
     }
 
     cocoapods {
-        summary = "Genesys Cloud Messenger Transport Framework"
-        homepage = "https://www.genesys.com"
+        summary = "Genesys Cloud Messenger Transport Framework - Development podspec for use with local testbed app."
+        homepage = "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk"
+        license = "MIT"
+        authors = "Genesys Cloud Services, Inc."
         ios.deploymentTarget = "11.0"
         podfile = project.file("../iosApp/Podfile")
         framework {
@@ -82,7 +83,6 @@ kotlin {
             baseName = iosFrameworkName
             // To specify a custom Objective-C prefix/name for the Kotlin framework, use the `-module-name` compiler option or matching Gradle DSL statement.
             freeCompilerArgs += listOf("-module-name", "GCM")
-            export(Deps.Libs.kermit)
         }
         pod("jetfire", "~> 0.1.5")
     }
