@@ -27,19 +27,12 @@ The Messenger Transport SDK supports versions of iOS 11.0 and up.
 
 To install the Messenger Transport SDK in your app with CocoaPods, follow this guidance.
 
-In your project's `Podfile`, specify the Genesys podspec sources. The Genesys specs repository should precede the CocoaPods official repository. 
-
-```
-source 'https://github.com/genesys/dx-sdk-specs-dev.git'
-source 'https://github.com/CocoaPods/Specs.git'
-```
-
-In your `Podfile`, configure your target to include the MessengerTransport dependency and specify the use of frameworks instead of static libraries.
+In your `Podfile`, configure your target to include the `GenesysCloudMessengerTransport` pod  dependency and specify the use of frameworks instead of static libraries.
 
 ```
 target 'TargetNameInYourXcodeProject' do
   use_frameworks!
-  pod 'MessengerTransport'
+  pod 'GenesysCloudMessengerTransport'
 end
 ```
 
