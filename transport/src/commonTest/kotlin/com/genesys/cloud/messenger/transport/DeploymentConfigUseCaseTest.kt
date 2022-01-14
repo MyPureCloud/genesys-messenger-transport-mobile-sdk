@@ -1,5 +1,6 @@
 package com.genesys.cloud.messenger.transport
 
+import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
