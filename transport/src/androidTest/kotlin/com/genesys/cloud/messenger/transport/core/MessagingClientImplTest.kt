@@ -377,9 +377,8 @@ class MessagingClientImplTest {
 
     @Test
     fun whenSocketListenerInvokeTooManyRequestsErrorMessage() {
-        val givenRawMessage = """
-            {"type":"response","class":"TooManyRequestsErrorMessage","code":429,"body":{"retryAfter":3,"errorCode":4029,"errorMessage":"Message rate too high for this session"}}
-            """.trimIndent()
+        val givenRawMessage =
+            """{"type":"response","class":"TooManyRequestsErrorMessage","code":429,"body":{"retryAfter":3,"errorCode":4029,"errorMessage":"Message rate too high for this session"}}""".trimIndent()
         subject.connect()
 
         slot.captured.onMessage(givenRawMessage)

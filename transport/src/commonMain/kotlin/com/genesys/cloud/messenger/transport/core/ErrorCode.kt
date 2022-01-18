@@ -41,6 +41,7 @@ sealed class ErrorCode(val code: Int) {
                 4010 -> AttachmentNotSuccessfullyUploaded
                 4011 -> MessageTooLong
                 4020 -> MissingParameter
+                4029 -> RequestRateTooHigh
                 in 300..399 -> RedirectResponseError(value)
                 in 400..499 -> ClientResponseError(value)
                 in 500..599 -> ServerResponseError(value)
