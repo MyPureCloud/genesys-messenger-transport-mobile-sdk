@@ -17,6 +17,7 @@ sealed class ErrorCode(val code: Int) {
     object AttachmentNotSuccessfullyUploaded : ErrorCode(4010)
     object MessageTooLong : ErrorCode(4011)
     object MissingParameter : ErrorCode(4020)
+    object RequestRateTooHigh : ErrorCode(4029)
     object UnexpectedError : ErrorCode(5000)
     object WebsocketError : ErrorCode(1001)
     data class RedirectResponseError(val value: Int) : ErrorCode(value)

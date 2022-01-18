@@ -12,6 +12,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionExpiredEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
+import com.genesys.cloud.messenger.transport.shyrka.receive.TooManyRequestsErrorMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
@@ -334,5 +335,27 @@ class SerializationTest {
         assertThat(message.body, "WebMessagingMessage body").isNotNull()
             .hasClass(GenerateUrlError::class)
         assertThat(message).isEqualTo(expectedGenerateUrlErrorMessage)
+    }
+
+    @Test
+    fun whenTooManyRequestsErrorMessageThenDecodes() {
+        val json =
+            """
+            {"type":"response","class":"TooManyRequestsErrorMessage","code":429,"body":{"retryAfter":3,"errorCode":4029,"errorMessage":"Message rate too high for this session"}}
+            """.trimIndent()
+        val expectedTooManyRequestsErrorBody = TooManyRequestsErrorMessage(
+            retryAfter = 3,
+            errorCode = 4029,
+            errorMessage = "Message rate too high for this session"
+        )
+        val expectedTooManyRequestsError = WebMessagingMessage(
+            type = MessageType.Response.value,
+            code = 429,
+            body = expectedTooManyRequestsErrorBody
+        )
+
+        val message = decode(json)
+
+        assertThat(message).isEqualTo(expectedTooManyRequestsError)
     }
 }

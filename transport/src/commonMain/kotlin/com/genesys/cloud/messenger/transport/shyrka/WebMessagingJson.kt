@@ -6,6 +6,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageClassName
 import com.genesys.cloud.messenger.transport.shyrka.receive.PreIdentifiedWebMessagingMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.TooManyRequestsErrorMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionExpiredEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
@@ -53,6 +54,8 @@ internal object WebMessagingJson {
                 json.decodeFromString<WebMessagingMessage<GenerateUrlError>>(string)
             MessageClassName.SESSION_EXPIRED_EVENT.value ->
                 json.decodeFromString<WebMessagingMessage<SessionExpiredEvent>>(string)
+            MessageClassName.TOO_MANY_REQUESTS_ERROR_MESSAGE.value ->
+                json.decodeFromString<WebMessagingMessage<TooManyRequestsErrorMessage>>(string)
             else -> throw IllegalArgumentException()
         }
     }
