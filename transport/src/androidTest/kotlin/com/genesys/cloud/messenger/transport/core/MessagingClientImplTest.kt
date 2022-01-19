@@ -376,6 +376,23 @@ class MessagingClientImplTest {
     }
 
     @Test
+    fun whenSocketListenerInvokeTooManyRequestsErrorMessage() {
+        val givenRawMessage =
+            """{"type":"response","class":"TooManyRequestsErrorMessage","code":429,"body":{"retryAfter":3,"errorCode":4029,"errorMessage":"Message rate too high for this session"}}""".trimIndent()
+        subject.connect()
+
+        slot.captured.onMessage(givenRawMessage)
+
+        verifySequence {
+            connectSequence()
+            mockMessageStore.onMessageError(
+                ErrorCode.RequestRateTooHigh,
+                "Message rate too high for this session. Retry after 3 seconds."
+            )
+        }
+    }
+
+    @Test
     fun whenSocketListenerInvokeOnMessageWitSessionExpiredEvent() {
         val expectedErrorState =
             MessagingClient.State.Error(ErrorCode.SessionHasExpired, null)

@@ -13,6 +13,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionExpiredEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
+import com.genesys.cloud.messenger.transport.shyrka.receive.TooManyRequestsErrorMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
@@ -167,10 +168,14 @@ internal class MessagingClientImpl(
     }
 
     private fun handleError(code: ErrorCode, message: String? = null) {
-        if (code == ErrorCode.SessionHasExpired || code == ErrorCode.SessionNotFound) {
-            currentState = State.Error(code, message)
-        } else if (code == ErrorCode.MessageTooLong) {
-            messageStore.onMessageError(code, message)
+        when (code) {
+            is ErrorCode.SessionHasExpired,
+            is ErrorCode.SessionNotFound ->
+                currentState = State.Error(code, message)
+            is ErrorCode.MessageTooLong,
+            is ErrorCode.RequestRateTooHigh ->
+                messageStore.onMessageError(code, message)
+            else -> log.w { "Unhandled ErrorCode: $code with optional message: $message" }
         }
     }
 
@@ -200,6 +205,12 @@ internal class MessagingClientImpl(
                 when (decoded.body) {
                     is String -> handleError(ErrorCode.mapFrom(decoded.code), decoded.body)
                     is SessionExpiredEvent -> handleError(ErrorCode.SessionHasExpired)
+                    is TooManyRequestsErrorMessage -> {
+                        handleError(
+                            ErrorCode.RequestRateTooHigh,
+                            "${decoded.body.errorMessage}. Retry after ${decoded.body.retryAfter} seconds."
+                        )
+                    }
                     is SessionResponse -> {
                         decoded.body.run {
                             currentState = State.Configured(connected, newSession)
