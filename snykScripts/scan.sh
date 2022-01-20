@@ -108,7 +108,7 @@ docker exec \
     --org="$snyk_org" \
     --project-name="$snyk_project_name" \
     --sub-project="$snyk_subproject" \
-    --configuration-matching="$snyk_configuration" \
+    --configuration-matching="$snyk_configuration"
 monitor_exit_code=$?
 process_snyk_exit_code $monitor_exit_code
 
