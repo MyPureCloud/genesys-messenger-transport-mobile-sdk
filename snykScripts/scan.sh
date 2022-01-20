@@ -15,8 +15,12 @@ else
   exit 1
 fi
 
+# Note that these are solely to make the gradle scripts not blow up due to being undefined
+# These values won't actually get used. If that ever changes and we need "sane" values,
+# ensure these get modified accordingly.
 deployment_id="1"
 deployment_domain="1"
+
 snyk_org="messenger-mobile-sdk"
 snyk_project_name="genesys-messenger-transport-mobile-sdk"
 snyk_android_subproject="transport"
