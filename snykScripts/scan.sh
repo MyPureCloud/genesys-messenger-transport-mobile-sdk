@@ -9,17 +9,18 @@ ecr_login
 if test -n "$JENKINS_HOME"; then
   # Jenkins build concerns
   require_environment_variable "JENKINS_HOME" "$JENKINS_HOME"
-  require_environment_variable "DEPLOYMENT_ID" "$DEPLOYMENT_ID"
-  require_environment_variable "DEPLOYMENT_DOMAIN" "$DEPLOYMENT_DOMAIN"
   require_environment_variable "SNYK_TOKEN", "$SNYK_TOKEN"
-  require_environment_variable "SNYK_ORG", "$SNYK_ORG"
-  require_environment_variable "SNYK_PROJECT_NAME", "$SNYK_PROJECT_NAME"
-  require_environment_variable "SNYK_SUB_PROJECT", "$SNYK_SUB_PROJECT"
-  require_environment_variable "SNYK_CONFIGURATION", "$SNYK_CONFIGURATION"
 else
   echo "Not yet supported outside of Jenkins"
   exit 1
 fi
+
+deployment_id="1"
+deployment_domain="1"
+snyk_org="messenger-mobile-sdk"
+snyk_project_name="genesys-messenger-transport-mobile-sdk"
+snyk_subproject="transport"
+snyk_configuration="releaseRuntimeClasspath"
 
 if ! docker pull "$android_sdk_docker_image"
 then
@@ -77,20 +78,16 @@ function process_snyk_exit_code() {
 
 docker exec \
   --env JENKINS_HOME="$JENKINS_HOME" \
-  --env DEPLOYMENT_ID="$DEPLOYMENT_ID" \
-  --env DEPLOYMENT_DOMAIN="$DEPLOYMENT_DOMAIN" \
+  --env DEPLOYMENT_ID="$deployment_id" \
+  --env DEPLOYMENT_DOMAIN="$deployment_domain" \
   --env SNYK_TOKEN="$SNYK_TOKEN" \
-  --env SNYK_ORG="$SNYK_ORG" \
-  --env SNYK_PROJECT_NAME="$SNYK_PROJECT_NAME" \
-  --env SNYK_SUB_PROJECT="$SNYK_SUB_PROJECT" \
-  --env SNYK_CONFIGURATION="$SNYK_CONFIGURATION" \
   -w /home/repo \
   "$container" \
   snyk test \
-    --org="$SNYK_ORG" \
-    --project-name="$SNYK_PROJECT_NAME" \
-    --sub-project="$SNYK_SUB_PROJECT" \
-    --configuration-matching="$SNYK_CONFIGURATION" \
+    --org="$snyk_org" \
+    --project-name="$snyk_project_name" \
+    --sub-project="$snyk_subproject" \
+    --configuration-matching="$snyk_configuration" \
     --json-file-output=snyk-test.json
 test_exit_code=$?
 process_snyk_exit_code $test_exit_code
@@ -102,20 +99,16 @@ docker exec -w /home/repo "$container"  \
 # report for monitoring
 docker exec \
   --env JENKINS_HOME="$JENKINS_HOME" \
-  --env DEPLOYMENT_ID="$DEPLOYMENT_ID" \
-  --env DEPLOYMENT_DOMAIN="$DEPLOYMENT_DOMAIN" \
+  --env DEPLOYMENT_ID="$deployment_id" \
+  --env DEPLOYMENT_DOMAIN="$deployment_domain" \
   --env SNYK_TOKEN="$SNYK_TOKEN" \
-  --env SNYK_ORG="$SNYK_ORG" \
-  --env SNYK_PROJECT_NAME="$SNYK_PROJECT_NAME" \
-  --env SNYK_SUB_PROJECT="$SNYK_SUB_PROJECT" \
-  --env SNYK_CONFIGURATION="$SNYK_CONFIGURATION" \
   -w /home/repo \
   "$container" \
   snyk monitor \
-    --org="$SNYK_ORG" \
-    --project-name="$SNYK_PROJECT_NAME" \
-    --sub-project="$SNYK_SUB_PROJECT" \
-    --configuration-matching="$SNYK_CONFIGURATION"
+    --org="$snyk_org" \
+    --project-name="$snyk_project_name" \
+    --sub-project="$snyk_subproject" \
+    --configuration-matching="$snyk_configuration" \
 monitor_exit_code=$?
 process_snyk_exit_code $monitor_exit_code
 
