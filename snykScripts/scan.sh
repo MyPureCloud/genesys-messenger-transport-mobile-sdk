@@ -77,6 +77,11 @@ function process_snyk_exit_code() {
 }
 
 # Start with Android
+
+echo "--------------------------------------------------"
+echo "Starting Android Test"
+echo "--------------------------------------------------"
+
 docker exec \
   --env JENKINS_HOME="$JENKINS_HOME" \
   --env DEPLOYMENT_ID="$deployment_id" \
@@ -98,6 +103,9 @@ docker exec -w /home/repo "$container"  \
   snyk-to-html --input snyk-android-test.json --output snyk-android-test.html -a
 
 # report for monitoring
+echo "--------------------------------------------------"
+echo "Starting Android Monitor"
+echo "--------------------------------------------------"
 docker exec \
   --env JENKINS_HOME="$JENKINS_HOME" \
   --env DEPLOYMENT_ID="$deployment_id" \
@@ -114,6 +122,9 @@ monitor_exit_code=$?
 process_snyk_exit_code $monitor_exit_code
 
 #Now iOS
+echo "--------------------------------------------------"
+echo "Starting iOS Test"
+echo "--------------------------------------------------"
 docker exec \
   --env JENKINS_HOME="$JENKINS_HOME" \
   --env SNYK_TOKEN="$SNYK_TOKEN" \
@@ -132,6 +143,9 @@ process_snyk_exit_code $test_exit_code
 docker exec -w /home/repo "$container"  \
   snyk-to-html --input snyk-ios-test.json --output snyk-ios-test.html -a
 
+echo "--------------------------------------------------"
+echo "Starting iOS Monitor"
+echo "--------------------------------------------------"
 docker exec \
   --env JENKINS_HOME="$JENKINS_HOME" \
   --env SNYK_TOKEN="$SNYK_TOKEN" \
