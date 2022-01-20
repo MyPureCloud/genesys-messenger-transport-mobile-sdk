@@ -113,6 +113,37 @@ docker exec \
 monitor_exit_code=$?
 process_snyk_exit_code $monitor_exit_code
 
+#Now iOS
+docker exec \
+  --env JENKINS_HOME="$JENKINS_HOME" \
+  --env SNYK_TOKEN="$SNYK_TOKEN" \
+  -w /home/repo \
+  "$container" \
+  snyk test \
+    --org="$snyk_org" \
+    --project-name="$snyk_project_name" \
+    --package-manager=cocoapods \
+    --file=./iosApp/Podfile.lock \
+    --json-file-output=snyk-ios-test.json
+test_exit_code=$?
+process_snyk_exit_code $test_exit_code
+
+# convert test output to html
+docker exec -w /home/repo "$container"  \
+  snyk-to-html --input snyk-ios-test.json --output snyk-ios-test.html -a
+
+docker exec \
+  --env JENKINS_HOME="$JENKINS_HOME" \
+  --env SNYK_TOKEN="$SNYK_TOKEN" \
+  -w /home/repo \
+  "$container" \
+  snyk monitor \
+    --org="$snyk_org" \
+    --project-name="$snyk_project_name" \
+    --package-manager=cocoapods \
+    --file=./iosApp/Podfile.lock
+test_exit_code=$?
+process_snyk_exit_code $test_exit_code
 
 docker stop "$container"
 docker rm "$container"
