@@ -1,0 +1,31 @@
+#!/usr/bin/env groovy
+
+// Shared python lib, @master means branch / commit.
+@Library('pipeline-library@master')
+import com.genesys.jenkins.Service
+
+final defaultBranch = 'main'
+
+//Snyk variables
+def snykProject = 'genesys-messenger-transport-mobile-sdk'
+def snykTargetFiles = '../iosApp/Podfile.lock'
+def snykOrganization = 'messenger-mobile-sdk'
+
+properties([parameters([string(defaultValue: defaultBranch, description: '', name: 'BRANCH', trim: false)])])
+
+// Providing a 20 minutes timeout
+timeout(20) {
+    node('dev_mesos_v2') {
+
+        final serviceBuild = new com.genesys.jenkins.Service()
+
+        stage('Checkout') {
+            cleanWs()
+            checkout(scm)
+        }
+
+        stage('Snyk vulnerability scan') {
+            serviceBuild.snykValidation(snykProject, snykTargetFiles, snykOrganization, snykProject, params.BRANCH)
+        }
+    }
+}
