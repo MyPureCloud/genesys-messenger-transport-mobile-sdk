@@ -4,7 +4,7 @@
 @Library('pipeline-library@master')
 import com.genesys.jenkins.Service
 
-final defaultBranch = 'main'
+final defaultBranch = 'GMDX-178_create-snyk-scripts-for-android-pipelin'
 
 //Snyk variables
 def snykProject = 'genesys-messenger-transport-mobile-sdk'
@@ -25,7 +25,7 @@ timeout(20) {
         }
 
         stage('Snyk vulnerability scan') {
-            serviceBuild.snykValidation(snykProject, snykTargetFiles, snykOrganization, snykProject, params.BRANCH)
+            serviceBuild.snykValidation(snykProject, snykTargetFiles, snykOrganization, snykProject, params.BRANCH, true)
         }
     }
 }
