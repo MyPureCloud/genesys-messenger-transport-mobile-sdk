@@ -19,8 +19,8 @@ deployment_id="1"
 deployment_domain="1"
 snyk_org="messenger-mobile-sdk"
 snyk_project_name="genesys-messenger-transport-mobile-sdk"
-snyk_subproject="transport"
-snyk_configuration="releaseRuntimeClasspath"
+snyk_android_subproject="transport"
+snyk_android_configuration="releaseRuntimeClasspath"
 
 if ! docker pull "$android_sdk_docker_image"
 then
@@ -76,6 +76,7 @@ function process_snyk_exit_code() {
   esac
 }
 
+# Start with Android
 docker exec \
   --env JENKINS_HOME="$JENKINS_HOME" \
   --env DEPLOYMENT_ID="$deployment_id" \
@@ -86,15 +87,15 @@ docker exec \
   snyk test \
     --org="$snyk_org" \
     --project-name="$snyk_project_name" \
-    --sub-project="$snyk_subproject" \
-    --configuration-matching="$snyk_configuration" \
-    --json-file-output=snyk-test.json
+    --sub-project="$snyk_android_subproject" \
+    --configuration-matching="$snyk_android_configuration" \
+    --json-file-output=snyk-android-test.json
 test_exit_code=$?
 process_snyk_exit_code $test_exit_code
 
 # convert test output to html
 docker exec -w /home/repo "$container"  \
-  snyk-to-html --input snyk-test.json --output snyk-test.html -a
+  snyk-to-html --input snyk-android-test.json --output snyk-android-test.html -a
 
 # report for monitoring
 docker exec \
@@ -107,10 +108,39 @@ docker exec \
   snyk monitor \
     --org="$snyk_org" \
     --project-name="$snyk_project_name" \
-    --sub-project="$snyk_subproject" \
-    --configuration-matching="$snyk_configuration"
+    --sub-project="$snyk_android_subproject" \
+    --configuration-matching="$snyk_android_configuration"
 monitor_exit_code=$?
 process_snyk_exit_code $monitor_exit_code
+
+#Now iOS
+docker exec \
+  --env JENKINS_HOME="$JENKINS_HOME" \
+  --env SNYK_TOKEN="$SNYK_TOKEN" \
+  -w /home/repo/iosApp \
+  "$container" \
+  snyk test \
+    --org="$snyk_org" \
+    --project-name="$snyk_project_name" \
+    --json-file-output=snyk-ios-test.json
+test_exit_code=$?
+process_snyk_exit_code $test_exit_code
+
+# convert test output to html
+docker exec -w /home/repo "$container"  \
+  snyk-to-html --input snyk-ios-test.json --output snyk-ios-test.html -a
+
+docker exec \
+  --env JENKINS_HOME="$JENKINS_HOME" \
+  --env SNYK_TOKEN="$SNYK_TOKEN" \
+  -w /home/repo/iosApp \
+  "$container" \
+  snyk monitor \
+    --org="$snyk_org" \
+    --project-name="$snyk_project_name"
+test_exit_code=$?
+process_snyk_exit_code $test_exit_code
+
 
 docker stop "$container"
 docker rm "$container"
