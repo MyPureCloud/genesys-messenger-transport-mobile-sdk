@@ -26,10 +26,9 @@ plugins {
 }
 
 // CocoaPods requires the podspec to have a version.
-val envVersion = System.getenv("BUILD_VERSION") ?: "1.1"
-val buildNumber = System.getenv("BUILD_NUMBER") ?: "0"
+val buildVersion = "1.1.14"
 val snapshot = System.getenv("SNAPSHOT_BUILD") ?: ""
-version = "${envVersion}.${buildNumber}${snapshot}"
+version = "${buildVersion}${snapshot}"
 group = "cloud.genesys"
 
 nexusPublishing {
