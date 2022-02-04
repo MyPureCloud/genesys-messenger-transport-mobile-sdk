@@ -8,7 +8,6 @@ internal class OnMessageRequest(
     override val token: String,
     val message: TextMessage,
     val time: String? = null,
-    val attachmentIds: Array<String>? = null
 ) : WebMessagingRequest {
     @Required override val action: String = RequestAction.ON_MESSAGE.value
 }

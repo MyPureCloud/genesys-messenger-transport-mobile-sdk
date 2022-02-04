@@ -1,5 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
+import assertk.assertThat
+import assertk.assertions.containsOnly
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.util.extensions.getUploadedAttachments
@@ -100,9 +102,16 @@ internal class MessageExtensionTest {
                     )
                 )
             )
-        val expectedAttachmentIds = arrayOf("first test attachment id")
+        val expectedContent = Message.Content(
+            contentType = Message.Content.Type.Attachment,
+            attachment = Attachment(
+                id = "first test attachment id",
+                fileName = "test.png",
+                state = Attachment.State.Uploaded("http://test.com")
+            )
+        )
 
-        assertTrue { expectedAttachmentIds.contentEquals(givenMessage.getUploadedAttachments()) }
+        assertThat(givenMessage.getUploadedAttachments()).containsOnly(expectedContent)
     }
 
     @Test

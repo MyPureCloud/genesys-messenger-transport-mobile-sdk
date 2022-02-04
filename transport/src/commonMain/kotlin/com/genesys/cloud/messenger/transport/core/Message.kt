@@ -56,4 +56,21 @@ data class Message(
          */
         data class Error(val code: ErrorCode, val message: String?) : State()
     }
+
+    /**
+     * Content of the Message.
+     *
+     * @property contentType is a type of the Content attached to the Message.
+     * @property attachment attachment itself.
+     */
+    @Serializable
+    data class Content(
+        val contentType: Type,
+        val attachment: Attachment,
+    ) {
+        @Serializable
+        enum class Type {
+            Attachment
+        }
+    }
 }
