@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
 import assertk.assertThat
+import assertk.assertions.containsOnly
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import io.mockk.Called
@@ -41,8 +42,6 @@ internal class MessageStoreTest {
             assertEquals(expectedOnMessageRequest.token, token)
             assertEquals(expectedOnMessageRequest.message, message)
             assertNull(time)
-            assertNotNull(attachmentIds)
-            assertTrue { attachmentIds.isEmpty() }
         }
 
         assertEquals(expectedMessage, subject.getConversation()[0])
@@ -72,8 +71,12 @@ internal class MessageStoreTest {
         )
 
         subject.prepareMessage("test message").run {
-            assertNotNull(attachmentIds)
-            assertTrue { attachmentIds.contains("given id") }
+            assertThat(this.message.content).containsOnly(
+                Message.Content(
+                    contentType = Message.Content.Type.Attachment,
+                    attachment(state = Attachment.State.Uploaded("http://someurl.com"))
+                )
+            )
         }
         assertTrue { subject.pendingMessage.attachments.isEmpty() }
     }
@@ -85,8 +88,8 @@ internal class MessageStoreTest {
         )
 
         subject.prepareMessage("test message").run {
-            assertNotNull(attachmentIds)
-            assertTrue { attachmentIds.isEmpty() }
+            assertNotNull(this.message.content)
+            assertTrue { this.message.content.isEmpty() }
         }
     }
 

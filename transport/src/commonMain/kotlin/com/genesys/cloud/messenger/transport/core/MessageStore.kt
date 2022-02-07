@@ -31,8 +31,7 @@ internal class MessageStore(
         }
         return OnMessageRequest(
             token = token,
-            message = TextMessage(text, metadata = mapOf("customMessageId" to messageToSend.id)),
-            attachmentIds = messageToSend.getUploadedAttachments()
+            message = TextMessage(text, metadata = mapOf("customMessageId" to messageToSend.id), content = messageToSend.getUploadedAttachments()),
         )
     }
 

@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 /**
  * Container for attachment related information.
@@ -8,8 +9,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Attachment(
     val id: String,
-    val fileName: String,
-    val state: State,
+    @Transient val fileName: String = "",
+    @Transient val state: State = State.Presigning,
 ) {
     /**
      * Represent Attachment states.

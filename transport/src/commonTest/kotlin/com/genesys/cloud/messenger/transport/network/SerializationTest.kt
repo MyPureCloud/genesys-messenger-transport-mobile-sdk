@@ -4,6 +4,8 @@ import assertk.assertThat
 import assertk.assertions.hasClass
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
+import com.genesys.cloud.messenger.transport.core.Attachment
+import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
@@ -70,14 +72,21 @@ class SerializationTest {
 
         val messageWithAttachmentRequest = OnMessageRequest(
             token = "<token>",
-            message = TextMessage(text = "Hello world", metadata = mapOf("id" to "aaa-bbb-ccc")),
-            attachmentIds = arrayOf("abcd-1234")
+            message = TextMessage(
+                text = "Hello world", metadata = mapOf("id" to "aaa-bbb-ccc"),
+                content = listOf(
+                    Message.Content(
+                        contentType = Message.Content.Type.Attachment,
+                        attachment = Attachment("abcd-1234")
+                    )
+                )
+            ),
         )
 
         encodedString = WebMessagingJson.json.encodeToString(messageWithAttachmentRequest)
 
         assertThat(encodedString, "encoded OnMessageRequest with attachment")
-            .isEqualTo("""{"token":"<token>","message":{"text":"Hello world","metadata":{"id":"aaa-bbb-ccc"},"type":"Text"},"attachmentIds":["abcd-1234"],"action":"onMessage"}""")
+            .isEqualTo("""{"token":"<token>","message":{"text":"Hello world","metadata":{"id":"aaa-bbb-ccc"},"content":[{"contentType":"Attachment","attachment":{"id":"abcd-1234"}}],"type":"Text"},"action":"onMessage"}""")
     }
 
     @Test

@@ -24,17 +24,17 @@ internal fun StructuredMessage.toMessage(): Message {
     )
 }
 
-internal fun Message.getUploadedAttachments(): Array<String> {
-    if (this.attachments.isEmpty()) return emptyArray()
+internal fun Message.getUploadedAttachments(): List<Message.Content> {
+    if (this.attachments.isEmpty()) return emptyList()
     return this.attachments.filter {
         it.value.state is Attachment.State.Uploaded
     }.map {
-        it.key
-    }.toTypedArray()
+        Message.Content(contentType = Message.Content.Type.Attachment, attachment = it.value)
+    }.toList()
 }
 
 private fun List<StructuredMessage.Content>.toAttachments(): Map<String, Attachment> {
-    return this.map {
+    return this.associate {
         it.attachment.run {
             this.id to Attachment(
                 id = this.id,
@@ -42,5 +42,5 @@ private fun List<StructuredMessage.Content>.toAttachments(): Map<String, Attachm
                 state = Attachment.State.Sent(this.url),
             )
         }
-    }.toMap()
+    }
 }
