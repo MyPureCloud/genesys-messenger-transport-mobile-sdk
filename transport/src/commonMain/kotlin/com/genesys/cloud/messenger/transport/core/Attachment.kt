@@ -9,7 +9,7 @@ import kotlinx.serialization.Transient
 @Serializable
 data class Attachment(
     val id: String,
-    @Transient val fileName: String = "",
+    @Transient val fileName: String? = null,
     @Transient val state: State = State.Presigning,
 ) {
     /**
