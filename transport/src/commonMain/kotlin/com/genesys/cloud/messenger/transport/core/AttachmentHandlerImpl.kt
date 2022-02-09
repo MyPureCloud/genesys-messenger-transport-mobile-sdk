@@ -100,6 +100,7 @@ internal class AttachmentHandlerImpl(
     }
 
     override fun delete(attachmentId: String): DeleteAttachmentRequest {
+        log.i { "Deleting attachment: $attachmentId" }
         updateAttachmentStateWith(Attachment(attachmentId, state = Deleting))
         return DeleteAttachmentRequest(
             token = token,
@@ -115,7 +116,7 @@ internal class AttachmentHandlerImpl(
     }
 
     override fun onError(attachmentId: String, errorCode: ErrorCode, errorMessage: String) {
-        processedAttachments[attachmentId]?.let {
+        processedAttachments.remove(attachmentId)?.let {
             log.e { "Attachment error. ErrorCode: $errorCode, errorMessage: $errorMessage" }
             updateAttachmentStateWith(
                 it.attachment.copy(
