@@ -6,6 +6,7 @@ import com.genesys.cloud.messenger.transport.core.Attachment.State.Uploading
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
+import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import io.ktor.client.features.ResponseException
@@ -18,20 +19,20 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-internal class AttachmentHandler(
+internal class AttachmentHandlerImpl(
     private val api: WebMessagingApi,
     private val token: String,
     private val log: Log,
     private val updateAttachmentStateWith: (Attachment) -> Unit,
     private val processedAttachments: MutableMap<String, ProcessedAttachment> = mutableMapOf()
-) {
+) : IAttachmentHandler {
     private val uploadDispatcher = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
-    fun prepareAttachment(
+    override fun prepare(
         attachmentId: String,
         byteArray: ByteArray,
         fileName: String,
-        uploadProgress: ((Float) -> Unit)? = null,
+        uploadProgress: ((Float) -> Unit)?,
     ): OnAttachmentRequest {
         Attachment(id = attachmentId, fileName = fileName, state = Presigning).also {
             log.i { "Presigning attachment: $it" }
@@ -52,7 +53,7 @@ internal class AttachmentHandler(
         )
     }
 
-    fun upload(presignedUrlResponse: PresignedUrlResponse) {
+    override fun upload(presignedUrlResponse: PresignedUrlResponse) {
         processedAttachments[presignedUrlResponse.attachmentId]?.let {
             log.i { "Uploading attachment: ${it.attachment}" }
             it.attachment = it.attachment.copy(state = Uploading)
@@ -73,7 +74,7 @@ internal class AttachmentHandler(
         }
     }
 
-    fun uploadSuccess(uploadSuccessEvent: UploadSuccessEvent) {
+    override fun onUploadSuccess(uploadSuccessEvent: UploadSuccessEvent) {
         processedAttachments[uploadSuccessEvent.attachmentId]?.let {
             log.i { "Attachment uploaded: ${it.attachment}" }
             it.attachment = it.attachment.copy(
@@ -83,7 +84,7 @@ internal class AttachmentHandler(
         }
     }
 
-    fun detach(attachmentId: String, delete: () -> Unit) {
+    override fun detach(attachmentId: String, delete: () -> Unit) {
         processedAttachments[attachmentId]?.let {
             log.i { "Detaching: ${it.attachment}" }
             when (it.attachment.state) {
@@ -94,14 +95,21 @@ internal class AttachmentHandler(
         }
     }
 
-    fun onDeleted(attachmentId: String) {
+    override fun delete(attachmentId: String): DeleteAttachmentRequest {
+        return DeleteAttachmentRequest(
+            token = token,
+            attachmentId = attachmentId
+        )
+    }
+
+    override fun onDeleted(attachmentId: String) {
         processedAttachments.remove(attachmentId)?.let {
             log.i { "Attachment deleted: ${it.attachment}" }
             updateAttachmentStateWith(it.attachment.copy(state = Attachment.State.Deleted))
         }
     }
 
-    fun onError(attachmentId: String, errorCode: ErrorCode, errorMessage: String) {
+    override fun onError(attachmentId: String, errorCode: ErrorCode, errorMessage: String) {
         processedAttachments[attachmentId]?.let {
             log.e { "Attachment error. ErrorCode: $errorCode, errorMessage: $errorMessage" }
             updateAttachmentStateWith(
@@ -115,7 +123,13 @@ internal class AttachmentHandler(
         }
     }
 
-    fun clear() = processedAttachments.forEach { removeAttachment(it.value.attachment.id) }
+    override fun onSending() {
+        // TODO("Not yet implemented")
+    }
+
+    override fun onSent() {
+        // TODO("Not yet implemented")
+    }
 
     private fun removeAttachment(id: String) =
         processedAttachments.remove(id)?.job?.cancel()

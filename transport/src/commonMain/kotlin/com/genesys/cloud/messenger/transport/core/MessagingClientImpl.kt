@@ -17,7 +17,6 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.TooManyRequestsError
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
-import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.EchoRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
@@ -37,7 +36,7 @@ internal class MessagingClientImpl(
     private val log: Log,
     private val jwtHandler: JwtHandler,
     private val token: String,
-    private val attachmentHandler: AttachmentHandler,
+    private val attachmentHandler: IAttachmentHandler,
     private val messageStore: MessageStore,
 ) : MessagingClient {
 
@@ -99,7 +98,6 @@ internal class MessagingClientImpl(
     override fun sendMessage(text: String) {
         log.i { "sendMessage(text = $text)" }
         val request = messageStore.prepareMessage(text)
-        attachmentHandler.clear()
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         send(encodedJson)
     }
@@ -118,7 +116,7 @@ internal class MessagingClientImpl(
         uploadProgress: ((Float) -> Unit)?
     ): String {
         log.i { "attach(fileName = $fileName)" }
-        val request = attachmentHandler.prepareAttachment(
+        val request = attachmentHandler.prepare(
             Platform().randomUUID(),
             byteArray,
             fileName,
@@ -143,10 +141,7 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun deleteAttachment(attachmentId: String) {
         log.i { "deleteAttachment(attachmentId = $attachmentId)" }
-        val request = DeleteAttachmentRequest(
-            token = token,
-            attachmentId = attachmentId
-        )
+        val request = attachmentHandler.delete(attachmentId)
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         send(encodedJson)
     }
@@ -221,7 +216,7 @@ internal class MessagingClientImpl(
                     is PresignedUrlResponse ->
                         attachmentHandler.upload(decoded.body)
                     is UploadSuccessEvent ->
-                        attachmentHandler.uploadSuccess(decoded.body)
+                        attachmentHandler.onUploadSuccess(decoded.body)
                     is StructuredMessage ->
                         messageStore.update(decoded.body.toMessage())
                     is AttachmentDeletedResponse ->

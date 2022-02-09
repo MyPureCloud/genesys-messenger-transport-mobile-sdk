@@ -7,6 +7,7 @@ import com.genesys.cloud.messenger.transport.network.SocketCloseCode
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
+import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
@@ -36,9 +37,9 @@ class MessagingClientImplTest {
             TextMessage("Hello world")
         )
     }
-    private val mockAttachmentHandler: AttachmentHandler = mockk(relaxed = true) {
+    private val mockAttachmentHandler: IAttachmentHandler = mockk(relaxed = true) {
         every {
-            prepareAttachment(
+            prepare(
                 any(),
                 any(),
                 any(),
@@ -50,6 +51,11 @@ class MessagingClientImplTest {
             fileName = "test_attachment.png",
             fileType = "image/png",
             errorsAsJson = true,
+        )
+
+        every { delete(any()) } returns DeleteAttachmentRequest(
+            "00000000-0000-0000-0000-000000000000",
+            "88888888-8888-8888-8888-888888888888"
         )
     }
     private val mockPlatformSocket: PlatformSocket = mockk {
@@ -142,7 +148,6 @@ class MessagingClientImplTest {
             connectSequence()
             configureSequence()
             mockMessageStore.prepareMessage(expectedText)
-            mockAttachmentHandler.clear()
             mockPlatformSocket.sendMessage(expectedMessage)
         }
     }
@@ -175,7 +180,7 @@ class MessagingClientImplTest {
         verifySequence {
             connectSequence()
             configureSequence()
-            mockAttachmentHandler.prepareAttachment(any(), any(), any())
+            mockAttachmentHandler.prepare(any(), any(), any())
             mockPlatformSocket.sendMessage(expectedMessage)
         }
     }

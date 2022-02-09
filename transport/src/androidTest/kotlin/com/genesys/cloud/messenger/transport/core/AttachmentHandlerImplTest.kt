@@ -30,7 +30,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-internal class AttachmentHandlerTest {
+internal class AttachmentHandlerImplTest {
 
     private val mockApi: WebMessagingApi = mockk {
         coEvery { uploadFile(any(), any(), captureLambda()) } coAnswers {
@@ -48,7 +48,7 @@ internal class AttachmentHandlerTest {
     @ExperimentalCoroutinesApi
     private val threadSurrogate = newSingleThreadContext("main thread")
 
-    private val subject = AttachmentHandler(
+    private val subject = AttachmentHandlerImpl(
         mockApi,
         givenToken,
         mockk(relaxed = true),
@@ -76,7 +76,7 @@ internal class AttachmentHandlerTest {
         val expectedByteArray = ByteArray(10)
         val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Presigning)
 
-        val result = subject.prepareAttachment(givenAttachmentId, expectedByteArray, "image.png")
+        val result = subject.prepare(givenAttachmentId, expectedByteArray, "image.png")
 
         assertEquals(expectedFileName, result.fileName)
         assertEquals(expectedFileType, result.fileType)
@@ -94,7 +94,7 @@ internal class AttachmentHandlerTest {
             Attachment(givenAttachmentId, "filename.png", State.Uploading)
         val mockUploadProgress: ((Float) -> Unit) = spyk()
         val progressSlot = slot<Float>()
-        subject.prepareAttachment(
+        subject.prepare(
             givenAttachmentId,
             ByteArray(1),
             "filename.png",
@@ -117,12 +117,12 @@ internal class AttachmentHandlerTest {
     @Test
     fun whenUploadSuccess() {
         val expectedDownloadUrl = "http://somedownloadurl.com"
-        subject.prepareAttachment(givenAttachmentId, ByteArray(1), "image.png")
+        subject.prepare(givenAttachmentId, ByteArray(1), "image.png")
         val expectedAttachment =
             Attachment(givenAttachmentId, "image.png", State.Uploaded(expectedDownloadUrl))
         clearMocks(mockAttachmentListener)
 
-        subject.uploadSuccess(givenUploadSuccessEvent)
+        subject.onUploadSuccess(givenUploadSuccessEvent)
 
         verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
         assertEquals(expectedAttachment, attachmentSlot.captured)
@@ -132,8 +132,8 @@ internal class AttachmentHandlerTest {
     fun whenDetachUploaded() {
         val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Detached)
         val mockDeleteFun: () -> Unit = spyk()
-        subject.prepareAttachment(givenAttachmentId, ByteArray(1), "image.png")
-        subject.uploadSuccess(givenUploadSuccessEvent)
+        subject.prepare(givenAttachmentId, ByteArray(1), "image.png")
+        subject.onUploadSuccess(givenUploadSuccessEvent)
         clearMocks(mockAttachmentListener)
 
         subject.detach(givenAttachmentId, mockDeleteFun)
@@ -149,7 +149,7 @@ internal class AttachmentHandlerTest {
     fun whenDetachOnNonUploadedAttachment() {
         val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Detached)
         val mockDeleteFun: () -> Unit = spyk()
-        subject.prepareAttachment(givenAttachmentId, ByteArray(1), "image.png")
+        subject.prepare(givenAttachmentId, ByteArray(1), "image.png")
         clearMocks(mockAttachmentListener)
 
         subject.detach(givenAttachmentId, mockDeleteFun)
@@ -162,7 +162,7 @@ internal class AttachmentHandlerTest {
     @Test
     fun whenOnDeleted() {
         val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Deleted)
-        subject.prepareAttachment(givenAttachmentId, ByteArray(1), "image.png")
+        subject.prepare(givenAttachmentId, ByteArray(1), "image.png")
         clearMocks(mockAttachmentListener)
 
         subject.onDeleted(givenAttachmentId)
@@ -172,23 +172,12 @@ internal class AttachmentHandlerTest {
     }
 
     @Test
-    fun whenClear() {
-        subject.prepareAttachment(givenAttachmentId, ByteArray(1), "image.png")
-        clearMocks(mockAttachmentListener)
-
-        subject.clear()
-        subject.upload(givenPresignedUrlResponse)
-
-        verify(exactly = 0) { mockAttachmentListener.invoke(any()) }
-    }
-
-    @Test
     fun whenAttachmentIdDoesNotExist() {
-        subject.prepareAttachment(givenAttachmentId, ByteArray(1), "filename.png")
+        subject.prepare(givenAttachmentId, ByteArray(1), "filename.png")
         clearMocks(mockAttachmentListener)
 
         subject.upload(presignedUrlResponse("some attachment id"))
-        subject.uploadSuccess(uploadSuccessEvent("some attachment id"))
+        subject.onUploadSuccess(uploadSuccessEvent("some attachment id"))
         subject.detach("some attachment id", mockk())
         subject.onDeleted("some attachment id")
 
@@ -203,7 +192,7 @@ internal class AttachmentHandlerTest {
                 "filename.png",
                 State.Error(ErrorCode.FileTypeInvalid, "something went wrong")
             )
-        subject.prepareAttachment(givenAttachmentId, ByteArray(1), "filename.png")
+        subject.prepare(givenAttachmentId, ByteArray(1), "filename.png")
         clearMocks(mockAttachmentListener)
 
         subject.onError(givenAttachmentId, ErrorCode.mapFrom(4001), "something went wrong")
@@ -234,7 +223,7 @@ internal class AttachmentHandlerTest {
                     "Client request(http://someurl.com) invalid: 404 page not found. Text: \"something went wrong\""
                 )
             )
-        subject.prepareAttachment(givenAttachmentId, ByteArray(1), "filename.png")
+        subject.prepare(givenAttachmentId, ByteArray(1), "filename.png")
         clearMocks(mockAttachmentListener)
 
         subject.upload(givenPresignedUrlResponse)
