@@ -23,8 +23,8 @@ internal class AttachmentHandler(
     private val token: String,
     private val log: Log,
     private val updateAttachmentStateWith: (Attachment) -> Unit,
+    private val processedAttachments: MutableMap<String, ProcessedAttachment> = mutableMapOf()
 ) {
-    private val processedAttachments = mutableMapOf<String, ProcessedAttachment>()
     private val uploadDispatcher = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     fun prepareAttachment(
@@ -121,7 +121,7 @@ internal class AttachmentHandler(
         processedAttachments.remove(id)?.job?.cancel()
 }
 
-private class ProcessedAttachment(
+internal class ProcessedAttachment(
     var attachment: Attachment,
     var byteArray: ByteArray,
     var job: Job? = null,

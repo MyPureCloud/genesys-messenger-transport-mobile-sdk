@@ -39,6 +39,7 @@ internal class AttachmentHandlerTest {
     }
     private val attachmentSlot = slot<Attachment>()
     private val mockAttachmentListener: (Attachment) -> Unit = spyk()
+    private val processedAttachments = mutableMapOf<String, ProcessedAttachment>()
 
     private val givenToken = "00000000-0000-0000-0000-000000000000"
     private val givenAttachmentId = "99999999-9999-9999-9999-999999999999"
@@ -52,6 +53,7 @@ internal class AttachmentHandlerTest {
         givenToken,
         mockk(relaxed = true),
         mockAttachmentListener,
+        processedAttachments,
     )
 
     @ExperimentalCoroutinesApi
