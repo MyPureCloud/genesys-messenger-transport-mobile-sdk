@@ -1,5 +1,9 @@
 package com.genesys.cloud.messenger.transport.core
 
+import com.genesys.cloud.messenger.transport.core.Attachment.State.Deleted
+import com.genesys.cloud.messenger.transport.core.Attachment.State.Deleting
+import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
+import com.genesys.cloud.messenger.transport.core.Attachment.State.Error
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Presigning
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Uploaded
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Uploading
@@ -91,11 +95,12 @@ internal class AttachmentHandlerImpl(
                 is Uploaded -> delete()
                 else -> removeAttachment(it.attachment.id)
             }
-            updateAttachmentStateWith(it.attachment.copy(state = Attachment.State.Detached))
+            updateAttachmentStateWith(it.attachment.copy(state = Detached))
         }
     }
 
     override fun delete(attachmentId: String): DeleteAttachmentRequest {
+        updateAttachmentStateWith(Attachment(attachmentId, state = Deleting))
         return DeleteAttachmentRequest(
             token = token,
             attachmentId = attachmentId
@@ -105,7 +110,7 @@ internal class AttachmentHandlerImpl(
     override fun onDeleted(attachmentId: String) {
         processedAttachments.remove(attachmentId)?.let {
             log.i { "Attachment deleted: ${it.attachment}" }
-            updateAttachmentStateWith(it.attachment.copy(state = Attachment.State.Deleted))
+            updateAttachmentStateWith(it.attachment.copy(state = Deleted))
         }
     }
 
@@ -114,7 +119,7 @@ internal class AttachmentHandlerImpl(
             log.e { "Attachment error. ErrorCode: $errorCode, errorMessage: $errorMessage" }
             updateAttachmentStateWith(
                 it.attachment.copy(
-                    state = Attachment.State.Error(
+                    state = Error(
                         errorCode,
                         errorMessage
                     )
