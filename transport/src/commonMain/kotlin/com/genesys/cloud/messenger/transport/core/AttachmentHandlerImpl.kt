@@ -89,11 +89,11 @@ internal class AttachmentHandlerImpl(
     }
 
     override fun detach(attachmentId: String, delete: () -> Unit) {
-        processedAttachments[attachmentId]?.let {
-            log.i { "Detaching: ${it.attachment}" }
-            when (it.attachment.state) {
-                is Uploaded -> delete()
-                else -> removeAttachment(it.attachment.id)
+        processedAttachments.remove(attachmentId)?.let {
+            log.i { "Attachment detached: $attachmentId" }
+            it.job?.cancel()
+            if (it.attachment.state is Uploaded) {
+                delete()
             }
             updateAttachmentStateWith(it.attachment.copy(state = Detached))
         }
@@ -125,9 +125,6 @@ internal class AttachmentHandlerImpl(
     override fun onSent() {
         // TODO("Not yet implemented")
     }
-
-    private fun removeAttachment(id: String) =
-        processedAttachments.remove(id)?.job?.cancel()
 }
 
 internal class ProcessedAttachment(
