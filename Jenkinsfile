@@ -96,6 +96,11 @@ pipeline{
                 sh './gradlew :transport:assembleMessengerTransportReleaseXCFramework'
             }
         }
+        stage("CI Build - CocoaPods podspec creation for publication"){
+            steps{
+                sh './gradlew :transport:generateGenesysCloudMessengerTransportPodspec'
+            }
+        }
     }
     post{
         success{
