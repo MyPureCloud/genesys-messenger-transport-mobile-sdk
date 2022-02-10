@@ -148,6 +148,16 @@ tasks {
         archiveClassifier.set("javadoc")
         from("./deployment")
     }
+
+    register("generateGenesysCloudMessengerTransportPodspec") {
+        doLast {
+            val podspecFileName = "GenesysCloudMessengerTransport.podspec"
+            var content = file("${podspecFileName}_template").readText()
+                .replace(oldValue = "<VERSION>", newValue = version.toString())
+                .replace(oldValue = "<SOURCE_HTTP_URL>", newValue = "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/releases/download/v${version}/MessengerTransport.xcframework.zip")
+            file(podspecFileName, PathValidation.NONE).writeText(content)
+        }
+    }
 }
 
 publishing {
