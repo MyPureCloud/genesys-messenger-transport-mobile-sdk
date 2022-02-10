@@ -28,5 +28,5 @@ internal interface IAttachmentHandler {
 
     fun onSending()
 
-    fun onSent()
+    fun onSent(attachments: Map<String, Attachment>)
 }

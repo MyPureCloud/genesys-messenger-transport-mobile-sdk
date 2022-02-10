@@ -129,8 +129,10 @@ internal class AttachmentHandlerImpl(
         }
     }
 
-    override fun onSent() {
-        // TODO("Not yet implemented")
+    override fun onSent(attachments: Map<String, Attachment>) {
+        log.i { "Attachments sent: $attachments" }
+        attachments.forEach { updateAttachmentStateWith(it.value) }
+        processedAttachments.keys.removeAll(attachments.keys)
     }
 }
 

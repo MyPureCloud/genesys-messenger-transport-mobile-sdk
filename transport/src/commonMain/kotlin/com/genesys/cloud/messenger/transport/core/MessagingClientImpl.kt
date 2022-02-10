@@ -218,8 +218,12 @@ internal class MessagingClientImpl(
                         attachmentHandler.upload(decoded.body)
                     is UploadSuccessEvent ->
                         attachmentHandler.onUploadSuccess(decoded.body)
-                    is StructuredMessage ->
-                        messageStore.update(decoded.body.toMessage())
+                    is StructuredMessage -> {
+                        with(decoded.body.toMessage()) {
+                            messageStore.update(this)
+                            attachmentHandler.onSent(this.attachments)
+                        }
+                    }
                     is AttachmentDeletedResponse ->
                         attachmentHandler.onDeleted(decoded.body.attachmentId)
                     is GenerateUrlError -> {
