@@ -98,6 +98,7 @@ internal class MessagingClientImpl(
     override fun sendMessage(text: String) {
         log.i { "sendMessage(text = $text)" }
         val request = messageStore.prepareMessage(text)
+        attachmentHandler.onSending()
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         send(encodedJson)
     }

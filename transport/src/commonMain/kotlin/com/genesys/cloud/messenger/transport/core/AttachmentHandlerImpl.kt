@@ -5,6 +5,7 @@ import com.genesys.cloud.messenger.transport.core.Attachment.State.Deleting
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Error
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Presigning
+import com.genesys.cloud.messenger.transport.core.Attachment.State.Sending
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Uploaded
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Uploading
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
@@ -119,7 +120,13 @@ internal class AttachmentHandlerImpl(
     }
 
     override fun onSending() {
-        // TODO("Not yet implemented")
+        processedAttachments.forEach { entry ->
+            entry.value.takeUploaded()?.let {
+                log.i { "Sending attachment: ${it.attachment.id}" }
+                it.attachment = it.attachment.copy(state = Sending)
+                    .also(updateAttachmentStateWith)
+            }
+        }
     }
 
     override fun onSent() {
@@ -133,3 +140,6 @@ internal class ProcessedAttachment(
     var job: Job? = null,
     val uploadProgress: ((Float) -> Unit)?,
 )
+
+private fun ProcessedAttachment.takeUploaded(): ProcessedAttachment? =
+    this.takeIf { it.attachment.state is Uploaded }
