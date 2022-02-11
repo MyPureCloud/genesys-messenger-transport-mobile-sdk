@@ -150,8 +150,10 @@ tasks {
     }
 
     register("generateGenesysCloudMessengerTransportPodspec") {
+        val podspecFileName = "GenesysCloudMessengerTransport.podspec"
+        group = "publishing"
+        description = "Generates the $podspecFileName file for publication to CocoaPods."
         doLast {
-            val podspecFileName = "GenesysCloudMessengerTransport.podspec"
             var content = file("${podspecFileName}_template").readText()
                 .replace(oldValue = "<VERSION>", newValue = version.toString())
                 .replace(oldValue = "<SOURCE_HTTP_URL>", newValue = "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/releases/download/v${version}/MessengerTransport.xcframework.zip")
