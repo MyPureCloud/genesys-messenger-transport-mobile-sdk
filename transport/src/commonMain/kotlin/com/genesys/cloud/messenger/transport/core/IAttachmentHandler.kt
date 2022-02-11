@@ -29,4 +29,8 @@ internal interface IAttachmentHandler {
     fun onSending()
 
     fun onSent(attachments: Map<String, Attachment>)
+
+    fun onMessageError(code: ErrorCode, message: String?)
+
+    fun clearAll()
 }

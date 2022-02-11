@@ -169,8 +169,10 @@ internal class MessagingClientImpl(
             is ErrorCode.SessionNotFound ->
                 currentState = State.Error(code, message)
             is ErrorCode.MessageTooLong,
-            is ErrorCode.RequestRateTooHigh ->
+            is ErrorCode.RequestRateTooHigh -> {
                 messageStore.onMessageError(code, message)
+                attachmentHandler.onMessageError(code, message)
+            }
             else -> log.w { "Unhandled ErrorCode: $code with optional message: $message" }
         }
     }
@@ -191,6 +193,7 @@ internal class MessagingClientImpl(
         override fun onFailure(t: Throwable) {
             log.e(throwable = t) { "onFailure(message: ${t.message})" }
             currentState = State.Error(ErrorCode.WebsocketError, t.message)
+            attachmentHandler.clearAll()
             webSocket.closeSocket(SocketCloseCode.GOING_AWAY.value, "Going away.")
         }
 
@@ -260,6 +263,7 @@ internal class MessagingClientImpl(
         override fun onClosed(code: Int, reason: String) {
             log.i { "onClosed(code = $code, reason = $reason)" }
             currentState = State.Closed(code, reason)
+            attachmentHandler.clearAll()
         }
     }
 }

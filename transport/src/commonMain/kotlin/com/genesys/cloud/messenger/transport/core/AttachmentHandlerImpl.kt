@@ -110,6 +110,7 @@ internal class AttachmentHandlerImpl(
     }
 
     override fun onDeleted(attachmentId: String) {
+        log.i { "Attachment deleted: $attachmentId" }
         updateAttachmentStateWith(Attachment(attachmentId, state = Deleted))
     }
 
@@ -117,6 +118,12 @@ internal class AttachmentHandlerImpl(
         log.e { "Attachment error with id: $attachmentId. ErrorCode: $errorCode, errorMessage: $errorMessage" }
         processedAttachments.remove(attachmentId)
         updateAttachmentStateWith(Attachment(attachmentId, state = Error(errorCode, errorMessage)))
+    }
+
+    override fun onMessageError(code: ErrorCode, message: String?) {
+        processedAttachments.mapNotNull { it.value.takeSendingId() }.forEach {
+            onError(it, code, message ?: "")
+        }
     }
 
     override fun onSending() {
@@ -137,6 +144,8 @@ internal class AttachmentHandlerImpl(
             }
         }
     }
+
+    override fun clearAll() = processedAttachments.clear()
 }
 
 internal class ProcessedAttachment(
@@ -145,6 +154,10 @@ internal class ProcessedAttachment(
     var job: Job? = null,
     val uploadProgress: ((Float) -> Unit)?,
 )
+
+
+private fun ProcessedAttachment.takeSendingId(): String? =
+    this.takeIf { it.attachment.state is Sending }?.attachment?.id
 
 private fun ProcessedAttachment.takeUploaded(): ProcessedAttachment? =
     this.takeIf { it.attachment.state is Uploaded }
