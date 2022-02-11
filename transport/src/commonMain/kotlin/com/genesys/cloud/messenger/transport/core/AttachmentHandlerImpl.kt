@@ -131,8 +131,11 @@ internal class AttachmentHandlerImpl(
 
     override fun onSent(attachments: Map<String, Attachment>) {
         log.i { "Attachments sent: $attachments" }
-        attachments.forEach { updateAttachmentStateWith(it.value) }
-        processedAttachments.keys.removeAll(attachments.keys)
+        attachments.forEach { entry ->
+            processedAttachments.remove(entry.key)?.also {
+                updateAttachmentStateWith(entry.value)
+            }
+        }
     }
 }
 
