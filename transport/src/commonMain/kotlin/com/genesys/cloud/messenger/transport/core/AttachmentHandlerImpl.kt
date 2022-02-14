@@ -155,7 +155,6 @@ internal class ProcessedAttachment(
     val uploadProgress: ((Float) -> Unit)?,
 )
 
-
 private fun ProcessedAttachment.takeSendingId(): String? =
     this.takeIf { it.attachment.state is Sending }?.attachment?.id
 
