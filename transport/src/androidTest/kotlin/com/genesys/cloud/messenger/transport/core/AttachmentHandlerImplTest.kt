@@ -1,14 +1,22 @@
 package com.genesys.cloud.messenger.transport.core
 
+import assertk.assertThat
+import assertk.assertions.containsOnly
+import assertk.assertions.isEmpty
+import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
 import com.genesys.cloud.messenger.transport.core.Attachment.State
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
+import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import io.ktor.client.features.ClientRequestException
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.request
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
+import io.mockk.Called
 import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -26,12 +34,8 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 internal class AttachmentHandlerImplTest {
-
     private val mockApi: WebMessagingApi = mockk {
         coEvery { uploadFile(any(), any(), captureLambda()) } coAnswers {
             thirdArg<(Float) -> Unit>().invoke(25f)
@@ -45,6 +49,7 @@ internal class AttachmentHandlerImplTest {
     private val givenAttachmentId = "99999999-9999-9999-9999-999999999999"
     private val givenUploadSuccessEvent = uploadSuccessEvent()
     private val givenPresignedUrlResponse = presignedUrlResponse()
+
     @ExperimentalCoroutinesApi
     private val threadSurrogate = newSingleThreadContext("main thread")
 
@@ -70,37 +75,35 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenPrepareAttachmentCalled() {
-        val expectedFileName = "image.png"
-        val expectedFileType = "image/png"
-        val expectedByteArray = ByteArray(10)
+    fun whenPrepareCalled() {
         val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Presigning)
+        val expectedProcessedAttachment =
+            ProcessedAttachment(expectedAttachment, ByteArray(1))
+        val expectedOnAttachmentRequest = OnAttachmentRequest(
+            token = "00000000-0000-0000-0000-000000000000",
+            attachmentId = "99999999-9999-9999-9999-999999999999",
+            fileName = "image.png",
+            fileType = "image/png",
+            1,
+            null,
+            true,
+        )
 
-        val result = subject.prepare(givenAttachmentId, expectedByteArray, "image.png")
+        val onAttachmentRequest = subject.prepare(givenAttachmentId, ByteArray(1), "image.png")
 
-        assertEquals(expectedFileName, result.fileName)
-        assertEquals(expectedFileType, result.fileType)
-        assertEquals(expectedByteArray.size, result.fileSize)
-        assertTrue(result.errorsAsJson)
-
+        assertThat(expectedOnAttachmentRequest).isEqualTo(onAttachmentRequest)
+        assertThat(processedAttachments).containsOnly(givenAttachmentId to expectedProcessedAttachment)
         verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
-        assertEquals(expectedAttachment, attachmentSlot.captured)
+        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
     }
 
     @Test
-    fun whenUpload() {
+    fun whenUploadProcessedAttachment() {
         val expectedProgress = 25f
-        val expectedAttachment =
-            Attachment(givenAttachmentId, "filename.png", State.Uploading)
+        val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Uploading)
         val mockUploadProgress: ((Float) -> Unit) = spyk()
         val progressSlot = slot<Float>()
-        subject.prepare(
-            givenAttachmentId,
-            ByteArray(1),
-            "filename.png",
-            mockUploadProgress
-        )
-        clearMocks(mockAttachmentListener)
+        givenPrepareCalled(uploadProgress = mockUploadProgress)
 
         subject.upload(givenPresignedUrlResponse)
 
@@ -109,100 +112,24 @@ internal class AttachmentHandlerImplTest {
             mockApi.uploadFile(givenPresignedUrlResponse, ByteArray(1), mockUploadProgress)
             mockUploadProgress.invoke(capture(progressSlot))
         }
-        assertNotNull(mockUploadProgress)
-        assertEquals(expectedAttachment, attachmentSlot.captured)
-        assertEquals(expectedProgress, progressSlot.captured)
+        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
+        assertThat(expectedProgress).isEqualTo(progressSlot.captured)
     }
 
     @Test
-    fun whenUploadSuccess() {
-        val expectedDownloadUrl = "http://somedownloadurl.com"
-        subject.prepare(givenAttachmentId, ByteArray(1), "image.png")
-        val expectedAttachment =
-            Attachment(givenAttachmentId, "image.png", State.Uploaded(expectedDownloadUrl))
-        clearMocks(mockAttachmentListener)
+    fun whenUploadNotProcessedAttachment() {
+        val mockUploadProgress: ((Float) -> Unit) = spyk()
+        givenPrepareCalled(uploadProgress = mockUploadProgress)
 
-        subject.onUploadSuccess(givenUploadSuccessEvent)
+        subject.upload(presignedUrlResponse(id = "not processed attachment id"))
 
-        verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
-        assertEquals(expectedAttachment, attachmentSlot.captured)
-    }
-
-    @Test
-    fun whenDetachUploaded() {
-        val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Detached)
-        val mockDeleteFun: () -> Unit = spyk()
-        subject.prepare(givenAttachmentId, ByteArray(1), "image.png")
-        subject.onUploadSuccess(givenUploadSuccessEvent)
-        clearMocks(mockAttachmentListener)
-
-        subject.detach(givenAttachmentId, mockDeleteFun)
-
-        verifyOrder {
-            mockDeleteFun.invoke()
-            mockAttachmentListener.invoke(capture(attachmentSlot))
+        verify {
+            listOf(mockAttachmentListener, mockApi, mockUploadProgress) wasNot Called
         }
-        assertEquals(expectedAttachment, attachmentSlot.captured)
     }
 
     @Test
-    fun whenDetachOnNonUploadedAttachment() {
-        val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Detached)
-        val mockDeleteFun: () -> Unit = spyk()
-        subject.prepare(givenAttachmentId, ByteArray(1), "image.png")
-        clearMocks(mockAttachmentListener)
-
-        subject.detach(givenAttachmentId, mockDeleteFun)
-
-        verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
-        verify(exactly = 0) { mockDeleteFun.invoke() }
-        assertEquals(expectedAttachment, attachmentSlot.captured)
-    }
-
-    @Test
-    fun whenOnDeleted() {
-        val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Deleted)
-        subject.prepare(givenAttachmentId, ByteArray(1), "image.png")
-        clearMocks(mockAttachmentListener)
-
-        subject.onDeleted(givenAttachmentId)
-
-        verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
-        assertEquals(expectedAttachment, attachmentSlot.captured)
-    }
-
-    @Test
-    fun whenAttachmentIdDoesNotExist() {
-        subject.prepare(givenAttachmentId, ByteArray(1), "filename.png")
-        clearMocks(mockAttachmentListener)
-
-        subject.upload(presignedUrlResponse("some attachment id"))
-        subject.onUploadSuccess(uploadSuccessEvent("some attachment id"))
-        subject.detach("some attachment id", mockk())
-        subject.onDeleted("some attachment id")
-
-        verify(exactly = 0) { mockAttachmentListener.invoke(any()) }
-    }
-
-    @Test
-    fun whenOnError() {
-        val expectedAttachment =
-            Attachment(
-                givenAttachmentId,
-                "filename.png",
-                State.Error(ErrorCode.FileTypeInvalid, "something went wrong")
-            )
-        subject.prepare(givenAttachmentId, ByteArray(1), "filename.png")
-        clearMocks(mockAttachmentListener)
-
-        subject.onError(givenAttachmentId, ErrorCode.mapFrom(4001), "something went wrong")
-
-        verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
-        assertEquals(expectedAttachment, attachmentSlot.captured)
-    }
-
-    @Test
-    fun whenOnUploadThrowsResponseException() {
+    fun whenExceptionThrownDuringUpload() {
         val attachmentSlotList = mutableListOf<Attachment>()
         val mockHttpResponse: HttpResponse = mockk(relaxed = true) {
             every { status } returns HttpStatusCode(404, "page not found")
@@ -214,17 +141,14 @@ internal class AttachmentHandlerImplTest {
             mockHttpResponse,
             "something went wrong"
         )
-        val expectedAttachment =
-            Attachment(
-                givenAttachmentId,
-                "filename.png",
-                State.Error(
-                    ErrorCode.ClientResponseError(404),
-                    "Client request(http://someurl.com) invalid: 404 page not found. Text: \"something went wrong\""
-                )
+        val expectedAttachment = Attachment(
+            id = givenAttachmentId,
+            state = State.Error(
+                ErrorCode.ClientResponseError(404),
+                "Client request(http://someurl.com) invalid: 404 page not found. Text: \"something went wrong\""
             )
-        subject.prepare(givenAttachmentId, ByteArray(1), "filename.png")
-        clearMocks(mockAttachmentListener)
+        )
+        givenPrepareCalled()
 
         subject.upload(givenPresignedUrlResponse)
 
@@ -233,7 +157,219 @@ internal class AttachmentHandlerImplTest {
             mockApi.uploadFile(any(), any(), any())
             mockAttachmentListener.invoke(capture(attachmentSlotList))
         }
-        assertEquals(expectedAttachment, attachmentSlotList[1])
+        assertThat(expectedAttachment).isEqualTo(attachmentSlotList[1])
+        assertThat(processedAttachments.containsKey(givenAttachmentId)).isFalse()
+    }
+
+    @Test
+    fun whenUploadSuccessForProcessedAttachment() {
+        val expectedDownloadUrl = "http://somedownloadurl.com"
+        val expectedAttachment =
+            Attachment(givenAttachmentId, "image.png", State.Uploaded(expectedDownloadUrl))
+        val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(1))
+        givenPrepareCalled()
+
+        subject.onUploadSuccess(givenUploadSuccessEvent)
+
+        verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
+        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
+        assertThat(processedAttachments).containsOnly(givenAttachmentId to expectedProcessedAttachment)
+    }
+
+    @Test
+    fun whenUploadSuccessForNotProcessedAttachment() {
+        givenPrepareCalled()
+
+        subject.onUploadSuccess(uploadSuccessEvent(id = "not processed attachment id"))
+
+        verify {
+            listOf(mockAttachmentListener) wasNot Called
+        }
+    }
+
+    @Test
+    fun whenDetachUploaded() {
+        val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Detached)
+        val mockDeleteFun: () -> Unit = spyk()
+        givenPrepareCalled()
+        givenUploadSuccessCalled()
+
+        subject.detach(givenAttachmentId, mockDeleteFun)
+
+        verifyOrder {
+            mockDeleteFun.invoke()
+            mockAttachmentListener.invoke(capture(attachmentSlot))
+        }
+        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
+        assertThat(processedAttachments.containsKey(givenAttachmentId)).isFalse()
+    }
+
+    @Test
+    fun whenDetachNotUploaded() {
+        val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Detached)
+        val mockDeleteFun: () -> Unit = spyk()
+        givenPrepareCalled()
+
+        subject.detach(givenAttachmentId, mockDeleteFun)
+
+        verify {
+            listOf(mockDeleteFun) wasNot Called
+            mockAttachmentListener.invoke(capture(attachmentSlot))
+        }
+        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
+        assertThat(processedAttachments.containsKey(givenAttachmentId)).isFalse()
+    }
+
+    @Test
+    fun whenDetachNotProcessedAttachment() {
+        val mockDeleteFun: () -> Unit = spyk()
+
+        subject.detach("not processed attachment id", mockDeleteFun)
+
+        verify {
+            listOf(mockDeleteFun, mockAttachmentListener) wasNot Called
+        }
+    }
+
+    @Test
+    fun whenDelete() {
+        val expectedAttachment = Attachment(id = givenAttachmentId, state = State.Deleting)
+        val expectedResult = DeleteAttachmentRequest(givenToken, givenAttachmentId)
+
+        val result = subject.delete(givenAttachmentId)
+
+        verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
+        assertThat(result).isEqualTo(expectedResult)
+        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
+    }
+
+    @Test
+    fun whenOnDeleted() {
+        val expectedAttachment = Attachment(id = givenAttachmentId, state = State.Deleted)
+
+        subject.onDeleted(givenAttachmentId)
+
+        verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
+        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
+    }
+
+    @Test
+    fun whenOnError() {
+        val expectedAttachment = Attachment(
+            id = givenAttachmentId,
+            state = State.Error(ErrorCode.FileTypeInvalid, "something went wrong")
+        )
+        givenPrepareCalled()
+
+        subject.onError(givenAttachmentId, ErrorCode.mapFrom(4001), "something went wrong")
+
+        verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
+        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
+        assertThat(processedAttachments.containsKey(givenAttachmentId)).isFalse()
+    }
+
+    @Test
+    fun whenOnMessageErrorWhileHasSendingAttachment() {
+        val expectedAttachment = Attachment(
+            id = givenAttachmentId,
+            state = State.Error(ErrorCode.MessageTooLong, "Message too long")
+        )
+        givenPrepareCalled()
+        givenUploadSuccessCalled()
+        givenOnSendingCalled()
+
+        subject.onMessageError(ErrorCode.MessageTooLong, "Message too long")
+
+        verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
+        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
+        assertThat(processedAttachments.containsKey(givenAttachmentId)).isFalse()
+    }
+
+    @Test
+    fun whenOnMessageErrorHasNoSendingAttachment() {
+        subject.onMessageError(ErrorCode.MessageTooLong, "Message too long")
+
+        verify { listOf(mockAttachmentListener) wasNot Called }
+    }
+
+    @Test
+    fun whenOnSendingHasUploadedAttachment() {
+        val expectedAttachment = Attachment(
+            id = givenAttachmentId,
+            fileName = "image.png",
+            state = State.Sending
+        )
+        val expectedProcessedAttachment =
+            ProcessedAttachment(expectedAttachment, ByteArray(1))
+        givenPrepareCalled()
+        givenUploadSuccessCalled()
+
+        subject.onSending()
+
+        verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
+        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
+        assertThat(processedAttachments).containsOnly(givenAttachmentId to expectedProcessedAttachment)
+    }
+
+    @Test
+    fun whenOnSendingHasNoUploadedAttachment() {
+        givenPrepareCalled()
+
+        subject.onSending()
+
+        verify { listOf(mockAttachmentListener) wasNot Called }
+    }
+
+    @Test
+    fun whenOnSentProcessedAttachments() {
+        val expectedAttachment = Attachment(
+            id = givenAttachmentId,
+            fileName = "image.png",
+            state = State.Sent("http://somedownloadurl.com")
+        )
+
+        givenPrepareCalled()
+        givenUploadSuccessCalled()
+        givenOnSendingCalled()
+
+        subject.onSent(
+            mapOf(
+                givenAttachmentId to Attachment(
+                    givenAttachmentId,
+                    "image.png",
+                    State.Sent("http://somedownloadurl.com")
+                )
+            )
+        )
+
+        verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
+        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
+        assertThat(processedAttachments.containsKey(givenAttachmentId)).isFalse()
+    }
+
+    @Test
+    fun whenOnSentNotProcessedAttachments() {
+        subject.onSent(
+            mapOf(
+                givenAttachmentId to Attachment(
+                    givenAttachmentId,
+                    "image.png",
+                    State.Sent("http://somedownloadurl.com")
+                )
+            )
+        )
+
+        verify { listOf(mockAttachmentListener) wasNot Called }
+    }
+
+    @Test
+    fun whenClearAll() {
+        givenPrepareCalled("attachment id 1")
+        givenPrepareCalled("attachment id 2")
+
+        subject.clearAll()
+
+        assertThat(processedAttachments).isEmpty()
     }
 
     private fun presignedUrlResponse(id: String = givenAttachmentId): PresignedUrlResponse =
@@ -245,4 +381,41 @@ internal class AttachmentHandlerImplTest {
         UploadSuccessEvent(
             id, "http://somedownloadurl.com", "2021-08-17T17:00:08.746Z",
         )
+
+    /**
+     * Helper function.
+     * Executes the subject.prepare() call with given values and clearMocks related to this call.
+     */
+    private fun givenPrepareCalled(
+        attachmentId: String = givenAttachmentId,
+        byteArray: ByteArray = ByteArray(1),
+        fileName: String = "image.png",
+        uploadProgress: ((Float) -> Unit)? = null,
+    ) {
+        subject.prepare(
+            attachmentId = attachmentId,
+            byteArray = byteArray,
+            fileName = fileName,
+            uploadProgress = uploadProgress
+        )
+        clearMocks(mockAttachmentListener)
+    }
+
+    /**
+     * Helper function.
+     * Executes the subject.onUploadSuccess() call with given values and clearMocks related to this call.
+     */
+    private fun givenUploadSuccessCalled(uploadSuccessEvent: UploadSuccessEvent = givenUploadSuccessEvent) {
+        subject.onUploadSuccess(uploadSuccessEvent)
+        clearMocks(mockAttachmentListener)
+    }
+
+    /**
+     * Helper function.
+     * Executes the subject.onSending() call and clearMocks related to this call.
+     */
+    private fun givenOnSendingCalled() {
+        subject.onSending()
+        clearMocks(mockAttachmentListener)
+    }
 }

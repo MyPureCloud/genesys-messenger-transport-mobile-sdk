@@ -89,12 +89,12 @@ internal class AttachmentHandlerImpl(
         }
     }
 
-    override fun detach(attachmentId: String, delete: () -> Unit) {
+    override fun detach(attachmentId: String, deleteFn: () -> Unit) {
         processedAttachments.remove(attachmentId)?.let {
             log.i { "Attachment detached: $attachmentId" }
             it.job?.cancel()
             if (it.attachment.state is Uploaded) {
-                delete()
+                deleteFn()
             }
             updateAttachmentStateWith(it.attachment.copy(state = Detached))
         }
@@ -152,8 +152,30 @@ internal class ProcessedAttachment(
     var attachment: Attachment,
     var byteArray: ByteArray,
     var job: Job? = null,
-    val uploadProgress: ((Float) -> Unit)?,
-)
+    val uploadProgress: ((Float) -> Unit)? = null,
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as ProcessedAttachment
+
+        if (attachment != other.attachment) return false
+        if (!byteArray.contentEquals(other.byteArray)) return false
+        if (job != other.job) return false
+        if (uploadProgress != other.uploadProgress) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = attachment.hashCode()
+        result = 31 * result + byteArray.contentHashCode()
+        result = 31 * result + (job?.hashCode() ?: 0)
+        result = 31 * result + (uploadProgress?.hashCode() ?: 0)
+        return result
+    }
+}
 
 private fun ProcessedAttachment.takeSendingId(): String? =
     this.takeIf { it.attachment.state is Sending }?.attachment?.id
