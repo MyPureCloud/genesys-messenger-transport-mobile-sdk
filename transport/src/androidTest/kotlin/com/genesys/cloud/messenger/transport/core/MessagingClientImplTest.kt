@@ -37,7 +37,7 @@ class MessagingClientImplTest {
             TextMessage("Hello world")
         )
     }
-    private val mockAttachmentHandler: IAttachmentHandler = mockk(relaxed = true) {
+    private val mockAttachmentHandler: AttachmentHandler = mockk(relaxed = true) {
         every {
             prepare(
                 any(),

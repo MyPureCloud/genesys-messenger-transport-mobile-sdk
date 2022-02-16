@@ -36,7 +36,7 @@ internal class MessagingClientImpl(
     private val log: Log,
     private val jwtHandler: JwtHandler,
     private val token: String,
-    private val attachmentHandler: IAttachmentHandler,
+    private val attachmentHandler: AttachmentHandler,
     private val messageStore: MessageStore,
 ) : MessagingClient {
 

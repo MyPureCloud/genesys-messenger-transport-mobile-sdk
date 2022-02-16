@@ -5,7 +5,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 
-internal interface IAttachmentHandler {
+internal interface AttachmentHandler {
 
     fun prepare(
         attachmentId: String,

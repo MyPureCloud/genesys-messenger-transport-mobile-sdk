@@ -30,7 +30,7 @@ internal class AttachmentHandlerImpl(
     private val log: Log,
     private val updateAttachmentStateWith: (Attachment) -> Unit,
     private val processedAttachments: MutableMap<String, ProcessedAttachment> = mutableMapOf()
-) : IAttachmentHandler {
+) : AttachmentHandler {
     private val uploadDispatcher = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     override fun prepare(
