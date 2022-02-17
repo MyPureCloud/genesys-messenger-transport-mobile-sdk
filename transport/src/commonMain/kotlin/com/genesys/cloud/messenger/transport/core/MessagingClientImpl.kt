@@ -17,7 +17,6 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.TooManyRequestsError
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
-import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.EchoRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
@@ -99,7 +98,7 @@ internal class MessagingClientImpl(
     override fun sendMessage(text: String) {
         log.i { "sendMessage(text = $text)" }
         val request = messageStore.prepareMessage(text)
-        attachmentHandler.clear()
+        attachmentHandler.onSending()
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         send(encodedJson)
     }
@@ -118,7 +117,7 @@ internal class MessagingClientImpl(
         uploadProgress: ((Float) -> Unit)?
     ): String {
         log.i { "attach(fileName = $fileName)" }
-        val request = attachmentHandler.prepareAttachment(
+        val request = attachmentHandler.prepare(
             Platform().randomUUID(),
             byteArray,
             fileName,
@@ -143,10 +142,7 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun deleteAttachment(attachmentId: String) {
         log.i { "deleteAttachment(attachmentId = $attachmentId)" }
-        val request = DeleteAttachmentRequest(
-            token = token,
-            attachmentId = attachmentId
-        )
+        val request = attachmentHandler.delete(attachmentId)
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         send(encodedJson)
     }
@@ -173,8 +169,10 @@ internal class MessagingClientImpl(
             is ErrorCode.SessionNotFound ->
                 currentState = State.Error(code, message)
             is ErrorCode.MessageTooLong,
-            is ErrorCode.RequestRateTooHigh ->
+            is ErrorCode.RequestRateTooHigh -> {
                 messageStore.onMessageError(code, message)
+                attachmentHandler.onMessageError(code, message)
+            }
             else -> log.w { "Unhandled ErrorCode: $code with optional message: $message" }
         }
     }
@@ -195,6 +193,7 @@ internal class MessagingClientImpl(
         override fun onFailure(t: Throwable) {
             log.e(throwable = t) { "onFailure(message: ${t.message})" }
             currentState = State.Error(ErrorCode.WebsocketError, t.message)
+            attachmentHandler.clearAll()
             webSocket.closeSocket(SocketCloseCode.GOING_AWAY.value, "Going away.")
         }
 
@@ -221,9 +220,13 @@ internal class MessagingClientImpl(
                     is PresignedUrlResponse ->
                         attachmentHandler.upload(decoded.body)
                     is UploadSuccessEvent ->
-                        attachmentHandler.uploadSuccess(decoded.body)
-                    is StructuredMessage ->
-                        messageStore.update(decoded.body.toMessage())
+                        attachmentHandler.onUploadSuccess(decoded.body)
+                    is StructuredMessage -> {
+                        with(decoded.body.toMessage()) {
+                            messageStore.update(this)
+                            attachmentHandler.onSent(this.attachments)
+                        }
+                    }
                     is AttachmentDeletedResponse ->
                         attachmentHandler.onDeleted(decoded.body.attachmentId)
                     is GenerateUrlError -> {
@@ -260,6 +263,7 @@ internal class MessagingClientImpl(
         override fun onClosed(code: Int, reason: String) {
             log.i { "onClosed(code = $code, reason = $reason)" }
             currentState = State.Closed(code, reason)
+            attachmentHandler.clearAll()
         }
     }
 }

@@ -29,7 +29,7 @@ object MobileMessenger {
         val api = WebMessagingApi(configuration)
         val webSocket = PlatformSocket(log.withTag(LogTag.WEBSOCKET), configuration, 300000)
         val messageStore = MessageStore(token, log.withTag(LogTag.MESSAGE_STORE))
-        val attachmentHandler = AttachmentHandler(
+        val attachmentHandler = AttachmentHandlerImpl(
             api,
             token,
             log.withTag(LogTag.ATTACHMENT_HANDLER),

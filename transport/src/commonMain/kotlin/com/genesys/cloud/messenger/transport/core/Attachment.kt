@@ -9,7 +9,7 @@ import kotlinx.serialization.Transient
 @Serializable
 data class Attachment(
     val id: String,
-    @Transient val fileName: String = "",
+    @Transient val fileName: String? = null,
     @Transient val state: State = State.Presigning,
 ) {
     /**
@@ -17,6 +17,12 @@ data class Attachment(
      */
     @Serializable
     sealed class State {
+        /**
+         * Attachment was requested to be deleted from the conversation history,
+         * but there were no confirmation of deletion or failure yet.
+         */
+        object Deleting : State()
+
         /**
          * Attachment was deleted from the conversation history.
          */
@@ -43,6 +49,11 @@ data class Attachment(
          * @param downloadUrl is a url pointing to uploaded attachment.
          */
         data class Uploaded(val downloadUrl: String) : State()
+
+        /**
+         * Message that holds this attachment was sent, but there were no confirmation of delivery or failure yet.
+         */
+        object Sending : State()
 
         /**
          * Attachment was sent.

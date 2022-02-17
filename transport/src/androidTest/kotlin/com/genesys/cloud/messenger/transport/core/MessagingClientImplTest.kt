@@ -7,6 +7,7 @@ import com.genesys.cloud.messenger.transport.network.SocketCloseCode
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
+import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
@@ -38,7 +39,7 @@ class MessagingClientImplTest {
     }
     private val mockAttachmentHandler: AttachmentHandler = mockk(relaxed = true) {
         every {
-            prepareAttachment(
+            prepare(
                 any(),
                 any(),
                 any(),
@@ -50,6 +51,11 @@ class MessagingClientImplTest {
             fileName = "test_attachment.png",
             fileType = "image/png",
             errorsAsJson = true,
+        )
+
+        every { delete(any()) } returns DeleteAttachmentRequest(
+            "00000000-0000-0000-0000-000000000000",
+            "88888888-8888-8888-8888-888888888888"
         )
     }
     private val mockPlatformSocket: PlatformSocket = mockk {
@@ -142,7 +148,7 @@ class MessagingClientImplTest {
             connectSequence()
             configureSequence()
             mockMessageStore.prepareMessage(expectedText)
-            mockAttachmentHandler.clear()
+            mockAttachmentHandler.onSending()
             mockPlatformSocket.sendMessage(expectedMessage)
         }
     }
@@ -175,7 +181,7 @@ class MessagingClientImplTest {
         verifySequence {
             connectSequence()
             configureSequence()
-            mockAttachmentHandler.prepareAttachment(any(), any(), any())
+            mockAttachmentHandler.prepare(any(), any(), any())
             mockPlatformSocket.sendMessage(expectedMessage)
         }
     }
@@ -195,6 +201,7 @@ class MessagingClientImplTest {
 
     @Test
     fun whenDeleteAttachment() {
+        val expectedAttachmentId = "88888888-8888-8888-8888-888888888888"
         val expectedMessage =
             """{"token":"00000000-0000-0000-0000-000000000000","attachmentId":"88888888-8888-8888-8888-888888888888","action":"deleteAttachment"}"""
         connectAndConfigure()
@@ -204,6 +211,7 @@ class MessagingClientImplTest {
         verifySequence {
             connectSequence()
             configureSequence()
+            mockAttachmentHandler.delete(expectedAttachmentId)
             mockPlatformSocket.sendMessage(expectedMessage)
         }
     }
@@ -268,8 +276,10 @@ class MessagingClientImplTest {
         verifySequence {
             connectSequence()
             mockStateListener(expectedErrorState)
+            mockAttachmentHandler.clearAll()
             mockPlatformSocket.closeSocket(expectedState.code, expectedState.reason)
             mockStateListener(expectedState)
+            mockAttachmentHandler.clearAll()
         }
     }
 
@@ -389,6 +399,10 @@ class MessagingClientImplTest {
                 ErrorCode.RequestRateTooHigh,
                 "Message rate too high for this session. Retry after 3 seconds."
             )
+            mockAttachmentHandler.onMessageError(
+                ErrorCode.RequestRateTooHigh,
+                "Message rate too high for this session. Retry after 3 seconds."
+            )
         }
     }
 
@@ -423,6 +437,36 @@ class MessagingClientImplTest {
 
         verify {
             mockMessageStore.messageListener = givenMessageListener
+        }
+    }
+
+    @Test
+    fun whenSocketListenerInvokeOnMessageWithStructuredMessage() {
+        val expectedAttachment = Attachment(
+            "attachment_id",
+            "image.png",
+            Attachment.State.Sent("https://downloadurl.com")
+        )
+        val expectedMessage = Message(
+            "msg_id",
+            Message.Direction.Outbound,
+            Message.State.Sent,
+            "Text",
+            "Hi",
+            "some_time",
+            mapOf("attachment_id" to expectedAttachment)
+        )
+
+        val givenRawMessage =
+            """{"type":"message","class":"StructuredMessage","code":200,"body":{"direction":"Outbound","id":"msg_id","channel":{"time":"some_time","type":"Private"},"type":"Text","text":"Hi","content":[{"attachment":{"id":"attachment_id","filename":"image.png","mediaType":"Image","mime":"image/png","url":"https://downloadurl.com"},"contentType":"Attachment"}],"originatingEntity":"Human"}}"""
+        subject.connect()
+
+        slot.captured.onMessage(givenRawMessage)
+
+        verifySequence {
+            connectSequence()
+            mockMessageStore.update(expectedMessage)
+            mockAttachmentHandler.onSent(mapOf("attachment_id" to expectedAttachment))
         }
     }
 
@@ -463,6 +507,7 @@ class MessagingClientImplTest {
         mockStateListener(MessagingClient.State.Closing(expectedCloseCode, expectedCloseReason))
         mockPlatformSocket.closeSocket(expectedCloseCode, expectedCloseReason)
         mockStateListener(MessagingClient.State.Closed(expectedCloseCode, expectedCloseReason))
+        mockAttachmentHandler.clearAll()
     }
 
     private fun MockKVerificationScope.configureSequence(expected: String = any()) {
