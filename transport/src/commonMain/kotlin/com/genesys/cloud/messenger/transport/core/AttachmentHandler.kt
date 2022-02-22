@@ -16,13 +16,11 @@ internal interface AttachmentHandler {
 
     fun upload(presignedUrlResponse: PresignedUrlResponse)
 
-    fun detach(attachmentId: String, delete: () -> Unit)
-
-    fun delete(attachmentId: String): DeleteAttachmentRequest
+    fun detach(attachmentId: String): DeleteAttachmentRequest?
 
     fun onUploadSuccess(uploadSuccessEvent: UploadSuccessEvent)
 
-    fun onDeleted(attachmentId: String)
+    fun onDetached(attachmentId: String)
 
     fun onError(attachmentId: String, errorCode: ErrorCode, errorMessage: String)
 

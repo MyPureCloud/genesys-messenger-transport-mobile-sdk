@@ -18,15 +18,10 @@ data class Attachment(
     @Serializable
     sealed class State {
         /**
-         * Attachment was requested to be deleted from the conversation history,
-         * but there were no confirmation of deletion or failure yet.
+         * Attachment was requested to be detached from the message,
+         * but there were no confirmation of success or failure yet.
          */
-        object Deleting : State()
-
-        /**
-         * Attachment was deleted from the conversation history.
-         */
-        object Deleted : State()
+        object Detaching : State()
 
         /**
          * Attachment was detached from the Message.

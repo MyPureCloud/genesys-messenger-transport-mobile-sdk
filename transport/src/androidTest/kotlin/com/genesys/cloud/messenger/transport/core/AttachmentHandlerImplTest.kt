@@ -5,6 +5,7 @@ import assertk.assertions.containsOnly
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.core.Attachment.State
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
@@ -25,7 +26,6 @@ import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.spyk
 import io.mockk.verify
-import io.mockk.verifyOrder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.newSingleThreadContext
@@ -91,10 +91,10 @@ internal class AttachmentHandlerImplTest {
 
         val onAttachmentRequest = subject.prepare(givenAttachmentId, ByteArray(1), "image.png")
 
-        assertThat(expectedOnAttachmentRequest).isEqualTo(onAttachmentRequest)
+        assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
         assertThat(processedAttachments).containsOnly(givenAttachmentId to expectedProcessedAttachment)
         verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
-        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
+        assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
     }
 
     @Test
@@ -112,8 +112,8 @@ internal class AttachmentHandlerImplTest {
             mockApi.uploadFile(givenPresignedUrlResponse, ByteArray(1), mockUploadProgress)
             mockUploadProgress.invoke(capture(progressSlot))
         }
-        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
-        assertThat(expectedProgress).isEqualTo(progressSlot.captured)
+        assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
+        assertThat(progressSlot.captured).isEqualTo(expectedProgress)
     }
 
     @Test
@@ -157,7 +157,7 @@ internal class AttachmentHandlerImplTest {
             mockApi.uploadFile(any(), any(), any())
             mockAttachmentListener.invoke(capture(attachmentSlotList))
         }
-        assertThat(expectedAttachment).isEqualTo(attachmentSlotList[1])
+        assertThat(attachmentSlotList[1]).isEqualTo(expectedAttachment)
         assertThat(processedAttachments.containsKey(givenAttachmentId)).isFalse()
     }
 
@@ -172,7 +172,7 @@ internal class AttachmentHandlerImplTest {
         subject.onUploadSuccess(givenUploadSuccessEvent)
 
         verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
-        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
+        assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
         assertThat(processedAttachments).containsOnly(givenAttachmentId to expectedProcessedAttachment)
     }
 
@@ -189,68 +189,58 @@ internal class AttachmentHandlerImplTest {
 
     @Test
     fun whenDetachUploaded() {
-        val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Detached)
-        val mockDeleteFun: () -> Unit = spyk()
+        val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Detaching)
+        val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(1))
+        val expectedDeleteAttachmentRequest = DeleteAttachmentRequest(givenToken, givenAttachmentId)
         givenPrepareCalled()
         givenUploadSuccessCalled()
 
-        subject.detach(givenAttachmentId, mockDeleteFun)
+        val result = subject.detach(givenAttachmentId)
 
-        verifyOrder {
-            mockDeleteFun.invoke()
+        verify {
             mockAttachmentListener.invoke(capture(attachmentSlot))
         }
-        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
-        assertThat(processedAttachments.containsKey(givenAttachmentId)).isFalse()
+        assertThat(result).isEqualTo(expectedDeleteAttachmentRequest)
+        assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
+        assertThat(processedAttachments).containsOnly(givenAttachmentId to expectedProcessedAttachment)
     }
 
     @Test
     fun whenDetachNotUploaded() {
         val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Detached)
-        val mockDeleteFun: () -> Unit = spyk()
         givenPrepareCalled()
 
-        subject.detach(givenAttachmentId, mockDeleteFun)
+        val result = subject.detach(givenAttachmentId)
 
         verify {
-            listOf(mockDeleteFun) wasNot Called
             mockAttachmentListener.invoke(capture(attachmentSlot))
         }
-        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
+        assertThat(result).isNull()
+        assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
         assertThat(processedAttachments.containsKey(givenAttachmentId)).isFalse()
     }
 
     @Test
     fun whenDetachNotProcessedAttachment() {
-        val mockDeleteFun: () -> Unit = spyk()
-
-        subject.detach("not processed attachment id", mockDeleteFun)
+        val result = subject.detach("not processed attachment id")
 
         verify {
-            listOf(mockDeleteFun, mockAttachmentListener) wasNot Called
+            listOf(mockAttachmentListener) wasNot Called
         }
-    }
-
-    @Test
-    fun whenDelete() {
-        val expectedAttachment = Attachment(id = givenAttachmentId, state = State.Deleting)
-        val expectedResult = DeleteAttachmentRequest(givenToken, givenAttachmentId)
-
-        val result = subject.delete(givenAttachmentId)
-
-        verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
-        assertThat(result).isEqualTo(expectedResult)
-        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
+        assertThat(result).isNull()
     }
 
     @Test
     fun whenOnDeleted() {
-        val expectedAttachment = Attachment(id = givenAttachmentId, state = State.Deleted)
+        val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Detached)
+        givenPrepareCalled()
+        givenUploadSuccessCalled()
 
-        subject.onDeleted(givenAttachmentId)
+        subject.onDetached(givenAttachmentId)
 
         verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
-        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
+        assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
+        assertThat(processedAttachments.containsKey(givenAttachmentId)).isFalse()
     }
 
     @Test
@@ -264,7 +254,7 @@ internal class AttachmentHandlerImplTest {
         subject.onError(givenAttachmentId, ErrorCode.mapFrom(4001), "something went wrong")
 
         verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
-        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
+        assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
         assertThat(processedAttachments.containsKey(givenAttachmentId)).isFalse()
     }
 
@@ -281,7 +271,7 @@ internal class AttachmentHandlerImplTest {
         subject.onMessageError(ErrorCode.MessageTooLong, "Message too long")
 
         verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
-        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
+        assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
         assertThat(processedAttachments.containsKey(givenAttachmentId)).isFalse()
     }
 
@@ -307,7 +297,7 @@ internal class AttachmentHandlerImplTest {
         subject.onSending()
 
         verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
-        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
+        assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
         assertThat(processedAttachments).containsOnly(givenAttachmentId to expectedProcessedAttachment)
     }
 
@@ -343,7 +333,7 @@ internal class AttachmentHandlerImplTest {
         )
 
         verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
-        assertThat(expectedAttachment).isEqualTo(attachmentSlot.captured)
+        assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
         assertThat(processedAttachments.containsKey(givenAttachmentId)).isFalse()
     }
 

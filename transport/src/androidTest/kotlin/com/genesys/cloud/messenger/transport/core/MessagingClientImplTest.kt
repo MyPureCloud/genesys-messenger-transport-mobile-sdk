@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
 import assertk.assertThat
+import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.SocketCloseCode
@@ -12,8 +13,10 @@ import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import io.mockk.Called
 import io.mockk.MockKVerificationScope
 import io.mockk.clearAllMocks
+import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -53,7 +56,7 @@ class MessagingClientImplTest {
             errorsAsJson = true,
         )
 
-        every { delete(any()) } returns DeleteAttachmentRequest(
+        every { detach(any()) } returns DeleteAttachmentRequest(
             "00000000-0000-0000-0000-000000000000",
             "88888888-8888-8888-8888-888888888888"
         )
@@ -189,30 +192,31 @@ class MessagingClientImplTest {
     @Test
     fun whenDetach() {
         val expectedAttachmentId = "88888888-8888-8888-8888-888888888888"
+        val expectedMessage =
+            """{"token":"00000000-0000-0000-0000-000000000000","attachmentId":"88888888-8888-8888-8888-888888888888","action":"deleteAttachment"}"""
         val attachmentIdSlot = slot<String>()
+        connectAndConfigure()
 
         subject.detach("88888888-8888-8888-8888-888888888888")
 
         verify {
-            mockAttachmentHandler.detach(capture(attachmentIdSlot), any())
+            mockAttachmentHandler.detach(capture(attachmentIdSlot))
+            mockPlatformSocket.sendMessage(expectedMessage)
         }
-        assertEquals(expectedAttachmentId, attachmentIdSlot.captured)
+        assertThat(attachmentIdSlot.captured).isEqualTo(expectedAttachmentId)
     }
 
     @Test
-    fun whenDeleteAttachment() {
-        val expectedAttachmentId = "88888888-8888-8888-8888-888888888888"
-        val expectedMessage =
-            """{"token":"00000000-0000-0000-0000-000000000000","attachmentId":"88888888-8888-8888-8888-888888888888","action":"deleteAttachment"}"""
+    fun whenDetachNonExistingAttachmentId() {
         connectAndConfigure()
+        clearMocks(mockPlatformSocket)
+        every { mockAttachmentHandler.detach(any()) } returns null
 
-        subject.deleteAttachment("88888888-8888-8888-8888-888888888888")
+        subject.detach("88888888-8888-8888-8888-888888888888")
 
-        verifySequence {
-            connectSequence()
-            configureSequence()
-            mockAttachmentHandler.delete(expectedAttachmentId)
-            mockPlatformSocket.sendMessage(expectedMessage)
+        verify {
+            mockAttachmentHandler.detach("88888888-8888-8888-8888-888888888888")
+            mockPlatformSocket wasNot Called
         }
     }
 
@@ -252,9 +256,9 @@ class MessagingClientImplTest {
     }
 
     @Test
-    fun whenDeleteAttachmentWithoutConnection() {
+    fun whenDetachAttachmentWithoutConnection() {
         assertFailsWith<IllegalStateException> {
-            subject.deleteAttachment("file.png")
+            subject.detach("attachmentId")
         }
     }
 
@@ -467,6 +471,21 @@ class MessagingClientImplTest {
             connectSequence()
             mockMessageStore.update(expectedMessage)
             mockAttachmentHandler.onSent(mapOf("attachment_id" to expectedAttachment))
+        }
+    }
+
+    @Test
+    fun whenSocketListenerInvokeOnMessageWithAttachmentDeletedResponse() {
+        val expectedAttachmentId = "attachment_id"
+        val givenRawMessage =
+            """{"type":"message","class":"AttachmentDeletedResponse","code":200,"body":{"attachmentId":"attachment_id"}}"""
+        subject.connect()
+
+        slot.captured.onMessage(givenRawMessage)
+
+        verifySequence {
+            connectSequence()
+            mockAttachmentHandler.onDetached(expectedAttachmentId)
         }
     }
 
