@@ -231,7 +231,7 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenOnDeleted() {
+    fun whenOnDetached() {
         val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Detached)
         givenPrepareCalled()
         givenUploadSuccessCalled()
