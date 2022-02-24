@@ -301,7 +301,12 @@ extension ContentViewController : UITextFieldDelegate {
                 }
             }
         case ("detach", let attachId?):
-            client.detach(attachmentId: attachId)
+            do {
+                try client.detach(attachmentId: attachId)
+            } catch {
+                print(error)
+                self.info.text = "<\(error.localizedDescription)>"
+            }
         case ("deployment", _):
             MobileMessenger().fetchDeploymentConfig(domain: deployment.domain!, deploymentId: deployment.deploymentId!, logging: true,
                 completionHandler: { deploymentConfig, error in
