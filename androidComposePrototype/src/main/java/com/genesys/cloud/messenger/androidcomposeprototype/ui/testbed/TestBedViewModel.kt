@@ -7,7 +7,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.genesys.cloud.messenger.androidcomposeprototype.BuildConfig
-import com.genesys.cloud.messenger.transport.core.Attachment.State.Deleted
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.MessageEvent
@@ -97,8 +96,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "history" -> fetchNextPage()
             "healthCheck" -> doSendHealthCheck()
             "attach" -> doAttach()
-            "detach" -> doDetach()
-            "delete" -> doDeleteAttachment(components)
+            "detach" -> doDetach(components)
             "deployment" -> doDeployment()
             else -> {
                 Log.e(TAG, "Invalid command")
@@ -186,23 +184,10 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun doDetach() {
-        try {
-            if (attachedIds.isEmpty()) {
-                socketMessage = "No attachments to detach"
-                commandWaiting = false
-                return
-            }
-            client.detach(attachmentId = attachedIds.first())
-        } catch (t: Throwable) {
-            handleException(t, "detach")
-        }
-    }
-
-    private suspend fun doDeleteAttachment(components: List<String>) {
+    private suspend fun doDetach(components: List<String>) {
         try {
             val attachmentId = components.getOrNull(1) ?: ""
-            client.deleteAttachment(attachmentId)
+            client.detach(attachmentId)
         } catch (t: Throwable) {
             handleException(t, "detach")
         }
@@ -256,10 +241,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             is AttachmentUpdated -> {
                 when (event.attachment.state) {
                     Detached -> {
-                        attachedIds.remove(event.attachment.id)
-                        event.attachment.toString()
-                    }
-                    Deleted -> {
                         attachedIds.remove(event.attachment.id)
                         event.attachment.toString()
                     }

@@ -128,23 +128,19 @@ internal class MessagingClientImpl(
         return request.attachmentId
     }
 
+    @Throws(IllegalStateException::class)
     override fun detach(attachmentId: String) {
         log.i { "detach(attachmentId = $attachmentId)" }
-        attachmentHandler.detach(attachmentId) { deleteAttachment(attachmentId) }
+        attachmentHandler.detach(attachmentId)?.let {
+            val encodedJson = WebMessagingJson.json.encodeToString(it)
+            send(encodedJson)
+        }
     }
 
     private fun send(message: String) {
         if (currentState !is State.Configured) throw IllegalStateException("WebMessaging client is not configured.")
         log.i { "Will send message" }
         webSocket.sendMessage(message)
-    }
-
-    @Throws(IllegalStateException::class)
-    override fun deleteAttachment(attachmentId: String) {
-        log.i { "deleteAttachment(attachmentId = $attachmentId)" }
-        val request = attachmentHandler.delete(attachmentId)
-        val encodedJson = WebMessagingJson.json.encodeToString(request)
-        send(encodedJson)
     }
 
     override suspend fun fetchNextPage() {
@@ -228,7 +224,7 @@ internal class MessagingClientImpl(
                         }
                     }
                     is AttachmentDeletedResponse ->
-                        attachmentHandler.onDeleted(decoded.body.attachmentId)
+                        attachmentHandler.onDetached(decoded.body.attachmentId)
                     is GenerateUrlError -> {
                         decoded.body.run {
                             attachmentHandler.onError(

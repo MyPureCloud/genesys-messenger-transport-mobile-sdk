@@ -1,8 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
-import com.genesys.cloud.messenger.transport.core.Attachment.State.Deleted
-import com.genesys.cloud.messenger.transport.core.Attachment.State.Deleting
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
+import com.genesys.cloud.messenger.transport.core.Attachment.State.Detaching
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Error
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Presigning
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Sending
@@ -89,29 +88,29 @@ internal class AttachmentHandlerImpl(
         }
     }
 
-    override fun detach(attachmentId: String, deleteFn: () -> Unit) {
-        processedAttachments.remove(attachmentId)?.let {
-            log.i { "Attachment detached: $attachmentId" }
+    override fun detach(attachmentId: String): DeleteAttachmentRequest? {
+        processedAttachments[attachmentId]?.let {
+            log.i { "Detaching attachment: $attachmentId" }
             it.job?.cancel()
             if (it.attachment.state is Uploaded) {
-                deleteFn()
+                it.attachment =
+                    it.attachment.copy(state = Detaching).also(updateAttachmentStateWith)
+                return DeleteAttachmentRequest(
+                    token = token,
+                    attachmentId = attachmentId
+                )
+            } else {
+                onDetached(attachmentId)
             }
+        }
+        return null
+    }
+
+    override fun onDetached(attachmentId: String) {
+        log.i { "Attachment detached: $attachmentId" }
+        processedAttachments.remove(attachmentId)?.let {
             updateAttachmentStateWith(it.attachment.copy(state = Detached))
         }
-    }
-
-    override fun delete(attachmentId: String): DeleteAttachmentRequest {
-        log.i { "Deleting attachment: $attachmentId" }
-        updateAttachmentStateWith(Attachment(attachmentId, state = Deleting))
-        return DeleteAttachmentRequest(
-            token = token,
-            attachmentId = attachmentId
-        )
-    }
-
-    override fun onDeleted(attachmentId: String) {
-        log.i { "Attachment deleted: $attachmentId" }
-        updateAttachmentStateWith(Attachment(attachmentId, state = Deleted))
     }
 
     override fun onError(attachmentId: String, errorCode: ErrorCode, errorMessage: String) {

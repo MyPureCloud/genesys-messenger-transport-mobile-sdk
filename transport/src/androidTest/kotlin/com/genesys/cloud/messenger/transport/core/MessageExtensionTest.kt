@@ -98,7 +98,7 @@ internal class MessageExtensionTest {
                     "second test attachment id" to Attachment(
                         id = "second test attachment id",
                         fileName = "test2.png",
-                        Attachment.State.Deleted,
+                        Attachment.State.Detached,
                     )
                 )
             )
