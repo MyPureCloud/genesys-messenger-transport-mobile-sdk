@@ -2,9 +2,9 @@ package com.genesys.cloud.messenger.transport.core
 
 import assertk.assertThat
 import assertk.assertions.containsExactly
+import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
-import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses.isoTestTimestamp
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
@@ -123,7 +123,7 @@ internal class MessageExtensionTest {
                 attachments = emptyMap()
             )
 
-        assertThat(givenMessage.getUploadedAttachments().isEmpty()).isTrue()
+        assertThat(givenMessage.getUploadedAttachments()).isEmpty()
     }
 
     @Test
