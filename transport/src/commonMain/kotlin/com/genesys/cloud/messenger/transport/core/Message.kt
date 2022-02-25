@@ -13,7 +13,7 @@ data class Message(
     val state: State = State.Idle,
     val type: String = "Text",
     val text: String? = null,
-    val timeStamp: String? = null,
+    val timeStamp: Long? = null,
     val attachments: Map<String, Attachment> = emptyMap(),
 ) {
     /**

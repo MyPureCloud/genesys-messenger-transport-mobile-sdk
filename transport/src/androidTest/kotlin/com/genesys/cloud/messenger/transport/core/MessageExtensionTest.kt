@@ -1,48 +1,50 @@
 package com.genesys.cloud.messenger.transport.core
 
 import assertk.assertThat
-import assertk.assertions.containsOnly
+import assertk.assertions.containsExactly
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
+import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses.isoTestTimestamp
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
+import com.genesys.cloud.messenger.transport.util.extensions.fromIsoToEpochMilliseconds
 import com.genesys.cloud.messenger.transport.util.extensions.getUploadedAttachments
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 internal class MessageExtensionTest {
 
     @Test
     fun whenMessageEntityListToMessageList() {
-        val givenMessageEntityList = TestWebMessagingApiResponses.testMessageEntityList
-        val expectedMessageList = listOf(
-            Message(
-                id = "5befde6373a23f32f20b59b4e1cba0e6",
-                direction = Message.Direction.Outbound,
-                state = Message.State.Sent,
-                type = "Text",
-                text = "\uD83E\uDD2A",
-                timeStamp = "2021-03-26T21:11:01.464Z"
-            ),
-            Message(
-                id = "1234567890",
-                direction = Message.Direction.Inbound,
-                state = Message.State.Sent,
-                type = "Text",
-                text = "customer msg 7",
-                timeStamp = "2021-03-26T21:09:51.411Z",
-            )
+        val expectedMessage1 = Message(
+            id = "5befde6373a23f32f20b59b4e1cba0e6",
+            direction = Message.Direction.Outbound,
+            state = Message.State.Sent,
+            type = "Text",
+            text = "\uD83E\uDD2A",
+            timeStamp = 1398892191411L
+        )
+        val expectedMessage2 = Message(
+            id = "1234567890",
+            direction = Message.Direction.Inbound,
+            state = Message.State.Sent,
+            type = "Text",
+            text = "customer msg 7",
+            timeStamp = null,
         )
 
-        assertEquals(expectedMessageList, givenMessageEntityList.toMessageList())
+        val result = TestWebMessagingApiResponses.testMessageEntityList.toMessageList()
+
+        assertThat(result).containsExactly(expectedMessage1, expectedMessage2)
     }
 
     @Test
     fun whenStructuredMessageToMessage() {
         val givenStructuredMessage = StructuredMessage(
             id = "id",
-            channel = StructuredMessage.Channel(time = "2021-03-26T21:09:51.411Z"),
+            channel = StructuredMessage.Channel(time = isoTestTimestamp),
             type = "Text",
             text = "test text",
             content = listOf(
@@ -66,7 +68,7 @@ internal class MessageExtensionTest {
                 state = Message.State.Sent,
                 type = "Text",
                 text = "test text",
-                timeStamp = "2021-03-26T21:09:51.411Z",
+                timeStamp = 1398892191411L,
                 attachments = mapOf(
                     "test attachment id" to Attachment(
                         id = "test attachment id",
@@ -76,7 +78,7 @@ internal class MessageExtensionTest {
                 )
             )
 
-        assertEquals(expectedMessage, givenStructuredMessage.toMessage())
+        assertThat(givenStructuredMessage.toMessage()).isEqualTo(expectedMessage)
     }
 
     @Test
@@ -86,9 +88,6 @@ internal class MessageExtensionTest {
                 id = "test custom id",
                 direction = Message.Direction.Inbound,
                 state = Message.State.Sent,
-                type = "Text",
-                text = "test text",
-                timeStamp = "2021-03-26T21:09:51.411Z",
                 attachments = mapOf(
                     "first test attachment id" to Attachment(
                         id = "first test attachment id",
@@ -111,7 +110,7 @@ internal class MessageExtensionTest {
             )
         )
 
-        assertThat(givenMessage.getUploadedAttachments()).containsOnly(expectedContent)
+        assertThat(givenMessage.getUploadedAttachments()).containsExactly(expectedContent)
     }
 
     @Test
@@ -121,12 +120,32 @@ internal class MessageExtensionTest {
                 id = "test custom id",
                 direction = Message.Direction.Inbound,
                 state = Message.State.Sent,
-                type = "Text",
-                text = "test text",
-                timeStamp = "2021-03-26T21:09:51.411Z",
                 attachments = emptyMap()
             )
 
-        assertTrue { givenMessage.getUploadedAttachments().isEmpty() }
+        assertThat(givenMessage.getUploadedAttachments().isEmpty()).isTrue()
+    }
+
+    @Test
+    fun whenFromIsoToEpochMillisecondsOnValidISOString() {
+        val expectedTimestamp = 1398892191411L
+
+        val result = isoTestTimestamp.fromIsoToEpochMilliseconds()
+
+        assertThat(result).isEqualTo(expectedTimestamp)
+    }
+
+    @Test
+    fun whenFromIsoToEpochMillisecondsOnInvalidString() {
+        val result = "invalid timestamp format".fromIsoToEpochMilliseconds()
+
+        assertThat(result).isNull()
+    }
+
+    @Test
+    fun whenFromIsoToEpochMillisecondsOnNullString() {
+        val result = null.fromIsoToEpochMilliseconds()
+
+        assertThat(result).isNull()
     }
 }
