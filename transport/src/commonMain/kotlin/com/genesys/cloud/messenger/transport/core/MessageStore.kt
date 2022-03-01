@@ -25,13 +25,17 @@ internal class MessageStore(
     fun prepareMessage(text: String): OnMessageRequest {
         val messageToSend = pendingMessage.copy(text = text, state = Message.State.Sending).also {
             log.i { "Message prepared to send: $it" }
-            activeConversation.add(0, it)
+            activeConversation.add(it)
             messageListener?.invoke(MessageEvent.MessageInserted(it))
             pendingMessage = Message()
         }
         return OnMessageRequest(
             token = token,
-            message = TextMessage(text, metadata = mapOf("customMessageId" to messageToSend.id), content = messageToSend.getUploadedAttachments()),
+            message = TextMessage(
+                text,
+                metadata = mapOf("customMessageId" to messageToSend.id),
+                content = messageToSend.getUploadedAttachments()
+            ),
         )
     }
 
@@ -45,7 +49,7 @@ internal class MessageStore(
                 }
             }
             Direction.Outbound -> {
-                activeConversation.add(0, message)
+                activeConversation.add(message)
                 messageListener?.invoke(MessageEvent.MessageInserted(message))
             }
         }
@@ -63,9 +67,9 @@ internal class MessageStore(
 
     fun updateMessageHistory(historyPage: List<Message>, total: Int) {
         startOfConversation = isAllHistoryFetched(total)
-        with(historyPage.takeInactiveMessages()) {
+        with(historyPage.takeInactiveMessages().reversed()) {
             log.i { "Message history updated with: $this." }
-            activeConversation.addAll(this)
+            activeConversation.addAll(0, this)
             nextPage = activeConversation.getNextPage()
             messageListener?.invoke(MessageEvent.HistoryFetched(this, startOfConversation))
         }

@@ -1,7 +1,10 @@
 package com.genesys.cloud.messenger.transport.core
 
 import assertk.assertThat
+import assertk.assertions.containsExactly
 import assertk.assertions.containsOnly
+import assertk.assertions.isEqualTo
+import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import io.mockk.Called
@@ -141,7 +144,7 @@ internal class MessageStoreTest {
         subject.update(givenMessage)
 
         assertEquals(expectedConversationSize, subject.getConversation().size)
-        assertEquals(givenMessage, subject.getConversation()[1])
+        assertEquals(givenMessage, subject.getConversation().first())
         verify { mockMessageListener(capture(messageSlot)) }
         assertEquals(
             givenMessage,
@@ -201,20 +204,18 @@ internal class MessageStoreTest {
 
     @Test
     fun whenUpdateMessageHistory() {
-        val givenMessageHistory = messageList(5)
-        val givenTotal = 5
-        val expectedConversationSize = 5
+        val expectedMessageHistory = messageList(2).reversed()
+        val expectedConversationSize = 2
         val expectedNextPageIndex = 1
 
-        subject.updateMessageHistory(givenMessageHistory, givenTotal)
+        subject.updateMessageHistory(messageList(2), 2)
 
-        assertTrue { subject.startOfConversation }
-        assertEquals(expectedConversationSize, subject.getConversation().size)
-        assertEquals(expectedNextPageIndex, subject.nextPage)
+        assertThat(subject.startOfConversation).isTrue()
+        assertThat(subject.getConversation().size).isEqualTo(expectedConversationSize)
+        assertThat(subject.nextPage).isEqualTo(expectedNextPageIndex)
         verify { mockMessageListener(capture(messageSlot)) }
-        assertEquals(
-            givenMessageHistory,
-            (messageSlot.captured as MessageEvent.HistoryFetched).messages
+        assertThat((messageSlot.captured as MessageEvent.HistoryFetched).messages).isEqualTo(
+            expectedMessageHistory
         )
     }
 
@@ -232,20 +233,19 @@ internal class MessageStoreTest {
 
     @Test
     fun whenUpdateMessageHistoryContainsMessageThatAlreadyPresentInActiveConversation() {
+        val expectedMessage1 = outboundMessage(0)
+        val expectedMessage2 = outboundMessage(1)
         val givenMessageHistory = messageList(2).toMutableList()
-        val expectedMessageHistory = messageList(2)
-        subject.update(outboundMessage(messageId = 123).also { givenMessageHistory.add(0, it) })
+        subject.update(givenMessageHistory.first())
         clearMocks(mockMessageListener)
 
         subject.updateMessageHistory(givenMessageHistory, givenMessageHistory.size)
 
-        assertEquals(givenMessageHistory, subject.getConversation())
+        assertThat(subject.getConversation()).containsExactly(expectedMessage2, expectedMessage1)
         verify { mockMessageListener(capture(messageSlot)) }
-        assertEquals(
-            expectedMessageHistory,
-            (messageSlot.captured as MessageEvent.HistoryFetched).messages
-        )
-        assertTrue { (messageSlot.captured as MessageEvent.HistoryFetched).startOfConversation }
+        val captured = messageSlot.captured as MessageEvent.HistoryFetched
+        assertThat(captured.messages).containsExactly(expectedMessage2)
+        assertThat(captured.startOfConversation).isTrue()
     }
 
     @Test
