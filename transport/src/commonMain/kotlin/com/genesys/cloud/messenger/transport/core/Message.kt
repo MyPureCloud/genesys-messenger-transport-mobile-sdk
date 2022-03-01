@@ -10,7 +10,7 @@ import kotlinx.serialization.Serializable
  *  @property direction is direction in which message was sent.
  *  @property state represents current message state.
  *  @property type is message type. With default type "Text".
- *  @property text optional text payload of the message
+ *  @property text optional text payload of the message.
  *  @property timeStamp optional timeStamp the time when the message occurred represented in Unix epoch time, the number of milliseconds since January 1, 1970 UTC.
  *  @property attachments map of [Attachment] files to the message. Empty by default.
  */
