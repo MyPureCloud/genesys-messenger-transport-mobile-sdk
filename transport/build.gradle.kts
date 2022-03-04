@@ -19,6 +19,7 @@ android {
     defaultConfig {
         minSdk = Deps.Android.minSdk
         targetSdk = Deps.Android.targetSdk
+        consumerProguardFiles("transport-proguard-rules.txt")
     }
     buildTypes {
         getByName("release") {
