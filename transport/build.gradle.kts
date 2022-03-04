@@ -94,6 +94,7 @@ kotlin {
                 implementation(kotlin("stdlib-common"))
                 implementation(Deps.Libs.Kotlinx.serializationJson)
                 implementation(Deps.Libs.Kotlinx.coroutinesCore)
+                implementation(Deps.Libs.Kotlinx.dateTime)
                 implementation(Deps.Libs.Ktor.core)
                 implementation(Deps.Libs.Ktor.serialization)
                 implementation(Deps.Libs.Ktor.json)
@@ -155,7 +156,7 @@ tasks {
         group = "publishing"
         description = "Generates the $podspecFileName file for publication to CocoaPods."
         doLast {
-            var content = file("${podspecFileName}_template").readText()
+            val content = file("${podspecFileName}_template").readText()
                 .replace(oldValue = "<VERSION>", newValue = version.toString())
                 .replace(oldValue = "<SOURCE_HTTP_URL>", newValue = "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/releases/download/v${version}/MessengerTransport.xcframework.zip")
             file(podspecFileName, PathValidation.NONE).writeText(content)

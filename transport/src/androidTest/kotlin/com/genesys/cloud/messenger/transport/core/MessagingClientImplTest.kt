@@ -457,7 +457,7 @@ class MessagingClientImplTest {
             Message.State.Sent,
             "Text",
             "Hi",
-            "some_time",
+            null,
             mapOf("attachment_id" to expectedAttachment)
         )
 
