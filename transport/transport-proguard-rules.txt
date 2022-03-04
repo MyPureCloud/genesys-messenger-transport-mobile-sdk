@@ -1,0 +1,1 @@
+-keep class com.genesys.cloud.messenger.transport.shyrka.** { *; }

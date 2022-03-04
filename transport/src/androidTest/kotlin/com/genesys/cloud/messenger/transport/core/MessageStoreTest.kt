@@ -307,7 +307,7 @@ internal class MessageStoreTest {
         direction = Message.Direction.Outbound,
         state = Message.State.Sent,
         text = "message from agent number $messageId",
-        timeStamp = "$messageId-09-02T15:05:57.293Z",
+        timeStamp = 100 * messageId.toLong(),
     )
 
     private fun attachment(
