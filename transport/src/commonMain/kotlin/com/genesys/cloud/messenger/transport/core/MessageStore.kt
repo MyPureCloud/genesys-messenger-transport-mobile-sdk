@@ -35,7 +35,7 @@ internal class MessageStore(
                 text,
                 metadata = mapOf("customMessageId" to messageToSend.id),
                 content = messageToSend.getUploadedAttachments()
-            ),
+            )
         )
     }
 
