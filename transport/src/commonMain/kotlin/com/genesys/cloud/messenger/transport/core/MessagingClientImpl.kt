@@ -96,6 +96,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun sendMessage(text: String) {
+        checkConfigured()
         log.i { "sendMessage(text = $text)" }
         val request = messageStore.prepareMessage(text)
         attachmentHandler.onSending()
@@ -138,13 +139,13 @@ internal class MessagingClientImpl(
     }
 
     private fun send(message: String) {
-        if (currentState !is State.Configured) throw IllegalStateException("WebMessaging client is not configured.")
+        checkConfigured()
         log.i { "Will send message" }
         webSocket.sendMessage(message)
     }
 
     override suspend fun fetchNextPage() {
-        check(currentState is State.Configured) { "WebMessaging client is not configured." }
+        checkConfigured()
         if (messageStore.startOfConversation) {
             log.i { "All history have been fetched." }
             return
@@ -262,4 +263,6 @@ internal class MessagingClientImpl(
             attachmentHandler.clearAll()
         }
     }
+
+    private fun checkConfigured() = check(currentState is State.Configured) { "WebMessaging client is not configured." }
 }

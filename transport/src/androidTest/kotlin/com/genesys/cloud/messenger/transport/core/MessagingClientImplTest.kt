@@ -242,7 +242,7 @@ class MessagingClientImplTest {
     }
 
     @Test
-    fun whenSendMessageWithoutToken() {
+    fun whenSendMessageWithoutConnection() {
         assertFailsWith<IllegalStateException> {
             subject.sendMessage("foo")
         }
