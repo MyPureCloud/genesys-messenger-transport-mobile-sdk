@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 /**
  * Container for attachment related information.
@@ -8,8 +9,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Attachment(
     val id: String,
-    val fileName: String,
-    val state: State,
+    @Transient val fileName: String? = null,
+    @Transient val state: State = State.Presigning,
 ) {
     /**
      * Represent Attachment states.
@@ -17,9 +18,10 @@ data class Attachment(
     @Serializable
     sealed class State {
         /**
-         * Attachment was deleted from the conversation history.
+         * Attachment was requested to be detached from the message,
+         * but there were no confirmation of success or failure yet.
          */
-        object Deleted : State()
+        object Detaching : State()
 
         /**
          * Attachment was detached from the Message.
@@ -42,6 +44,11 @@ data class Attachment(
          * @param downloadUrl is a url pointing to uploaded attachment.
          */
         data class Uploaded(val downloadUrl: String) : State()
+
+        /**
+         * Message that holds this attachment was sent, but there were no confirmation of delivery or failure yet.
+         */
+        object Sending : State()
 
         /**
          * Attachment was sent.

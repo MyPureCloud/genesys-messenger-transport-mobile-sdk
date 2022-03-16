@@ -22,6 +22,7 @@ internal class ErrorCodeTest {
         assertTrue(ErrorCode.mapFrom(4010) is ErrorCode.AttachmentNotSuccessfullyUploaded)
         assertTrue(ErrorCode.mapFrom(4011) is ErrorCode.MessageTooLong)
         assertTrue(ErrorCode.mapFrom(4020) is ErrorCode.MissingParameter)
+        assertTrue(ErrorCode.mapFrom(4029) is ErrorCode.RequestRateTooHigh)
         assertTrue(ErrorCode.mapFrom(5000) is ErrorCode.UnexpectedError)
         assertTrue(ErrorCode.mapFrom(1001) is ErrorCode.WebsocketError)
         val randomIn300Range = Random.nextInt(300, 400)

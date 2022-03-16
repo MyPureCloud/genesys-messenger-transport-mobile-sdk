@@ -4,6 +4,8 @@ import assertk.assertThat
 import assertk.assertions.hasClass
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
+import com.genesys.cloud.messenger.transport.core.Attachment
+import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
@@ -12,6 +14,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionExpiredEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
+import com.genesys.cloud.messenger.transport.shyrka.receive.TooManyRequestsErrorMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
@@ -69,14 +72,21 @@ class SerializationTest {
 
         val messageWithAttachmentRequest = OnMessageRequest(
             token = "<token>",
-            message = TextMessage(text = "Hello world", metadata = mapOf("id" to "aaa-bbb-ccc")),
-            attachmentIds = arrayOf("abcd-1234")
+            message = TextMessage(
+                text = "Hello world", metadata = mapOf("id" to "aaa-bbb-ccc"),
+                content = listOf(
+                    Message.Content(
+                        contentType = Message.Content.Type.Attachment,
+                        attachment = Attachment("abcd-1234")
+                    )
+                )
+            ),
         )
 
         encodedString = WebMessagingJson.json.encodeToString(messageWithAttachmentRequest)
 
         assertThat(encodedString, "encoded OnMessageRequest with attachment")
-            .isEqualTo("""{"token":"<token>","message":{"text":"Hello world","metadata":{"id":"aaa-bbb-ccc"},"type":"Text"},"attachmentIds":["abcd-1234"],"action":"onMessage"}""")
+            .isEqualTo("""{"token":"<token>","message":{"text":"Hello world","metadata":{"id":"aaa-bbb-ccc"},"content":[{"contentType":"Attachment","attachment":{"id":"abcd-1234"}}],"type":"Text"},"action":"onMessage"}""")
     }
 
     @Test
@@ -334,5 +344,27 @@ class SerializationTest {
         assertThat(message.body, "WebMessagingMessage body").isNotNull()
             .hasClass(GenerateUrlError::class)
         assertThat(message).isEqualTo(expectedGenerateUrlErrorMessage)
+    }
+
+    @Test
+    fun whenTooManyRequestsErrorMessageThenDecodes() {
+        val json =
+            """
+            {"type":"response","class":"TooManyRequestsErrorMessage","code":429,"body":{"retryAfter":3,"errorCode":4029,"errorMessage":"Message rate too high for this session"}}
+            """.trimIndent()
+        val expectedTooManyRequestsErrorBody = TooManyRequestsErrorMessage(
+            retryAfter = 3,
+            errorCode = 4029,
+            errorMessage = "Message rate too high for this session"
+        )
+        val expectedTooManyRequestsError = WebMessagingMessage(
+            type = MessageType.Response.value,
+            code = 429,
+            body = expectedTooManyRequestsErrorBody
+        )
+
+        val message = decode(json)
+
+        assertThat(message).isEqualTo(expectedTooManyRequestsError)
     }
 }

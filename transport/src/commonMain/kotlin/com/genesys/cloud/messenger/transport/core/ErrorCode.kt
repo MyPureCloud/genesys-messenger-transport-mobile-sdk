@@ -17,6 +17,7 @@ sealed class ErrorCode(val code: Int) {
     object AttachmentNotSuccessfullyUploaded : ErrorCode(4010)
     object MessageTooLong : ErrorCode(4011)
     object MissingParameter : ErrorCode(4020)
+    object RequestRateTooHigh : ErrorCode(4029)
     object UnexpectedError : ErrorCode(5000)
     object WebsocketError : ErrorCode(1001)
     data class RedirectResponseError(val value: Int) : ErrorCode(value)
@@ -40,6 +41,7 @@ sealed class ErrorCode(val code: Int) {
                 4010 -> AttachmentNotSuccessfullyUploaded
                 4011 -> MessageTooLong
                 4020 -> MissingParameter
+                4029 -> RequestRateTooHigh
                 in 300..399 -> RedirectResponseError(value)
                 in 400..499 -> ClientResponseError(value)
                 in 500..599 -> ServerResponseError(value)

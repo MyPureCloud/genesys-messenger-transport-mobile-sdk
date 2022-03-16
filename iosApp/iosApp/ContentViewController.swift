@@ -277,7 +277,9 @@ extension ContentViewController : UITextFieldDelegate {
                 let image = UIImage(named: self.attachmentName)
                 guard let data = image?.pngData() as NSData? else { return }
                 self.byteArray = data.toByteArray()
-                self.info.text = "<loaded \(String(describing: self.byteArray?.count)) bytes>"
+                DispatchQueue.main.async {
+                    self.info.text = "<loaded \(String(describing: self.byteArray?.count)) bytes>"
+                }
             }
         case ("attach", _):
             if(byteArray != nil) {
@@ -299,7 +301,12 @@ extension ContentViewController : UITextFieldDelegate {
                 }
             }
         case ("detach", let attachId?):
-            client.detach(attachmentId: attachId)
+            do {
+                try client.detach(attachmentId: attachId)
+            } catch {
+                print(error)
+                self.info.text = "<\(error.localizedDescription)>"
+            }
         case ("deployment", _):
             MobileMessenger().fetchDeploymentConfig(domain: deployment.domain!, deploymentId: deployment.deploymentId!, logging: true,
                 completionHandler: { deploymentConfig, error in

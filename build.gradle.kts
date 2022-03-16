@@ -8,7 +8,7 @@ buildscript {
     }
     dependencies {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.30")
-        classpath("com.android.tools.build:gradle:7.1.0-alpha05")
+        classpath("com.android.tools.build:gradle:7.1.0")
         classpath("org.jmailen.gradle:kotlinter-gradle:3.4.0")
         classpath("com.vanniktech:gradle-android-junit-jacoco-plugin:0.16.0")
     }
@@ -26,10 +26,9 @@ plugins {
 }
 
 // CocoaPods requires the podspec to have a version.
-val envVersion = System.getenv("BUILD_VERSION") ?: "1.1"
-val buildNumber = System.getenv("BUILD_NUMBER") ?: "0"
+val buildVersion = "1.2.0"
 val snapshot = System.getenv("SNAPSHOT_BUILD") ?: ""
-version = "${envVersion}.${buildNumber}${snapshot}"
+version = "${buildVersion}${snapshot}"
 group = "cloud.genesys"
 
 nexusPublishing {

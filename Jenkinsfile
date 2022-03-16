@@ -96,6 +96,11 @@ pipeline{
                 sh './gradlew :transport:assembleMessengerTransportReleaseXCFramework'
             }
         }
+        stage("CI Build - CocoaPods podspec creation for publication"){
+            steps{
+                sh './gradlew :transport:generateGenesysCloudMessengerTransportPodspec'
+            }
+        }
     }
     post{
         success{
@@ -106,6 +111,8 @@ pipeline{
             emailext attachLog: false, body: "Build Job: ${BUILD_URL}", recipientProviders: [culprits(), requestor(), brokenBuildSuspects()], subject: "Build failed: ${JOB_NAME}-${BUILD_NUMBER}"
         }
         always{
+            archiveArtifacts 'transport/build/reports/tests/testReleaseUnitTest/**/*.html, transport/build/reports/tests/testReleaseUnitTest/**/*.js, transport/build/reports/tests/testReleaseUnitTest/**/*.css'
+            junit 'transport/build/test-results/testReleaseUnitTest/*.xml'
             cleanWs()
         }
     }

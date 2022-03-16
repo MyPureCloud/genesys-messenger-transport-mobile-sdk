@@ -1,0 +1,183 @@
+package com.genesys.cloud.messenger.transport.core
+
+import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
+import com.genesys.cloud.messenger.transport.core.Attachment.State.Detaching
+import com.genesys.cloud.messenger.transport.core.Attachment.State.Error
+import com.genesys.cloud.messenger.transport.core.Attachment.State.Presigning
+import com.genesys.cloud.messenger.transport.core.Attachment.State.Sending
+import com.genesys.cloud.messenger.transport.core.Attachment.State.Uploaded
+import com.genesys.cloud.messenger.transport.core.Attachment.State.Uploading
+import com.genesys.cloud.messenger.transport.network.WebMessagingApi
+import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
+import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
+import com.genesys.cloud.messenger.transport.util.logs.Log
+import io.ktor.client.features.ResponseException
+import io.ktor.http.ContentType
+import io.ktor.http.defaultForFilePath
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+
+internal class AttachmentHandlerImpl(
+    private val api: WebMessagingApi,
+    private val token: String,
+    private val log: Log,
+    private val updateAttachmentStateWith: (Attachment) -> Unit,
+    private val processedAttachments: MutableMap<String, ProcessedAttachment> = mutableMapOf()
+) : AttachmentHandler {
+    private val uploadDispatcher = CoroutineScope(Dispatchers.Main + SupervisorJob())
+
+    override fun prepare(
+        attachmentId: String,
+        byteArray: ByteArray,
+        fileName: String,
+        uploadProgress: ((Float) -> Unit)?,
+    ): OnAttachmentRequest {
+        Attachment(id = attachmentId, fileName = fileName, state = Presigning).also {
+            log.i { "Presigning attachment: $it" }
+            updateAttachmentStateWith(it)
+            processedAttachments[it.id] = ProcessedAttachment(
+                attachment = it,
+                byteArray = byteArray,
+                uploadProgress = uploadProgress,
+            )
+        }
+        return OnAttachmentRequest(
+            token,
+            attachmentId = attachmentId,
+            fileName = fileName,
+            fileType = ContentType.defaultForFilePath(fileName).toString(),
+            fileSize = byteArray.size,
+            errorsAsJson = true,
+        )
+    }
+
+    override fun upload(presignedUrlResponse: PresignedUrlResponse) {
+        processedAttachments[presignedUrlResponse.attachmentId]?.let {
+            log.i { "Uploading attachment: ${it.attachment}" }
+            it.attachment = it.attachment.copy(state = Uploading)
+                .also(updateAttachmentStateWith)
+            it.job = uploadDispatcher.launch {
+                try {
+                    api.uploadFile(presignedUrlResponse, it.byteArray, it.uploadProgress)
+                } catch (responseException: ResponseException) {
+                    onError(
+                        it.attachment.id,
+                        ErrorCode.mapFrom(responseException.response.status.value),
+                        responseException.message ?: "ResponseException during attachment upload"
+                    )
+                } catch (cancellationException: CancellationException) {
+                    log.w { "cancellationException during attachment upload: ${it.attachment}" }
+                }
+            }
+        }
+    }
+
+    override fun onUploadSuccess(uploadSuccessEvent: UploadSuccessEvent) {
+        processedAttachments[uploadSuccessEvent.attachmentId]?.let {
+            log.i { "Attachment uploaded: ${it.attachment}" }
+            it.attachment = it.attachment.copy(
+                state = Uploaded(uploadSuccessEvent.downloadUrl)
+            ).also(updateAttachmentStateWith)
+            it.job = null
+        }
+    }
+
+    override fun detach(attachmentId: String): DeleteAttachmentRequest? {
+        processedAttachments[attachmentId]?.let {
+            log.i { "Detaching attachment: $attachmentId" }
+            it.job?.cancel()
+            if (it.attachment.state is Uploaded) {
+                it.attachment =
+                    it.attachment.copy(state = Detaching).also(updateAttachmentStateWith)
+                return DeleteAttachmentRequest(
+                    token = token,
+                    attachmentId = attachmentId
+                )
+            } else {
+                onDetached(attachmentId)
+            }
+        }
+        return null
+    }
+
+    override fun onDetached(attachmentId: String) {
+        log.i { "Attachment detached: $attachmentId" }
+        processedAttachments.remove(attachmentId)?.let {
+            updateAttachmentStateWith(it.attachment.copy(state = Detached))
+        }
+    }
+
+    override fun onError(attachmentId: String, errorCode: ErrorCode, errorMessage: String) {
+        log.e { "Attachment error with id: $attachmentId. ErrorCode: $errorCode, errorMessage: $errorMessage" }
+        processedAttachments.remove(attachmentId)
+        updateAttachmentStateWith(Attachment(attachmentId, state = Error(errorCode, errorMessage)))
+    }
+
+    override fun onMessageError(code: ErrorCode, message: String?) {
+        processedAttachments.mapNotNull { it.value.takeSendingId() }.forEach {
+            onError(it, code, message ?: "")
+        }
+    }
+
+    override fun onSending() {
+        processedAttachments.forEach { entry ->
+            entry.value.takeUploaded()?.let {
+                log.i { "Sending attachment: ${it.attachment.id}" }
+                it.attachment = it.attachment.copy(state = Sending)
+                    .also(updateAttachmentStateWith)
+            }
+        }
+    }
+
+    override fun onSent(attachments: Map<String, Attachment>) {
+        log.i { "Attachments sent: $attachments" }
+        attachments.forEach { entry ->
+            processedAttachments.remove(entry.key)?.also {
+                updateAttachmentStateWith(entry.value)
+            }
+        }
+    }
+
+    override fun clearAll() = processedAttachments.clear()
+}
+
+internal class ProcessedAttachment(
+    var attachment: Attachment,
+    var byteArray: ByteArray,
+    var job: Job? = null,
+    val uploadProgress: ((Float) -> Unit)? = null,
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as ProcessedAttachment
+
+        if (attachment != other.attachment) return false
+        if (!byteArray.contentEquals(other.byteArray)) return false
+        if (job != other.job) return false
+        if (uploadProgress != other.uploadProgress) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = attachment.hashCode()
+        result = 31 * result + byteArray.contentHashCode()
+        result = 31 * result + (job?.hashCode() ?: 0)
+        result = 31 * result + (uploadProgress?.hashCode() ?: 0)
+        return result
+    }
+}
+
+private fun ProcessedAttachment.takeSendingId(): String? =
+    this.takeIf { it.attachment.state is Sending }?.attachment?.id
+
+private fun ProcessedAttachment.takeUploaded(): ProcessedAttachment? =
+    this.takeIf { it.attachment.state is Uploaded }

@@ -130,23 +130,14 @@ interface MessagingClient {
     ): String
 
     /**
-     * Detach file from message. If file was already uploaded
-     * or is uploading now - process will be stopped
-     * and [deleteAttachment] will be called.
+     * Detach file from message. If file was already uploaded it will be deleted.
+     * If file is uploading now - process will be stopped.
      *
      * @param attachmentId the ID of the attachment to remove
-     */
-    fun detach(attachmentId: String)
-
-    /**
-     * Attachments typically expire 72 hours after being uploaded. This method can be used to
-     * immediately delete the file prior to that expiration.
-     *
-     * @param attachmentId the ID of the attachment
-     * @throws IllegalStateException
+     * @throws IllegalStateException if called before session was connected.
      */
     @Throws(IllegalStateException::class)
-    fun deleteAttachment(attachmentId: String)
+    fun detach(attachmentId: String)
 
     /**
      * Get message history for a conversation.

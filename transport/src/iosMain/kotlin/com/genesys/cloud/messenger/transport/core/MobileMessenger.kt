@@ -26,13 +26,12 @@ object MobileMessenger {
         val token =
             TokenStoreImpl(configuration.tokenStoreKey, log.withTag(LogTag.TOKEN_STORE)).token
         val messageStore = MessageStore(token, log.withTag(LogTag.MESSAGE_STORE))
-        val attachmentHandler =
-            AttachmentHandler(
-                api,
-                token,
-                log.withTag(LogTag.ATTACHMENT_HANDLER),
-                messageStore.updateAttachmentStateWith,
-            )
+        val attachmentHandler = AttachmentHandlerImpl(
+            api,
+            token,
+            log.withTag(LogTag.ATTACHMENT_HANDLER),
+            messageStore.updateAttachmentStateWith,
+        )
         return MessagingClientImpl(
             api = api,
             log = log,
