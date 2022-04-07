@@ -66,9 +66,13 @@ For linting these Android Studio settings can assist.
 
 File -> Manage IDE Settings -> Import Settings -> `./android-studio-settings.zip` (repo root folder)
 
-### Xcode Version Dependency
+### Xcode
 
-Currently, Xcode 12 is required to build the iOS dependencies correctly. This KMM Application uses CocoaPods to manage its iOS dependencies. There is currently a known issue with Kotlin versions 1.5, CocoaPods for dependency management, and Xcode 13. This issue results in the execution of the cinterop tasks for the dependent pods producing a fatal `TaskExecutionException` as discovered here: https://kotlinlang.slack.com/archives/C3SGXARS6/p1635262123074100.
+Xcode 13 is required to build the iOS SDK. The recommended minimum version of Xcode is 13.3.
+
+### CocoaPods
+
+This project integrates with the CocoaPods dependency manager for the iOS platform. Please follow the instructions in the kotlinlang documentation to [Set up the environment to work with CocoaPods](https://kotlinlang.org/docs/native-cocoapods.html#set-up-the-environment-to-work-with-cocoapods).
 
 ### Region Code Generator
 
