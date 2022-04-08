@@ -72,7 +72,7 @@ Xcode 13 is required to build the iOS SDK. The recommended minimum version of Xc
 
 ### CocoaPods
 
-This project integrates with the CocoaPods dependency manager for the iOS platform. Please follow the instructions in the kotlinlang documentation to [Set up the environment to work with CocoaPods](https://kotlinlang.org/docs/native-cocoapods.html#set-up-the-environment-to-work-with-cocoapods).
+This project integrates with the [CocoaPods dependency manager](https://cocoapods.org) for the iOS platform and also uses the [cocoapods-generate](https://github.com/square/cocoapods-generate) plugin. Please follow the instructions in the kotlinlang documentation to [Set up the environment to work with CocoaPods](https://kotlinlang.org/docs/native-cocoapods.html#set-up-the-environment-to-work-with-cocoapods).
 
 ### Region Code Generator
 
