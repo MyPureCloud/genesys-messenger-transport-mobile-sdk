@@ -157,7 +157,7 @@ interface MessagingClient {
 
     /**
      * Reset current [conversation] and history request pagination index.
-     * Note! After calling thing function, [fetchNextPage] will request the
+     * Note! After calling this function, [fetchNextPage] will request the
      * latest available history.
      */
     fun clearConversation()
