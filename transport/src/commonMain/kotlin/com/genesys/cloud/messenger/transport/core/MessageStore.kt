@@ -97,6 +97,12 @@ internal class MessageStore(
             }
         }
     }
+
+    fun clearConversation() {
+        nextPage = 1
+        activeConversation.clear()
+        startOfConversation = false
+    }
 }
 
 /**
@@ -104,8 +110,8 @@ internal class MessageStore(
  */
 sealed class MessageEvent {
     /**
-     * Dispatched when new message is added to the conversation either by user or agent.
      *
+     * Dispatched when new message is added to the conversation either by user or agent.
      * @property message is the [Message] object with all the details.
      */
     class MessageInserted(val message: Message) : MessageEvent()

@@ -489,6 +489,15 @@ class MessagingClientImplTest {
         }
     }
 
+    @Test
+    fun whenResetConversation(){
+        subject.clearConversation()
+
+        verify {
+            mockMessageStore.clearConversation()
+        }
+    }
+
     private fun connectAndConfigure() {
         val sessionResponseMessage =
             """

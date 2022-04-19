@@ -98,6 +98,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "attach" -> doAttach()
             "detach" -> doDetach(components)
             "deployment" -> doDeployment()
+            "clearConversation" -> doClearConversation()
             else -> {
                 Log.e(TAG, "Invalid command")
                 withContext(Dispatchers.Main) {
@@ -191,6 +192,11 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         } catch (t: Throwable) {
             handleException(t, "detach")
         }
+    }
+
+    private suspend fun doClearConversation() {
+        client.clearConversation()
+        clearCommand()
     }
 
     private suspend fun onClientState(state: State) {
