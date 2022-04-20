@@ -311,7 +311,7 @@ internal class MessageStoreTest {
 
         assertFalse { subject.startOfConversation }
         assertTrue { subject.getConversation().isEmpty() }
-        assertThat (subject.nextPage).isEqualTo(expectedNextPage)
+        assertThat(subject.nextPage).isEqualTo(expectedNextPage)
     }
 
     private fun outboundMessage(messageId: Int = 0): Message = Message(
