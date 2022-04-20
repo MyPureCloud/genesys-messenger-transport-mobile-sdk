@@ -489,6 +489,15 @@ class MessagingClientImplTest {
         }
     }
 
+    @Test
+    fun whenInvalidateConversationCache() {
+        subject.invalidateConversationCache()
+
+        verify {
+            mockMessageStore.invalidateConversationCache()
+        }
+    }
+
     private fun connectAndConfigure() {
         val sessionResponseMessage =
             """

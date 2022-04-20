@@ -160,6 +160,11 @@ internal class MessagingClientImpl(
             }
     }
 
+    override fun invalidateConversationCache() {
+        log.i { "Clear conversation history." }
+        messageStore.invalidateConversationCache()
+    }
+
     private fun handleError(code: ErrorCode, message: String? = null) {
         when (code) {
             is ErrorCode.SessionHasExpired,

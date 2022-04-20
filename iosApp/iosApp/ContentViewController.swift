@@ -63,6 +63,7 @@ class ContentViewController: UIViewController {
             'deployment'
             'bye'
             'healthCheck'
+            'clearConversation'
         """
         view.font = UIFont.preferredFont(forTextStyle: .subheadline)
         return view
@@ -316,6 +317,8 @@ extension ContentViewController : UITextFieldDelegate {
                 }
                 self.info.text = "<\(deploymentConfig?.description() ?? "Unknown deployment config")>"
             })
+        case ("clearConversation", _):
+            client.invalidateConversationCache()
         default:
             break
         }
