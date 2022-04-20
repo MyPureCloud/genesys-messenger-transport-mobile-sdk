@@ -490,7 +490,7 @@ class MessagingClientImplTest {
     }
 
     @Test
-    fun whenResetConversation(){
+    fun whenInvalidateConversationCache(){
         subject.invalidateConversationCache()
 
         verify {

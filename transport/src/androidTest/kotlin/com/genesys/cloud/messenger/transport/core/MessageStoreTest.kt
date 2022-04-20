@@ -303,7 +303,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenResetConversationCalled() {
+    fun whenInvalidateConversationCache() {
         val expectedNextPage = 1
         subject.update(outboundMessage())
 
