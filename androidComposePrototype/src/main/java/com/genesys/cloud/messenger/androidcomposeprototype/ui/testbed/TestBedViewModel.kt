@@ -195,7 +195,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     }
 
     private suspend fun doClearConversation() {
-        client.clearConversation()
+        client.invalidateConversationCache()
         clearCommand()
     }
 

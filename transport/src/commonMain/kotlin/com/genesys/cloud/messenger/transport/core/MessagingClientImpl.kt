@@ -160,9 +160,9 @@ internal class MessagingClientImpl(
             }
     }
 
-    override fun clearConversation() {
+    override fun invalidateConversationCache() {
         log.i { "Clear conversation history." }
-        messageStore.clearConversation()
+        messageStore.invalidateConversationCache()
     }
 
     private fun handleError(code: ErrorCode, message: String? = null) {

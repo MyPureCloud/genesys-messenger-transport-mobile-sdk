@@ -491,10 +491,10 @@ class MessagingClientImplTest {
 
     @Test
     fun whenResetConversation(){
-        subject.clearConversation()
+        subject.invalidateConversationCache()
 
         verify {
-            mockMessageStore.clearConversation()
+            mockMessageStore.invalidateConversationCache()
         }
     }
 

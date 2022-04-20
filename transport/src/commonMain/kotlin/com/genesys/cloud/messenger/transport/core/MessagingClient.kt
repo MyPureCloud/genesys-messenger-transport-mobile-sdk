@@ -160,5 +160,5 @@ interface MessagingClient {
      * Note! After calling this function, [fetchNextPage] will request the
      * latest available history.
      */
-    fun clearConversation()
+    fun invalidateConversationCache()
 }

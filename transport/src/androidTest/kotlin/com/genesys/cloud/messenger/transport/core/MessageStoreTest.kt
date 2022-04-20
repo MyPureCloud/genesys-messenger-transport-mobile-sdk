@@ -307,7 +307,7 @@ internal class MessageStoreTest {
         val expectedNextPage = 1
         subject.update(outboundMessage())
 
-        subject.clearConversation()
+        subject.invalidateConversationCache()
 
         assertFalse { subject.startOfConversation }
         assertTrue { subject.getConversation().isEmpty() }

@@ -98,7 +98,7 @@ internal class MessageStore(
         }
     }
 
-    fun clearConversation() {
+    fun invalidateConversationCache() {
         nextPage = 1
         activeConversation.clear()
         startOfConversation = false

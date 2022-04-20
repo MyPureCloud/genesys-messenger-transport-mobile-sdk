@@ -318,7 +318,7 @@ extension ContentViewController : UITextFieldDelegate {
                 self.info.text = "<\(deploymentConfig?.description() ?? "Unknown deployment config")>"
             })
         case ("clearConversation", _):
-            client.clearConversation()
+            client.invalidateConversationCache()
         default:
             break
         }
