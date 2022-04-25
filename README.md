@@ -6,7 +6,7 @@
 
 ---
 
-The Messenger Transport SDK provides a library of methods for connecting to Genesys Cloud Messenger chat APIs and WebSockets from iOS and Android native applications. 
+The Messenger Transport SDK provides a library of methods for connecting to Genesys Cloud Web Messaging APIs and WebSockets from iOS and Android native applications. 
 
 ## Usage
 
