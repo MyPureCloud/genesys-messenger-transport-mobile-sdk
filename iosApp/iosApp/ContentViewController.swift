@@ -20,7 +20,10 @@ class ContentViewController: UIViewController {
 
     init(deployment: Deployment) {
         self.deployment = deployment
-        self.config = Configuration(deployment: deployment, tokenStoreKey: "com.genesys.cloud.messenger", logging: true)!
+        self.config = Configuration(deploymentId: deployment.deploymentId!,
+                                    domain: deployment.domain!,
+                                    tokenStoreKey: "com.genesys.cloud.messenger",
+                                    logging: true)
         self.client = MobileMessenger().createMessagingClient(configuration: self.config)
         super.init(nibName: nil, bundle: nil)
     }
