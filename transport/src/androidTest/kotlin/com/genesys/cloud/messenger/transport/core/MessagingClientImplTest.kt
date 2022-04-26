@@ -13,17 +13,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.logs.Log
-import io.mockk.Called
-import io.mockk.MockKVerificationScope
-import io.mockk.clearAllMocks
-import io.mockk.clearMocks
-import io.mockk.coEvery
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.slot
-import io.mockk.spyk
-import io.mockk.verify
-import io.mockk.verifySequence
+import io.mockk.*
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -283,6 +273,7 @@ class MessagingClientImplTest {
             mockAttachmentHandler.clearAll()
             mockPlatformSocket.closeSocket(expectedState.code, expectedState.reason)
             mockStateListener(expectedState)
+            mockMessageStore.invalidateConversationCache()
             mockAttachmentHandler.clearAll()
         }
     }
@@ -535,6 +526,7 @@ class MessagingClientImplTest {
         mockStateListener(MessagingClient.State.Closing(expectedCloseCode, expectedCloseReason))
         mockPlatformSocket.closeSocket(expectedCloseCode, expectedCloseReason)
         mockStateListener(MessagingClient.State.Closed(expectedCloseCode, expectedCloseReason))
+        mockMessageStore.invalidateConversationCache()
         mockAttachmentHandler.clearAll()
     }
 
