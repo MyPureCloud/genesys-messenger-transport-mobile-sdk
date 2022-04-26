@@ -265,6 +265,7 @@ internal class MessagingClientImpl(
         override fun onClosed(code: Int, reason: String) {
             log.i { "onClosed(code = $code, reason = $reason)" }
             currentState = State.Closed(code, reason)
+            invalidateConversationCache()
             attachmentHandler.clearAll()
         }
     }

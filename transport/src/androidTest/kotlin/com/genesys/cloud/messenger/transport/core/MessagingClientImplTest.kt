@@ -283,6 +283,7 @@ class MessagingClientImplTest {
             mockAttachmentHandler.clearAll()
             mockPlatformSocket.closeSocket(expectedState.code, expectedState.reason)
             mockStateListener(expectedState)
+            mockMessageStore.invalidateConversationCache()
             mockAttachmentHandler.clearAll()
         }
     }
@@ -535,6 +536,7 @@ class MessagingClientImplTest {
         mockStateListener(MessagingClient.State.Closing(expectedCloseCode, expectedCloseReason))
         mockPlatformSocket.closeSocket(expectedCloseCode, expectedCloseReason)
         mockStateListener(MessagingClient.State.Closed(expectedCloseCode, expectedCloseReason))
+        mockMessageStore.invalidateConversationCache()
         mockAttachmentHandler.clearAll()
     }
 
