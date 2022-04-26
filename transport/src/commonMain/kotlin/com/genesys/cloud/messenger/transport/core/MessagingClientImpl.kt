@@ -148,7 +148,7 @@ internal class MessagingClientImpl(
         checkConfigured()
         if (messageStore.startOfConversation) {
             log.i { "All history have been fetched." }
-            return
+            throw UnsupportedOperationException("All history have been fetched.")
         }
         log.i { "fetching history for page index = ${messageStore.nextPage}" }
         jwtHandler.withJwt { jwt -> api.getMessages(jwt, messageStore.nextPage) }
