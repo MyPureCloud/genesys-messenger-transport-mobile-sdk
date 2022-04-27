@@ -509,9 +509,14 @@ class MessagingClientImplTest {
     @Test
     fun whenFetchNextPageButAllHistoryWasAlreadyFetched() {
         every { mockMessageStore.startOfConversation } returns true
+        every { mockMessageStore.getConversation() } returns List(DEFAULT_PAGE_SIZE) { Message() }
         connectAndConfigure()
 
-        assertFailsWith<UnsupportedOperationException> { runBlocking { subject.fetchNextPage() } }
+        runBlocking { subject.fetchNextPage() }
+
+        verify {
+            mockMessageStore.updateMessageHistory(emptyList(), DEFAULT_PAGE_SIZE)
+        }
     }
 
     private fun connectAndConfigure() {
