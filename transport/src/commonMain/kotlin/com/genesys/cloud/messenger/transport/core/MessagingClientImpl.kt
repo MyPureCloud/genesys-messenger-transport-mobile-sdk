@@ -147,8 +147,8 @@ internal class MessagingClientImpl(
     override suspend fun fetchNextPage() {
         checkConfigured()
         if (messageStore.startOfConversation) {
-            log.i { "All history have been fetched." }
-            throw UnsupportedOperationException("All history have been fetched.")
+            log.i { "All history has been fetched." }
+            throw UnsupportedOperationException("All history has been fetched.")
         }
         log.i { "fetching history for page index = ${messageStore.nextPage}" }
         jwtHandler.withJwt { jwt -> api.getMessages(jwt, messageStore.nextPage) }
