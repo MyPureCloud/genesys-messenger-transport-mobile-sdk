@@ -147,7 +147,8 @@ internal class MessagingClientImpl(
     override suspend fun fetchNextPage() {
         checkConfigured()
         if (messageStore.startOfConversation) {
-            log.i { "All history have been fetched." }
+            log.i { "All history has been fetched." }
+            messageStore.updateMessageHistory(emptyList(), conversation.size)
             return
         }
         log.i { "fetching history for page index = ${messageStore.nextPage}" }
