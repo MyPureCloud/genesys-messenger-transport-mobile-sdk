@@ -25,7 +25,6 @@ import io.mockk.spyk
 import io.mockk.verify
 import io.mockk.verifySequence
 import kotlinx.coroutines.runBlocking
-import java.lang.UnsupportedOperationException
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
