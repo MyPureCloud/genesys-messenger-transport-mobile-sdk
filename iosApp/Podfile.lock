@@ -1,6 +1,6 @@
 PODS:
   - jetfire (0.1.5)
-  - transport (1.2.0):
+  - transport (1.2.1):
     - jetfire (~> 0.1.5)
 
 DEPENDENCIES:
@@ -16,8 +16,8 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   jetfire: 60c16cd6ae0282928e24203eb93f03b89c1929ce
-  transport: ad6a86f6fea10e917c233a23739992d215e779e9
+  transport: eaa915425d8932f920428919f946c4851db777dd
 
-PODFILE CHECKSUM: 5eac24c446a9287e8ab64ba98923743c10ec8982
+PODFILE CHECKSUM: 0d3d68df1031aef1b30e1776c3aa1ca0beb1f6f7
 
-COCOAPODS: 1.11.2
+COCOAPODS: 1.11.3

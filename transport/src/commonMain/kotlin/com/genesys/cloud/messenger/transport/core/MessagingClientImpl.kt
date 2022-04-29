@@ -147,7 +147,8 @@ internal class MessagingClientImpl(
     override suspend fun fetchNextPage() {
         checkConfigured()
         if (messageStore.startOfConversation) {
-            log.i { "All history have been fetched." }
+            log.i { "All history has been fetched." }
+            messageStore.updateMessageHistory(emptyList(), conversation.size)
             return
         }
         log.i { "fetching history for page index = ${messageStore.nextPage}" }
@@ -158,6 +159,11 @@ internal class MessagingClientImpl(
                     it.total,
                 )
             }
+    }
+
+    override fun invalidateConversationCache() {
+        log.i { "Clear conversation history." }
+        messageStore.invalidateConversationCache()
     }
 
     private fun handleError(code: ErrorCode, message: String? = null) {
@@ -260,6 +266,7 @@ internal class MessagingClientImpl(
         override fun onClosed(code: Int, reason: String) {
             log.i { "onClosed(code = $code, reason = $reason)" }
             currentState = State.Closed(code, reason)
+            invalidateConversationCache()
             attachmentHandler.clearAll()
         }
     }

@@ -302,6 +302,18 @@ internal class MessageStoreTest {
         verify { mockMessageListener wasNot Called }
     }
 
+    @Test
+    fun whenInvalidateConversationCache() {
+        val expectedNextPage = 1
+        subject.update(outboundMessage())
+
+        subject.invalidateConversationCache()
+
+        assertFalse { subject.startOfConversation }
+        assertTrue { subject.getConversation().isEmpty() }
+        assertThat(subject.nextPage).isEqualTo(expectedNextPage)
+    }
+
     private fun outboundMessage(messageId: Int = 0): Message = Message(
         id = "$messageId",
         direction = Message.Direction.Outbound,

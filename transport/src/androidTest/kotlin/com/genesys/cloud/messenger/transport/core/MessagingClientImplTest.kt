@@ -24,6 +24,7 @@ import io.mockk.slot
 import io.mockk.spyk
 import io.mockk.verify
 import io.mockk.verifySequence
+import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -283,6 +284,7 @@ class MessagingClientImplTest {
             mockAttachmentHandler.clearAll()
             mockPlatformSocket.closeSocket(expectedState.code, expectedState.reason)
             mockStateListener(expectedState)
+            mockMessageStore.invalidateConversationCache()
             mockAttachmentHandler.clearAll()
         }
     }
@@ -489,6 +491,33 @@ class MessagingClientImplTest {
         }
     }
 
+    @Test
+    fun whenInvalidateConversationCache() {
+        subject.invalidateConversationCache()
+
+        verify {
+            mockMessageStore.invalidateConversationCache()
+        }
+    }
+
+    @Test
+    fun whenFetchNextPageButClientIsNotConfigured() {
+        assertFailsWith<IllegalStateException> { runBlocking { subject.fetchNextPage() } }
+    }
+
+    @Test
+    fun whenFetchNextPageButAllHistoryWasAlreadyFetched() {
+        every { mockMessageStore.startOfConversation } returns true
+        every { mockMessageStore.getConversation() } returns List(DEFAULT_PAGE_SIZE) { Message() }
+        connectAndConfigure()
+
+        runBlocking { subject.fetchNextPage() }
+
+        verify {
+            mockMessageStore.updateMessageHistory(emptyList(), DEFAULT_PAGE_SIZE)
+        }
+    }
+
     private fun connectAndConfigure() {
         val sessionResponseMessage =
             """
@@ -521,11 +550,12 @@ class MessagingClientImplTest {
 
     private fun MockKVerificationScope.disconnectSequence(
         expectedCloseCode: Int = any(),
-        expectedCloseReason: String = any()
+        expectedCloseReason: String = any(),
     ) {
         mockStateListener(MessagingClient.State.Closing(expectedCloseCode, expectedCloseReason))
         mockPlatformSocket.closeSocket(expectedCloseCode, expectedCloseReason)
         mockStateListener(MessagingClient.State.Closed(expectedCloseCode, expectedCloseReason))
+        mockMessageStore.invalidateConversationCache()
         mockAttachmentHandler.clearAll()
     }
 

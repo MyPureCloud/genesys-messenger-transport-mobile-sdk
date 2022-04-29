@@ -154,4 +154,11 @@ interface MessagingClient {
      */
     @Throws(IllegalStateException::class)
     fun disconnect()
+
+    /**
+     * Reset current [conversation] and history request pagination index.
+     * Note! After calling this function, [fetchNextPage] will request the
+     * latest available history.
+     */
+    fun invalidateConversationCache()
 }
