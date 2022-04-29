@@ -48,10 +48,6 @@ CocoaPods will download and install the MessengerTransport pod and any necessary
 
 The `MessengerTransport` module may now be imported and used in your project.
 
-### Integrating with the SDK 
-
-See `com.genesys.cloud.messenger.transport.MessagingClient` for the interfaces exposed by the SDK.
-
 ## Documentation
 
 Detailed documentation for Messenger Transport, including how to use the SDK and how to contribute to the project, can be found on the [Wiki](https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/wiki).
