@@ -25,8 +25,8 @@ plugins {
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 }
 
-// CocoaPods requires the podspec to have a version.
-val buildVersion = "1.2.0"
+// CocoaPods requires the podspec to have a `version`.
+val buildVersion = "1.2.1"
 val snapshot = System.getenv("SNAPSHOT_BUILD") ?: ""
 version = "${buildVersion}${snapshot}"
 group = "cloud.genesys"
