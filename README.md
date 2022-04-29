@@ -6,22 +6,24 @@
 
 ---
 
-The Messenger Transport SDK provides a library of methods for connecting to Genesys Cloud Web Messaging APIs and WebSockets from Android and iOS native applications. 
+Genesys Cloud Messenger Transport SDK provides a library of methods for connecting to Genesys Cloud Web Messaging APIs and WebSockets from Android and iOS native applications. 
 
-## Usage
+## Installation
 
-To use the Messenger Transport SDK in an app, follow the installation instructions below for the appropriate platform.
+To import and install the Messenger Transport SDK in an app, follow the instructions below for the appropriate platform.
 
-### Android SDK Installation
+### Install Messenger Transport SDK on Android
+
+Messenger Transport supports versions of Android 21 and up.
 
 Add the following dependency to the `dependencies` section of your app's `build.gradle` file.
 ```
 implementation 'cloud.genesys:messenger-transport-mobile-sdk:<version>' 
 ```
 
-### iOS SDK Installation
+### Install Messenger Transport SDK on iOS
 
-The Messenger Transport SDK supports versions of iOS 11.0 and up.
+Messenger Transport SDK supports versions of iOS 11.0 and up.
 
 #### Installation with CocoaPods
 
@@ -38,52 +40,14 @@ end
 
 In a Terminal window, navigate to the project directory with your Podfile and Xcode project and run the CocoaPods install command:
 
-`$ pod install`
+```
+$ pod install
+```
 
 CocoaPods will download and install the MessengerTransport pod and any necessary dependencies.
 
 The `MessengerTransport` module may now be imported and used in your project.
 
-### Integrating with the SDK 
+## Documentation
 
-See `com.genesys.cloud.messenger.transport.MessagingClient` for the interfaces exposed by the SDK.
-
-## Development
-
-### Generating the deployment.properties file
-
-First rename the `deployment.properites.example`.
-
-```
-mv deployment.properties.example deployment.properties
-```
-
-Open the resultant file and replace the `INSERT_DEPLOYMENT_ID_HERE` with your deployment id from your messenger deployment.
-
-### Android Studio Settings
-
-For linting these Android Studio settings can assist.
-
-File -> Manage IDE Settings -> Import Settings -> `./android-studio-settings.zip` (repo root folder)
-
-### Xcode
-
-Xcode 13 is required to build the iOS SDK. The recommended minimum version of Xcode is 13.3.
-
-### CocoaPods
-
-This project integrates with the [CocoaPods dependency manager](https://cocoapods.org) for the iOS platform and also uses the [cocoapods-generate](https://github.com/square/cocoapods-generate) plugin. Please follow the instructions in the kotlinlang documentation to [Set up the environment to work with CocoaPods](https://kotlinlang.org/docs/native-cocoapods.html#set-up-the-environment-to-work-with-cocoapods).
-
-### Region Code Generator
-
-The `Region` enum is code-generated using the `generate-region.main.kts` Kotlin script. It's intended to be executed infrequently, manually, on an as-needed basis, whenever the available regions change, or the requirements of the `Region` class change.
-
-Using a code-generator with minimal automated adaptations for code style should make it easier for the user-facing snippet generator to produce consistent output, ie Region.PROD using the same input data from the service environment, allowing the mobile SDK to take advantage of type safety as much as possible.
-
-Pre-requisites:
-
-- Kotlin ([brew](https://formulae.brew.sh/formula/kotlin), [sdkman](https://sdkman.io/sdks#kotlin))
-
-```shell
-./generate-region.main.kts
-```
+Detailed documentation for Messenger Transport, including how to use the SDK and how to contribute to the project, can be found on the [Wiki](https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/wiki).
