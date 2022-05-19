@@ -8,7 +8,7 @@ buildscript {
     }
     dependencies {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.10")
-        classpath("com.android.tools.build:gradle:7.1.2")
+        classpath("com.android.tools.build:gradle:7.2.0")
         classpath("org.jmailen.gradle:kotlinter-gradle:3.4.0")
         classpath("com.vanniktech:gradle-android-junit-jacoco-plugin:0.16.0")
     }

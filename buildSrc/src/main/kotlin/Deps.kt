@@ -5,7 +5,7 @@ object Deps {
     private const val kermitVersion = "0.1.9"
     private const val kotlinxSerializationJsonVersion = "1.3.1"
     private const val kotlinxDateTimeVersion = "0.3.1"
-    private const val ktorVersion = "1.6.4"
+    private const val ktorVersion = "2.0.1"
     private const val logbackVersion = "1.2.10"
     private const val mockWebServerVersion = "4.9.0"
     private const val mockkVersion = "1.12.2"
@@ -43,13 +43,14 @@ object Deps {
 
         object Ktor {
             const val core = "io.ktor:ktor-client-core:$ktorVersion"
-            const val serialization = "io.ktor:ktor-client-serialization:$ktorVersion"
+            const val serialization = "io.ktor:ktor-serialization-kotlinx-json:$ktorVersion"
             const val json = "io.ktor:ktor-client-json:$ktorVersion"
             const val logging = "io.ktor:ktor-client-logging:$ktorVersion"
             const val loggingJvm = "io.ktor:ktor-client-logging-jvm:$ktorVersion"
             const val android = "io.ktor:ktor-client-android:$ktorVersion"
-            const val ios = "io.ktor:ktor-client-ios:$ktorVersion"
+            const val ios = "io.ktor:ktor-client-darwin:$ktorVersion"
             const val mock = "io.ktor:ktor-client-mock:$ktorVersion"
+            const val contentNegotiation = "io.ktor:ktor-client-content-negotiation:$ktorVersion"
         }
     }
 

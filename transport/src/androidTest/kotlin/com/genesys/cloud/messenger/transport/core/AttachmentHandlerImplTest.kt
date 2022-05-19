@@ -12,7 +12,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
-import io.ktor.client.features.ClientRequestException
+import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.request
 import io.ktor.http.HttpStatusCode
@@ -145,7 +145,7 @@ internal class AttachmentHandlerImplTest {
             id = givenAttachmentId,
             state = State.Error(
                 ErrorCode.ClientResponseError(404),
-                "Client request(http://someurl.com) invalid: 404 page not found. Text: \"something went wrong\""
+                "Client request( http://someurl.com) invalid: 404 page not found. Text: \"something went wrong\""
             )
         )
         givenPrepareCalled()

@@ -19,10 +19,6 @@ class TestBedFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View = ComposeView(requireContext()).apply {
         setViewContent(this)
-    }
-
-    override fun onResume() {
-        super.onResume()
         runBlocking {
             viewModel.init(requireContext())
         }

@@ -2,7 +2,7 @@ package com.genesys.cloud.messenger.transport.util.logs
 
 import co.touchlab.kermit.Kermit
 import co.touchlab.kermit.NSLogLogger
-import io.ktor.client.features.logging.Logger
+import io.ktor.client.plugins.logging.Logger
 
 internal actual class Log actual constructor(
     private val enableLogs: Boolean,

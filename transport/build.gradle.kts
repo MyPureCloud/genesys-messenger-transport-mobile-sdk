@@ -68,6 +68,7 @@ kotlin {
             binaries.framework {
                 baseName = iosFrameworkName
                 xcf.add(this)
+                binaryOptions["memoryModel"] = "experimental"
             }
         }
     }
@@ -97,10 +98,11 @@ kotlin {
                 implementation(Deps.Libs.Kotlinx.dateTime)
                 implementation(Deps.Libs.Ktor.core)
                 implementation(Deps.Libs.Ktor.serialization)
+                implementation(Deps.Libs.Ktor.contentNegotiation)
                 implementation(Deps.Libs.Ktor.json)
                 implementation(Deps.Libs.Ktor.logging)
                 implementation(Deps.Libs.logback)
-                api(Deps.Libs.kermit)
+                implementation(Deps.Libs.kermit)
             }
         }
         commonTest {

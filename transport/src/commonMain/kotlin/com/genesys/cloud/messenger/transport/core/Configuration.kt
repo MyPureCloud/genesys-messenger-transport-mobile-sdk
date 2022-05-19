@@ -2,6 +2,7 @@ package com.genesys.cloud.messenger.transport.core
 
 import io.ktor.http.URLBuilder
 import io.ktor.http.Url
+import io.ktor.http.path
 
 /**
  * @param deploymentId the ID of the deployment containing configuration and routing information.

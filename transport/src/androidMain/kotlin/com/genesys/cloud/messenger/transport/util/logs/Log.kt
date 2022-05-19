@@ -2,8 +2,8 @@ package com.genesys.cloud.messenger.transport.util.logs
 
 import co.touchlab.kermit.Kermit
 import co.touchlab.kermit.LogcatLogger
-import io.ktor.client.features.logging.Logger
-import io.ktor.client.features.logging.MessageLengthLimitingLogger
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.plugins.logging.MessageLengthLimitingLogger
 import okhttp3.logging.HttpLoggingInterceptor
 
 internal actual class Log actual constructor(
