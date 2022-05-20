@@ -12,12 +12,11 @@ class RegionConfigurationTest {
     fun itShouldGetWebSocketUrl() {
         val configuration = Configuration(
             deploymentId = "foo",
-            domain = Region.PROD.domain,
+            domain = "mypurecloud.com",
             tokenStoreKey = "tokenStoreKey"
         )
 
         val actual = configuration.webSocketUrl
-
         val expected = Url("wss://webmessaging.mypurecloud.com/v1?deploymentId=foo")
 
         assertThat(actual, "WebSocket URL").isEqualTo(expected)
@@ -27,12 +26,11 @@ class RegionConfigurationTest {
     fun itShouldGetApiBaseUrl() {
         val configuration = Configuration(
             deploymentId = "foo",
-            domain = Region.PROD.domain,
+            domain = "mypurecloud.com",
             tokenStoreKey = "tokenStoreKey"
         )
 
         val actual = configuration.apiBaseUrl
-
         val expected = Url("https://api.mypurecloud.com")
 
         assertThat(actual, "API Base URL").isEqualTo(expected)
@@ -42,12 +40,11 @@ class RegionConfigurationTest {
     fun itShouldGetDeploymentConfigUrl() {
         val configuration = Configuration(
             deploymentId = "foo",
-            domain = Region.PROD.domain,
+            domain = "mypurecloud.com",
             tokenStoreKey = "tokenStoreKey"
         )
 
         val actual = configuration.deploymentConfigUrl
-
         val expected = Url("https://api-cdn.mypurecloud.com/webdeployments/v1/deployments/foo/config.json")
 
         assertThat(actual, "Deployment config URL").isEqualTo(expected)
