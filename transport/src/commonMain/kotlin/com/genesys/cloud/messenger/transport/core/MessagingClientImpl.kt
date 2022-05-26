@@ -42,8 +42,10 @@ internal class MessagingClientImpl(
 
     override var currentState: State = State.Idle
         private set(value) {
-            field = value
-            stateListener?.invoke(value)
+            if (field != value) {
+                field = value
+                stateListener?.invoke(value)
+            }
         }
 
     override var stateListener: ((State) -> Unit)? = null

@@ -106,7 +106,7 @@ class ContentViewController: UIViewController {
 
         configureAutoLayout()
 
-        setupSocketListeners()
+        setupStateListener()
         setupMessageListener()
 
         NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { [weak self] notification in
@@ -155,29 +155,29 @@ class ContentViewController: UIViewController {
         content.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
     }
 
-    private func setupSocketListeners() {
+    private func setupStateListener() {
         client.stateListener = { [weak self] state in
             switch state {
             case _ as MessagingClientState.Connecting:
-                print("connecting state")
+                print("State Event: <connecting>")
                 self?.info.text = "<connecting>"
             case _ as MessagingClientState.Connected:
-                print("connected")
+                print("State Event: <connected>")
                 self?.info.text = "<connected>"
             case let configured as MessagingClientState.Configured:
-                print("Socket <configured>. connected: <\(configured.connected.description)> , newSession: <\(configured.newSession?.description ?? "nill")>")
-                self?.info.text = "Socket <configured>. connected: <\(configured.connected.description)> , newSession: <\(configured.newSession?.description ?? "nill")>"
+                print("State Event: <configured>. connected: <\(configured.connected.description)> , newSession: <\(configured.newSession?.description ?? "nill")>")
+                self?.info.text = "<configured>. connected: <\(configured.connected.description)> , newSession: <\(configured.newSession?.description ?? "nill")>"
             case let closing as MessagingClientState.Closing:
-                print("Socket <closing>. reason: <\(closing.reason.description)> , code: <\(closing.code.description)>")
-                self?.info.text = "Socket <closing>. reason: <\(closing.reason.description)> , code: <\(closing.code.description))>"
+                print("State Event: <closing>. reason: <\(closing.reason.description)> , code: <\(closing.code.description)>")
+                self?.info.text = "<closing>. reason: <\(closing.reason.description)> , code: <\(closing.code.description))>"
             case let closed as MessagingClientState.Closed:
-                print("Socket <closed>. reason: <\(closed.reason.description)> , code: <\(closed.code.description)>")
-                self?.info.text = "Socket <closed>. reason: <\(closed.reason.description)> , code: <\(closed.code.description)>"
+                print("State Event: <closed>. reason: <\(closed.reason.description)> , code: <\(closed.code.description)>")
+                self?.info.text = "<closed>. reason: <\(closed.reason.description)> , code: <\(closed.code.description)>"
             case let error as MessagingClientState.Error:
-                print("Socket <error>. code: <\(error.code.description)> , message: <\(error.message ?? "No message")>")
-                self?.info.text = "Socket <error>. code: <\(error.code.description)> , message: <\(error.message ?? "No message")>"
+                print("State Event: <error>. code: <\(error.code.description)> , message: <\(error.message ?? "No message")>")
+                self?.info.text = "<error>. code: <\(error.code.description)> , message: <\(error.message ?? "No message")>"
             default:
-                print("Unexpected stateListener state: \(state)")
+                print("State Event: Unexpected stateListener state: \(state)")
             }
         }
     }

@@ -11,9 +11,9 @@ Pod::Spec.new do |spec|
     spec.libraries                = "c++"
     spec.module_name              = "#{spec.name}_umbrella"
 
-    spec.ios.deployment_target = '11.0'
+    spec.ios.deployment_target = '13.0'
 
-    spec.dependency 'jetfire', '~> 0.1.5'
+                
 
     spec.pod_target_xcconfig = {
         'KOTLIN_PROJECT_PATH' => ':transport',
