@@ -11,20 +11,14 @@ import MessengerTransport
 
 class ContentViewController: UIViewController {
 
-    private let client: MessagingClient
-    private let deployment: Deployment
-    let config: Configuration
+    let messenger: MessengerHandler
     private var attachImageName = ""
     private let attachmentName = "image"
     private var byteArray: [UInt8]? = nil
 
     init(deployment: Deployment) {
-        self.deployment = deployment
-        self.config = Configuration(deploymentId: deployment.deploymentId!,
-                                    domain: deployment.domain!,
-                                    tokenStoreKey: "com.genesys.cloud.messenger",
-                                    logging: true)
-        self.client = MobileMessenger().createMessagingClient(configuration: self.config)
+        self.messenger = MessengerHandler(deployment: deployment)
+        messenger.setOutputLabel(outputLabel: info)
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -106,8 +100,8 @@ class ContentViewController: UIViewController {
 
         configureAutoLayout()
 
-        setupSocketListeners()
-        setupMessageListener()
+        messenger.setupSocketListeners()
+        messenger.setupMessageListener()
 
         NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { [weak self] notification in
             guard let self = self,
@@ -155,68 +149,6 @@ class ContentViewController: UIViewController {
         content.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
     }
 
-    private func setupSocketListeners() {
-        client.stateListener = { [weak self] state in
-            switch state {
-            case _ as MessagingClientState.Connecting:
-                print("connecting state")
-                self?.info.text = "<connecting>"
-            case _ as MessagingClientState.Connected:
-                print("connected")
-                self?.info.text = "<connected>"
-            case let configured as MessagingClientState.Configured:
-                print("Socket <configured>. connected: <\(configured.connected.description)> , newSession: <\(configured.newSession?.description ?? "nill")>")
-                self?.info.text = "Socket <configured>. connected: <\(configured.connected.description)> , newSession: <\(configured.newSession?.description ?? "nill")>"
-            case let closing as MessagingClientState.Closing:
-                print("Socket <closing>. reason: <\(closing.reason.description)> , code: <\(closing.code.description)>")
-                self?.info.text = "Socket <closing>. reason: <\(closing.reason.description)> , code: <\(closing.code.description))>"
-            case let closed as MessagingClientState.Closed:
-                print("Socket <closed>. reason: <\(closed.reason.description)> , code: <\(closed.code.description)>")
-                self?.info.text = "Socket <closed>. reason: <\(closed.reason.description)> , code: <\(closed.code.description)>"
-            case let error as MessagingClientState.Error:
-                print("Socket <error>. code: <\(error.code.description)> , message: <\(error.message ?? "No message")>")
-                self?.info.text = "Socket <error>. code: <\(error.code.description)> , message: <\(error.message ?? "No message")>"
-            default:
-                print("Unexpected stateListener state: \(state)")
-            }
-        }
-    }
-    
-    private func setupMessageListener() {
-        client.messageListener = { [weak self] event in
-            switch event {
-            case let messageInserted as MessageEvent.MessageInserted:
-                self?.info.text = "Message Inserted: <\(messageInserted.message.description)>"
-            case let messageUpdated as MessageEvent.MessageUpdated:
-                self?.info.text = "Message Updated: <\(messageUpdated.message.description)>"
-            case let attachmentUpdated as MessageEvent.AttachmentUpdated:
-                self?.info.text = "Attachment Updated: <\(attachmentUpdated.attachment.description)>"
-            case let history as MessageEvent.HistoryFetched:
-                self?.info.text = "start of conversation: <\(history.startOfConversation.description)>, messages: <\(history.messages.description)> "
-            default:
-                print("Unexpected messageListener event: \(event)")
-            }
-        }        
-    }
-
-    private func connect() {
-        do {
-            try client.connect()
-        } catch {
-            print(error)
-            info.text = "<\(error.localizedDescription)>"
-        }
-    }
-
-    private func disconnect() {
-        do {
-            try client.disconnect()
-        } catch {
-            print(error)
-            info.text = "<\(error.localizedDescription)>"
-        }
-    }
-
     private func splitUserInput(_ input: String) -> (String?, String?) {
         let segments = input.split(separator: " ", maxSplits: 1)
         guard !segments.isEmpty else {
@@ -244,37 +176,17 @@ extension ContentViewController : UITextFieldDelegate {
 
         switch userInput {
         case ("connect", _):
-            connect()
+            messenger.connect()
         case ("bye", _):
-            disconnect()
+            messenger.disconnect()
         case ("configure", _):
-            do {
-                try client.configureSession()
-            } catch {
-                print(error)
-                self.info.text = "<\(error.localizedDescription)>"
-            }
+            messenger.configureSession()
         case ("send", let msg?):
-            do {
-                try client.sendMessage(text: msg.trimmingCharacters(in: .whitespaces))
-            } catch {
-                print(error)
-                self.info.text = "<\(error.localizedDescription)>"
-            }
+            messenger.sendMessage(text: msg.trimmingCharacters(in: .whitespaces))
         case ("history", _):
-            client.fetchNextPage() {_, error in
-                if let error = error {
-                    self.info.text = "<\(error.localizedDescription)>"
-                    return
-                }
-            }
+            messenger.fetchNextPage()
         case ("healthCheck", _):
-            do {
-                try client.sendHealthCheck()
-            } catch {
-                print(error)
-                self.info.text = "<\(error.localizedDescription)>"
-            }
+            messenger.sendHealthCheck()
         case ("selectAttachment", _):
             attachImageName = attachmentName
             DispatchQueue.global().async {
@@ -295,33 +207,14 @@ extension ContentViewController : UITextFieldDelegate {
                     kotlinByteArray.set(index: Int32(index), value: element)
                 }
 
-                do {
-                    try client.attach(byteArray: kotlinByteArray, fileName: "image.png", uploadProgress: { progress in
-                        print("Attachment upload progress: \(progress)")
-                    })
-                } catch {
-                    print(error)
-                    self.info.text = "<\(error.localizedDescription)>"
-                }
+                messenger.attachImage(kotlinByteArray: kotlinByteArray)
             }
         case ("detach", let attachId?):
-            do {
-                try client.detach(attachmentId: attachId)
-            } catch {
-                print(error)
-                self.info.text = "<\(error.localizedDescription)>"
-            }
+            messenger.detachImage(attachId: attachId)
         case ("deployment", _):
-            MobileMessenger().fetchDeploymentConfig(domain: deployment.domain!, deploymentId: deployment.deploymentId!, logging: true,
-                completionHandler: { deploymentConfig, error in
-                if let error = error {
-                    self.info.text = "<\(error.localizedDescription)>"
-                    return
-                }
-                self.info.text = "<\(deploymentConfig?.description() ?? "Unknown deployment config")>"
-            })
+            messenger.fetchDeployment()
         case ("clearConversation", _):
-            client.invalidateConversationCache()
+            messenger.clearConversation()
         default:
             break
         }

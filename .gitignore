@@ -8,6 +8,7 @@ build
 *.iml
 local.properties
 !.jenkins/local.properties
+iosApp/iosAppTests/config.json
 
 # Xcode
 #
