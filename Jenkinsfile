@@ -87,6 +87,8 @@ pipeline{
                     fi
                     cd iosApp
                     pod install --verbose
+		             pod update --verbose
+		             touch iosAppTests/config.json
                     xcodebuild clean build -verbose -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug CODE_SIGNING_ALLOWED=NO EXCLUDED_ARCHS=armv7
                 '''
             }
