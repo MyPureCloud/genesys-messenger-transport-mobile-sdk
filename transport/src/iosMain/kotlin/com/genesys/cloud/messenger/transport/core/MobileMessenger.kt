@@ -42,7 +42,7 @@ object MobileMessenger {
             jwtHandler = JwtHandler(webSocket, token),
             attachmentHandler = attachmentHandler,
             messageStore = messageStore,
-            networkMonitor = NetworkMonitor(),
+            networkMonitor = NetworkMonitor(log.withTag(LogTag.NETWORK_MONITOR)),
         )
     }
 

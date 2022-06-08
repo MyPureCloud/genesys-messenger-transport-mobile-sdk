@@ -13,12 +13,12 @@ internal actual class NetworkMonitor(val context: Context) {
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
             Log.d("Connectivity status", "Connected")
-            networkStateListener?.onStateChanged(NetworkState.Connected)
+            networkStateListener?.onStateChanged(NetworkState.Available)
         }
 
         override fun onLost(network: Network) {
             Log.d("Connectivity status", "Disconnected")
-            networkStateListener?.onStateChanged(NetworkState.Disconnected)
+            networkStateListener?.onStateChanged(NetworkState.Unavailable)
         }
     }
 
@@ -34,7 +34,7 @@ internal actual class NetworkMonitor(val context: Context) {
                 connectivityManager.registerDefaultNetworkCallback(networkCallback)
                 val currentNetwork = connectivityManager.activeNetwork
                 if (currentNetwork == null) {
-                    networkStateListener?.onStateChanged(NetworkState.Disconnected)
+                    networkStateListener?.onStateChanged(NetworkState.Unavailable)
                     Log.d("Connectivity status", "Disconnected")
                 }
             } else {
@@ -42,7 +42,7 @@ internal actual class NetworkMonitor(val context: Context) {
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            networkStateListener?.onStateChanged(NetworkState.Disconnected)
+            networkStateListener?.onStateChanged(NetworkState.Unavailable)
         }
     }
 

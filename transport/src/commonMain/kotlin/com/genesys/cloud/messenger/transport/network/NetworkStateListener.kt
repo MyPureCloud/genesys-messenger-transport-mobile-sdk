@@ -6,6 +6,6 @@ internal interface NetworkStateListener {
 }
 
 internal enum class NetworkState {
-    Connected,
-    Disconnected,
+    Available,
+    Unavailable,
 }
