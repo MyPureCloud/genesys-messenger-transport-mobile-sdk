@@ -48,7 +48,7 @@ internal class MessagingClientImpl(
     init {
         val networkStateListener = object : NetworkStateListener {
             override fun onStateChanged(state: NetworkState) {
-                log.e { "Network state changed to: $state" }
+                log.i { "Network state changed to: $state" }
             }
         }
         networkMonitor.setNetworkStateListener(networkStateListener)
