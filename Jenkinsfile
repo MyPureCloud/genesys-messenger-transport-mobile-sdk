@@ -85,10 +85,12 @@ pipeline{
                       echo "deploymentId=${DEPLOYMENT_ID}" >> deployment.properties
                       echo "deploymentDomain=${DEPLOYMENT_DOMAIN}" >> deployment.properties
                     fi
+			./gradlew -p "transport" :transport:syncFramework \
+                    -Pkotlin.native.cocoapods.platform=iphoneos\
+                    -Pkotlin.native.cocoapods.archs="arm64" \
+                    -Pkotlin.native.cocoapods.configuration=Debug
                     cd iosApp
 		             touch iosAppTests/config.json
-                    pod install --verbose
-		             pod update --verbose
                     pod install --verbose
                     xcodebuild clean build -verbose -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug CODE_SIGNING_ALLOWED=NO EXCLUDED_ARCHS=armv7
                 '''
