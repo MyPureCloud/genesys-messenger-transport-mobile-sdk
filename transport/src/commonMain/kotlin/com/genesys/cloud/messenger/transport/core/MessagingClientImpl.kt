@@ -1,6 +1,9 @@
 package com.genesys.cloud.messenger.transport.core
 
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
+import com.genesys.cloud.messenger.transport.network.NetworkMonitor
+import com.genesys.cloud.messenger.transport.network.NetworkStateListener
+import com.genesys.cloud.messenger.transport.network.NetworkState
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.SocketCloseCode
@@ -38,7 +41,19 @@ internal class MessagingClientImpl(
     private val token: String,
     private val attachmentHandler: AttachmentHandler,
     private val messageStore: MessageStore,
-) : MessagingClient {
+    networkMonitor: NetworkMonitor,
+
+    ) : MessagingClient {
+
+    init {
+        val networkStateListener = object : NetworkStateListener {
+            override fun onStateChanged(state: NetworkState) {
+                log.i { "Network state changed to: $state" }
+            }
+        }
+        networkMonitor.setNetworkStateListener(networkStateListener)
+        networkMonitor.start()
+    }
 
     override var currentState: State = State.Idle
         private set(value) {
