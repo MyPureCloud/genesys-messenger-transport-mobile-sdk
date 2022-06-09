@@ -2,6 +2,7 @@ package com.genesys.cloud.messenger.transport.network
 
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import platform.Network.nw_path_get_status
+import platform.Network.nw_path_is_equal
 import platform.Network.nw_path_monitor_cancel
 import platform.Network.nw_path_monitor_create
 import platform.Network.nw_path_monitor_set_queue
@@ -22,6 +23,7 @@ internal actual class NetworkMonitor(
 
     private var networkStateListener: NetworkStateListener? = null
     private var networkPathMonitor: nw_path_monitor_t = null
+    private var currentPath: nw_path_t = null
 
     actual fun setNetworkStateListener(networkStateListener: NetworkStateListener) {
         this.networkStateListener = networkStateListener
@@ -31,6 +33,10 @@ internal actual class NetworkMonitor(
         val updateHandler = object : nw_path_monitor_update_handler_t {
             override fun invoke(path: nw_path_t) {
                 log.i { "Network update: $path" }
+                if (!nw_path_is_equal(path, currentPath)) {
+                    currentPath = path
+                }
+
                 when (nw_path_get_status(path)) {
                     nw_path_status_satisfied -> {
                         // The path is available to establish connections and send data.
@@ -66,6 +72,7 @@ internal actual class NetworkMonitor(
 
     actual fun stop() {
         networkStateListener = null
+        currentPath = null
         nw_path_monitor_cancel(networkPathMonitor)
     }
 

@@ -60,4 +60,8 @@ internal actual class PlatformSocket actual constructor(
         log.i { "sendMessage(text = $text)" }
         webSocket?.send(text)
     }
+
+    actual fun sendPing() {
+        //TODO: can this be done with OkHttp websocket?
+    }
 }

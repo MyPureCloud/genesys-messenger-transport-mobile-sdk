@@ -20,4 +20,5 @@ internal expect class PlatformSocket(
     fun openSocket(listener: PlatformSocketListener)
     fun closeSocket(code: Int, reason: String)
     fun sendMessage(text: String)
+    fun sendPing()
 }

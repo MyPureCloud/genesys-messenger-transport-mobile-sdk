@@ -49,6 +49,9 @@ internal class MessagingClientImpl(
         val networkStateListener = object : NetworkStateListener {
             override fun onStateChanged(state: NetworkState) {
                 log.i { "Network state changed to: $state" }
+                if (state == NetworkState.Available) {
+                    webSocket.sendPing()
+                }
             }
         }
         networkMonitor.setNetworkStateListener(networkStateListener)

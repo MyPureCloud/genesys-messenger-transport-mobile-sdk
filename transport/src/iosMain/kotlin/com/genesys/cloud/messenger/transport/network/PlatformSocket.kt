@@ -7,7 +7,6 @@ import platform.Foundation.NSData
 import platform.Foundation.NSHTTPURLResponse
 import platform.Foundation.NSMutableURLRequest
 import platform.Foundation.NSOperationQueue
-import platform.Foundation.NSPOSIXErrorDomain
 import platform.Foundation.NSTimer
 import platform.Foundation.NSURL
 import platform.Foundation.NSURLRequest
@@ -73,6 +72,17 @@ internal actual class PlatformSocket actual constructor(
         webSocket = null
     }
 
+    actual fun sendPing() {
+        log.i { "sending ping" }
+        webSocket?.sendPingWithPongReceiveHandler { nsError ->
+            if (nsError != null) {
+                log.e { "received pong error: ${nsError.description}" ?: "Unknown pong error" }
+            } else {
+                log.i { "received pong" }
+            }
+        }
+    }
+
     private fun schedulePings() {
         if (pingTimer == null && pingInterval > 0) {
             pingTimer = NSTimer.scheduledTimerWithTimeInterval(
@@ -80,13 +90,7 @@ internal actual class PlatformSocket actual constructor(
                 repeats = true
             ) {
                 it?.let {
-                    log.i { "sending ping" }
-                    webSocket?.sendPingWithPongReceiveHandler { nsError ->
-                        log.i { "received pong" }
-                        if (nsError != null) {
-                            log.e { nsError.description ?: "Unknown pong error" }
-                        }
-                    }
+                    sendPing()
                 }
             }
         }
