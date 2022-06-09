@@ -5,6 +5,7 @@ import assertk.assertions.containsExactly
 import assertk.assertions.containsOnly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
+import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import io.mockk.Called
@@ -45,6 +46,7 @@ internal class MessageStoreTest {
             assertEquals(expectedOnMessageRequest.token, token)
             assertEquals(expectedOnMessageRequest.message, message)
             assertNull(time)
+            assertNull(channel)
         }
 
         assertEquals(expectedMessage, subject.getConversation()[0])
@@ -312,6 +314,35 @@ internal class MessageStoreTest {
         assertFalse { subject.startOfConversation }
         assertTrue { subject.getConversation().isEmpty() }
         assertThat(subject.nextPage).isEqualTo(expectedNextPage)
+    }
+
+    @Test
+    fun whenPrepareMessageWithCustomAttributes() {
+        val expectedMessage =
+            subject.pendingMessage.copy(state = Message.State.Sending, text = "test message")
+        val expectedOnMessageRequest = OnMessageRequest(
+            givenToken,
+            message = TextMessage(
+                "test message",
+                metadata = mapOf("customMessageId" to expectedMessage.id)
+            ),
+            channel = Channel(Channel.Metadata(mapOf("A" to "B")))
+        )
+
+        subject.prepareMessage("test message", mapOf("A" to "B")).run {
+            assertEquals(expectedOnMessageRequest.token, token)
+            assertEquals(expectedOnMessageRequest.message, message)
+            assertEquals(expectedOnMessageRequest.channel, channel)
+            assertNull(time)
+        }
+
+        assertEquals(expectedMessage, subject.getConversation()[0])
+        assertNotEquals(expectedMessage.id, subject.pendingMessage.id)
+        verify { mockMessageListener(capture(messageSlot)) }
+        assertEquals(
+            expectedMessage,
+            (messageSlot.captured as MessageEvent.MessageInserted).message
+        )
     }
 
     private fun outboundMessage(messageId: Int = 0): Message = Message(

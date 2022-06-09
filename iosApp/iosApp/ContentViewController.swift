@@ -17,6 +17,7 @@ class ContentViewController: UIViewController {
     private var attachImageName = ""
     private let attachmentName = "image"
     private var byteArray: [UInt8]? = nil
+    private var customAttributes: [String: String] = [:]
 
     init(deployment: Deployment) {
         self.deployment = deployment
@@ -67,6 +68,7 @@ class ContentViewController: UIViewController {
             'bye'
             'healthCheck'
             'clearConversation'
+            'addAttribute <key> <value>'
         """
         view.font = UIFont.preferredFont(forTextStyle: .subheadline)
         return view
@@ -256,7 +258,8 @@ extension ContentViewController : UITextFieldDelegate {
             }
         case ("send", let msg?):
             do {
-                try client.sendMessage(text: msg.trimmingCharacters(in: .whitespaces))
+                try client.sendMessage(text: msg.trimmingCharacters(in: .whitespaces), customAttributes: customAttributes)
+                customAttributes = [:]
             } catch {
                 print(error)
                 self.info.text = "<\(error.localizedDescription)>"
@@ -322,6 +325,15 @@ extension ContentViewController : UITextFieldDelegate {
             })
         case ("clearConversation", _):
             client.invalidateConversationCache()
+        case ("addAttribute", let msg?):
+            let segments = splitUserInput(msg)
+            if((segments.0?.isEmpty) == nil) {
+                self.info.text = "Custom attribute key can not be null or empty!"
+            } else {
+                customAttributes[segments.0!] = segments.1
+                self.info.text =  "Custom attribute added: \(segments)"
+            }
+ 
         default:
             break
         }

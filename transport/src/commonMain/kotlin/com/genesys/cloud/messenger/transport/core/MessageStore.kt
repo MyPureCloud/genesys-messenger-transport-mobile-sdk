@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
 import com.genesys.cloud.messenger.transport.core.Message.Direction
+import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.extensions.getUploadedAttachments
@@ -22,20 +23,26 @@ internal class MessageStore(
     val updateAttachmentStateWith = { attachment: Attachment -> update(attachment) }
     var messageListener: ((MessageEvent) -> Unit)? = null
 
-    fun prepareMessage(text: String): OnMessageRequest {
+    fun prepareMessage(
+        text: String,
+        customAttributes: Map<String, String> = emptyMap(),
+    ): OnMessageRequest {
         val messageToSend = pendingMessage.copy(text = text, state = Message.State.Sending).also {
             log.i { "Message prepared to send: $it" }
             activeConversation.add(it)
             messageListener?.invoke(MessageEvent.MessageInserted(it))
             pendingMessage = Message()
         }
+        val channel =
+            if (customAttributes.isNotEmpty()) Channel(Channel.Metadata(customAttributes)) else null
         return OnMessageRequest(
             token = token,
             message = TextMessage(
                 text,
                 metadata = mapOf("customMessageId" to messageToSend.id),
                 content = messageToSend.getUploadedAttachments()
-            )
+            ),
+            channel = channel,
         )
     }
 

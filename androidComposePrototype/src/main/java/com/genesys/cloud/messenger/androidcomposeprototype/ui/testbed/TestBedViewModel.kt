@@ -47,6 +47,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         private set
 
     val regions = listOf("inindca")
+    private val customAttributes = mutableMapOf<String, String>()
 
     suspend fun init(context: Context) {
         val mmsdkConfiguration = Configuration(
@@ -88,17 +89,20 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             commandWaiting = true
         }
         val components = command.split(" ", limit = 2)
-        when (components.firstOrNull()) {
+        val command = components.firstOrNull()
+        val input = components.getOrNull(1) ?: ""
+        when (command) {
             "connect" -> doConnect()
             "bye" -> doDisconnect()
             "configure" -> doConfigureSession()
-            "send" -> doSendMessage(components)
+            "send" -> doSendMessage(input)
             "history" -> fetchNextPage()
             "healthCheck" -> doSendHealthCheck()
             "attach" -> doAttach()
-            "detach" -> doDetach(components)
+            "detach" -> doDetach(input)
             "deployment" -> doDeployment()
             "clearConversation" -> doClearConversation()
+            "addAttribute" -> doAddCustomAttributes(input)
             else -> {
                 Log.e(TAG, "Invalid command")
                 withContext(Dispatchers.Main) {
@@ -146,10 +150,10 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun doSendMessage(components: List<String>) {
+    private suspend fun doSendMessage(message: String) {
         try {
-            val message = components.getOrNull(1) ?: ""
-            client.sendMessage(message)
+            client.sendMessage(message, customAttributes = customAttributes)
+            customAttributes.clear()
         } catch (t: Throwable) {
             handleException(t, "send message")
         }
@@ -185,9 +189,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun doDetach(components: List<String>) {
+    private suspend fun doDetach(attachmentId: String) {
         try {
-            val attachmentId = components.getOrNull(1) ?: ""
             client.detach(attachmentId)
         } catch (t: Throwable) {
             handleException(t, "detach")
@@ -197,6 +200,18 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     private suspend fun doClearConversation() {
         client.invalidateConversationCache()
         clearCommand()
+    }
+
+    private suspend fun doAddCustomAttributes(customAttributes: String) {
+        clearCommand()
+        val keyValue = customAttributes.toKeyValuePair()
+        val consoleMessage = if (keyValue.first.isNotEmpty()) {
+            this.customAttributes[keyValue.first] = keyValue.second
+            "Custom attribute added: $keyValue"
+        } else {
+            "Custom attribute key can not be null or empty!"
+        }
+        onSocketMessageReceived(consoleMessage)
     }
 
     private suspend fun onClientState(state: State) {
@@ -258,5 +273,13 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         launch {
             onSocketMessageReceived(eventMessage)
         }
+    }
+}
+
+private fun String.toKeyValuePair(): Pair<String, String> {
+    return this.split(" ", limit = 2).run {
+        val key = firstOrNull() ?: ""
+        val value = getOrNull(1) ?: ""
+        Pair(key, value)
     }
 }
