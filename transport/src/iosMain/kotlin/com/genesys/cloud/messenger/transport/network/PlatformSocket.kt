@@ -55,6 +55,7 @@ internal actual class PlatformSocket actual constructor(
                     reason: NSData?
                 ) {
                     listener.onClosed(didCloseWithCode.toInt(), reason.toString())
+                    cleanup()
                 }
             },
             delegateQueue = NSOperationQueue.currentQueue()
@@ -106,6 +107,7 @@ internal actual class PlatformSocket actual constructor(
             when {
                 nsError != null -> {
                     listener.onFailure(Throwable(nsError.description))
+                    cleanup()
                     return@receiveMessageWithCompletionHandler
                 }
                 message != null -> {
@@ -119,10 +121,6 @@ internal actual class PlatformSocket actual constructor(
     actual fun closeSocket(code: Int, reason: String) {
         log.i { "closeSocket(code = $code, reason = $reason)" }
         webSocket?.cancelWithCloseCode(code.toLong(), null)
-        // there are sometimes states, like if the app is backgrounded and resumed, where the socket may have already closed without invoking the didCloseWithCode delegate and future calls to cancel the socket don't invoke it either
-        // so call the onClosed listener callback here?
-        listener?.onClosed(code, reason)
-        cleanup()
     }
 
     actual fun sendMessage(text: String) {

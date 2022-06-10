@@ -42,7 +42,6 @@ internal class MessagingClientImpl(
     private val attachmentHandler: AttachmentHandler,
     private val messageStore: MessageStore,
     networkMonitor: NetworkMonitor,
-
     ) : MessagingClient {
 
     init {
@@ -83,7 +82,7 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun connect() {
         log.i { "connect()" }
-        check(currentState is State.Closed || currentState is State.Idle || currentState is State.Error) { "MessagingClient must be in closed, idle or error state" }
+        check(currentState is State.Closed || currentState is State.Idle || currentState is State.Error) { "MessagingClient must be in closed, idle or error" }
         currentState = State.Connecting
         webSocket.openSocket(socketListener)
     }
@@ -91,7 +90,7 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun disconnect() {
         log.i { "disconnect()" }
-        check(currentState !is State.Closed && currentState !is State.Idle) { "MessagingClient must not already be closed or idle" }
+        check(currentState !is State.Closed && currentState !is State.Idle && currentState !is State.Error) { "MessagingClient must not already be closed, idle or error" }
         val code = SocketCloseCode.NORMAL_CLOSURE.value
         val reason = "The user has closed the connection."
         currentState = State.Closing(code, reason)
@@ -160,7 +159,6 @@ internal class MessagingClientImpl(
 
     private fun send(message: String) {
         checkConfigured()
-        log.i { "Will send message" }
         webSocket.sendMessage(message)
     }
 
@@ -217,7 +215,6 @@ internal class MessagingClientImpl(
             log.e(throwable = t) { "onFailure(message: ${t.message})" }
             currentState = State.Error(ErrorCode.WebsocketError, t.message)
             attachmentHandler.clearAll()
-            webSocket.closeSocket(SocketCloseCode.GOING_AWAY.value, "Going away.")
         }
 
         override fun onMessage(text: String) {
