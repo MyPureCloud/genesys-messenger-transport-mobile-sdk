@@ -72,7 +72,7 @@ internal actual class PlatformSocket actual constructor(
         webSocket = null
     }
 
-    actual fun sendPing() {
+    private fun sendPing() {
         webSocket?.let {
             log.i { "sending ping" }
             it.sendPingWithPongReceiveHandler { nsError ->
