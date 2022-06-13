@@ -54,8 +54,8 @@ internal actual class PlatformSocket actual constructor(
                     didCloseWithCode: NSURLSessionWebSocketCloseCode,
                     reason: NSData?
                 ) {
-                    listener.onClosed(didCloseWithCode.toInt(), reason.toString())
                     cleanup()
+                    listener.onClosed(didCloseWithCode.toInt(), reason.toString())
                 }
             },
             delegateQueue = NSOperationQueue.currentQueue()
@@ -69,18 +69,21 @@ internal actual class PlatformSocket actual constructor(
 
     private fun cleanup() {
         cancelPings()
-        listener = null
         webSocket = null
     }
 
     actual fun sendPing() {
-        log.i { "sending ping" }
-        webSocket?.sendPingWithPongReceiveHandler { nsError ->
-            if (nsError != null) {
-                log.e { "received pong error: ${nsError.description}" ?: "Unknown pong error" }
-            } else {
-                log.i { "received pong" }
+        webSocket?.let {
+            log.i { "sending ping" }
+            it.sendPingWithPongReceiveHandler { nsError ->
+                if (nsError != null) {
+                    log.e { "received pong error: ${nsError.description}" ?: "Unknown pong error" }
+                } else {
+                    log.i { "received pong" }
+                }
             }
+        } ?: run {
+            log.i { "ping requested but webSocket is null" }
         }
     }
 
@@ -106,8 +109,8 @@ internal actual class PlatformSocket actual constructor(
         webSocket?.receiveMessageWithCompletionHandler { message, nsError ->
             when {
                 nsError != null -> {
-                    listener.onFailure(Throwable(nsError.description))
                     cleanup()
+                    listener.onFailure(Throwable(nsError.description))
                     return@receiveMessageWithCompletionHandler
                 }
                 message != null -> {
