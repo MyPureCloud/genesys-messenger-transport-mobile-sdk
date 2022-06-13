@@ -117,11 +117,11 @@ class ContentViewController: UIViewController {
 
             let inputFrameInView = self.view.convert(self.input.frame, to: self.view)
             let originY = keyboardFrameInfo.0.origin.y < inputFrameInView.origin.y ? keyboardFrameInfo.0.origin.y - inputFrameInView.maxY : 0
-
-            UIView.setAnimationCurve(keyboardFrameInfo.2)
-            UIView.animate(withDuration: keyboardFrameInfo.1) {
+            
+            UIViewPropertyAnimator(duration: keyboardFrameInfo.1, curve: keyboardFrameInfo.2) {
                 self.view.frame.origin.y = originY
             }
+            .startAnimation()
         }
 
         NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { [weak self] notification in
@@ -129,11 +129,11 @@ class ContentViewController: UIViewController {
                   let keyboardFrameInfo = self.makeFrameInfo(notification: notification) else {
                 return
             }
-
-            UIView.setAnimationCurve(keyboardFrameInfo.2)
-            UIView.animate(withDuration: keyboardFrameInfo.1) {
+            
+            UIViewPropertyAnimator(duration: keyboardFrameInfo.1, curve: keyboardFrameInfo.2) {
                 self.view.frame.origin.y = 0
             }
+            .startAnimation()
         }
     }
 
