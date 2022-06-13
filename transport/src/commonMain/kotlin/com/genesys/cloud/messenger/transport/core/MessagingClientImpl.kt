@@ -42,8 +42,10 @@ internal class MessagingClientImpl(
 
     override var currentState: State = State.Idle
         private set(value) {
-            field = value
-            stateListener?.invoke(value)
+            if (field != value) {
+                field = value
+                stateListener?.invoke(value)
+            }
         }
 
     override var stateListener: ((State) -> Unit)? = null
@@ -63,7 +65,7 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun connect() {
         log.i { "connect()" }
-        check(currentState is State.Closed || currentState is State.Idle || currentState is State.Error) { "MessagingClient must be in closed, idle or error state" }
+        check(currentState is State.Closed || currentState is State.Idle || currentState is State.Error) { "MessagingClient state must be Closed, Idle or Error" }
         currentState = State.Connecting
         webSocket.openSocket(socketListener)
     }
@@ -71,7 +73,7 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun disconnect() {
         log.i { "disconnect()" }
-        check(currentState !is State.Closed && currentState !is State.Idle) { "MessagingClient must not already be closed or idle" }
+        check(currentState !is State.Closed && currentState !is State.Idle && currentState !is State.Error) { "MessagingClient state must not already be Closed, Idle or Error" }
         val code = SocketCloseCode.NORMAL_CLOSURE.value
         val reason = "The user has closed the connection."
         currentState = State.Closing(code, reason)

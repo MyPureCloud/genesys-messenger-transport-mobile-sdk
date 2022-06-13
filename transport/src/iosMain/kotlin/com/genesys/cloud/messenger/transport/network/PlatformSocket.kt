@@ -1,11 +1,24 @@
 package com.genesys.cloud.messenger.transport.network
 
-import cocoapods.jetfire.JFRWebSocket
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import platform.Foundation.HTTPMethod
 import platform.Foundation.NSData
+import platform.Foundation.NSHTTPURLResponse
+import platform.Foundation.NSMutableURLRequest
+import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSTimer
 import platform.Foundation.NSURL
+import platform.Foundation.NSURLRequest
+import platform.Foundation.NSURLSession
+import platform.Foundation.NSURLSessionConfiguration
+import platform.Foundation.NSURLSessionWebSocketCloseCode
+import platform.Foundation.NSURLSessionWebSocketDelegateProtocol
+import platform.Foundation.NSURLSessionWebSocketMessage
+import platform.Foundation.NSURLSessionWebSocketTask
+import platform.Foundation.allHTTPHeaderFields
+import platform.Foundation.setValue
+import platform.darwin.NSObject
 
 internal actual class PlatformSocket actual constructor(
     private val log: Log,
@@ -14,36 +27,64 @@ internal actual class PlatformSocket actual constructor(
 ) {
     private val url = configuration.webSocketUrl
     private val socketEndpoint = NSURL.URLWithString(url.toString())!!
-    private var socket: JFRWebSocket? = null
+    private var webSocket: NSURLSessionWebSocketTask? = null
     private var pingTimer: NSTimer? = null
+    private var listener: PlatformSocketListener? = null
 
     actual fun openSocket(listener: PlatformSocketListener) {
-        if (socket?.isConnected == true) {
-            listener.onFailure(Throwable("Socket is already connected."))
-            return
-        }
+        val urlRequest = NSMutableURLRequest(socketEndpoint)
+        urlRequest.setValue(url.host, forHTTPHeaderField = "Origin")
+        val urlSession = NSURLSession.sessionWithConfiguration(
+            configuration = NSURLSessionConfiguration.defaultSessionConfiguration(),
+            delegate = object : NSObject(), NSURLSessionWebSocketDelegateProtocol {
+                override fun URLSession(
+                    session: NSURLSession,
+                    webSocketTask: NSURLSessionWebSocketTask,
+                    didOpenWithProtocol: String?
+                ) {
+                    webSocketTask.currentRequest?.also { log(it) }
+                    when (val response = webSocketTask.response) {
+                        is NSHTTPURLResponse -> log(response)
+                    }
+                    listener.onOpen()
+                }
+                override fun URLSession(
+                    session: NSURLSession,
+                    webSocketTask: NSURLSessionWebSocketTask,
+                    didCloseWithCode: NSURLSessionWebSocketCloseCode,
+                    reason: NSData?
+                ) {
+                    cleanup()
+                    listener.onClosed(didCloseWithCode.toInt(), reason.toString())
+                }
+            },
+            delegateQueue = NSOperationQueue.currentQueue()
+        )
+        webSocket = urlSession.webSocketTaskWithRequest(urlRequest)
+        listenMessages(listener)
+        webSocket?.resume()
+        schedulePings()
+        this.listener = listener
+    }
 
-        socket = JFRWebSocket(socketEndpoint, null)
-        socket?.onConnect = {
-            log.i { "onConnect()" }
-            listener.onOpen()
-        }
-        socket?.onDisconnect = { nsError ->
-            log.i { "onDisconnect(): $nsError" }
-            when {
-                nsError != null -> {
-                    listener.onFailure(Throwable(nsError.description))
+    private fun cleanup() {
+        cancelPings()
+        webSocket = null
+    }
+
+    actual fun sendPing() {
+        webSocket?.let {
+            log.i { "sending ping" }
+            it.sendPingWithPongReceiveHandler { nsError ->
+                if (nsError != null) {
+                    log.e { "received pong error: ${nsError.description}" ?: "Unknown pong error" }
+                } else {
+                    log.i { "received pong" }
                 }
             }
-            val closeCode =
-                if (nsError == null) SocketCloseCode.NORMAL_CLOSURE.value else SocketCloseCode.NO_STATUS_RECEIVED.value
-            listener.onClosed(closeCode, "disconnected")
+        } ?: run {
+            log.i { "ping requested but webSocket is null" }
         }
-        socket?.onText = { text ->
-            text?.let { listener.onMessage(it) }
-        }
-        socket?.connect()
-        schedulePings()
     }
 
     private fun schedulePings() {
@@ -53,8 +94,7 @@ internal actual class PlatformSocket actual constructor(
                 repeats = true
             ) {
                 it?.let {
-                    log.i { "sending ping" }
-                    socket?.writePing(NSData())
+                    sendPing()
                 }
             }
         }
@@ -65,17 +105,58 @@ internal actual class PlatformSocket actual constructor(
         pingTimer = null
     }
 
+    private fun listenMessages(listener: PlatformSocketListener) {
+        webSocket?.receiveMessageWithCompletionHandler { message, nsError ->
+            when {
+                nsError != null -> {
+                    cleanup()
+                    listener.onFailure(Throwable(nsError.description))
+                    return@receiveMessageWithCompletionHandler
+                }
+                message != null -> {
+                    message.string?.let { listener.onMessage(it) }
+                }
+            }
+            listenMessages(listener)
+        }
+    }
+
     actual fun closeSocket(code: Int, reason: String) {
         log.i { "closeSocket(code = $code, reason = $reason)" }
-        cancelPings()
-        socket?.disconnect()
-        // onDisconnect doesn't get called on the Jetfire socket when we call disconnect, so explicitly invoke it
-        socket?.onDisconnect?.let { it(null) }
-        socket = null
+        webSocket?.cancelWithCloseCode(code.toLong(), null)
     }
 
     actual fun sendMessage(text: String) {
         log.i { "sendMessage(text = $text)" }
-        socket?.writeString(text)
+        val message = NSURLSessionWebSocketMessage(text)
+        webSocket?.sendMessage(message) { err ->
+            if (err != null) {
+                log.e { "Failed to send message. Error: $err" }
+            }
+        }
     }
+
+    private fun log(request: NSURLRequest) {
+        log.i {
+"""
+--> HTTP ${request.HTTPMethod} ${request.URL?.absoluteString}
+${buildHeaderLogLines(request.allHTTPHeaderFields)}
+--> END ${request.HTTPMethod}
+""".trim()
+        }
+    }
+
+    private fun log(response: NSHTTPURLResponse) {
+        log.i {
+"""
+<-- HTTP ${response.statusCode} ${response.URL?.absoluteString}
+${buildHeaderLogLines(response.allHeaderFields)}
+<-- END HTTP
+""".trim()
+        }
+    }
+
+    private fun buildHeaderLogLines(headers: Map<Any?, *>?) = headers
+        ?.map { (key, value) -> "$key: $value" }
+        ?.joinToString(separator = "\n")
 }

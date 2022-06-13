@@ -77,7 +77,7 @@ kotlin {
         homepage = "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk"
         license = "MIT"
         authors = "Genesys Cloud Services, Inc."
-        ios.deploymentTarget = "11.0"
+        ios.deploymentTarget = "13.0"
         podfile = project.file("../iosApp/Podfile")
         framework {
             // The default name for an iOS framework is `<project name>.framework`. To set a custom name, use the `baseName` option. This will also set the module name.
@@ -85,7 +85,6 @@ kotlin {
             // To specify a custom Objective-C prefix/name for the Kotlin framework, use the `-module-name` compiler option or matching Gradle DSL statement.
             freeCompilerArgs += listOf("-module-name", "GCM")
         }
-        pod("jetfire", "~> 0.1.5")
     }
 
     sourceSets {
