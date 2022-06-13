@@ -77,7 +77,7 @@ internal actual class PlatformSocket actual constructor(
             log.i { "sending ping" }
             it.sendPingWithPongReceiveHandler { nsError ->
                 if (nsError != null) {
-                    log.e { "received pong error: ${nsError.description}" ?: "Unknown pong error" }
+                    log.e { "received pong error: ${nsError.description}" }
                 } else {
                     log.i { "received pong" }
                 }
