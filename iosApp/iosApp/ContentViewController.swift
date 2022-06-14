@@ -327,13 +327,13 @@ extension ContentViewController : UITextFieldDelegate {
             client.invalidateConversationCache()
         case ("addAttribute", let msg?):
             let segments = splitUserInput(msg)
-            if((segments.0?.isEmpty) == nil) {
-                self.info.text = "Custom attribute key can not be null or empty!"
-            } else {
-                customAttributes[segments.0!] = segments.1
-                self.info.text =  "Custom attribute added: \(segments)"
+            if let key = segments.0, !key.isEmpty {
+                let value = segments.1 ?? ""
+                customAttributes[key] = value
+                self.info.text = "Custom attribute added: key: \(key) value: \(value)"
+            }  else {
+                self.info.text = "Custom attribute key cannot be nil or empty!"
             }
- 
         default:
             break
         }
