@@ -90,7 +90,6 @@ pipeline{
                       -Pkotlin.native.cocoapods.archs="arm64" \
                       -Pkotlin.native.cocoapods.configuration=Debug
                     cd iosApp
-                    touch iosAppTests/config.json
                     pod install --verbose
                     xcodebuild clean build -verbose -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug CODE_SIGNING_ALLOWED=NO EXCLUDED_ARCHS=armv7
                 '''
