@@ -21,10 +21,8 @@ class ContentViewController: UIViewController {
         
         super.init(nibName: nil, bundle: nil)
         
-        monitorMessengerEvents()
-    }
-    
-    func monitorMessengerEvents() {
+        // set up MessengerHandler callbacks
+        
         messenger.onStateChange = { [weak self] state in
             var stateMessage = "\(state)"
             switch state {
