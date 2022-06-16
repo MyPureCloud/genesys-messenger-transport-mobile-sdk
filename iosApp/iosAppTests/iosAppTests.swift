@@ -37,9 +37,8 @@ class iosAppTests: XCTestCase {
             return
         }
 
-        try! contentController.connect()
-        try! contentController.configureSession()
-        try! contentController.sendMessage(text: "Testing from E2E test.")
+        contentController.startMessengerConnection()
+        contentController.sendText(text: "Testing from E2E test.")
 
         // Use the public API to answer the new Messenger conversation.
         // Send a message from that agent and make sure we receive it.
@@ -60,12 +59,12 @@ class iosAppTests: XCTestCase {
         for (index, element) in intArray.enumerated() {
             kotlinByteArray.set(index: Int32(index), value: element)
         }
-        try! contentController.attachImage(kotlinByteArray: kotlinByteArray)
+        contentController.attemptImageAttach(kotlinByteArray: kotlinByteArray)
         contentController.sendUploadedImage()
 
         // Disconnect the conversation for the agent and disconnect the session.
         ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
-        try! contentController.disconnect()
+        contentController.disconnectMessenger()
     }
 
     func testSendAndReceiveMessage() {
@@ -75,9 +74,8 @@ class iosAppTests: XCTestCase {
             return
         }
 
-        try! contentController.connect()
-        try! contentController.configureSession()
-        try! contentController.sendMessage(text: "Testing from E2E test.")
+        contentController.startMessengerConnection()
+        contentController.sendText(text: "Testing from E2E test.")
 
         // Use the public API to answer the new Messenger conversation.
         // Send a message from that agent and make sure we receive it.
@@ -93,7 +91,7 @@ class iosAppTests: XCTestCase {
 
         // Disconnect the conversation for the agent and disconnect the session.
         ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
-        try! contentController.disconnect()
+        contentController.disconnectMessenger()
     }
 
 }
@@ -151,6 +149,15 @@ class TestContentController: MessengerHandler {
         
     }
 
+    func startMessengerConnection(file: StaticString = #file, line: UInt = #line) {
+        do {
+            try connect()
+            try configureSession()
+        } catch {
+            XCTFail("Possible issue with connecting to the backend: \(error.localizedDescription)", file: file, line: line)
+        }
+    }
+
     override func connect() throws {
         testExpectation = XCTestExpectation(description: "Wait for Connection.")
         try super.connect()
@@ -163,12 +170,27 @@ class TestContentController: MessengerHandler {
         waitForExpectation()
     }
 
+    func disconnectMessenger(file: StaticString = #file, line: UInt = #line) {
+        do {
+            try disconnect()
+        } catch {
+            XCTFail("Failed to disconnect the session.\n\(error.localizedDescription)", file: file, line: line)
+        }
+    }
+
     override func disconnect() throws {
         testExpectation = XCTestExpectation(description: "Wait for Disconnect.")
         try super.disconnect()
         waitForExpectation()
     }
 
+    func sendText(text: String, file: StaticString = #file, line: UInt = #line) {
+        do {
+            try sendMessage(text: text)
+        } catch {
+            XCTFail("Failed to send the message '\(text)'\n\(error.localizedDescription)", file: file, line: line)
+        }
+    }
 
     override func sendMessage(text: String) throws {
         testExpectation = XCTestExpectation(description: "Wait for message to send.")
@@ -177,19 +199,31 @@ class TestContentController: MessengerHandler {
         verifyReceivedMessage(expectedMessage: text)
     }
 
+    func attemptImageAttach(kotlinByteArray: KotlinByteArray, file: StaticString = #file, line: UInt = #line) {
+        do {
+            try attachImage(kotlinByteArray: kotlinByteArray)
+        } catch {
+            XCTFail("Failed to attach image.\n\(error.localizedDescription)", file: file, line: line)
+        }
+    }
+
     override func attachImage(kotlinByteArray: KotlinByteArray) throws {
         testExpectation = XCTestExpectation(description: "Wait for image to attach successfully.")
         try super.attachImage(kotlinByteArray: kotlinByteArray)
         waitForExpectation()
     }
 
-    func sendUploadedImage() {
+    func sendUploadedImage(file: StaticString = #file, line: UInt = #line) {
         testExpectation = XCTestExpectation(description: "Wait for the uploaded image url to send.")
         guard let receivedDownloadUrl = receivedDownloadUrl else {
             XCTFail("There was no download URL received.")
             return
         }
-        try? super.sendMessage(text: receivedDownloadUrl)
+        do {
+            try super.sendMessage(text: receivedDownloadUrl)
+        } catch {
+            XCTFail("Failed to upload an image.\n\(error.localizedDescription)", file: file, line: line)
+        }
         waitForExpectation()
         verifyReceivedMessage(expectedMessage: receivedDownloadUrl)
     }
