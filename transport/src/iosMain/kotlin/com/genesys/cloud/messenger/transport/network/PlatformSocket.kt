@@ -1,28 +1,34 @@
 package com.genesys.cloud.messenger.transport.network
 
 import com.genesys.cloud.messenger.transport.core.Configuration
+import com.genesys.cloud.messenger.transport.util.extensions.toNSData
+import com.genesys.cloud.messenger.transport.util.extensions.string
 import com.genesys.cloud.messenger.transport.util.logs.Log
-import platform.Foundation.HTTPMethod
+import kotlinx.cinterop.convert
 import platform.Foundation.NSData
-import platform.Foundation.NSHTTPURLResponse
+import platform.Foundation.NSError
+import platform.Foundation.NSPOSIXErrorDomain
 import platform.Foundation.NSMutableURLRequest
 import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSTimer
 import platform.Foundation.NSURL
-import platform.Foundation.NSURLRequest
 import platform.Foundation.NSURLSession
 import platform.Foundation.NSURLSessionConfiguration
 import platform.Foundation.NSURLSessionWebSocketCloseCode
 import platform.Foundation.NSURLSessionWebSocketDelegateProtocol
 import platform.Foundation.NSURLSessionWebSocketMessage
 import platform.Foundation.NSURLSessionWebSocketTask
-import platform.Foundation.allHTTPHeaderFields
 import platform.Foundation.setValue
 import platform.darwin.NSObject
+import platform.posix.ETIMEDOUT
 
 internal actual class PlatformSocket actual constructor(
     private val log: Log,
     configuration: Configuration,
+    /**
+     * Interval to automatically send pings while active. If pong not received within `interval`,
+     * client assumes connectivity is lost and will notify [PlatformSocketListener.onFailure].
+     */
     actual val pingInterval: Long
 ) {
     private val url = configuration.webSocketUrl
@@ -30,6 +36,8 @@ internal actual class PlatformSocket actual constructor(
     private var webSocket: NSURLSessionWebSocketTask? = null
     private var pingTimer: NSTimer? = null
     private var listener: PlatformSocketListener? = null
+    val active: Boolean
+        get() = webSocket != null
 
     actual fun openSocket(listener: PlatformSocketListener) {
         val urlRequest = NSMutableURLRequest(socketEndpoint)
@@ -42,11 +50,9 @@ internal actual class PlatformSocket actual constructor(
                     webSocketTask: NSURLSessionWebSocketTask,
                     didOpenWithProtocol: String?
                 ) {
-                    webSocketTask.currentRequest?.also { log(it) }
-                    when (val response = webSocketTask.response) {
-                        is NSHTTPURLResponse -> log(response)
-                    }
+                    log.i { "Socket did open."}
                     listener.onOpen()
+                    keepAlive()
                 }
                 override fun URLSession(
                     session: NSURLSession,
@@ -54,8 +60,10 @@ internal actual class PlatformSocket actual constructor(
                     didCloseWithCode: NSURLSessionWebSocketCloseCode,
                     reason: NSData?
                 ) {
-                    cleanup()
-                    listener.onClosed(didCloseWithCode.toInt(), reason.toString())
+                    val why = reason?.string() ?: ""
+                    log.i { "Socket did close. code: $didCloseWithCode, reason: ${why}"}
+                    deactivate()
+                    listener.onClosed(code = didCloseWithCode.toInt(), reason = why)
                 }
             },
             delegateQueue = NSOperationQueue.currentQueue()
@@ -63,38 +71,53 @@ internal actual class PlatformSocket actual constructor(
         webSocket = urlSession.webSocketTaskWithRequest(urlRequest)
         listenMessages(listener)
         webSocket?.resume()
-        schedulePings()
         this.listener = listener
     }
 
-    private fun cleanup() {
+    private fun deactivate() {
+        log.i { "deactivate"}
         cancelPings()
         webSocket = null
     }
 
-    private fun sendPing() {
-        webSocket?.let {
-            log.i { "sending ping" }
-            it.sendPingWithPongReceiveHandler { nsError ->
-                if (nsError != null) {
-                    log.e { "received pong error: ${nsError.description}" }
-                } else {
-                    log.i { "received pong" }
-                }
-            }
-        } ?: run {
-            log.i { "ping requested but webSocket is null" }
+    private fun handleErrorAndDeactivate(error: NSError, context: String? = null) {
+        log.e { "${context ?: "NSError"}. [${error.code}] ${error.localizedDescription}" }
+        if (active) {
+            deactivate()
+            listener?.onFailure(Throwable(error.localizedDescription))
         }
     }
 
-    private fun schedulePings() {
-        if (pingTimer == null && pingInterval > 0) {
+    private var waitingOnPong = false
+
+    private fun keepAlive() {
+        val isTimerScheduled = pingTimer?.valid ?: false
+        if (!isTimerScheduled && pingInterval > 0) {
+            waitingOnPong = false
             pingTimer = NSTimer.scheduledTimerWithTimeInterval(
                 interval = pingInterval / 1000.0,
                 repeats = true
             ) {
-                it?.let {
-                    sendPing()
+                if (waitingOnPong) {
+                    // Prior pong not received within pingInterval. Assume connectivity is lost.
+                    val nsError = NSError(
+                        domain = NSPOSIXErrorDomain,
+                        code = ETIMEDOUT.convert(),
+                        userInfo = null
+                    )
+                    handleErrorAndDeactivate(nsError, "Pong not received within interval [$pingInterval]")
+                    return@scheduledTimerWithTimeInterval
+                }
+
+                log.i { "Sending ping" }
+                waitingOnPong = true
+                webSocket?.sendPingWithPongReceiveHandler { nsError ->
+                    waitingOnPong = false
+                    if (nsError != null) {
+                        handleErrorAndDeactivate(nsError, "Received pong error")
+                    } else {
+                        log.i { "Received pong" }
+                    }
                 }
             }
         }
@@ -103,14 +126,14 @@ internal actual class PlatformSocket actual constructor(
     private fun cancelPings() {
         pingTimer?.invalidate()
         pingTimer = null
+        waitingOnPong = false
     }
 
     private fun listenMessages(listener: PlatformSocketListener) {
         webSocket?.receiveMessageWithCompletionHandler { message, nsError ->
             when {
                 nsError != null -> {
-                    cleanup()
-                    listener.onFailure(Throwable(nsError.description))
+                    handleErrorAndDeactivate(nsError, "Receive handler error")
                     return@receiveMessageWithCompletionHandler
                 }
                 message != null -> {
@@ -123,40 +146,18 @@ internal actual class PlatformSocket actual constructor(
 
     actual fun closeSocket(code: Int, reason: String) {
         log.i { "closeSocket(code = $code, reason = $reason)" }
-        webSocket?.cancelWithCloseCode(code.toLong(), null)
+        webSocket?.cancelWithCloseCode(code.toLong(), reason.toNSData())
+        deactivate()
     }
 
     actual fun sendMessage(text: String) {
         log.i { "sendMessage(text = $text)" }
         val message = NSURLSessionWebSocketMessage(text)
-        webSocket?.sendMessage(message) { err ->
-            if (err != null) {
-                log.e { "Failed to send message. Error: $err" }
+        webSocket?.sendMessage(message) { nsError ->
+            if (nsError != null) {
+                handleErrorAndDeactivate(nsError, "Send message error")
             }
         }
     }
 
-    private fun log(request: NSURLRequest) {
-        log.i {
-"""
---> HTTP ${request.HTTPMethod} ${request.URL?.absoluteString}
-${buildHeaderLogLines(request.allHTTPHeaderFields)}
---> END ${request.HTTPMethod}
-""".trim()
-        }
-    }
-
-    private fun log(response: NSHTTPURLResponse) {
-        log.i {
-"""
-<-- HTTP ${response.statusCode} ${response.URL?.absoluteString}
-${buildHeaderLogLines(response.allHeaderFields)}
-<-- END HTTP
-""".trim()
-        }
-    }
-
-    private fun buildHeaderLogLines(headers: Map<Any?, *>?) = headers
-        ?.map { (key, value) -> "$key: $value" }
-        ?.joinToString(separator = "\n")
 }

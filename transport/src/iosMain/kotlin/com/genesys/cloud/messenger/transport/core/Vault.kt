@@ -5,6 +5,8 @@ package com.genesys.cloud.messenger.transport.core
  * KVault, Copyright 2021 Liftric, MIT license
  */
 
+import com.genesys.cloud.messenger.transport.util.extensions.toNSData
+import com.genesys.cloud.messenger.transport.util.extensions.string
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
@@ -22,10 +24,6 @@ import platform.CoreFoundation.kCFBooleanTrue
 import platform.Foundation.CFBridgingRelease
 import platform.Foundation.CFBridgingRetain
 import platform.Foundation.NSData
-import platform.Foundation.NSString
-import platform.Foundation.NSUTF8StringEncoding
-import platform.Foundation.create
-import platform.Foundation.dataUsingEncoding
 import platform.Security.SecItemAdd
 import platform.Security.SecItemCopyMatching
 import platform.Security.SecItemUpdate
@@ -47,18 +45,14 @@ internal class Vault(private val serviceName: String) {
      * @param stringValue The value to store
      * @return True or false, depending on whether the value has been stored in the Keychain
      */
-    fun set(key: String, stringValue: String): Boolean {
-        return addOrUpdate(key, stringValue.toNSData())
-    }
+    fun set(key: String, stringValue: String): Boolean = addOrUpdate(key, stringValue.toNSData())
 
     /**
      * Returns the string value of an object in the Keychain.
      * @param forKey The key to query
      * @return The stored string value, or null if it is missing
      */
-    fun string(forKey: String): String? {
-        return value(forKey)?.stringValue
-    }
+    fun string(forKey: String): String? = value(forKey)?.string()
 
     private fun existsObject(forKey: String): Boolean = context(forKey) { (account) ->
         val query = query(
@@ -142,13 +136,6 @@ internal class Vault(private val serviceName: String) {
             standard.values.plus(custom).forEach { CFBridgingRelease(it) }
         }
     }
-
-    private fun String.toNSData(): NSData? = NSString.create(string = this).dataUsingEncoding(
-        NSUTF8StringEncoding
-    )
-
-    private val NSData.stringValue: String?
-        get() = NSString.create(this, NSUTF8StringEncoding) as String?
 
     private fun OSStatus.validate(): Boolean = toUInt() == noErr
 }
