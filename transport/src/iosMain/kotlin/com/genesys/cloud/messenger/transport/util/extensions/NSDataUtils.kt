@@ -2,9 +2,9 @@ package com.genesys.cloud.messenger.transport.util.extensions
 
 import platform.Foundation.NSData
 import platform.Foundation.NSString
+import platform.Foundation.NSUTF8StringEncoding
 import platform.Foundation.create
 import platform.Foundation.dataUsingEncoding
-import platform.Foundation.NSUTF8StringEncoding
 
 internal fun NSData.string(): String? =
     NSString.create(data = this, encoding = NSUTF8StringEncoding)?.toString()

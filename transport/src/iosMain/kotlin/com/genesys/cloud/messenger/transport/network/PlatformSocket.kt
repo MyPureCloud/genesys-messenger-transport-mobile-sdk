@@ -1,15 +1,15 @@
 package com.genesys.cloud.messenger.transport.network
 
 import com.genesys.cloud.messenger.transport.core.Configuration
-import com.genesys.cloud.messenger.transport.util.extensions.toNSData
 import com.genesys.cloud.messenger.transport.util.extensions.string
+import com.genesys.cloud.messenger.transport.util.extensions.toNSData
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import kotlinx.cinterop.convert
 import platform.Foundation.NSData
 import platform.Foundation.NSError
-import platform.Foundation.NSPOSIXErrorDomain
 import platform.Foundation.NSMutableURLRequest
 import platform.Foundation.NSOperationQueue
+import platform.Foundation.NSPOSIXErrorDomain
 import platform.Foundation.NSTimer
 import platform.Foundation.NSURL
 import platform.Foundation.NSURLSession
@@ -50,7 +50,7 @@ internal actual class PlatformSocket actual constructor(
                     webSocketTask: NSURLSessionWebSocketTask,
                     didOpenWithProtocol: String?
                 ) {
-                    log.i { "Socket did open."}
+                    log.i { "Socket did open." }
                     listener.onOpen()
                     keepAlive()
                 }
@@ -61,7 +61,7 @@ internal actual class PlatformSocket actual constructor(
                     reason: NSData?
                 ) {
                     val why = reason?.string() ?: ""
-                    log.i { "Socket did close. code: $didCloseWithCode, reason: ${why}"}
+                    log.i { "Socket did close. code: $didCloseWithCode, reason: $why" }
                     deactivate()
                     listener.onClosed(code = didCloseWithCode.toInt(), reason = why)
                 }
@@ -75,7 +75,7 @@ internal actual class PlatformSocket actual constructor(
     }
 
     private fun deactivate() {
-        log.i { "deactivate"}
+        log.i { "deactivate" }
         cancelPings()
         webSocket = null
     }
@@ -159,5 +159,4 @@ internal actual class PlatformSocket actual constructor(
             }
         }
     }
-
 }

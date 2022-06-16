@@ -5,8 +5,8 @@ package com.genesys.cloud.messenger.transport.core
  * KVault, Copyright 2021 Liftric, MIT license
  */
 
-import com.genesys.cloud.messenger.transport.util.extensions.toNSData
 import com.genesys.cloud.messenger.transport.util.extensions.string
+import com.genesys.cloud.messenger.transport.util.extensions.toNSData
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
