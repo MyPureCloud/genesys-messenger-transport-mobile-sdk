@@ -192,7 +192,7 @@ class TestContentController: MessengerHandler {
         }
     }
 
-    override func sendMessage(text: String) throws {
+    override func sendMessage(text: String, customAttributes: [String: String] = [:]) throws {
         testExpectation = XCTestExpectation(description: "Wait for message to send.")
         try super.sendMessage(text: text)
         waitForExpectation()
