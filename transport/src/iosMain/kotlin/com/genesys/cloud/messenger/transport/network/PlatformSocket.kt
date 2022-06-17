@@ -60,7 +60,7 @@ internal actual class PlatformSocket actual constructor(
                     didCloseWithCode: NSURLSessionWebSocketCloseCode,
                     reason: NSData?
                 ) {
-                    val why = reason?.string() ?: ""
+                    val why = reason?.string() ?: "Reason not specified."
                     log.i { "Socket did close. code: $didCloseWithCode, reason: $why" }
                     deactivate()
                     listener.onClosed(code = didCloseWithCode.toInt(), reason = why)
