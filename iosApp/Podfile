@@ -3,6 +3,11 @@ platform :ios, '13.0'
 target 'iosApp' do
   use_frameworks!
   pod 'transport', :path => '../transport'
+
+  target 'iosAppTests' do
+    inherit! :search_paths
+  end
+
 end
 
 post_install do |installer|
