@@ -36,7 +36,7 @@ internal actual class PlatformSocket actual constructor(
     private var webSocket: NSURLSessionWebSocketTask? = null
     private var pingTimer: NSTimer? = null
     private var listener: PlatformSocketListener? = null
-    val active: Boolean
+    private val active: Boolean
         get() = webSocket != null
 
     actual fun openSocket(listener: PlatformSocketListener) {
