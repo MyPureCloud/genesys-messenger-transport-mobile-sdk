@@ -43,6 +43,7 @@ class ContentViewController: UIViewController {
                 break
             }
             self?.status.text = "Messenger Status: " + stateMessage
+            self?.info.text = "State changed to \(state)"
         }
 
         messenger.onMessageEvent = { [weak self] event in
