@@ -5,7 +5,7 @@ import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageEntityList
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
-import kotlinx.datetime.toInstant
+import com.soywiz.klock.DateTime
 
 internal fun MessageEntityList.toMessageList(): List<Message> {
     return this.entities.map {
@@ -36,7 +36,9 @@ internal fun Message.getUploadedAttachments(): List<Message.Content> {
 
 internal fun String?.fromIsoToEpochMilliseconds(): Long? {
     return try {
-        this?.toInstant()?.toEpochMilliseconds()
+        this?.let {
+            DateTime.fromString(it).local.unixMillisLong
+        }
     } catch (t: Throwable) {
         null
     }
