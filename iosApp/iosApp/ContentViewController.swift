@@ -16,6 +16,7 @@ class ContentViewController: UIViewController {
     private let attachmentName = "image"
     private var byteArray: [UInt8]? = nil
     var customAttributes: [String: String] = [:]
+    
 
     init(deployment: Deployment) {
         self.messenger = MessengerHandler(deployment: deployment)
@@ -95,7 +96,7 @@ class ContentViewController: UIViewController {
             }
         }
     }
-
+    
     private let content: UIStackView = {
         let view = UIStackView()
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -165,16 +166,16 @@ class ContentViewController: UIViewController {
         view.addSubview(content)
 
         configureAutoLayout()
-
+        
         observeKeyboard()
     }
-
+    
     private func configureAutoLayout() {
         content.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
         content.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
         content.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
     }
-
+    
     private func observeKeyboard() {
         NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { [weak self] notification in
             guard let self = self,
