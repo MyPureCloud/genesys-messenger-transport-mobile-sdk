@@ -16,7 +16,6 @@ class ContentViewController: UIViewController {
     private let attachmentName = "image"
     private var byteArray: [UInt8]? = nil
     var customAttributes: [String: String] = [:]
-    
 
     init(deployment: Deployment) {
         self.messenger = MessengerHandler(deployment: deployment)
@@ -96,7 +95,7 @@ class ContentViewController: UIViewController {
             }
         }
     }
-    
+
     private let content: UIStackView = {
         let view = UIStackView()
         view.translatesAutoresizingMaskIntoConstraints = false
