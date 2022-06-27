@@ -16,14 +16,15 @@ class ContentViewController: UIViewController {
     private let attachmentName = "image"
     private var byteArray: [UInt8]? = nil
     var customAttributes: [String: String] = [:]
+    
 
     init(deployment: Deployment) {
         self.messenger = MessengerHandler(deployment: deployment)
         
         super.init(nibName: nil, bundle: nil)
-
+        
         // set up MessengerHandler callbacks
-
+        
         messenger.onStateChange = { [weak self] state in
             var stateMessage = "\(state)"
             switch state {
@@ -45,7 +46,7 @@ class ContentViewController: UIViewController {
             self?.status.text = "Messenger Status: " + stateMessage
             self?.info.text = "State changed to \(state)"
         }
-
+        
         messenger.onMessageEvent = { [weak self] event in
             var displayMessage = "Unexpected message event: \(event)"
             switch event {
@@ -68,7 +69,7 @@ class ContentViewController: UIViewController {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
     /**
      User commands for the test bed app.
      */
@@ -85,7 +86,7 @@ class ContentViewController: UIViewController {
         case healthCheck
         case clearConversation
         case addAttribute
-
+        
         var helpDescription: String {
             switch self {
             case .send: return "send <msg>"
@@ -95,7 +96,7 @@ class ContentViewController: UIViewController {
             }
         }
     }
-
+    
     private let content: UIStackView = {
         let view = UIStackView()
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -134,7 +135,7 @@ class ContentViewController: UIViewController {
         view.delegate = self
         return view
     }()
-
+    
     private let status: UILabel = {
         let view = UILabel()
         view.numberOfLines = 0
@@ -282,7 +283,7 @@ extension ContentViewController : UITextFieldDelegate {
                     for (index, element) in intArray.enumerated() {
                         kotlinByteArray.set(index: Int32(index), value: element)
                     }
-
+                    
                     try messenger.attachImage(kotlinByteArray: kotlinByteArray)
                 }
             case (.detach, let attachId?):
@@ -312,7 +313,7 @@ extension ContentViewController : UITextFieldDelegate {
         } catch {
             self.info.text = error.localizedDescription
         }
-
+        
         self.input.text = ""
         textField.resignFirstResponder()
         return true
