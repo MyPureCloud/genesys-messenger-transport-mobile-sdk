@@ -17,6 +17,7 @@ class ContentViewController: UIViewController {
     private var byteArray: [UInt8]? = nil
     var customAttributes: [String: String] = [:]
 
+
     init(deployment: Deployment) {
         self.messenger = MessengerHandler(deployment: deployment)
 
