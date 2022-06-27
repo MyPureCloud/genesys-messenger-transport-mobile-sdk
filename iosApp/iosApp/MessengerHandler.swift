@@ -64,9 +64,9 @@ class MessengerHandler {
         }
     }
 
-    func sendMessage(text: String) throws {
+    func sendMessage(text: String, customAttributes: [String: String] = [:]) throws {
         do {
-            try client.sendMessage(text: text.trimmingCharacters(in: .whitespaces))
+            try client.sendMessage(text: text.trimmingCharacters(in: .whitespaces), customAttributes: customAttributes)
         } catch {
             print("sendMessage(text:) failed. \(error.localizedDescription)")
             throw error

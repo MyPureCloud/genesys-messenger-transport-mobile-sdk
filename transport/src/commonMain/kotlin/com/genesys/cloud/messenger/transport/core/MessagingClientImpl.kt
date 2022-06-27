@@ -97,10 +97,10 @@ internal class MessagingClientImpl(
     }
 
     @Throws(IllegalStateException::class)
-    override fun sendMessage(text: String) {
+    override fun sendMessage(text: String, customAttributes: Map<String, String>) {
         checkConfigured()
-        log.i { "sendMessage(text = $text)" }
-        val request = messageStore.prepareMessage(text)
+        log.i { "sendMessage(text = $text, customAttributes = $customAttributes)" }
+        val request = messageStore.prepareMessage(text, customAttributes)
         attachmentHandler.onSending()
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         send(encodedJson)
@@ -117,7 +117,7 @@ internal class MessagingClientImpl(
     override fun attach(
         byteArray: ByteArray,
         fileName: String,
-        uploadProgress: ((Float) -> Unit)?
+        uploadProgress: ((Float) -> Unit)?,
     ): String {
         log.i { "attach(fileName = $fileName)" }
         val request = attachmentHandler.prepare(
@@ -174,7 +174,9 @@ internal class MessagingClientImpl(
             is ErrorCode.SessionNotFound ->
                 currentState = State.Error(code, message)
             is ErrorCode.MessageTooLong,
-            is ErrorCode.RequestRateTooHigh -> {
+            is ErrorCode.RequestRateTooHigh,
+            is ErrorCode.CustomAttributeSizeTooLarge,
+            -> {
                 messageStore.onMessageError(code, message)
                 attachmentHandler.onMessageError(code, message)
             }

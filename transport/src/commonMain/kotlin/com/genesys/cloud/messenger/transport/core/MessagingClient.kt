@@ -96,10 +96,11 @@ interface MessagingClient {
      * Send a message to the conversation as plain text.
      *
      * @param text the plain text to send.
+     * @param customAttributes optional dictionary of attributes to send with the message. Empty by default.
      * @throws IllegalStateException
      */
     @Throws(IllegalStateException::class)
-    fun sendMessage(text: String)
+    fun sendMessage(text: String, customAttributes: Map<String, String> = emptyMap())
 
     /**
      * Perform a health check of the connection by sending an echo message.

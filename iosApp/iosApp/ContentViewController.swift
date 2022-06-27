@@ -15,6 +15,7 @@ class ContentViewController: UIViewController {
     private var attachImageName = ""
     private let attachmentName = "image"
     private var byteArray: [UInt8]? = nil
+    var customAttributes: [String: String] = [:]
 
     init(deployment: Deployment) {
         self.messenger = MessengerHandler(deployment: deployment)
@@ -83,11 +84,13 @@ class ContentViewController: UIViewController {
         case bye
         case healthCheck
         case clearConversation
+        case addAttribute
         
         var helpDescription: String {
             switch self {
             case .send: return "send <msg>"
             case .detach: return "detach <attachmentId>"
+            case .addAttribute: return "addAttribute <key> <value>"
             default: return rawValue
             }
         }
@@ -213,16 +216,23 @@ class ContentViewController: UIViewController {
         return (frame.cgRectValue, duration.doubleValue, curve)
     }
 
-    private func segmentUserInput(_ input: String) -> (UserCommand?, String?) {
+    private func segmentUserInput(_ input: String) -> (String?, String?) {
         let segments = input.split(separator: " ", maxSplits: 1)
         guard !segments.isEmpty else {
             return (nil, nil)
         }
-        let command = UserCommand(rawValue: String(segments[0]))
+        let command = String(segments[0])
         if segments.indices.contains(1) {
             return (command, String(segments[1]).trimmingCharacters(in: .whitespaces))
         }
         return (command, nil)
+    }
+
+    private func convertToCommand(command: String?, input: String?) -> (UserCommand?, String?) {
+        if(command == nil) {
+            return (nil, input)
+        }
+        return (UserCommand(rawValue: command!), input)
     }
 
 }
@@ -237,9 +247,10 @@ extension ContentViewController : UITextFieldDelegate {
 
         attachImageName = ""
         let userInput = segmentUserInput(message)
+        let command = convertToCommand(command: userInput.0,input: userInput.1)
 
         do {
-            switch userInput {
+            switch command {
             case (.connect, _):
                 try messenger.connect()
             case (.bye, _):
@@ -247,7 +258,8 @@ extension ContentViewController : UITextFieldDelegate {
             case (.configure, _):
                 try messenger.configureSession()
             case (.send, let msg?):
-                try messenger.sendMessage(text: msg.trimmingCharacters(in: .whitespaces))
+                try messenger.sendMessage(text: msg.trimmingCharacters(in: .whitespaces), customAttributes: customAttributes)
+                customAttributes = [:]
             case (.history, _):
                 messenger.fetchNextPage()
             case (.healthCheck, _):
@@ -286,6 +298,15 @@ extension ContentViewController : UITextFieldDelegate {
                 }
             case (.clearConversation, _):
                 messenger.clearConversation()
+            case(.addAttribute, let msg?):
+                let segments = segmentUserInput(msg)
+                if let key = segments.0, !key.isEmpty {
+                    let value = segments.1 ?? ""
+                    customAttributes[key] = value
+                    self.info.text = "Custom attribute added: key: \(key) value: \(value)"
+                }  else {
+                    self.info.text = "Custom attribute key cannot be nil or empty!"
+                }
             default:
                 self.info.text = "Invalid command"
             }

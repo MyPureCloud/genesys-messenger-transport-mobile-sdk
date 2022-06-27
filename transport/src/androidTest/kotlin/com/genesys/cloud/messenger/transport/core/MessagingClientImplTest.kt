@@ -8,6 +8,8 @@ import com.genesys.cloud.messenger.transport.network.SocketCloseCode
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
+import com.genesys.cloud.messenger.transport.shyrka.send.Channel
+import com.genesys.cloud.messenger.transport.shyrka.send.Channel.Metadata
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
@@ -36,7 +38,7 @@ class MessagingClientImplTest {
     private val slot = slot<PlatformSocketListener>()
     private val mockStateListener: (MessagingClient.State) -> Unit = spyk()
     private val mockMessageStore: MessageStore = mockk(relaxed = true) {
-        every { prepareMessage(any()) } returns OnMessageRequest(
+        every { prepareMessage(any(), any()) } returns OnMessageRequest(
             "00000000-0000-0000-0000-000000000000",
             TextMessage("Hello world")
         )
@@ -515,6 +517,53 @@ class MessagingClientImplTest {
 
         verify {
             mockMessageStore.updateMessageHistory(emptyList(), DEFAULT_PAGE_SIZE)
+        }
+    }
+
+    @Test
+    fun whenSendMessageWithCustomAttributes() {
+        val expectedMessage =
+            """{"token":"00000000-0000-0000-0000-000000000000","message":{"text":"Hello world","type":"Text"},"channel":{"metadata":{"customAttributes":{"A":"B"}}},"action":"onMessage"}"""
+        val expectedText = "Hello world"
+        val expectedCustomAttributes = mapOf("A" to "B")
+        every { mockMessageStore.prepareMessage(any(), any()) } returns OnMessageRequest(
+            token = "00000000-0000-0000-0000-000000000000",
+            message = TextMessage("Hello world"),
+            channel = Channel(Metadata(expectedCustomAttributes)),
+        )
+        connectAndConfigure()
+
+        subject.sendMessage(text = "Hello world", customAttributes = mapOf("A" to "B"))
+
+        verifySequence {
+            connectSequence()
+            configureSequence()
+            mockMessageStore.prepareMessage(expectedText, expectedCustomAttributes)
+            mockAttachmentHandler.onSending()
+            mockPlatformSocket.sendMessage(expectedMessage)
+        }
+    }
+
+    @Test
+    fun whenMessageWithCustomAttributesIsTooLarge() {
+        val givenRawMessage =
+            """
+            {
+              "type": "response",
+              "class": "string",
+              "code": 4013,
+              "body": "Custom Attributes in channel metadata is larger than 2048 bytes"
+            }
+            """
+        val expectedErrorCode = ErrorCode.CustomAttributeSizeTooLarge
+        val expectedErrorMessage = "Custom Attributes in channel metadata is larger than 2048 bytes"
+        subject.connect()
+
+        slot.captured.onMessage(givenRawMessage)
+
+        verifySequence {
+            connectSequence()
+            mockMessageStore.onMessageError(expectedErrorCode, expectedErrorMessage)
         }
     }
 
