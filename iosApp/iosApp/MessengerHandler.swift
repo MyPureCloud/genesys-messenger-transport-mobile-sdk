@@ -54,6 +54,15 @@ class MessengerHandler {
             throw error
         }
     }
+    
+    func connectToSession() throws {
+        do {
+            try client.connectToSession()
+        } catch {
+            print("connectToSession() failed. \(error.localizedDescription)")
+            throw error
+        }
+    }
 
     func disconnect() throws {
         do {

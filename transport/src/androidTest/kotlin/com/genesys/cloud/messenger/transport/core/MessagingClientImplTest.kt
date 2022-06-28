@@ -567,6 +567,64 @@ class MessagingClientImplTest {
         }
     }
 
+    @Test
+    fun whenConnectToSession() {
+        val givenConfigureResponse = """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":true}}"""
+        val expectedConfigureMessage =
+            """{"token":"00000000-0000-0000-0000-000000000000","deploymentId":"deploymentId","journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"action":"configureSession"}"""
+        every { mockPlatformSocket.sendMessage(expectedConfigureMessage) } answers {
+            slot.captured.onMessage(givenConfigureResponse)
+        }
+
+        subject.connectToSession()
+
+        assertThat(subject).isConfigured(true, true)
+        verifySequence {
+            connectSequence()
+            configureSequence(expectedConfigureMessage)
+        }
+    }
+
+    @Test
+    fun whenConnectToSessionAfterConnectWasCalled() {
+        val givenConfigureResponse = """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":true}}"""
+        val expectedConfigureMessage =
+            """{"token":"00000000-0000-0000-0000-000000000000","deploymentId":"deploymentId","journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"action":"configureSession"}"""
+        subject.connect()
+        clearAllMocks()
+        every { mockPlatformSocket.sendMessage(expectedConfigureMessage) } answers {
+            slot.captured.onMessage(givenConfigureResponse)
+        }
+
+        subject.connectToSession()
+
+        assertThat(subject).isConfigured(true, true)
+        verifySequence {
+            configureSequence(expectedConfigureMessage)
+        }
+    }
+
+    @Test
+    fun whenConnectToSessionHaveClientResponseError() {
+        val givenConfigureResponse = """{"type":"response","class":"string","code":400,"body":"Deployment not found"}"""
+        val expectedConfigureMessage =
+            """{"token":"00000000-0000-0000-0000-000000000000","deploymentId":"deploymentId","journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"action":"configureSession"}"""
+        val expectedErrorCode = ErrorCode.ClientResponseError(400)
+        val expectedErrorMessage = "Deployment not found"
+        every { mockPlatformSocket.sendMessage(expectedConfigureMessage) } answers {
+            slot.captured.onMessage(givenConfigureResponse)
+        }
+
+        subject.connectToSession()
+
+        assertThat(subject).isError(expectedErrorCode, expectedErrorMessage)
+        verifySequence {
+            connectSequence()
+            mockPlatformSocket.sendMessage(expectedConfigureMessage)
+            mockStateListener(MessagingClient.State.Error(expectedErrorCode, expectedErrorMessage))
+        }
+    }
+
     private fun connectAndConfigure() {
         val sessionResponseMessage =
             """

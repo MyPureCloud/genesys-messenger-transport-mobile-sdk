@@ -83,14 +83,26 @@ interface MessagingClient {
      *
      * @throws IllegalStateException
      */
+    @Deprecated("Use the connectToSession() instead", ReplaceWith("connectToSession()"))
     @Throws(IllegalStateException::class)
     fun connect()
 
     /**
      * Configure a Web Messaging session.
      */
+    @Deprecated("Use the connectToSession() instead", ReplaceWith("connectToSession()"))
     @Throws(IllegalStateException::class)
     fun configureSession()
+
+    /**
+     * Simplify commonly used api to start a new chat. Calling this function will execute a series of action:
+     * 1. Connect to the websocket.
+     * 2. Configure a Web Messaging session.
+     *
+     * @throws IllegalStateException
+     */
+    @Throws(IllegalStateException::class)
+    fun connectToSession()
 
     /**
      * Send a message to the conversation as plain text.
