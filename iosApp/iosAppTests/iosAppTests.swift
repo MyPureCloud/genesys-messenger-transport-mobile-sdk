@@ -108,8 +108,6 @@ class TestContentController: MessengerHandler {
         client.stateListener = { [weak self] state in
             print("State Event: \(state)")
             switch state {
-            case _ as MessagingClientState.Connected:
-                self?.testExpectation?.fulfill()
             case _ as MessagingClientState.Configured:
                 self?.testExpectation?.fulfill()
             case _ as MessagingClientState.Closed:
@@ -151,22 +149,15 @@ class TestContentController: MessengerHandler {
 
     func startMessengerConnection(file: StaticString = #file, line: UInt = #line) {
         do {
-            try connect()
-            try configureSession()
+            try connect(shouldConfigure: true)
         } catch {
             XCTFail("Possible issue with connecting to the backend: \(error.localizedDescription)", file: file, line: line)
         }
     }
 
-    override func connect() throws {
-        testExpectation = XCTestExpectation(description: "Wait for Connection.")
-        try super.connect()
-        waitForExpectation()
-    }
-
-    override func configureSession() throws {
+    override func connect(shouldConfigure: Bool) throws {
         testExpectation = XCTestExpectation(description: "Wait for Configuration.")
-        try super.configureSession()
+        try super.connect(shouldConfigure: shouldConfigure)
         waitForExpectation()
     }
 
