@@ -72,6 +72,11 @@ internal class MessagingClientImpl(
         webSocket.openSocket(socketListener)
     }
 
+    override fun connect(shouldConfigure: Boolean) {
+        shouldConfigureAfterConnect = shouldConfigure
+        connect()
+    }
+
     @Throws(IllegalStateException::class)
     override fun disconnect() {
         log.i { "disconnect()" }
@@ -97,13 +102,6 @@ internal class MessagingClientImpl(
         )
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         webSocket.sendMessage(encodedJson)
-    }
-
-    @Throws(IllegalStateException::class)
-    override fun connectToSession() {
-        log.i { "connecting to the session." }
-        shouldConfigureAfterConnect = true
-        if (currentState is State.Connected) configureSession() else connect()
     }
 
     @Throws(IllegalStateException::class)

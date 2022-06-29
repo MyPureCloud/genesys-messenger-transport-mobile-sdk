@@ -95,7 +95,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "connect" -> doConnect()
             "bye" -> doDisconnect()
             "configure" -> doConfigureSession()
-            "connectToSession" -> doConnectToSession()
+            "connectWithConfigure" -> doConnectWithConfigure()
             "send" -> doSendMessage(input)
             "history" -> fetchNextPage()
             "healthCheck" -> doSendHealthCheck()
@@ -151,11 +151,11 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun doConnectToSession() {
+    private suspend fun doConnectWithConfigure() {
         try {
-            client.connectToSession()
+            client.connect(shouldConfigure = true)
         } catch (t: Throwable) {
-            handleException(t, "connect to session")
+            handleException(t, "connect with configure")
         }
     }
 

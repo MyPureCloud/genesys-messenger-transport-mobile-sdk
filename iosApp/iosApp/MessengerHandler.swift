@@ -55,11 +55,11 @@ class MessengerHandler {
         }
     }
     
-    func connectToSession() throws {
+    func connect(shouldConfigure: Bool) throws {
         do {
-            try client.connectToSession()
+            try client.connect(shouldConfigure: shouldConfigure)
         } catch {
-            print("connectToSession() failed. \(error.localizedDescription)")
+            print("connectWithConfigure() failed. \(error.localizedDescription)")
             throw error
         }
     }
