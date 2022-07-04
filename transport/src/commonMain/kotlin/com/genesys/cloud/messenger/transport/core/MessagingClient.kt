@@ -95,7 +95,7 @@ interface MessagingClient {
      * @throws IllegalStateException
      */
     @Throws(IllegalStateException::class)
-    fun connect(shouldConfigure: Boolean = false)
+    fun connect(shouldConfigure: Boolean = true)
 
     /**
      * Configure a Web Messaging session.
