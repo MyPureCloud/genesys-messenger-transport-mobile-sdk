@@ -91,7 +91,7 @@ interface MessagingClient {
      * Open a secure WebSocket connection to the Web Messaging service with the url and
      * deploymentId configured on this MessagingClient instance.
      *
-     * @param shouldConfigure when true, Configure a Web Messaging session.
+     * @param shouldConfigure a Boolean value indicating whether to configure a Web Messaging session after the WebSocket is opened.
      * @throws IllegalStateException
      */
     @Throws(IllegalStateException::class)
