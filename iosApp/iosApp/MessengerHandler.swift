@@ -54,6 +54,15 @@ class MessengerHandler {
             throw error
         }
     }
+    
+    func connect(shouldConfigure: Bool) throws {
+        do {
+            try client.connect(shouldConfigure: shouldConfigure)
+        } catch {
+            print("connectWithConfigure() failed. \(error.localizedDescription)")
+            throw error
+        }
+    }
 
     func disconnect() throws {
         do {

@@ -75,6 +75,7 @@ class ContentViewController: UIViewController {
     enum UserCommand: String, CaseIterable {
         case connect
         case configure
+        case connectWithConfigure
         case send
         case history
         case selectAttachment
@@ -257,6 +258,8 @@ extension ContentViewController : UITextFieldDelegate {
                 try messenger.disconnect()
             case (.configure, _):
                 try messenger.configureSession()
+            case (.connectWithConfigure, _):
+                try messenger.connect(shouldConfigure: true)
             case (.send, let msg?):
                 try messenger.sendMessage(text: msg.trimmingCharacters(in: .whitespaces), customAttributes: customAttributes)
                 customAttributes = [:]

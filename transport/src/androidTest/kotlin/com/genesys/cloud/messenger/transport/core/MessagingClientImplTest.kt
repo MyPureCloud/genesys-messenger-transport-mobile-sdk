@@ -74,6 +74,9 @@ class MessagingClientImplTest {
         every { sendMessage(any()) } answers {
             slot.captured.onMessage("")
         }
+        every { sendMessage(Request.configureRequest) } answers {
+            slot.captured.onMessage(Response.configureSuccess)
+        }
     }
 
     private val mockWebMessagingApi: WebMessagingApi = mockk {
@@ -129,15 +132,13 @@ class MessagingClientImplTest {
 
     @Test
     fun whenConnectAndThenConfigureSession() {
-        val expectedConfigureMessage =
-            """{"token":"00000000-0000-0000-0000-000000000000","deploymentId":"deploymentId","journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"action":"configureSession"}"""
         subject.connect()
 
         subject.configureSession()
 
         verifySequence {
             connectSequence()
-            mockPlatformSocket.sendMessage(expectedConfigureMessage)
+            configureSequence()
         }
     }
 
@@ -294,21 +295,9 @@ class MessagingClientImplTest {
     @Test
     fun whenSocketListenerInvokeOnMessageWithProperlyStructuredMessage() {
         val expectedSessionResponse = SessionResponse(connected = true, newSession = true)
-        val expectedRawMessage =
-            """
-            {
-              "type": "response",
-              "class": "SessionResponse",
-              "code": 200,
-              "body": {
-                "connected": true,
-                "newSession": true
-              }
-            }
-            """
         subject.connect()
 
-        slot.captured.onMessage(expectedRawMessage)
+        slot.captured.onMessage(Response.configureSuccess)
 
         assertThat(subject).isConfigured(
             expectedSessionResponse.connected,
@@ -567,22 +556,49 @@ class MessagingClientImplTest {
         }
     }
 
+    @Test
+    fun whenConnectWithConfigureSetToTrue() {
+        subject.connect(shouldConfigure = true)
+
+        assertThat(subject).isConfigured(true, true)
+        verifySequence {
+            connectSequence()
+            configureSequence()
+        }
+    }
+
+    @Test
+    fun whenConnectWithConfigureSetToFalse() {
+        subject.connect(shouldConfigure = false)
+
+        assertThat(subject).isConnected()
+        verifySequence {
+            connectSequence()
+        }
+    }
+
+    @Test
+    fun whenConnectWithConfigureHasClientResponseError() {
+        val expectedErrorCode = ErrorCode.ClientResponseError(400)
+        val expectedErrorMessage = "Deployment not found"
+        every { mockPlatformSocket.sendMessage(Request.configureRequest) } answers {
+            slot.captured.onMessage(Response.configureFail)
+        }
+
+        subject.connect(shouldConfigure = true)
+
+        assertThat(subject).isError(expectedErrorCode, expectedErrorMessage)
+        verifySequence {
+            connectSequence()
+            mockPlatformSocket.sendMessage(Request.configureRequest)
+            mockStateListener(MessagingClient.State.Error(expectedErrorCode, expectedErrorMessage))
+        }
+    }
+
     private fun connectAndConfigure() {
-        val sessionResponseMessage =
-            """
-            {
-              "type": "response",
-              "class": "SessionResponse",
-              "code": 200,
-              "body": {
-                "connected": true,
-                "newSession": true
-              }
-            }
-            """
         subject.connect()
         subject.configureSession()
-        slot.captured.onMessage(sessionResponseMessage)
+        slot.captured.onMessage(Response.configureSuccess)
     }
 
     private fun configuration(): Configuration = Configuration(
@@ -608,8 +624,20 @@ class MessagingClientImplTest {
         mockAttachmentHandler.clearAll()
     }
 
-    private fun MockKVerificationScope.configureSequence(expected: String = any()) {
-        mockPlatformSocket.sendMessage(expected)
+    private fun MockKVerificationScope.configureSequence() {
+        mockPlatformSocket.sendMessage(Request.configureRequest)
         mockStateListener(MessagingClient.State.Configured(connected = true, newSession = true))
     }
+}
+
+private object Request {
+    const val configureRequest =
+        """{"token":"00000000-0000-0000-0000-000000000000","deploymentId":"deploymentId","journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"action":"configureSession"}"""
+}
+
+private object Response {
+    const val configureSuccess =
+        """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":true}}"""
+    const val configureFail =
+        """{"type":"response","class":"string","code":400,"body":"Deployment not found"}"""
 }
