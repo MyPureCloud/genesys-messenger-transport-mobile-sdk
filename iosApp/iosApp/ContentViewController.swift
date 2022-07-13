@@ -32,7 +32,7 @@ class ContentViewController: UIViewController {
             case _ as MessagingClientState.Connected:
                 stateMessage = "Connected"
             case let configured as MessagingClientState.Configured:
-                stateMessage = "Configured, connected=\(configured.connected) newSession=\(configured.newSession?.description ?? "nil"))"
+                stateMessage = "Configured, connected=\(configured.connected) newSession=\(configured.newSession) wasReconnecting=\(configured.wasReconnecting))"
             case let closing as MessagingClientState.Closing:
                 stateMessage = "Closing, code=\(closing.code) reason=\(closing.reason)"
             case let closed as MessagingClientState.Closed:

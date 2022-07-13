@@ -227,7 +227,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         Log.v(TAG, "onClientState(state = $state)")
         clientState = state
         val statePayloadMessage = when (state) {
-            is State.Configured -> "connected: ${state.connected}, newSession: ${state.newSession}"
+            is State.Configured -> "connected: ${state.connected}, newSession: ${state.newSession}, wasReconnecting: ${state.wasReconnecting}"
             is State.Closing -> "code: ${state.code}, reason: ${state.reason}"
             is State.Closed -> "code: ${state.code}, reason: ${state.reason}"
             is State.Error -> "code: ${state.code}, message: ${state.message}"
