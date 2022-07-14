@@ -158,8 +158,10 @@ internal actual class PlatformSocket actual constructor(
                 code = ETIMEDOUT.convert(),
                 userInfo = null
             )
-            handleErrorAndDeactivate(nsError,
-                "Pong not received within interval [$pingInterval] ")
+            handleErrorAndDeactivate(
+                nsError,
+                "Pong not received within interval [$pingInterval] "
+            )
         }
     }
 
