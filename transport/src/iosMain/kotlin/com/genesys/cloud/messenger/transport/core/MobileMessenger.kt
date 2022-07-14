@@ -23,7 +23,7 @@ object MobileMessenger {
     ): MessagingClient {
         val log = Log(configuration.logging, LogTag.MESSAGING_CLIENT)
         val api = WebMessagingApi(configuration)
-        val webSocket = PlatformSocket(log.withTag(LogTag.WEBSOCKET), configuration.webSocketUrl)
+        val webSocket = PlatformSocket(log.withTag(LogTag.WEBSOCKET), configuration, 300000)
         val token =
             TokenStoreImpl(configuration.tokenStoreKey, log.withTag(LogTag.TOKEN_STORE)).token
         val messageStore = MessageStore(token, log.withTag(LogTag.MESSAGE_STORE))

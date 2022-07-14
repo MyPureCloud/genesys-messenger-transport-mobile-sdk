@@ -1,7 +1,7 @@
 package com.genesys.cloud.messenger.transport.network
 
+import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.util.logs.Log
-import io.ktor.http.Url
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -11,10 +11,10 @@ import java.util.concurrent.TimeUnit
 
 internal actual class PlatformSocket actual constructor(
     private val log: Log,
-    private val url: Url,
-    actual val pingInterval: Int,
-    actual val pongInterval: Int,
+    configuration: Configuration,
+    actual val pingInterval: Long
 ) {
+    private val url = configuration.webSocketUrl
     private var webSocket: WebSocket? = null
 
     actual fun openSocket(listener: PlatformSocketListener) {
@@ -22,7 +22,7 @@ internal actual class PlatformSocket actual constructor(
             Request.Builder().url(url.toString()).header(name = "Origin", value = url.host).build()
         val webClient = OkHttpClient()
             .newBuilder()
-            .pingInterval(pingInterval.toLong(), TimeUnit.SECONDS)
+            .pingInterval(pingInterval, TimeUnit.MILLISECONDS)
             .addInterceptor(
                 HttpLoggingInterceptor(logger = log.okHttpLogger()).apply {
                     level = HttpLoggingInterceptor.Level.BODY
