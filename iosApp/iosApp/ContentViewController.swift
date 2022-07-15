@@ -24,15 +24,16 @@ class ContentViewController: UIViewController {
         
         // set up MessengerHandler callbacks
         
-        messenger.onStateChange = { [weak self] state in
-            var stateMessage = "\(state)"
-            switch state {
+        messenger.onStateChange = { [weak self] stateChange in
+            let newState = stateChange.newState
+            var stateMessage = "\(newState)"
+            switch newState {
             case _ as MessagingClientState.Connecting:
                 stateMessage = "Connecting"
             case _ as MessagingClientState.Connected:
                 stateMessage = "Connected"
             case let configured as MessagingClientState.Configured:
-                stateMessage = "Configured, connected=\(configured.connected) newSession=\(configured.newSession) wasReconnecting=\(configured.wasReconnecting))"
+                stateMessage = "Configured, connected=\(configured.connected) newSession=\(configured.newSession) wasReconnecting=\(stateChange.oldState.isEqual(MessagingClientState.Reconnecting()))"
             case let closing as MessagingClientState.Closing:
                 stateMessage = "Closing, code=\(closing.code) reason=\(closing.reason)"
             case let closed as MessagingClientState.Closed:
@@ -43,7 +44,7 @@ class ContentViewController: UIViewController {
                 break
             }
             self?.status.text = "Messenger Status: " + stateMessage
-            self?.info.text = "State changed to \(state)"
+            self?.info.text = "State changed from \(stateChange.oldState) to \(newState)"
         }
         
         messenger.onMessageEvent = { [weak self] event in

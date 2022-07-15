@@ -49,9 +49,16 @@ internal class MessagingClientImpl(
             return stateMachine.currentState
         }
 
+    @Deprecated("Use onStateChanged() instead", ReplaceWith("onStateChanged"))
     override var stateListener: ((State) -> Unit)? = null
         set(value) {
             stateMachine.stateListener = value
+            field = value
+        }
+
+    override var onStateChanged: ((StateChange) -> Unit)? = null
+        set(value) {
+            stateMachine.onStateChanged = value
             field = value
         }
 
@@ -71,7 +78,6 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun connect() {
         log.i { "connect()" }
-        check(stateMachine.canConnect()) { "MessagingClient state must be Closed, Idle or Error" }
         stateMachine.onConnect()
         webSocket.openSocket(socketListener)
     }
@@ -84,7 +90,6 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun disconnect() {
         log.i { "disconnect()" }
-        check(stateMachine.canDisconnect()) { "MessagingClient state must not already be Closed, Idle or Error" }
         val code = SocketCloseCode.NORMAL_CLOSURE.value
         val reason = "The user has closed the connection."
         stateMachine.onClosing(code, reason)
@@ -95,7 +100,7 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun configureSession() {
         log.i { "configureSession(token = $token)" }
-        check(stateMachine.canConfigure()) { "WebMessaging client is not connected." }
+        stateMachine.onConfiguring()
         val request = ConfigureSessionRequest(
             token = token,
             deploymentId = configuration.deploymentId,

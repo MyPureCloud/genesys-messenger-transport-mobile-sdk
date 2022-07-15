@@ -61,7 +61,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             configuration = mmsdkConfiguration,
         )
         with(client) {
-            stateListener = { runBlocking { onClientState(it) } }
+            onStateChanged = { runBlocking { onClientStateChanged(it.newState, it.oldState) } }
             messageListener = { onEvent(it) }
             clientState = client.currentState
         }
@@ -223,14 +223,14 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         onSocketMessageReceived(consoleMessage)
     }
 
-    private suspend fun onClientState(state: State) {
-        Log.v(TAG, "onClientState(state = $state)")
-        clientState = state
-        val statePayloadMessage = when (state) {
-            is State.Configured -> "connected: ${state.connected}, newSession: ${state.newSession}, wasReconnecting: ${state.wasReconnecting}"
-            is State.Closing -> "code: ${state.code}, reason: ${state.reason}"
-            is State.Closed -> "code: ${state.code}, reason: ${state.reason}"
-            is State.Error -> "code: ${state.code}, message: ${state.message}"
+    private suspend fun onClientStateChanged(newState: State, oldState: State) {
+        Log.v(TAG, "onClientStateChanged(oldState = $oldState, newState = $newState)")
+        clientState = newState
+        val statePayloadMessage = when (newState) {
+            is State.Configured -> "connected: ${newState.connected}, newSession: ${newState.newSession}, wasReconnecting: ${oldState is State.Reconnecting}"
+            is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
+            is State.Closed -> "code: ${newState.code}, reason: ${newState.reason}"
+            is State.Error -> "code: ${newState.code}, message: ${newState.message}"
             else -> ""
         }
         onSocketMessageReceived(statePayloadMessage)

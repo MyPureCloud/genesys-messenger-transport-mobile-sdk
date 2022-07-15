@@ -141,7 +141,7 @@ class MessagingClientImplTest {
 
         subject.configureSession()
 
-        assertThat(subject).isConfigured(true, true, false)
+        assertThat(subject).isConfigured(true, true)
         verifySequence {
             connectSequence()
             configureSequence()
@@ -303,11 +303,10 @@ class MessagingClientImplTest {
         assertThat(subject).isConfigured(
             expectedSessionResponse.connected,
             expectedSessionResponse.newSession,
-            expectedWasReconnecting,
         )
         verifySequence {
             connectSequence()
-            mockStateListener(MessagingClient.State.Configured(connected = true, newSession = true, wasReconnecting = false))
+            mockStateListener(MessagingClient.State.Configured(connected = true, newSession = true))
         }
     }
 
@@ -562,7 +561,7 @@ class MessagingClientImplTest {
     fun whenConnectWithConfigureSetToTrue() {
         subject.connect(shouldConfigure = true)
 
-        assertThat(subject).isConfigured(true, true, false)
+        assertThat(subject).isConfigured(true, true)
         verifySequence {
             connectSequence()
             configureSequence()
@@ -628,7 +627,7 @@ class MessagingClientImplTest {
 
     private fun MockKVerificationScope.configureSequence() {
         mockPlatformSocket.sendMessage(Request.configureRequest)
-        mockStateListener(MessagingClient.State.Configured(connected = true, newSession = true, wasReconnecting = false))
+        mockStateListener(MessagingClient.State.Configured(connected = true, newSession = true))
     }
 }
 

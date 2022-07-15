@@ -4,18 +4,22 @@ import assertk.Assert
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.prop
+import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import io.mockk.spyk
 import io.mockk.verify
 import org.junit.Before
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
 
 class StateMachineTest {
     private val subject = StateMachineImpl()
-    private val mockStateListener: (MessagingClient.State) -> Unit = spyk()
+    private val mockStateListener: (State) -> Unit = spyk()
+    private val mockOnStateChanged: (StateChange) -> Unit = spyk()
 
     @Before
     fun setup() {
         subject.stateListener = mockStateListener
+        subject.onStateChanged = mockOnStateChanged
     }
 
     @Test
@@ -25,106 +29,164 @@ class StateMachineTest {
 
     @Test
     fun whenOnConnectionOpened() {
+        val expectedStateChange = StateChange(State.Idle, State.Connected)
+
         subject.onConnectionOpened()
 
         assertThat(subject).isConnected()
-
-        verify { mockStateListener(MessagingClient.State.Connected) }
+        verify { mockStateListener(State.Connected) }
+        verify { mockOnStateChanged(expectedStateChange) }
     }
 
     @Test
     fun whenOnConnectionOpenedAfterOnReconnect() {
+        val expectedStateChange = StateChange(State.Idle, State.Reconnecting)
+
         subject.onReconnect()
         subject.onConnectionOpened()
 
         assertThat(subject).isReconnecting()
-        verify { mockStateListener(MessagingClient.State.Reconnecting) }
+        verify { mockStateListener(State.Reconnecting) }
+        verify { mockOnStateChanged(expectedStateChange) }
     }
 
     @Test
     fun whenOnConnect() {
+        val expectedStateChange = StateChange(State.Idle, State.Connecting)
+
         subject.onConnect()
 
         assertThat(subject).isConnecting()
-        verify { mockStateListener(MessagingClient.State.Connecting) }
+        verify { mockStateListener(State.Connecting) }
+        verify { mockOnStateChanged(expectedStateChange) }
     }
 
     @Test
     fun whenOnConnectAfterOnReconnect() {
+        val expectedStateChange = StateChange(State.Idle, State.Reconnecting)
+
         subject.onReconnect()
         subject.onConnect()
 
         assertThat(subject).isReconnecting()
-        verify { mockStateListener(MessagingClient.State.Reconnecting) }
+        verify { mockStateListener(State.Reconnecting) }
+        verify { mockOnStateChanged(expectedStateChange) }
+    }
+
+    @Test
+    fun whenOnConnectAndCurrentStateIsConnected() {
+        subject.onConnectionOpened()
+
+        assertFailsWith<IllegalStateException> { subject.onConnect() }
+    }
+
+    @Test
+    fun whenOnConnectAndCurrentStateIsConfigured() {
+        subject.onSessionConfigured(connected = true, newSession = true)
+
+        assertFailsWith<IllegalStateException> { subject.onConnect() }
     }
 
     @Test
     fun whenOnReconnect() {
+        val expectedStateChange = StateChange(State.Idle, State.Reconnecting)
+
         subject.onReconnect()
 
         assertThat(subject).isReconnecting()
-        verify { mockStateListener(MessagingClient.State.Reconnecting) }
+        verify { mockStateListener(State.Reconnecting) }
+        verify { mockOnStateChanged(expectedStateChange) }
     }
 
     @Test
     fun whenOnSessionConfigured() {
+        val expectedStateChange =
+            StateChange(State.Idle, State.Configured(connected = true, newSession = true))
+
         subject.onSessionConfigured(connected = true, newSession = true)
 
         assertThat(subject).isConfigured(
             connected = true,
             newSession = true,
-            wasReconnecting = false
         )
         verify {
-            mockStateListener(
-                MessagingClient.State.Configured(
-                    connected = true,
-                    newSession = true,
-                    wasReconnecting = false
-                )
-            )
+            mockStateListener(State.Configured(connected = true, newSession = true))
         }
+        verify { mockOnStateChanged(expectedStateChange) }
     }
 
     @Test
     fun whenOnSessionConfiguredAfterOnReconnect() {
+        val expectedStateChange =
+            StateChange(State.Reconnecting, State.Configured(connected = true, newSession = true))
+
         subject.onReconnect()
         subject.onSessionConfigured(connected = true, newSession = true)
 
         assertThat(subject).isConfigured(
             connected = true,
             newSession = true,
-            wasReconnecting = true
         )
         verify {
             mockStateListener(
-                MessagingClient.State.Configured(
+                State.Configured(
                     connected = true,
                     newSession = true,
-                    wasReconnecting = true
                 )
             )
         }
+        verify { mockOnStateChanged(expectedStateChange) }
     }
 
     @Test
-    fun whenOnClosing() {
+    fun whenOnClosingAfterConnectionWasOpened() {
+        val expectedStateChange =
+            StateChange(State.Connected, State.Closing(code = 1, reason = "A reason."))
+
+        subject.onConnectionOpened()
         subject.onClosing(code = 1, reason = "A reason.")
 
         assertThat(subject).isClosing(code = 1, reason = "A reason.")
-        verify { mockStateListener(MessagingClient.State.Closing(code = 1, reason = "A reason.")) }
+        verify { mockStateListener(State.Closing(code = 1, reason = "A reason.")) }
+        verify { mockOnStateChanged(expectedStateChange) }
+    }
+
+    @Test
+    fun whenOnClosingAndCurrentStateIsIdle() {
+        assertFailsWith<IllegalStateException> { subject.onClosing(code = 1, reason = "A reason.") }
+    }
+
+    @Test
+    fun whenOnClosingAndCurrentStateIsClosed() {
+        subject.onClosed(code = 1, reason = "A reason.")
+
+        assertFailsWith<IllegalStateException> { subject.onClosing(code = 1, reason = "A reason.") }
+    }
+
+    @Test
+    fun whenOnClosingWhenStateIsError() {
+        subject.onError(code = ErrorCode.WebsocketError, message = "A message.")
+
+        assertFailsWith<IllegalStateException> { subject.onClosing(code = 1, reason = "A reason.") }
     }
 
     @Test
     fun whenOnClosed() {
+        val expectedStateChange =
+            StateChange(State.Idle, State.Closed(code = 1, reason = "A reason."))
+
         subject.onClosed(code = 1, reason = "A reason.")
 
         assertThat(subject).isClosed(code = 1, reason = "A reason.")
-        verify { mockStateListener(MessagingClient.State.Closed(code = 1, reason = "A reason.")) }
+        verify { mockStateListener(State.Closed(code = 1, reason = "A reason.")) }
+        verify { mockOnStateChanged(expectedStateChange) }
     }
 
     @Test
     fun whenOnError() {
+        val expectedStateChange =
+            StateChange(State.Idle, State.Error(ErrorCode.WebsocketError, "A message."))
+
         subject.onError(code = ErrorCode.WebsocketError, message = "A message.")
 
         assertThat(subject).isError(
@@ -133,41 +195,40 @@ class StateMachineTest {
         )
         verify {
             mockStateListener(
-                MessagingClient.State.Error(
+                State.Error(
                     code = ErrorCode.WebsocketError,
                     message = "A message."
                 )
             )
         }
+        verify { mockOnStateChanged(expectedStateChange) }
     }
 
     private fun Assert<StateMachine>.currentState() = prop(StateMachine::currentState)
-    private fun Assert<StateMachine>.isIdle() = currentState().isEqualTo(MessagingClient.State.Idle)
+    private fun Assert<StateMachine>.isIdle() = currentState().isEqualTo(State.Idle)
     private fun Assert<StateMachine>.isClosed(code: Int, reason: String) =
-        currentState().isEqualTo(MessagingClient.State.Closed(code, reason))
+        currentState().isEqualTo(State.Closed(code, reason))
 
     private fun Assert<StateMachine>.isConnecting() =
-        currentState().isEqualTo(MessagingClient.State.Connecting)
+        currentState().isEqualTo(State.Connecting)
 
     private fun Assert<StateMachine>.isConnected() =
-        currentState().isEqualTo(MessagingClient.State.Connected)
+        currentState().isEqualTo(State.Connected)
 
     private fun Assert<StateMachine>.isReconnecting() =
-        currentState().isEqualTo(MessagingClient.State.Reconnecting)
+        currentState().isEqualTo(State.Reconnecting)
 
     private fun Assert<StateMachine>.isClosing(code: Int, reason: String) =
-        currentState().isEqualTo(MessagingClient.State.Closing(code, reason))
+        currentState().isEqualTo(State.Closing(code, reason))
 
     private fun Assert<StateMachine>.isConfigured(
         connected: Boolean,
         newSession: Boolean,
-        wasReconnecting: Boolean,
     ) =
         currentState().isEqualTo(
-            MessagingClient.State.Configured(
+            State.Configured(
                 connected,
                 newSession,
-                wasReconnecting
             )
         )
 
@@ -176,7 +237,7 @@ class StateMachineTest {
         message: String?,
     ) =
         currentState().isEqualTo(
-            MessagingClient.State.Error(
+            State.Error(
                 code, message
             )
         )
