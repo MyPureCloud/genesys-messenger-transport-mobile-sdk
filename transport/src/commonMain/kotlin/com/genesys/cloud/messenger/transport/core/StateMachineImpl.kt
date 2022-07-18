@@ -16,15 +16,16 @@ internal class StateMachineImpl(
         set(value) {
             if (field != value) {
                 log.i { "State changed from: $field, to: $value" }
-                stateListener?.invoke(value)
-                onStateChanged?.invoke(StateChange(field, value))
+                val oldState = field
                 field = value
+                stateListener?.invoke(value)
+                stateChangedListener?.invoke(StateChange(oldState, value))
             }
         }
 
     override var stateListener: ((State) -> Unit)? = null
 
-    override var onStateChanged: ((StateChange) -> Unit)? = null
+    override var stateChangedListener: ((StateChange) -> Unit)? = null
 
     override fun onConnectionOpened() {
         currentState = if (isReconnecting) State.Reconnecting else State.Connected

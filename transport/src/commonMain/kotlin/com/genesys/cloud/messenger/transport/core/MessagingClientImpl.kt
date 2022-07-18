@@ -56,9 +56,9 @@ internal class MessagingClientImpl(
             field = value
         }
 
-    override var onStateChanged: ((StateChange) -> Unit)? = null
+    override var stateChangedListener: ((StateChange) -> Unit)? = null
         set(value) {
-            stateMachine.onStateChanged = value
+            stateMachine.stateChangedListener = value
             field = value
         }
 

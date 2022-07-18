@@ -61,7 +61,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             configuration = mmsdkConfiguration,
         )
         with(client) {
-            onStateChanged = { runBlocking { onClientStateChanged(it.newState, it.oldState) } }
+            stateChangedListener = { runBlocking { onClientStateChanged(oldState = it.oldState, newState = it.newState) } }
             messageListener = { onEvent(it) }
             clientState = client.currentState
         }
@@ -223,7 +223,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         onSocketMessageReceived(consoleMessage)
     }
 
-    private suspend fun onClientStateChanged(newState: State, oldState: State) {
+    private suspend fun onClientStateChanged(oldState: State, newState: State) {
         Log.v(TAG, "onClientStateChanged(oldState = $oldState, newState = $newState)")
         clientState = newState
         val statePayloadMessage = when (newState) {

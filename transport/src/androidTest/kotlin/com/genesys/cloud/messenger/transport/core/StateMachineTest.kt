@@ -14,12 +14,12 @@ import kotlin.test.assertFailsWith
 class StateMachineTest {
     private val subject = StateMachineImpl()
     private val mockStateListener: (State) -> Unit = spyk()
-    private val mockOnStateChanged: (StateChange) -> Unit = spyk()
+    private val mockStateChangedListener: (StateChange) -> Unit = spyk()
 
     @Before
     fun setup() {
         subject.stateListener = mockStateListener
-        subject.onStateChanged = mockOnStateChanged
+        subject.stateChangedListener = mockStateChangedListener
     }
 
     @Test
@@ -35,7 +35,7 @@ class StateMachineTest {
 
         assertThat(subject).isConnected()
         verify { mockStateListener(State.Connected) }
-        verify { mockOnStateChanged(expectedStateChange) }
+        verify { mockStateChangedListener(expectedStateChange) }
     }
 
     @Test
@@ -47,7 +47,7 @@ class StateMachineTest {
 
         assertThat(subject).isReconnecting()
         verify { mockStateListener(State.Reconnecting) }
-        verify { mockOnStateChanged(expectedStateChange) }
+        verify { mockStateChangedListener(expectedStateChange) }
     }
 
     @Test
@@ -58,7 +58,7 @@ class StateMachineTest {
 
         assertThat(subject).isConnecting()
         verify { mockStateListener(State.Connecting) }
-        verify { mockOnStateChanged(expectedStateChange) }
+        verify { mockStateChangedListener(expectedStateChange) }
     }
 
     @Test
@@ -70,7 +70,7 @@ class StateMachineTest {
 
         assertThat(subject).isReconnecting()
         verify { mockStateListener(State.Reconnecting) }
-        verify { mockOnStateChanged(expectedStateChange) }
+        verify { mockStateChangedListener(expectedStateChange) }
     }
 
     @Test
@@ -95,7 +95,7 @@ class StateMachineTest {
 
         assertThat(subject).isReconnecting()
         verify { mockStateListener(State.Reconnecting) }
-        verify { mockOnStateChanged(expectedStateChange) }
+        verify { mockStateChangedListener(expectedStateChange) }
     }
 
     @Test
@@ -112,7 +112,7 @@ class StateMachineTest {
         verify {
             mockStateListener(State.Configured(connected = true, newSession = true))
         }
-        verify { mockOnStateChanged(expectedStateChange) }
+        verify { mockStateChangedListener(expectedStateChange) }
     }
 
     @Test
@@ -135,7 +135,7 @@ class StateMachineTest {
                 )
             )
         }
-        verify { mockOnStateChanged(expectedStateChange) }
+        verify { mockStateChangedListener(expectedStateChange) }
     }
 
     @Test
@@ -148,7 +148,7 @@ class StateMachineTest {
 
         assertThat(subject).isClosing(code = 1, reason = "A reason.")
         verify { mockStateListener(State.Closing(code = 1, reason = "A reason.")) }
-        verify { mockOnStateChanged(expectedStateChange) }
+        verify { mockStateChangedListener(expectedStateChange) }
     }
 
     @Test
@@ -179,7 +179,7 @@ class StateMachineTest {
 
         assertThat(subject).isClosed(code = 1, reason = "A reason.")
         verify { mockStateListener(State.Closed(code = 1, reason = "A reason.")) }
-        verify { mockOnStateChanged(expectedStateChange) }
+        verify { mockStateChangedListener(expectedStateChange) }
     }
 
     @Test
@@ -201,7 +201,7 @@ class StateMachineTest {
                 )
             )
         }
-        verify { mockOnStateChanged(expectedStateChange) }
+        verify { mockStateChangedListener(expectedStateChange) }
     }
 
     private fun Assert<StateMachine>.currentState() = prop(StateMachine::currentState)

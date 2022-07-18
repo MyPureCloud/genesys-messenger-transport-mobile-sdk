@@ -71,7 +71,7 @@ interface MessagingClient {
     /**
      * Listener for MessagingClient state changes.
      */
-    var onStateChanged: ((StateChange) -> Unit)?
+    var stateChangedListener: ((StateChange) -> Unit)?
 
     /**
      * Listener for Message events.

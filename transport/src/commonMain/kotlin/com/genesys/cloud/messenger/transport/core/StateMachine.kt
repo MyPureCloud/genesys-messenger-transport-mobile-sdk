@@ -3,7 +3,7 @@ package com.genesys.cloud.messenger.transport.core
 internal interface StateMachine {
     var currentState: MessagingClient.State
     var stateListener: ((MessagingClient.State) -> Unit)?
-    var onStateChanged: ((StateChange) -> Unit)?
+    var stateChangedListener: ((StateChange) -> Unit)?
 
     fun onConnectionOpened()
     @Throws(IllegalStateException::class)
