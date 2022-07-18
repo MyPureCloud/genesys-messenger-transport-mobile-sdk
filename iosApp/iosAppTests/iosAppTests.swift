@@ -105,7 +105,7 @@ class TestContentController: MessengerHandler {
     override init(deployment: Deployment) {
         super.init(deployment: deployment)
         
-        client.onStateChanged = { [weak self] stateChange in
+        client.stateChangedListener = { [weak self] stateChange in
             print("State Event. New state: \(stateChange.newState), old state: \(stateChange.oldState)")
             let newState = stateChange.newState
             switch newState {

@@ -27,7 +27,7 @@ class MessengerHandler {
                                     logging: true)
         self.client = MobileMessenger().createMessagingClient(configuration: self.config)
         
-        client.onStateChanged = { [weak self] stateChange in
+        client.stateChangedListener = { [weak self] stateChange in
             print("State Change: \(stateChange)")
             self?.onStateChange?(stateChange)
         }

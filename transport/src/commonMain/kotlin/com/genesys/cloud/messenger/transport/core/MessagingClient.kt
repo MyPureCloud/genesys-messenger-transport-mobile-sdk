@@ -65,7 +65,7 @@ interface MessagingClient {
     /**
      * Listener for MessagingClient state changes.
      */
-    @Deprecated("Use onStateChanged() instead", ReplaceWith("onStateChanged"))
+    @Deprecated("Use stateChangedListener() instead", ReplaceWith("stateChangedListener"))
     var stateListener: ((State) -> Unit)?
 
     /**
