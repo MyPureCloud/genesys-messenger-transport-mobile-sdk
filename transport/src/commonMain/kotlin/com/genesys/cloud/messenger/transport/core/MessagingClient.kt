@@ -26,12 +26,17 @@ interface MessagingClient {
         object Connected : State()
 
         /**
+         * Trying to reconnect after WebSocket failure.
+         */
+        object Reconnecting : State()
+
+        /**
          * Session was successfully configured.
          *
          * @property connected true if session has been configured and connection is established.
          * @property newSession indicates if configured session is new. When configuring an existing session, [newSession] will be false.
          */
-        data class Configured(val connected: Boolean, val newSession: Boolean?) : State()
+        data class Configured(val connected: Boolean, val newSession: Boolean) : State()
 
         /**
          * Remote peer has indicated that no more incoming messages will be transmitted.
@@ -60,7 +65,13 @@ interface MessagingClient {
     /**
      * Listener for MessagingClient state changes.
      */
+    @Deprecated("Use stateChangedListener() instead", ReplaceWith("stateChangedListener"))
     var stateListener: ((State) -> Unit)?
+
+    /**
+     * Listener for MessagingClient state changes.
+     */
+    var stateChangedListener: ((StateChange) -> Unit)?
 
     /**
      * Listener for Message events.

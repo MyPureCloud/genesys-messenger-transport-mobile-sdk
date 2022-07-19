@@ -105,9 +105,10 @@ class TestContentController: MessengerHandler {
     override init(deployment: Deployment) {
         super.init(deployment: deployment)
         
-        client.stateListener = { [weak self] state in
-            print("State Event: \(state)")
-            switch state {
+        client.stateChangedListener = { [weak self] stateChange in
+            print("State Event. New state: \(stateChange.newState), old state: \(stateChange.oldState)")
+            let newState = stateChange.newState
+            switch newState {
             case _ as MessagingClientState.Configured:
                 self?.testExpectation?.fulfill()
             case _ as MessagingClientState.Closed:
@@ -117,7 +118,7 @@ class TestContentController: MessengerHandler {
             default:
                 break
             }
-            self?.onStateChange?(state)
+            self?.onStateChange?(stateChange)
         }
         
         client.messageListener = { [weak self] event in
