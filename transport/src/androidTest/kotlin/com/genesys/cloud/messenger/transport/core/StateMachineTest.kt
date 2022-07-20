@@ -204,6 +204,30 @@ class StateMachineTest {
         verify { mockStateChangedListener(expectedStateChange) }
     }
 
+    @Test
+    fun verifyFullStateTransitionCycle() {
+        subject.onConnect()
+        assertThat(subject).isConnecting()
+        subject.onConnectionOpened()
+        assertThat(subject).isConnected()
+        subject.onConfiguring()
+        subject.onSessionConfigured(connected = true, newSession = true)
+        assertThat(subject).isConfigured(connected = true, newSession = true)
+        subject.onReconnect()
+        assertThat(subject).isReconnecting()
+        subject.onConnect()
+        assertThat(subject).isReconnecting()
+        subject.onConnectionOpened()
+        assertThat(subject).isReconnecting()
+        subject.onConfiguring()
+        subject.onSessionConfigured(connected = true, newSession = true)
+        assertThat(subject).isConfigured(connected = true, newSession = true)
+        subject.onClosing(100, "sss")
+        assertThat(subject).isClosing(100, "sss")
+        subject.onClosed(100, "sss")
+        assertThat(subject).isClosed(100, "sss")
+    }
+
     private fun Assert<StateMachine>.currentState() = prop(StateMachine::currentState)
     private fun Assert<StateMachine>.isIdle() = currentState().isEqualTo(State.Idle)
     private fun Assert<StateMachine>.isClosed(code: Int, reason: String) =

@@ -7,10 +7,6 @@ import com.genesys.cloud.messenger.transport.util.logs.LogTag
 internal class StateMachineImpl(
     val log: Log = Log(enableLogs = false, LogTag.STATE_MACHINE),
 ) : StateMachine {
-    private val canConnect: Boolean by lazy { currentState is State.Closed || currentState is State.Idle || currentState is State.Error || currentState is State.Reconnecting }
-    private val canConfigure: Boolean by lazy { currentState is State.Connected || currentState is State.Reconnecting }
-    private val isReconnecting: Boolean by lazy { currentState is State.Reconnecting }
-    private val canDisconnect: Boolean by lazy { currentState !is State.Closed && currentState !is State.Idle && currentState !is State.Error }
 
     override var currentState: State = State.Idle
         set(value) {
@@ -28,13 +24,13 @@ internal class StateMachineImpl(
     override var stateChangedListener: ((StateChange) -> Unit)? = null
 
     override fun onConnectionOpened() {
-        currentState = if (isReconnecting) State.Reconnecting else State.Connected
+        currentState = if (currentState.isReconnecting()) State.Reconnecting else State.Connected
     }
 
     @Throws(IllegalStateException::class)
     override fun onConnect() {
-        check(canConnect) { "MessagingClient state must be Closed, Idle or Error" }
-        currentState = if (isReconnecting) State.Reconnecting else State.Connecting
+        check(currentState.canConnect()) { "MessagingClient state must be Closed, Idle or Error" }
+        currentState = if (currentState.isReconnecting()) State.Reconnecting else State.Connecting
     }
 
     override fun onReconnect() {
@@ -43,7 +39,7 @@ internal class StateMachineImpl(
 
     @Throws(IllegalStateException::class)
     override fun onConfiguring() {
-        check(canConfigure) { "WebMessaging client is not connected." }
+        check(currentState.canConfigure()) { "WebMessaging client is not connected." }
     }
 
     override fun onSessionConfigured(
@@ -55,7 +51,7 @@ internal class StateMachineImpl(
 
     @Throws(IllegalStateException::class)
     override fun onClosing(code: Int, reason: String) {
-        check(canDisconnect) { "MessagingClient state must not already be Closed, Idle or Error" }
+        check(currentState.canDisconnect()) { "MessagingClient state must not already be Closed, Idle or Error" }
         currentState = State.Closing(code, reason)
     }
 
@@ -71,3 +67,15 @@ internal class StateMachineImpl(
 internal fun StateMachine.isConnected(): Boolean = currentState is State.Connected
 
 internal fun StateMachine.isConfigured(): Boolean = currentState is State.Configured
+
+internal fun StateMachine.isClosed(): Boolean = currentState is State.Closed
+
+private fun State.canConnect(): Boolean =
+    this is State.Closed || this is State.Idle || this is State.Error || this is State.Reconnecting
+
+private fun State.canConfigure(): Boolean = this is State.Connected || this is State.Reconnecting
+
+private fun State.isReconnecting(): Boolean = this is State.Reconnecting
+
+private fun State.canDisconnect(): Boolean =
+    this !is State.Closed && this !is State.Idle && this !is State.Error
