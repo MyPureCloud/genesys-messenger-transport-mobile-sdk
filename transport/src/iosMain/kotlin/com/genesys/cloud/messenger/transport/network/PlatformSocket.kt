@@ -131,7 +131,7 @@ internal actual class PlatformSocket actual constructor(
 
     private fun sendPing() {
         log.i { "Sending ping" }
-        if(waitingOnPong) {
+        if (waitingOnPong) {
             log.w { "Trying to send ping while still waiting for pong." }
             return
         }
