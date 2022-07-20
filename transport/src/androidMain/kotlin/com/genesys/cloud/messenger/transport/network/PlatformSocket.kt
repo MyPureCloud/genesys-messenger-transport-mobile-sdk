@@ -13,7 +13,6 @@ internal actual class PlatformSocket actual constructor(
     private val log: Log,
     private val url: Url,
     actual val pingInterval: Int,
-    actual val pongInterval: Int,
 ) {
     private var webSocket: WebSocket? = null
 

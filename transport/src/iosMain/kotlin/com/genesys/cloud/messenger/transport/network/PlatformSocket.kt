@@ -26,24 +26,18 @@ internal actual class PlatformSocket actual constructor(
     private val log: Log,
     private val url: Url,
     /**
-     * Interval to automatically send pings while active.
-     * Note that [pingInterval] should not be lower than [pongInterval]
-     */
-    actual val pingInterval: Int,
-    /**
-     * Interval to wait for successful pong after ping was sent. If pong not received within `interval`,
+     * Interval to automatically send pings while active. If pong not received within `interval`,
      * client assumes connectivity is lost and will notify [PlatformSocketListener.onFailure].
      */
-    actual val pongInterval: Int,
+    actual val pingInterval: Int,
 ) {
     private val socketEndpoint = NSURL.URLWithString(url.toString())!!
     private var webSocket: NSURLSessionWebSocketTask? = null
     private var pingTimer: NSTimer? = null
-    private var pongTimer: NSTimer? = null
     private var listener: PlatformSocketListener? = null
     private val active: Boolean
         get() = webSocket != null
-    private var pongReceived = false
+    private var waitingOnPong = false
 
     actual fun openSocket(listener: PlatformSocketListener) {
         val urlRequest = NSMutableURLRequest(socketEndpoint)
@@ -58,12 +52,11 @@ internal actual class PlatformSocket actual constructor(
                 ) {
                     log.i { "Socket did open. Active: $active" }
                     if (active) {
-                        listener.onOpen()
                         sendPing()
                         keepAlive()
+                        listener.onOpen()
                     }
                 }
-
                 override fun URLSession(
                     session: NSURLSession,
                     webSocketTask: NSURLSessionWebSocketTask,
@@ -117,60 +110,36 @@ internal actual class PlatformSocket actual constructor(
 
     private fun keepAlive() {
         if (!pingTimer.isScheduled() && pingInterval > 0) {
-            pingTimer = createActionableTimer(pingInterval, true) {
+            waitingOnPong = false
+            pingTimer = NSTimer.scheduledTimerWithTimeInterval(
+                interval = pingInterval.toDouble(),
+                repeats = true
+            ) {
+                if (waitingOnPong) {
+                    // Prior pong not received within pingInterval. Assume connectivity is lost.
+                    val nsError = NSError(
+                        domain = NSPOSIXErrorDomain,
+                        code = ETIMEDOUT.convert(),
+                        userInfo = null
+                    )
+                    handleErrorAndDeactivate(nsError, "Pong not received within interval [$pingInterval]")
+                    return@scheduledTimerWithTimeInterval
+                }
                 sendPing()
             }
         }
     }
 
     private fun sendPing() {
-        log.i { "Sending ping." }
-        pongReceived = false
-        schedulePong()
+        log.i { "Sending ping" }
+        waitingOnPong = true
         webSocket?.sendPingWithPongReceiveHandler { nsError ->
+            waitingOnPong = false
             if (nsError != null) {
-                handleErrorAndDeactivate(nsError, "Received pong error.")
+                handleErrorAndDeactivate(nsError, "Received pong error")
             } else {
-                log.i { "Received pong." }
-                pongReceived = true
+                log.i { "Received pong" }
             }
-        }
-    }
-
-    private fun schedulePong() {
-        if (pingInterval <= pongInterval) {
-            log.w { "Ping interval should NOT be lower than pong interval!" }
-            return
-        }
-        if (!pongTimer.isScheduled() && pongInterval > 0) {
-            log.i { "Waiting for pong." }
-            createActionableTimer(pongInterval, false) {
-                validatePongReceived()
-            }
-        }
-    }
-
-    private fun validatePongReceived() {
-        if (!pongReceived) {
-            // Prior pong not received within pingInterval. Assume connectivity is lost.
-            val nsError = NSError(
-                domain = NSPOSIXErrorDomain,
-                code = ETIMEDOUT.convert(),
-                userInfo = null
-            )
-            handleErrorAndDeactivate(
-                nsError,
-                "Pong not received within interval [$pingInterval] "
-            )
-        }
-    }
-
-    private fun handleErrorAndDeactivate(error: NSError, context: String? = null) {
-        log.e { "${context ?: "NSError"}. [${error.code}] ${error.localizedDescription}" }
-        if (active) {
-            deactivate()
-            listener?.onFailure(Throwable(error.localizedDescription))
-            listener = null
         }
     }
 
@@ -180,25 +149,18 @@ internal actual class PlatformSocket actual constructor(
         webSocket = null
     }
 
-    private fun cancelPings() {
-        pingTimer?.invalidate()
-        pongTimer?.invalidate()
-        pingTimer = null
-        pongTimer = null
-        pongReceived = false
+    private fun handleErrorAndDeactivate(error: NSError, context: String? = null) {
+        log.e { "${context ?: "NSError"}. [${error.code}] ${error.localizedDescription}" }
+        if (active) {
+            deactivate()
+            listener?.onFailure(Throwable(error.localizedDescription))
+        }
     }
 
-    private fun createActionableTimer(
-        interval: Int,
-        repeats: Boolean,
-        action: () -> Unit,
-    ): NSTimer {
-        return NSTimer.scheduledTimerWithTimeInterval(
-            interval = interval.toDouble(),
-            repeats = repeats,
-        ) {
-            action()
-        }
+    private fun cancelPings() {
+        pingTimer?.invalidate()
+        pingTimer = null
+        waitingOnPong = false
     }
 }
 
