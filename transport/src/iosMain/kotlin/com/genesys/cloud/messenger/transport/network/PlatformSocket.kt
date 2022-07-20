@@ -52,7 +52,6 @@ internal actual class PlatformSocket actual constructor(
                 ) {
                     log.i { "Socket did open. Active: $active" }
                     if (active) {
-                        sendPing()
                         keepAlive()
                         listener.onOpen()
                     }
