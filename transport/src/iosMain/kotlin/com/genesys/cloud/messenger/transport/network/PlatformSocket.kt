@@ -22,6 +22,8 @@ import platform.Foundation.setValue
 import platform.darwin.NSObject
 import platform.posix.ETIMEDOUT
 
+private const val CUSTOM_SOCKET_CLOSE_CODE = -111L
+
 internal actual class PlatformSocket actual constructor(
     private val log: Log,
     private val url: Url,
@@ -42,6 +44,7 @@ internal actual class PlatformSocket actual constructor(
     actual fun openSocket(listener: PlatformSocketListener) {
         val urlRequest = NSMutableURLRequest(socketEndpoint)
         urlRequest.setValue(url.host, forHTTPHeaderField = "Origin")
+        urlRequest.setTimeoutInterval(30.0)
         val urlSession = NSURLSession.sessionWithConfiguration(
             configuration = NSURLSessionConfiguration.defaultSessionConfiguration(),
             delegate = object : NSObject(), NSURLSessionWebSocketDelegateProtocol {
@@ -64,6 +67,12 @@ internal actual class PlatformSocket actual constructor(
                 ) {
                     val why = reason?.string() ?: "Reason not specified."
                     log.i { "Socket did close. code: $didCloseWithCode, reason: $why" }
+                    if(didCloseWithCode == CUSTOM_SOCKET_CLOSE_CODE) {
+                        log.e { "closed because socket error do not actually close." }
+                        return
+                    }
+                    // At the current implementation normal closure might result in calling the
+                    // webSocket?.cancelWithCloseCode(-100, null). Just
                     deactivate()
                     listener.onClosed(code = didCloseWithCode.toInt(), reason = why)
                 }
@@ -87,7 +96,7 @@ internal actual class PlatformSocket actual constructor(
         val message = NSURLSessionWebSocketMessage(text)
         webSocket?.sendMessage(message) { nsError ->
             if (nsError != null) {
-                handleErrorAndDeactivate(nsError, "Send message error")
+                handleErrorAndDeactivate(nsError, "Send message error", "sendMessage")
             }
         }
     }
@@ -96,7 +105,8 @@ internal actual class PlatformSocket actual constructor(
         webSocket?.receiveMessageWithCompletionHandler { message, nsError ->
             when {
                 nsError != null -> {
-                    handleErrorAndDeactivate(nsError, "Receive handler error")
+                    log.e { "receiveMessageWithCompletionHandler: message: $message" }
+                    handleErrorAndDeactivate(nsError, "Receive handler error", "receiveMessageWithCompletionHandler")
                     return@receiveMessageWithCompletionHandler
                 }
                 message != null -> {
@@ -121,7 +131,8 @@ internal actual class PlatformSocket actual constructor(
                         code = ETIMEDOUT.convert(),
                         userInfo = null
                     )
-                    handleErrorAndDeactivate(nsError, "Pong not received within interval [$pingInterval]")
+                    handleErrorAndDeactivate(nsError,
+                        "Pong not received within interval [$pingInterval]", "waitOnPong")
                     return@scheduledTimerWithTimeInterval
                 }
                 sendPing()
@@ -139,7 +150,7 @@ internal actual class PlatformSocket actual constructor(
         webSocket?.sendPingWithPongReceiveHandler { nsError ->
             waitingOnPong = false
             if (nsError != null) {
-                handleErrorAndDeactivate(nsError, "Received pong error")
+                handleErrorAndDeactivate(nsError, "Received pong error", "sendPing")
             } else {
                 log.i { "Received pong" }
             }
@@ -149,11 +160,12 @@ internal actual class PlatformSocket actual constructor(
     private fun deactivate() {
         log.i { "deactivate" }
         cancelPings()
+        webSocket?.cancelWithCloseCode(CUSTOM_SOCKET_CLOSE_CODE, null)
         webSocket = null
     }
 
-    private fun handleErrorAndDeactivate(error: NSError, context: String? = null) {
-        log.e { "${context ?: "NSError"}. [${error.code}] ${error.localizedDescription}" }
+    private fun handleErrorAndDeactivate(error: NSError, context: String? = null, from: String) {
+        log.e { "failed from: $from, ws is active: $active, ${context ?: "NSError"}. [${error.code}] ${error.localizedDescription}" }
         if (active) {
             deactivate()
             listener?.onFailure(Throwable(error.localizedDescription))

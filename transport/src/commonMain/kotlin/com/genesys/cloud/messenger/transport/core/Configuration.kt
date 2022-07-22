@@ -13,7 +13,8 @@ data class Configuration(
     val deploymentId: String,
     private val domain: String,
     val tokenStoreKey: String,
-    val logging: Boolean = false
+    val logging: Boolean = false,
+    val maxReconnectionAttempts: Int = 10,
 ) {
 
     internal val webSocketUrl: Url by lazy {

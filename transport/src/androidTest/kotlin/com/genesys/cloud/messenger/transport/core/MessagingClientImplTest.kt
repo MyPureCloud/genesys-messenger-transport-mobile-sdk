@@ -90,7 +90,7 @@ class MessagingClientImplTest {
         } returns TestWebMessagingApiResponses.testMessageEntityList
     }
 
-    private val mockReconnectionHandler: ReconnectionHandlerImpl = mockk {
+    private val mockReconnectionHandler: ReconnectionHandlerImpl = mockk(relaxed = true) {
         every { shouldReconnect() } returns false
     }
 
