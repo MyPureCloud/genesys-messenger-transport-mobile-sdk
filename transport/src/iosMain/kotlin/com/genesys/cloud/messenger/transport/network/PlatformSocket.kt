@@ -22,6 +22,8 @@ import platform.Foundation.setValue
 import platform.darwin.NSObject
 import platform.posix.ETIMEDOUT
 
+private const val CUSTOM_SOCKET_CLOSE_CODE = -111L
+
 internal actual class PlatformSocket actual constructor(
     private val log: Log,
     private val url: Url,
@@ -87,7 +89,7 @@ internal actual class PlatformSocket actual constructor(
         val message = NSURLSessionWebSocketMessage(text)
         webSocket?.sendMessage(message) { nsError ->
             if (nsError != null) {
-                handleErrorAndDeactivate(nsError, "Send message error")
+                handleErrorAndDeactivate(nsError, "Send message error", "sendMessage")
             }
         }
     }
@@ -96,7 +98,8 @@ internal actual class PlatformSocket actual constructor(
         webSocket?.receiveMessageWithCompletionHandler { message, nsError ->
             when {
                 nsError != null -> {
-                    handleErrorAndDeactivate(nsError, "Receive handler error")
+                    log.e { "receiveMessageWithCompletionHandler: message: $message" }
+                    handleErrorAndDeactivate(nsError, "Receive handler error", "receiveMessageWithCompletionHandler")
                     return@receiveMessageWithCompletionHandler
                 }
                 message != null -> {
@@ -121,7 +124,8 @@ internal actual class PlatformSocket actual constructor(
                         code = ETIMEDOUT.convert(),
                         userInfo = null
                     )
-                    handleErrorAndDeactivate(nsError, "Pong not received within interval [$pingInterval]")
+                    handleErrorAndDeactivate(nsError,
+                        "Pong not received within interval [$pingInterval]", "waitOnPong")
                     return@scheduledTimerWithTimeInterval
                 }
                 sendPing()
@@ -139,7 +143,7 @@ internal actual class PlatformSocket actual constructor(
         webSocket?.sendPingWithPongReceiveHandler { nsError ->
             waitingOnPong = false
             if (nsError != null) {
-                handleErrorAndDeactivate(nsError, "Received pong error")
+                handleErrorAndDeactivate(nsError, "Received pong error", "sendPing")
             } else {
                 log.i { "Received pong" }
             }
@@ -152,8 +156,8 @@ internal actual class PlatformSocket actual constructor(
         webSocket = null
     }
 
-    private fun handleErrorAndDeactivate(error: NSError, context: String? = null) {
-        log.e { "${context ?: "NSError"}. [${error.code}] ${error.localizedDescription}" }
+    private fun handleErrorAndDeactivate(error: NSError, context: String? = null, from: String) {
+        log.e { "failed from: $from, ws is active: $active, ${context ?: "NSError"}. [${error.code}] ${error.localizedDescription}" }
         if (active) {
             deactivate()
             listener?.onFailure(Throwable(error.localizedDescription))

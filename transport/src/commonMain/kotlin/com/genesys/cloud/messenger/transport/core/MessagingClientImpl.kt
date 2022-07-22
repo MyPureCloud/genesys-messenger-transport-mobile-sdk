@@ -92,6 +92,7 @@ internal class MessagingClientImpl(
         log.i { "disconnect()" }
         val code = SocketCloseCode.NORMAL_CLOSURE.value
         val reason = "The user has closed the connection."
+        reconnectionHandler.clear()
         stateMachine.onClosing(code, reason)
         webSocket.closeSocket(code, reason)
     }
@@ -115,7 +116,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun sendMessage(text: String, customAttributes: Map<String, String>) {
-        check(stateMachine.isConfigured())
+        stateMachine.checkIfConfigured()
         log.i { "sendMessage(text = $text, customAttributes = $customAttributes)" }
         val request = messageStore.prepareMessage(text, customAttributes)
         attachmentHandler.onSending()
@@ -159,14 +160,14 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     private fun send(message: String) {
-        check(stateMachine.isConfigured())
+        stateMachine.checkIfConfigured()
         log.i { "Will send message" }
         webSocket.sendMessage(message)
     }
 
     @Throws(Exception::class)
     override suspend fun fetchNextPage() {
-        check(stateMachine.isConfigured())
+        stateMachine.checkIfConfigured()
         if (messageStore.startOfConversation) {
             log.i { "All history has been fetched." }
             messageStore.updateMessageHistory(emptyList(), conversation.size)
@@ -215,9 +216,11 @@ internal class MessagingClientImpl(
     }
 
     private fun handleWebSocketError() {
+        if (stateMachine.isClosed()) return
         invalidateConversationCache()
-        if (reconnectionHandler.shouldReconnect()) {
+        if (reconnectionHandler.shouldReconnect) {
             stateMachine.onReconnect()
+            reconnectionHandler.reconnect { connect(true) }
         } else {
             stateMachine.onError(ErrorCode.WebsocketError, "Failed to reconnect.")
             attachmentHandler.clearAll()
@@ -265,6 +268,7 @@ internal class MessagingClientImpl(
                     is SessionResponse -> {
                         decoded.body.run {
                             shouldConfigureAfterConnect = false
+                            reconnectionHandler.clear()
                             stateMachine.onSessionConfigured(connected, newSession)
                         }
                     }

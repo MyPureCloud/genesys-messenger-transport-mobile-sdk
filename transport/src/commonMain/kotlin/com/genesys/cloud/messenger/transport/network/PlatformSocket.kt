@@ -3,7 +3,7 @@ package com.genesys.cloud.messenger.transport.network
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import io.ktor.http.Url
 
-const val DEFAULT_PING_INTERVAL_IN_SECONDS = 15
+const val DEFAULT_PING_INTERVAL_IN_SECONDS = 3
 
 /**
  * Common WebSocket class

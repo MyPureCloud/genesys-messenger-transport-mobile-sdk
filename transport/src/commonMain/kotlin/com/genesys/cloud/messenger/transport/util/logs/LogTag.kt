@@ -10,4 +10,5 @@ internal object LogTag {
     const val TOKEN_STORE = "MMSDKTokenStore"
     const val HTTP_CLIENT = "MMSDKHttpClient"
     const val STATE_MACHINE = "Transport State Machine"
+    const val RECONNECTION_HANDLER = "TransportReconnectionHandler"
 }
