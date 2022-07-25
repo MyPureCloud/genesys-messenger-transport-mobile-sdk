@@ -100,7 +100,8 @@ internal actual class PlatformSocket actual constructor(
             when {
                 nsError != null -> {
                     log.e { "receiveMessageWithCompletionHandler: message: $message" }
-                    handleError(nsError, "Receive handler error"
+                    handleError(
+                        nsError, "Receive handler error"
                     )
                     return@receiveMessageWithCompletionHandler
                 }
