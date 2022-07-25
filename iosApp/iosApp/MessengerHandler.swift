@@ -24,7 +24,8 @@ class MessengerHandler {
         self.config = Configuration(deploymentId: deployment.deploymentId!,
                                     domain: deployment.domain!,
                                     tokenStoreKey: "com.genesys.cloud.messenger",
-                                    logging: true)
+                                    logging: true,
+                                    reconnectionTimeoutInSeconds: 60 * 5)
         self.client = MobileMessenger().createMessagingClient(configuration: self.config)
         
         client.stateChangedListener = { [weak self] stateChange in

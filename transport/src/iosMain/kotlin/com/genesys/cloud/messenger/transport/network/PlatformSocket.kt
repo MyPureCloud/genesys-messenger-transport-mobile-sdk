@@ -42,6 +42,7 @@ internal actual class PlatformSocket actual constructor(
     actual fun openSocket(listener: PlatformSocketListener) {
         val urlRequest = NSMutableURLRequest(socketEndpoint)
         urlRequest.setValue(url.host, forHTTPHeaderField = "Origin")
+        urlRequest.setTimeoutInterval(TIMEOUT_INTERVAL)
         val urlSession = NSURLSession.sessionWithConfiguration(
             configuration = NSURLSessionConfiguration.defaultSessionConfiguration(),
             delegate = object : NSObject(), NSURLSessionWebSocketDelegateProtocol {
@@ -50,8 +51,8 @@ internal actual class PlatformSocket actual constructor(
                     webSocketTask: NSURLSessionWebSocketTask,
                     didOpenWithProtocol: String?,
                 ) {
-                    log.i { "Socket did open. Active: $active" }
-                    if (active) {
+                    log.i { "Socket did open. Active: $active." }
+                    if (webSocketTask == webSocket) {
                         keepAlive()
                         listener.onOpen()
                     }
@@ -63,23 +64,25 @@ internal actual class PlatformSocket actual constructor(
                     reason: NSData?,
                 ) {
                     val why = reason?.string() ?: "Reason not specified."
-                    log.i { "Socket did close. code: $didCloseWithCode, reason: $why" }
-                    deactivate()
-                    listener.onClosed(code = didCloseWithCode.toInt(), reason = why)
+                    log.i { "Socket did close (code: $didCloseWithCode, reason: $why). Active: $active." }
+                    if (webSocketTask == webSocket) {
+                        deactivate()
+                        listener.onClosed(code = didCloseWithCode.toInt(), reason = why)
+                    }
                 }
             },
             delegateQueue = NSOperationQueue.currentQueue()
         )
         webSocket = urlSession.webSocketTaskWithRequest(urlRequest)
-        listenMessages(listener)
         webSocket?.resume()
         this.listener = listener
+        listenMessages(listener)
     }
 
     actual fun closeSocket(code: Int, reason: String) {
         log.i { "closeSocket(code = $code, reason = $reason)" }
-        webSocket?.cancelWithCloseCode(code.toLong(), reason.toNSData())
-        deactivate()
+        deactivateAndCancelWebSocket(code, reason)
+        listener?.onClosed(code, reason)
     }
 
     actual fun sendMessage(text: String) {
@@ -87,7 +90,7 @@ internal actual class PlatformSocket actual constructor(
         val message = NSURLSessionWebSocketMessage(text)
         webSocket?.sendMessage(message) { nsError ->
             if (nsError != null) {
-                handleErrorAndDeactivate(nsError, "Send message error")
+                handleError(nsError, "Send message error")
             }
         }
     }
@@ -96,7 +99,9 @@ internal actual class PlatformSocket actual constructor(
         webSocket?.receiveMessageWithCompletionHandler { message, nsError ->
             when {
                 nsError != null -> {
-                    handleErrorAndDeactivate(nsError, "Receive handler error")
+                    log.e { "receiveMessageWithCompletionHandler: message: $message" }
+                    handleError(nsError, "Receive handler error"
+                    )
                     return@receiveMessageWithCompletionHandler
                 }
                 message != null -> {
@@ -121,7 +126,7 @@ internal actual class PlatformSocket actual constructor(
                         code = ETIMEDOUT.convert(),
                         userInfo = null
                     )
-                    handleErrorAndDeactivate(nsError, "Pong not received within interval [$pingInterval]")
+                    handleError(nsError, "Pong not received within interval [$pingInterval]")
                     return@scheduledTimerWithTimeInterval
                 }
                 sendPing()
@@ -139,24 +144,10 @@ internal actual class PlatformSocket actual constructor(
         webSocket?.sendPingWithPongReceiveHandler { nsError ->
             waitingOnPong = false
             if (nsError != null) {
-                handleErrorAndDeactivate(nsError, "Received pong error")
+                handleError(nsError, "Received pong error")
             } else {
                 log.i { "Received pong" }
             }
-        }
-    }
-
-    private fun deactivate() {
-        log.i { "deactivate" }
-        cancelPings()
-        webSocket = null
-    }
-
-    private fun handleErrorAndDeactivate(error: NSError, context: String? = null) {
-        log.e { "${context ?: "NSError"}. [${error.code}] ${error.localizedDescription}" }
-        if (active) {
-            deactivate()
-            listener?.onFailure(Throwable(error.localizedDescription))
         }
     }
 
@@ -164,6 +155,34 @@ internal actual class PlatformSocket actual constructor(
         pingTimer?.invalidate()
         pingTimer = null
         waitingOnPong = false
+    }
+
+    private fun deactivate() {
+        log.i { "deactivate()" }
+        cancelPings()
+        webSocket = null
+    }
+
+    /**
+     * Deactivates the webSocket connection per `deactivate()`.
+     * Attempt to send a final close frame with the given code and reason without `listener.onClosed()` being called.
+     */
+    private fun deactivateAndCancelWebSocket(code: Int, reason: String?) {
+        log.i { "deactivateWithCloseCode(code = $code, reason = $reason)" }
+        val webSocketRef = webSocket
+        deactivate()
+        webSocketRef?.cancelWithCloseCode(code.toLong(), reason?.toNSData())
+    }
+
+    private fun handleError(error: NSError, context: String? = null) {
+        log.e { "${context ?: "NSError"}. [${error.code}] ${error.localizedDescription}" }
+        if (active) {
+            deactivateAndCancelWebSocket(
+                SocketCloseCode.GOING_AWAY.value,
+                "Closing due to error code ${error.code}"
+            )
+            listener?.onFailure(Throwable(error.localizedDescription))
+        }
     }
 }
 

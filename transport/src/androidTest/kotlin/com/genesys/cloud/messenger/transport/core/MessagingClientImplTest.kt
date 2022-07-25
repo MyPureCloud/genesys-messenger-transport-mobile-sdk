@@ -90,8 +90,8 @@ class MessagingClientImplTest {
         } returns TestWebMessagingApiResponses.testMessageEntityList
     }
 
-    private val mockReconnectionHandler: ReconnectionHandlerImpl = mockk {
-        every { shouldReconnect() } returns false
+    private val mockReconnectionHandler: ReconnectionHandlerImpl = mockk(relaxed = true) {
+        every { shouldReconnect } returns false
     }
 
     private val subject = MessagingClientImpl(
@@ -285,7 +285,7 @@ class MessagingClientImplTest {
         verifySequence {
             connectSequence()
             mockMessageStore.invalidateConversationCache()
-            mockReconnectionHandler.shouldReconnect()
+            mockReconnectionHandler.shouldReconnect
             mockStateChangedListener(fromConnectedToError(expectedErrorState))
             mockAttachmentHandler.clearAll()
         }
