@@ -210,19 +210,22 @@ internal class MessagingClientImpl(
                     stateMachine.onError(code, message)
                 }
             }
-            is ErrorCode.WebsocketError -> handleWebSocketError()
+            is ErrorCode.WebsocketError -> handleWebSocketError(
+                ErrorCode.WebsocketError,
+                ErrorMessage.FailedToReconnect
+            )
             else -> log.w { "Unhandled ErrorCode: $code with optional message: $message" }
         }
     }
 
-    private fun handleWebSocketError() {
+    private fun handleWebSocketError(errorCode: ErrorCode, message: String? = null) {
         if (stateMachine.isClosed()) return
         invalidateConversationCache()
         if (reconnectionHandler.shouldReconnect) {
             stateMachine.onReconnect()
             reconnectionHandler.reconnect { connect(true) }
         } else {
-            stateMachine.onError(ErrorCode.WebsocketError, "Failed to reconnect.")
+            stateMachine.onError(errorCode, message)
             attachmentHandler.clearAll()
         }
     }
@@ -247,9 +250,9 @@ internal class MessagingClientImpl(
             }
         }
 
-        override fun onFailure(t: Throwable) {
+        override fun onFailure(t: Throwable, errorCode: ErrorCode) {
             log.e(throwable = t) { "onFailure(message: ${t.message})" }
-            handleWebSocketError()
+            handleWebSocketError(errorCode, t.message)
         }
 
         override fun onMessage(text: String) {

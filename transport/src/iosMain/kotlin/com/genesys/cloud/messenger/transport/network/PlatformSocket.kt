@@ -1,5 +1,6 @@
 package com.genesys.cloud.messenger.transport.network
 
+import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.util.extensions.string
 import com.genesys.cloud.messenger.transport.util.extensions.toNSData
 import com.genesys.cloud.messenger.transport.util.logs.Log
@@ -99,7 +100,7 @@ internal actual class PlatformSocket actual constructor(
         webSocket?.receiveMessageWithCompletionHandler { message, nsError ->
             when {
                 nsError != null -> {
-                    log.e { "receiveMessageWithCompletionHandler: message: $message" }
+                    log.e { "receiveMessageWithCompletionHandler: error: ${nsError.localizedDescription}" }
                     handleError(
                         nsError, "Receive handler error"
                     )
@@ -182,10 +183,16 @@ internal actual class PlatformSocket actual constructor(
                 SocketCloseCode.GOING_AWAY.value,
                 "Closing due to error code ${error.code}"
             )
-            listener?.onFailure(Throwable(error.localizedDescription))
+            listener?.onFailure(
+                Throwable(error.localizedDescription),
+                error.code.toTransportErrorCode()
+            )
         }
     }
 }
+
+private fun Long.toTransportErrorCode(): ErrorCode =
+    if (this.toInt() == ErrorCode.NetworkDisabled.code) ErrorCode.NetworkDisabled else ErrorCode.WebsocketError
 
 internal fun NSTimer?.isScheduled(): Boolean {
     return this?.valid ?: false

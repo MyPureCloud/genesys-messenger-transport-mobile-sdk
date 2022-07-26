@@ -21,6 +21,7 @@ sealed class ErrorCode(val code: Int) {
     object RequestRateTooHigh : ErrorCode(4029)
     object UnexpectedError : ErrorCode(5000)
     object WebsocketError : ErrorCode(1001)
+    object NetworkDisabled : ErrorCode(-1009)
     data class RedirectResponseError(val value: Int) : ErrorCode(value)
     data class ClientResponseError(val value: Int) : ErrorCode(value)
     data class ServerResponseError(val value: Int) : ErrorCode(value)
@@ -51,4 +52,8 @@ sealed class ErrorCode(val code: Int) {
             }
         }
     }
+}
+
+object ErrorMessage {
+    const val FailedToReconnect = "Failed to reconnect."
 }

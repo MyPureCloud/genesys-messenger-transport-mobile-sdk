@@ -274,12 +274,12 @@ class MessagingClientImplTest {
 
     @Test
     fun whenConfigureFailsAndSocketListenerRespondWithOnFailureAndThereAreNoReconnectionAttemptsLeft() {
-        val expectedException = Exception("Some error message")
-        val expectedErrorState = State.Error(ErrorCode.WebsocketError, "Failed to reconnect.")
+        val expectedException = Exception(ErrorMessage.FailedToReconnect)
+        val expectedErrorState = State.Error(ErrorCode.WebsocketError, ErrorMessage.FailedToReconnect)
 
         subject.connect()
 
-        slot.captured.onFailure(expectedException)
+        slot.captured.onFailure(expectedException, ErrorCode.WebsocketError)
 
         assertThat(subject).isError(expectedErrorState.code, expectedErrorState.message)
         verifySequence {
