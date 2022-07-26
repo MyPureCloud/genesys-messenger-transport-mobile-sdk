@@ -11,7 +11,7 @@ internal class StateMachineImpl(
     override var currentState: State = State.Idle
         set(value) {
             if (field != value) {
-                log.i { "State changed from: $field, to: $value" }
+                log.i { "State changed from: ${field::class.simpleName}, to: ${value::class.simpleName}" }
                 val oldState = field
                 field = value
                 stateListener?.invoke(value)
@@ -66,7 +66,9 @@ internal class StateMachineImpl(
 
 internal fun StateMachine.isConnected(): Boolean = currentState is State.Connected
 
-internal fun StateMachine.isConfigured(): Boolean = currentState is State.Configured
+@Throws(IllegalStateException::class)
+internal fun StateMachine.checkIfConfigured() =
+    check(currentState is State.Configured) { "WebMessaging client is not configured." }
 
 internal fun StateMachine.isClosed(): Boolean = currentState is State.Closed
 

@@ -45,7 +45,7 @@ object MobileMessenger {
             jwtHandler = JwtHandler(webSocket, token),
             attachmentHandler = attachmentHandler,
             messageStore = messageStore,
-            reconnectionHandler = ReconnectionHandlerImpl(),
+            reconnectionHandler = ReconnectionHandlerImpl(configuration.reconnectionTimeoutInSeconds, log.withTag(LogTag.RECONNECTION_HANDLER)),
         )
     }
 
