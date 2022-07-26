@@ -1,5 +1,6 @@
 package com.genesys.cloud.messenger.transport.network
 
+import com.genesys.cloud.messenger.transport.core.ErrorMessage
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import io.ktor.http.Url
 import okhttp3.OkHttpClient
@@ -33,7 +34,7 @@ internal actual class PlatformSocket actual constructor(
             object : okhttp3.WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) = listener.onOpen()
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) =
-                    listener.onFailure(t)
+                    listener.onFailure(Throwable(ErrorMessage.FailedToReconnect, t))
 
                 override fun onMessage(webSocket: WebSocket, text: String) =
                     listener.onMessage(text)
