@@ -5,15 +5,19 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiSelector
 import org.awaitility.Awaitility
-import java.util.concurrent.TimeUnit
+import java.lang.Thread.sleep
+import java.util.concurrent.TimeUnit.SECONDS
+
 
 class MessengerPage(activity: Activity) : BasePage(activity) {
 
-    val title = "Web Messaging Testbed"
-    val sendText = "Send"
-    val buttonClass = "android.widget.Button"
-    val commandClass = "android.widget.EditText"
-    val responseClass = "android.widget.ScrollView"
+    private val title = "Web Messaging Testbed"
+    private val sendText = "Send"
+    private val messageResultText1 = "direction=Inbound"
+    private val messageResultText2 = "Message\$State\$Sent"
+    private val buttonClass = "android.widget.Button"
+    private val commandClass = "android.widget.EditText"
+    private val responseClass = "android.widget.ScrollView"
 
     // Wait until android compose prototype begins
     fun verifyPageIsVisible(waitTime: Long = 20) {
@@ -29,6 +33,7 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         commandBox.click()
         commandBox.clearTextField()
         commandBox.legacySetText(command)
+        sleep(3000)
         val sendButton = mDevice.findObject(
             UiSelector().text(sendText)
         )
@@ -50,7 +55,7 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
 
     // Wait for client to return proper response
     fun waitForProperResponse(response: String) {
-        Awaitility.await().atMost(waitTime, TimeUnit.SECONDS)
+        Awaitility.await().atMost(waitTime, SECONDS)
             .until {
                 getFullResponse().contains(response, ignoreCase = true)
             }
@@ -58,15 +63,23 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
 
     // Wait for client to be connected
     fun waitForConnected() {
-        Awaitility.await().atMost(waitTime, TimeUnit.SECONDS)
+        Awaitility.await().atMost(waitTime, SECONDS)
             .until {
                 getClientResponse().contains("Connected", ignoreCase = true)
             }
     }
 
+    // Wait for client to be connected
+    fun waitForConfigured() {
+        Awaitility.await().atMost(waitTime, SECONDS)
+            .until {
+                getClientResponse().contains("Configured", ignoreCase = true)
+            }
+    }
+
     // Wait for client to be closed
     fun waitForClosed() {
-        Awaitility.await().atMost(waitTime, TimeUnit.SECONDS)
+        Awaitility.await().atMost(waitTime, SECONDS)
             .until {
                 getClientResponse().contains("Closed", ignoreCase = true)
             }
@@ -86,14 +99,14 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     // Verify configured full response
     fun checkConfigureFullResponse() {
         val response = getFullResponse()
-        if (!(response.contains("200", ignoreCase = true))) AssertionError("Response does not contain 200")
         if (!(response.contains("\"Connected\": true", ignoreCase = true))) AssertionError("Response does not contain \"Connected\": true")
     }
 
     // Verify response for sending a message
     fun checkSendMsgFullResponse() {
         val response = getFullResponse()
-        if (!(response.contains("MessageUpdated", ignoreCase = true))) AssertionError("Response does not contain MessageUpdated")
+        if (!(response.contains(messageResultText1, ignoreCase = true))) AssertionError("Response does not contain MessageUpdated")
+        if (!(response.contains(messageResultText2, ignoreCase = true))) AssertionError("Response does not contain MessageUpdated")
     }
 
     // Verify response for the ping command
