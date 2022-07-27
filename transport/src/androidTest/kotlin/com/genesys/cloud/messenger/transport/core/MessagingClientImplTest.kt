@@ -273,19 +273,36 @@ class MessagingClientImplTest {
     }
 
     @Test
-    fun whenConfigureFailsAndSocketListenerRespondWithOnFailureAndThereAreNoReconnectionAttemptsLeft() {
-        val expectedException = Exception("Some error message")
-        val expectedErrorState = State.Error(ErrorCode.WebsocketError, "Failed to reconnect.")
+    fun whenConfigureFailsAndSocketListenerRespondWithWebsocketErrorAndThereAreNoReconnectionAttemptsLeft() {
+        val expectedException = Exception(ErrorMessage.FailedToReconnect)
+        val expectedErrorState = State.Error(ErrorCode.WebsocketError, ErrorMessage.FailedToReconnect)
 
         subject.connect()
 
-        slot.captured.onFailure(expectedException)
+        slot.captured.onFailure(expectedException, ErrorCode.WebsocketError)
 
         assertThat(subject).isError(expectedErrorState.code, expectedErrorState.message)
         verifySequence {
             connectSequence()
             mockMessageStore.invalidateConversationCache()
             mockReconnectionHandler.shouldReconnect
+            mockStateChangedListener(fromConnectedToError(expectedErrorState))
+            mockAttachmentHandler.clearAll()
+        }
+    }
+
+    @Test
+    fun whenConfigureFailsAndSocketListenerRespondWithNetworkDisabledError() {
+        val expectedException = Exception(ErrorMessage.InternetConnectionIsOffline)
+        val expectedErrorState = State.Error(ErrorCode.NetworkDisabled, ErrorMessage.InternetConnectionIsOffline)
+
+        subject.connect()
+
+        slot.captured.onFailure(expectedException, ErrorCode.NetworkDisabled)
+
+        assertThat(subject).isError(expectedErrorState.code, expectedErrorState.message)
+        verifySequence {
+            connectSequence()
             mockStateChangedListener(fromConnectedToError(expectedErrorState))
             mockAttachmentHandler.clearAll()
         }

@@ -210,20 +210,29 @@ internal class MessagingClientImpl(
                     stateMachine.onError(code, message)
                 }
             }
-            is ErrorCode.WebsocketError -> handleWebSocketError()
+            is ErrorCode.WebsocketError -> handleWebSocketError(ErrorCode.WebsocketError)
             else -> log.w { "Unhandled ErrorCode: $code with optional message: $message" }
         }
     }
 
-    private fun handleWebSocketError() {
+    private fun handleWebSocketError(errorCode: ErrorCode) {
         if (stateMachine.isClosed()) return
         invalidateConversationCache()
-        if (reconnectionHandler.shouldReconnect) {
-            stateMachine.onReconnect()
-            reconnectionHandler.reconnect { connect(true) }
-        } else {
-            stateMachine.onError(ErrorCode.WebsocketError, "Failed to reconnect.")
-            attachmentHandler.clearAll()
+        when (errorCode) {
+            is ErrorCode.WebsocketError -> {
+                if (reconnectionHandler.shouldReconnect) {
+                    stateMachine.onReconnect()
+                    reconnectionHandler.reconnect { connect(true) }
+                } else {
+                    stateMachine.onError(errorCode, ErrorMessage.FailedToReconnect)
+                    attachmentHandler.clearAll()
+                }
+            }
+            is ErrorCode.NetworkDisabled -> {
+                stateMachine.onError(errorCode, ErrorMessage.InternetConnectionIsOffline)
+                attachmentHandler.clearAll()
+            }
+            else -> log.w { "Unhandled WebSocket errorCode. ErrorCode: $errorCode" }
         }
     }
 
@@ -247,9 +256,9 @@ internal class MessagingClientImpl(
             }
         }
 
-        override fun onFailure(t: Throwable) {
+        override fun onFailure(t: Throwable, errorCode: ErrorCode) {
             log.e(throwable = t) { "onFailure(message: ${t.message})" }
-            handleWebSocketError()
+            handleWebSocketError(errorCode)
         }
 
         override fun onMessage(text: String) {
