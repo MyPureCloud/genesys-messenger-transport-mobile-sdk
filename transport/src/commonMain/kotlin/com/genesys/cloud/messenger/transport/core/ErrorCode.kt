@@ -56,4 +56,6 @@ sealed class ErrorCode(val code: Int) {
 
 object ErrorMessage {
     const val FailedToReconnect = "Failed to reconnect."
+    const val InternetConnectionIsOffline =
+        "Network is disabled. Please enable wifi or cellular and try again."
 }
