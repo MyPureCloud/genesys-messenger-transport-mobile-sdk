@@ -20,14 +20,14 @@ class ComposePrototypeUITest : BaseTests() {
     val detachImageText = "detach"
     val deleteText = "delete"
     val byeText = "bye"
-    val messageText = "How can I help?"
-    val messageResultText = "MessageUpdated"
     val uploadingText = "Uploading"
     val uploadedText = "Uploaded"
     val deletedText = "Deleted"
-
+    val messageText = "Message"
+    val oneThousandText = "Code: 1000"
     val twoHundredText = "200"
     val historyFetchedText = "HistoryFetched"
+    val longClosedText = "The user has closed the connection"
     private val randomFileName = "a" + java.util.UUID.randomUUID().toString().substring(0, 15) + ".jpg"
 
     // Send the connect command and wait for connected response
@@ -44,7 +44,7 @@ class ComposePrototypeUITest : BaseTests() {
         messenger {
             verifyPageIsVisible()
             enterCommand(configureText)
-            waitForProperResponse(twoHundredText)
+            waitForConfigured()
             checkConfigureFullResponse()
         }
     }
@@ -54,7 +54,7 @@ class ComposePrototypeUITest : BaseTests() {
         messenger {
             verifyPageIsVisible()
             enterCommand(sendMsgText)
-            waitForProperResponse(messageResultText)
+            waitForProperResponse(messageText)
             checkSendMsgFullResponse()
         }
     }
@@ -118,6 +118,8 @@ class ComposePrototypeUITest : BaseTests() {
             verifyPageIsVisible()
             enterCommand(byeText)
             waitForClosed()
+            waitForProperResponse(oneThousandText)
+            waitForProperResponse(longClosedText)
         }
     }
 
@@ -134,10 +136,12 @@ class ComposePrototypeUITest : BaseTests() {
         connect()
         configure()
         sendMsg()
-        ping()
-        history()
+      //  ping()
+      //  history()
         attachImage()
-        detachImage()
+    //    detachImage()
+        val attachmentId = attachImage()
+        deleteImage(attachmentId)
         bye()
     }
 
