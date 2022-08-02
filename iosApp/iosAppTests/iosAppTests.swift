@@ -67,6 +67,27 @@ class iosAppTests: XCTestCase {
         contentController.disconnectMessenger()
     }
 
+    func testMessageAttributes() {
+        // Setup the session. Send a message.
+        guard let contentController = contentController else {
+            XCTFail("Failed to setup the content controller.")
+            return
+        }
+
+        contentController.startMessengerConnection()
+        contentController.sendTextWithAttribute(text: "Testing with a specific name.", attributes: ["name": "Jane Doe"])
+        guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
+            XCTFail("The message we sent may not have connected to an agent.")
+            return
+        }
+
+        // Send a message with a new name via custom attributes.
+        contentController.sendTextWithAttribute(text: "Testing with a new name!", attributes: ["name": "John Doe"])
+
+        // Cleanup.
+        ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
+    }
+
     func testSendAndReceiveMessage() {
         // Setup the session. Send a message.
         guard let contentController = contentController else {
@@ -99,11 +120,12 @@ class iosAppTests: XCTestCase {
 class TestContentController: MessengerHandler {
 
     var testExpectation: XCTestExpectation? = nil
+    var errorExpectation: XCTestExpectation? = nil
     var receivedMessageText: String? = nil
     var receivedDownloadUrl: String? = nil
     
-    override init(deployment: Deployment) {
-        super.init(deployment: deployment)
+    override init(deployment: Deployment, reconnectTimeout: Int64 = 60 * 5) {
+        super.init(deployment: deployment, reconnectTimeout: reconnectTimeout)
         
         client.stateChangedListener = { [weak self] stateChange in
             print("State Event. New state: \(stateChange.newState), old state: \(stateChange.oldState)")
@@ -114,7 +136,8 @@ class TestContentController: MessengerHandler {
             case _ as MessagingClientState.Closed:
                 self?.testExpectation?.fulfill()
             case let error as MessagingClientState.Error:
-                XCTFail("Socket <error>. code: <\(error.code.description)> , message: <\(error.message ?? "No message")>")
+                print("Socket <error>. code: <\(error.code.description)> , message: <\(error.message ?? "No message")>")
+                self?.errorExpectation?.fulfill()
             default:
                 break
             }
@@ -184,9 +207,17 @@ class TestContentController: MessengerHandler {
         }
     }
 
+    func sendTextWithAttribute(text: String, attributes: [String: String], file: StaticString = #file, line: UInt = #line) {
+        do {
+            try sendMessage(text: text, customAttributes: attributes)
+        } catch {
+            XCTFail("Failed to send the message \(text) with the attributes: \(attributes)\n\(error.localizedDescription)", file: file, line: line)
+        }
+    }
+
     override func sendMessage(text: String, customAttributes: [String: String] = [:]) throws {
         testExpectation = XCTestExpectation(description: "Wait for message to send.")
-        try super.sendMessage(text: text)
+        try super.sendMessage(text: text, customAttributes: customAttributes)
         waitForExpectation()
         verifyReceivedMessage(expectedMessage: text)
     }
