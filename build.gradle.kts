@@ -1,5 +1,5 @@
 buildscript {
-    val compose_version by extra("1.1.1")
+    val compose_version by extra("1.2.0-rc02")
 
     repositories {
         gradlePluginPortal()
