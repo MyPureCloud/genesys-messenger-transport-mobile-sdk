@@ -39,7 +39,7 @@ internal actual class Log actual constructor(
     actual fun withTag(tag: String): Log = Log(enableLogs = enableLogs, tag = tag)
 
     internal fun okHttpLogger(): HttpLoggingInterceptor.Logger =
-        HttpLoggingInterceptor.Logger {
-            message -> kermit.log(Severity.Info, LogTag.OKHTTP, null, message)
+        HttpLoggingInterceptor.Logger { message ->
+            kermit.log(Severity.Info, LogTag.OKHTTP, null, message)
         }
 }
