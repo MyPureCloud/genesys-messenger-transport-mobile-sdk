@@ -2,6 +2,7 @@ package com.genesys.cloud.messenger.transport.util.logs
 
 import co.touchlab.kermit.Kermit
 import co.touchlab.kermit.LogcatLogger
+import co.touchlab.kermit.Severity
 import io.ktor.client.features.logging.Logger
 import io.ktor.client.features.logging.MessageLengthLimitingLogger
 import okhttp3.logging.HttpLoggingInterceptor
@@ -38,5 +39,7 @@ internal actual class Log actual constructor(
     actual fun withTag(tag: String): Log = Log(enableLogs = enableLogs, tag = tag)
 
     internal fun okHttpLogger(): HttpLoggingInterceptor.Logger =
-        HttpLoggingInterceptor.Logger { message -> kermit.i(LogTag.OKHTTP) { message } }
+        HttpLoggingInterceptor.Logger {
+            message -> kermit.log(Severity.Info, LogTag.OKHTTP, null, message)
+        }
 }
