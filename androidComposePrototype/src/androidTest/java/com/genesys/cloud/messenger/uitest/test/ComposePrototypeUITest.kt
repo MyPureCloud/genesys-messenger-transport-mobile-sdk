@@ -13,13 +13,13 @@ class ComposePrototypeUITest : BaseTests() {
     val testBedViewText = "TestBed View"
     val connectText = "connect"
     val configureText = "configure"
+    val connectConfigureText = "connectWithConfigure"
     val sendMsgText = "send"
     val helloText = "hello"
     val healthCheckText = "healthCheck"
     val historyText = "history 1 1"
     val attachImageText = "attach"
     val detachImageText = "detach"
-    val deleteText = "delete"
     val byeText = "bye"
     val uploadingText = "Uploading"
     val uploadedText = "Uploaded"
@@ -48,6 +48,15 @@ class ComposePrototypeUITest : BaseTests() {
         messenger {
             verifyPageIsVisible()
             enterCommand(configureText)
+            waitForConfigured()
+            checkConfigureFullResponse()
+        }
+    }
+
+    fun connectWithConfigure() {
+        messenger {
+            verifyPageIsVisible()
+            enterCommand(connectConfigureText)
             waitForConfigured()
             checkConfigureFullResponse()
         }
@@ -94,6 +103,7 @@ class ComposePrototypeUITest : BaseTests() {
             attachmentId = checkAttachFullResponse()
             enterCommand(sendMsgText)
             waitForProperResponse(attachmentSentText)
+            waitForProperResponse("id=$attachmentId")
         }
         return attachmentId
     }
@@ -103,16 +113,6 @@ class ComposePrototypeUITest : BaseTests() {
         messenger {
             verifyPageIsVisible()
             enterCommand("$detachImageText $attachmentId")
-            waitForProperResponse(deletedText)
-            checkDetachFullResponse()
-        }
-    }
-
-    // Send a delete command, wait for the response, and verify it is correct
-    fun deleteImage(attachmentId: String) {
-        messenger {
-            verifyPageIsVisible()
-            enterCommand("$deleteText $attachmentId")
             waitForProperResponse(deletedText)
             checkDetachFullResponse()
         }
@@ -138,7 +138,7 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
-    // A test to verify the connect, configure, send message, ping, history, attach image, detach image, and bye commands
+    // A test to verify the connect, configure, send message, attach image, add custom attribute, and bye commands
     @Test
     fun testAllCommands() {
         opening {
@@ -156,20 +156,17 @@ class ComposePrototypeUITest : BaseTests() {
         bye()
     }
 
-    // A test to verify the connect, configure, attach image, delete image, and bye commands
+    // A test to verify the connect with configure command
     @Test
-    fun testDeleteCommand() {
+    fun testConnectWithConfigureCommand() {
         opening {
             verifyPageIsVisible()
             selectView(testBedViewText)
         }
         messenger {
             verifyPageIsVisible()
+            connectWithConfigure()
         }
-        connect()
-        configure()
-        val attachmentId = attachImage()
-        deleteImage(attachmentId)
         bye()
     }
 }
