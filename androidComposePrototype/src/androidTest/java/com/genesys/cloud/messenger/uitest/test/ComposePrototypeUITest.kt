@@ -13,7 +13,8 @@ class ComposePrototypeUITest : BaseTests() {
     val testBedViewText = "TestBed View"
     val connectText = "connect"
     val configureText = "configure"
-    val sendMsgText = "send hello"
+    val sendMsgText = "send"
+    val helloText = "hello"
     val healthCheckText = "healthCheck"
     val historyText = "history 1 1"
     val attachImageText = "attach"
@@ -23,13 +24,16 @@ class ComposePrototypeUITest : BaseTests() {
     val uploadingText = "Uploading"
     val uploadedText = "Uploaded"
     val deletedText = "Deleted"
-    val messageText = "Message"
+    val attachmentSentText = "state=Sent"
+    val addAtrributeText = "addAttribute"
+    val nameText = "name"
+    val newNameText = "Nellie Hay"
+    val customAttributeAddedText = "Custom attribute added"
     val oneThousandText = "Code: 1000"
     val twoHundredText = "200"
     val historyFetchedText = "HistoryFetched"
     val longClosedText = "The user has closed the connection"
-    private val randomFileName = "a" + java.util.UUID.randomUUID().toString().substring(0, 15) + ".jpg"
-
+    
     // Send the connect command and wait for connected response
     fun connect() {
         messenger {
@@ -50,10 +54,10 @@ class ComposePrototypeUITest : BaseTests() {
     }
 
     // Send a message, wait for the response, and verify it is correct
-    fun sendMsg() {
+    fun sendMsg(messageText: String) {
         messenger {
             verifyPageIsVisible()
-            enterCommand(sendMsgText)
+            enterCommand("$sendMsgText $messageText")
             waitForProperResponse(messageText)
             checkSendMsgFullResponse()
         }
@@ -88,27 +92,38 @@ class ComposePrototypeUITest : BaseTests() {
             waitForProperResponse(uploadingText)
             waitForProperResponse(uploadedText)
             attachmentId = checkAttachFullResponse()
+            enterCommand(sendMsgText)
+            waitForProperResponse(attachmentSentText)
         }
         return attachmentId
     }
 
     // Send a detach command, wait for the response, and verify it is correct
-    fun detachImage() {
+    fun detachImage(attachmentId: String) {
         messenger {
             verifyPageIsVisible()
-            enterCommand(detachImageText)
+            enterCommand("$detachImageText $attachmentId")
             waitForProperResponse(deletedText)
             checkDetachFullResponse()
         }
     }
 
-    // Send a detach command, wait for the response, and verify it is correct
+    // Send a delete command, wait for the response, and verify it is correct
     fun deleteImage(attachmentId: String) {
         messenger {
             verifyPageIsVisible()
             enterCommand("$deleteText $attachmentId")
             waitForProperResponse(deletedText)
             checkDetachFullResponse()
+        }
+    }
+
+    fun addCustomAttribute(key: String, value: String) {
+        messenger {
+            verifyPageIsVisible()
+            enterCommand("$addAtrributeText $key $value")
+            waitForProperResponse(customAttributeAddedText)
+            waitForProperResponse("$key, $value")
         }
     }
 
@@ -135,13 +150,9 @@ class ComposePrototypeUITest : BaseTests() {
         }
         connect()
         configure()
-        sendMsg()
-      //  ping()
-      //  history()
-        attachImage()
-    //    detachImage()
+        sendMsg(helloText)
         val attachmentId = attachImage()
-        deleteImage(attachmentId)
+        addCustomAttribute(nameText, newNameText)
         bye()
     }
 
