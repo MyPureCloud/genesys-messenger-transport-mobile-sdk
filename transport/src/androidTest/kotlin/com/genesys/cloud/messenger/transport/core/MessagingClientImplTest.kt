@@ -2,9 +2,10 @@ package com.genesys.cloud.messenger.transport.core
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
-import com.genesys.cloud.messenger.transport.network.SocketCloseCode
+import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
@@ -36,7 +37,7 @@ class MessagingClientImplTest {
     private val configuration = configuration()
     private val log: Log = Log(configuration.logging, "Log")
     private val slot = slot<PlatformSocketListener>()
-    private val mockStateListener: (MessagingClient.State) -> Unit = spyk()
+    private val mockStateChangedListener: (StateChange) -> Unit = spyk()
     private val mockMessageStore: MessageStore = mockk(relaxed = true) {
         every { prepareMessage(any(), any()) } returns OnMessageRequest(
             "00000000-0000-0000-0000-000000000000",
@@ -89,6 +90,10 @@ class MessagingClientImplTest {
         } returns TestWebMessagingApiResponses.testMessageEntityList
     }
 
+    private val mockReconnectionHandler: ReconnectionHandlerImpl = mockk(relaxed = true) {
+        every { shouldReconnect } returns false
+    }
+
     private val subject = MessagingClientImpl(
         log = log,
         configuration = configuration,
@@ -98,8 +103,9 @@ class MessagingClientImplTest {
         jwtHandler = mockk(),
         attachmentHandler = mockAttachmentHandler,
         messageStore = mockMessageStore,
+        reconnectionHandler = mockReconnectionHandler,
     ).also {
-        it.stateListener = mockStateListener
+        it.stateChangedListener = mockStateChangedListener
     }
 
     @AfterTest
@@ -117,8 +123,7 @@ class MessagingClientImplTest {
 
     @Test
     fun whenConnectAndThenDisconnect() {
-        val expectedState =
-            MessagingClient.State.Closed(1000, "The user has closed the connection.")
+        val expectedState = State.Closed(1000, "The user has closed the connection.")
         subject.connect()
 
         subject.disconnect()
@@ -136,6 +141,7 @@ class MessagingClientImplTest {
 
         subject.configureSession()
 
+        assertThat(subject).isConfigured(true, true)
         verifySequence {
             connectSequence()
             configureSequence()
@@ -267,27 +273,37 @@ class MessagingClientImplTest {
     }
 
     @Test
-    fun whenConfigureFailsAndSocketListenerRespondWithOnFailure() {
-        val expectedException = Exception("Some error message")
-        val expectedErrorState =
-            MessagingClient.State.Error(ErrorCode.WebsocketError, "Some error message")
-        val expectedState =
-            MessagingClient.State.Closed(SocketCloseCode.GOING_AWAY.value, "Going away.")
-        every { mockPlatformSocket.closeSocket(any(), any()) } answers {
-            slot.captured.onClosed(1001, "Going away.")
-        }
+    fun whenConfigureFailsAndSocketListenerRespondWithWebsocketErrorAndThereAreNoReconnectionAttemptsLeft() {
+        val expectedException = Exception(ErrorMessage.FailedToReconnect)
+        val expectedErrorState = State.Error(ErrorCode.WebsocketError, ErrorMessage.FailedToReconnect)
+
         subject.connect()
 
-        slot.captured.onFailure(expectedException)
+        slot.captured.onFailure(expectedException, ErrorCode.WebsocketError)
 
-        assertThat(subject).isClosed(expectedState.code, expectedState.reason)
+        assertThat(subject).isError(expectedErrorState.code, expectedErrorState.message)
         verifySequence {
             connectSequence()
-            mockStateListener(expectedErrorState)
-            mockAttachmentHandler.clearAll()
-            mockPlatformSocket.closeSocket(expectedState.code, expectedState.reason)
-            mockStateListener(expectedState)
             mockMessageStore.invalidateConversationCache()
+            mockReconnectionHandler.shouldReconnect
+            mockStateChangedListener(fromConnectedToError(expectedErrorState))
+            mockAttachmentHandler.clearAll()
+        }
+    }
+
+    @Test
+    fun whenConfigureFailsAndSocketListenerRespondWithNetworkDisabledError() {
+        val expectedException = Exception(ErrorMessage.InternetConnectionIsOffline)
+        val expectedErrorState = State.Error(ErrorCode.NetworkDisabled, ErrorMessage.InternetConnectionIsOffline)
+
+        subject.connect()
+
+        slot.captured.onFailure(expectedException, ErrorCode.NetworkDisabled)
+
+        assertThat(subject).isError(expectedErrorState.code, expectedErrorState.message)
+        verifySequence {
+            connectSequence()
+            mockStateChangedListener(fromConnectedToError(expectedErrorState))
             mockAttachmentHandler.clearAll()
         }
     }
@@ -295,27 +311,25 @@ class MessagingClientImplTest {
     @Test
     fun whenSocketListenerInvokeOnMessageWithProperlyStructuredMessage() {
         val expectedSessionResponse = SessionResponse(connected = true, newSession = true)
+        val expectedConfigureState = State.Configured(connected = true, newSession = true)
         subject.connect()
 
         slot.captured.onMessage(Response.configureSuccess)
 
         assertThat(subject).isConfigured(
             expectedSessionResponse.connected,
-            expectedSessionResponse.newSession
+            expectedSessionResponse.newSession,
         )
         verifySequence {
             connectSequence()
-            mockStateListener(MessagingClient.State.Configured(connected = true, newSession = true))
+            mockStateChangedListener(fromConnectedToConfigured(expectedConfigureState))
         }
     }
 
     @Test
     fun whenSocketListenerInvokeOnMessageWithSessionExpiredStringMessage() {
         val expectedErrorState =
-            MessagingClient.State.Error(
-                ErrorCode.SessionHasExpired,
-                "session expired error message"
-            )
+            State.Error(ErrorCode.SessionHasExpired, "session expired error message")
         val givenRawMessage =
             """
             {
@@ -331,17 +345,14 @@ class MessagingClientImplTest {
 
         verifySequence {
             connectSequence()
-            mockStateListener(expectedErrorState)
+            mockStateChangedListener(fromConnectedToError(expectedErrorState))
         }
     }
 
     @Test
     fun whenSocketListenerInvokeOnMessageWithSessionNotFoundStringMessage() {
         val expectedErrorState =
-            MessagingClient.State.Error(
-                ErrorCode.SessionNotFound,
-                "session not found error message"
-            )
+            State.Error(ErrorCode.SessionNotFound, "session not found error message")
         val givenRawMessage =
             """
             {
@@ -357,7 +368,7 @@ class MessagingClientImplTest {
 
         verifySequence {
             connectSequence()
-            mockStateListener(expectedErrorState)
+            mockStateChangedListener(fromConnectedToError(expectedErrorState))
         }
     }
 
@@ -405,8 +416,7 @@ class MessagingClientImplTest {
 
     @Test
     fun whenSocketListenerInvokeOnMessageWitSessionExpiredEvent() {
-        val expectedErrorState =
-            MessagingClient.State.Error(ErrorCode.SessionHasExpired, null)
+        val expectedErrorState = State.Error(ErrorCode.SessionHasExpired, null)
         val givenRawMessage =
             """
             {
@@ -422,7 +432,7 @@ class MessagingClientImplTest {
 
         verifySequence {
             connectSequence()
-            mockStateListener(expectedErrorState)
+            mockStateChangedListener(fromConnectedToError(expectedErrorState))
         }
     }
 
@@ -581,6 +591,7 @@ class MessagingClientImplTest {
     fun whenConnectWithConfigureHasClientResponseError() {
         val expectedErrorCode = ErrorCode.ClientResponseError(400)
         val expectedErrorMessage = "Deployment not found"
+        val expectedErrorState = State.Error(expectedErrorCode, expectedErrorMessage)
         every { mockPlatformSocket.sendMessage(Request.configureRequest) } answers {
             slot.captured.onMessage(Response.configureFail)
         }
@@ -591,7 +602,7 @@ class MessagingClientImplTest {
         verifySequence {
             connectSequence()
             mockPlatformSocket.sendMessage(Request.configureRequest)
-            mockStateListener(MessagingClient.State.Error(expectedErrorCode, expectedErrorMessage))
+            mockStateChangedListener(fromConnectedToError(expectedErrorState))
         }
     }
 
@@ -608,26 +619,45 @@ class MessagingClientImplTest {
     )
 
     private fun MockKVerificationScope.connectSequence() {
-        mockStateListener(MessagingClient.State.Connecting)
+        val fromIdleToConnecting =
+            StateChange(oldState = State.Idle, newState = State.Connecting)
+        val fromConnectingToConnected =
+            StateChange(oldState = State.Connecting, newState = State.Connected)
+        mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
-        mockStateListener(MessagingClient.State.Connected)
+        mockStateChangedListener(fromConnectingToConnected)
     }
 
     private fun MockKVerificationScope.disconnectSequence(
         expectedCloseCode: Int = any(),
         expectedCloseReason: String = any(),
     ) {
-        mockStateListener(MessagingClient.State.Closing(expectedCloseCode, expectedCloseReason))
+        val fromConnectedToClosing = StateChange(
+            oldState = State.Connected,
+            newState = State.Closing(expectedCloseCode, expectedCloseReason)
+        )
+        val fromClosingToClosed = StateChange(
+            oldState = State.Closing(expectedCloseCode, expectedCloseReason),
+            newState = State.Closed(expectedCloseCode, expectedCloseReason)
+        )
+        mockStateChangedListener(fromConnectedToClosing)
         mockPlatformSocket.closeSocket(expectedCloseCode, expectedCloseReason)
-        mockStateListener(MessagingClient.State.Closed(expectedCloseCode, expectedCloseReason))
+        mockStateChangedListener(fromClosingToClosed)
         mockMessageStore.invalidateConversationCache()
         mockAttachmentHandler.clearAll()
     }
 
     private fun MockKVerificationScope.configureSequence() {
+        val expectedConfigureState = State.Configured(connected = true, newSession = true)
         mockPlatformSocket.sendMessage(Request.configureRequest)
-        mockStateListener(MessagingClient.State.Configured(connected = true, newSession = true))
+        mockStateChangedListener(fromConnectedToConfigured(expectedConfigureState))
     }
+
+    private fun fromConnectedToConfigured(configured: State) =
+        StateChange(oldState = State.Connected, newState = configured)
+
+    private fun fromConnectedToError(errorState: State) =
+        StateChange(oldState = State.Connected, newState = errorState)
 }
 
 private object Request {

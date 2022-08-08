@@ -1,0 +1,101 @@
+@startuml
+
+skinparam {
+        ArrowColor darkBlue
+        backgroundColor #EEEBDC
+        NoteBackgroundColor #lightyellow
+        NoteBorderColor gray
+        sequenceGroupHeaderFontColor midnightblue
+        padding 6
+}
+
+participant UI #red
+participant MobileMessenger #skyBlue
+participant MessagingClient #skyBlue
+participant StateMachine #skyBlue
+participant PlatformSocket #skyBlue
+participant NSURLSessionWebSocket #skyBlue
+participant ReconnectionHandler #skyBlue
+participant MessageStore #skyBlue
+
+UI -> MobileMessenger: createMessagingClient(Configuration)
+MobileMessenger -> ReconnectionHandler: init(reconnectionTimeoutInSeconds)
+ReconnectionHandler -> ReconnectionHandler: setMaxAttempts
+MobileMessenger --> UI: MessagingClient
+UI -> MessagingClient: connectAndConfigure
+MessagingClient -> StateMachine: onConnect
+StateMachine --> UI: stateChangedListener(old = Idle, new = Connecting)
+MessagingClient -> PlatformSocket: connect
+PlatformSocket -> NSURLSessionWebSocket: init
+
+alt #lightgreen SUCCESS
+    NSURLSessionWebSocket --> PlatformSocket: onOpen
+    PlatformSocket --> MessagingClient: onOpen
+    MessagingClient -> StateMachine: onConnectionOpened
+    StateMachine --> UI: stateChangedListener(old = Connecting, new = Connected)
+    loop #EEEBDC forever
+    PlatformSocket -> NSURLSessionWebSocket: ping (every 15 seconds)
+    PlatformSocket -> PlatformSocket: waitForPong
+        alt #FF7276 pong not received
+            PlatformSocket -> NSURLSessionWebSocket: cancelPings
+            PlatformSocket -> NSURLSessionWebSocket: closeSocket
+            PlatformSocket -> MessagingClient: onFailure
+            note right MessagingClient
+                 If ErrorCode.NetworkDisabled - transition MessagingClient
+                 state to Error without trying to reconnect
+                 and notify UI with message asking to enable network on the device.
+            end note
+            MessagingClient -> MessageStore: invalidateConversationCache
+            MessagingClient -> ReconnectionHandler: shouldReconnect
+            ReconnectionHandler --> MessagingClient: attempt > maxAttempts
+            ReconnectionHandler -> ReconnectionHandler: attempt++
+            alt #lightgreen shouldReconnect == true
+                MessagingClient -> StateMachine: onReconnecting
+                StateMachine --> UI: stateChangedListener(old = Configured, new = Reconnecting)
+                MessagingClient -> PlatformSocket: connect
+                note right MessagingClient
+                                In case connect failed iterate over shouldReconnect
+                            end note
+                PlatformSocket -> NSURLSessionWebSocket: init
+                NSURLSessionWebSocket --> PlatformSocket: onOpen
+                PlatformSocket --> MessagingClient: onOpen
+                MessagingClient -> PlatformSocket: configure
+                note right MessagingClient
+                                In case configure failed iterate over shouldReconnect
+                end note
+                PlatformSocket -> NSURLSessionWebSocket: sendMessage(configureMessage)
+                NSURLSessionWebSocket --> PlatformSocket: onMessage(configureSuccess)
+                PlatformSocket --> MessagingClient: onConfigured
+                MessagingClient -> ReconnectionHandler: clear
+                ReconnectionHandler -> ReconnectionHandler: attempt = 0
+                MessagingClient -> StateMachine: onSessionConfigured
+                StateMachine --> UI: stateChangedListener(old = Reconnecting, new = Configured)
+            else #FF7276 shouldReconnect == false
+                MessagingClient -> StateMachine: onError
+                StateMachine --> UI: stateChangedListener(old = Reconnecting, new = Error)
+            end
+        end
+    NSURLSessionWebSocket --> PlatformSocket: pong
+    end
+alt SUCCESS
+    MessagingClient -> PlatformSocket: configure
+    PlatformSocket -> NSURLSessionWebSocket: sendMessage(configureMessage)
+    NSURLSessionWebSocket --> PlatformSocket: onMessage(configureSuccess)
+    PlatformSocket --> MessagingClient: onConfigured
+    MessagingClient -> StateMachine: onSessionConfigured
+    StateMachine --> UI: stateChangedListener(old = Connected, new = Configured)
+else #FF7276 FAILURE
+    PlatformSocket --> MessagingClient: onFailure
+        note right MessagingClient
+                   In case configure failed iterate over shouldReconnect
+        end note
+    MessagingClient --> UI: onStateChanged(Error)
+end
+else #FF7276 FAILURE
+    PlatformSocket --> MessagingClient: onFailure
+     note right MessagingClient
+                       In case connect failed iterate over shouldReconnect
+            end note
+    MessagingClient --> UI: onStateChanged(Error)
+end
+@enduml

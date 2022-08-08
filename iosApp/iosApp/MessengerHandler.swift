@@ -16,7 +16,7 @@ class MessengerHandler {
     private let config: Configuration
     let client: MessagingClient
     
-    public var onStateChange: ((MessagingClientState) -> Void)?
+    public var onStateChange: ((StateChange) -> Void)?
     public var onMessageEvent: ((MessageEvent) -> Void)?
     
     init(deployment: Deployment) {
@@ -24,12 +24,13 @@ class MessengerHandler {
         self.config = Configuration(deploymentId: deployment.deploymentId!,
                                     domain: deployment.domain!,
                                     tokenStoreKey: "com.genesys.cloud.messenger",
-                                    logging: true)
+                                    logging: true,
+                                    reconnectionTimeoutInSeconds: 60 * 5)
         self.client = MobileMessenger().createMessagingClient(configuration: self.config)
         
-        client.stateListener = { [weak self] state in
-            print("State Change: \(state)")
-            self?.onStateChange?(state)
+        client.stateChangedListener = { [weak self] stateChange in
+            print("State Change: \(stateChange)")
+            self?.onStateChange?(stateChange)
         }
         client.messageListener = { [weak self] event in
             print("Message Event: \(event)")

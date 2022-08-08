@@ -8,12 +8,14 @@ import io.ktor.http.Url
  * @param domain the regional base domain address for a Genesys Cloud Web Messaging service. For example, "mypurecloud.com".
  * @param tokenStoreKey the key to access local storage.
  * @param logging indicates if logging should be enabled.
+ * @param reconnectionTimeoutInSeconds period of time during which Transport will try to reconnect to the web socket in case of connectivity lost.
  */
 data class Configuration(
     val deploymentId: String,
     private val domain: String,
     val tokenStoreKey: String,
-    val logging: Boolean = false
+    val logging: Boolean = false,
+    val reconnectionTimeoutInSeconds: Long = 60 * 5,
 ) {
 
     internal val webSocketUrl: Url by lazy {
