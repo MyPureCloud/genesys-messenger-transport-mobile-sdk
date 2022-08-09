@@ -130,8 +130,8 @@ kotlin {
             }
         }
         val iosTest by getting
-        val iosSimulatorArm64Main by sourceSets.getting
-        val iosSimulatorArm64Test by sourceSets.getting
+        val iosSimulatorArm64Main by getting
+        val iosSimulatorArm64Test by getting
 
         // Set up dependencies between the source sets
         iosSimulatorArm64Main.dependsOn(iosMain)
