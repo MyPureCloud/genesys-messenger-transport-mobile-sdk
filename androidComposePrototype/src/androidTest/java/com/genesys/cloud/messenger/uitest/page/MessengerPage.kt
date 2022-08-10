@@ -8,7 +8,6 @@ import org.awaitility.Awaitility
 import java.lang.Thread.sleep
 import java.util.concurrent.TimeUnit.SECONDS
 
-
 class MessengerPage(activity: Activity) : BasePage(activity) {
 
     private val title = "Web Messaging Testbed"
