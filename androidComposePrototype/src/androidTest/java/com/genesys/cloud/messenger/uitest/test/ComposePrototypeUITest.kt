@@ -13,22 +13,26 @@ class ComposePrototypeUITest : BaseTests() {
     val testBedViewText = "TestBed View"
     val connectText = "connect"
     val configureText = "configure"
-    val sendMsgText = "send hello"
+    val connectConfigureText = "connectWithConfigure"
+    val sendMsgText = "send"
+    val helloText = "hello"
     val healthCheckText = "healthCheck"
     val historyText = "history 1 1"
     val attachImageText = "attach"
     val detachImageText = "detach"
-    val deleteText = "delete"
     val byeText = "bye"
-    val messageText = "How can I help?"
-    val messageResultText = "MessageUpdated"
     val uploadingText = "Uploading"
     val uploadedText = "Uploaded"
     val deletedText = "Deleted"
-
+    val attachmentSentText = "state=Sent"
+    val addAtrributeText = "addAttribute"
+    val nameText = "name"
+    val newNameText = "Nellie Hay"
+    val customAttributeAddedText = "Custom attribute added"
+    val oneThousandText = "Code: 1000"
     val twoHundredText = "200"
     val historyFetchedText = "HistoryFetched"
-    private val randomFileName = "a" + java.util.UUID.randomUUID().toString().substring(0, 15) + ".jpg"
+    val longClosedText = "The user has closed the connection"
 
     // Send the connect command and wait for connected response
     fun connect() {
@@ -44,17 +48,26 @@ class ComposePrototypeUITest : BaseTests() {
         messenger {
             verifyPageIsVisible()
             enterCommand(configureText)
-            waitForProperResponse(twoHundredText)
+            waitForConfigured()
+            checkConfigureFullResponse()
+        }
+    }
+
+    fun connectWithConfigure() {
+        messenger {
+            verifyPageIsVisible()
+            enterCommand(connectConfigureText)
+            waitForConfigured()
             checkConfigureFullResponse()
         }
     }
 
     // Send a message, wait for the response, and verify it is correct
-    fun sendMsg() {
+    fun sendMsg(messageText: String) {
         messenger {
             verifyPageIsVisible()
-            enterCommand(sendMsgText)
-            waitForProperResponse(messageResultText)
+            enterCommand("$sendMsgText $messageText")
+            waitForProperResponse(messageText)
             checkSendMsgFullResponse()
         }
     }
@@ -81,34 +94,36 @@ class ComposePrototypeUITest : BaseTests() {
 
     // Send an attach command, wait for the response, and verify it is correct
     fun attachImage(): String {
-        var attachmentId: String = ""
+        var attachmentId = ""
         messenger {
             verifyPageIsVisible()
             enterCommand(attachImageText)
             waitForProperResponse(uploadingText)
             waitForProperResponse(uploadedText)
             attachmentId = checkAttachFullResponse()
+            enterCommand(sendMsgText)
+            waitForProperResponse(attachmentSentText)
+            waitForProperResponse("id=$attachmentId")
         }
         return attachmentId
     }
 
     // Send a detach command, wait for the response, and verify it is correct
-    fun detachImage() {
+    fun detachImage(attachmentId: String) {
         messenger {
             verifyPageIsVisible()
-            enterCommand(detachImageText)
+            enterCommand("$detachImageText $attachmentId")
             waitForProperResponse(deletedText)
             checkDetachFullResponse()
         }
     }
 
-    // Send a detach command, wait for the response, and verify it is correct
-    fun deleteImage(attachmentId: String) {
+    fun addCustomAttribute(key: String, value: String) {
         messenger {
             verifyPageIsVisible()
-            enterCommand("$deleteText $attachmentId")
-            waitForProperResponse(deletedText)
-            checkDetachFullResponse()
+            enterCommand("$addAtrributeText $key $value")
+            waitForProperResponse(customAttributeAddedText)
+            waitForProperResponse("$key, $value")
         }
     }
 
@@ -118,10 +133,12 @@ class ComposePrototypeUITest : BaseTests() {
             verifyPageIsVisible()
             enterCommand(byeText)
             waitForClosed()
+            waitForProperResponse(oneThousandText)
+            waitForProperResponse(longClosedText)
         }
     }
 
-    // A test to verify the connect, configure, send message, ping, history, attach image, detach image, and bye commands
+    // A test to verify the connect, configure, send message, attach image, add custom attribute, and bye commands
     @Test
     fun testAllCommands() {
         opening {
@@ -133,28 +150,23 @@ class ComposePrototypeUITest : BaseTests() {
         }
         connect()
         configure()
-        sendMsg()
-        ping()
-        history()
-        attachImage()
-        detachImage()
+        sendMsg(helloText)
+        val attachmentId = attachImage()
+        addCustomAttribute(nameText, newNameText)
         bye()
     }
 
-    // A test to verify the connect, configure, attach image, delete image, and bye commands
+    // A test to verify the connect with configure command
     @Test
-    fun testDeleteCommand() {
+    fun testConnectWithConfigureCommand() {
         opening {
             verifyPageIsVisible()
             selectView(testBedViewText)
         }
         messenger {
             verifyPageIsVisible()
+            connectWithConfigure()
         }
-        connect()
-        configure()
-        val attachmentId = attachImage()
-        deleteImage(attachmentId)
         bye()
     }
 }
