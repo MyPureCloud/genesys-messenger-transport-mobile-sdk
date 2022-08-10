@@ -33,7 +33,7 @@ class ComposePrototypeUITest : BaseTests() {
     val twoHundredText = "200"
     val historyFetchedText = "HistoryFetched"
     val longClosedText = "The user has closed the connection"
-    
+
     // Send the connect command and wait for connected response
     fun connect() {
         messenger {
@@ -94,7 +94,7 @@ class ComposePrototypeUITest : BaseTests() {
 
     // Send an attach command, wait for the response, and verify it is correct
     fun attachImage(): String {
-        var attachmentId: String = ""
+        var attachmentId = ""
         messenger {
             verifyPageIsVisible()
             enterCommand(attachImageText)
