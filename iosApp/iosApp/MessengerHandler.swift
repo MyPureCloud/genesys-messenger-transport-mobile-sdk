@@ -19,13 +19,13 @@ class MessengerHandler {
     public var onStateChange: ((StateChange) -> Void)?
     public var onMessageEvent: ((MessageEvent) -> Void)?
     
-    init(deployment: Deployment) {
+    init(deployment: Deployment, reconnectTimeout: Int64 = 60 * 5) {
         self.deployment = deployment
         self.config = Configuration(deploymentId: deployment.deploymentId!,
                                     domain: deployment.domain!,
                                     tokenStoreKey: "com.genesys.cloud.messenger",
                                     logging: true,
-                                    reconnectionTimeoutInSeconds: 60 * 5)
+                                    reconnectionTimeoutInSeconds: reconnectTimeout)
         self.client = MobileMessenger().createMessagingClient(configuration: self.config)
         
         client.stateChangedListener = { [weak self] stateChange in
