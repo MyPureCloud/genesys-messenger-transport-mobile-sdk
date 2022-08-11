@@ -1,5 +1,6 @@
 package com.genesys.cloud.messenger.transport.core
 
+import com.genesys.cloud.messenger.transport.network.*
 import com.genesys.cloud.messenger.transport.network.DeploymentConfigUseCase
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
@@ -23,7 +24,7 @@ object MobileMessenger {
     ): MessagingClient {
         val log = Log(configuration.logging, LogTag.MESSAGING_CLIENT)
         val api = WebMessagingApi(configuration)
-        val webSocket = PlatformSocket(log.withTag(LogTag.WEBSOCKET), configuration.webSocketUrl)
+        val webSocket = PlatformSocket(log.withTag(LogTag.WEBSOCKET), configuration.webSocketUrl, DEFAULT_PING_INTERVAL_IN_SECONDS)
         val token =
             TokenStoreImpl(configuration.tokenStoreKey, log.withTag(LogTag.TOKEN_STORE)).token
         val messageStore = MessageStore(token, log.withTag(LogTag.MESSAGE_STORE))
