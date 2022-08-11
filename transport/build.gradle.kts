@@ -53,22 +53,17 @@ kotlin {
         }
     }
 
-    if (properties.containsKey("android.injected.invoked.from.ide")) {
-        // When running from Android Studio, the shared iOS source set needs this workaround for IDE features like code-completion/highlighting with 3rd party iOS libs
-        // https://kotlinlang.org/docs/kmm-add-dependencies.html#workaround-to-enable-ide-support-for-the-shared-ios-source-set
-        val iosTarget: (String, KotlinNativeTarget.() -> Unit) -> KotlinNativeTarget = when {
-            System.getenv("SDK_NAME")?.startsWith("iphoneos") == true -> ::iosArm64
-            System.getenv("NATIVE_ARCH")?.startsWith("arm") == true -> ::iosSimulatorArm64
-            else -> ::iosX64
+    val xcf = XCFramework(iosFrameworkName)
+    ios {
+        binaries.framework {
+            baseName = iosFrameworkName
+            xcf.add(this)
         }
-        iosTarget("ios") {}
-    } else {
-        val xcf = XCFramework(iosFrameworkName)
-        ios {
-            binaries.framework {
-                baseName = iosFrameworkName
-                xcf.add(this)
-            }
+    }
+    iosSimulatorArm64 {
+        binaries.framework {
+            baseName = iosFrameworkName
+            xcf.add(this)
         }
     }
 
@@ -77,7 +72,7 @@ kotlin {
         homepage = "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk"
         license = "MIT"
         authors = "Genesys Cloud Services, Inc."
-        ios.deploymentTarget = "11.0"
+        ios.deploymentTarget = "13.0"
         podfile = project.file("../iosApp/Podfile")
         framework {
             // The default name for an iOS framework is `<project name>.framework`. To set a custom name, use the `baseName` option. This will also set the module name.
@@ -85,7 +80,6 @@ kotlin {
             // To specify a custom Objective-C prefix/name for the Kotlin framework, use the `-module-name` compiler option or matching Gradle DSL statement.
             freeCompilerArgs += listOf("-module-name", "GCM")
         }
-        pod("jetfire", "~> 0.1.5")
     }
 
     sourceSets {
@@ -94,12 +88,12 @@ kotlin {
                 implementation(kotlin("stdlib-common"))
                 implementation(Deps.Libs.Kotlinx.serializationJson)
                 implementation(Deps.Libs.Kotlinx.coroutinesCore)
-                implementation(Deps.Libs.Kotlinx.dateTime)
                 implementation(Deps.Libs.Ktor.core)
                 implementation(Deps.Libs.Ktor.serialization)
                 implementation(Deps.Libs.Ktor.json)
                 implementation(Deps.Libs.Ktor.logging)
                 implementation(Deps.Libs.logback)
+                implementation(Deps.Libs.klock)
                 api(Deps.Libs.kermit)
             }
         }
@@ -136,6 +130,12 @@ kotlin {
             }
         }
         val iosTest by getting
+        val iosSimulatorArm64Main by getting
+        val iosSimulatorArm64Test by getting
+
+        // Set up dependencies between the source sets
+        iosSimulatorArm64Main.dependsOn(iosMain)
+        iosSimulatorArm64Test.dependsOn(iosTest)
     }
 }
 
@@ -158,7 +158,10 @@ tasks {
         doLast {
             val content = file("${podspecFileName}_template").readText()
                 .replace(oldValue = "<VERSION>", newValue = version.toString())
-                .replace(oldValue = "<SOURCE_HTTP_URL>", newValue = "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/releases/download/v${version}/MessengerTransport.xcframework.zip")
+                .replace(
+                    oldValue = "<SOURCE_HTTP_URL>",
+                    newValue = "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/releases/download/v${version}/MessengerTransport.xcframework.zip"
+                )
             file(podspecFileName, PathValidation.NONE).writeText(content)
         }
     }

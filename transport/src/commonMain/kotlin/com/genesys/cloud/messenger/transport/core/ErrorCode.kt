@@ -16,10 +16,12 @@ sealed class ErrorCode(val code: Int) {
     object AttachmentNotFound : ErrorCode(4009)
     object AttachmentNotSuccessfullyUploaded : ErrorCode(4010)
     object MessageTooLong : ErrorCode(4011)
+    object CustomAttributeSizeTooLarge : ErrorCode(4013)
     object MissingParameter : ErrorCode(4020)
     object RequestRateTooHigh : ErrorCode(4029)
     object UnexpectedError : ErrorCode(5000)
     object WebsocketError : ErrorCode(1001)
+    object NetworkDisabled : ErrorCode(-1009)
     data class RedirectResponseError(val value: Int) : ErrorCode(value)
     data class ClientResponseError(val value: Int) : ErrorCode(value)
     data class ServerResponseError(val value: Int) : ErrorCode(value)
@@ -40,6 +42,7 @@ sealed class ErrorCode(val code: Int) {
                 4009 -> AttachmentNotFound
                 4010 -> AttachmentNotSuccessfullyUploaded
                 4011 -> MessageTooLong
+                4013 -> CustomAttributeSizeTooLarge
                 4020 -> MissingParameter
                 4029 -> RequestRateTooHigh
                 in 300..399 -> RedirectResponseError(value)
@@ -49,4 +52,10 @@ sealed class ErrorCode(val code: Int) {
             }
         }
     }
+}
+
+object ErrorMessage {
+    const val FailedToReconnect = "Failed to reconnect."
+    const val InternetConnectionIsOffline =
+        "Network is disabled. Please enable wifi or cellular and try again."
 }

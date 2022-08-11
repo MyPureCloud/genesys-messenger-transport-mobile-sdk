@@ -1,8 +1,8 @@
 package com.genesys.cloud.messenger.transport.core
 
 /**
- * WebMessagingClient provides bi-directional communication between a guest and Genesys Cloud via
- * Web Messaging service.
+ * The main SDK interface providing bi-directional communication between a guest and Genesys Cloud
+ * via Web Messaging service.
  */
 interface MessagingClient {
 
@@ -11,7 +11,7 @@ interface MessagingClient {
      */
     sealed class State {
         /**
-         * MessagingClient was instantiated, but never attempted to connect.
+         * MessagingClient has been instantiated and has not attempted to connect.
          */
         object Idle : State()
 
@@ -26,25 +26,30 @@ interface MessagingClient {
         object Connected : State()
 
         /**
+         * Trying to reconnect after WebSocket failure.
+         */
+        object Reconnecting : State()
+
+        /**
          * Session was successfully configured.
          *
          * @property connected true if session has been configured and connection is established.
-         * @property newSession indicates if configured session is new. When configuring an existing session [newSession] will be false.
+         * @property newSession indicates if configured session is new. When configuring an existing session, [newSession] will be false.
          */
-        data class Configured(val connected: Boolean, val newSession: Boolean?) : State()
+        data class Configured(val connected: Boolean, val newSession: Boolean) : State()
 
         /**
-         * State when the remote peer has indicated that no more incoming messages will be transmitted.
+         * Remote peer has indicated that no more incoming messages will be transmitted.
          */
         data class Closing(val code: Int, val reason: String) : State()
 
         /**
-         * State when both peers have indicated that no more messages will be transmitted and the connection has been successfully released.
+         * Both peers have indicated that no more messages will be transmitted and the connection has been successfully released.
          */
         data class Closed(val code: Int, val reason: String) : State()
 
         /**
-         * In case of fatal, unrecoverable errors MessagingClient will transition into this state.
+         * In case of fatal, unrecoverable errors MessagingClient will transition to this state.
          *
          * @property code the [ErrorCode.WebsocketError] for websocket errors.
          * @property message is an optional message.
@@ -58,23 +63,28 @@ interface MessagingClient {
     val currentState: State
 
     /**
-     * Listener for client state changes.
+     * Listener for MessagingClient state changes.
      */
+    @Deprecated("Use stateChangedListener() instead", ReplaceWith("stateChangedListener"))
     var stateListener: ((State) -> Unit)?
 
     /**
-     * Listener for Message related events.
+     * Listener for MessagingClient state changes.
+     */
+    var stateChangedListener: ((StateChange) -> Unit)?
+
+    /**
+     * Listener for Message events.
      */
     var messageListener: ((MessageEvent) -> Unit)?
 
     /**
-     * Message object that is currently under construct.
-     * [sendMessage] command dispatch message based on the values stored in pending message.
+     * Message that is currently in progress of being sent.
      */
     val pendingMessage: Message
 
     /**
-     * Immutable Collection containing all Messages from current conversation.
+     * Immutable Collection containing all Messages from the current conversation.
      */
     val conversation: List<Message>
 
@@ -84,12 +94,24 @@ interface MessagingClient {
      *
      * @throws IllegalStateException
      */
+    @Deprecated("Use the connect(shouldConfigure: Boolean) instead", ReplaceWith("connect(shouldConfigure: Boolean)"))
     @Throws(IllegalStateException::class)
     fun connect()
 
     /**
+     * Open a secure WebSocket connection to the Web Messaging service with the url and
+     * deploymentId configured on this MessagingClient instance.
+     *
+     * @param shouldConfigure a Boolean value indicating whether to configure a Web Messaging session after the WebSocket is opened.
+     * @throws IllegalStateException
+     */
+    @Throws(IllegalStateException::class)
+    fun connect(shouldConfigure: Boolean = true)
+
+    /**
      * Configure a Web Messaging session.
      */
+    @Deprecated("Use the connect(shouldConfigure: Boolean) instead", ReplaceWith("connect(shouldConfigure: Boolean)"))
     @Throws(IllegalStateException::class)
     fun configureSession()
 
@@ -97,10 +119,11 @@ interface MessagingClient {
      * Send a message to the conversation as plain text.
      *
      * @param text the plain text to send.
+     * @param customAttributes optional dictionary of attributes to send with the message. Empty by default.
      * @throws IllegalStateException
      */
     @Throws(IllegalStateException::class)
-    fun sendMessage(text: String)
+    fun sendMessage(text: String, customAttributes: Map<String, String> = emptyMap())
 
     /**
      * Perform a health check of the connection by sending an echo message.
@@ -111,9 +134,9 @@ interface MessagingClient {
     fun sendHealthCheck()
 
     /**
-     * Attach file to the message. This file will be uploaded and cached locally
+     * Attach a file to the message. This file will be uploaded and cached locally
      * until user decides to send a message.
-     * After message has been sent, attachment will be cleared from cache.
+     * After the message has been sent, attachment will be cleared from cache.
      *
      * @param byteArray data to upload.
      * @param fileName the name of the file to upload. Has to include file extension type
@@ -131,7 +154,7 @@ interface MessagingClient {
 
     /**
      * Detach file from message. If file was already uploaded it will be deleted.
-     * If file is uploading now - process will be stopped.
+     * If file is uploading now, the process will be stopped.
      *
      * @param attachmentId the ID of the attachment to remove
      * @throws IllegalStateException if called before session was connected.
@@ -157,7 +180,7 @@ interface MessagingClient {
 
     /**
      * Reset current [conversation] and history request pagination index.
-     * Note! After calling this function, [fetchNextPage] will request the
+     * Note! After calling this function, the next call to [fetchNextPage] will request the
      * latest available history.
      */
     fun invalidateConversationCache()

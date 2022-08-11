@@ -47,6 +47,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         private set
 
     val regions = listOf("inindca")
+    private val customAttributes = mutableMapOf<String, String>()
 
     suspend fun init(context: Context) {
         val mmsdkConfiguration = Configuration(
@@ -60,7 +61,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             configuration = mmsdkConfiguration,
         )
         with(client) {
-            stateListener = { runBlocking { onClientState(it) } }
+            stateChangedListener = { runBlocking { onClientStateChanged(oldState = it.oldState, newState = it.newState) } }
             messageListener = { onEvent(it) }
             clientState = client.currentState
         }
@@ -88,17 +89,21 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             commandWaiting = true
         }
         val components = command.split(" ", limit = 2)
-        when (components.firstOrNull()) {
+        val command = components.firstOrNull()
+        val input = components.getOrNull(1) ?: ""
+        when (command) {
             "connect" -> doConnect()
             "bye" -> doDisconnect()
             "configure" -> doConfigureSession()
-            "send" -> doSendMessage(components)
+            "connectWithConfigure" -> doConnectWithConfigure()
+            "send" -> doSendMessage(input)
             "history" -> fetchNextPage()
             "healthCheck" -> doSendHealthCheck()
             "attach" -> doAttach()
-            "detach" -> doDetach(components)
+            "detach" -> doDetach(input)
             "deployment" -> doDeployment()
             "clearConversation" -> doClearConversation()
+            "addAttribute" -> doAddCustomAttributes(input)
             else -> {
                 Log.e(TAG, "Invalid command")
                 withContext(Dispatchers.Main) {
@@ -146,10 +151,18 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun doSendMessage(components: List<String>) {
+    private suspend fun doConnectWithConfigure() {
         try {
-            val message = components.getOrNull(1) ?: ""
-            client.sendMessage(message)
+            client.connect(shouldConfigure = true)
+        } catch (t: Throwable) {
+            handleException(t, "connect with configure")
+        }
+    }
+
+    private suspend fun doSendMessage(message: String) {
+        try {
+            client.sendMessage(message, customAttributes = customAttributes)
+            customAttributes.clear()
         } catch (t: Throwable) {
             handleException(t, "send message")
         }
@@ -185,9 +198,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun doDetach(components: List<String>) {
+    private suspend fun doDetach(attachmentId: String) {
         try {
-            val attachmentId = components.getOrNull(1) ?: ""
             client.detach(attachmentId)
         } catch (t: Throwable) {
             handleException(t, "detach")
@@ -199,14 +211,26 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         clearCommand()
     }
 
-    private suspend fun onClientState(state: State) {
-        Log.v(TAG, "onClientState(state = $state)")
-        clientState = state
-        val statePayloadMessage = when (state) {
-            is State.Configured -> "connected: ${state.connected}, newSession: ${state.newSession}"
-            is State.Closing -> "code: ${state.code}, reason: ${state.reason}"
-            is State.Closed -> "code: ${state.code}, reason: ${state.reason}"
-            is State.Error -> "code: ${state.code}, message: ${state.message}"
+    private suspend fun doAddCustomAttributes(customAttributes: String) {
+        clearCommand()
+        val keyValue = customAttributes.toKeyValuePair()
+        val consoleMessage = if (keyValue.first.isNotEmpty()) {
+            this.customAttributes[keyValue.first] = keyValue.second
+            "Custom attribute added: $keyValue"
+        } else {
+            "Custom attribute key can not be null or empty!"
+        }
+        onSocketMessageReceived(consoleMessage)
+    }
+
+    private suspend fun onClientStateChanged(oldState: State, newState: State) {
+        Log.v(TAG, "onClientStateChanged(oldState = $oldState, newState = $newState)")
+        clientState = newState
+        val statePayloadMessage = when (newState) {
+            is State.Configured -> "connected: ${newState.connected}, newSession: ${newState.newSession}, wasReconnecting: ${oldState is State.Reconnecting}"
+            is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
+            is State.Closed -> "code: ${newState.code}, reason: ${newState.reason}"
+            is State.Error -> "code: ${newState.code}, message: ${newState.message}"
             else -> ""
         }
         onSocketMessageReceived(statePayloadMessage)
@@ -258,5 +282,13 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         launch {
             onSocketMessageReceived(eventMessage)
         }
+    }
+}
+
+private fun String.toKeyValuePair(): Pair<String, String> {
+    return this.split(" ", limit = 2).run {
+        val key = firstOrNull() ?: ""
+        val value = getOrNull(1) ?: ""
+        Pair(key, value)
     }
 }

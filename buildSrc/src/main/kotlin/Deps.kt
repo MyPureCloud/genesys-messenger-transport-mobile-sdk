@@ -1,21 +1,22 @@
 object Deps {
-    private const val assertkVersion = "0.23.1"
+    private const val assertkVersion = "0.25"
     private const val coroutinesVersion = "1.6.0-native-mt"
     private const val junitVersion = "4.13.2"
-    private const val kermitVersion = "0.1.9"
-    private const val kotlinxSerializationJsonVersion = "1.3.1"
-    private const val kotlinxDateTimeVersion = "0.3.1"
-    private const val ktorVersion = "1.6.4"
+    private const val kermitVersion = "0.3.0-m1"
+    private const val kotlinxSerializationJsonVersion = "1.3.2"
+    private const val ktorVersion = "1.6.8"
     private const val logbackVersion = "1.2.10"
     private const val mockWebServerVersion = "4.9.0"
     private const val mockkVersion = "1.12.2"
     private const val okhttpVersion = "4.9.1"
+    private const val klockVersion = "2.4.13"
 
     object Libs {
         const val junit = "junit:junit:$junitVersion"
         const val logback = "ch.qos.logback:logback-classic:$logbackVersion"
         const val mockk = "io.mockk:mockk:$mockkVersion"
         const val kermit = "co.touchlab:kermit:$kermitVersion"
+        const val klock = "com.soywiz.korlibs.klock:klock:$klockVersion"
 
         object Assertk {
             const val common = "com.willowtreeapps.assertk:assertk:$assertkVersion"
@@ -37,8 +38,6 @@ object Deps {
                 "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion"
             const val coroutinesTest =
                 "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion"
-            const val dateTime =
-                "org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDateTimeVersion"
         }
 
         object Ktor {

@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.core
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
+import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
 import com.genesys.cloud.messenger.transport.network.SocketCloseCode
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
@@ -38,15 +39,28 @@ internal class MessagingClientImpl(
     private val token: String,
     private val attachmentHandler: AttachmentHandler,
     private val messageStore: MessageStore,
+    private val reconnectionHandler: ReconnectionHandler,
+    private val stateMachine: StateMachine = StateMachineImpl(log.withTag(LogTag.STATE_MACHINE)),
 ) : MessagingClient {
+    private var shouldConfigureAfterConnect = false
 
-    override var currentState: State = State.Idle
-        private set(value) {
-            field = value
-            stateListener?.invoke(value)
+    override val currentState: State
+        get() {
+            return stateMachine.currentState
         }
 
+    @Deprecated("Use stateChangedListener() instead", ReplaceWith("stateChangedListener"))
     override var stateListener: ((State) -> Unit)? = null
+        set(value) {
+            stateMachine.stateListener = value
+            field = value
+        }
+
+    override var stateChangedListener: ((StateChange) -> Unit)? = null
+        set(value) {
+            stateMachine.stateChangedListener = value
+            field = value
+        }
 
     override var messageListener: ((MessageEvent) -> Unit)? = null
         set(value) {
@@ -60,28 +74,34 @@ internal class MessagingClientImpl(
     override val conversation: List<Message>
         get() = messageStore.getConversation()
 
+    @Deprecated("Use the connect(shouldConfigure: Boolean) instead", ReplaceWith("connect(shouldConfigure: Boolean)"))
     @Throws(IllegalStateException::class)
     override fun connect() {
         log.i { "connect()" }
-        check(currentState is State.Closed || currentState is State.Idle || currentState is State.Error) { "MessagingClient must be in closed, idle or error state" }
-        currentState = State.Connecting
+        stateMachine.onConnect()
         webSocket.openSocket(socketListener)
+    }
+
+    override fun connect(shouldConfigure: Boolean) {
+        shouldConfigureAfterConnect = shouldConfigure
+        connect()
     }
 
     @Throws(IllegalStateException::class)
     override fun disconnect() {
         log.i { "disconnect()" }
-        check(currentState !is State.Closed && currentState !is State.Idle) { "MessagingClient must not already be closed or idle" }
         val code = SocketCloseCode.NORMAL_CLOSURE.value
         val reason = "The user has closed the connection."
-        currentState = State.Closing(code, reason)
+        reconnectionHandler.clear()
+        stateMachine.onClosing(code, reason)
         webSocket.closeSocket(code, reason)
     }
 
+    @Deprecated("Use the connect(shouldConfigure: Boolean) instead", ReplaceWith("connect(shouldConfigure: Boolean)"))
     @Throws(IllegalStateException::class)
     override fun configureSession() {
         log.i { "configureSession(token = $token)" }
-        if (currentState !is State.Connected) throw IllegalStateException("WebMessaging client is not connected.")
+        stateMachine.onConfiguring()
         val request = ConfigureSessionRequest(
             token = token,
             deploymentId = configuration.deploymentId,
@@ -95,10 +115,10 @@ internal class MessagingClientImpl(
     }
 
     @Throws(IllegalStateException::class)
-    override fun sendMessage(text: String) {
-        checkConfigured()
-        log.i { "sendMessage(text = $text)" }
-        val request = messageStore.prepareMessage(text)
+    override fun sendMessage(text: String, customAttributes: Map<String, String>) {
+        stateMachine.checkIfConfigured()
+        log.i { "sendMessage(text = $text, customAttributes = $customAttributes)" }
+        val request = messageStore.prepareMessage(text, customAttributes)
         attachmentHandler.onSending()
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         send(encodedJson)
@@ -115,7 +135,7 @@ internal class MessagingClientImpl(
     override fun attach(
         byteArray: ByteArray,
         fileName: String,
-        uploadProgress: ((Float) -> Unit)?
+        uploadProgress: ((Float) -> Unit)?,
     ): String {
         log.i { "attach(fileName = $fileName)" }
         val request = attachmentHandler.prepare(
@@ -138,14 +158,16 @@ internal class MessagingClientImpl(
         }
     }
 
+    @Throws(IllegalStateException::class)
     private fun send(message: String) {
-        checkConfigured()
+        stateMachine.checkIfConfigured()
         log.i { "Will send message" }
         webSocket.sendMessage(message)
     }
 
+    @Throws(Exception::class)
     override suspend fun fetchNextPage() {
-        checkConfigured()
+        stateMachine.checkIfConfigured()
         if (messageStore.startOfConversation) {
             log.i { "All history has been fetched." }
             messageStore.updateMessageHistory(emptyList(), conversation.size)
@@ -169,14 +191,48 @@ internal class MessagingClientImpl(
     private fun handleError(code: ErrorCode, message: String? = null) {
         when (code) {
             is ErrorCode.SessionHasExpired,
-            is ErrorCode.SessionNotFound ->
-                currentState = State.Error(code, message)
+            is ErrorCode.SessionNotFound,
+            ->
+                stateMachine.onError(code, message)
             is ErrorCode.MessageTooLong,
-            is ErrorCode.RequestRateTooHigh -> {
+            is ErrorCode.RequestRateTooHigh,
+            is ErrorCode.CustomAttributeSizeTooLarge,
+            -> {
                 messageStore.onMessageError(code, message)
                 attachmentHandler.onMessageError(code, message)
             }
+            is ErrorCode.ClientResponseError,
+            is ErrorCode.ServerResponseError,
+            is ErrorCode.RedirectResponseError,
+            -> {
+                if (stateMachine.isConnected()) {
+                    shouldConfigureAfterConnect = false
+                    stateMachine.onError(code, message)
+                }
+            }
+            is ErrorCode.WebsocketError -> handleWebSocketError(ErrorCode.WebsocketError)
             else -> log.w { "Unhandled ErrorCode: $code with optional message: $message" }
+        }
+    }
+
+    private fun handleWebSocketError(errorCode: ErrorCode) {
+        if (stateMachine.isClosed()) return
+        invalidateConversationCache()
+        when (errorCode) {
+            is ErrorCode.WebsocketError -> {
+                if (reconnectionHandler.shouldReconnect) {
+                    stateMachine.onReconnect()
+                    reconnectionHandler.reconnect { connect(true) }
+                } else {
+                    stateMachine.onError(errorCode, ErrorMessage.FailedToReconnect)
+                    attachmentHandler.clearAll()
+                }
+            }
+            is ErrorCode.NetworkDisabled -> {
+                stateMachine.onError(errorCode, ErrorMessage.InternetConnectionIsOffline)
+                attachmentHandler.clearAll()
+            }
+            else -> log.w { "Unhandled WebSocket errorCode. ErrorCode: $errorCode" }
         }
     }
 
@@ -190,14 +246,19 @@ internal class MessagingClientImpl(
 
         override fun onOpen() {
             log.i { "onOpen()" }
-            currentState = State.Connected
+            stateMachine.onConnectionOpened()
+            if (shouldConfigureAfterConnect) {
+                try {
+                    configureSession()
+                } catch (t: Throwable) {
+                    handleError(ErrorCode.WebsocketError, t.message)
+                }
+            }
         }
 
-        override fun onFailure(t: Throwable) {
+        override fun onFailure(t: Throwable, errorCode: ErrorCode) {
             log.e(throwable = t) { "onFailure(message: ${t.message})" }
-            currentState = State.Error(ErrorCode.WebsocketError, t.message)
-            attachmentHandler.clearAll()
-            webSocket.closeSocket(SocketCloseCode.GOING_AWAY.value, "Going away.")
+            handleWebSocketError(errorCode)
         }
 
         override fun onMessage(text: String) {
@@ -215,7 +276,9 @@ internal class MessagingClientImpl(
                     }
                     is SessionResponse -> {
                         decoded.body.run {
-                            currentState = State.Configured(connected, newSession)
+                            shouldConfigureAfterConnect = false
+                            reconnectionHandler.clear()
+                            stateMachine.onSessionConfigured(connected, newSession)
                         }
                     }
                     is JwtResponse ->
@@ -260,16 +323,14 @@ internal class MessagingClientImpl(
 
         override fun onClosing(code: Int, reason: String) {
             log.i { "onClosing(code = $code, reason = $reason)" }
-            currentState = State.Closing(code, reason)
+            stateMachine.onClosing(code, reason)
         }
 
         override fun onClosed(code: Int, reason: String) {
             log.i { "onClosed(code = $code, reason = $reason)" }
-            currentState = State.Closed(code, reason)
+            stateMachine.onClosed(code, reason)
             invalidateConversationCache()
             attachmentHandler.clearAll()
         }
     }
-
-    private fun checkConfigured() = check(currentState is State.Configured) { "WebMessaging client is not configured." }
 }

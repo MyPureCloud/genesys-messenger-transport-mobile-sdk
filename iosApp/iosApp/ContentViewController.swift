@@ -11,27 +11,93 @@ import MessengerTransport
 
 class ContentViewController: UIViewController {
 
-    private let client: MessagingClient
-    private let deployment: Deployment
-    let config: Configuration
+    let messenger: MessengerHandler
     private var attachImageName = ""
     private let attachmentName = "image"
     private var byteArray: [UInt8]? = nil
+    var customAttributes: [String: String] = [:]
 
     init(deployment: Deployment) {
-        self.deployment = deployment
-        self.config = Configuration(deploymentId: deployment.deploymentId!,
-                                    domain: deployment.domain!,
-                                    tokenStoreKey: "com.genesys.cloud.messenger",
-                                    logging: true)
-        self.client = MobileMessenger().createMessagingClient(configuration: self.config)
+        self.messenger = MessengerHandler(deployment: deployment)
+        
         super.init(nibName: nil, bundle: nil)
+        
+        // set up MessengerHandler callbacks
+        
+        messenger.onStateChange = { [weak self] stateChange in
+            let newState = stateChange.newState
+            var stateMessage = "\(newState)"
+            switch newState {
+            case _ as MessagingClientState.Connecting:
+                stateMessage = "Connecting"
+            case _ as MessagingClientState.Connected:
+                stateMessage = "Connected"
+            case let configured as MessagingClientState.Configured:
+                stateMessage = "Configured, connected=\(configured.connected) newSession=\(configured.newSession) wasReconnecting=\(stateChange.oldState.isEqual(MessagingClientState.Reconnecting()))"
+            case let closing as MessagingClientState.Closing:
+                stateMessage = "Closing, code=\(closing.code) reason=\(closing.reason)"
+            case let closed as MessagingClientState.Closed:
+                stateMessage = "Closed, code=\(closed.code) reason=\(closed.reason)"
+            case let error as MessagingClientState.Error:
+                stateMessage = "Error, code=\(error.code) message=\(error.message?.description ?? "nil")"
+            default:
+                break
+            }
+            self?.status.text = "Messenger Status: " + stateMessage
+            self?.info.text = "State changed from \(stateChange.oldState) to \(newState)"
+        }
+        
+        messenger.onMessageEvent = { [weak self] event in
+            var displayMessage = "Unexpected message event: \(event)"
+            switch event {
+            case let messageInserted as MessageEvent.MessageInserted:
+                displayMessage = "Message Inserted: \(messageInserted.message.description)"
+            case let messageUpdated as MessageEvent.MessageUpdated:
+                displayMessage = "Message Updated: \(messageUpdated.message.description)"
+            case let attachmentUpdated as MessageEvent.AttachmentUpdated:
+                displayMessage = "Attachment Updated: \(attachmentUpdated.attachment.description)"
+            case let history as MessageEvent.HistoryFetched:
+                displayMessage = "History Fetched: startOfConversation: <\(history.startOfConversation.description)>, messages: <\(history.messages.description)> "
+                print(displayMessage)
+            default:
+                break
+            }
+            self?.info.text = displayMessage
+        }
     }
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
+    /**
+     User commands for the test bed app.
+     */
+    enum UserCommand: String, CaseIterable {
+        case connect
+        case configure
+        case connectWithConfigure
+        case send
+        case history
+        case selectAttachment
+        case attach
+        case detach
+        case deployment
+        case bye
+        case healthCheck
+        case clearConversation
+        case addAttribute
+        
+        var helpDescription: String {
+            switch self {
+            case .send: return "send <msg>"
+            case .detach: return "detach <attachmentId>"
+            case .addAttribute: return "addAttribute <key> <value>"
+            default: return rawValue
+            }
+        }
+    }
+        
     private let content: UIStackView = {
         let view = UIStackView()
         view.translatesAutoresizingMaskIntoConstraints = false
@@ -54,21 +120,8 @@ class ContentViewController: UIViewController {
     private let instructions: UILabel = {
         let view = UILabel()
         view.numberOfLines = 0
-        view.text = """
-        Commands:
-            'connect'
-            'configure'
-            'send <msg>'
-            'history'
-            'selectAttachment'
-            'attach'
-            'detach <attachmentId>'
-            'deployment'
-            'bye'
-            'healthCheck'
-            'clearConversation'
-        """
-        view.font = UIFont.preferredFont(forTextStyle: .subheadline)
+        view.text = "Commands: " + UserCommand.allCases.map { $0.helpDescription }.joined(separator: ", ")
+        view.font = UIFont.preferredFont(forTextStyle: .caption1)
         return view
     }()
 
@@ -81,6 +134,14 @@ class ContentViewController: UIViewController {
         view.autocorrectionType = .no
         view.accessibilityIdentifier = "Text-Field"
         view.delegate = self
+        return view
+    }()
+    
+    private let status: UILabel = {
+        let view = UILabel()
+        view.numberOfLines = 0
+        view.text = "Messenger Status: Idle"
+        view.font = UIFont.preferredFont(forTextStyle: .callout)
         return view
     }()
 
@@ -98,17 +159,25 @@ class ContentViewController: UIViewController {
         view.backgroundColor = UIColor(white: 0.99, alpha: 1.0)
 
         content.addArrangedSubview(heading)
-        content.addArrangedSubview(instructions)
         content.addArrangedSubview(input)
+        content.addArrangedSubview(instructions)
+        content.addArrangedSubview(status)
         content.addArrangedSubview(info)
 
         view.addSubview(content)
 
         configureAutoLayout()
-
-        setupSocketListeners()
-        setupMessageListener()
-
+        
+        observeKeyboard()
+    }
+    
+    private func configureAutoLayout() {
+        content.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
+        content.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
+        content.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
+    }
+        
+    private func observeKeyboard() {
         NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { [weak self] notification in
             guard let self = self,
                   let keyboardFrameInfo = self.makeFrameInfo(notification: notification) else {
@@ -118,10 +187,10 @@ class ContentViewController: UIViewController {
             let inputFrameInView = self.view.convert(self.input.frame, to: self.view)
             let originY = keyboardFrameInfo.0.origin.y < inputFrameInView.origin.y ? keyboardFrameInfo.0.origin.y - inputFrameInView.maxY : 0
 
-            UIView.setAnimationCurve(keyboardFrameInfo.2)
-            UIView.animate(withDuration: keyboardFrameInfo.1) {
+            UIViewPropertyAnimator(duration: keyboardFrameInfo.1, curve: keyboardFrameInfo.2) {
                 self.view.frame.origin.y = originY
             }
+            .startAnimation()
         }
 
         NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { [weak self] notification in
@@ -130,10 +199,10 @@ class ContentViewController: UIViewController {
                 return
             }
 
-            UIView.setAnimationCurve(keyboardFrameInfo.2)
-            UIView.animate(withDuration: keyboardFrameInfo.1) {
+            UIViewPropertyAnimator(duration: keyboardFrameInfo.1, curve: keyboardFrameInfo.2) {
                 self.view.frame.origin.y = 0
             }
+            .startAnimation()
         }
     }
 
@@ -149,75 +218,7 @@ class ContentViewController: UIViewController {
         return (frame.cgRectValue, duration.doubleValue, curve)
     }
 
-    private func configureAutoLayout() {
-        content.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
-        content.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
-        content.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
-    }
-
-    private func setupSocketListeners() {
-        client.stateListener = { [weak self] state in
-            switch state {
-            case _ as MessagingClientState.Connecting:
-                print("connecting state")
-                self?.info.text = "<connecting>"
-            case _ as MessagingClientState.Connected:
-                print("connected")
-                self?.info.text = "<connected>"
-            case let configured as MessagingClientState.Configured:
-                print("Socket <configured>. connected: <\(configured.connected.description)> , newSession: <\(configured.newSession?.description ?? "nill")>")
-                self?.info.text = "Socket <configured>. connected: <\(configured.connected.description)> , newSession: <\(configured.newSession?.description ?? "nill")>"
-            case let closing as MessagingClientState.Closing:
-                print("Socket <closing>. reason: <\(closing.reason.description)> , code: <\(closing.code.description)>")
-                self?.info.text = "Socket <closing>. reason: <\(closing.reason.description)> , code: <\(closing.code.description))>"
-            case let closed as MessagingClientState.Closed:
-                print("Socket <closed>. reason: <\(closed.reason.description)> , code: <\(closed.code.description)>")
-                self?.info.text = "Socket <closed>. reason: <\(closed.reason.description)> , code: <\(closed.code.description)>"
-            case let error as MessagingClientState.Error:
-                print("Socket <error>. code: <\(error.code.description)> , message: <\(error.message ?? "No message")>")
-                self?.info.text = "Socket <error>. code: <\(error.code.description)> , message: <\(error.message ?? "No message")>"
-            default:
-                print("Unexpected stateListener state: \(state)")
-            }
-        }
-    }
-    
-    private func setupMessageListener() {
-        client.messageListener = { [weak self] event in
-            switch event {
-            case let messageInserted as MessageEvent.MessageInserted:
-                self?.info.text = "Message Inserted: <\(messageInserted.message.description)>"
-            case let messageUpdated as MessageEvent.MessageUpdated:
-                self?.info.text = "Message Updated: <\(messageUpdated.message.description)>"
-            case let attachmentUpdated as MessageEvent.AttachmentUpdated:
-                self?.info.text = "Attachment Updated: <\(attachmentUpdated.attachment.description)>"
-            case let history as MessageEvent.HistoryFetched:
-                self?.info.text = "start of conversation: <\(history.startOfConversation.description)>, messages: <\(history.messages.description)> "
-            default:
-                print("Unexpected messageListener event: \(event)")
-            }
-        }        
-    }
-
-    private func connect() {
-        do {
-            try client.connect()
-        } catch {
-            print(error)
-            info.text = "<\(error.localizedDescription)>"
-        }
-    }
-
-    private func disconnect() {
-        do {
-            try client.disconnect()
-        } catch {
-            print(error)
-            info.text = "<\(error.localizedDescription)>"
-        }
-    }
-
-    private func splitUserInput(_ input: String) -> (String?, String?) {
+    private func segmentUserInput(_ input: String) -> (String?, String?) {
         let segments = input.split(separator: " ", maxSplits: 1)
         guard !segments.isEmpty else {
             return (nil, nil)
@@ -227,6 +228,13 @@ class ContentViewController: UIViewController {
             return (command, String(segments[1]).trimmingCharacters(in: .whitespaces))
         }
         return (command, nil)
+    }
+
+    private func convertToCommand(command: String?, input: String?) -> (UserCommand?, String?) {
+        if(command == nil) {
+            return (nil, input)
+        }
+        return (UserCommand(rawValue: command!), input)
     }
 
 }
@@ -240,91 +248,76 @@ extension ContentViewController : UITextFieldDelegate {
         }
 
         attachImageName = ""
-        let userInput = splitUserInput(message)
+        let userInput = segmentUserInput(message)
+        let command = convertToCommand(command: userInput.0,input: userInput.1)
 
-        switch userInput {
-        case ("connect", _):
-            connect()
-        case ("bye", _):
-            disconnect()
-        case ("configure", _):
-            do {
-                try client.configureSession()
-            } catch {
-                print(error)
-                self.info.text = "<\(error.localizedDescription)>"
-            }
-        case ("send", let msg?):
-            do {
-                try client.sendMessage(text: msg.trimmingCharacters(in: .whitespaces))
-            } catch {
-                print(error)
-                self.info.text = "<\(error.localizedDescription)>"
-            }
-        case ("history", _):
-            client.fetchNextPage() {_, error in
-                if let error = error {
-                    self.info.text = "<\(error.localizedDescription)>"
-                    return
+        do {
+            switch command {
+            case (.connect, _):
+                try messenger.connect()
+            case (.bye, _):
+                try messenger.disconnect()
+            case (.configure, _):
+                try messenger.configureSession()
+            case (.connectWithConfigure, _):
+                try messenger.connect(shouldConfigure: true)
+            case (.send, let msg?):
+                try messenger.sendMessage(text: msg.trimmingCharacters(in: .whitespaces), customAttributes: customAttributes)
+                customAttributes = [:]
+            case (.history, _):
+                messenger.fetchNextPage()
+            case (.healthCheck, _):
+                try messenger.sendHealthCheck()
+            case (.selectAttachment, _):
+                attachImageName = attachmentName
+                DispatchQueue.global().async {
+                    let image = UIImage(named: self.attachmentName)
+                    guard let data = image?.pngData() as NSData? else { return }
+                    self.byteArray = data.toByteArray()
+                    DispatchQueue.main.async {
+                        self.info.text = "<loaded \(String(describing: self.byteArray?.count)) bytes>"
+                    }
                 }
-            }
-        case ("healthCheck", _):
-            do {
-                try client.sendHealthCheck()
-            } catch {
-                print(error)
-                self.info.text = "<\(error.localizedDescription)>"
-            }
-        case ("selectAttachment", _):
-            attachImageName = attachmentName
-            DispatchQueue.global().async {
-                let image = UIImage(named: self.attachmentName)
-                guard let data = image?.pngData() as NSData? else { return }
-                self.byteArray = data.toByteArray()
-                DispatchQueue.main.async {
-                    self.info.text = "<loaded \(String(describing: self.byteArray?.count)) bytes>"
+            case (.attach, _):
+                if(byteArray != nil) {
+                    let swiftByteArray : [UInt8] = byteArray!
+                    let intArray : [Int8] = swiftByteArray
+                        .map { Int8(bitPattern: $0) }
+                    let kotlinByteArray: KotlinByteArray = KotlinByteArray.init(size: Int32(swiftByteArray.count))
+                    for (index, element) in intArray.enumerated() {
+                        kotlinByteArray.set(index: Int32(index), value: element)
+                    }
+                    
+                    try messenger.attachImage(kotlinByteArray: kotlinByteArray)
                 }
-            }
-        case ("attach", _):
-            if(byteArray != nil) {
-                let swiftByteArray : [UInt8] = byteArray!
-                let intArray : [Int8] = swiftByteArray
-                    .map { Int8(bitPattern: $0) }
-                let kotlinByteArray: KotlinByteArray = KotlinByteArray.init(size: Int32(swiftByteArray.count))
-                for (index, element) in intArray.enumerated() {
-                    kotlinByteArray.set(index: Int32(index), value: element)
+            case (.detach, let attachId?):
+                try messenger.detachImage(attachId: attachId)
+            case (.deployment, _):
+                messenger.fetchDeployment { deploymentConfig, error in
+                    if let error = error {
+                        self.info.text = "<\(error.localizedDescription)>"
+                        return
+                    }
+                    self.info.text = "<\(deploymentConfig?.description() ?? "Unknown deployment config")>"
                 }
-
-                do {
-                    try client.attach(byteArray: kotlinByteArray, fileName: "image.png", uploadProgress: { progress in
-                        print("Attachment upload progress: \(progress)")
-                    })
-                } catch {
-                    print(error)
-                    self.info.text = "<\(error.localizedDescription)>"
+            case (.clearConversation, _):
+                messenger.clearConversation()
+            case(.addAttribute, let msg?):
+                let segments = segmentUserInput(msg)
+                if let key = segments.0, !key.isEmpty {
+                    let value = segments.1 ?? ""
+                    customAttributes[key] = value
+                    self.info.text = "Custom attribute added: key: \(key) value: \(value)"
+                }  else {
+                    self.info.text = "Custom attribute key cannot be nil or empty!"
                 }
+            default:
+                self.info.text = "Invalid command"
             }
-        case ("detach", let attachId?):
-            do {
-                try client.detach(attachmentId: attachId)
-            } catch {
-                print(error)
-                self.info.text = "<\(error.localizedDescription)>"
-            }
-        case ("deployment", _):
-            MobileMessenger().fetchDeploymentConfig(domain: deployment.domain!, deploymentId: deployment.deploymentId!, logging: true,
-                completionHandler: { deploymentConfig, error in
-                if let error = error {
-                    self.info.text = "<\(error.localizedDescription)>"
-                    return
-                }
-                self.info.text = "<\(deploymentConfig?.description() ?? "Unknown deployment config")>"
-            })
-        case ("clearConversation", _):
-            client.invalidateConversationCache()
-        default:
-            break
+        } catch {
+            self.info.text = error.localizedDescription
         }
+        
         self.input.text = ""
         textField.resignFirstResponder()
         return true

@@ -1,23 +1,16 @@
 PODS:
-  - jetfire (0.1.5)
-  - transport (1.2.1):
-    - jetfire (~> 0.1.5)
+  - transport (1.2.2)
 
 DEPENDENCIES:
   - transport (from `../transport`)
-
-SPEC REPOS:
-  trunk:
-    - jetfire
 
 EXTERNAL SOURCES:
   transport:
     :path: "../transport"
 
 SPEC CHECKSUMS:
-  jetfire: 60c16cd6ae0282928e24203eb93f03b89c1929ce
-  transport: eaa915425d8932f920428919f946c4851db777dd
+  transport: 36866941541c2166295efd94e0284f1c16f70154
 
-PODFILE CHECKSUM: 0d3d68df1031aef1b30e1776c3aa1ca0beb1f6f7
+PODFILE CHECKSUM: c3105f0698090ba6d9702820eb0f13f123776417
 
 COCOAPODS: 1.11.3
