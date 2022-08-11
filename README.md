@@ -1,4 +1,4 @@
-# Mobile Messenger Transport SDK
+# Genesys Cloud Messenger Transport SDK
 
 Genesys Cloud Messenger Transport SDK provides a library of methods for connecting to Genesys Cloud Web Messaging APIs and WebSockets from Android and iOS native applications. 
 
@@ -17,7 +17,7 @@ implementation 'cloud.genesys:messenger-transport-mobile-sdk:<version>'
 
 ### Install Messenger Transport SDK on iOS
 
-Messenger Transport SDK supports versions of iOS 11.0 and up.
+Messenger Transport SDK supports versions of iOS 13.0 and up.
 
 #### Installation with CocoaPods
 
@@ -27,7 +27,6 @@ In your `Podfile`, configure your target to include the `GenesysCloudMessengerTr
 
 ```
 target 'TargetNameInYourXcodeProject' do
-  use_frameworks!
   pod 'GenesysCloudMessengerTransport'
 end
 ```
