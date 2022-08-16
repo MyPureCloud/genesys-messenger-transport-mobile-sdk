@@ -236,7 +236,7 @@ internal class MessagingClientImpl(
         }
     }
 
-    private fun handleStructureMessage(structuredMessage: StructuredMessage) {
+    private fun handleStructuredMessage(structuredMessage: StructuredMessage) {
         when (structuredMessage.type) {
             StructuredMessage.Type.Text -> {
                 with(structuredMessage.toMessage()) {
@@ -301,7 +301,7 @@ internal class MessagingClientImpl(
                         attachmentHandler.upload(decoded.body)
                     is UploadSuccessEvent ->
                         attachmentHandler.onUploadSuccess(decoded.body)
-                    is StructuredMessage -> handleStructureMessage(decoded.body)
+                    is StructuredMessage -> handleStructuredMessage(decoded.body)
                     is AttachmentDeletedResponse ->
                         attachmentHandler.onDetached(decoded.body.attachmentId)
                     is GenerateUrlError -> {
