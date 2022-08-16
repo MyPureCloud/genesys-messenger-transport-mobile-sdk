@@ -214,7 +214,7 @@ class SerializationTest {
             direction = "Outbound",
             id = "00000000-0000-0000-0000-000000000000",
             channel = channel,
-            type = "Text",
+            type = StructuredMessage.Type.Text,
             content = listOf()
         )
         val expectedUnsolicitedMessage = WebMessagingMessage(

@@ -45,7 +45,7 @@ internal class MessageExtensionTest {
         val givenStructuredMessage = StructuredMessage(
             id = "id",
             channel = StructuredMessage.Channel(time = isoTestTimestamp),
-            type = "Text",
+            type = StructuredMessage.Type.Text,
             text = "test text",
             content = listOf(
                 StructuredMessage.Content(

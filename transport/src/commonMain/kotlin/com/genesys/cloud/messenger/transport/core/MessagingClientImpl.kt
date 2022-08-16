@@ -236,6 +236,20 @@ internal class MessagingClientImpl(
         }
     }
 
+    private fun handleStructuredMessage(structuredMessage: StructuredMessage) {
+        when (structuredMessage.type) {
+            StructuredMessage.Type.Text -> {
+                with(structuredMessage.toMessage()) {
+                    messageStore.update(this)
+                    attachmentHandler.onSent(this.attachments)
+                }
+            }
+            StructuredMessage.Type.Event -> {
+                TODO("Handle events here.")
+            }
+        }
+    }
+
     private val socketListener = SocketListener(
         log = log.withTag(LogTag.WEBSOCKET)
     )
@@ -287,12 +301,7 @@ internal class MessagingClientImpl(
                         attachmentHandler.upload(decoded.body)
                     is UploadSuccessEvent ->
                         attachmentHandler.onUploadSuccess(decoded.body)
-                    is StructuredMessage -> {
-                        with(decoded.body.toMessage()) {
-                            messageStore.update(this)
-                            attachmentHandler.onSent(this.attachments)
-                        }
-                    }
+                    is StructuredMessage -> handleStructuredMessage(decoded.body)
                     is AttachmentDeletedResponse ->
                         attachmentHandler.onDetached(decoded.body.attachmentId)
                     is GenerateUrlError -> {

@@ -90,7 +90,7 @@ object TestWebMessagingApiResponses {
         return StructuredMessage(
             id = id,
             channel = StructuredMessage.Channel(time = time),
-            type = "Text",
+            type = StructuredMessage.Type.Text,
             text = text,
             content = emptyList(),
             direction = if (isInbound) "Inbound" else "Outbound",

@@ -1,5 +1,6 @@
 package com.genesys.cloud.messenger.transport.shyrka.receive
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -14,7 +15,7 @@ internal data class MessageEntityList(
 @Serializable
 internal data class StructuredMessage(
     val id: String,
-    val type: String,
+    val type: Type,
     val text: String? = null,
     val direction: String,
     val channel: Channel? = null,
@@ -54,4 +55,12 @@ internal data class StructuredMessage(
         val contentType: String,
         val attachment: Attachment,
     )
+
+    @Serializable
+    enum class Type {
+        @SerialName("Text")
+        Text,
+        @SerialName("Event")
+        Event,
+    }
 }
