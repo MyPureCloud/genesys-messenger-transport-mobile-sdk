@@ -10,8 +10,8 @@ import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
-import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.Typing
+import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel.Metadata
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
@@ -706,7 +706,7 @@ private object Response {
     const val configureFail =
         """{"type":"response","class":"string","code":400,"body":"Deployment not found"}"""
     const val defaultStructuredEvents = """{"eventType": "Typing","typing": {"type": "Off","duration": 1000}},{"eventType": "Typing","typing": {"type": "On","duration": 5000}}"""
-    fun structuredMessageWithEvents(events: String = defaultStructuredEvents) : String {
+    fun structuredMessageWithEvents(events: String = defaultStructuredEvents): String {
         return """{"type": "message","class": "StructuredMessage","code": 200,"body": {"direction": "Inbound","id": "0000000-0000-0000-0000-0000000000","channel": {"time": "2022-03-09T13:35:31.104Z","messageId": "0000000-0000-0000-0000-0000000000"},"type": "Event","metadata": {"correlationId": "0000000-0000-0000-0000-0000000000"},"events": [$events]}}"""
     }
 }
