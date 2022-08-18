@@ -6,6 +6,7 @@ import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
+import com.genesys.cloud.messenger.transport.util.DefaultTokenStore
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 
@@ -25,8 +26,8 @@ object MobileMessenger {
         configuration: Configuration,
     ): MessagingClient {
         val log = Log(configuration.logging, LogTag.MESSAGING_CLIENT)
-        val token =
-            TokenStoreImpl(context = context, configuration.tokenStoreKey).token
+        DefaultTokenStore.context = context
+        val token = DefaultTokenStore(configuration.tokenStoreKey).token
         val api = WebMessagingApi(configuration)
         val webSocket = PlatformSocket(log.withTag(LogTag.WEBSOCKET), configuration.webSocketUrl)
         val messageStore = MessageStore(token, log.withTag(LogTag.MESSAGE_STORE))
