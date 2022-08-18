@@ -1,5 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
+import com.genesys.cloud.messenger.transport.core.events.Event
+
 /**
  * The main SDK interface providing bi-directional communication between a guest and Genesys Cloud
  * via Web Messaging service.
@@ -77,6 +79,11 @@ interface MessagingClient {
      * Listener for Message events.
      */
     var messageListener: ((MessageEvent) -> Unit)?
+
+    /**
+     * Listener for Transport events.
+     */
+    var eventListener: ((Event) -> Unit)?
 
     /**
      * Message that is currently in progress of being sent.

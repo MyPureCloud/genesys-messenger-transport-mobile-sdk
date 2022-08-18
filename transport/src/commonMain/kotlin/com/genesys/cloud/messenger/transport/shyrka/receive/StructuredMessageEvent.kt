@@ -22,13 +22,13 @@ internal sealed class StructuredMessageEvent {
 @Serializable
 internal data class TypingEvent(
     val typing: Typing,
-) : StructuredMessageEvent()
-
-@Serializable
-internal data class Typing(
-    val type: String,
-    val duration: Int,
-)
+) : StructuredMessageEvent() {
+    @Serializable
+    internal data class Typing(
+        val type: String,
+        val duration: Int,
+    )
+}
 
 internal object StructuredMessageEventSerializer :
     JsonContentPolymorphicSerializer<StructuredMessageEvent>(StructuredMessageEvent::class) {

@@ -9,8 +9,12 @@ internal class EventHandlerImpl(
     val log: Log = Log(enableLogs = false, LogTag.EVENT_HANDLER),
 ) : EventHandler {
 
+    override var eventListener: ((Event) -> Unit)? = null
+
     override fun onEvent(event: StructuredMessageEvent) {
-        log.i { "on event: ${event.toTransportEvent()}" }
+        val transportEvent = event.toTransportEvent()
+        log.i { "on event: $transportEvent" }
+        eventListener?.invoke(transportEvent)
     }
 }
 
