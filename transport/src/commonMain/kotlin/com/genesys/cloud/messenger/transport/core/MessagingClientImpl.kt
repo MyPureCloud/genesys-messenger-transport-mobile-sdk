@@ -1,6 +1,8 @@
 package com.genesys.cloud.messenger.transport.core
 
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
+import com.genesys.cloud.messenger.transport.core.events.EventHandler
+import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
@@ -41,6 +43,7 @@ internal class MessagingClientImpl(
     private val messageStore: MessageStore,
     private val reconnectionHandler: ReconnectionHandler,
     private val stateMachine: StateMachine = StateMachineImpl(log.withTag(LogTag.STATE_MACHINE)),
+    private val eventHandler: EventHandler = EventHandlerImpl(log.withTag(LogTag.EVENT_HANDLER)),
 ) : MessagingClient {
     private var shouldConfigureAfterConnect = false
 
@@ -245,7 +248,9 @@ internal class MessagingClientImpl(
                 }
             }
             StructuredMessage.Type.Event -> {
-                TODO("Handle events here.")
+                structuredMessage.events.forEach {
+                    eventHandler.onEvent(it)
+                }
             }
         }
     }

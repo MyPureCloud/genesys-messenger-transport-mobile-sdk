@@ -3,12 +3,15 @@ package com.genesys.cloud.messenger.transport.core
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
+import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.Typing
+import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel.Metadata
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
@@ -94,6 +97,8 @@ class MessagingClientImplTest {
         every { shouldReconnect } returns false
     }
 
+    private val mockEventHandler: EventHandler = mockk(relaxed = true)
+
     private val subject = MessagingClientImpl(
         log = log,
         configuration = configuration,
@@ -104,6 +109,7 @@ class MessagingClientImplTest {
         attachmentHandler = mockAttachmentHandler,
         messageStore = mockMessageStore,
         reconnectionHandler = mockReconnectionHandler,
+        eventHandler = mockEventHandler,
     ).also {
         it.stateChangedListener = mockStateChangedListener
     }
@@ -606,6 +612,35 @@ class MessagingClientImplTest {
         }
     }
 
+    @Test
+    fun whenStructuredMessageWithMultipleEventsReceived() {
+        val firstExpectedEvent = TypingEvent(Typing(type = "Off", duration = 1000))
+        val secondsExpectedEvent = TypingEvent(Typing(type = "On", duration = 5000))
+
+        subject.connect()
+
+        slot.captured.onMessage(Response.structuredMessageWithEvents())
+
+        verifySequence {
+            mockEventHandler.onEvent(eq(firstExpectedEvent))
+            mockEventHandler.onEvent(eq(secondsExpectedEvent))
+        }
+        verify(exactly = 0) { mockMessageStore.update(any()) }
+        verify(exactly = 0) { mockAttachmentHandler.onSent(any()) }
+    }
+
+    @Test
+    fun whenStructuredMessageWithUnknownEventTypeReceived() {
+        val givenUnknownEvent = """{"eventType": "Fake","bloop": {"bip": "bop"}}"""
+        subject.connect()
+
+        slot.captured.onMessage(Response.structuredMessageWithEvents(givenUnknownEvent))
+
+        verify(exactly = 0) { mockEventHandler.onEvent(any()) }
+        verify(exactly = 0) { mockMessageStore.update(any()) }
+        verify(exactly = 0) { mockAttachmentHandler.onSent(any()) }
+    }
+
     private fun connectAndConfigure() {
         subject.connect()
         subject.configureSession()
@@ -670,4 +705,8 @@ private object Response {
         """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":true}}"""
     const val configureFail =
         """{"type":"response","class":"string","code":400,"body":"Deployment not found"}"""
+    const val defaultStructuredEvents = """{"eventType": "Typing","typing": {"type": "Off","duration": 1000}},{"eventType": "Typing","typing": {"type": "On","duration": 5000}}"""
+    fun structuredMessageWithEvents(events: String = defaultStructuredEvents): String {
+        return """{"type": "message","class": "StructuredMessage","code": 200,"body": {"direction": "Inbound","id": "0000000-0000-0000-0000-0000000000","channel": {"time": "2022-03-09T13:35:31.104Z","messageId": "0000000-0000-0000-0000-0000000000"},"type": "Event","metadata": {"correlationId": "0000000-0000-0000-0000-0000000000"},"events": [$events]}}"""
+    }
 }

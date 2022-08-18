@@ -20,7 +20,8 @@ internal data class StructuredMessage(
     val direction: String,
     val channel: Channel? = null,
     val content: List<Content> = emptyList(),
-    val metadata: Map<String, String> = emptyMap()
+    val metadata: Map<String, String> = emptyMap(),
+    val events: List<StructuredMessageEvent> = emptyList(),
 ) {
     @Serializable
     data class Participant(
