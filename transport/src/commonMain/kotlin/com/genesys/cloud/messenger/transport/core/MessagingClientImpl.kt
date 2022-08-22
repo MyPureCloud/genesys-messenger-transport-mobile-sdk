@@ -4,6 +4,8 @@ import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
+import com.genesys.cloud.messenger.transport.core.events.TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND
+import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
@@ -20,6 +22,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.TooManyRequestsErrorMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.isOutbound
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.EchoRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
@@ -45,6 +48,7 @@ internal class MessagingClientImpl(
     private val reconnectionHandler: ReconnectionHandler,
     private val stateMachine: StateMachine = StateMachineImpl(log.withTag(LogTag.STATE_MACHINE)),
     private val eventHandler: EventHandler = EventHandlerImpl(log.withTag(LogTag.EVENT_HANDLER)),
+    private val userTypingProvider: UserTypingProvider = UserTypingProvider(),
 ) : MessagingClient {
     private var shouldConfigureAfterConnect = false
 
@@ -198,6 +202,17 @@ internal class MessagingClientImpl(
         messageStore.invalidateConversationCache()
     }
 
+    @Throws(IllegalStateException::class)
+    override fun userIsTyping() {
+        val encodedJson = userTypingProvider.encodeRequest(token)
+        if (encodedJson == null) {
+            log.w { "Typing event can be sent only once every $TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND milliseconds." }
+            return
+        }
+        log.i { "sendUserIsTyping()" }
+        send(encodedJson)
+    }
+
     private fun handleError(code: ErrorCode, message: String? = null) {
         when (code) {
             is ErrorCode.SessionHasExpired,
@@ -252,11 +267,15 @@ internal class MessagingClientImpl(
                 with(structuredMessage.toMessage()) {
                     messageStore.update(this)
                     attachmentHandler.onSent(this.attachments)
+                    userTypingProvider.clear()
                 }
             }
+
             StructuredMessage.Type.Event -> {
-                structuredMessage.events.forEach {
-                    eventHandler.onEvent(it)
+                if (structuredMessage.isOutbound()) {
+                    structuredMessage.events.forEach {
+                        eventHandler.onEvent(it)
+                    }
                 }
             }
         }

@@ -12,6 +12,7 @@ import kotlinx.serialization.json.jsonPrimitive
 
 @Serializable(with = StructuredMessageEventSerializer::class)
 internal sealed class StructuredMessageEvent {
+    abstract val eventType: Type
     @Serializable
     enum class Type {
         @SerialName("Typing")
@@ -21,12 +22,13 @@ internal sealed class StructuredMessageEvent {
 
 @Serializable
 internal data class TypingEvent(
+    override val eventType: Type,
     val typing: Typing,
 ) : StructuredMessageEvent() {
     @Serializable
     internal data class Typing(
         val type: String,
-        val duration: Int,
+        val duration: Long,
     )
 }
 

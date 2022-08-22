@@ -4,10 +4,13 @@ import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
 import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses.isoTestTimestamp
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
+import com.genesys.cloud.messenger.transport.shyrka.receive.isOutbound
 import com.genesys.cloud.messenger.transport.util.extensions.fromIsoToEpochMilliseconds
 import com.genesys.cloud.messenger.transport.util.extensions.getUploadedAttachments
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
@@ -147,5 +150,27 @@ internal class MessageExtensionTest {
         val result = null.fromIsoToEpochMilliseconds()
 
         assertThat(result).isNull()
+    }
+
+    @Test
+    fun whenOutboundStructuredMessageCheckedForIsOutbound() {
+        val givenStructuredMessage = StructuredMessage(
+            id = "some_id",
+            type = StructuredMessage.Type.Text,
+            direction = "Outbound"
+        )
+
+        assertThat(givenStructuredMessage.isOutbound()).isTrue()
+    }
+
+    @Test
+    fun whenInboundStructuredMessageCheckedForIsOutbound() {
+        val givenStructuredMessage = StructuredMessage(
+            id = "some_id",
+            type = StructuredMessage.Type.Text,
+            direction = "Inbound"
+        )
+
+        assertThat(givenStructuredMessage.isOutbound()).isFalse()
     }
 }

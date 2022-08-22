@@ -191,4 +191,12 @@ interface MessagingClient {
      * latest available history.
      */
     fun invalidateConversationCache()
+
+    /**
+     * Notify the Agent that the User is typing a message.
+     *
+     * @throws IllegalStateException if called before session was connected.
+     */
+    @Throws(IllegalStateException::class)
+    fun userIsTyping()
 }

@@ -1,5 +1,6 @@
 package com.genesys.cloud.messenger.transport.core.events
 
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent.Typing
 import io.mockk.mockk
@@ -14,7 +15,10 @@ class EventHandlerTest {
 
     @Test
     fun whenTypingEventOccurs() {
-        val givenStructuredMessageEvent = TypingEvent(Typing(type = "On", duration = 5000))
+        val givenStructuredMessageEvent = TypingEvent(
+            eventType = StructuredMessageEvent.Type.Typing,
+            typing = Typing(type = "On", duration = 5000)
+        )
         val expectedEvent = Event.Typing(5000)
 
         subject.onEvent(givenStructuredMessageEvent)
@@ -24,7 +28,10 @@ class EventHandlerTest {
 
     @Test
     fun whenNoEventListenerSetAndOnEventInvoked() {
-        val givenStructuredMessageEvent = TypingEvent(Typing(type = "On", duration = 5000))
+        val givenStructuredMessageEvent = TypingEvent(
+            eventType = StructuredMessageEvent.Type.Typing,
+            typing = Typing(type = "On", duration = 5000)
+        )
         subject.eventListener = null
 
         subject.onEvent(givenStructuredMessageEvent)

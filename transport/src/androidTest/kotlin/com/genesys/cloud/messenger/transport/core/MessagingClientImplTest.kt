@@ -4,12 +4,15 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
+import com.genesys.cloud.messenger.transport.core.events.TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND
+import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent.Typing
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
@@ -18,6 +21,8 @@ import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
+import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import io.mockk.Called
 import io.mockk.MockKVerificationScope
@@ -98,6 +103,9 @@ class MessagingClientImplTest {
     }
 
     private val mockEventHandler: EventHandler = mockk(relaxed = true)
+    private val mockTimestampFunction: () -> Long = spyk<() -> Long>().also {
+        every { it.invoke() } answers { Platform().epochMillis() }
+    }
 
     private val subject = MessagingClientImpl(
         log = log,
@@ -110,6 +118,7 @@ class MessagingClientImplTest {
         messageStore = mockMessageStore,
         reconnectionHandler = mockReconnectionHandler,
         eventHandler = mockEventHandler,
+        userTypingProvider = UserTypingProvider(mockTimestampFunction)
     ).also {
         it.stateChangedListener = mockStateChangedListener
     }
@@ -614,8 +623,14 @@ class MessagingClientImplTest {
 
     @Test
     fun whenStructuredMessageWithMultipleEventsReceived() {
-        val firstExpectedEvent = TypingEvent(Typing(type = "Off", duration = 1000))
-        val secondsExpectedEvent = TypingEvent(Typing(type = "On", duration = 5000))
+        val firstExpectedEvent = TypingEvent(
+            eventType = StructuredMessageEvent.Type.Typing,
+            typing = Typing(type = "Off", duration = 1000),
+        )
+        val secondsExpectedEvent = TypingEvent(
+            eventType = StructuredMessageEvent.Type.Typing,
+            typing = Typing(type = "On", duration = 5000),
+        )
 
         subject.connect()
 
@@ -639,6 +654,75 @@ class MessagingClientImplTest {
         verify(exactly = 0) { mockEventHandler.onEvent(any()) }
         verify(exactly = 0) { mockMessageStore.update(any()) }
         verify(exactly = 0) { mockAttachmentHandler.onSent(any()) }
+    }
+
+    @Test
+    fun whenStructuredMessageWithInboundEventReceived() {
+        connectAndConfigure()
+
+        slot.captured.onMessage(Response.structuredMessageWithEvents(direction = Message.Direction.Inbound))
+
+        verify(exactly = 0) { mockEventHandler.onEvent(any()) }
+        verify(exactly = 0) { mockMessageStore.update(any()) }
+        verify(exactly = 0) { mockAttachmentHandler.onSent(any()) }
+    }
+
+    @Test
+    fun whenUserIsTyping() {
+        val expectedMessage = Request.userTypingRequest
+        connectAndConfigure()
+
+        subject.userIsTyping()
+
+        verifySequence {
+            connectSequence()
+            configureSequence()
+            mockPlatformSocket.sendMessage(expectedMessage)
+        }
+    }
+
+    @Test
+    fun whenNotConnectedAndUserIsTypingInvoked() {
+        assertFailsWith<IllegalStateException> {
+            subject.userIsTyping()
+        }
+    }
+
+    @Test
+    fun whenUserIsTypingInvokedTwiceWithoutCoolDown() {
+        val expectedMessage = Request.userTypingRequest
+        connectAndConfigure()
+
+        subject.userIsTyping()
+        subject.userIsTyping()
+
+        verify(exactly = 1) { mockPlatformSocket.sendMessage(expectedMessage) }
+    }
+
+    @Test
+    fun whenUserIsTypingInvokedTwiceWithCoolDown() {
+        val expectedMessage = Request.userTypingRequest
+
+        connectAndConfigure()
+
+        subject.userIsTyping()
+        // Fast forward epochMillis by TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND.
+        every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND }
+        subject.userIsTyping()
+
+        verify(exactly = 2) { mockPlatformSocket.sendMessage(expectedMessage) }
+    }
+
+    @Test
+    fun whenUserIsTypingInvokedTwiceWithoutCoolDownButAfterMessageWasSent() {
+        val expectedMessage = Request.userTypingRequest
+        connectAndConfigure()
+
+        subject.userIsTyping()
+        slot.captured.onMessage(Response.onMessageResponse)
+        subject.userIsTyping()
+
+        verify(exactly = 2) { mockPlatformSocket.sendMessage(expectedMessage) }
     }
 
     private fun connectAndConfigure() {
@@ -695,18 +779,20 @@ class MessagingClientImplTest {
         StateChange(oldState = State.Connected, newState = errorState)
 }
 
-private object Request {
-    const val configureRequest =
-        """{"token":"00000000-0000-0000-0000-000000000000","deploymentId":"deploymentId","journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"action":"configureSession"}"""
-}
-
 private object Response {
     const val configureSuccess =
         """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":true}}"""
     const val configureFail =
         """{"type":"response","class":"string","code":400,"body":"Deployment not found"}"""
-    const val defaultStructuredEvents = """{"eventType": "Typing","typing": {"type": "Off","duration": 1000}},{"eventType": "Typing","typing": {"type": "On","duration": 5000}}"""
-    fun structuredMessageWithEvents(events: String = defaultStructuredEvents): String {
-        return """{"type": "message","class": "StructuredMessage","code": 200,"body": {"direction": "Inbound","id": "0000000-0000-0000-0000-0000000000","channel": {"time": "2022-03-09T13:35:31.104Z","messageId": "0000000-0000-0000-0000-0000000000"},"type": "Event","metadata": {"correlationId": "0000000-0000-0000-0000-0000000000"},"events": [$events]}}"""
+    const val defaultStructuredEvents =
+        """{"eventType": "Typing","typing": {"type": "Off","duration": 1000}},{"eventType": "Typing","typing": {"type": "On","duration": 5000}}"""
+    const val onMessageResponse =
+        """{"type":"message","class":"StructuredMessage","code":200,"body":{"text":"Hi!","direction":"Inbound","id":"test_id","channel":{"time":"2022-08-22T19:24:26.704Z","messageId":"message_id"},"type":"Text","metadata":{"customMessageId":"some_custom_message_id"}}}"""
+
+    fun structuredMessageWithEvents(
+        events: String = defaultStructuredEvents,
+        direction: Message.Direction = Message.Direction.Outbound,
+    ): String {
+        return """{"type": "message","class": "StructuredMessage","code": 200,"body": {"direction": "${direction.name}","id": "0000000-0000-0000-0000-0000000000","channel": {"time": "2022-03-09T13:35:31.104Z","messageId": "0000000-0000-0000-0000-0000000000"},"type": "Event","metadata": {"correlationId": "0000000-0000-0000-0000-0000000000"},"events": [$events]}}"""
     }
 }
