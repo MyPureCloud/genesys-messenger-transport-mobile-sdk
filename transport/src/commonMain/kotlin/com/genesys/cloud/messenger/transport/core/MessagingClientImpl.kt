@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
+import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
@@ -68,6 +69,12 @@ internal class MessagingClientImpl(
     override var messageListener: ((MessageEvent) -> Unit)? = null
         set(value) {
             messageStore.messageListener = value
+            field = value
+        }
+
+    override var eventListener: ((Event) -> Unit)? = null
+        set(value) {
+            eventHandler.eventListener = value
             field = value
         }
 
