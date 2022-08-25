@@ -1,6 +1,5 @@
 package com.genesys.cloud.messenger.transport.shyrka.send
 
-import com.genesys.cloud.messenger.transport.core.events.TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import kotlinx.serialization.Required
@@ -18,10 +17,7 @@ internal data class UserTypingRequest(
         listOf(
             TypingEvent(
                 eventType = StructuredMessageEvent.Type.Typing,
-                typing = TypingEvent.Typing(
-                    type = "On",
-                    duration = TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND
-                )
+                typing = TypingEvent.Typing(type = "On"),
             )
         )
     )

@@ -5,6 +5,8 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 
+private const val FALLBACK_TYPING_INDICATOR_DURATION = 5000L
+
 internal class EventHandlerImpl(
     val log: Log = Log(enableLogs = false, LogTag.EVENT_HANDLER),
 ) : EventHandler {
@@ -21,7 +23,7 @@ internal class EventHandlerImpl(
 private fun StructuredMessageEvent.toTransportEvent(): Event {
     return when (this) {
         is TypingEvent -> {
-            Event.Typing(durationInMilliseconds = typing.duration)
+            Event.Typing(typing.duration ?: FALLBACK_TYPING_INDICATOR_DURATION)
         }
     }
 }

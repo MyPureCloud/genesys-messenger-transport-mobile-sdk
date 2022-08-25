@@ -5,7 +5,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.UserTypingRequest
 import com.genesys.cloud.messenger.transport.util.Platform
 import kotlinx.serialization.encodeToString
 
-const val TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND = 5000L
+internal const val TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND = 5000L
 
 internal class UserTypingProvider(val getCurrentTimestamp: () -> Long = { Platform().epochMillis() }) {
     private var lastSentUserTypingTimestamp = 0L

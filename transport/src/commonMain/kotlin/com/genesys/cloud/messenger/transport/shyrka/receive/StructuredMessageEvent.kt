@@ -28,7 +28,7 @@ internal data class TypingEvent(
     @Serializable
     internal data class Typing(
         val type: String,
-        val duration: Long,
+        val duration: Long? = null,
     )
 }
 
