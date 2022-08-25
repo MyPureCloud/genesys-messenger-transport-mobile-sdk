@@ -9,5 +9,5 @@ sealed class Event {
      *
      *  @param durationInMilliseconds amount of time to display visual typing indicator in UI.
      */
-    data class Typing(val durationInMilliseconds: Int) : Event()
+    data class Typing(val durationInMilliseconds: Long) : Event()
 }

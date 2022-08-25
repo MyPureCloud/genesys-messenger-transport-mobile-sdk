@@ -9,6 +9,6 @@ internal data class TextMessage(
     val text: String,
     val metadata: Map<String, String>? = null,
     val content: List<Message.Content> = emptyList()
-) {
-    @Required val type = "Text"
+) : BaseMessageProtocol {
+    @Required override val type = BaseMessageProtocol.Type.Text
 }
