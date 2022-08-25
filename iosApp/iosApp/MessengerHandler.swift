@@ -84,7 +84,7 @@ class MessengerHandler {
     }
 
     func fetchNextPage(completion: ((Error?) -> Void)? = nil) {
-        client.fetchNextPage() {_, error in
+        client.fetchNextPage() { _, error in
             completion?(error)
         }
     }
