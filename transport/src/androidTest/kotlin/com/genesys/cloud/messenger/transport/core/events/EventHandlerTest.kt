@@ -51,5 +51,4 @@ class EventHandlerTest {
 
         verify { mockEventListener.invoke(eq(expectedEvent)) }
     }
-
 }
