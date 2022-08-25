@@ -203,13 +203,13 @@ internal class MessagingClientImpl(
     }
 
     @Throws(IllegalStateException::class)
-    override fun userIsTyping() {
+    override fun indicateTyping() {
         val encodedJson = userTypingProvider.encodeRequest(token)
         if (encodedJson == null) {
             log.w { "Typing event can be sent only once every $TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND milliseconds." }
             return
         }
-        log.i { "sendUserIsTyping()" }
+        log.i { "indicateTyping()" }
         send(encodedJson)
     }
 

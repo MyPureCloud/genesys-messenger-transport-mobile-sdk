@@ -142,7 +142,7 @@ interface MessagingClient {
 
     /**
      * Attach a file to the message. This file will be uploaded and cached locally
-     * until user decides to send a message.
+     * until customer decides to send a message.
      * After the message has been sent, attachment will be cleared from cache.
      *
      * @param byteArray data to upload.
@@ -193,10 +193,12 @@ interface MessagingClient {
     fun invalidateConversationCache()
 
     /**
-     * Notify the Agent that the User is typing a message.
+     * Notify the agent that the customer is typing a message.
+     * This command sends a single typing indicator event and should be called a maximum of once every 5 seconds.
+     * If called more frequently, this command will be rate limited in order to optimize network traffic.
      *
      * @throws IllegalStateException if called before session was connected.
      */
     @Throws(IllegalStateException::class)
-    fun userIsTyping()
+    fun indicateTyping()
 }

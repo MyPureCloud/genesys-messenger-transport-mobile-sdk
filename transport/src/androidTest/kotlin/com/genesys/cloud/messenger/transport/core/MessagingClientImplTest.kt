@@ -668,11 +668,11 @@ class MessagingClientImplTest {
     }
 
     @Test
-    fun whenUserIsTyping() {
+    fun whenIndicateTyping() {
         val expectedMessage = Request.userTypingRequest
         connectAndConfigure()
 
-        subject.userIsTyping()
+        subject.indicateTyping()
 
         verifySequence {
             connectSequence()
@@ -682,45 +682,45 @@ class MessagingClientImplTest {
     }
 
     @Test
-    fun whenNotConnectedAndUserIsTypingInvoked() {
+    fun whenNotConnectedAndIndicateTypingInvoked() {
         assertFailsWith<IllegalStateException> {
-            subject.userIsTyping()
+            subject.indicateTyping()
         }
     }
 
     @Test
-    fun whenUserIsTypingInvokedTwiceWithoutCoolDown() {
+    fun whenIndicateTypingTwiceWithoutCoolDown() {
         val expectedMessage = Request.userTypingRequest
         connectAndConfigure()
 
-        subject.userIsTyping()
-        subject.userIsTyping()
+        subject.indicateTyping()
+        subject.indicateTyping()
 
         verify(exactly = 1) { mockPlatformSocket.sendMessage(expectedMessage) }
     }
 
     @Test
-    fun whenUserIsTypingInvokedTwiceWithCoolDown() {
+    fun whenIndicateTypingTwiceWithCoolDown() {
         val expectedMessage = Request.userTypingRequest
 
         connectAndConfigure()
 
-        subject.userIsTyping()
+        subject.indicateTyping()
         // Fast forward epochMillis by TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND.
         every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND }
-        subject.userIsTyping()
+        subject.indicateTyping()
 
         verify(exactly = 2) { mockPlatformSocket.sendMessage(expectedMessage) }
     }
 
     @Test
-    fun whenUserIsTypingInvokedTwiceWithoutCoolDownButAfterMessageWasSent() {
+    fun whenIndicateTypingTwiceWithoutCoolDownButAfterMessageWasSent() {
         val expectedMessage = Request.userTypingRequest
         connectAndConfigure()
 
-        subject.userIsTyping()
+        subject.indicateTyping()
         slot.captured.onMessage(Response.onMessageResponse)
-        subject.userIsTyping()
+        subject.indicateTyping()
 
         verify(exactly = 2) { mockPlatformSocket.sendMessage(expectedMessage) }
     }
