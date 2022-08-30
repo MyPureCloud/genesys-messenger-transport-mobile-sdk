@@ -164,7 +164,7 @@ tasks {
                         "CFBundleVersion" to version,
                         "MinimumOSVersion" to iosMinimumOSVersion
                     )
-                    println("Updating framework metadata at $infoPlistPath")
+                    println("Updating framework metadata at: ${this.project.projectDir}/$infoPlistPath")
                     for ((key, value) in propertiesMap) {
                         println("  $key = $value")
                         exec {
@@ -189,6 +189,7 @@ tasks {
                     newValue = "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/releases/download/v${version}/MessengerTransport.xcframework.zip"
                 )
             file(podspecFileName, PathValidation.NONE).writeText(content)
+            println("CocoaPods podspec for Pod $iosCocoaPodName written to: ${this.project.projectDir}/$podspecFileName")
         }
     }
 }
