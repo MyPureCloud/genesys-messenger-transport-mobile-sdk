@@ -14,6 +14,7 @@ import com.genesys.cloud.messenger.transport.core.MessageEvent.AttachmentUpdated
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.MobileMessenger
+import com.genesys.cloud.messenger.transport.core.events.Event
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -61,8 +62,16 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             configuration = mmsdkConfiguration,
         )
         with(client) {
-            stateChangedListener = { runBlocking { onClientStateChanged(oldState = it.oldState, newState = it.newState) } }
-            messageListener = { onEvent(it) }
+            stateChangedListener = {
+                runBlocking {
+                    onClientStateChanged(
+                        oldState = it.oldState,
+                        newState = it.newState,
+                    )
+                }
+            }
+            messageListener = { onMessage(it) }
+            eventListener = { onEvent(it) }
             clientState = client.currentState
         }
         withContext(Dispatchers.IO) {
@@ -104,6 +113,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "deployment" -> doDeployment()
             "clearConversation" -> doClearConversation()
             "addAttribute" -> doAddCustomAttributes(input)
+            "typing" -> doIndicateTyping()
             else -> {
                 Log.e(TAG, "Invalid command")
                 withContext(Dispatchers.Main) {
@@ -223,6 +233,15 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         onSocketMessageReceived(consoleMessage)
     }
 
+    private suspend fun doIndicateTyping() {
+        try {
+            client.indicateTyping()
+            commandWaiting = false
+        } catch (t: Throwable) {
+            handleException(t, "indicate typing.")
+        }
+    }
+
     private suspend fun onClientStateChanged(oldState: State, newState: State) {
         Log.v(TAG, "onClientStateChanged(oldState = $oldState, newState = $newState)")
         clientState = newState
@@ -263,7 +282,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private fun onEvent(event: MessageEvent) {
+    private fun onMessage(event: MessageEvent) {
         val eventMessage = when (event) {
             is MessageEvent.MessageUpdated -> event.message.toString()
             is MessageEvent.MessageInserted -> event.message.toString()
@@ -282,6 +301,10 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         launch {
             onSocketMessageReceived(eventMessage)
         }
+    }
+
+    private fun onEvent(event: Event) {
+        launch { onSocketMessageReceived(event.toString()) }
     }
 }
 
