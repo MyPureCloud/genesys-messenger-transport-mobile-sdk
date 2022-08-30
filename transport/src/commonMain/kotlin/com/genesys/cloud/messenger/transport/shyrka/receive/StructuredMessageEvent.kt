@@ -1,6 +1,5 @@
 package com.genesys.cloud.messenger.transport.shyrka.receive
 
-import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent.Type
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerialName
@@ -18,7 +17,6 @@ internal sealed class StructuredMessageEvent {
     enum class Type {
         @SerialName("Typing")
         Typing,
-        Error,
     }
 }
 
@@ -33,12 +31,6 @@ internal data class TypingEvent(
         val duration: Long? = null,
     )
 }
-
-internal data class ErrorEvent(
-    override val eventType: Type = Type.Error,
-    val errorCode: ErrorCode,
-    val message: String?,
-) : StructuredMessageEvent()
 
 internal object StructuredMessageEventSerializer :
     JsonContentPolymorphicSerializer<StructuredMessageEvent>(StructuredMessageEvent::class) {

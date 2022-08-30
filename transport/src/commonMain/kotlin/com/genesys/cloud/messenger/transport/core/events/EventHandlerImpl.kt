@@ -1,7 +1,5 @@
 package com.genesys.cloud.messenger.transport.core.events
 
-import com.genesys.cloud.messenger.transport.core.toCorrectiveAction
-import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.util.logs.Log
@@ -27,13 +25,5 @@ private fun StructuredMessageEvent.toTransportEvent(): Event {
         is TypingEvent -> {
             Event.Typing(typing.duration ?: FALLBACK_TYPING_INDICATOR_DURATION)
         }
-        is ErrorEvent -> {
-            Event.Error(
-                errorCode = errorCode,
-                message = message,
-                correctiveAction = errorCode.toCorrectiveAction()
-            )
-        }
-
     }
 }

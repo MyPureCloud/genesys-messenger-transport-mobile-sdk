@@ -59,22 +59,3 @@ object ErrorMessage {
     const val InternetConnectionIsOffline =
         "Network is disabled. Please enable wifi or cellular and try again."
 }
-
-sealed class CorrectiveAction(val message: String) {
-    object BadRequest : CorrectiveAction("Refer to the error details.")
-    object Forbidden : CorrectiveAction("Turn on the Feature Toggle or fix the configuration.")
-    object NotFound : CorrectiveAction("An object referenced in the request was not found, pass an id that exists.")
-    object RequestTimeOut : CorrectiveAction("Was unable to fulfil the request in time. You can retry later.")
-    object TooManyRequests : CorrectiveAction("Retry later.")
-    object Unknown : CorrectiveAction("Action unknown.")
-}
-
-
-internal fun ErrorCode.toCorrectiveAction(): CorrectiveAction = when(this.code) {
-    400 -> CorrectiveAction.BadRequest
-    403 -> CorrectiveAction.Forbidden
-    404 -> CorrectiveAction.NotFound
-    408 -> CorrectiveAction.RequestTimeOut
-    429 -> CorrectiveAction.TooManyRequests
-    else -> CorrectiveAction.Unknown
-}

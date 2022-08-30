@@ -1,8 +1,5 @@
 package com.genesys.cloud.messenger.transport.core.events
 
-import com.genesys.cloud.messenger.transport.core.CorrectiveAction
-import com.genesys.cloud.messenger.transport.core.ErrorCode
-import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent.Typing
@@ -49,24 +46,6 @@ class EventHandlerTest {
             typing = Typing(type = "On", duration = null)
         )
         val expectedEvent = Event.Typing(5000)
-
-        subject.onEvent(givenStructuredMessageEvent)
-
-        verify { mockEventListener.invoke(eq(expectedEvent)) }
-    }
-
-    @Test
-    fun whenErrorEvent() {
-        val givenStructuredMessageEvent = ErrorEvent(
-            errorCode = ErrorCode.ClientResponseError(403),
-            message = "some message",
-        )
-
-        val expectedEvent = Event.Error(
-            errorCode = ErrorCode.ClientResponseError(403),
-            message = "some message",
-            correctiveAction = CorrectiveAction.Forbidden,
-        )
 
         subject.onEvent(givenStructuredMessageEvent)
 
