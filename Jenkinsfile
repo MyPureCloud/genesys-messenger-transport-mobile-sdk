@@ -97,7 +97,7 @@ pipeline{
         }
         stage("CI Build - iOS XCFramework"){
             steps{
-                sh './gradlew :transport:assembleMessengerTransportReleaseXCFramework'
+                sh './gradlew assembleMessengerTransportXCFramework'
             }
         }
         stage("CI Build - CocoaPods podspec creation for publication"){
