@@ -152,28 +152,13 @@ tasks {
         from("./deployment")
     }
 
-    val generatePodspecTaskName = "generate${iosCocoaPodName}Podspec"
-    register(generatePodspecTaskName) {
-        val podspecFileName = "${iosCocoaPodName}.podspec"
-        group = "publishing"
-        description = "Generates the $podspecFileName file for publication to CocoaPods."
-        doLast {
-            val content = file("${podspecFileName}_template").readText()
-                .replace(oldValue = "<VERSION>", newValue = version.toString())
-                .replace(
-                    oldValue = "<SOURCE_HTTP_URL>",
-                    newValue = "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/releases/download/v${version}/MessengerTransport.xcframework.zip"
-                )
-            file(podspecFileName, PathValidation.NONE).writeText(content)
-        }
-    }
-
-    named("assemble${iosFrameworkName}XCFramework") {
-        doLast {
-            listOf("debug", "release").forEach { buildVariant ->
+    listOf("Debug", "Release").forEach { buildVariant ->
+        named("assemble${iosFrameworkName}${buildVariant}XCFramework") {
+            doLast {
+                println(this.name)
                 listOf("ios-arm64", "ios-arm64_x86_64-simulator").forEach { arch ->
                     val xcframeworkPath =
-                        "build/XCFrameworks/$buildVariant/$iosFrameworkName.xcframework/$arch/$iosFrameworkName.framework"
+                        "build/XCFrameworks/${buildVariant.toLowerCase()}/$iosFrameworkName.xcframework/$arch/$iosFrameworkName.framework"
                     val infoPlistPath = "$xcframeworkPath/Info.plist"
                     val propertiesMap = mapOf(
                         "CFBundleShortVersionString" to version,
@@ -189,6 +174,22 @@ tasks {
                     }
                 }
             }
+        }
+    }
+
+    val generatePodspecTaskName = "generate${iosCocoaPodName}Podspec"
+    register(generatePodspecTaskName) {
+        val podspecFileName = "${iosCocoaPodName}.podspec"
+        group = "publishing"
+        description = "Generates the $podspecFileName file for publication to CocoaPods."
+        doLast {
+            val content = file("${podspecFileName}_template").readText()
+                .replace(oldValue = "<VERSION>", newValue = version.toString())
+                .replace(
+                    oldValue = "<SOURCE_HTTP_URL>",
+                    newValue = "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/releases/download/v${version}/MessengerTransport.xcframework.zip"
+                )
+            file(podspecFileName, PathValidation.NONE).writeText(content)
         }
     }
 }
