@@ -42,4 +42,23 @@ internal class ErrorCodeTest {
             ErrorCode.ServerResponseError(randomIn500Range)
         )
     }
+
+    @Test
+    fun whenErrorCodeToCorrectiveAction() {
+        assertEquals(ErrorCode.ClientResponseError(400).toCorrectiveAction(), CorrectiveAction.BadRequest)
+        assertEquals(ErrorCode.ClientResponseError(403).toCorrectiveAction(), CorrectiveAction.Forbidden)
+        assertEquals(ErrorCode.ClientResponseError(404).toCorrectiveAction(), CorrectiveAction.NotFound)
+        assertEquals(ErrorCode.ClientResponseError(408).toCorrectiveAction(), CorrectiveAction.RequestTimeOut)
+        assertEquals(ErrorCode.ClientResponseError(429).toCorrectiveAction(), CorrectiveAction.TooManyRequests)
+        assertEquals(ErrorCode.ClientResponseError(randomCodeExcludingKnown()).toCorrectiveAction(), CorrectiveAction.Unknown)
+    }
+
+    private fun randomCodeExcludingKnown(): Int {
+        val errorCodesToExclude = arrayOf(400, 403, 404, 408, 429)
+        var random = Random.nextInt(401, 500)
+        while (errorCodesToExclude.contains(random)) {
+            random = Random.nextInt(401, 500)
+        }
+        return random
+    }
 }
