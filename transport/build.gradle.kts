@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
 plugins {
@@ -42,6 +41,8 @@ android {
 }
 
 val iosFrameworkName = "MessengerTransport"
+val iosMinimumOSVersion = "13.0"
+val iosCocoaPodName = "GenesysCloudMessengerTransport"
 version = project.rootProject.version
 
 kotlin {
@@ -72,7 +73,7 @@ kotlin {
         homepage = "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk"
         license = "MIT"
         authors = "Genesys Cloud Services, Inc."
-        ios.deploymentTarget = "13.0"
+        ios.deploymentTarget = iosMinimumOSVersion
         podfile = project.file("../iosApp/Podfile")
         framework {
             // The default name for an iOS framework is `<project name>.framework`. To set a custom name, use the `baseName` option. This will also set the module name.
@@ -151,8 +152,9 @@ tasks {
         from("./deployment")
     }
 
-    register("generateGenesysCloudMessengerTransportPodspec") {
-        val podspecFileName = "GenesysCloudMessengerTransport.podspec"
+    val generatePodspecTaskName = "generate${iosCocoaPodName}Podspec"
+    register(generatePodspecTaskName) {
+        val podspecFileName = "${iosCocoaPodName}.podspec"
         group = "publishing"
         description = "Generates the $podspecFileName file for publication to CocoaPods."
         doLast {
@@ -163,6 +165,30 @@ tasks {
                     newValue = "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/releases/download/v${version}/MessengerTransport.xcframework.zip"
                 )
             file(podspecFileName, PathValidation.NONE).writeText(content)
+        }
+    }
+
+    named("assemble${iosFrameworkName}XCFramework") {
+        doLast {
+            listOf("debug", "release").forEach { buildVariant ->
+                listOf("ios-arm64", "ios-arm64_x86_64-simulator").forEach { arch ->
+                    val xcframeworkPath =
+                        "build/XCFrameworks/$buildVariant/$iosFrameworkName.xcframework/$arch/$iosFrameworkName.framework"
+                    val infoPlistPath = "$xcframeworkPath/Info.plist"
+                    val propertiesMap = mapOf(
+                        "CFBundleShortVersionString" to version,
+                        "CFBundleVersion" to version,
+                        "MinimumOSVersion" to iosMinimumOSVersion
+                    )
+                    println("Updating framework metadata at $infoPlistPath")
+                    for ((key, value) in propertiesMap) {
+                        println("  $key = $value")
+                        exec {
+                            commandLine("plutil", "-replace", key, "-string", value, infoPlistPath)
+                        }
+                    }
+                }
+            }
         }
     }
 }
