@@ -155,7 +155,6 @@ tasks {
     listOf("Debug", "Release").forEach { buildVariant ->
         named("assemble${iosFrameworkName}${buildVariant}XCFramework") {
             doLast {
-                println(this.name)
                 listOf("ios-arm64", "ios-arm64_x86_64-simulator").forEach { arch ->
                     val xcframeworkPath =
                         "build/XCFrameworks/${buildVariant.toLowerCase()}/$iosFrameworkName.xcframework/$arch/$iosFrameworkName.framework"
