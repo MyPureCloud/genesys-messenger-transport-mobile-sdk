@@ -16,8 +16,10 @@ internal actual class PlatformSocket actual constructor(
     actual val pingInterval: Int,
 ) {
     private var webSocket: WebSocket? = null
+    private var listener: PlatformSocketListener? = null
 
     actual fun openSocket(listener: PlatformSocketListener) {
+        this.listener = listener
         val socketRequest =
             Request.Builder().url(url.toString()).header(name = "Origin", value = url.host).build()
         val webClient = OkHttpClient()
@@ -51,8 +53,9 @@ internal actual class PlatformSocket actual constructor(
     }
 
     actual fun closeSocket(code: Int, reason: String) {
-        log.i { "closeSocket(code = $code, reason = $reason)" }
-        webSocket?.close(code, reason)
+        log.i { "closeSocket(code = $code, reason = $reason) " }
+        val shutdownInitiatedByThisCall = webSocket?.close(code, reason) ?: false
+        if (!shutdownInitiatedByThisCall) { listener?.onClosed(code, reason) }
         webSocket = null
     }
 
