@@ -131,9 +131,9 @@ class TestContentController: MessengerHandler {
             print("State Event. New state: \(stateChange.newState), old state: \(stateChange.oldState)")
             let newState = stateChange.newState
             switch newState {
-            case _ as MessagingClientState.Configured:
+            case is MessagingClientState.Configured:
                 self?.testExpectation?.fulfill()
-            case _ as MessagingClientState.Closed:
+            case is MessagingClientState.Closed:
                 self?.testExpectation?.fulfill()
             case let error as MessagingClientState.Error:
                 print("Socket <error>. code: <\(error.code.description)> , message: <\(error.message ?? "No message")>")
