@@ -47,9 +47,9 @@ class ContentViewController: UIViewController {
             self?.info.text = "State changed from \(stateChange.oldState) to \(newState)"
         }
         
-        messenger.onMessageEvent = { [weak self] event in
-            var displayMessage = "Unexpected message event: \(event)"
-            switch event {
+        messenger.onMessageEvent = { [weak self] message in
+            var displayMessage = "Unexpected message event: \(message)"
+            switch message {
             case let messageInserted as MessageEvent.MessageInserted:
                 displayMessage = "Message Inserted: \(messageInserted.message.description)"
             case let messageUpdated as MessageEvent.MessageUpdated:
@@ -63,6 +63,19 @@ class ContentViewController: UIViewController {
                 break
             }
             self?.info.text = displayMessage
+        }
+        
+        messenger.onEvent = { [weak self] event in
+            var displayEvent = "Unexpected event: \(event)"
+            switch event {
+            case let typing as Event.AgentTyping:
+                displayEvent = "Event received: \(typing.description)"
+            case let error as Event.Error:
+                displayEvent = "Event received: \(error.description)"
+            default:
+                break
+            }
+            self?.info.text = displayEvent
         }
     }
 
@@ -87,7 +100,8 @@ class ContentViewController: UIViewController {
         case healthCheck
         case clearConversation
         case addAttribute
-        
+        case typing
+
         var helpDescription: String {
             switch self {
             case .send: return "send <msg>"
@@ -311,6 +325,8 @@ extension ContentViewController : UITextFieldDelegate {
                 }  else {
                     self.info.text = "Custom attribute key cannot be nil or empty!"
                 }
+            case (.typing, _):
+                try messenger.indicateTyping()
             default:
                 self.info.text = "Invalid command"
             }
