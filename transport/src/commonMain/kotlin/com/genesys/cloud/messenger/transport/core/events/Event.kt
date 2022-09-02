@@ -12,7 +12,7 @@ sealed class Event {
      *
      *  @param durationInMilliseconds amount of time to display visual typing indicator in UI.
      */
-    data class Typing(val durationInMilliseconds: Long) : Event()
+    data class AgentTyping(val durationInMilliseconds: Long) : Event()
 
     /**
      * This event indicates error.
