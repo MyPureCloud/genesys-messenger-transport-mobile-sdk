@@ -11,6 +11,7 @@ import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
+import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
@@ -725,6 +726,19 @@ class MessagingClientImplTest {
         verify(exactly = 2) { mockPlatformSocket.sendMessage(expectedMessage) }
     }
 
+    @Test
+    fun whenWebSocketRespondWithUnstructuredTypingIndicatorForbiddenError() {
+        val expectedEvent = ErrorEvent(
+            errorCode = ErrorCode.ClientResponseError(403),
+            message = "Turn on the Feature Toggle or fix the configuration.",
+        )
+        connectAndConfigure()
+
+        slot.captured.onMessage(Response.typingIndicatorForbidden)
+
+        verify { mockEventHandler.onEvent(expectedEvent) }
+    }
+
     private fun connectAndConfigure() {
         subject.connect()
         subject.configureSession()
@@ -788,6 +802,8 @@ private object Response {
         """{"eventType": "Typing","typing": {"type": "Off","duration": 1000}},{"eventType": "Typing","typing": {"type": "On","duration": 5000}}"""
     const val onMessageResponse =
         """{"type":"message","class":"StructuredMessage","code":200,"body":{"text":"Hi!","direction":"Inbound","id":"test_id","channel":{"time":"2022-08-22T19:24:26.704Z","messageId":"message_id"},"type":"Text","metadata":{"customMessageId":"some_custom_message_id"}}}"""
+    const val typingIndicatorForbidden =
+        """{"type":"response","class":"string","code":403,"body":"Turn on the Feature Toggle or fix the configuration."}"""
 
     fun structuredMessageWithEvents(
         events: String = defaultStructuredEvents,
