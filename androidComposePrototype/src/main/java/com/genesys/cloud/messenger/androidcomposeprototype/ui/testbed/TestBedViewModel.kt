@@ -7,10 +7,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.genesys.cloud.messenger.androidcomposeprototype.BuildConfig
-import com.genesys.cloud.messenger.transport.core.*
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
+import com.genesys.cloud.messenger.transport.core.Configuration
+import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessageEvent.AttachmentUpdated
+import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
+import com.genesys.cloud.messenger.transport.core.MessengerTransport
 import com.genesys.cloud.messenger.transport.util.DefaultTokenStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
