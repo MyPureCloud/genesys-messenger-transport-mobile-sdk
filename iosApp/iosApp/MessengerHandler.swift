@@ -14,6 +14,7 @@ class MessengerHandler {
 
     private let deployment: Deployment
     private let config: Configuration
+    let messengerTransport: MessengerTransport
     let client: MessagingClient
     
     public var onStateChange: ((StateChange) -> Void)?
@@ -26,7 +27,8 @@ class MessengerHandler {
                                     tokenStoreKey: "com.genesys.cloud.messenger",
                                     logging: true,
                                     reconnectionTimeoutInSeconds: reconnectTimeout)
-        self.client = MobileMessenger().createMessagingClient(configuration: self.config)
+        self.messengerTransport = MessengerTransport(self.config)
+        self.client = self.messengerTransport.createMessagingClient()
         
         client.stateChangedListener = { [weak self] stateChange in
             print("State Change: \(stateChange)")
@@ -119,11 +121,7 @@ class MessengerHandler {
     }
 
     func fetchDeployment(completion: @escaping (DeploymentConfig?, Error?) -> Void) {
-        MobileMessenger().fetchDeploymentConfig(
-            domain: deployment.domain!,
-            deploymentId: deployment.deploymentId!,
-            logging: true,
-            completionHandler: completion)
+        messengerTransport.fetchDeploymentConfig(completionHandler: completion)
     }
 
     func clearConversation() {
