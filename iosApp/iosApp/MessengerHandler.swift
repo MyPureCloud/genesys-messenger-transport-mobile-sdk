@@ -27,7 +27,7 @@ class MessengerHandler {
                                     tokenStoreKey: "com.genesys.cloud.messenger",
                                     logging: true,
                                     reconnectionTimeoutInSeconds: reconnectTimeout)
-        self.messengerTransport = MessengerTransport(self.config)
+        self.messengerTransport = MessengerTransport(configuration: self.config)
         self.client = self.messengerTransport.createMessagingClient()
         
         client.stateChangedListener = { [weak self] stateChange in
