@@ -226,11 +226,13 @@ internal class MessagingClientImpl(
                 } else {
                     stateMachine.onError(errorCode, ErrorMessage.FailedToReconnect)
                     attachmentHandler.clearAll()
+                    reconnectionHandler.clear()
                 }
             }
             is ErrorCode.NetworkDisabled -> {
                 stateMachine.onError(errorCode, ErrorMessage.InternetConnectionIsOffline)
                 attachmentHandler.clearAll()
+                reconnectionHandler.clear()
             }
             else -> log.w { "Unhandled WebSocket errorCode. ErrorCode: $errorCode" }
         }

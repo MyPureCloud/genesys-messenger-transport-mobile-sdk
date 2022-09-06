@@ -28,18 +28,20 @@ class ContentViewController: UIViewController {
             let newState = stateChange.newState
             var stateMessage = "\(newState)"
             switch newState {
-            case _ as MessagingClientState.Connecting:
+            case is MessagingClientState.Connecting:
                 stateMessage = "Connecting"
-            case _ as MessagingClientState.Connected:
+            case is MessagingClientState.Connected:
                 stateMessage = "Connected"
             case let configured as MessagingClientState.Configured:
-                stateMessage = "Configured, connected=\(configured.connected) newSession=\(configured.newSession) wasReconnecting=\(stateChange.oldState.isEqual(MessagingClientState.Reconnecting()))"
+                stateMessage = "Configured, connected=\(configured.connected) newSession=\(configured.newSession) wasReconnecting=\(stateChange.oldState is MessagingClientState.Reconnecting)"
             case let closing as MessagingClientState.Closing:
                 stateMessage = "Closing, code=\(closing.code) reason=\(closing.reason)"
             case let closed as MessagingClientState.Closed:
                 stateMessage = "Closed, code=\(closed.code) reason=\(closed.reason)"
             case let error as MessagingClientState.Error:
                 stateMessage = "Error, code=\(error.code) message=\(error.message?.description ?? "nil")"
+            case is MessagingClientState.Reconnecting:
+                stateMessage = "Reconnecting"
             default:
                 break
             }
@@ -129,7 +131,7 @@ class ContentViewController: UIViewController {
         let view = UITextField()
         view.font = UIFont.preferredFont(forTextStyle: .body)
         view.borderStyle = .line
-        view.placeholder = "Send a message"
+        view.placeholder = "Send a command"
         view.autocapitalizationType = .none
         view.autocorrectionType = .no
         view.accessibilityIdentifier = "Text-Field"

@@ -288,6 +288,7 @@ class MessagingClientImplTest {
             mockReconnectionHandler.shouldReconnect
             mockStateChangedListener(fromConnectedToError(expectedErrorState))
             mockAttachmentHandler.clearAll()
+            mockReconnectionHandler.clear()
         }
     }
 
@@ -305,6 +306,7 @@ class MessagingClientImplTest {
             connectSequence()
             mockStateChangedListener(fromConnectedToError(expectedErrorState))
             mockAttachmentHandler.clearAll()
+            mockReconnectionHandler.clear()
         }
     }
 
