@@ -8,7 +8,7 @@ object Deps {
     private const val logbackVersion = "1.2.10"
     private const val mockWebServerVersion = "4.9.0"
     private const val mockkVersion = "1.12.2"
-    private const val okhttpVersion = "4.9.1"
+    private const val okhttpVersion = "4.10.0"
     private const val klockVersion = "2.4.13"
 
     object Libs {

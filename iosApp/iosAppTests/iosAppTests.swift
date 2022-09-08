@@ -120,6 +120,7 @@ class iosAppTests: XCTestCase {
         guard let contentController = contentController else {
             XCTFail("Failed to setup the content controller.")
             return
+
         }
 
         contentController.startMessengerConnection()
