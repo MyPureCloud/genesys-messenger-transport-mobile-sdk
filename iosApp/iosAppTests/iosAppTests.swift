@@ -115,151 +115,38 @@ class iosAppTests: XCTestCase {
         contentController.disconnectMessenger()
     }
 
-}
-
-class TestContentController: MessengerHandler {
-
-    var testExpectation: XCTestExpectation? = nil
-    var errorExpectation: XCTestExpectation? = nil
-    var receivedMessageText: String? = nil
-    var receivedDownloadUrl: String? = nil
-    
-    override init(deployment: Deployment, reconnectTimeout: Int64 = 60 * 5) {
-        super.init(deployment: deployment, reconnectTimeout: reconnectTimeout)
-        
-        client.stateChangedListener = { [weak self] stateChange in
-            print("State Event. New state: \(stateChange.newState), old state: \(stateChange.oldState)")
-            let newState = stateChange.newState
-            switch newState {
-            case _ as MessagingClientState.Configured:
-                self?.testExpectation?.fulfill()
-            case _ as MessagingClientState.Closed:
-                self?.testExpectation?.fulfill()
-            case let error as MessagingClientState.Error:
-                print("Socket <error>. code: <\(error.code.description)> , message: <\(error.message ?? "No message")>")
-                self?.errorExpectation?.fulfill()
-            default:
-                break
-            }
-            self?.onStateChange?(stateChange)
-        }
-        
-        client.messageListener = { [weak self] event in
-            switch event {
-            case let messageInserted as MessageEvent.MessageInserted:
-                print("Message Inserted: <\(messageInserted.message.description)>")
-                self?.receivedMessageText = messageInserted.message.text
-                self?.testExpectation?.fulfill()
-            case let messageUpdated as MessageEvent.MessageUpdated:
-                print("Message Updated: <\(messageUpdated.message.description)>")
-                self?.testExpectation?.fulfill()
-            case let attachmentUpdated as MessageEvent.AttachmentUpdated:
-                print("Attachment Updated: <\(attachmentUpdated.attachment.description)>")
-                // Only finish the wait when the attachment has finished uploading.
-                if let uploadedAttachment = attachmentUpdated.attachment.state as? Attachment.StateUploaded {
-                    self?.receivedDownloadUrl = uploadedAttachment.downloadUrl
-                    self?.testExpectation?.fulfill()
-                }
-            case let history as MessageEvent.HistoryFetched:
-                print("start of conversation: <\(history.startOfConversation.description)>, messages: <\(history.messages.description)>")
-                self?.testExpectation?.fulfill()
-            default:
-                print("Unexpected messageListener event: \(event)")
-            }
-            self?.onMessageEvent?(event)
-        }
-        
-    }
-
-    func startMessengerConnection(file: StaticString = #file, line: UInt = #line) {
-        do {
-            try connect(shouldConfigure: true)
-        } catch {
-            XCTFail("Possible issue with connecting to the backend: \(error.localizedDescription)", file: file, line: line)
-        }
-    }
-
-    override func connect(shouldConfigure: Bool) throws {
-        testExpectation = XCTestExpectation(description: "Wait for Configuration.")
-        try super.connect(shouldConfigure: shouldConfigure)
-        waitForExpectation()
-    }
-
-    func disconnectMessenger(file: StaticString = #file, line: UInt = #line) {
-        do {
-            try disconnect()
-        } catch {
-            XCTFail("Failed to disconnect the session.\n\(error.localizedDescription)", file: file, line: line)
-        }
-    }
-
-    override func disconnect() throws {
-        testExpectation = XCTestExpectation(description: "Wait for Disconnect.")
-        try super.disconnect()
-        waitForExpectation()
-    }
-
-    func sendText(text: String, file: StaticString = #file, line: UInt = #line) {
-        do {
-            try sendMessage(text: text)
-        } catch {
-            XCTFail("Failed to send the message '\(text)'\n\(error.localizedDescription)", file: file, line: line)
-        }
-    }
-
-    func sendTextWithAttribute(text: String, attributes: [String: String], file: StaticString = #file, line: UInt = #line) {
-        do {
-            try sendMessage(text: text, customAttributes: attributes)
-        } catch {
-            XCTFail("Failed to send the message \(text) with the attributes: \(attributes)\n\(error.localizedDescription)", file: file, line: line)
-        }
-    }
-
-    override func sendMessage(text: String, customAttributes: [String: String] = [:]) throws {
-        testExpectation = XCTestExpectation(description: "Wait for message to send.")
-        try super.sendMessage(text: text, customAttributes: customAttributes)
-        waitForExpectation()
-        verifyReceivedMessage(expectedMessage: text)
-    }
-
-    func attemptImageAttach(kotlinByteArray: KotlinByteArray, file: StaticString = #file, line: UInt = #line) {
-        do {
-            try attachImage(kotlinByteArray: kotlinByteArray)
-        } catch {
-            XCTFail("Failed to attach image.\n\(error.localizedDescription)", file: file, line: line)
-        }
-    }
-
-    override func attachImage(kotlinByteArray: KotlinByteArray) throws {
-        testExpectation = XCTestExpectation(description: "Wait for image to attach successfully.")
-        try super.attachImage(kotlinByteArray: kotlinByteArray)
-        waitForExpectation()
-    }
-
-    func sendUploadedImage(file: StaticString = #file, line: UInt = #line) {
-        testExpectation = XCTestExpectation(description: "Wait for the uploaded image url to send.")
-        guard let receivedDownloadUrl = receivedDownloadUrl else {
-            XCTFail("There was no download URL received.")
+    func testTypingIndicators() {
+        // Setup the session. Send a message.
+        guard let contentController = contentController else {
+            XCTFail("Failed to setup the content controller.")
             return
         }
-        do {
-            try super.sendMessage(text: receivedDownloadUrl)
-        } catch {
-            XCTFail("Failed to upload an image.\n\(error.localizedDescription)", file: file, line: line)
+
+        contentController.startMessengerConnection()
+        contentController.sendText(text: "Testing from E2E test.")
+
+        // Use the public API to answer the new Messenger conversation.
+        // Send a message from that agent and make sure we receive it.
+        guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
+            XCTFail("The message we sent may not have connected to an agent.")
+            return
         }
-        waitForExpectation()
-        verifyReceivedMessage(expectedMessage: receivedDownloadUrl)
-    }
 
-    func waitForExpectation() {
-        let result = XCTWaiter().wait(for: [testExpectation!], timeout: 60)
-        XCTAssertEqual(result, .completed, "Expectation never fullfilled: \(testExpectation?.description ?? "No description.")")
-    }
+        // Send a typing indicator. Ensure that we don't receive an error.
+        do {
+            try contentController.indicateTyping()
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
 
-    func verifyReceivedMessage(expectedMessage: String) {
-        print("Checking the received message...")
-        XCTAssertEqual(expectedMessage, receivedMessageText, "The received message: '\(receivedMessageText ?? "")' didn't match what was expected: '\(expectedMessage)'.")
-        receivedMessageText = nil
+        // Receive a typing indicator from the agent.
+        contentController.testExpectation = XCTestExpectation(description: "Wait for a typing indicator from the agent.")
+        ApiHelper.shared.sendTypingIndicator(conversationId: conversationInfo.conversationId, communicationId: conversationInfo.communicationId)
+        contentController.waitForExpectation()
+
+        // Disconnect the conversation for the agent and disconnect the session.
+        ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
+        contentController.disconnectMessenger()
     }
 
 }

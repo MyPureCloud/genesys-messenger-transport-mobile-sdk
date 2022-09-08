@@ -52,6 +52,12 @@ extension ApiHelper {
         _ = publicAPICall(httpMethod: "POST", httpURL: "/api/v2/conversations/messages/\(conversationId)/communications/\(communicationId)/messages", jsonBody: payload)
     }
 
+    public func sendTypingIndicator(conversationId: String, communicationId: String) {
+        let conversationEventTyping: [String: Any] = ["type": "On"]
+        let payload: [String: Any] = ["typing": conversationEventTyping]
+        _ = publicAPICall(httpMethod: "POST", httpURL: "/api/v2/conversations/messages/\(conversationId)/communications/\(communicationId)/typing", jsonBody: payload)
+    }
+
     public func getCommunicationId(conversationId: String) -> String? {
         guard let results = publicAPICall(httpMethod: "GET", httpURL: "/api/v2/conversations/\(conversationId)"), let participants = results.value(forKey: "participants") as? [JsonDictionary] else {
             print("There was an issue getting the conversation information.")
