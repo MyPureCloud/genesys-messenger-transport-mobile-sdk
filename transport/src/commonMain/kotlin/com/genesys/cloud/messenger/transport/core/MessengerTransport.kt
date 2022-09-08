@@ -27,10 +27,11 @@ class MessengerTransport(private val configuration: Configuration, private val t
         val log = Log(configuration.logging, LogTag.MESSAGING_CLIENT)
         val api = WebMessagingApi(configuration)
         val webSocket = PlatformSocket(log.withTag(LogTag.WEBSOCKET), configuration.webSocketUrl, DEFAULT_PING_INTERVAL_IN_SECONDS)
-        val messageStore = MessageStore(tokenStore.token, log.withTag(LogTag.MESSAGE_STORE))
+        val token = tokenStore.token
+        val messageStore = MessageStore(token, log.withTag(LogTag.MESSAGE_STORE))
         val attachmentHandler = AttachmentHandlerImpl(
             api,
-            tokenStore.token,
+            token,
             log.withTag(LogTag.ATTACHMENT_HANDLER),
             messageStore.updateAttachmentStateWith,
         )
@@ -38,9 +39,9 @@ class MessengerTransport(private val configuration: Configuration, private val t
             api = api,
             log = log,
             webSocket = webSocket,
-            token = tokenStore.token,
+            token = token,
             configuration = configuration,
-            jwtHandler = JwtHandler(webSocket, tokenStore.token),
+            jwtHandler = JwtHandler(webSocket, token),
             attachmentHandler = attachmentHandler,
             messageStore = messageStore,
             reconnectionHandler = ReconnectionHandlerImpl(configuration.reconnectionTimeoutInSeconds, log.withTag(
