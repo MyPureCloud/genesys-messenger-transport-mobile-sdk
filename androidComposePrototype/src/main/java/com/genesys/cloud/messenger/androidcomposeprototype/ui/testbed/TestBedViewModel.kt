@@ -13,7 +13,8 @@ import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessageEvent.AttachmentUpdated
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
-import com.genesys.cloud.messenger.transport.core.MobileMessenger
+import com.genesys.cloud.messenger.transport.core.MessengerTransport
+import com.genesys.cloud.messenger.transport.util.DefaultTokenStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -29,6 +30,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private val TAG = TestBedViewModel::class.simpleName
 
+    private lateinit var messengerTransport: MessengerTransport
     private lateinit var client: MessagingClient
     private lateinit var attachment: ByteArray
     private val attachedIds = mutableListOf<String>()
@@ -53,13 +55,11 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         val mmsdkConfiguration = Configuration(
             deploymentId = BuildConfig.DEPLOYMENT_ID,
             domain = BuildConfig.DEPLOYMENT_DOMAIN,
-            tokenStoreKey = "com.genesys.cloud.messenger",
             logging = true
         )
-        client = MobileMessenger.createMessagingClient(
-            context = context,
-            configuration = mmsdkConfiguration,
-        )
+        DefaultTokenStore.context = context
+        messengerTransport = MessengerTransport(mmsdkConfiguration)
+        client = messengerTransport.createMessagingClient()
         with(client) {
             stateChangedListener = { runBlocking { onClientStateChanged(oldState = it.oldState, newState = it.newState) } }
             messageListener = { onEvent(it) }
@@ -116,11 +116,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     private suspend fun doDeployment() {
         try {
             onSocketMessageReceived(
-                MobileMessenger.fetchDeploymentConfig(
-                    BuildConfig.DEPLOYMENT_DOMAIN,
-                    BuildConfig.DEPLOYMENT_ID,
-                    true,
-                ).toString()
+                messengerTransport.fetchDeploymentConfig().toString()
             )
         } catch (t: Throwable) {
             handleException(t, "fetch deployment config")

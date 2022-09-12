@@ -13,7 +13,6 @@ class RegionConfigurationTest {
         val configuration = Configuration(
             deploymentId = "foo",
             domain = "mypurecloud.com",
-            tokenStoreKey = "tokenStoreKey"
         )
 
         val actual = configuration.webSocketUrl
@@ -27,7 +26,6 @@ class RegionConfigurationTest {
         val configuration = Configuration(
             deploymentId = "foo",
             domain = "mypurecloud.com",
-            tokenStoreKey = "tokenStoreKey"
         )
 
         val actual = configuration.apiBaseUrl
@@ -41,7 +39,6 @@ class RegionConfigurationTest {
         val configuration = Configuration(
             deploymentId = "foo",
             domain = "mypurecloud.com",
-            tokenStoreKey = "tokenStoreKey"
         )
 
         val actual = configuration.deploymentConfigUrl
