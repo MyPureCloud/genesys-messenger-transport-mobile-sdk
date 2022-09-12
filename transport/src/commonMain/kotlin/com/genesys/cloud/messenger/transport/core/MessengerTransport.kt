@@ -16,9 +16,7 @@ import com.genesys.cloud.messenger.transport.util.logs.LogTag
  */
 class MessengerTransport(private val configuration: Configuration, private val tokenStore: TokenStore) {
 
-    constructor(configuration: Configuration, storeKey: String) : this(configuration, DefaultTokenStore(storeKey))
-
-    constructor(configuration: Configuration) : this(configuration, "com.genesys.cloud.messenger")
+    constructor(configuration: Configuration) : this(configuration, DefaultTokenStore(TOKEN_STORE_KEY))
 
     /**
      * Creates an instance of [MessagingClient] based on the provided configuration.
@@ -57,5 +55,9 @@ class MessengerTransport(private val configuration: Configuration, private val t
     @Throws(Exception::class)
     suspend fun fetchDeploymentConfig(): DeploymentConfig {
         return DeploymentConfigUseCase(configuration.logging, configuration.deploymentConfigUrl.toString()).fetch()
+    }
+
+    companion object {
+        private const val TOKEN_STORE_KEY = "com.genesys.cloud.messenger"
     }
 }
