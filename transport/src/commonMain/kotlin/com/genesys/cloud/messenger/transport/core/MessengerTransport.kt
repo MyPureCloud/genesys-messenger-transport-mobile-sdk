@@ -1,6 +1,6 @@
 package com.genesys.cloud.messenger.transport.core
 
-import com.genesys.cloud.messenger.transport.network.*
+import com.genesys.cloud.messenger.transport.network.DEFAULT_PING_INTERVAL_IN_SECONDS
 import com.genesys.cloud.messenger.transport.network.DeploymentConfigUseCase
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
