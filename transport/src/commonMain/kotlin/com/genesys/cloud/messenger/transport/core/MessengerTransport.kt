@@ -11,6 +11,8 @@ import com.genesys.cloud.messenger.transport.util.TokenStore
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 
+private const val TOKEN_STORE_KEY = "com.genesys.cloud.messenger"
+
 /**
  * The entry point to the services provided by the transport SDK.
  */
@@ -57,7 +59,4 @@ class MessengerTransport(private val configuration: Configuration, private val t
         return DeploymentConfigUseCase(configuration.logging, configuration.deploymentConfigUrl.toString()).fetch()
     }
 
-    companion object {
-        private const val TOKEN_STORE_KEY = "com.genesys.cloud.messenger"
-    }
 }

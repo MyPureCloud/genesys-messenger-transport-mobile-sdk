@@ -24,7 +24,6 @@ class MessengerHandler {
         self.deployment = deployment
         self.config = Configuration(deploymentId: deployment.deploymentId!,
                                     domain: deployment.domain!,
-                                    tokenStoreKey: "com.genesys.cloud.messenger",
                                     logging: true,
                                     reconnectionTimeoutInSeconds: reconnectTimeout)
         self.messengerTransport = MessengerTransport(configuration: self.config)

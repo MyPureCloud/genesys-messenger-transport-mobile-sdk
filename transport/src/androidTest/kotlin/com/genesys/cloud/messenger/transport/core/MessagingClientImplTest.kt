@@ -617,7 +617,6 @@ class MessagingClientImplTest {
     private fun configuration(): Configuration = Configuration(
         deploymentId = "deploymentId",
         domain = "inindca.com",
-        tokenStoreKey = "tokenStoreKey"
     )
 
     private fun MockKVerificationScope.connectSequence() {

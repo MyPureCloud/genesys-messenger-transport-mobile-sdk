@@ -55,7 +55,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         val mmsdkConfiguration = Configuration(
             deploymentId = BuildConfig.DEPLOYMENT_ID,
             domain = BuildConfig.DEPLOYMENT_DOMAIN,
-            tokenStoreKey = "com.genesys.cloud.messenger",
             logging = true
         )
         DefaultTokenStore.context = context
