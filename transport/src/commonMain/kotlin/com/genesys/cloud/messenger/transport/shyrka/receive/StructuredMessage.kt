@@ -1,5 +1,7 @@
 package com.genesys.cloud.messenger.transport.shyrka.receive
 
+import com.genesys.cloud.messenger.transport.core.Message
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -14,12 +16,13 @@ internal data class MessageEntityList(
 @Serializable
 internal data class StructuredMessage(
     val id: String,
-    val type: String,
+    val type: Type,
     val text: String? = null,
     val direction: String,
     val channel: Channel? = null,
     val content: List<Content> = emptyList(),
-    val metadata: Map<String, String> = emptyMap()
+    val metadata: Map<String, String> = emptyMap(),
+    val events: List<StructuredMessageEvent> = emptyList(),
 ) {
     @Serializable
     data class Participant(
@@ -54,4 +57,14 @@ internal data class StructuredMessage(
         val contentType: String,
         val attachment: Attachment,
     )
+
+    @Serializable
+    enum class Type {
+        @SerialName("Text")
+        Text,
+        @SerialName("Event")
+        Event,
+    }
 }
+
+internal fun StructuredMessage.isOutbound(): Boolean = this.direction == Message.Direction.Outbound.name

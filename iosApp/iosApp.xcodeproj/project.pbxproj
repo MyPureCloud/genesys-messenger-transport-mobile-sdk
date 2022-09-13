@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 51;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -19,6 +19,7 @@
 		8C4A6A23273C696C008B8150 /* Deployment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4A6A22273C696C008B8150 /* Deployment.swift */; };
 		8CF6294F27074EB400AE0CA8 /* ContentViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CF6294E27074EB400AE0CA8 /* ContentViewController.swift */; };
 		8CF62953270754C000AE0CA8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF80242A565900829871 /* SceneDelegate.swift */; };
+		BA5B8CD428CA2FEC007C8160 /* TestContentController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5B8CD328CA2FEC007C8160 /* TestContentController.swift */; };
 		BA88FE14284953CA009AA1F8 /* MessengerHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA88FE13284953CA009AA1F8 /* MessengerHandler.swift */; };
 		BA88FE16284A54E7009AA1F8 /* config.json in Resources */ = {isa = PBXBuildFile; fileRef = BA88FE15284A54E6009AA1F8 /* config.json */; };
 		BA88FE22284A5501009AA1F8 /* TestConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA88FE18284A5501009AA1F8 /* TestConfig.swift */; };
@@ -69,6 +70,7 @@
 		8C4A6A19273C3CD8008B8150 /* deployment.properties */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = deployment.properties; path = ../../deployment.properties; sourceTree = "<group>"; };
 		8C4A6A22273C696C008B8150 /* Deployment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deployment.swift; sourceTree = "<group>"; };
 		8CF6294E27074EB400AE0CA8 /* ContentViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewController.swift; sourceTree = "<group>"; };
+		BA5B8CD328CA2FEC007C8160 /* TestContentController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestContentController.swift; sourceTree = "<group>"; };
 		BA88FE13284953CA009AA1F8 /* MessengerHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessengerHandler.swift; sourceTree = "<group>"; };
 		BA88FE15284A54E6009AA1F8 /* config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = config.json; sourceTree = "<group>"; };
 		BA88FE18284A5501009AA1F8 /* TestConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TestConfig.swift; sourceTree = "<group>"; };
@@ -209,6 +211,7 @@
 				BA88FE1C284A5501009AA1F8 /* ConversationInfo.swift */,
 				BA88FE1D284A5501009AA1F8 /* extensions.swift */,
 				BA88FE2A284A57E2009AA1F8 /* WaitHandler.swift */,
+				BA5B8CD328CA2FEC007C8160 /* TestContentController.swift */,
 			);
 			path = Support;
 			sourceTree = "<group>";
@@ -242,7 +245,7 @@
 				7555FF77242A565900829871 /* Sources */,
 				7555FF78242A565900829871 /* Frameworks */,
 				7555FF79242A565900829871 /* Resources */,
-				5D1BB332E141DF44B408E7B0 /* [CP] Embed Pods Frameworks */,
+				DE828D6A2F904488DF0DABF5 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -386,7 +389,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		5D1BB332E141DF44B408E7B0 /* [CP] Embed Pods Frameworks */ = {
+		DE828D6A2F904488DF0DABF5 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -453,6 +456,7 @@
 				7555FF96242A565B00829871 /* iosAppTests.swift in Sources */,
 				BA88FE22284A5501009AA1F8 /* TestConfig.swift in Sources */,
 				BA88FE2B284A57E2009AA1F8 /* WaitHandler.swift in Sources */,
+				BA5B8CD428CA2FEC007C8160 /* TestContentController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

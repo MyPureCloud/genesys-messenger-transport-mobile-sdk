@@ -18,7 +18,7 @@ internal fun StructuredMessage.toMessage(): Message {
         id = this.metadata["customMessageId"] ?: this.id,
         direction = if (this.direction == "Inbound") Direction.Inbound else Direction.Outbound,
         state = Message.State.Sent,
-        type = this.type,
+        type = this.type.name,
         text = this.text,
         timeStamp = this.channel?.time.fromIsoToEpochMilliseconds(),
         attachments = this.content.toAttachments()

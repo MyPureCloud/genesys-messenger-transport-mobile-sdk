@@ -19,6 +19,7 @@ class MessengerHandler {
     
     public var onStateChange: ((StateChange) -> Void)?
     public var onMessageEvent: ((MessageEvent) -> Void)?
+    public var onEvent: ((Event) -> Void)?
     
     init(deployment: Deployment, reconnectTimeout: Int64 = 60 * 5) {
         self.deployment = deployment
@@ -33,9 +34,13 @@ class MessengerHandler {
             print("State Change: \(stateChange)")
             self?.onStateChange?(stateChange)
         }
-        client.messageListener = { [weak self] event in
-            print("Message Event: \(event)")
-            self?.onMessageEvent?(event)
+        client.messageListener = { [weak self] message in
+            print("Message Event: \(message)")
+            self?.onMessageEvent?(message)
+        }
+        client.eventListener = { [weak self] event in
+            print("Event: \(event)")
+            self?.onEvent?(event)
         }
     }
 
@@ -125,5 +130,14 @@ class MessengerHandler {
 
     func clearConversation() {
         client.invalidateConversationCache()
+    }
+
+    func indicateTyping() throws {
+        do {
+            try client.indicateTyping()
+        } catch {
+            print("indicateTyping() failed. \(error.localizedDescription)")
+            throw error
+        }
     }
 }

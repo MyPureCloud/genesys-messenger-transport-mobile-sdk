@@ -1,6 +1,11 @@
 package com.genesys.cloud.messenger.transport.core
 
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
+import com.genesys.cloud.messenger.transport.core.events.Event
+import com.genesys.cloud.messenger.transport.core.events.EventHandler
+import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
+import com.genesys.cloud.messenger.transport.core.events.TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND
+import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
@@ -8,6 +13,7 @@ import com.genesys.cloud.messenger.transport.network.SocketCloseCode
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.AttachmentDeletedResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
@@ -17,6 +23,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.TooManyRequestsErrorMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.isOutbound
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.EchoRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
@@ -41,6 +48,8 @@ internal class MessagingClientImpl(
     private val messageStore: MessageStore,
     private val reconnectionHandler: ReconnectionHandler,
     private val stateMachine: StateMachine = StateMachineImpl(log.withTag(LogTag.STATE_MACHINE)),
+    private val eventHandler: EventHandler = EventHandlerImpl(log.withTag(LogTag.EVENT_HANDLER)),
+    private val userTypingProvider: UserTypingProvider = UserTypingProvider(),
 ) : MessagingClient {
     private var shouldConfigureAfterConnect = false
 
@@ -65,6 +74,12 @@ internal class MessagingClientImpl(
     override var messageListener: ((MessageEvent) -> Unit)? = null
         set(value) {
             messageStore.messageListener = value
+            field = value
+        }
+
+    override var eventListener: ((Event) -> Unit)? = null
+        set(value) {
+            eventHandler.eventListener = value
             field = value
         }
 
@@ -188,6 +203,17 @@ internal class MessagingClientImpl(
         messageStore.invalidateConversationCache()
     }
 
+    @Throws(IllegalStateException::class)
+    override fun indicateTyping() {
+        val encodedJson = userTypingProvider.encodeRequest(token)
+        if (encodedJson == null) {
+            log.w { "Typing event can be sent only once every $TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND milliseconds." }
+            return
+        }
+        log.i { "indicateTyping()" }
+        send(encodedJson)
+    }
+
     private fun handleError(code: ErrorCode, message: String? = null) {
         when (code) {
             is ErrorCode.SessionHasExpired,
@@ -208,6 +234,8 @@ internal class MessagingClientImpl(
                 if (stateMachine.isConnected()) {
                     shouldConfigureAfterConnect = false
                     stateMachine.onError(code, message)
+                } else {
+                    eventHandler.onEvent(ErrorEvent(errorCode = code, message = message))
                 }
             }
             is ErrorCode.WebsocketError -> handleWebSocketError(ErrorCode.WebsocketError)
@@ -235,6 +263,26 @@ internal class MessagingClientImpl(
                 reconnectionHandler.clear()
             }
             else -> log.w { "Unhandled WebSocket errorCode. ErrorCode: $errorCode" }
+        }
+    }
+
+    private fun handleStructuredMessage(structuredMessage: StructuredMessage) {
+        when (structuredMessage.type) {
+            StructuredMessage.Type.Text -> {
+                with(structuredMessage.toMessage()) {
+                    messageStore.update(this)
+                    attachmentHandler.onSent(this.attachments)
+                    userTypingProvider.clear()
+                }
+            }
+
+            StructuredMessage.Type.Event -> {
+                if (structuredMessage.isOutbound()) {
+                    structuredMessage.events.forEach {
+                        eventHandler.onEvent(it)
+                    }
+                }
+            }
         }
     }
 
@@ -289,12 +337,7 @@ internal class MessagingClientImpl(
                         attachmentHandler.upload(decoded.body)
                     is UploadSuccessEvent ->
                         attachmentHandler.onUploadSuccess(decoded.body)
-                    is StructuredMessage -> {
-                        with(decoded.body.toMessage()) {
-                            messageStore.update(this)
-                            attachmentHandler.onSent(this.attachments)
-                        }
-                    }
+                    is StructuredMessage -> handleStructuredMessage(decoded.body)
                     is AttachmentDeletedResponse ->
                         attachmentHandler.onDetached(decoded.body.attachmentId)
                     is GenerateUrlError -> {
