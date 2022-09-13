@@ -1,5 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
+import com.genesys.cloud.messenger.transport.core.events.Event
+
 /**
  * The main SDK interface providing bi-directional communication between a guest and Genesys Cloud
  * via Web Messaging service.
@@ -79,6 +81,11 @@ interface MessagingClient {
     var messageListener: ((MessageEvent) -> Unit)?
 
     /**
+     * Listener for Transport events.
+     */
+    var eventListener: ((Event) -> Unit)?
+
+    /**
      * Message that is currently in progress of being sent.
      */
     val pendingMessage: Message
@@ -135,7 +142,7 @@ interface MessagingClient {
 
     /**
      * Attach a file to the message. This file will be uploaded and cached locally
-     * until user decides to send a message.
+     * until customer decides to send a message.
      * After the message has been sent, attachment will be cleared from cache.
      *
      * @param byteArray data to upload.
@@ -184,4 +191,14 @@ interface MessagingClient {
      * latest available history.
      */
     fun invalidateConversationCache()
+
+    /**
+     * Notify the agent that the customer is typing a message.
+     * This command sends a single typing indicator event and should be called a maximum of once every 5 seconds.
+     * If called more frequently, this command will be rate limited in order to optimize network traffic.
+     *
+     * @throws IllegalStateException if called before session was connected.
+     */
+    @Throws(IllegalStateException::class)
+    fun indicateTyping()
 }
