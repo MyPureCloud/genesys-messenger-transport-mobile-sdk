@@ -44,8 +44,10 @@ class MessengerTransport(private val configuration: Configuration, private val t
             jwtHandler = JwtHandler(webSocket, token),
             attachmentHandler = attachmentHandler,
             messageStore = messageStore,
-            reconnectionHandler = ReconnectionHandlerImpl(configuration.reconnectionTimeoutInSeconds, log.withTag(
-                LogTag.RECONNECTION_HANDLER))
+            reconnectionHandler = ReconnectionHandlerImpl(
+                configuration.reconnectionTimeoutInSeconds,
+                log.withTag(LogTag.RECONNECTION_HANDLER),
+            )
         )
     }
 
@@ -58,5 +60,4 @@ class MessengerTransport(private val configuration: Configuration, private val t
     suspend fun fetchDeploymentConfig(): DeploymentConfig {
         return DeploymentConfigUseCase(configuration.logging, configuration.deploymentConfigUrl.toString()).fetch()
     }
-
 }
