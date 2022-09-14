@@ -96,31 +96,13 @@ interface MessagingClient {
     val conversation: List<Message>
 
     /**
-     * Open a secure WebSocket connection to the Web Messaging service with the url and
+     * Open and Configure a secure WebSocket connection to the Web Messaging service with the url and
      * deploymentId configured on this MessagingClient instance.
      *
      * @throws IllegalStateException
      */
-    @Deprecated("Use the connect(shouldConfigure: Boolean) instead", ReplaceWith("connect(shouldConfigure: Boolean)"))
     @Throws(IllegalStateException::class)
     fun connect()
-
-    /**
-     * Open a secure WebSocket connection to the Web Messaging service with the url and
-     * deploymentId configured on this MessagingClient instance.
-     *
-     * @param shouldConfigure a Boolean value indicating whether to configure a Web Messaging session after the WebSocket is opened.
-     * @throws IllegalStateException
-     */
-    @Throws(IllegalStateException::class)
-    fun connect(shouldConfigure: Boolean = true)
-
-    /**
-     * Configure a Web Messaging session.
-     */
-    @Deprecated("Use the connect(shouldConfigure: Boolean) instead", ReplaceWith("connect(shouldConfigure: Boolean)"))
-    @Throws(IllegalStateException::class)
-    fun configureSession()
 
     /**
      * Send a message to the conversation as plain text.

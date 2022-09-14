@@ -37,11 +37,6 @@ internal class StateMachineImpl(
         currentState = State.Reconnecting
     }
 
-    @Throws(IllegalStateException::class)
-    override fun onConfiguring() {
-        check(currentState.canConfigure()) { "WebMessaging client is not connected." }
-    }
-
     override fun onSessionConfigured(
         connected: Boolean,
         newSession: Boolean,
@@ -74,8 +69,6 @@ internal fun StateMachine.isClosed(): Boolean = currentState is State.Closed
 
 private fun State.canConnect(): Boolean =
     this is State.Closed || this is State.Idle || this is State.Error || this is State.Reconnecting
-
-private fun State.canConfigure(): Boolean = this is State.Connected || this is State.Reconnecting
 
 private fun State.isReconnecting(): Boolean = this is State.Reconnecting
 

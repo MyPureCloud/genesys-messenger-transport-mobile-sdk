@@ -12,7 +12,6 @@ import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent.Typing
@@ -131,7 +130,7 @@ class MessagingClientImplTest {
     fun whenConnect() {
         subject.connect()
 
-        assertThat(subject).isConnected()
+        assertThat(subject).isConfigured(connected = true, newSession = true)
         verifySequence {
             connectSequence()
         }
@@ -152,30 +151,16 @@ class MessagingClientImplTest {
     }
 
     @Test
-    fun whenConnectAndThenConfigureSession() {
-        subject.connect()
-
-        subject.configureSession()
-
-        assertThat(subject).isConfigured(true, true)
-        verifySequence {
-            connectSequence()
-            configureSequence()
-        }
-    }
-
-    @Test
-    fun whenConnectConfigureSessionAndThenSendMessage() {
+    fun whenConnectAndThenSendMessage() {
         val expectedMessage =
             """{"token":"00000000-0000-0000-0000-000000000000","message":{"text":"Hello world","type":"Text"},"action":"onMessage"}"""
         val expectedText = "Hello world"
-        connectAndConfigure()
+        subject.connect()
 
         subject.sendMessage("Hello world")
 
         verifySequence {
             connectSequence()
-            configureSequence()
             mockMessageStore.prepareMessage(expectedText)
             mockAttachmentHandler.onSending()
             mockPlatformSocket.sendMessage(expectedMessage)
@@ -186,13 +171,12 @@ class MessagingClientImplTest {
     fun whenSendHealthCheckWithToken() {
         val expectedMessage =
             """{"token":"00000000-0000-0000-0000-000000000000","action":"echo","message":{"text":"ping","type":"Text"}}"""
-        connectAndConfigure()
+        subject.connect()
 
         subject.sendHealthCheck()
 
         verifySequence {
             connectSequence()
-            configureSequence()
             mockPlatformSocket.sendMessage(expectedMessage)
         }
     }
@@ -202,14 +186,13 @@ class MessagingClientImplTest {
         val expectedAttachmentId = "88888888-8888-8888-8888-888888888888"
         val expectedMessage =
             """{"token":"00000000-0000-0000-0000-000000000000","attachmentId":"88888888-8888-8888-8888-888888888888","fileName":"test_attachment.png","fileType":"image/png","errorsAsJson":true,"action":"onAttachment"}"""
-        connectAndConfigure()
+        subject.connect()
 
         val result = subject.attach(ByteArray(1), "test.png")
 
         assertEquals(expectedAttachmentId, result)
         verifySequence {
             connectSequence()
-            configureSequence()
             mockAttachmentHandler.prepare(any(), any(), any())
             mockPlatformSocket.sendMessage(expectedMessage)
         }
@@ -221,7 +204,7 @@ class MessagingClientImplTest {
         val expectedMessage =
             """{"token":"00000000-0000-0000-0000-000000000000","attachmentId":"88888888-8888-8888-8888-888888888888","action":"deleteAttachment"}"""
         val attachmentIdSlot = slot<String>()
-        connectAndConfigure()
+        subject.connect()
 
         subject.detach("88888888-8888-8888-8888-888888888888")
 
@@ -234,7 +217,7 @@ class MessagingClientImplTest {
 
     @Test
     fun whenDetachNonExistingAttachmentId() {
-        connectAndConfigure()
+        subject.connect()
         clearMocks(mockPlatformSocket)
         every { mockAttachmentHandler.detach(any()) } returns null
 
@@ -243,13 +226,6 @@ class MessagingClientImplTest {
         verify {
             mockAttachmentHandler.detach("88888888-8888-8888-8888-888888888888")
             mockPlatformSocket wasNot Called
-        }
-    }
-
-    @Test
-    fun whenNotConnectedAndConfigureVerifyIllegalStateExceptionThrown() {
-        assertFailsWith<IllegalStateException> {
-            subject.configureSession()
         }
     }
 
@@ -289,9 +265,10 @@ class MessagingClientImplTest {
     }
 
     @Test
-    fun whenConfigureFailsAndSocketListenerRespondWithWebsocketErrorAndThereAreNoReconnectionAttemptsLeft() {
+    fun whenConnectFailsAndSocketListenerRespondWithWebsocketErrorAndThereAreNoReconnectionAttemptsLeft() {
         val expectedException = Exception(ErrorMessage.FailedToReconnect)
-        val expectedErrorState = State.Error(ErrorCode.WebsocketError, ErrorMessage.FailedToReconnect)
+        val expectedErrorState =
+            State.Error(ErrorCode.WebsocketError, ErrorMessage.FailedToReconnect)
 
         subject.connect()
 
@@ -302,45 +279,29 @@ class MessagingClientImplTest {
             connectSequence()
             mockMessageStore.invalidateConversationCache()
             mockReconnectionHandler.shouldReconnect
-            mockStateChangedListener(fromConnectedToError(expectedErrorState))
+            mockStateChangedListener(fromConfiguredToError(expectedErrorState))
             mockAttachmentHandler.clearAll()
             mockReconnectionHandler.clear()
         }
     }
 
     @Test
-    fun whenConfigureFailsAndSocketListenerRespondWithNetworkDisabledError() {
-        val expectedException = Exception(ErrorMessage.InternetConnectionIsOffline)
-        val expectedErrorState = State.Error(ErrorCode.NetworkDisabled, ErrorMessage.InternetConnectionIsOffline)
+    fun whenConfigureFailsBecauseSocketListenerRespondWithNetworkDisabledError() {
+        val givenException = Exception(ErrorMessage.InternetConnectionIsOffline)
+        val expectedErrorState =
+            State.Error(ErrorCode.NetworkDisabled, ErrorMessage.InternetConnectionIsOffline)
+        every { mockPlatformSocket.sendMessage(Request.configureRequest) } answers {
+            slot.captured.onFailure(givenException, ErrorCode.NetworkDisabled)
+        }
 
         subject.connect()
-
-        slot.captured.onFailure(expectedException, ErrorCode.NetworkDisabled)
 
         assertThat(subject).isError(expectedErrorState.code, expectedErrorState.message)
         verifySequence {
-            connectSequence()
+            connectWithFailedConfigureSequence()
             mockStateChangedListener(fromConnectedToError(expectedErrorState))
             mockAttachmentHandler.clearAll()
             mockReconnectionHandler.clear()
-        }
-    }
-
-    @Test
-    fun whenSocketListenerInvokeOnMessageWithProperlyStructuredMessage() {
-        val expectedSessionResponse = SessionResponse(connected = true, newSession = true)
-        val expectedConfigureState = State.Configured(connected = true, newSession = true)
-        subject.connect()
-
-        slot.captured.onMessage(Response.configureSuccess)
-
-        assertThat(subject).isConfigured(
-            expectedSessionResponse.connected,
-            expectedSessionResponse.newSession,
-        )
-        verifySequence {
-            connectSequence()
-            mockStateChangedListener(fromConnectedToConfigured(expectedConfigureState))
         }
     }
 
@@ -348,22 +309,13 @@ class MessagingClientImplTest {
     fun whenSocketListenerInvokeOnMessageWithSessionExpiredStringMessage() {
         val expectedErrorState =
             State.Error(ErrorCode.SessionHasExpired, "session expired error message")
-        val givenRawMessage =
-            """
-            {
-              "type": "response",
-              "class": "string",
-              "code": 4006,
-              "body": "session expired error message"
-            }
-            """
         subject.connect()
 
-        slot.captured.onMessage(givenRawMessage)
+        slot.captured.onMessage(Response.sessionExpired)
 
         verifySequence {
             connectSequence()
-            mockStateChangedListener(fromConnectedToError(expectedErrorState))
+            mockStateChangedListener(fromConfiguredToError(expectedErrorState))
         }
     }
 
@@ -371,39 +323,23 @@ class MessagingClientImplTest {
     fun whenSocketListenerInvokeOnMessageWithSessionNotFoundStringMessage() {
         val expectedErrorState =
             State.Error(ErrorCode.SessionNotFound, "session not found error message")
-        val givenRawMessage =
-            """
-            {
-              "type": "response",
-              "class": "string",
-              "code": 4007,
-              "body": "session not found error message"
-            }
-            """
+        every { mockPlatformSocket.sendMessage(Request.configureRequest) } answers {
+            slot.captured.onMessage(Response.sessionNotFound)
+        }
+
         subject.connect()
 
-        slot.captured.onMessage(givenRawMessage)
-
         verifySequence {
-            connectSequence()
+            connectWithFailedConfigureSequence()
             mockStateChangedListener(fromConnectedToError(expectedErrorState))
         }
     }
 
     @Test
     fun whenSocketListenerInvokeOnMessageWithMessageTooLongStringMessage() {
-        val givenRawMessage =
-            """
-            {
-              "type": "response",
-              "class": "string",
-              "code": 4011,
-              "body": "message too long"
-            }
-            """
         subject.connect()
 
-        slot.captured.onMessage(givenRawMessage)
+        slot.captured.onMessage(Response.messageTooLong)
 
         verifySequence {
             connectSequence()
@@ -413,11 +349,9 @@ class MessagingClientImplTest {
 
     @Test
     fun whenSocketListenerInvokeTooManyRequestsErrorMessage() {
-        val givenRawMessage =
-            """{"type":"response","class":"TooManyRequestsErrorMessage","code":429,"body":{"retryAfter":3,"errorCode":4029,"errorMessage":"Message rate too high for this session"}}""".trimIndent()
         subject.connect()
 
-        slot.captured.onMessage(givenRawMessage)
+        slot.captured.onMessage(Response.tooManyRequests)
 
         verifySequence {
             connectSequence()
@@ -435,22 +369,14 @@ class MessagingClientImplTest {
     @Test
     fun whenSocketListenerInvokeOnMessageWitSessionExpiredEvent() {
         val expectedErrorState = State.Error(ErrorCode.SessionHasExpired, null)
-        val givenRawMessage =
-            """
-            {
-              "type": "response",
-              "class": "SessionExpiredEvent",
-              "code": 200,
-              "body": {}
-            }
-            """
+
         subject.connect()
 
-        slot.captured.onMessage(givenRawMessage)
+        slot.captured.onMessage(Response.sessionExpiredEvent)
 
         verifySequence {
             connectSequence()
-            mockStateChangedListener(fromConnectedToError(expectedErrorState))
+            mockStateChangedListener(fromConfiguredToError(expectedErrorState))
         }
     }
 
@@ -482,11 +408,9 @@ class MessagingClientImplTest {
             mapOf("attachment_id" to expectedAttachment)
         )
 
-        val givenRawMessage =
-            """{"type":"message","class":"StructuredMessage","code":200,"body":{"direction":"Outbound","id":"msg_id","channel":{"time":"some_time","type":"Private"},"type":"Text","text":"Hi","content":[{"attachment":{"id":"attachment_id","filename":"image.png","mediaType":"Image","mime":"image/png","url":"https://downloadurl.com"},"contentType":"Attachment"}],"originatingEntity":"Human"}}"""
         subject.connect()
 
-        slot.captured.onMessage(givenRawMessage)
+        slot.captured.onMessage(Response.onMessageWithAttachment)
 
         verifySequence {
             connectSequence()
@@ -498,11 +422,10 @@ class MessagingClientImplTest {
     @Test
     fun whenSocketListenerInvokeOnMessageWithAttachmentDeletedResponse() {
         val expectedAttachmentId = "attachment_id"
-        val givenRawMessage =
-            """{"type":"message","class":"AttachmentDeletedResponse","code":200,"body":{"attachmentId":"attachment_id"}}"""
+
         subject.connect()
 
-        slot.captured.onMessage(givenRawMessage)
+        slot.captured.onMessage(Response.attachmentDeleted)
 
         verifySequence {
             connectSequence()
@@ -528,7 +451,7 @@ class MessagingClientImplTest {
     fun whenFetchNextPageButAllHistoryWasAlreadyFetched() {
         every { mockMessageStore.startOfConversation } returns true
         every { mockMessageStore.getConversation() } returns List(DEFAULT_PAGE_SIZE) { Message() }
-        connectAndConfigure()
+        subject.connect()
 
         runBlocking { subject.fetchNextPage() }
 
@@ -548,13 +471,12 @@ class MessagingClientImplTest {
             message = TextMessage("Hello world"),
             channel = Channel(Metadata(expectedCustomAttributes)),
         )
-        connectAndConfigure()
+        subject.connect()
 
         subject.sendMessage(text = "Hello world", customAttributes = mapOf("A" to "B"))
 
         verifySequence {
             connectSequence()
-            configureSequence()
             mockMessageStore.prepareMessage(expectedText, expectedCustomAttributes)
             mockAttachmentHandler.onSending()
             mockPlatformSocket.sendMessage(expectedMessage)
@@ -563,20 +485,11 @@ class MessagingClientImplTest {
 
     @Test
     fun whenMessageWithCustomAttributesIsTooLarge() {
-        val givenRawMessage =
-            """
-            {
-              "type": "response",
-              "class": "string",
-              "code": 4013,
-              "body": "Custom Attributes in channel metadata is larger than 2048 bytes"
-            }
-            """
         val expectedErrorCode = ErrorCode.CustomAttributeSizeTooLarge
         val expectedErrorMessage = "Custom Attributes in channel metadata is larger than 2048 bytes"
         subject.connect()
 
-        slot.captured.onMessage(givenRawMessage)
+        slot.captured.onMessage(Response.customAttributeSizeTooLarge)
 
         verifySequence {
             connectSequence()
@@ -585,28 +498,7 @@ class MessagingClientImplTest {
     }
 
     @Test
-    fun whenConnectWithConfigureSetToTrue() {
-        subject.connect(shouldConfigure = true)
-
-        assertThat(subject).isConfigured(true, true)
-        verifySequence {
-            connectSequence()
-            configureSequence()
-        }
-    }
-
-    @Test
-    fun whenConnectWithConfigureSetToFalse() {
-        subject.connect(shouldConfigure = false)
-
-        assertThat(subject).isConnected()
-        verifySequence {
-            connectSequence()
-        }
-    }
-
-    @Test
-    fun whenConnectWithConfigureHasClientResponseError() {
+    fun whenConnectHasClientResponseError() {
         val expectedErrorCode = ErrorCode.ClientResponseError(400)
         val expectedErrorMessage = "Deployment not found"
         val expectedErrorState = State.Error(expectedErrorCode, expectedErrorMessage)
@@ -614,12 +506,11 @@ class MessagingClientImplTest {
             slot.captured.onMessage(Response.configureFail)
         }
 
-        subject.connect(shouldConfigure = true)
+        subject.connect()
 
         assertThat(subject).isError(expectedErrorCode, expectedErrorMessage)
         verifySequence {
-            connectSequence()
-            mockPlatformSocket.sendMessage(Request.configureRequest)
+            connectWithFailedConfigureSequence()
             mockStateChangedListener(fromConnectedToError(expectedErrorState))
         }
     }
@@ -661,7 +552,7 @@ class MessagingClientImplTest {
 
     @Test
     fun whenStructuredMessageWithInboundEventReceived() {
-        connectAndConfigure()
+        subject.connect()
 
         slot.captured.onMessage(Response.structuredMessageWithEvents(direction = Message.Direction.Inbound))
 
@@ -673,13 +564,12 @@ class MessagingClientImplTest {
     @Test
     fun whenIndicateTyping() {
         val expectedMessage = Request.userTypingRequest
-        connectAndConfigure()
+        subject.connect()
 
         subject.indicateTyping()
 
         verifySequence {
             connectSequence()
-            configureSequence()
             mockPlatformSocket.sendMessage(expectedMessage)
         }
     }
@@ -694,7 +584,7 @@ class MessagingClientImplTest {
     @Test
     fun whenIndicateTypingTwiceWithoutCoolDown() {
         val expectedMessage = Request.userTypingRequest
-        connectAndConfigure()
+        subject.connect()
 
         subject.indicateTyping()
         subject.indicateTyping()
@@ -706,7 +596,7 @@ class MessagingClientImplTest {
     fun whenIndicateTypingTwiceWithCoolDown() {
         val expectedMessage = Request.userTypingRequest
 
-        connectAndConfigure()
+        subject.connect()
 
         subject.indicateTyping()
         // Fast forward epochMillis by TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND.
@@ -719,10 +609,10 @@ class MessagingClientImplTest {
     @Test
     fun whenIndicateTypingTwiceWithoutCoolDownButAfterMessageWasSent() {
         val expectedMessage = Request.userTypingRequest
-        connectAndConfigure()
+        subject.connect()
 
         subject.indicateTyping()
-        slot.captured.onMessage(Response.onMessageResponse)
+        slot.captured.onMessage(Response.onMessage)
         subject.indicateTyping()
 
         verify(exactly = 2) { mockPlatformSocket.sendMessage(expectedMessage) }
@@ -734,17 +624,11 @@ class MessagingClientImplTest {
             errorCode = ErrorCode.ClientResponseError(403),
             message = "Turn on the Feature Toggle or fix the configuration.",
         )
-        connectAndConfigure()
+        subject.connect()
 
         slot.captured.onMessage(Response.typingIndicatorForbidden)
 
         verify { mockEventHandler.onEvent(expectedEvent) }
-    }
-
-    private fun connectAndConfigure() {
-        subject.connect()
-        subject.configureSession()
-        slot.captured.onMessage(Response.configureSuccess)
     }
 
     private fun configuration(): Configuration = Configuration(
@@ -754,45 +638,61 @@ class MessagingClientImplTest {
     )
 
     private fun MockKVerificationScope.connectSequence() {
-        val fromIdleToConnecting =
-            StateChange(oldState = State.Idle, newState = State.Connecting)
-        val fromConnectingToConnected =
-            StateChange(oldState = State.Connecting, newState = State.Connected)
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
+        mockPlatformSocket.sendMessage(Request.configureRequest)
+        mockReconnectionHandler.clear()
+        mockStateChangedListener(fromConnectedToConfigured)
     }
 
     private fun MockKVerificationScope.disconnectSequence(
         expectedCloseCode: Int = any(),
         expectedCloseReason: String = any(),
     ) {
-        val fromConnectedToClosing = StateChange(
-            oldState = State.Connected,
+        val fromConfiguredToClosing = StateChange(
+            oldState = State.Configured(connected = true, newSession = true),
             newState = State.Closing(expectedCloseCode, expectedCloseReason)
         )
         val fromClosingToClosed = StateChange(
             oldState = State.Closing(expectedCloseCode, expectedCloseReason),
             newState = State.Closed(expectedCloseCode, expectedCloseReason)
         )
-        mockStateChangedListener(fromConnectedToClosing)
+        mockReconnectionHandler.clear()
+        mockStateChangedListener(fromConfiguredToClosing)
         mockPlatformSocket.closeSocket(expectedCloseCode, expectedCloseReason)
         mockStateChangedListener(fromClosingToClosed)
         mockMessageStore.invalidateConversationCache()
         mockAttachmentHandler.clearAll()
     }
 
-    private fun MockKVerificationScope.configureSequence() {
-        val expectedConfigureState = State.Configured(connected = true, newSession = true)
+    private fun MockKVerificationScope.connectWithFailedConfigureSequence() {
+        mockStateChangedListener(fromIdleToConnecting)
+        mockPlatformSocket.openSocket(any())
+        mockStateChangedListener(fromConnectingToConnected)
         mockPlatformSocket.sendMessage(Request.configureRequest)
-        mockStateChangedListener(fromConnectedToConfigured(expectedConfigureState))
     }
 
-    private fun fromConnectedToConfigured(configured: State) =
-        StateChange(oldState = State.Connected, newState = configured)
+    private val fromIdleToConnecting =
+        StateChange(oldState = State.Idle, newState = State.Connecting)
+
+    private val fromConnectingToConnected =
+        StateChange(oldState = State.Connecting, newState = State.Connected)
+
+    private val fromConnectedToConfigured =
+        StateChange(
+            oldState = State.Connected,
+            newState = State.Configured(connected = true, newSession = true)
+        )
 
     private fun fromConnectedToError(errorState: State) =
         StateChange(oldState = State.Connected, newState = errorState)
+
+    private fun fromConfiguredToError(errorState: State) =
+        StateChange(
+            oldState = State.Configured(connected = true, newSession = true),
+            newState = errorState,
+        )
 }
 
 private object Response {
@@ -802,10 +702,26 @@ private object Response {
         """{"type":"response","class":"string","code":400,"body":"Deployment not found"}"""
     const val defaultStructuredEvents =
         """{"eventType": "Typing","typing": {"type": "Off","duration": 1000}},{"eventType": "Typing","typing": {"type": "On","duration": 5000}}"""
-    const val onMessageResponse =
+    const val onMessage =
         """{"type":"message","class":"StructuredMessage","code":200,"body":{"text":"Hi!","direction":"Inbound","id":"test_id","channel":{"time":"2022-08-22T19:24:26.704Z","messageId":"message_id"},"type":"Text","metadata":{"customMessageId":"some_custom_message_id"}}}"""
+    const val onMessageWithAttachment =
+        """{"type":"message","class":"StructuredMessage","code":200,"body":{"direction":"Outbound","id":"msg_id","channel":{"time":"some_time","type":"Private"},"type":"Text","text":"Hi","content":[{"attachment":{"id":"attachment_id","filename":"image.png","mediaType":"Image","mime":"image/png","url":"https://downloadurl.com"},"contentType":"Attachment"}],"originatingEntity":"Human"}}"""
+    const val attachmentDeleted =
+        """{"type":"message","class":"AttachmentDeletedResponse","code":200,"body":{"attachmentId":"attachment_id"}}"""
     const val typingIndicatorForbidden =
         """{"type":"response","class":"string","code":403,"body":"Turn on the Feature Toggle or fix the configuration."}"""
+    const val sessionNotFound =
+        """{"type": "response","class": "string","code": 4007,"body": "session not found error message"}"""
+    const val sessionExpired =
+        """{"type": "response","class": "string","code": 4006,"body": "session expired error message"}"""
+    const val sessionExpiredEvent =
+        """{"type": "response","class": "SessionExpiredEvent","code": 200,"body": {}}"""
+    const val messageTooLong =
+        """{"type": "response","class": "string","code": 4011,"body": "message too long"}"""
+    const val tooManyRequests =
+        """{"type":"response","class":"TooManyRequestsErrorMessage","code":429,"body":{"retryAfter":3,"errorCode":4029,"errorMessage":"Message rate too high for this session"}}"""
+    const val customAttributeSizeTooLarge =
+        """{"type": "response","class": "string","code": 4013,"body": "Custom Attributes in channel metadata is larger than 2048 bytes"}"""
 
     fun structuredMessageWithEvents(
         events: String = defaultStructuredEvents,

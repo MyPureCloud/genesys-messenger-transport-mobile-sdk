@@ -76,15 +76,15 @@ class TestContentController: MessengerHandler {
 
     func startMessengerConnection(file: StaticString = #file, line: UInt = #line) {
         do {
-            try connect(shouldConfigure: true)
+            try connect()
         } catch {
             XCTFail("Possible issue with connecting to the backend: \(error.localizedDescription)", file: file, line: line)
         }
     }
 
-    override func connect(shouldConfigure: Bool) throws {
+    override func connect() throws {
         testExpectation = XCTestExpectation(description: "Wait for Configuration.")
-        try super.connect(shouldConfigure: shouldConfigure)
+        try super.connect()
         waitForExpectation()
     }
 
