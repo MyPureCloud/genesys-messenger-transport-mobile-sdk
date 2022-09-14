@@ -1,10 +1,9 @@
 package com.genesys.cloud.messenger.transport.util.logs
 
-import co.touchlab.kermit.Kermit
 import io.ktor.client.features.logging.Logger
 
 internal class KermitKtorLogger(
-    private val kermit: Kermit
+    private val kermit: co.touchlab.kermit.Logger
 ) : Logger {
     override fun log(message: String) {
         kermit.i { message }

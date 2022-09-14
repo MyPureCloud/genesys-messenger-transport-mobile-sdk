@@ -1,34 +1,33 @@
 package com.genesys.cloud.messenger.transport.core
 
-import android.content.Context
+import com.genesys.cloud.messenger.transport.network.DEFAULT_PING_INTERVAL_IN_SECONDS
 import com.genesys.cloud.messenger.transport.network.DeploymentConfigUseCase
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
+import com.genesys.cloud.messenger.transport.util.DefaultTokenStore
+import com.genesys.cloud.messenger.transport.util.TokenStore
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 
+private const val TOKEN_STORE_KEY = "com.genesys.cloud.messenger"
+
 /**
- * Client entry point for the Mobile Messenger Transport SDK.
+ * The entry point to the services provided by the transport SDK.
  */
-object MobileMessenger {
+class MessengerTransport(private val configuration: Configuration, private val tokenStore: TokenStore) {
+
+    constructor(configuration: Configuration) : this(configuration, DefaultTokenStore(TOKEN_STORE_KEY))
 
     /**
      * Creates an instance of [MessagingClient] based on the provided configuration.
-     *
-     * @param context an application context.
-     * @param configuration the configuration parameters for setting up the client.
      */
-    fun createMessagingClient(
-        context: Context,
-        configuration: Configuration,
-    ): MessagingClient {
+    fun createMessagingClient(): MessagingClient {
         val log = Log(configuration.logging, LogTag.MESSAGING_CLIENT)
-        val token =
-            TokenStoreImpl(context = context, configuration.tokenStoreKey).token
         val api = WebMessagingApi(configuration)
-        val webSocket = PlatformSocket(log.withTag(LogTag.WEBSOCKET), configuration.webSocketUrl)
+        val webSocket = PlatformSocket(log.withTag(LogTag.WEBSOCKET), configuration.webSocketUrl, DEFAULT_PING_INTERVAL_IN_SECONDS)
+        val token = tokenStore.token
         val messageStore = MessageStore(token, log.withTag(LogTag.MESSAGE_STORE))
         val attachmentHandler = AttachmentHandlerImpl(
             api,
@@ -45,25 +44,20 @@ object MobileMessenger {
             jwtHandler = JwtHandler(webSocket, token),
             attachmentHandler = attachmentHandler,
             messageStore = messageStore,
-            reconnectionHandler = ReconnectionHandlerImpl(configuration.reconnectionTimeoutInSeconds, log.withTag(LogTag.RECONNECTION_HANDLER)),
+            reconnectionHandler = ReconnectionHandlerImpl(
+                configuration.reconnectionTimeoutInSeconds,
+                log.withTag(LogTag.RECONNECTION_HANDLER),
+            )
         )
     }
 
     /**
      *  Fetch deployment configuration based on deployment id and domain.
      *
-     * @param deploymentId the ID of the deployment containing configuration and routing information.
-     * @param domain the regional base domain address for a Genesys Cloud Web Messaging service. For example, "mypurecloud.com".
-     * @param logging indicates if logging should be enabled. False by default.
-     *
      * @throws Exception
      */
     @Throws(Exception::class)
-    suspend fun fetchDeploymentConfig(
-        domain: String,
-        deploymentId: String,
-        logging: Boolean = false
-    ): DeploymentConfig {
-        return DeploymentConfigUseCase(logging).fetch(domain, deploymentId)
+    suspend fun fetchDeploymentConfig(): DeploymentConfig {
+        return DeploymentConfigUseCase(configuration.logging, configuration.deploymentConfigUrl.toString()).fetch()
     }
 }

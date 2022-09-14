@@ -18,7 +18,7 @@ private const val BASIC_DEPLOYMENT_CONFIG_RESPONSE_PATH =
     "/webdeployments/v1/deployments/deploymentId/config.json"
 
 class DeploymentConfigUseCaseTest {
-    private val subject = DeploymentConfigUseCase(false, mockHttpClient())
+    private val subject = DeploymentConfigUseCase(false, BASIC_DEPLOYMENT_CONFIG_RESPONSE_PATH, mockHttpClient())
 
     @Test
     fun whenFetchDeploymentConfig() {
@@ -26,7 +26,7 @@ class DeploymentConfigUseCaseTest {
 
         val result = runBlocking {
             withTimeout(DEFAULT_TIMEOUT) {
-                subject.fetch("inindca.com", "deploymentId")
+                subject.fetch()
             }
         }
         assertEquals(expectedTestDeploymentConfig, result)

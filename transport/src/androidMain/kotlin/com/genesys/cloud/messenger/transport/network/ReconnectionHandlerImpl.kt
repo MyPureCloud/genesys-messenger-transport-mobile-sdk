@@ -9,7 +9,7 @@ import kotlinx.coroutines.launch
 
 private const val TIMEOUT_INTERVAL_IN_SECONDS: Long = 5
 
-internal class ReconnectionHandlerImpl(
+internal actual class ReconnectionHandlerImpl actual constructor(
     reconnectionTimeoutInSeconds: Long,
     private val log: Log,
 ) : ReconnectionHandler {

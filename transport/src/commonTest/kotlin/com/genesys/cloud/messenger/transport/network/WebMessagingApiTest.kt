@@ -59,7 +59,6 @@ class WebMessagingApiTest {
     private fun configuration(): Configuration = Configuration(
         deploymentId = "deploymentId",
         domain = "inindca.com",
-        tokenStoreKey = "tokenStoreKey",
         logging = false
     )
 
