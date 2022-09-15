@@ -51,7 +51,6 @@ internal class MessagingClientImpl(
     private val eventHandler: EventHandler = EventHandlerImpl(log.withTag(LogTag.EVENT_HANDLER)),
     private val userTypingProvider: UserTypingProvider = UserTypingProvider(),
 ) : MessagingClient {
-    private var shouldConfigureAfterConnect = false
 
     override val currentState: State
         get() {
@@ -89,17 +88,11 @@ internal class MessagingClientImpl(
     override val conversation: List<Message>
         get() = messageStore.getConversation()
 
-    @Deprecated("Use the connect(shouldConfigure: Boolean) instead", ReplaceWith("connect(shouldConfigure: Boolean)"))
     @Throws(IllegalStateException::class)
     override fun connect() {
         log.i { "connect()" }
         stateMachine.onConnect()
         webSocket.openSocket(socketListener)
-    }
-
-    override fun connect(shouldConfigure: Boolean) {
-        shouldConfigureAfterConnect = shouldConfigure
-        connect()
     }
 
     @Throws(IllegalStateException::class)
@@ -112,11 +105,8 @@ internal class MessagingClientImpl(
         webSocket.closeSocket(code, reason)
     }
 
-    @Deprecated("Use the connect(shouldConfigure: Boolean) instead", ReplaceWith("connect(shouldConfigure: Boolean)"))
-    @Throws(IllegalStateException::class)
-    override fun configureSession() {
+    private fun configureSession() {
         log.i { "configureSession(token = $token)" }
-        stateMachine.onConfiguring()
         val request = ConfigureSessionRequest(
             token = token,
             deploymentId = configuration.deploymentId,
@@ -232,7 +222,6 @@ internal class MessagingClientImpl(
             is ErrorCode.RedirectResponseError,
             -> {
                 if (stateMachine.isConnected()) {
-                    shouldConfigureAfterConnect = false
                     stateMachine.onError(code, message)
                 } else {
                     eventHandler.onEvent(ErrorEvent(errorCode = code, message = message))
@@ -250,7 +239,7 @@ internal class MessagingClientImpl(
             is ErrorCode.WebsocketError -> {
                 if (reconnectionHandler.shouldReconnect) {
                     stateMachine.onReconnect()
-                    reconnectionHandler.reconnect { connect(true) }
+                    reconnectionHandler.reconnect { connect() }
                 } else {
                     stateMachine.onError(errorCode, ErrorMessage.FailedToReconnect)
                     attachmentHandler.clearAll()
@@ -297,13 +286,7 @@ internal class MessagingClientImpl(
         override fun onOpen() {
             log.i { "onOpen()" }
             stateMachine.onConnectionOpened()
-            if (shouldConfigureAfterConnect) {
-                try {
-                    configureSession()
-                } catch (t: Throwable) {
-                    handleError(ErrorCode.WebsocketError, t.message)
-                }
-            }
+            configureSession()
         }
 
         override fun onFailure(t: Throwable, errorCode: ErrorCode) {
@@ -326,7 +309,6 @@ internal class MessagingClientImpl(
                     }
                     is SessionResponse -> {
                         decoded.body.run {
-                            shouldConfigureAfterConnect = false
                             reconnectionHandler.clear()
                             stateMachine.onSessionConfigured(connected, newSession)
                         }

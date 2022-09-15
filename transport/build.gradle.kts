@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
+import org.jetbrains.kotlin.gradle.plugin.mpp.BitcodeEmbeddingMode
 
 plugins {
     kotlin("multiplatform")
@@ -60,12 +61,14 @@ kotlin {
     val xcf = XCFramework(iosFrameworkName)
     ios {
         binaries.framework {
+            embedBitcode = BitcodeEmbeddingMode.DISABLE
             baseName = iosFrameworkName
             xcf.add(this)
         }
     }
     iosSimulatorArm64 {
         binaries.framework {
+            embedBitcode = BitcodeEmbeddingMode.DISABLE
             baseName = iosFrameworkName
             xcf.add(this)
         }
