@@ -57,13 +57,6 @@ internal class MessagingClientImpl(
             return stateMachine.currentState
         }
 
-    @Deprecated("Use stateChangedListener() instead", ReplaceWith("stateChangedListener"))
-    override var stateListener: ((State) -> Unit)? = null
-        set(value) {
-            stateMachine.stateListener = value
-            field = value
-        }
-
     override var stateChangedListener: ((StateChange) -> Unit)? = null
         set(value) {
             stateMachine.stateChangedListener = value
