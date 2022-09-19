@@ -10,16 +10,16 @@ import io.mockk.mockk
 import io.mockk.spyk
 import org.junit.Test
 
-class UserTypingProviderTest {
+class HealthCheckProviderTest {
     private val mockTimestampFunction: () -> Long = spyk<() -> Long>().also {
         every { it.invoke() } answers { Platform().epochMillis() }
     }
 
-    private val subject = UserTypingProvider(mockk(relaxed = true), mockTimestampFunction)
+    private val subject = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction)
 
     @Test
     fun whenEncode() {
-        val expected = Request.userTypingRequest
+        val expected = Request.echoRequest
 
         val result = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
 
@@ -28,11 +28,11 @@ class UserTypingProviderTest {
 
     @Test
     fun whenEncodeWithCoolDown() {
-        val typingIndicatorCoolDownInMilliseconds = 5000
-        val expected = Request.userTypingRequest
+        val healthCheckCoolDownInMilliseconds = 30000
+        val expected = Request.echoRequest
 
         val firstResult = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
-        every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + typingIndicatorCoolDownInMilliseconds }
+        every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + healthCheckCoolDownInMilliseconds }
         val secondResult = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
 
         assertThat(firstResult).isEqualTo(expected)
@@ -41,7 +41,7 @@ class UserTypingProviderTest {
 
     @Test
     fun whenEncodeWithoutCoolDown() {
-        val expected = Request.userTypingRequest
+        val expected = Request.echoRequest
 
         val firstResult = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
         val secondResult = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
@@ -52,7 +52,7 @@ class UserTypingProviderTest {
 
     @Test
     fun whenEncodeWithoutCoolDownButWithClear() {
-        val expected = Request.userTypingRequest
+        val expected = Request.echoRequest
 
         val firstResult = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
         subject.clear()

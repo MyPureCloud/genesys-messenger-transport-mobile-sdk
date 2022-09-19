@@ -12,4 +12,6 @@ internal object LogTag {
     const val STATE_MACHINE = "Transport State Machine"
     const val RECONNECTION_HANDLER = "TransportReconnectionHandler"
     const val EVENT_HANDLER = "TransportEventHandler"
+    const val TYPING_INDICATOR_PROVIDER = "TypingIndicatorProvider"
+    const val HEALTH_CHECK_PROVIDER = "HealthCheckProvider"
 }

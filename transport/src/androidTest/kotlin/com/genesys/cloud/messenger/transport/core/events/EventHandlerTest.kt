@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.core.events
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.HealthCheckEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent.Typing
@@ -67,6 +68,16 @@ class EventHandlerTest {
             message = "some message",
             correctiveAction = CorrectiveAction.Forbidden,
         )
+
+        subject.onEvent(givenStructuredMessageEvent)
+
+        verify { mockEventListener.invoke(eq(expectedEvent)) }
+    }
+
+    @Test
+    fun whenHealthCheckedOccurs() {
+        val givenStructuredMessageEvent = HealthCheckEvent()
+        val expectedEvent = Event.HealthChecked
 
         subject.onEvent(givenStructuredMessageEvent)
 

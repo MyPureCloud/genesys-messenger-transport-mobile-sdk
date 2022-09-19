@@ -19,6 +19,7 @@ internal sealed class StructuredMessageEvent {
         @SerialName("Typing")
         Typing,
         Error,
+        HealthChecked,
     }
 }
 
@@ -38,6 +39,10 @@ internal data class ErrorEvent(
     override val eventType: Type = Type.Error,
     val errorCode: ErrorCode,
     val message: String?,
+) : StructuredMessageEvent()
+
+internal data class HealthCheckEvent(
+    override val eventType: Type = Type.HealthChecked,
 ) : StructuredMessageEvent()
 
 internal object StructuredMessageEventSerializer :

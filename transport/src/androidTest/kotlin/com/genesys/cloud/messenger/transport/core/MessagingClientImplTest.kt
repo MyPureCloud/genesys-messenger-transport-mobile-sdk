@@ -4,7 +4,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
-import com.genesys.cloud.messenger.transport.core.events.TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND
+import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
@@ -18,6 +18,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent.Typing
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel.Metadata
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
@@ -118,7 +119,8 @@ class MessagingClientImplTest {
         messageStore = mockMessageStore,
         reconnectionHandler = mockReconnectionHandler,
         eventHandler = mockEventHandler,
-        userTypingProvider = UserTypingProvider(mockTimestampFunction)
+        userTypingProvider = UserTypingProvider(mockk(relaxed = true), mockTimestampFunction),
+        healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),
     ).also {
         it.stateChangedListener = mockStateChangedListener
     }
@@ -170,13 +172,64 @@ class MessagingClientImplTest {
     @Test
     fun whenSendHealthCheckWithToken() {
         val expectedMessage =
-            """{"token":"00000000-0000-0000-0000-000000000000","action":"echo","message":{"text":"ping","type":"Text"}}"""
+            """{"token":"00000000-0000-0000-0000-000000000000","action":"echo","message":{"text":"ping","metadata":{"customMessageId":"$HealthCheckID"},"type":"Text"}}"""
         subject.connect()
 
         subject.sendHealthCheck()
 
         verifySequence {
             connectSequence()
+            mockPlatformSocket.sendMessage(expectedMessage)
+        }
+    }
+
+    @Test
+    fun whenSendHealthCheckTwiceWithoutCoolDown() {
+        val expectedMessage = Request.echoRequest
+
+        subject.connect()
+
+        subject.sendHealthCheck()
+        subject.sendHealthCheck()
+
+        verify(exactly = 1) { mockPlatformSocket.sendMessage(expectedMessage) }
+    }
+
+    @Test
+    fun whenSendHealthCheckTwiceWithCoolDown() {
+        val healthCheckCoolDownInMilliseconds = 30000
+        val expectedMessage = Request.echoRequest
+
+        subject.connect()
+
+        subject.sendHealthCheck()
+        // Fast forward epochMillis by HEALTH_CHECK_COOL_DOWN_IN_MILLISECOND.
+        every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + healthCheckCoolDownInMilliseconds }
+        subject.sendHealthCheck()
+
+        verify(exactly = 2) { mockPlatformSocket.sendMessage(expectedMessage) }
+    }
+
+    @Test
+    fun whenConnectSendHealthCheckReconnectAndSendHealthCheckAgainWithoutDelay() {
+        val expectedMessage = Request.echoRequest
+
+        subject.connect()
+        subject.sendHealthCheck()
+        subject.disconnect()
+        subject.connect()
+        subject.sendHealthCheck()
+
+        verifySequence {
+            connectSequence()
+            mockPlatformSocket.sendMessage(expectedMessage)
+            disconnectSequence()
+            mockStateChangedListener(fromClosedToConnecting)
+            mockPlatformSocket.openSocket(any())
+            mockStateChangedListener(fromConnectingToConnected)
+            mockPlatformSocket.sendMessage(Request.configureRequest)
+            mockReconnectionHandler.clear()
+            mockStateChangedListener(fromConnectedToConfigured)
             mockPlatformSocket.sendMessage(expectedMessage)
         }
     }
@@ -594,13 +647,14 @@ class MessagingClientImplTest {
 
     @Test
     fun whenIndicateTypingTwiceWithCoolDown() {
+        val typingIndicatorCoolDownInMilliseconds = 5000
         val expectedMessage = Request.userTypingRequest
 
         subject.connect()
 
         subject.indicateTyping()
         // Fast forward epochMillis by TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND.
-        every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND }
+        every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + typingIndicatorCoolDownInMilliseconds }
         subject.indicateTyping()
 
         verify(exactly = 2) { mockPlatformSocket.sendMessage(expectedMessage) }
@@ -646,8 +700,8 @@ class MessagingClientImplTest {
     }
 
     private fun MockKVerificationScope.disconnectSequence(
-        expectedCloseCode: Int = any(),
-        expectedCloseReason: String = any(),
+        expectedCloseCode: Int = 1000,
+        expectedCloseReason: String = "The user has closed the connection.",
     ) {
         val fromConfiguredToClosing = StateChange(
             oldState = State.Configured(connected = true, newSession = true),
@@ -674,6 +728,9 @@ class MessagingClientImplTest {
 
     private val fromIdleToConnecting =
         StateChange(oldState = State.Idle, newState = State.Connecting)
+
+    private val fromClosedToConnecting =
+        StateChange(oldState = State.Closed(1000, "The user has closed the connection."), newState = State.Connecting)
 
     private val fromConnectingToConnected =
         StateChange(oldState = State.Connecting, newState = State.Connected)

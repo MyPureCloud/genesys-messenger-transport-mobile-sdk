@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.shyrka.receive
 
 import com.genesys.cloud.messenger.transport.core.Message
+import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -67,4 +68,8 @@ internal data class StructuredMessage(
     }
 }
 
-internal fun StructuredMessage.isOutbound(): Boolean = this.direction == Message.Direction.Outbound.name
+internal fun StructuredMessage.isOutbound(): Boolean =
+    this.direction == Message.Direction.Outbound.name
+
+internal fun StructuredMessage.isHealthCheckResponse(): Boolean =
+    this.metadata["customMessageId"] == HealthCheckID
