@@ -15,11 +15,21 @@ sealed class Event {
     data class AgentTyping(val durationInMilliseconds: Long) : Event()
 
     /**
+     * This event indicates a successful health check response to the
+     * [com.genesys.cloud.messenger.transport.core.MessagingClient.sendHealthCheck] call.
+     */
+    object HealthChecked : Event()
+
+    /**
      * This event indicates error.
      *
      * @param errorCode indicating what went wrong.
      * @param message is an optional message.
      * @param correctiveAction is an action that can help resolve this error.
      */
-    data class Error(val errorCode: ErrorCode, val message: String?, val correctiveAction: CorrectiveAction) : Event()
+    data class Error(
+        val errorCode: ErrorCode,
+        val message: String?,
+        val correctiveAction: CorrectiveAction,
+    ) : Event()
 }

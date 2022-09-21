@@ -20,6 +20,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.EchoRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
@@ -58,7 +59,7 @@ class SerializationTest {
         val encodedString = WebMessagingJson.json.encodeToString(echoRequest)
 
         assertThat(encodedString, "encoded EchoRequest")
-            .isEqualTo("""{"token":"<token>","action":"echo","message":{"text":"ping","type":"Text"}}""")
+            .isEqualTo("""{"token":"<token>","action":"echo","message":{"text":"ping","metadata":{"customMessageId":"$HealthCheckID"},"type":"Text"}}""")
     }
 
     @Test

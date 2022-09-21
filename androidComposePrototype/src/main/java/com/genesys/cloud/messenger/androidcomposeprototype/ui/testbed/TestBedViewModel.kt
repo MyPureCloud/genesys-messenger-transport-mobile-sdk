@@ -168,6 +168,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     private suspend fun doSendHealthCheck() {
         try {
             client.sendHealthCheck()
+            commandWaiting = false
         } catch (t: Throwable) {
             handleException(t, "send health check")
         }

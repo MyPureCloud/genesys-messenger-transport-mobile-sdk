@@ -110,6 +110,8 @@ interface MessagingClient {
 
     /**
      * Perform a health check of the connection by sending an echo message.
+     * This command sends a single echo request and should be called a maximum of once every 30 seconds.
+     * If called more frequently, this command will be rate limited in order to optimize network traffic.
      *
      * @throws IllegalStateException
      */

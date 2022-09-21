@@ -4,7 +4,7 @@ import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
-import com.genesys.cloud.messenger.transport.core.events.TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND
+import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
@@ -15,6 +15,7 @@ import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.AttachmentDeletedResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
+import com.genesys.cloud.messenger.transport.shyrka.receive.HealthCheckEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionExpiredEvent
@@ -23,9 +24,9 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.TooManyRequestsErrorMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.isHealthCheckResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.isOutbound
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
-import com.genesys.cloud.messenger.transport.shyrka.send.EchoRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
@@ -49,7 +50,8 @@ internal class MessagingClientImpl(
     private val reconnectionHandler: ReconnectionHandler,
     private val stateMachine: StateMachine = StateMachineImpl(log.withTag(LogTag.STATE_MACHINE)),
     private val eventHandler: EventHandler = EventHandlerImpl(log.withTag(LogTag.EVENT_HANDLER)),
-    private val userTypingProvider: UserTypingProvider = UserTypingProvider(),
+    private val userTypingProvider: UserTypingProvider = UserTypingProvider(log.withTag(LogTag.TYPING_INDICATOR_PROVIDER)),
+    private val healthCheckProvider: HealthCheckProvider = HealthCheckProvider(log.withTag(LogTag.HEALTH_CHECK_PROVIDER)),
 ) : MessagingClient {
 
     override val currentState: State
@@ -124,10 +126,10 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun sendHealthCheck() {
-        log.i { "sendHealthCheck()" }
-        val request = EchoRequest(token = token)
-        val encodedJson = WebMessagingJson.json.encodeToString(request)
-        send(encodedJson)
+        healthCheckProvider.encodeRequest(token)?.let {
+            log.i { "sendHealthCheck()" }
+            send(it)
+        }
     }
 
     override fun attach(
@@ -188,13 +190,10 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun indicateTyping() {
-        val encodedJson = userTypingProvider.encodeRequest(token)
-        if (encodedJson == null) {
-            log.w { "Typing event can be sent only once every $TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND milliseconds." }
-            return
+        userTypingProvider.encodeRequest(token)?.let {
+            log.i { "indicateTyping()" }
+            send(it)
         }
-        log.i { "indicateTyping()" }
-        send(encodedJson)
     }
 
     private fun handleError(code: ErrorCode, message: String? = null) {
@@ -312,7 +311,13 @@ internal class MessagingClientImpl(
                         attachmentHandler.upload(decoded.body)
                     is UploadSuccessEvent ->
                         attachmentHandler.onUploadSuccess(decoded.body)
-                    is StructuredMessage -> handleStructuredMessage(decoded.body)
+                    is StructuredMessage -> {
+                        if (decoded.body.isHealthCheckResponse()) {
+                            eventHandler.onEvent(HealthCheckEvent())
+                        } else {
+                            handleStructuredMessage(decoded.body)
+                        }
+                    }
                     is AttachmentDeletedResponse ->
                         attachmentHandler.onDetached(decoded.body.attachmentId)
                     is GenerateUrlError -> {
@@ -350,6 +355,8 @@ internal class MessagingClientImpl(
             log.i { "onClosed(code = $code, reason = $reason)" }
             stateMachine.onClosed(code, reason)
             invalidateConversationCache()
+            userTypingProvider.clear()
+            healthCheckProvider.clear()
             attachmentHandler.clearAll()
         }
     }

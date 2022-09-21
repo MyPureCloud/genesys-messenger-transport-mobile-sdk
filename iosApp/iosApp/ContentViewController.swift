@@ -74,6 +74,8 @@ class ContentViewController: UIViewController {
                 displayEvent = "Event received: \(typing.description)"
             case let error as Event.Error:
                 displayEvent = "Event received: \(error.description)"
+            case let healthChecked as Event.HealthChecked:
+                displayEvent = "Event received: \(healthChecked.description)"
             default:
                 break
             }
