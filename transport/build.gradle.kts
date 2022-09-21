@@ -45,6 +45,7 @@ val iosFrameworkName = "MessengerTransport"
 val iosMinimumOSVersion = "13.0"
 val iosCocoaPodName = "GenesysCloudMessengerTransport"
 version = project.rootProject.version
+group = project.rootProject.group
 
 kotlin {
     android {
@@ -53,6 +54,8 @@ kotlin {
                 jvmTarget = Deps.Android.jvmTarget
             }
         }
+        publishLibraryVariants("release", "debug")
+        publishLibraryVariantsGroupedByFlavor = true
     }
 
     val xcf = XCFramework(iosFrameworkName)
@@ -144,11 +147,6 @@ kotlin {
 }
 
 tasks {
-    create<Jar>("kotlinSourcesJar") {
-        archiveClassifier.set("sources")
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        from("./src/androidMain", "./src/commonMain")
-    }
 
     create<Jar>("fakeJavadocJar") {
         archiveClassifier.set("javadoc")
@@ -199,17 +197,12 @@ tasks {
 
 publishing {
     publications {
-        create<MavenPublication>("maven") {
-            artifact(File("build/outputs/aar/transport-release.aar"))
-            artifact(tasks["kotlinSourcesJar"])
+        withType<MavenPublication> {
             artifact(tasks["fakeJavadocJar"])
-            groupId = rootProject.group as String?
-            artifactId = "messenger-transport-mobile-sdk"
-            version = version
 
             pom {
                 name.set("Genesys Cloud Mobile Messenger Transport SDK")
-                description.set("This library provides methods for connecting to Genesys Cloud Messenger chat APIs and WebSockets from Android native applications.")
+                description.set("This library provides methods for connecting to Genesys Cloud Messenger chat APIs and WebSockets from mobile applications.")
                 url.set("https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk")
 
                 licenses {
@@ -229,38 +222,27 @@ publishing {
                 scm {
                     url.set("https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk.git")
                 }
-
-                withXml {
-                    asNode().appendNode("dependencies").let { dependenciesNode ->
-                        listOf(
-                            "androidMainImplementation",
-                            "androidMainApi",
-                            "commonMainImplementation",
-                            "commonMainApi"
-                        ).forEach {
-                            for (dependency in configurations[it].dependencies) {
-                                if (dependency.name != "unspecified") {
-                                    dependenciesNode.appendNode("dependency").let { node ->
-                                        node.appendNode("groupId", dependency.group)
-                                        node.appendNode("artifactId", dependency.name)
-                                        node.appendNode("version", dependency.version)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
             }
         }
     }
 }
 
+afterEvaluate {
+    configure<PublishingExtension> {
+        publications.all {
+            val mavenPublication = this as? MavenPublication
+            mavenPublication?.artifactId =
+                "messenger-transport-mobile-sdk${"-$name".takeUnless { "kotlinMultiplatform" in name }.orEmpty()}"
+        }
+    }
+}
+
+
 signing {
     // Signing configuration is setup in the ~/.gradle/gradle.properties file on the Jenkins machine
     isRequired = true
-    sign(tasks["kotlinSourcesJar"])
-    sign(tasks["fakeJavadocJar"])
-    sign(publishing.publications["maven"])
+
+    sign(publishing.publications)
 }
 
 apply(from = "${rootDir}/jacoco.gradle.kts")
