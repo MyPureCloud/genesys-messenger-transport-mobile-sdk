@@ -72,7 +72,7 @@ pipeline{
         }
         stage("CI Build - transport POM creation"){
             steps{
-                sh './gradlew :transport:generatePomFileForMavenPublication'
+                sh './gradlew :transport:generatePomFileForKotlinMultiplatformPublication'
             }
         }
         stage("CI Build - iOS Testbed"){
