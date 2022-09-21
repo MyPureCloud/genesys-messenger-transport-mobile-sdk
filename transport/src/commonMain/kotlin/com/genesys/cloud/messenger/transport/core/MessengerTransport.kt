@@ -52,7 +52,7 @@ class MessengerTransport(private val configuration: Configuration, private val t
     }
 
     /**
-     *  Fetch deployment configuration based on deployment id and domain.
+     *  Fetch deployment configuration based on `Configuration`.
      *
      * @throws Exception
      */
