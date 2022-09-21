@@ -187,7 +187,7 @@ tasks {
                 .replace(oldValue = "<VERSION>", newValue = version.toString())
                 .replace(
                     oldValue = "<SOURCE_HTTP_URL>",
-                    newValue = "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/releases/download/v${version}/MessengerTransport.xcframework.zip"
+                    newValue = "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/releases/download/${version}/MessengerTransport.xcframework.zip"
                 )
             file(podspecFileName, PathValidation.NONE).writeText(content)
             println("CocoaPods podspec for Pod $iosCocoaPodName written to: ${this.project.projectDir}/$podspecFileName")
