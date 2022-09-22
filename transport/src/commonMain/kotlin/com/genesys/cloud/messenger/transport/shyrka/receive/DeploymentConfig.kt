@@ -36,7 +36,11 @@ data class Messenger(
 data class Apps(val conversations: Conversations)
 
 @Serializable
-data class Conversations(val messagingEndpoint: String)
+data class Conversations(
+    val messagingEndpoint: String,
+    val showAgentTypingIndicator: Boolean = false,
+    val showUserTypingIndicator: Boolean = false,
+)
 
 @Serializable
 data class Styles(val primaryColor: String)

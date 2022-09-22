@@ -1,5 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
+import com.genesys.cloud.messenger.transport.core.events.Event
+
 /**
  * The main SDK interface providing bi-directional communication between a guest and Genesys Cloud
  * via Web Messaging service.
@@ -65,18 +67,17 @@ interface MessagingClient {
     /**
      * Listener for MessagingClient state changes.
      */
-    @Deprecated("Use stateChangedListener() instead", ReplaceWith("stateChangedListener"))
-    var stateListener: ((State) -> Unit)?
-
-    /**
-     * Listener for MessagingClient state changes.
-     */
     var stateChangedListener: ((StateChange) -> Unit)?
 
     /**
      * Listener for Message events.
      */
     var messageListener: ((MessageEvent) -> Unit)?
+
+    /**
+     * Listener for Transport events.
+     */
+    var eventListener: ((Event) -> Unit)?
 
     /**
      * Message that is currently in progress of being sent.
@@ -89,31 +90,13 @@ interface MessagingClient {
     val conversation: List<Message>
 
     /**
-     * Open a secure WebSocket connection to the Web Messaging service with the url and
+     * Open and Configure a secure WebSocket connection to the Web Messaging service with the url and
      * deploymentId configured on this MessagingClient instance.
      *
      * @throws IllegalStateException
      */
-    @Deprecated("Use the connect(shouldConfigure: Boolean) instead", ReplaceWith("connect(shouldConfigure: Boolean)"))
     @Throws(IllegalStateException::class)
     fun connect()
-
-    /**
-     * Open a secure WebSocket connection to the Web Messaging service with the url and
-     * deploymentId configured on this MessagingClient instance.
-     *
-     * @param shouldConfigure a Boolean value indicating whether to configure a Web Messaging session after the WebSocket is opened.
-     * @throws IllegalStateException
-     */
-    @Throws(IllegalStateException::class)
-    fun connect(shouldConfigure: Boolean = true)
-
-    /**
-     * Configure a Web Messaging session.
-     */
-    @Deprecated("Use the connect(shouldConfigure: Boolean) instead", ReplaceWith("connect(shouldConfigure: Boolean)"))
-    @Throws(IllegalStateException::class)
-    fun configureSession()
 
     /**
      * Send a message to the conversation as plain text.
@@ -127,6 +110,8 @@ interface MessagingClient {
 
     /**
      * Perform a health check of the connection by sending an echo message.
+     * This command sends a single echo request and should be called a maximum of once every 30 seconds.
+     * If called more frequently, this command will be rate limited in order to optimize network traffic.
      *
      * @throws IllegalStateException
      */
@@ -135,7 +120,7 @@ interface MessagingClient {
 
     /**
      * Attach a file to the message. This file will be uploaded and cached locally
-     * until user decides to send a message.
+     * until customer decides to send a message.
      * After the message has been sent, attachment will be cleared from cache.
      *
      * @param byteArray data to upload.
@@ -184,4 +169,14 @@ interface MessagingClient {
      * latest available history.
      */
     fun invalidateConversationCache()
+
+    /**
+     * Notify the agent that the customer is typing a message.
+     * This command sends a single typing indicator event and should be called a maximum of once every 5 seconds.
+     * If called more frequently, this command will be rate limited in order to optimize network traffic.
+     *
+     * @throws IllegalStateException if called before session was connected.
+     */
+    @Throws(IllegalStateException::class)
+    fun indicateTyping()
 }

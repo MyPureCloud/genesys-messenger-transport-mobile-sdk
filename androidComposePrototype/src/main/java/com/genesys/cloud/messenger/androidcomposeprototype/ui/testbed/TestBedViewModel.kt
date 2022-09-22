@@ -13,7 +13,9 @@ import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessageEvent.AttachmentUpdated
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
-import com.genesys.cloud.messenger.transport.core.MobileMessenger
+import com.genesys.cloud.messenger.transport.core.MessengerTransport
+import com.genesys.cloud.messenger.transport.core.events.Event
+import com.genesys.cloud.messenger.transport.util.DefaultTokenStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -29,6 +31,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private val TAG = TestBedViewModel::class.simpleName
 
+    private lateinit var messengerTransport: MessengerTransport
     private lateinit var client: MessagingClient
     private lateinit var attachment: ByteArray
     private val attachedIds = mutableListOf<String>()
@@ -53,16 +56,22 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         val mmsdkConfiguration = Configuration(
             deploymentId = BuildConfig.DEPLOYMENT_ID,
             domain = BuildConfig.DEPLOYMENT_DOMAIN,
-            tokenStoreKey = "com.genesys.cloud.messenger",
             logging = true
         )
-        client = MobileMessenger.createMessagingClient(
-            context = context,
-            configuration = mmsdkConfiguration,
-        )
+        DefaultTokenStore.context = context
+        messengerTransport = MessengerTransport(mmsdkConfiguration)
+        client = messengerTransport.createMessagingClient()
         with(client) {
-            stateChangedListener = { runBlocking { onClientStateChanged(oldState = it.oldState, newState = it.newState) } }
-            messageListener = { onEvent(it) }
+            stateChangedListener = {
+                runBlocking {
+                    onClientStateChanged(
+                        oldState = it.oldState,
+                        newState = it.newState,
+                    )
+                }
+            }
+            messageListener = { onMessage(it) }
+            eventListener = { onEvent(it) }
             clientState = client.currentState
         }
         withContext(Dispatchers.IO) {
@@ -94,8 +103,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         when (command) {
             "connect" -> doConnect()
             "bye" -> doDisconnect()
-            "configure" -> doConfigureSession()
-            "connectWithConfigure" -> doConnectWithConfigure()
             "send" -> doSendMessage(input)
             "history" -> fetchNextPage()
             "healthCheck" -> doSendHealthCheck()
@@ -104,6 +111,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "deployment" -> doDeployment()
             "clearConversation" -> doClearConversation()
             "addAttribute" -> doAddCustomAttributes(input)
+            "typing" -> doIndicateTyping()
             else -> {
                 Log.e(TAG, "Invalid command")
                 withContext(Dispatchers.Main) {
@@ -116,11 +124,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     private suspend fun doDeployment() {
         try {
             onSocketMessageReceived(
-                MobileMessenger.fetchDeploymentConfig(
-                    BuildConfig.DEPLOYMENT_DOMAIN,
-                    BuildConfig.DEPLOYMENT_ID,
-                    true,
-                ).toString()
+                messengerTransport.fetchDeploymentConfig().toString()
             )
         } catch (t: Throwable) {
             handleException(t, "fetch deployment config")
@@ -140,22 +144,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             client.disconnect()
         } catch (t: Throwable) {
             handleException(t, "disconnect")
-        }
-    }
-
-    private suspend fun doConfigureSession() {
-        try {
-            client.configureSession()
-        } catch (t: Throwable) {
-            handleException(t, "configure session")
-        }
-    }
-
-    private suspend fun doConnectWithConfigure() {
-        try {
-            client.connect(shouldConfigure = true)
-        } catch (t: Throwable) {
-            handleException(t, "connect with configure")
         }
     }
 
@@ -180,6 +168,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     private suspend fun doSendHealthCheck() {
         try {
             client.sendHealthCheck()
+            commandWaiting = false
         } catch (t: Throwable) {
             handleException(t, "send health check")
         }
@@ -223,6 +212,15 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         onSocketMessageReceived(consoleMessage)
     }
 
+    private suspend fun doIndicateTyping() {
+        try {
+            client.indicateTyping()
+            commandWaiting = false
+        } catch (t: Throwable) {
+            handleException(t, "indicate typing.")
+        }
+    }
+
     private suspend fun onClientStateChanged(oldState: State, newState: State) {
         Log.v(TAG, "onClientStateChanged(oldState = $oldState, newState = $newState)")
         clientState = newState
@@ -263,7 +261,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private fun onEvent(event: MessageEvent) {
+    private fun onMessage(event: MessageEvent) {
         val eventMessage = when (event) {
             is MessageEvent.MessageUpdated -> event.message.toString()
             is MessageEvent.MessageInserted -> event.message.toString()
@@ -282,6 +280,10 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         launch {
             onSocketMessageReceived(eventMessage)
         }
+    }
+
+    private fun onEvent(event: Event) {
+        launch { onSocketMessageReceived(event.toString()) }
     }
 }
 

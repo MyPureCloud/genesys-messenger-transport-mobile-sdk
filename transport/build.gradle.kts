@@ -1,5 +1,5 @@
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
+import org.jetbrains.kotlin.gradle.plugin.mpp.BitcodeEmbeddingMode
 
 plugins {
     kotlin("multiplatform")
@@ -42,7 +42,10 @@ android {
 }
 
 val iosFrameworkName = "MessengerTransport"
+val iosMinimumOSVersion = "13.0"
+val iosCocoaPodName = "GenesysCloudMessengerTransport"
 version = project.rootProject.version
+group = project.rootProject.group
 
 kotlin {
     android {
@@ -51,17 +54,21 @@ kotlin {
                 jvmTarget = Deps.Android.jvmTarget
             }
         }
+        publishLibraryVariants("release", "debug")
+        publishLibraryVariantsGroupedByFlavor = true
     }
 
     val xcf = XCFramework(iosFrameworkName)
     ios {
         binaries.framework {
+            embedBitcode = BitcodeEmbeddingMode.DISABLE
             baseName = iosFrameworkName
             xcf.add(this)
         }
     }
     iosSimulatorArm64 {
         binaries.framework {
+            embedBitcode = BitcodeEmbeddingMode.DISABLE
             baseName = iosFrameworkName
             xcf.add(this)
         }
@@ -72,7 +79,7 @@ kotlin {
         homepage = "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk"
         license = "MIT"
         authors = "Genesys Cloud Services, Inc."
-        ios.deploymentTarget = "13.0"
+        ios.deploymentTarget = iosMinimumOSVersion
         podfile = project.file("../iosApp/Podfile")
         framework {
             // The default name for an iOS framework is `<project name>.framework`. To set a custom name, use the `baseName` option. This will also set the module name.
@@ -140,19 +147,39 @@ kotlin {
 }
 
 tasks {
-    create<Jar>("kotlinSourcesJar") {
-        archiveClassifier.set("sources")
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        from("./src/androidMain", "./src/commonMain")
-    }
 
     create<Jar>("fakeJavadocJar") {
         archiveClassifier.set("javadoc")
         from("./deployment")
     }
 
-    register("generateGenesysCloudMessengerTransportPodspec") {
-        val podspecFileName = "GenesysCloudMessengerTransport.podspec"
+    listOf("Debug", "Release").forEach { buildVariant ->
+        named("assemble${iosFrameworkName}${buildVariant}XCFramework") {
+            doLast {
+                listOf("ios-arm64", "ios-arm64_x86_64-simulator").forEach { arch ->
+                    val xcframeworkPath =
+                        "build/XCFrameworks/${buildVariant.toLowerCase()}/$iosFrameworkName.xcframework/$arch/$iosFrameworkName.framework"
+                    val infoPlistPath = "$xcframeworkPath/Info.plist"
+                    val propertiesMap = mapOf(
+                        "CFBundleShortVersionString" to version,
+                        "CFBundleVersion" to version,
+                        "MinimumOSVersion" to iosMinimumOSVersion
+                    )
+                    println("Updating framework metadata at: ${this.project.projectDir}/$infoPlistPath")
+                    for ((key, value) in propertiesMap) {
+                        println("  $key = $value")
+                        exec {
+                            commandLine("plutil", "-replace", key, "-string", value, infoPlistPath)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    val generatePodspecTaskName = "generate${iosCocoaPodName}Podspec"
+    register(generatePodspecTaskName) {
+        val podspecFileName = "${iosCocoaPodName}.podspec"
         group = "publishing"
         description = "Generates the $podspecFileName file for publication to CocoaPods."
         doLast {
@@ -160,26 +187,22 @@ tasks {
                 .replace(oldValue = "<VERSION>", newValue = version.toString())
                 .replace(
                     oldValue = "<SOURCE_HTTP_URL>",
-                    newValue = "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/releases/download/v${version}/MessengerTransport.xcframework.zip"
+                    newValue = "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/releases/download/${version}/MessengerTransport.xcframework.zip"
                 )
             file(podspecFileName, PathValidation.NONE).writeText(content)
+            println("CocoaPods podspec for Pod $iosCocoaPodName written to: ${this.project.projectDir}/$podspecFileName")
         }
     }
 }
 
 publishing {
     publications {
-        create<MavenPublication>("maven") {
-            artifact(File("build/outputs/aar/transport-release.aar"))
-            artifact(tasks["kotlinSourcesJar"])
+        withType<MavenPublication> {
             artifact(tasks["fakeJavadocJar"])
-            groupId = rootProject.group as String?
-            artifactId = "messenger-transport-mobile-sdk"
-            version = version
 
             pom {
                 name.set("Genesys Cloud Mobile Messenger Transport SDK")
-                description.set("This library provides methods for connecting to Genesys Cloud Messenger chat APIs and WebSockets from Android native applications.")
+                description.set("This library provides methods for connecting to Genesys Cloud Messenger chat APIs and WebSockets from mobile applications.")
                 url.set("https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk")
 
                 licenses {
@@ -199,38 +222,27 @@ publishing {
                 scm {
                     url.set("https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk.git")
                 }
-
-                withXml {
-                    asNode().appendNode("dependencies").let { dependenciesNode ->
-                        listOf(
-                            "androidMainImplementation",
-                            "androidMainApi",
-                            "commonMainImplementation",
-                            "commonMainApi"
-                        ).forEach {
-                            for (dependency in configurations[it].dependencies) {
-                                if (dependency.name != "unspecified") {
-                                    dependenciesNode.appendNode("dependency").let { node ->
-                                        node.appendNode("groupId", dependency.group)
-                                        node.appendNode("artifactId", dependency.name)
-                                        node.appendNode("version", dependency.version)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
             }
         }
     }
 }
 
+afterEvaluate {
+    configure<PublishingExtension> {
+        publications.all {
+            val mavenPublication = this as? MavenPublication
+            mavenPublication?.artifactId =
+                "messenger-transport-mobile-sdk${"-$name".takeUnless { "kotlinMultiplatform" in name }.orEmpty()}"
+        }
+    }
+}
+
+
 signing {
     // Signing configuration is setup in the ~/.gradle/gradle.properties file on the Jenkins machine
     isRequired = true
-    sign(tasks["kotlinSourcesJar"])
-    sign(tasks["fakeJavadocJar"])
-    sign(publishing.publications["maven"])
+
+    sign(publishing.publications)
 }
 
 apply(from = "${rootDir}/jacoco.gradle.kts")

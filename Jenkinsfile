@@ -72,7 +72,7 @@ pipeline{
         }
         stage("CI Build - transport POM creation"){
             steps{
-                sh './gradlew :transport:generatePomFileForMavenPublication'
+                sh './gradlew :transport:generatePomFileForKotlinMultiplatformPublication'
             }
         }
         stage("CI Build - iOS Testbed"){
@@ -91,7 +91,7 @@ pipeline{
                       -Pkotlin.native.cocoapods.configuration=Debug
                     cd iosApp
                     pod install --verbose
-                    xcodebuild clean build -verbose -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug CODE_SIGNING_ALLOWED=NO EXCLUDED_ARCHS=armv7
+                    xcodebuild clean build -verbose -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug CODE_SIGNING_ALLOWED=NO
                 '''
             }
         }

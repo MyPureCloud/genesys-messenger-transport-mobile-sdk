@@ -1,6 +1,11 @@
 package com.genesys.cloud.messenger.transport.core
 
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
+import com.genesys.cloud.messenger.transport.core.events.Event
+import com.genesys.cloud.messenger.transport.core.events.EventHandler
+import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
+import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
+import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
@@ -8,7 +13,9 @@ import com.genesys.cloud.messenger.transport.network.SocketCloseCode
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.AttachmentDeletedResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
+import com.genesys.cloud.messenger.transport.shyrka.receive.HealthCheckEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionExpiredEvent
@@ -17,8 +24,9 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.TooManyRequestsErrorMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.isHealthCheckResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.isOutbound
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
-import com.genesys.cloud.messenger.transport.shyrka.send.EchoRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
@@ -41,19 +49,14 @@ internal class MessagingClientImpl(
     private val messageStore: MessageStore,
     private val reconnectionHandler: ReconnectionHandler,
     private val stateMachine: StateMachine = StateMachineImpl(log.withTag(LogTag.STATE_MACHINE)),
+    private val eventHandler: EventHandler = EventHandlerImpl(log.withTag(LogTag.EVENT_HANDLER)),
+    private val userTypingProvider: UserTypingProvider = UserTypingProvider(log.withTag(LogTag.TYPING_INDICATOR_PROVIDER)),
+    private val healthCheckProvider: HealthCheckProvider = HealthCheckProvider(log.withTag(LogTag.HEALTH_CHECK_PROVIDER)),
 ) : MessagingClient {
-    private var shouldConfigureAfterConnect = false
 
     override val currentState: State
         get() {
             return stateMachine.currentState
-        }
-
-    @Deprecated("Use stateChangedListener() instead", ReplaceWith("stateChangedListener"))
-    override var stateListener: ((State) -> Unit)? = null
-        set(value) {
-            stateMachine.stateListener = value
-            field = value
         }
 
     override var stateChangedListener: ((StateChange) -> Unit)? = null
@@ -68,23 +71,23 @@ internal class MessagingClientImpl(
             field = value
         }
 
+    override var eventListener: ((Event) -> Unit)? = null
+        set(value) {
+            eventHandler.eventListener = value
+            field = value
+        }
+
     override val pendingMessage: Message
         get() = messageStore.pendingMessage
 
     override val conversation: List<Message>
         get() = messageStore.getConversation()
 
-    @Deprecated("Use the connect(shouldConfigure: Boolean) instead", ReplaceWith("connect(shouldConfigure: Boolean)"))
     @Throws(IllegalStateException::class)
     override fun connect() {
         log.i { "connect()" }
         stateMachine.onConnect()
         webSocket.openSocket(socketListener)
-    }
-
-    override fun connect(shouldConfigure: Boolean) {
-        shouldConfigureAfterConnect = shouldConfigure
-        connect()
     }
 
     @Throws(IllegalStateException::class)
@@ -97,11 +100,8 @@ internal class MessagingClientImpl(
         webSocket.closeSocket(code, reason)
     }
 
-    @Deprecated("Use the connect(shouldConfigure: Boolean) instead", ReplaceWith("connect(shouldConfigure: Boolean)"))
-    @Throws(IllegalStateException::class)
-    override fun configureSession() {
+    private fun configureSession() {
         log.i { "configureSession(token = $token)" }
-        stateMachine.onConfiguring()
         val request = ConfigureSessionRequest(
             token = token,
             deploymentId = configuration.deploymentId,
@@ -126,10 +126,10 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun sendHealthCheck() {
-        log.i { "sendHealthCheck()" }
-        val request = EchoRequest(token = token)
-        val encodedJson = WebMessagingJson.json.encodeToString(request)
-        send(encodedJson)
+        healthCheckProvider.encodeRequest(token)?.let {
+            log.i { "sendHealthCheck()" }
+            send(it)
+        }
     }
 
     override fun attach(
@@ -188,6 +188,14 @@ internal class MessagingClientImpl(
         messageStore.invalidateConversationCache()
     }
 
+    @Throws(IllegalStateException::class)
+    override fun indicateTyping() {
+        userTypingProvider.encodeRequest(token)?.let {
+            log.i { "indicateTyping()" }
+            send(it)
+        }
+    }
+
     private fun handleError(code: ErrorCode, message: String? = null) {
         when (code) {
             is ErrorCode.SessionHasExpired,
@@ -206,8 +214,9 @@ internal class MessagingClientImpl(
             is ErrorCode.RedirectResponseError,
             -> {
                 if (stateMachine.isConnected()) {
-                    shouldConfigureAfterConnect = false
                     stateMachine.onError(code, message)
+                } else {
+                    eventHandler.onEvent(ErrorEvent(errorCode = code, message = message))
                 }
             }
             is ErrorCode.WebsocketError -> handleWebSocketError(ErrorCode.WebsocketError)
@@ -222,17 +231,39 @@ internal class MessagingClientImpl(
             is ErrorCode.WebsocketError -> {
                 if (reconnectionHandler.shouldReconnect) {
                     stateMachine.onReconnect()
-                    reconnectionHandler.reconnect { connect(true) }
+                    reconnectionHandler.reconnect { connect() }
                 } else {
                     stateMachine.onError(errorCode, ErrorMessage.FailedToReconnect)
                     attachmentHandler.clearAll()
+                    reconnectionHandler.clear()
                 }
             }
             is ErrorCode.NetworkDisabled -> {
                 stateMachine.onError(errorCode, ErrorMessage.InternetConnectionIsOffline)
                 attachmentHandler.clearAll()
+                reconnectionHandler.clear()
             }
             else -> log.w { "Unhandled WebSocket errorCode. ErrorCode: $errorCode" }
+        }
+    }
+
+    private fun handleStructuredMessage(structuredMessage: StructuredMessage) {
+        when (structuredMessage.type) {
+            StructuredMessage.Type.Text -> {
+                with(structuredMessage.toMessage()) {
+                    messageStore.update(this)
+                    attachmentHandler.onSent(this.attachments)
+                    userTypingProvider.clear()
+                }
+            }
+
+            StructuredMessage.Type.Event -> {
+                if (structuredMessage.isOutbound()) {
+                    structuredMessage.events.forEach {
+                        eventHandler.onEvent(it)
+                    }
+                }
+            }
         }
     }
 
@@ -247,13 +278,7 @@ internal class MessagingClientImpl(
         override fun onOpen() {
             log.i { "onOpen()" }
             stateMachine.onConnectionOpened()
-            if (shouldConfigureAfterConnect) {
-                try {
-                    configureSession()
-                } catch (t: Throwable) {
-                    handleError(ErrorCode.WebsocketError, t.message)
-                }
-            }
+            configureSession()
         }
 
         override fun onFailure(t: Throwable, errorCode: ErrorCode) {
@@ -276,7 +301,6 @@ internal class MessagingClientImpl(
                     }
                     is SessionResponse -> {
                         decoded.body.run {
-                            shouldConfigureAfterConnect = false
                             reconnectionHandler.clear()
                             stateMachine.onSessionConfigured(connected, newSession)
                         }
@@ -288,9 +312,10 @@ internal class MessagingClientImpl(
                     is UploadSuccessEvent ->
                         attachmentHandler.onUploadSuccess(decoded.body)
                     is StructuredMessage -> {
-                        with(decoded.body.toMessage()) {
-                            messageStore.update(this)
-                            attachmentHandler.onSent(this.attachments)
+                        if (decoded.body.isHealthCheckResponse()) {
+                            eventHandler.onEvent(HealthCheckEvent())
+                        } else {
+                            handleStructuredMessage(decoded.body)
                         }
                     }
                     is AttachmentDeletedResponse ->
@@ -330,6 +355,8 @@ internal class MessagingClientImpl(
             log.i { "onClosed(code = $code, reason = $reason)" }
             stateMachine.onClosed(code, reason)
             invalidateConversationCache()
+            userTypingProvider.clear()
+            healthCheckProvider.clear()
             attachmentHandler.clearAll()
         }
     }

@@ -28,18 +28,20 @@ class ContentViewController: UIViewController {
             let newState = stateChange.newState
             var stateMessage = "\(newState)"
             switch newState {
-            case _ as MessagingClientState.Connecting:
+            case is MessagingClientState.Connecting:
                 stateMessage = "Connecting"
-            case _ as MessagingClientState.Connected:
+            case is MessagingClientState.Connected:
                 stateMessage = "Connected"
             case let configured as MessagingClientState.Configured:
-                stateMessage = "Configured, connected=\(configured.connected) newSession=\(configured.newSession) wasReconnecting=\(stateChange.oldState.isEqual(MessagingClientState.Reconnecting()))"
+                stateMessage = "Configured, connected=\(configured.connected) newSession=\(configured.newSession) wasReconnecting=\(stateChange.oldState is MessagingClientState.Reconnecting)"
             case let closing as MessagingClientState.Closing:
                 stateMessage = "Closing, code=\(closing.code) reason=\(closing.reason)"
             case let closed as MessagingClientState.Closed:
                 stateMessage = "Closed, code=\(closed.code) reason=\(closed.reason)"
             case let error as MessagingClientState.Error:
                 stateMessage = "Error, code=\(error.code) message=\(error.message?.description ?? "nil")"
+            case is MessagingClientState.Reconnecting:
+                stateMessage = "Reconnecting"
             default:
                 break
             }
@@ -47,9 +49,9 @@ class ContentViewController: UIViewController {
             self?.info.text = "State changed from \(stateChange.oldState) to \(newState)"
         }
         
-        messenger.onMessageEvent = { [weak self] event in
-            var displayMessage = "Unexpected message event: \(event)"
-            switch event {
+        messenger.onMessageEvent = { [weak self] message in
+            var displayMessage = "Unexpected message event: \(message)"
+            switch message {
             case let messageInserted as MessageEvent.MessageInserted:
                 displayMessage = "Message Inserted: \(messageInserted.message.description)"
             case let messageUpdated as MessageEvent.MessageUpdated:
@@ -64,6 +66,21 @@ class ContentViewController: UIViewController {
             }
             self?.info.text = displayMessage
         }
+        
+        messenger.onEvent = { [weak self] event in
+            var displayEvent = "Unexpected event: \(event)"
+            switch event {
+            case let typing as Event.AgentTyping:
+                displayEvent = "Event received: \(typing.description)"
+            case let error as Event.Error:
+                displayEvent = "Event received: \(error.description)"
+            case let healthChecked as Event.HealthChecked:
+                displayEvent = "Event received: \(healthChecked.description)"
+            default:
+                break
+            }
+            self?.info.text = displayEvent
+        }
     }
 
     required init?(coder: NSCoder) {
@@ -75,8 +92,6 @@ class ContentViewController: UIViewController {
      */
     enum UserCommand: String, CaseIterable {
         case connect
-        case configure
-        case connectWithConfigure
         case send
         case history
         case selectAttachment
@@ -87,7 +102,8 @@ class ContentViewController: UIViewController {
         case healthCheck
         case clearConversation
         case addAttribute
-        
+        case typing
+
         var helpDescription: String {
             switch self {
             case .send: return "send <msg>"
@@ -129,7 +145,7 @@ class ContentViewController: UIViewController {
         let view = UITextField()
         view.font = UIFont.preferredFont(forTextStyle: .body)
         view.borderStyle = .line
-        view.placeholder = "Send a message"
+        view.placeholder = "Send a command"
         view.autocapitalizationType = .none
         view.autocorrectionType = .no
         view.accessibilityIdentifier = "Text-Field"
@@ -257,10 +273,6 @@ extension ContentViewController : UITextFieldDelegate {
                 try messenger.connect()
             case (.bye, _):
                 try messenger.disconnect()
-            case (.configure, _):
-                try messenger.configureSession()
-            case (.connectWithConfigure, _):
-                try messenger.connect(shouldConfigure: true)
             case (.send, let msg?):
                 try messenger.sendMessage(text: msg.trimmingCharacters(in: .whitespaces), customAttributes: customAttributes)
                 customAttributes = [:]
@@ -311,6 +323,8 @@ extension ContentViewController : UITextFieldDelegate {
                 }  else {
                     self.info.text = "Custom attribute key cannot be nil or empty!"
                 }
+            case (.typing, _):
+                try messenger.indicateTyping()
             default:
                 self.info.text = "Invalid command"
             }

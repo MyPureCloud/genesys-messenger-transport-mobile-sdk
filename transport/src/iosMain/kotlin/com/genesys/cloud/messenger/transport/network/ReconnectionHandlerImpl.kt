@@ -5,7 +5,7 @@ import kotlin.native.concurrent.AtomicInt
 
 internal const val TIMEOUT_INTERVAL = 30.0
 
-internal class ReconnectionHandlerImpl(
+internal actual class ReconnectionHandlerImpl actual constructor(
     reconnectionTimeoutInSeconds: Long,
     private val log: Log,
 ) : ReconnectionHandler {

@@ -14,27 +14,33 @@ class MessengerHandler {
 
     private let deployment: Deployment
     private let config: Configuration
+    let messengerTransport: MessengerTransport
     let client: MessagingClient
     
     public var onStateChange: ((StateChange) -> Void)?
     public var onMessageEvent: ((MessageEvent) -> Void)?
+    public var onEvent: ((Event) -> Void)?
     
     init(deployment: Deployment, reconnectTimeout: Int64 = 60 * 5) {
         self.deployment = deployment
         self.config = Configuration(deploymentId: deployment.deploymentId!,
                                     domain: deployment.domain!,
-                                    tokenStoreKey: "com.genesys.cloud.messenger",
                                     logging: true,
                                     reconnectionTimeoutInSeconds: reconnectTimeout)
-        self.client = MobileMessenger().createMessagingClient(configuration: self.config)
+        self.messengerTransport = MessengerTransport(configuration: self.config)
+        self.client = self.messengerTransport.createMessagingClient()
         
         client.stateChangedListener = { [weak self] stateChange in
             print("State Change: \(stateChange)")
             self?.onStateChange?(stateChange)
         }
-        client.messageListener = { [weak self] event in
-            print("Message Event: \(event)")
-            self?.onMessageEvent?(event)
+        client.messageListener = { [weak self] message in
+            print("Message Event: \(message)")
+            self?.onMessageEvent?(message)
+        }
+        client.eventListener = { [weak self] event in
+            print("Event: \(event)")
+            self?.onEvent?(event)
         }
     }
 
@@ -43,24 +49,6 @@ class MessengerHandler {
             try client.connect()
         } catch {
             print("connect() failed. \(error.localizedDescription)")
-            throw error
-        }
-    }
-    
-    func configureSession() throws {
-        do {
-            try client.configureSession()
-        } catch {
-            print("configureSession() failed. \(error.localizedDescription)")
-            throw error
-        }
-    }
-    
-    func connect(shouldConfigure: Bool) throws {
-        do {
-            try client.connect(shouldConfigure: shouldConfigure)
-        } catch {
-            print("connectWithConfigure() failed. \(error.localizedDescription)")
             throw error
         }
     }
@@ -84,7 +72,7 @@ class MessengerHandler {
     }
 
     func fetchNextPage(completion: ((Error?) -> Void)? = nil) {
-        client.fetchNextPage() {_, error in
+        client.fetchNextPage() { _, error in
             completion?(error)
         }
     }
@@ -119,14 +107,19 @@ class MessengerHandler {
     }
 
     func fetchDeployment(completion: @escaping (DeploymentConfig?, Error?) -> Void) {
-        MobileMessenger().fetchDeploymentConfig(
-            domain: deployment.domain!,
-            deploymentId: deployment.deploymentId!,
-            logging: true,
-            completionHandler: completion)
+        messengerTransport.fetchDeploymentConfig(completionHandler: completion)
     }
 
     func clearConversation() {
         client.invalidateConversationCache()
+    }
+
+    func indicateTyping() throws {
+        do {
+            try client.indicateTyping()
+        } catch {
+            print("indicateTyping() failed. \(error.localizedDescription)")
+            throw error
+        }
     }
 }
