@@ -6,16 +6,17 @@ Genesys Cloud Messenger Transport SDK provides a library of methods for connecti
 
 To import and install the Messenger Transport SDK in an app, follow the instructions below for the appropriate platform.
 
-### Install Messenger Transport SDK on Android
+### Install Messenger Transport on Android
 
 Messenger Transport supports versions of Android 21 and up.
 
 Add the following dependency to the `dependencies` section of your app's `build.gradle` file.
+
 ```
-implementation 'cloud.genesys:messenger-transport-mobile-sdk:<version>' 
+implementation 'cloud.genesys:messenger-transport-mobile-sdk-android:<version>'
 ```
 
-### Install Messenger Transport SDK on iOS
+### Install Messenger Transport on iOS
 
 Messenger Transport SDK supports versions of iOS 13.0 and up.
 
@@ -43,6 +44,14 @@ The `MessengerTransport` module may now be imported and used in your project.
 
 ```
 import MessengerTransport
+```
+
+### Install Messenger Transport in Kotlin Multiplatform Mobile Project
+
+Add the following dependency to the `dependencies` section of your library's `build.gradle` file.
+
+```{ "title": "build.gradle" }
+implementation 'cloud.genesys:messenger-transport-mobile-sdk:<version>'
 ```
 
 ## Documentation
