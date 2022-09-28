@@ -5,7 +5,6 @@ object Deps {
     private const val kermitVersion = "1.1.2"
     private const val kotlinxSerializationJsonVersion = "1.3.2"
     private const val ktorVersion = "1.6.8"
-    private const val logbackVersion = "1.2.10"
     private const val mockWebServerVersion = "4.9.0"
     private const val mockkVersion = "1.12.2"
     private const val okhttpVersion = "4.10.0"
@@ -13,7 +12,6 @@ object Deps {
 
     object Libs {
         const val junit = "junit:junit:$junitVersion"
-        const val logback = "ch.qos.logback:logback-classic:$logbackVersion"
         const val mockk = "io.mockk:mockk:$mockkVersion"
         const val kermit = "co.touchlab:kermit:$kermitVersion"
         const val klock = "com.soywiz.korlibs.klock:klock:$klockVersion"
