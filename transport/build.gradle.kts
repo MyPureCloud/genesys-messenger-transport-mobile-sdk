@@ -99,7 +99,6 @@ kotlin {
                 implementation(Deps.Libs.Ktor.serialization)
                 implementation(Deps.Libs.Ktor.json)
                 implementation(Deps.Libs.Ktor.logging)
-                implementation(Deps.Libs.logback)
                 implementation(Deps.Libs.klock)
                 api(Deps.Libs.kermit)
             }
