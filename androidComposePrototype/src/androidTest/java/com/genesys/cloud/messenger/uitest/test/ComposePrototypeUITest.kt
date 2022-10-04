@@ -4,16 +4,16 @@ import androidx.test.filters.LargeTest
 import androidx.test.runner.AndroidJUnit4
 import org.junit.Test
 import org.junit.runner.RunWith
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.*
 
 @Suppress("FunctionName")
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 class ComposePrototypeUITest : BaseTests() {
 
+    open val apiHelper by lazy { API() }
     val testBedViewText = "TestBed View"
     val connectText = "connect"
-    val configureText = "configure"
-    val connectConfigureText = "connectWithConfigure"
     val sendMsgText = "send"
     val helloText = "hello"
     val healthCheckText = "healthCheck"
@@ -30,35 +30,18 @@ class ComposePrototypeUITest : BaseTests() {
     val newNameText = "Nellie Hay"
     val customAttributeAddedText = "Custom attribute added"
     val oneThousandText = "Code: 1000"
-    val twoHundredText = "200"
+    val healthCheckResponse = "HealthChecked"
     val historyFetchedText = "HistoryFetched"
     val longClosedText = "The user has closed the connection"
+    val connectedText = "Connected: true"
 
     // Send the connect command and wait for connected response
     fun connect() {
         messenger {
             verifyPageIsVisible()
             enterCommand(connectText)
-            waitForConnected()
-        }
-    }
-
-    // Send the configure command, wait for configure response, and verify it is correct
-    fun configure() {
-        messenger {
-            verifyPageIsVisible()
-            enterCommand(configureText)
+            waitForProperResponse(connectedText)
             waitForConfigured()
-            checkConfigureFullResponse()
-        }
-    }
-
-    fun connectWithConfigure() {
-        messenger {
-            verifyPageIsVisible()
-            enterCommand(connectConfigureText)
-            waitForConfigured()
-            checkConfigureFullResponse()
         }
     }
 
@@ -73,12 +56,11 @@ class ComposePrototypeUITest : BaseTests() {
     }
 
     // Send a ping command, wait for the response, and verify it is correct
-    fun ping() {
+    fun healthcheckTest() {
         messenger {
             verifyPageIsVisible()
             enterCommand(healthCheckText)
-            waitForProperResponse(twoHundredText)
-            checkPingFullResponse()
+            waitForProperResponse(healthCheckResponse)
         }
     }
 
@@ -127,6 +109,17 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
+    fun sendTypingIndicator() {
+        messenger {
+            verifyPageIsVisible()
+            enterCommand("typing")
+            //verify that an error was not received
+        }
+        val conversation = apiHelper.waitForConversation()
+        val conversationInfo = apiHelper.getConversationInfo(conversation!!.id)
+        apiHelper.sendTypingIndicator(conversationInfo)
+    }
+
     // Send the bye command and wait for the closed response
     fun bye() {
         messenger {
@@ -138,7 +131,7 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
-    // A test to verify the connect, configure, send message, attach image, add custom attribute, and bye commands
+    // A test to verify the connect, healthCheck, send message, attach image, add custom attribute, and bye commands
     @Test
     fun testAllCommands() {
         opening {
@@ -149,24 +142,10 @@ class ComposePrototypeUITest : BaseTests() {
             verifyPageIsVisible()
         }
         connect()
-        configure()
+        healthcheckTest()
         sendMsg(helloText)
         val attachmentId = attachImage()
         addCustomAttribute(nameText, newNameText)
-        bye()
-    }
-
-    // A test to verify the connect with configure command
-    @Test
-    fun testConnectWithConfigureCommand() {
-        opening {
-            verifyPageIsVisible()
-            selectView(testBedViewText)
-        }
-        messenger {
-            verifyPageIsVisible()
-            connectWithConfigure()
-        }
         bye()
     }
 }

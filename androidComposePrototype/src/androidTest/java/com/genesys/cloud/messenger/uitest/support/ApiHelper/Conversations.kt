@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.uitest.support.ApiHelper
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+
 import java.lang.Thread.sleep
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -109,4 +110,10 @@ fun API.sendOutboundSmsMessage(conversationInfo: Conversation, message: String =
     val participant = conversationInfo.getParticipantForUserId(agentId)!!
     val payload = """{ "textBody": "$message" }""".toByteArray()
     publicApiCall("POST", "/api/v2/conversations/messages/${conversationInfo.id}/communications/${conversationInfo.getCommunicationId(participant)}/messages", payload = payload)
+}
+
+fun API.sendTypingIndicator(conversationInfo: Conversation) {
+    val participant = conversationInfo.getParticipantForUserId(agentId)!!
+    val payload = """{ "textBody": "typing" }""".toByteArray()
+    publicApiCall("POST", "/api/v2/conversations/messages/${conversationInfo.id}/communications/${conversationInfo.getCommunicationId(participant)}/typing", payload = payload)
 }

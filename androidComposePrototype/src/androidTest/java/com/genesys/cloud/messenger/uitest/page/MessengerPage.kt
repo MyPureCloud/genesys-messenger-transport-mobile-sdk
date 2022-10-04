@@ -60,15 +60,7 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
             }
     }
 
-    // Wait for client to be connected
-    fun waitForConnected() {
-        Awaitility.await().atMost(waitTime, SECONDS)
-            .until {
-                getClientResponse().contains("Connected", ignoreCase = true)
-            }
-    }
-
-    // Wait for client to be connected
+    // Wait for configure response
     fun waitForConfigured() {
         Awaitility.await().atMost(waitTime, SECONDS)
             .until {
