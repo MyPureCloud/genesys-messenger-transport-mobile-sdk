@@ -5,6 +5,7 @@ import androidx.test.runner.AndroidJUnit4
 import org.junit.Test
 import org.junit.runner.RunWith
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.*
+import java.lang.Thread.sleep
 
 @Suppress("FunctionName")
 @LargeTest
@@ -34,6 +35,7 @@ class ComposePrototypeUITest : BaseTests() {
     val historyFetchedText = "HistoryFetched"
     val longClosedText = "The user has closed the connection"
     val connectedText = "Connected: true"
+    val typingIndicatorResponse = "AgentTyping"
 
     // Send the connect command and wait for connected response
     fun connect() {
@@ -109,15 +111,27 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
+    @Test
     fun sendTypingIndicator() {
+        opening {
+            verifyPageIsVisible()
+            enterDeploymentID()
+            selectView(testBedViewText)
+        }
         messenger {
             verifyPageIsVisible()
-            enterCommand("typing")
-            //verify that an error was not received
         }
+        connect()
+        sendMsg("howdy")
+        sleep(6000)
         val conversation = apiHelper.waitForConversation()
         val conversationInfo = apiHelper.getConversationInfo(conversation!!.id)
         apiHelper.sendTypingIndicator(conversationInfo)
+        messenger {
+            waitForProperResponse(typingIndicatorResponse)
+            enterCommand(byeText)
+            waitForClosed()
+        }
     }
 
     // Send the bye command and wait for the closed response

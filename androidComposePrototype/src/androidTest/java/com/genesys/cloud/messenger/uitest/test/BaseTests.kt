@@ -3,16 +3,16 @@ package com.genesys.cloud.messenger.uitest.test
 import androidx.test.rule.ActivityTestRule
 import androidx.test.rule.GrantPermissionRule
 import com.genesys.cloud.messenger.androidcomposeprototype.MainActivity
-import com.genesys.cloud.messenger.uitest.page.MessageUsPage
 import com.genesys.cloud.messenger.uitest.page.MessengerPage
 import com.genesys.cloud.messenger.uitest.page.OpeningPage
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.API
 import com.jaredrummler.android.device.DeviceName
 import org.junit.Before
 import org.junit.Rule
 
 open class BaseTests {
     companion object {
-
+        open val apiHelper by lazy { API() }
         // Will run before running any test.
         init {
             setUpDevice()
@@ -52,9 +52,4 @@ open class BaseTests {
         return Unit
     }
 
-    // Message Us page shortcut
-    fun messageUs(func: MessageUsPage.() -> Unit) {
-        MessageUsPage(rule.activity).apply(func)
-        return Unit
-    }
 }

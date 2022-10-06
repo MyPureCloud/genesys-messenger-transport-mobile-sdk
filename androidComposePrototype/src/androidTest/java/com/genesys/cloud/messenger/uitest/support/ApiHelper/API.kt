@@ -25,7 +25,7 @@ class API : IdlingResource {
         with(url.openConnection() as HttpURLConnection) {
             requestMethod = httpMethod
             setRequestProperty("Authorization", "bearer $token")
-            setRequestProperty("User-Agent", "testing-communicate-mobile-Android")
+            setRequestProperty("User-Agent", "Android-MMSDK-Testing")
             setRequestProperty("Content-Type", "application/json")
 
             // send the payload if needed.

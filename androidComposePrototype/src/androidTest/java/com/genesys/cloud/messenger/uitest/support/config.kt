@@ -9,7 +9,8 @@ val testConfig by lazy { pullConfig() }
 data class Config(
     val token: String,
     val agentId: String,
-    val deploymentId: String
+    val deploymentId: String,
+    val password: String
 )
 
 private fun pullConfig(): Config {
