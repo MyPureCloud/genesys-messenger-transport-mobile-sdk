@@ -37,7 +37,7 @@ fun API.getPresenceList(): MutableMap<String, String> {
     return presenceList
 }
 
-fun API.changePresence(presenceName: String, message: String = "") {
+fun API.changePresence(presenceName: String, agentId: String, message: String = "") {
     val presenceList = getPresenceList()
     val presenceID = presenceList[presenceName]
     val payload = """

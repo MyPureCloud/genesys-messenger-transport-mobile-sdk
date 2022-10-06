@@ -1,8 +1,11 @@
 package com.genesys.cloud.messenger.uitest.support.ApiHelper
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.genesys.cloud.messenger.uitest.support.testConfig
+import org.awaitility.Awaitility
 
 import java.lang.Thread.sleep
+import java.util.concurrent.TimeUnit
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Conversation(
@@ -34,6 +37,9 @@ data class Participant(
     val userId: String?,
     var messages: Array<CallDetails>
 )
+
+data class ConnectionState(val state: String)
+data class WrapUpPayload(val codeId: String, val notes: String)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class CallDetails(
@@ -85,4 +91,70 @@ fun API.sendTypingIndicator(conversationInfo: Conversation) {
     val participant = conversationInfo.getParticipantForUserId(agentParticipant!!.userId!!)
     val payload = "{\"typing\": {\"type\": \"On\"}}".toByteArray()
     publicApiCall("POST", "/api/v2/conversations/messages/${conversationInfo.id}/communications/${conversationInfo.getCommunicationId(participant!!)}/typing", payload = payload)
+}
+
+fun API.answerNewConversation(): Conversation? {
+    changePresence("On Queue", testConfig.agentId)
+    val conversation = waitForConversation()
+    if (conversation == null) {
+        println("Failed to receive a new conversation to answer.")
+        return null
+    }
+    sendConnectOrDisconnect(conversation, true, false)
+    changePresence("Available", testConfig.agentId)
+    return getConversationInfo(conversation.id)
+}
+
+fun API.sendConnectOrDisconnect(conversationInfo: Conversation, connecting: Boolean, wrapup: Boolean = true) {
+    println("Sending request to Connect to: Disconnect from a conversation.")
+    val statusPayload = ConnectionState(if (connecting) "CONNECTED" else "DISCONNECTED")
+    val agentParticipant = conversationInfo.getParticipantFromPurpose("agent")
+    val wrapupCodeId = getDefaultWrapupCode(conversationInfo.id, agentParticipant!!.userId!!)
+    val wrapupCodePayload = WrapUpPayload(wrapupCodeId, "")
+
+    /// Send requests to disconnect the conversation and send the wrapup code.
+    sendStatusToParticipant(conversationInfo.id, agentParticipant.id, statusPayload.state)
+    if (connecting) {
+        waitForParticipantToConnect(conversationInfo.id)
+    } else if (wrapup) {
+        sleep(2)
+        print("Sending wrapup code.")
+        sendWrapupCode(conversationInfo, wrapupCodePayload)
+    }
+}
+
+fun API.getDefaultWrapupCode(conversationId: String, participantId: String): String {
+    return (publicApiCall("GET", "/api/v2/conversations/messages/($conversationId)/participants/($participantId)/wrapupcodes")?.firstOrNull()?.get("id") as?
+            String)!!
+}
+
+private fun API.waitForParticipantToConnect(conversationId: String) {
+    Awaitility.await().atMost(60, TimeUnit.SECONDS).ignoreExceptions()
+        .untilAsserted { getConversationInfo().getParticipantFromPurpose("messages").(conversationId) == "Connected"}
+
+
+//    Wait.queryUntilTrue {
+//        guard let conversationInfo = getConversation(conversationId: conversationId) else {
+//        return false
+//    }
+//        return (conversationInfo.agentParticipant?.value(forKey: "messages") as? [JsonDictionary])?.first?.value(forKey: "state") as? String == "connected"
+//    }
+}
+
+//fun API.getConversation(conversationId: String): Conversation? {
+//    if (publicAPICall("GET", "/api/v2/conversations/($conversationId)") != null) {
+//        return Conversation(conversationJson)
+//    }
+//    else return null
+//}
+
+
+
+fun API.sendStatusToParticipant(conversationId: String, participantId: String, statusPayload:[String: Any]): [String: Any]? {
+    return publicAPICall("PATCH", "/api/v2/conversations/messages/($conversationId)/participants/($participantId)", statusPayload)
+}
+
+fun API.sendWrapupCode(conversationInfo: Conversation, wrapupPayload: JsonDictionary) {
+    publicAPICall("POST", "/api/v2/conversations/messages/($conversationInfo.id)/participants/($conversationInfo.agentParticipantId)/communications/" +
+        "(conversationInfo.communicationId)/wrapup", wrapupPayload)
 }
