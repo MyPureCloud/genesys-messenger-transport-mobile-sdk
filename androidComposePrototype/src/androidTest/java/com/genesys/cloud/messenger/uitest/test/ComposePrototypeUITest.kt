@@ -5,7 +5,7 @@ import androidx.test.runner.AndroidJUnit4
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.API
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.answerNewConversation
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendConnectOrDisconnect
-import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendTypingIndicator
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendTypingIndicatorFromAgentToUser
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -112,6 +112,17 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
+    // Send the bye command and wait for the closed response
+    fun bye() {
+        messenger {
+            verifyPageIsVisible()
+            enterCommand(byeText)
+            waitForClosed()
+            waitForProperResponse(oneThousandText)
+            waitForProperResponse(longClosedText)
+        }
+    }
+
     @Test
     fun sendTypingIndicator() {
         opening {
@@ -125,25 +136,16 @@ class ComposePrototypeUITest : BaseTests() {
         connect()
         sendMsg("howdy")
         val conversationInfo = apiHelper.answerNewConversation()
-        apiHelper.sendTypingIndicator(conversationInfo!!)
-        messenger {
-            waitForProperResponse(typingIndicatorResponse)
-        }
-        apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+        if (conversationInfo != null) {
+            apiHelper.sendTypingIndicatorFromAgentToUser(conversationInfo!!)
+            messenger {
+                waitForProperResponse(typingIndicatorResponse)
+            }
+            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+        } else AssertionError("Agent did not answer conversation.")
         messenger {
             enterCommand(byeText)
             waitForClosed()
-        }
-    }
-
-    // Send the bye command and wait for the closed response
-    fun bye() {
-        messenger {
-            verifyPageIsVisible()
-            enterCommand(byeText)
-            waitForClosed()
-            waitForProperResponse(oneThousandText)
-            waitForProperResponse(longClosedText)
         }
     }
 
