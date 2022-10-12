@@ -18,6 +18,7 @@ private val fakeMessenger = Messenger(
             messagingEndpoint = "messaging_endpoint",
             showAgentTypingIndicator = true,
             showUserTypingIndicator = true,
+            autoStart = Conversations.AutoStart()
         )
     ),
     styles = Styles(primaryColor = "red"),
