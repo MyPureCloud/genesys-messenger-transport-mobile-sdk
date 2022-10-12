@@ -15,6 +15,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent.Typing
+import com.genesys.cloud.messenger.transport.shyrka.receive.fakeDeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel.Metadata
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
@@ -123,6 +124,7 @@ class MessagingClientImplTest {
         healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),
     ).also {
         it.stateChangedListener = mockStateChangedListener
+        it.deploymentConfig = fakeDeploymentConfig()
     }
 
     @AfterTest
