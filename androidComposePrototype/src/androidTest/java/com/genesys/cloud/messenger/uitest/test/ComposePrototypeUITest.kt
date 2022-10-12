@@ -6,8 +6,8 @@ import com.genesys.cloud.messenger.uitest.support.ApiHelper.API
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.answerNewConversation
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendConnectOrDisconnect
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendTypingIndicator
-import org.junit.runner.RunWith
 import org.junit.Test
+import org.junit.runner.RunWith
 
 @Suppress("FunctionName")
 @LargeTest

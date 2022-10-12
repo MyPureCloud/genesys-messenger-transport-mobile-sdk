@@ -36,7 +36,6 @@ data class Participant(
     var messages: Array<CallDetails>
 )
 
-data class ConnectionState(val state: String)
 data class WrapUpPayload(val codeId: String, val notes: String)
 var statusPayload = "{\"state\": \"CONNECTED\"}"
 
