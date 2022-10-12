@@ -40,7 +40,11 @@ data class Conversations(
     val messagingEndpoint: String,
     val showAgentTypingIndicator: Boolean = false,
     val showUserTypingIndicator: Boolean = false,
-)
+    val autoStart: AutoStart = AutoStart(),
+) {
+    @Serializable
+    data class AutoStart(val enabled: Boolean = false)
+}
 
 @Serializable
 data class Styles(val primaryColor: String)
