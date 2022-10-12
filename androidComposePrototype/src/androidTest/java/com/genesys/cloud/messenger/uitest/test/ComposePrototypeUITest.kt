@@ -2,16 +2,17 @@ package com.genesys.cloud.messenger.uitest.test
 
 import androidx.test.filters.LargeTest
 import androidx.test.runner.AndroidJUnit4
-import org.junit.Test
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.API
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.answerNewConversation
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendConnectOrDisconnect
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendTypingIndicator
 import org.junit.runner.RunWith
-import com.genesys.cloud.messenger.uitest.support.ApiHelper.*
-import java.lang.Thread.sleep
+import org.junit.Test
 
 @Suppress("FunctionName")
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 class ComposePrototypeUITest : BaseTests() {
-
     open val apiHelper by lazy { API() }
     val testBedViewText = "TestBed View"
     val connectText = "connect"
@@ -57,7 +58,7 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
-    // Send a ping command, wait for the response, and verify it is correct
+    // Send a healthCheck command, wait for the response, and verify it is correct
     fun healthcheckTest() {
         messenger {
             verifyPageIsVisible()
@@ -76,7 +77,7 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
-    // Send an attach command, wait for the response, and verify it is correct
+    // Send an attach image command, wait for the response, and verify it is correct
     fun attachImage(): String {
         var attachmentId = ""
         messenger {
@@ -92,7 +93,7 @@ class ComposePrototypeUITest : BaseTests() {
         return attachmentId
     }
 
-    // Send a detach command, wait for the response, and verify it is correct
+    // Send a detach image command, wait for the response, and verify it is correct
     fun detachImage(attachmentId: String) {
         messenger {
             verifyPageIsVisible()
@@ -123,12 +124,13 @@ class ComposePrototypeUITest : BaseTests() {
         }
         connect()
         sendMsg("howdy")
-        sleep(6000)
-        val conversation = apiHelper.waitForConversation()
-        val conversationInfo = apiHelper.getConversationInfo(conversation!!.id)
-        apiHelper.sendTypingIndicator(conversationInfo)
+        val conversationInfo = apiHelper.answerNewConversation()
+        apiHelper.sendTypingIndicator(conversationInfo!!)
         messenger {
             waitForProperResponse(typingIndicatorResponse)
+        }
+        apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+        messenger {
             enterCommand(byeText)
             waitForClosed()
         }

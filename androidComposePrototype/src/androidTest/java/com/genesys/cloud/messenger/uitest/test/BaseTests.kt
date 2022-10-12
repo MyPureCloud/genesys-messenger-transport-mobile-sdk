@@ -51,5 +51,4 @@ open class BaseTests {
         OpeningPage(rule.activity).apply(func)
         return Unit
     }
-
 }

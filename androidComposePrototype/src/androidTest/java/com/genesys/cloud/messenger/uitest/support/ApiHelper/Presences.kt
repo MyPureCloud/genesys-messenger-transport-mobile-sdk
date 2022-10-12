@@ -40,12 +40,6 @@ fun API.getPresenceList(): MutableMap<String, String> {
 fun API.changePresence(presenceName: String, agentId: String, message: String = "") {
     val presenceList = getPresenceList()
     val presenceID = presenceList[presenceName]
-    val payload = """
-        {
-            "primary": true,
-            "presenceDefinition": {"id": "$presenceID"},
-            "message": "$message"
-        }
-    """.toByteArray()
-    publicApiCall(httpMethod = "PATCH", httpURL = "/api/v2/users/$agentId/presences/PURECLOUD", payload = payload)
+    val payload = "{\"primary\": \"true\",\"presenceDefinition\": {\"id\": \"$presenceID\"},\"message\": \"$message\" }".toByteArray()
+    publicApiCall("PATCH", "/api/v2/users/$agentId/presences/PURECLOUD", payload)
 }

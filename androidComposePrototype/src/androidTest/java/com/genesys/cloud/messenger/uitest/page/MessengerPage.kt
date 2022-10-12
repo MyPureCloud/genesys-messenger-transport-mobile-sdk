@@ -4,8 +4,6 @@ import android.app.Activity
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiSelector
-import com.genesys.cloud.messenger.uitest.support.testConfig
-import com.genesys.cloud.messenger.uitest.test.BaseTests.Companion.apiHelper
 import org.awaitility.Awaitility
 import java.lang.Thread.sleep
 import java.util.concurrent.TimeUnit.SECONDS

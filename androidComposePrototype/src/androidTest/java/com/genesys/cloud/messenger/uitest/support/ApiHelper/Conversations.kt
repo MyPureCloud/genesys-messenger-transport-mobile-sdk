@@ -3,7 +3,6 @@ package com.genesys.cloud.messenger.uitest.support.ApiHelper
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.genesys.cloud.messenger.uitest.support.testConfig
 import org.awaitility.Awaitility
-
 import java.lang.Thread.sleep
 import java.util.concurrent.TimeUnit
 
@@ -12,14 +11,13 @@ data class Conversation(
     val id: String,
     var participants: Array<Participant>
 ) {
-
     fun getParticipantForUserId(userId: String): Participant? {
         return participants.firstOrNull { participant ->
             participant.userId == userId && participant.purpose == "agent" && participant.messages.firstOrNull()?.isDisconnected()?.not() ?: false
         }
     }
 
-    fun getParticipantFromPurpose(purpose: String) : Participant? {
+    fun getParticipantFromPurpose(purpose: String): Participant? {
         return participants.firstOrNull { participant ->
             participant.purpose == purpose && participant.messages.firstOrNull()?.isDisconnected()?.not() ?: false
         }
@@ -40,6 +38,7 @@ data class Participant(
 
 data class ConnectionState(val state: String)
 data class WrapUpPayload(val codeId: String, val notes: String)
+var statusPayload = "{\"state\": \"CONNECTED\"}"
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class CallDetails(
@@ -58,12 +57,6 @@ data class CallDetails(
         return state == "alerting"
     }
 }
-
-// At the moment, just need to know the wrapup code id.
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class WrapupCodes(
-    val id: String
-)
 
 fun API.waitForConversation(): Conversation? {
     for (x in 0..60) {
@@ -94,67 +87,60 @@ fun API.sendTypingIndicator(conversationInfo: Conversation) {
 }
 
 fun API.answerNewConversation(): Conversation? {
-    changePresence("On Queue", testConfig.agentId)
+    changePresence("On Queue", testConfig.agentUserId)
     val conversation = waitForConversation()
     if (conversation == null) {
         println("Failed to receive a new conversation to answer.")
         return null
     }
     sendConnectOrDisconnect(conversation, true, false)
-    changePresence("Available", testConfig.agentId)
+    changePresence("Available", testConfig.agentUserId)
     return getConversationInfo(conversation.id)
 }
 
 fun API.sendConnectOrDisconnect(conversationInfo: Conversation, connecting: Boolean, wrapup: Boolean = true) {
-    println("Sending request to Connect to: Disconnect from a conversation.")
-    val statusPayload = ConnectionState(if (connecting) "CONNECTED" else "DISCONNECTED")
+    println("Sending $connecting request to: ${conversationInfo.id} from a conversation.")
     val agentParticipant = conversationInfo.getParticipantFromPurpose("agent")
-    val wrapupCodeId = getDefaultWrapupCode(conversationInfo.id, agentParticipant!!.userId!!)
-    val wrapupCodePayload = WrapUpPayload(wrapupCodeId, "")
-
-    /// Send requests to disconnect the conversation and send the wrapup code.
-    sendStatusToParticipant(conversationInfo.id, agentParticipant.id, statusPayload.state)
+    var wrapupCodePayload = WrapUpPayload("", "")
+    if (!connecting) {
+        statusPayload = "{\"state\": \"DISCONNECTED\"}"
+        val wrapupCodeId = getDefaultWrapupCode(conversationInfo.id, agentParticipant!!.id!!)
+        wrapupCodePayload = WrapUpPayload(wrapupCodeId, "")
+    }
+    // Send requests to disconnect the conversation and send the wrapup code.
+    sendStatusToParticipant(conversationInfo.id, agentParticipant!!.id)
     if (connecting) {
         waitForParticipantToConnect(conversationInfo.id)
     } else if (wrapup) {
-        sleep(2)
+        sleep(2000)
         print("Sending wrapup code.")
         sendWrapupCode(conversationInfo, wrapupCodePayload)
     }
 }
 
 fun API.getDefaultWrapupCode(conversationId: String, participantId: String): String {
-    return (publicApiCall("GET", "/api/v2/conversations/messages/($conversationId)/participants/($participantId)/wrapupcodes")?.firstOrNull()?.get("id") as?
-            String)!!
+    return publicApiCall("GET", "/api/v2/conversations/$conversationId/participants/$participantId/wrapupcodes")?.firstOrNull()?.get("id").toString()
 }
 
 private fun API.waitForParticipantToConnect(conversationId: String) {
     Awaitility.await().atMost(60, TimeUnit.SECONDS).ignoreExceptions()
-        .untilAsserted { getConversationInfo().getParticipantFromPurpose("messages").(conversationId) == "Connected"}
-
-
-//    Wait.queryUntilTrue {
-//        guard let conversationInfo = getConversation(conversationId: conversationId) else {
-//        return false
-//    }
-//        return (conversationInfo.agentParticipant?.value(forKey: "messages") as? [JsonDictionary])?.first?.value(forKey: "state") as? String == "connected"
-//    }
+        .untilAsserted {
+            val listOfMessages = getConversationInfo(conversationId).getParticipantFromPurpose("agent")?.messages?.toList()
+            listOfMessages?.get(0)?.state == "connected"
+        }
 }
 
-//fun API.getConversation(conversationId: String): Conversation? {
-//    if (publicAPICall("GET", "/api/v2/conversations/($conversationId)") != null) {
-//        return Conversation(conversationJson)
-//    }
-//    else return null
-//}
-
-
-
-fun API.sendStatusToParticipant(conversationId: String, participantId: String, statusPayload:[String: Any]): [String: Any]? {
-    return publicAPICall("PATCH", "/api/v2/conversations/messages/($conversationId)/participants/($participantId)", statusPayload)
+fun API.sendStatusToParticipant(conversationId: String, participantId: String) {
+    publicApiCall("PATCH", "/api/v2/conversations/messages/$conversationId/participants/$participantId", statusPayload.toByteArray())
 }
 
-fun API.sendWrapupCode(conversationInfo: Conversation, wrapupPayload: JsonDictionary) {
-    publicAPICall("POST", "/api/v2/conversations/messages/($conversationInfo.id)/participants/($conversationInfo.agentParticipantId)/communications/" +
-        "(conversationInfo.communicationId)/wrapup", wrapupPayload)
+fun API.sendWrapupCode(conversationInfo: Conversation, wrapupPayload: WrapUpPayload) {
+    val agentParticipant = conversationInfo.getParticipantFromPurpose("agent")
+    val communicationId = conversationInfo.getCommunicationId(agentParticipant!!)
+    publicApiCall(
+        "POST",
+        "/api/v2/conversations/messages/${conversationInfo.id}/participants/${agentParticipant?.id}/communications/" +
+            "$communicationId/wrapup",
+        wrapupPayload.codeId.toByteArray()
+    )
 }
