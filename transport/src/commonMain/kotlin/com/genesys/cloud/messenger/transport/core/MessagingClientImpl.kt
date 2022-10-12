@@ -97,12 +97,14 @@ internal class MessagingClientImpl(
         log.i { "connect()" }
         stateMachine.onConnect()
         if (deploymentConfig == null) {
-            try {
-                coroutineScope.launch { fetchDeploymentConfig() }
-            } catch (e: Exception) {
-                log.w { "Failed to fetch deployment config. Proceed with default." }
-            } finally {
-                webSocket.openSocket(socketListener)
+            coroutineScope.launch {
+                try {
+                    fetchDeploymentConfig()
+                } catch (e: Exception) {
+                    log.w { "Failed to fetch deployment config. Proceed with default." }
+                } finally {
+                    webSocket.openSocket(socketListener)
+                }
             }
         } else {
             webSocket.openSocket(socketListener)
