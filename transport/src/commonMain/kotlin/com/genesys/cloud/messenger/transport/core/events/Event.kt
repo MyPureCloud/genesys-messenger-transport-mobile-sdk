@@ -32,4 +32,9 @@ sealed class Event {
         val message: String?,
         val correctiveAction: CorrectiveAction,
     ) : Event()
+
+    /**
+     * This event indicates that conversation was successfully autostart.
+     */
+    object ConversationAutostart : Event()
 }
