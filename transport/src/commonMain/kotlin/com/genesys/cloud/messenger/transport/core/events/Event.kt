@@ -34,7 +34,7 @@ sealed class Event {
     ) : Event()
 
     /**
-     * This event indicates that conversation was successfully autostart.
+     * This event indicates that conversation was successfully autostarted.
      */
     object ConversationAutostart : Event()
 }
