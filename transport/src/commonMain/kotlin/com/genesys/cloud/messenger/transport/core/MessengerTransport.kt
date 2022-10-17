@@ -10,6 +10,10 @@ import com.genesys.cloud.messenger.transport.util.DefaultTokenStore
 import com.genesys.cloud.messenger.transport.util.TokenStore
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 private const val TOKEN_STORE_KEY = "com.genesys.cloud.messenger"
 
@@ -20,13 +24,7 @@ class MessengerTransport(
     private val configuration: Configuration,
     private val tokenStore: TokenStore,
 ) {
-
-    private var messageClientImpl: MessagingClientImpl? = null
     private var deploymentConfig: DeploymentConfig? = null
-        set(value) {
-            field = value
-            messageClientImpl?.deploymentConfig = field
-        }
 
     constructor(configuration: Configuration) : this(configuration, DefaultTokenStore(TOKEN_STORE_KEY))
 
@@ -34,6 +32,9 @@ class MessengerTransport(
      * Creates an instance of [MessagingClient] based on the provided configuration.
      */
     fun createMessagingClient(): MessagingClient {
+        if (deploymentConfig == null) {
+            CoroutineScope(Dispatchers.Main + SupervisorJob()).launch { fetchDeploymentConfig() }
+        }
         val log = Log(configuration.logging, LogTag.MESSAGING_CLIENT)
         val api = WebMessagingApi(configuration)
         val webSocket = PlatformSocket(
@@ -62,10 +63,8 @@ class MessengerTransport(
                 configuration.reconnectionTimeoutInSeconds,
                 log.withTag(LogTag.RECONNECTION_HANDLER),
             ),
-        ).also {
-            this.messageClientImpl = it
-            it.deploymentConfig = deploymentConfig
-        }
+            deploymentConfig = this::deploymentConfig,
+        )
     }
 
     /**

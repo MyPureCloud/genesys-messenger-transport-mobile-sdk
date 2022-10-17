@@ -6,7 +6,6 @@ import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
-import com.genesys.cloud.messenger.transport.network.DeploymentConfigUseCase
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
@@ -37,12 +36,9 @@ import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
+import kotlin.reflect.KProperty0
 
 internal class MessagingClientImpl(
     private val api: WebMessagingApi,
@@ -58,10 +54,8 @@ internal class MessagingClientImpl(
     private val eventHandler: EventHandler = EventHandlerImpl(log.withTag(LogTag.EVENT_HANDLER)),
     private val userTypingProvider: UserTypingProvider = UserTypingProvider(log.withTag(LogTag.TYPING_INDICATOR_PROVIDER)),
     private val healthCheckProvider: HealthCheckProvider = HealthCheckProvider(log.withTag(LogTag.HEALTH_CHECK_PROVIDER)),
-    private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
+    private var deploymentConfig: KProperty0<DeploymentConfig?>,
 ) : MessagingClient {
-
-    internal var deploymentConfig: DeploymentConfig? = null
 
     override val currentState: State
         get() {
@@ -96,19 +90,7 @@ internal class MessagingClientImpl(
     override fun connect() {
         log.i { "connect()" }
         stateMachine.onConnect()
-        if (deploymentConfig == null) {
-            coroutineScope.launch {
-                try {
-                    fetchDeploymentConfig()
-                } catch (e: Exception) {
-                    log.w { "Failed to fetch deployment config. Proceed with default." }
-                } finally {
-                    webSocket.openSocket(socketListener)
-                }
-            }
-        } else {
-            webSocket.openSocket(socketListener)
-        }
+        webSocket.openSocket(socketListener)
     }
 
     @Throws(IllegalStateException::class)
@@ -286,15 +268,6 @@ internal class MessagingClientImpl(
                 }
             }
         }
-    }
-
-    @Throws(Exception::class)
-    private suspend fun fetchDeploymentConfig() {
-        log.i { "Fetching deployment config." }
-        deploymentConfig = DeploymentConfigUseCase(
-            configuration.logging,
-            configuration.deploymentConfigUrl.toString(),
-        ).fetch()
     }
 
     private val socketListener = SocketListener(

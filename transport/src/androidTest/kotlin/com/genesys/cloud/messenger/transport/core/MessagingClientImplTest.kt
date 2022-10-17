@@ -11,6 +11,7 @@ import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
+import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
@@ -38,6 +39,7 @@ import io.mockk.spyk
 import io.mockk.verify
 import io.mockk.verifySequence
 import kotlinx.coroutines.runBlocking
+import kotlin.reflect.KProperty0
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -108,6 +110,9 @@ class MessagingClientImplTest {
     private val mockTimestampFunction: () -> Long = spyk<() -> Long>().also {
         every { it.invoke() } answers { Platform().epochMillis() }
     }
+    private val mockDeploymentConfig = mockk<KProperty0<DeploymentConfig?>> {
+        every { get() } returns fakeDeploymentConfig()
+    }
 
     private val subject = MessagingClientImpl(
         log = log,
@@ -122,9 +127,9 @@ class MessagingClientImplTest {
         eventHandler = mockEventHandler,
         userTypingProvider = UserTypingProvider(mockk(relaxed = true), mockTimestampFunction),
         healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),
+        deploymentConfig = mockDeploymentConfig,
     ).also {
         it.stateChangedListener = mockStateChangedListener
-        it.deploymentConfig = fakeDeploymentConfig()
     }
 
     @AfterTest
@@ -732,7 +737,10 @@ class MessagingClientImplTest {
         StateChange(oldState = State.Idle, newState = State.Connecting)
 
     private val fromClosedToConnecting =
-        StateChange(oldState = State.Closed(1000, "The user has closed the connection."), newState = State.Connecting)
+        StateChange(
+            oldState = State.Closed(1000, "The user has closed the connection."),
+            newState = State.Connecting
+        )
 
     private val fromConnectingToConnected =
         StateChange(oldState = State.Connecting, newState = State.Connected)
