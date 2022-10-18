@@ -22,11 +22,13 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionExpiredEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TooManyRequestsErrorMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.isHealthCheckResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.isOutbound
+import com.genesys.cloud.messenger.transport.shyrka.send.AutoStartRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
@@ -199,6 +201,14 @@ internal class MessagingClientImpl(
         }
     }
 
+    @Throws(IllegalStateException::class)
+    private fun sendAutoStart() {
+        WebMessagingJson.json.encodeToString(AutoStartRequest(token)).let {
+            log.i { "sendAutoStart()" }
+            send(it)
+        }
+    }
+
     private fun handleError(code: ErrorCode, message: String? = null) {
         when (code) {
             is ErrorCode.SessionHasExpired,
@@ -265,6 +275,12 @@ internal class MessagingClientImpl(
                     structuredMessage.events.forEach {
                         eventHandler.onEvent(it)
                     }
+                } else {
+                    structuredMessage.events.forEach {
+                        if (it.eventType == StructuredMessageEvent.Type.Presence) {
+                            eventHandler.onEvent(it)
+                        }
+                    }
                 }
             }
         }
@@ -306,6 +322,9 @@ internal class MessagingClientImpl(
                         decoded.body.run {
                             reconnectionHandler.clear()
                             stateMachine.onSessionConfigured(connected, newSession)
+                            if (newSession && deploymentConfig.isAutostartEnabled()) {
+                                sendAutoStart()
+                            }
                         }
                     }
                     is JwtResponse ->
@@ -364,3 +383,6 @@ internal class MessagingClientImpl(
         }
     }
 }
+
+private fun KProperty0<DeploymentConfig?>.isAutostartEnabled(): Boolean =
+    this.get()?.messenger?.apps?.conversations?.autoStart?.enabled == true

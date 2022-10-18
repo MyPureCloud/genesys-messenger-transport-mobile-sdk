@@ -11,12 +11,17 @@ import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
+import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
+import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent.Typing
-import com.genesys.cloud.messenger.transport.shyrka.receive.fakeDeploymentConfig
+import com.genesys.cloud.messenger.transport.shyrka.receive.testConversations
+import com.genesys.cloud.messenger.transport.shyrka.receive.testDeploymentConfig
+import com.genesys.cloud.messenger.transport.shyrka.receive.testMessenger
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel.Metadata
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
@@ -111,7 +116,7 @@ class MessagingClientImplTest {
         every { it.invoke() } answers { Platform().epochMillis() }
     }
     private val mockDeploymentConfig = mockk<KProperty0<DeploymentConfig?>> {
-        every { get() } returns fakeDeploymentConfig()
+        every { get() } returns testDeploymentConfig()
     }
 
     private val subject = MessagingClientImpl(
@@ -692,6 +697,86 @@ class MessagingClientImplTest {
         verify { mockEventHandler.onEvent(expectedEvent) }
     }
 
+    @Test
+    fun whenNewSessionAndAutostartEnabled() {
+        every { mockDeploymentConfig.get() } returns testDeploymentConfig(
+            messenger = testMessenger(
+                apps = Apps(
+                    conversations = testConversations(
+                        autoStart = Conversations.AutoStart(enabled = true)
+                    )
+                )
+            )
+        )
+
+        subject.connect()
+
+        verifySequence {
+            connectSequence()
+            mockPlatformSocket.sendMessage(Request.autostart)
+        }
+    }
+
+    @Test
+    fun whenOldSessionAndAutostartEnabled() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest) } answers {
+            slot.captured.onMessage(Response.configureSuccessWithNewSessionFalse)
+        }
+        every { mockDeploymentConfig.get() } returns testDeploymentConfig(
+            messenger = testMessenger(
+                apps = Apps(
+                    conversations = testConversations(
+                        autoStart = Conversations.AutoStart(enabled = true)
+                    )
+                )
+            )
+        )
+
+        subject.connect()
+
+        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart) }
+    }
+
+    @Test
+    fun whenOldSessionAndAutostartDisabled() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest) } answers {
+            slot.captured.onMessage(Response.configureSuccessWithNewSessionFalse)
+        }
+
+        subject.connect()
+
+        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart) }
+    }
+
+    @Test
+    fun whenNewSessionAndAutostartDisabled() {
+        subject.connect()
+
+        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart) }
+    }
+
+    @Test
+    fun whenNewSessionAndDeploymentConfigNotSet() {
+        every { mockDeploymentConfig.get() } returns null
+
+        subject.connect()
+
+        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart) }
+    }
+
+    @Test
+    fun whenEventPresenceJoinReceived() {
+        val givenPresenceJoinEvent = """{"eventType":"Presence","presence":{"type":"Join"}}"""
+        val expectedEvent = PresenceEvent(eventType = StructuredMessageEvent.Type.Presence, PresenceEvent.Presence("Join"))
+
+        subject.connect()
+        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceJoinEvent))
+
+        verify {
+            mockEventHandler.onEvent(eq(expectedEvent))
+        }
+    }
+
     private fun configuration(): Configuration = Configuration(
         deploymentId = "deploymentId",
         domain = "inindca.com",
@@ -764,6 +849,8 @@ class MessagingClientImplTest {
 private object Response {
     const val configureSuccess =
         """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":true}}"""
+    const val configureSuccessWithNewSessionFalse =
+        """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":false}}"""
     const val configureFail =
         """{"type":"response","class":"string","code":400,"body":"Deployment not found"}"""
     const val defaultStructuredEvents =
