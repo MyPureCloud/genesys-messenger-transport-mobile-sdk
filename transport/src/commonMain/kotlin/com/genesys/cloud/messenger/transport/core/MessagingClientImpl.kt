@@ -54,7 +54,7 @@ internal class MessagingClientImpl(
     private val eventHandler: EventHandler = EventHandlerImpl(log.withTag(LogTag.EVENT_HANDLER)),
     private val userTypingProvider: UserTypingProvider = UserTypingProvider(log.withTag(LogTag.TYPING_INDICATOR_PROVIDER)),
     private val healthCheckProvider: HealthCheckProvider = HealthCheckProvider(log.withTag(LogTag.HEALTH_CHECK_PROVIDER)),
-    private var deploymentConfig: KProperty0<DeploymentConfig?>,
+    private val deploymentConfig: KProperty0<DeploymentConfig?>,
 ) : MessagingClient {
 
     override val currentState: State
