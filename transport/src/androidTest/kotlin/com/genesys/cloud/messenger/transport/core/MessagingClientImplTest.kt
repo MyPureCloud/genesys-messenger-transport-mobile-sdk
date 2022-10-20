@@ -19,9 +19,9 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent.Typing
-import com.genesys.cloud.messenger.transport.shyrka.receive.testConversations
-import com.genesys.cloud.messenger.transport.shyrka.receive.testDeploymentConfig
-import com.genesys.cloud.messenger.transport.shyrka.receive.testMessenger
+import com.genesys.cloud.messenger.transport.shyrka.receive.createConversationsVOForTesting
+import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
+import com.genesys.cloud.messenger.transport.shyrka.receive.createMessengerVOForTesting
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel.Metadata
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
@@ -116,7 +116,7 @@ class MessagingClientImplTest {
         every { it.invoke() } answers { Platform().epochMillis() }
     }
     private val mockDeploymentConfig = mockk<KProperty0<DeploymentConfig?>> {
-        every { get() } returns testDeploymentConfig()
+        every { get() } returns createDeploymentConfigForTesting()
     }
 
     private val subject = MessagingClientImpl(
@@ -699,10 +699,10 @@ class MessagingClientImplTest {
 
     @Test
     fun whenNewSessionAndAutostartEnabled() {
-        every { mockDeploymentConfig.get() } returns testDeploymentConfig(
-            messenger = testMessenger(
+        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
+            messenger = createMessengerVOForTesting(
                 apps = Apps(
-                    conversations = testConversations(
+                    conversations = createConversationsVOForTesting(
                         autoStart = Conversations.AutoStart(enabled = true)
                     )
                 )
@@ -722,10 +722,10 @@ class MessagingClientImplTest {
         every { mockPlatformSocket.sendMessage(Request.configureRequest) } answers {
             slot.captured.onMessage(Response.configureSuccessWithNewSessionFalse)
         }
-        every { mockDeploymentConfig.get() } returns testDeploymentConfig(
-            messenger = testMessenger(
+        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
+            messenger = createMessengerVOForTesting(
                 apps = Apps(
-                    conversations = testConversations(
+                    conversations = createConversationsVOForTesting(
                         autoStart = Conversations.AutoStart(enabled = true)
                     )
                 )
