@@ -32,10 +32,16 @@ class MessengerTransport(
      * Creates an instance of [MessagingClient] based on the provided configuration.
      */
     fun createMessagingClient(): MessagingClient {
-        if (deploymentConfig == null) {
-            CoroutineScope(Dispatchers.Main + SupervisorJob()).launch { fetchDeploymentConfig() }
-        }
         val log = Log(configuration.logging, LogTag.MESSAGING_CLIENT)
+        if (deploymentConfig == null) {
+            CoroutineScope(Dispatchers.Main + SupervisorJob()).launch {
+                try {
+                    fetchDeploymentConfig()
+                } catch (t: Throwable) {
+                    log.w { "Failed to fetch deployment config: $t" }
+                }
+            }
+        }
         val api = WebMessagingApi(configuration)
         val webSocket = PlatformSocket(
             log.withTag(LogTag.WEBSOCKET),
