@@ -1,26 +1,23 @@
 package com.genesys.cloud.messenger.transport.shyrka.receive
 
-fun fakeDeploymentConfig() = DeploymentConfig(
+fun createDeploymentConfigForTesting(
+    messenger: Messenger = createMessengerVOForTesting()
+) = DeploymentConfig(
     id = "id",
     version = "1",
     languages = listOf("en-us", "zh-cn"),
     defaultLanguage = "en-us",
     apiEndpoint = "api_endpoint",
-    messenger = fakeMessenger,
+    messenger = messenger,
     journeyEvents = JourneyEvents(enabled = false),
     status = DeploymentConfig.Status.Active,
 )
 
-private val fakeMessenger = Messenger(
+fun createMessengerVOForTesting(
+    apps: Apps = Apps(createConversationsVOForTesting())
+) = Messenger(
     enabled = true,
-    apps = Apps(
-        conversations = Conversations(
-            messagingEndpoint = "messaging_endpoint",
-            showAgentTypingIndicator = true,
-            showUserTypingIndicator = true,
-            autoStart = Conversations.AutoStart()
-        )
-    ),
+    apps = apps,
     styles = Styles(primaryColor = "red"),
     launcherButton = LauncherButton(visibility = "On"),
     fileUpload = FileUpload(
@@ -31,4 +28,11 @@ private val fakeMessenger = Messenger(
             ),
         )
     )
+)
+
+fun createConversationsVOForTesting(
+    autoStart: Conversations.AutoStart = Conversations.AutoStart()
+): Conversations = Conversations(
+    messagingEndpoint = "messaging_endpoint",
+    autoStart = autoStart,
 )
