@@ -46,7 +46,6 @@ internal class MessageStoreTest {
             assertEquals(expectedOnMessageRequest.token, token)
             assertEquals(expectedOnMessageRequest.message, message)
             assertNull(time)
-            assertNull(channel)
         }
 
         assertEquals(expectedMessage, subject.getConversation()[0])
@@ -324,15 +323,15 @@ internal class MessageStoreTest {
             givenToken,
             message = TextMessage(
                 "test message",
-                metadata = mapOf("customMessageId" to expectedMessage.id)
+                metadata = mapOf("customMessageId" to expectedMessage.id),
+                channel = Channel(Channel.Metadata(mapOf("A" to "B"))),
             ),
-            channel = Channel(Channel.Metadata(mapOf("A" to "B")))
         )
 
         subject.prepareMessage("test message", mapOf("A" to "B")).run {
             assertEquals(expectedOnMessageRequest.token, token)
             assertEquals(expectedOnMessageRequest.message, message)
-            assertEquals(expectedOnMessageRequest.channel, channel)
+            assertEquals(expectedOnMessageRequest.message.channel, message.channel)
             assertNull(time)
         }
 

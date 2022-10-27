@@ -516,13 +516,15 @@ class MessagingClientImplTest {
     @Test
     fun whenSendMessageWithCustomAttributes() {
         val expectedMessage =
-            """{"token":"00000000-0000-0000-0000-000000000000","message":{"text":"Hello world","type":"Text"},"channel":{"metadata":{"customAttributes":{"A":"B"}}},"action":"onMessage"}"""
+            """{"token":"00000000-0000-0000-0000-000000000000","message":{"text":"Hello world","channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"action":"onMessage"}"""
         val expectedText = "Hello world"
         val expectedCustomAttributes = mapOf("A" to "B")
         every { mockMessageStore.prepareMessage(any(), any()) } returns OnMessageRequest(
             token = "00000000-0000-0000-0000-000000000000",
-            message = TextMessage("Hello world"),
-            channel = Channel(Metadata(expectedCustomAttributes)),
+            message = TextMessage(
+                text = "Hello world",
+                channel = Channel(Metadata(expectedCustomAttributes)),
+            ),
         )
         subject.connect()
 
