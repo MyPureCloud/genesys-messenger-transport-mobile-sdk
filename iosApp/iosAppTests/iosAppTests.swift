@@ -13,8 +13,14 @@ class iosAppTests: XCTestCase {
 
     var contentController: TestContentController?
 
+    override class func setUp() {
+        super.setUp()
+        ApiHelper.shared.disconnectExistingConversations()
+    }
+
     override func setUp() {
         super.setUp()
+        continueAfterFailure = false
         if contentController == nil {
             do {
                 let deployment = try Deployment()
@@ -61,6 +67,28 @@ class iosAppTests: XCTestCase {
         }
         contentController.attemptImageAttach(kotlinByteArray: kotlinByteArray)
         contentController.sendUploadedImage()
+
+        // Disconnect the conversation for the agent and disconnect the session.
+        ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
+        contentController.disconnectMessenger()
+    }
+
+    // Test Assumption: Deployment has AutoStart enabled. See Deployment Configuration options in Admin.
+    func testAutoStart() {
+        // Save a new token.
+        DefaultTokenStore(storeKey: "com.genesys.cloud.messenger").store(token: UUID().uuidString)
+
+        guard let contentController = contentController else {
+            XCTFail("Failed to setup the content controller.")
+            return
+        }
+
+        // Should be able to answer the conversation immediately after starting the connection if AutoStart is enabled.
+        contentController.startMessengerConnection()
+        guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
+            XCTFail("The message we sent may not have connected to an agent.")
+            return
+        }
 
         // Disconnect the conversation for the agent and disconnect the session.
         ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)

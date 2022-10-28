@@ -14,12 +14,22 @@ extension ApiHelper {
         let agentId = TestConfig.shared.config?.agentId ?? ""
         changePresence(presenceName: "On Queue", userID: agentId)
         guard let conversation = waitForConversation() else {
-            XCTFail("Failed to receive a new conversation to answer.")
+            print("Failed to receive a new conversation to answer.")
             return nil
         }
         sendConnectOrDisconnect(conversationInfo: conversation, connecting: true, wrapup: false)
         changePresence(presenceName: "Available", userID: agentId)
         return getConversation(conversationId: conversation.conversationId)
+    }
+
+    public func disconnectExistingConversations() {
+        guard let conversationList = getSmsConversations()?.value(forKey: "entities") as? [JsonDictionary] else {
+            XCTFail("Failed to get the existing conversation list.")
+            return
+        }
+        for conversation in conversationList {
+            sendConnectOrDisconnect(conversationInfo: ConversationInfo(json: conversation), connecting: false)
+        }
     }
 
     private func getSmsConversations() -> JsonDictionary? {
@@ -118,7 +128,7 @@ extension ApiHelper {
 
     public func sendOutboundSmsImage(conversationId: String, communicationId: String) {
         guard let mediaId = uploadFileForMessages(conversationId: conversationId, communicationId: communicationId) else {
-            XCTFail("Failed to upload the image.")
+            print("Failed to upload the image.")
             return
         }
         let json: [String: Any] = [
@@ -132,7 +142,7 @@ extension ApiHelper {
         // Prepare backend for a new file. Get the Upload URL.
         let result = publicAPICall(httpMethod: "POST", httpURL: "/api/v2/conversations/messages/\(conversationId)/communications/\(communicationId)/messages/media")
         guard let mediaId = result?.value(forKey: "id") as? String else {
-            XCTFail("Failed to get the upload Url for messages.")
+            print("Failed to get the upload Url for messages.")
             return nil
         }
 

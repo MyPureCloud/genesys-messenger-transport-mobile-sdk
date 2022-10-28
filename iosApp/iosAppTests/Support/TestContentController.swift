@@ -71,7 +71,6 @@ class TestContentController: MessengerHandler {
                 print("Other event. \(event)")
             }
         }
-
     }
 
     func startMessengerConnection(file: StaticString = #file, line: UInt = #line) {
