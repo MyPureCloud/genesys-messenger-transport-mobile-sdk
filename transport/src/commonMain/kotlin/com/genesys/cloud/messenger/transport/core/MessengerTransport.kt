@@ -10,13 +10,21 @@ import com.genesys.cloud.messenger.transport.util.DefaultTokenStore
 import com.genesys.cloud.messenger.transport.util.TokenStore
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 private const val TOKEN_STORE_KEY = "com.genesys.cloud.messenger"
 
 /**
  * The entry point to the services provided by the transport SDK.
  */
-class MessengerTransport(private val configuration: Configuration, private val tokenStore: TokenStore) {
+class MessengerTransport(
+    private val configuration: Configuration,
+    private val tokenStore: TokenStore,
+) {
+    private var deploymentConfig: DeploymentConfig? = null
 
     constructor(configuration: Configuration) : this(configuration, DefaultTokenStore(TOKEN_STORE_KEY))
 
@@ -25,8 +33,21 @@ class MessengerTransport(private val configuration: Configuration, private val t
      */
     fun createMessagingClient(): MessagingClient {
         val log = Log(configuration.logging, LogTag.MESSAGING_CLIENT)
+        if (deploymentConfig == null) {
+            CoroutineScope(Dispatchers.Main + SupervisorJob()).launch {
+                try {
+                    fetchDeploymentConfig()
+                } catch (t: Throwable) {
+                    log.w { "Failed to fetch deployment config: $t" }
+                }
+            }
+        }
         val api = WebMessagingApi(configuration)
-        val webSocket = PlatformSocket(log.withTag(LogTag.WEBSOCKET), configuration.webSocketUrl, DEFAULT_PING_INTERVAL_IN_SECONDS)
+        val webSocket = PlatformSocket(
+            log.withTag(LogTag.WEBSOCKET),
+            configuration.webSocketUrl,
+            DEFAULT_PING_INTERVAL_IN_SECONDS,
+        )
         val token = tokenStore.token
         val messageStore = MessageStore(token, log.withTag(LogTag.MESSAGE_STORE))
         val attachmentHandler = AttachmentHandlerImpl(
@@ -47,7 +68,8 @@ class MessengerTransport(private val configuration: Configuration, private val t
             reconnectionHandler = ReconnectionHandlerImpl(
                 configuration.reconnectionTimeoutInSeconds,
                 log.withTag(LogTag.RECONNECTION_HANDLER),
-            )
+            ),
+            deploymentConfig = this::deploymentConfig,
         )
     }
 
@@ -58,6 +80,11 @@ class MessengerTransport(private val configuration: Configuration, private val t
      */
     @Throws(Exception::class)
     suspend fun fetchDeploymentConfig(): DeploymentConfig {
-        return DeploymentConfigUseCase(configuration.logging, configuration.deploymentConfigUrl.toString()).fetch()
+        return DeploymentConfigUseCase(
+            configuration.logging,
+            configuration.deploymentConfigUrl.toString(),
+        ).fetch().also {
+            deploymentConfig = it
+        }
     }
 }

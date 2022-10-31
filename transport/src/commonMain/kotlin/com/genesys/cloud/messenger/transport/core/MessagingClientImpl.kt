@@ -13,6 +13,7 @@ import com.genesys.cloud.messenger.transport.network.SocketCloseCode
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.AttachmentDeletedResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
 import com.genesys.cloud.messenger.transport.shyrka.receive.HealthCheckEvent
@@ -21,11 +22,13 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionExpiredEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TooManyRequestsErrorMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.isHealthCheckResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.isOutbound
+import com.genesys.cloud.messenger.transport.shyrka.send.AutoStartRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
@@ -37,6 +40,7 @@ import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
+import kotlin.reflect.KProperty0
 
 internal class MessagingClientImpl(
     private val api: WebMessagingApi,
@@ -52,6 +56,7 @@ internal class MessagingClientImpl(
     private val eventHandler: EventHandler = EventHandlerImpl(log.withTag(LogTag.EVENT_HANDLER)),
     private val userTypingProvider: UserTypingProvider = UserTypingProvider(log.withTag(LogTag.TYPING_INDICATOR_PROVIDER)),
     private val healthCheckProvider: HealthCheckProvider = HealthCheckProvider(log.withTag(LogTag.HEALTH_CHECK_PROVIDER)),
+    private val deploymentConfig: KProperty0<DeploymentConfig?>,
 ) : MessagingClient {
 
     override val currentState: State
@@ -196,6 +201,14 @@ internal class MessagingClientImpl(
         }
     }
 
+    @Throws(IllegalStateException::class)
+    private fun sendAutoStart() {
+        WebMessagingJson.json.encodeToString(AutoStartRequest(token)).let {
+            log.i { "sendAutoStart()" }
+            send(it)
+        }
+    }
+
     private fun handleError(code: ErrorCode, message: String? = null) {
         when (code) {
             is ErrorCode.SessionHasExpired,
@@ -262,6 +275,12 @@ internal class MessagingClientImpl(
                     structuredMessage.events.forEach {
                         eventHandler.onEvent(it)
                     }
+                } else {
+                    structuredMessage.events.forEach {
+                        if (it.eventType == StructuredMessageEvent.Type.Presence) {
+                            eventHandler.onEvent(it)
+                        }
+                    }
                 }
             }
         }
@@ -303,6 +322,9 @@ internal class MessagingClientImpl(
                         decoded.body.run {
                             reconnectionHandler.clear()
                             stateMachine.onSessionConfigured(connected, newSession)
+                            if (newSession && deploymentConfig.isAutostartEnabled()) {
+                                sendAutoStart()
+                            }
                         }
                     }
                     is JwtResponse ->
@@ -361,3 +383,6 @@ internal class MessagingClientImpl(
         }
     }
 }
+
+private fun KProperty0<DeploymentConfig?>.isAutostartEnabled(): Boolean =
+    this.get()?.messenger?.apps?.conversations?.autoStart?.enabled == true

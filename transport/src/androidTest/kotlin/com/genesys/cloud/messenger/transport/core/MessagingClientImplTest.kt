@@ -11,10 +11,17 @@ import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
+import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
+import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
+import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent.Typing
+import com.genesys.cloud.messenger.transport.shyrka.receive.createConversationsVOForTesting
+import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
+import com.genesys.cloud.messenger.transport.shyrka.receive.createMessengerVOForTesting
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel.Metadata
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
@@ -37,6 +44,7 @@ import io.mockk.spyk
 import io.mockk.verify
 import io.mockk.verifySequence
 import kotlinx.coroutines.runBlocking
+import kotlin.reflect.KProperty0
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -107,6 +115,9 @@ class MessagingClientImplTest {
     private val mockTimestampFunction: () -> Long = spyk<() -> Long>().also {
         every { it.invoke() } answers { Platform().epochMillis() }
     }
+    private val mockDeploymentConfig = mockk<KProperty0<DeploymentConfig?>> {
+        every { get() } returns createDeploymentConfigForTesting()
+    }
 
     private val subject = MessagingClientImpl(
         log = log,
@@ -121,6 +132,7 @@ class MessagingClientImplTest {
         eventHandler = mockEventHandler,
         userTypingProvider = UserTypingProvider(mockk(relaxed = true), mockTimestampFunction),
         healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),
+        deploymentConfig = mockDeploymentConfig,
     ).also {
         it.stateChangedListener = mockStateChangedListener
     }
@@ -687,6 +699,86 @@ class MessagingClientImplTest {
         verify { mockEventHandler.onEvent(expectedEvent) }
     }
 
+    @Test
+    fun whenNewSessionAndAutostartEnabled() {
+        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
+            messenger = createMessengerVOForTesting(
+                apps = Apps(
+                    conversations = createConversationsVOForTesting(
+                        autoStart = Conversations.AutoStart(enabled = true)
+                    )
+                )
+            )
+        )
+
+        subject.connect()
+
+        verifySequence {
+            connectSequence()
+            mockPlatformSocket.sendMessage(Request.autostart)
+        }
+    }
+
+    @Test
+    fun whenOldSessionAndAutostartEnabled() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest) } answers {
+            slot.captured.onMessage(Response.configureSuccessWithNewSessionFalse)
+        }
+        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
+            messenger = createMessengerVOForTesting(
+                apps = Apps(
+                    conversations = createConversationsVOForTesting(
+                        autoStart = Conversations.AutoStart(enabled = true)
+                    )
+                )
+            )
+        )
+
+        subject.connect()
+
+        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart) }
+    }
+
+    @Test
+    fun whenOldSessionAndAutostartDisabled() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest) } answers {
+            slot.captured.onMessage(Response.configureSuccessWithNewSessionFalse)
+        }
+
+        subject.connect()
+
+        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart) }
+    }
+
+    @Test
+    fun whenNewSessionAndAutostartDisabled() {
+        subject.connect()
+
+        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart) }
+    }
+
+    @Test
+    fun whenNewSessionAndDeploymentConfigNotSet() {
+        every { mockDeploymentConfig.get() } returns null
+
+        subject.connect()
+
+        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart) }
+    }
+
+    @Test
+    fun whenEventPresenceJoinReceived() {
+        val givenPresenceJoinEvent = """{"eventType":"Presence","presence":{"type":"Join"}}"""
+        val expectedEvent = PresenceEvent(eventType = StructuredMessageEvent.Type.Presence, PresenceEvent.Presence("Join"))
+
+        subject.connect()
+        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceJoinEvent))
+
+        verify {
+            mockEventHandler.onEvent(eq(expectedEvent))
+        }
+    }
+
     private fun configuration(): Configuration = Configuration(
         deploymentId = "deploymentId",
         domain = "inindca.com",
@@ -732,7 +824,10 @@ class MessagingClientImplTest {
         StateChange(oldState = State.Idle, newState = State.Connecting)
 
     private val fromClosedToConnecting =
-        StateChange(oldState = State.Closed(1000, "The user has closed the connection."), newState = State.Connecting)
+        StateChange(
+            oldState = State.Closed(1000, "The user has closed the connection."),
+            newState = State.Connecting
+        )
 
     private val fromConnectingToConnected =
         StateChange(oldState = State.Connecting, newState = State.Connected)
@@ -756,6 +851,8 @@ class MessagingClientImplTest {
 private object Response {
     const val configureSuccess =
         """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":true}}"""
+    const val configureSuccessWithNewSessionFalse =
+        """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":false}}"""
     const val configureFail =
         """{"type":"response","class":"string","code":400,"body":"Deployment not found"}"""
     const val defaultStructuredEvents =

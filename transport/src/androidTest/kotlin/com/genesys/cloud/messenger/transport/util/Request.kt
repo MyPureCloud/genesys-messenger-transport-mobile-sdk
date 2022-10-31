@@ -7,4 +7,6 @@ internal object Request {
         """{"token":"00000000-0000-0000-0000-000000000000","action":"onMessage","message":{"events":[{"eventType":"Typing","typing":{"type":"On"}}],"type":"Event"}}"""
     const val echoRequest =
         """{"token":"00000000-0000-0000-0000-000000000000","action":"echo","message":{"text":"ping","metadata":{"customMessageId":"SGVhbHRoQ2hlY2tNZXNzYWdlSWQ="},"type":"Text"}}"""
+    const val autostart =
+        """{"token":"00000000-0000-0000-0000-000000000000","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Join"}}],"type":"Event"}}"""
 }
