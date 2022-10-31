@@ -73,8 +73,14 @@ class iosAppTests: XCTestCase {
         contentController.disconnectMessenger()
     }
 
-    // Test Assumption: Deployment has AutoStart enabled. See Deployment Configuration options in Admin.
+    // Test will always fail if the deployment configuration doesn't have AutoStart enabled. See Deployment Configuration options in Admin.
     func testAutoStart() {
+        guard let deploymentConfig = contentController?.pullDeploymentConfig() else {
+            XCTFail("Failed to pull the deployment configuration.")
+            return
+        }
+        XCTAssertTrue(deploymentConfig.messenger.apps.conversations.autoStart.enabled, "AutoStart was not enabled for this deployment config.")
+
         // Save a new token.
         DefaultTokenStore(storeKey: "com.genesys.cloud.messenger").store(token: UUID().uuidString)
 
