@@ -14,8 +14,15 @@ class UserTypingProviderTest {
     private val mockTimestampFunction: () -> Long = spyk<() -> Long>().also {
         every { it.invoke() } answers { Platform().epochMillis() }
     }
+    private val mockShowUserTypingIndicatorFunction: () -> Boolean = spyk<() -> Boolean>().also {
+        every { it.invoke() } returns true
+    }
 
-    private val subject = UserTypingProvider(mockk(relaxed = true), mockTimestampFunction)
+    private val subject = UserTypingProvider(
+        log = mockk(relaxed = true),
+        showUserTypingEnabled = mockShowUserTypingIndicatorFunction,
+        getCurrentTimestamp = mockTimestampFunction,
+    )
 
     @Test
     fun whenEncode() {
@@ -60,5 +67,14 @@ class UserTypingProviderTest {
 
         assertThat(firstResult).isEqualTo(expected)
         assertThat(secondResult).isEqualTo(expected)
+    }
+
+    @Test
+    fun whenEncodeAndShowUserTypingIsDisabled() {
+        every { mockShowUserTypingIndicatorFunction.invoke() } returns false
+
+        val result = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
+
+        assertThat(result).isNull()
     }
 }

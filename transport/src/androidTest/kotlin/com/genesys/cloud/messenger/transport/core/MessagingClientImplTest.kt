@@ -49,6 +49,7 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 
 class MessagingClientImplTest {
     private val configuration = configuration()
@@ -115,9 +116,17 @@ class MessagingClientImplTest {
     private val mockTimestampFunction: () -> Long = spyk<() -> Long>().also {
         every { it.invoke() } answers { Platform().epochMillis() }
     }
+    private val mockShowUserTypingIndicatorFunction: () -> Boolean = spyk<() -> Boolean>().also {
+        every { it.invoke() } returns true
+    }
     private val mockDeploymentConfig = mockk<KProperty0<DeploymentConfig?>> {
         every { get() } returns createDeploymentConfigForTesting()
     }
+    private val userTypingProvider = UserTypingProvider(
+        log = mockk(relaxed = true),
+        showUserTypingEnabled = mockShowUserTypingIndicatorFunction,
+        getCurrentTimestamp = mockTimestampFunction,
+    )
 
     private val subject = MessagingClientImpl(
         log = log,
@@ -130,7 +139,7 @@ class MessagingClientImplTest {
         messageStore = mockMessageStore,
         reconnectionHandler = mockReconnectionHandler,
         eventHandler = mockEventHandler,
-        userTypingProvider = UserTypingProvider(mockk(relaxed = true), mockTimestampFunction),
+        userTypingProvider = userTypingProvider,
         healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),
         deploymentConfig = mockDeploymentConfig,
     ).also {
@@ -629,7 +638,7 @@ class MessagingClientImplTest {
     }
 
     @Test
-    fun whenIndicateTyping() {
+    fun whenIndicateTypingAndShowUserTypingIsEnabled() {
         val expectedMessage = Request.userTypingRequest
         subject.connect()
 
@@ -639,6 +648,20 @@ class MessagingClientImplTest {
             connectSequence()
             mockPlatformSocket.sendMessage(expectedMessage)
         }
+    }
+
+    @Test
+    fun whenIndicateTypingAndShowUserTypingIsDisabled() {
+        every { mockShowUserTypingIndicatorFunction.invoke() } returns false
+        val expectedMessage = Request.userTypingRequest
+        subject.connect()
+
+        subject.indicateTyping()
+
+        verify(exactly = 0) {
+            mockPlatformSocket.sendMessage(expectedMessage)
+        }
+        assertNull(userTypingProvider.encodeRequest(token = "00000000-0000-0000-0000-000000000000"))
     }
 
     @Test
