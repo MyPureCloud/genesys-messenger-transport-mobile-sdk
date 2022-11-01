@@ -257,6 +257,14 @@ internal class MessagingClientImpl(
                     reconnectionHandler.clear()
                 }
             }
+            is ErrorCode.WebsocketHandshakeFailure -> {
+                stateMachine.onError(
+                    errorCode,
+                    "Server handshake failed. Please check your deploymentId."
+                )
+                attachmentHandler.clearAll()
+                reconnectionHandler.clear()
+            }
             is ErrorCode.NetworkDisabled -> {
                 stateMachine.onError(errorCode, ErrorMessage.InternetConnectionIsOffline)
                 attachmentHandler.clearAll()

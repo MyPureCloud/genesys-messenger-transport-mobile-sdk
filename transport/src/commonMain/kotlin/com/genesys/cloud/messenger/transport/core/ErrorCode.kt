@@ -21,6 +21,7 @@ sealed class ErrorCode(val code: Int) {
     object RequestRateTooHigh : ErrorCode(4029)
     object UnexpectedError : ErrorCode(5000)
     object WebsocketError : ErrorCode(1001)
+    object WebsocketHandshakeFailure : ErrorCode(1002)
     object NetworkDisabled : ErrorCode(-1009)
     data class RedirectResponseError(val value: Int) : ErrorCode(value)
     data class ClientResponseError(val value: Int) : ErrorCode(value)
@@ -30,6 +31,7 @@ sealed class ErrorCode(val code: Int) {
         fun mapFrom(value: Int): ErrorCode {
             return when (value) {
                 1001 -> WebsocketError
+                1002 -> WebsocketHandshakeFailure
                 4000 -> FeatureUnavailable
                 4001 -> FileTypeInvalid
                 4002 -> FileSizeInvalid
@@ -48,6 +50,7 @@ sealed class ErrorCode(val code: Int) {
                 in 300..399 -> RedirectResponseError(value)
                 in 400..499 -> ClientResponseError(value)
                 in 500..599 -> ServerResponseError(value)
+                -1009 -> NetworkDisabled
                 else -> UnexpectedError
             }
         }
