@@ -49,14 +49,18 @@ internal class MessagingClientImpl(
     private val log: Log,
     private val jwtHandler: JwtHandler,
     private val token: String,
+    private val deploymentConfig: KProperty0<DeploymentConfig?>,
     private val attachmentHandler: AttachmentHandler,
     private val messageStore: MessageStore,
     private val reconnectionHandler: ReconnectionHandler,
     private val stateMachine: StateMachine = StateMachineImpl(log.withTag(LogTag.STATE_MACHINE)),
     private val eventHandler: EventHandler = EventHandlerImpl(log.withTag(LogTag.EVENT_HANDLER)),
-    private val userTypingProvider: UserTypingProvider = UserTypingProvider(log.withTag(LogTag.TYPING_INDICATOR_PROVIDER)),
     private val healthCheckProvider: HealthCheckProvider = HealthCheckProvider(log.withTag(LogTag.HEALTH_CHECK_PROVIDER)),
-    private val deploymentConfig: KProperty0<DeploymentConfig?>,
+    private val userTypingProvider: UserTypingProvider =
+        UserTypingProvider(
+            log.withTag(LogTag.TYPING_INDICATOR_PROVIDER),
+            { deploymentConfig.isShowUserTypingEnabled() },
+        ),
 ) : MessagingClient {
 
     override val currentState: State
@@ -386,3 +390,6 @@ internal class MessagingClientImpl(
 
 private fun KProperty0<DeploymentConfig?>.isAutostartEnabled(): Boolean =
     this.get()?.messenger?.apps?.conversations?.autoStart?.enabled == true
+
+private fun KProperty0<DeploymentConfig?>.isShowUserTypingEnabled(): Boolean =
+    this.get()?.messenger?.apps?.conversations?.showUserTypingIndicator == true
