@@ -37,4 +37,10 @@ sealed class Event {
      * This event indicates that the conversation was successfully autostarted.
      */
     object ConversationAutostart : Event()
+
+    /**
+     * Sent when connection is closing due to exceeding maximum of
+     * 3 simultaneously opened sessions.
+     */
+    object ConnectionClosed: Event()
 }

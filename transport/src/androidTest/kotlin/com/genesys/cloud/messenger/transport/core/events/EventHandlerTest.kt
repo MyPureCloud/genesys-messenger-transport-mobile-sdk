@@ -2,6 +2,7 @@ package com.genesys.cloud.messenger.transport.core.events
 
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
+import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosed
 import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.HealthCheckEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
@@ -78,6 +79,16 @@ class EventHandlerTest {
     fun whenHealthCheckedOccurs() {
         val givenStructuredMessageEvent = HealthCheckEvent()
         val expectedEvent = Event.HealthChecked
+
+        subject.onEvent(givenStructuredMessageEvent)
+
+        verify { mockEventListener.invoke(eq(expectedEvent)) }
+    }
+
+    @Test
+    fun whenConnectionClosedOccurs() {
+        val givenStructuredMessageEvent = ConnectionClosed()
+        val expectedEvent = Event.ConnectionClosed
 
         subject.onEvent(givenStructuredMessageEvent)
 

@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.core.events
 
 import com.genesys.cloud.messenger.transport.core.toCorrectiveAction
+import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosed
 import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.HealthCheckEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
@@ -38,5 +39,6 @@ private fun StructuredMessageEvent.toTransportEvent(): Event {
         }
         is HealthCheckEvent -> Event.HealthChecked
         is PresenceEvent -> Event.ConversationAutostart
+        is ConnectionClosed -> Event.ConnectionClosed
     }
 }

@@ -12,6 +12,7 @@ import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
+import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosed
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
@@ -802,6 +803,20 @@ class MessagingClientImplTest {
         }
     }
 
+    @Test
+    fun whenEventConnectionClosedReceived() {
+        val expectedEvent = ConnectionClosed()
+
+        subject.connect()
+        slot.captured.onMessage(Response.connectionClosedEvent)
+
+        verifySequence {
+            connectSequence()
+            disconnectSequence()
+            mockEventHandler.onEvent(eq(expectedEvent))
+        }
+    }
+
     private fun configuration(): Configuration = Configuration(
         deploymentId = "deploymentId",
         domain = "inindca.com",
@@ -900,6 +915,7 @@ private object Response {
         """{"type":"response","class":"TooManyRequestsErrorMessage","code":429,"body":{"retryAfter":3,"errorCode":4029,"errorMessage":"Message rate too high for this session"}}"""
     const val customAttributeSizeTooLarge =
         """{"type": "response","class": "string","code": 4013,"body": "Custom Attributes in channel metadata is larger than 2048 bytes"}"""
+    const val connectionClosedEvent = """{"type":"message","class":"ConnectionClosedEvent","code":200,"body":{}}"""
 
     fun structuredMessageWithEvents(
         events: String = defaultStructuredEvents,
