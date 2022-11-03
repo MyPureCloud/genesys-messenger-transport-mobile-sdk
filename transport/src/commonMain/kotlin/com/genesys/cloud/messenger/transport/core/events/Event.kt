@@ -42,5 +42,5 @@ sealed class Event {
      * Sent when connection is closing due to exceeding maximum of
      * 3 simultaneously opened sessions.
      */
-    object ConnectionClosed: Event()
+    object ConnectionClosed : Event()
 }
