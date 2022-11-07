@@ -21,6 +21,7 @@ internal sealed class StructuredMessageEvent {
         Error,
         HealthChecked,
         Presence,
+        ConnectionClosed,
     }
 }
 
@@ -54,6 +55,11 @@ internal data class PresenceEvent(
     @Serializable
     internal data class Presence(val type: String)
 }
+
+@Serializable
+internal data class ConnectionClosed(
+    override val eventType: Type = Type.ConnectionClosed,
+) : StructuredMessageEvent()
 
 internal object StructuredMessageEventSerializer :
     JsonContentPolymorphicSerializer<StructuredMessageEvent>(StructuredMessageEvent::class) {

@@ -12,4 +12,5 @@ internal enum class MessageClassName(val value: String) {
     GENERATE_URL_ERROR("GenerateUrlError"),
     SESSION_EXPIRED_EVENT("SessionExpiredEvent"),
     TOO_MANY_REQUESTS_ERROR_MESSAGE("TooManyRequestsErrorMessage"),
+    CONNECTION_CLOSED_EVENT("ConnectionClosedEvent"),
 }

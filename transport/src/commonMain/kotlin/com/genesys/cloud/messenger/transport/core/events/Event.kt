@@ -37,4 +37,10 @@ sealed class Event {
      * This event indicates that the conversation was successfully autostarted.
      */
     object ConversationAutostart : Event()
+
+    /**
+     * Sent when the connection is closed due to exceeding the maximum number of simultaneously open sessions.
+     * Detailed information about Genesys Cloud Web Messaging capabilities is available in the [Developer Center](https://developer.genesys.cloud).
+     */
+    object ConnectionClosed : Event()
 }

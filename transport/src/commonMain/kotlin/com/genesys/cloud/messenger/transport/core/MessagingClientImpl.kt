@@ -13,6 +13,8 @@ import com.genesys.cloud.messenger.transport.network.SocketCloseCode
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.AttachmentDeletedResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosed
+import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosedEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
@@ -363,6 +365,10 @@ internal class MessagingClientImpl(
                                 errorMessage
                             )
                         }
+                    }
+                    is ConnectionClosedEvent -> {
+                        disconnect()
+                        eventHandler.onEvent(ConnectionClosed())
                     }
                 }
             } catch (exception: SerializationException) {

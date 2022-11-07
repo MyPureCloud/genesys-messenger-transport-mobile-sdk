@@ -78,6 +78,8 @@ class ContentViewController: UIViewController {
                 displayEvent = "Event received: \(healthChecked.description)"
             case let conversationAutostart as Event.ConversationAutostart:
                 displayEvent = "Event received: \(conversationAutostart.description)"
+            case let connectionClosed as Event.ConnectionClosed:
+                displayEvent = "Event received: \(connectionClosed.description)"
             default:
                 break
             }
