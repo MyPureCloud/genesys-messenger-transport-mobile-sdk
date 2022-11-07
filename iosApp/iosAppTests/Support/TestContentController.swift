@@ -77,11 +77,10 @@ class TestContentController: MessengerHandler {
         var deploymentConfig: DeploymentConfig?
         let expectation = XCTestExpectation(description: "Wait for deployment config.")
         self.messengerTransport.fetchDeploymentConfig { config, error in
-            if let config {
-                deploymentConfig = config
-            } else if let error {
+            if let error = error {
                 XCTFail(error.localizedDescription)
             }
+            deploymentConfig = config
             expectation.fulfill()
         }
         XCTWaiter().wait(for: [expectation], timeout: 30)
