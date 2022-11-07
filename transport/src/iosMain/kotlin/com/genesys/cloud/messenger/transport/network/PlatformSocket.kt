@@ -198,7 +198,7 @@ private fun NSError.toTransportErrorCode(): ErrorCode =
         NSURLErrorNotConnectedToInternet -> ErrorCode.NetworkDisabled
         NSURLErrorBadServerResponse -> {
             if (this.userInfo.containsKey("_NSURLErrorWebSocketHandshakeFailureReasonKey")) {
-                ErrorCode.WebsocketHandshakeFailure
+                ErrorCode.WebsocketAccessDenied
             } else {
                 ErrorCode.WebsocketError
             }

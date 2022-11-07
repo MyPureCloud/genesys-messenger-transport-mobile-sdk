@@ -257,11 +257,8 @@ internal class MessagingClientImpl(
                     reconnectionHandler.clear()
                 }
             }
-            is ErrorCode.WebsocketHandshakeFailure -> {
-                stateMachine.onError(
-                    errorCode,
-                    "Server handshake failed. Please check your deploymentId."
-                )
+            is ErrorCode.WebsocketAccessDenied -> {
+                stateMachine.onError(errorCode, CorrectiveAction.Forbidden.message)
                 attachmentHandler.clearAll()
                 reconnectionHandler.clear()
             }
