@@ -71,7 +71,20 @@ class TestContentController: MessengerHandler {
                 print("Other event. \(event)")
             }
         }
+    }
 
+    func pullDeploymentConfig() -> DeploymentConfig? {
+        var deploymentConfig: DeploymentConfig?
+        let expectation = XCTestExpectation(description: "Wait for deployment config.")
+        self.messengerTransport.fetchDeploymentConfig { config, error in
+            if let error = error {
+                XCTFail(error.localizedDescription)
+            }
+            deploymentConfig = config
+            expectation.fulfill()
+        }
+        XCTWaiter().wait(for: [expectation], timeout: 30)
+        return deploymentConfig
     }
 
     func startMessengerConnection(file: StaticString = #file, line: UInt = #line) {
