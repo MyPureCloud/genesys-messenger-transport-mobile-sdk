@@ -2,6 +2,10 @@ package com.genesys.cloud.messenger.uitest.test
 
 import androidx.test.filters.LargeTest
 import androidx.test.runner.AndroidJUnit4
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.API
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.answerNewConversation
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendConnectOrDisconnect
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendTypingIndicatorFromAgentToUser
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -9,11 +13,9 @@ import org.junit.runner.RunWith
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 class ComposePrototypeUITest : BaseTests() {
-
+    open val apiHelper by lazy { API() }
     val testBedViewText = "TestBed View"
     val connectText = "connect"
-    val configureText = "configure"
-    val connectConfigureText = "connectWithConfigure"
     val sendMsgText = "send"
     val helloText = "hello"
     val healthCheckText = "healthCheck"
@@ -30,35 +32,19 @@ class ComposePrototypeUITest : BaseTests() {
     val newNameText = "Nellie Hay"
     val customAttributeAddedText = "Custom attribute added"
     val oneThousandText = "Code: 1000"
-    val twoHundredText = "200"
+    val healthCheckResponse = "HealthChecked"
     val historyFetchedText = "HistoryFetched"
     val longClosedText = "The user has closed the connection"
+    val connectedText = "Connected: true"
+    val typingIndicatorResponse = "AgentTyping"
 
     // Send the connect command and wait for connected response
     fun connect() {
         messenger {
             verifyPageIsVisible()
             enterCommand(connectText)
-            waitForConnected()
-        }
-    }
-
-    // Send the configure command, wait for configure response, and verify it is correct
-    fun configure() {
-        messenger {
-            verifyPageIsVisible()
-            enterCommand(configureText)
+            waitForProperResponse(connectedText)
             waitForConfigured()
-            checkConfigureFullResponse()
-        }
-    }
-
-    fun connectWithConfigure() {
-        messenger {
-            verifyPageIsVisible()
-            enterCommand(connectConfigureText)
-            waitForConfigured()
-            checkConfigureFullResponse()
         }
     }
 
@@ -72,13 +58,12 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
-    // Send a ping command, wait for the response, and verify it is correct
-    fun ping() {
+    // Send a healthCheck command, wait for the response, and verify it is correct
+    fun healthcheckTest() {
         messenger {
             verifyPageIsVisible()
             enterCommand(healthCheckText)
-            waitForProperResponse(twoHundredText)
-            checkPingFullResponse()
+            waitForProperResponse(healthCheckResponse)
         }
     }
 
@@ -92,7 +77,7 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
-    // Send an attach command, wait for the response, and verify it is correct
+    // Send an attach image command, wait for the response, and verify it is correct
     fun attachImage(): String {
         var attachmentId = ""
         messenger {
@@ -108,7 +93,7 @@ class ComposePrototypeUITest : BaseTests() {
         return attachmentId
     }
 
-    // Send a detach command, wait for the response, and verify it is correct
+    // Send a detach image command, wait for the response, and verify it is correct
     fun detachImage(attachmentId: String) {
         messenger {
             verifyPageIsVisible()
@@ -138,7 +123,33 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
-    // A test to verify the connect, configure, send message, attach image, add custom attribute, and bye commands
+    @Test
+    fun sendTypingIndicator() {
+        opening {
+            verifyPageIsVisible()
+            enterDeploymentID()
+            selectView(testBedViewText)
+        }
+        messenger {
+            verifyPageIsVisible()
+        }
+        connect()
+        sendMsg("howdy")
+        val conversationInfo = apiHelper.answerNewConversation()
+        if (conversationInfo != null) {
+            apiHelper.sendTypingIndicatorFromAgentToUser(conversationInfo!!)
+            messenger {
+                waitForProperResponse(typingIndicatorResponse)
+            }
+            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+        } else AssertionError("Agent did not answer conversation.")
+        messenger {
+            enterCommand(byeText)
+            waitForClosed()
+        }
+    }
+
+    // A test to verify the connect, healthCheck, send message, attach image, add custom attribute, and bye commands
     @Test
     fun testAllCommands() {
         opening {
@@ -149,24 +160,10 @@ class ComposePrototypeUITest : BaseTests() {
             verifyPageIsVisible()
         }
         connect()
-        configure()
+        healthcheckTest()
         sendMsg(helloText)
         val attachmentId = attachImage()
         addCustomAttribute(nameText, newNameText)
-        bye()
-    }
-
-    // A test to verify the connect with configure command
-    @Test
-    fun testConnectWithConfigureCommand() {
-        opening {
-            verifyPageIsVisible()
-            selectView(testBedViewText)
-        }
-        messenger {
-            verifyPageIsVisible()
-            connectWithConfigure()
-        }
         bye()
     }
 }
