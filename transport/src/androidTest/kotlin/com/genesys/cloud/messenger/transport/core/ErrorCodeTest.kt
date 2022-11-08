@@ -26,6 +26,8 @@ internal class ErrorCodeTest {
         assertTrue(ErrorCode.mapFrom(4029) is ErrorCode.RequestRateTooHigh)
         assertTrue(ErrorCode.mapFrom(5000) is ErrorCode.UnexpectedError)
         assertTrue(ErrorCode.mapFrom(1001) is ErrorCode.WebsocketError)
+        assertTrue(ErrorCode.mapFrom(1002) is ErrorCode.WebsocketAccessDenied)
+        assertTrue(ErrorCode.mapFrom(-1009) is ErrorCode.NetworkDisabled)
         val randomIn300Range = Random.nextInt(300, 400)
         assertEquals(
             ErrorCode.mapFrom(randomIn300Range),
