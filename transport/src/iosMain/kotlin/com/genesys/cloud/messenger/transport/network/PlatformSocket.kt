@@ -13,6 +13,8 @@ import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSPOSIXErrorDomain
 import platform.Foundation.NSTimer
 import platform.Foundation.NSURL
+import platform.Foundation.NSURLErrorBadServerResponse
+import platform.Foundation.NSURLErrorNotConnectedToInternet
 import platform.Foundation.NSURLSession
 import platform.Foundation.NSURLSessionConfiguration
 import platform.Foundation.NSURLSessionWebSocketCloseCode
@@ -100,7 +102,7 @@ internal actual class PlatformSocket actual constructor(
         webSocket?.receiveMessageWithCompletionHandler { message, nsError ->
             when {
                 nsError != null -> {
-                    log.e { "receiveMessageWithCompletionHandler: error: ${nsError.localizedDescription}" }
+                    log.e { "receiveMessageWithCompletionHandler error [${nsError.code}] ${nsError.localizedDescription}" }
                     handleError(
                         nsError, "Receive handler error"
                     )
@@ -177,22 +179,32 @@ internal actual class PlatformSocket actual constructor(
     }
 
     private fun handleError(error: NSError, context: String? = null) {
-        log.e { "${context ?: "NSError"}. [${error.code}] ${error.localizedDescription}" }
+        log.e { "handleError (${context ?: "no context"}) [${error.code}] $error" }
         if (active) {
             deactivateAndCancelWebSocket(
                 SocketCloseCode.GOING_AWAY.value,
                 "Closing due to error code ${error.code}"
             )
             listener?.onFailure(
-                Throwable(error.localizedDescription),
-                error.code.toTransportErrorCode()
+                Throwable("[${error.code}] ${error.localizedDescription}"),
+                error.toTransportErrorCode()
             )
         }
     }
 }
 
-private fun Long.toTransportErrorCode(): ErrorCode =
-    if (this.toInt() == ErrorCode.NetworkDisabled.code) ErrorCode.NetworkDisabled else ErrorCode.WebsocketError
+private fun NSError.toTransportErrorCode(): ErrorCode =
+    when (this.code) {
+        NSURLErrorNotConnectedToInternet -> ErrorCode.NetworkDisabled
+        NSURLErrorBadServerResponse -> {
+            if (this.userInfo.containsKey("_NSURLErrorWebSocketHandshakeFailureReasonKey")) {
+                ErrorCode.WebsocketAccessDenied
+            } else {
+                ErrorCode.WebsocketError
+            }
+        }
+        else -> ErrorCode.WebsocketError
+    }
 
 internal fun NSTimer?.isScheduled(): Boolean {
     return this?.valid ?: false

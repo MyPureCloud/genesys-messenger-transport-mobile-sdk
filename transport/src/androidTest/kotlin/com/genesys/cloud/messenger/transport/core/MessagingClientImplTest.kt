@@ -361,6 +361,29 @@ class MessagingClientImplTest {
     }
 
     @Test
+    fun whenConnectFailsWithWebsocketAccessDenied() {
+        val message = CorrectiveAction.Forbidden.message
+        val expectedErrorState = State.Error(ErrorCode.WebsocketAccessDenied, message)
+        val accessException = Exception(message)
+        val socketListenerSlot = slot<PlatformSocketListener>()
+        every { mockPlatformSocket.openSocket(capture((socketListenerSlot))) } answers {
+            socketListenerSlot.captured.onFailure(accessException, ErrorCode.WebsocketAccessDenied)
+        }
+
+        subject.connect()
+
+        assertThat(subject).isError(expectedErrorState.code, expectedErrorState.message)
+        verifySequence {
+            mockStateChangedListener(fromIdleToConnecting)
+            mockPlatformSocket.openSocket(any())
+            mockMessageStore.invalidateConversationCache()
+            mockStateChangedListener(StateChange(oldState = State.Connecting, newState = expectedErrorState))
+            mockAttachmentHandler.clearAll()
+            mockReconnectionHandler.clear()
+        }
+    }
+
+    @Test
     fun whenConfigureFailsBecauseSocketListenerRespondWithNetworkDisabledError() {
         val givenException = Exception(ErrorMessage.InternetConnectionIsOffline)
         val expectedErrorState =

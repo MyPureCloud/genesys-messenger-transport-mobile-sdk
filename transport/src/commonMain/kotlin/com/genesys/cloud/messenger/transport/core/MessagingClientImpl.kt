@@ -257,6 +257,11 @@ internal class MessagingClientImpl(
                     reconnectionHandler.clear()
                 }
             }
+            is ErrorCode.WebsocketAccessDenied -> {
+                stateMachine.onError(errorCode, CorrectiveAction.Forbidden.message)
+                attachmentHandler.clearAll()
+                reconnectionHandler.clear()
+            }
             is ErrorCode.NetworkDisabled -> {
                 stateMachine.onError(errorCode, ErrorMessage.InternetConnectionIsOffline)
                 attachmentHandler.clearAll()
