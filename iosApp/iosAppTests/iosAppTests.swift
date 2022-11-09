@@ -109,7 +109,7 @@ class iosAppTests: XCTestCase {
         } catch {
             XCTFail("\(error.localizedDescription)")
         }
-        guard let deployment else {
+        guard let deployment = deployment else {
             XCTFail("Failed to pull the deployment config.")
             return
         }
