@@ -12,8 +12,9 @@ import MessengerTransport
 
 class TestContentController: MessengerHandler {
 
-    var testExpectation: XCTestExpectation? = nil
-    var errorExpectation: XCTestExpectation? = nil
+    var testExpectation: XCTestExpectation?
+    var errorExpectation: XCTestExpectation?
+    var connectionClosed: XCTestExpectation?
     var receivedMessageText: String? = nil
     var receivedDownloadUrl: String? = nil
 
@@ -67,6 +68,9 @@ class TestContentController: MessengerHandler {
             case let typing as Event.AgentTyping:
                 print("Agent is typing: \(typing)")
                 self?.testExpectation?.fulfill()
+            case let closedEvent as Event.ConnectionClosed:
+                print("Connection was closed: \(closedEvent)")
+                self?.connectionClosed?.fulfill()
             default:
                 print("Other event. \(event)")
             }
