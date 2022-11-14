@@ -1,5 +1,5 @@
 PODS:
-  - transport (2.0.0)
+  - transport (2.1.0)
 
 DEPENDENCIES:
   - transport (from `../transport`)
@@ -9,7 +9,7 @@ EXTERNAL SOURCES:
     :path: "../transport"
 
 SPEC CHECKSUMS:
-  transport: c0247d0684803a3804c480e6ff2461b0e1ffa616
+  transport: ff63e313ca5e066102fb9005eaece3f5235c604e
 
 PODFILE CHECKSUM: c3105f0698090ba6d9702820eb0f13f123776417
 
