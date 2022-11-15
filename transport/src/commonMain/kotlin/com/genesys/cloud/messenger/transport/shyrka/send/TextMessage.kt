@@ -8,7 +8,9 @@ import kotlinx.serialization.Serializable
 internal data class TextMessage(
     val text: String,
     val metadata: Map<String, String>? = null,
-    val content: List<Message.Content> = emptyList()
+    val content: List<Message.Content> = emptyList(),
+    val channel: Channel? = null,
 ) : BaseMessageProtocol {
-    @Required override val type = BaseMessageProtocol.Type.Text
+    @Required
+    override val type = BaseMessageProtocol.Type.Text
 }

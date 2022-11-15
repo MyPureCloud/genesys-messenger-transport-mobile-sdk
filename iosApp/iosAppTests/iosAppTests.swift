@@ -13,8 +13,14 @@ class iosAppTests: XCTestCase {
 
     var contentController: TestContentController?
 
+    override class func setUp() {
+        super.setUp()
+        ApiHelper.shared.disconnectExistingConversations()
+    }
+
     override func setUp() {
         super.setUp()
+        continueAfterFailure = false
         if contentController == nil {
             do {
                 let deployment = try Deployment()
@@ -65,6 +71,68 @@ class iosAppTests: XCTestCase {
         // Disconnect the conversation for the agent and disconnect the session.
         ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
         contentController.disconnectMessenger()
+    }
+
+    // Test will always fail if the deployment configuration doesn't have AutoStart enabled. See Deployment Configuration options in Admin.
+    func testAutoStart() {
+        guard let deploymentConfig = contentController?.pullDeploymentConfig() else {
+            XCTFail("Failed to pull the deployment configuration.")
+            return
+        }
+        XCTAssertTrue(deploymentConfig.messenger.apps.conversations.autoStart.enabled, "AutoStart was not enabled for this deployment config.")
+
+        // Save a new token.
+        DefaultTokenStore(storeKey: "com.genesys.cloud.messenger").store(token: UUID().uuidString)
+
+        guard let contentController = contentController else {
+            XCTFail("Failed to setup the content controller.")
+            return
+        }
+
+        // Should be able to answer the conversation immediately after starting the connection if AutoStart is enabled.
+        contentController.startMessengerConnection()
+        guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
+            XCTFail("The message we sent may not have connected to an agent.")
+            return
+        }
+
+        // Disconnect the conversation for the agent and disconnect the session.
+        ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
+        contentController.disconnectMessenger()
+    }
+
+    func testConnectionClosed() {
+        // Pull the deployment for use later.
+        var deployment: Deployment?
+        do {
+            deployment = try Deployment()
+        } catch {
+            XCTFail("\(error.localizedDescription)")
+        }
+        guard let deployment = deployment else {
+            XCTFail("Failed to pull the deployment config.")
+            return
+        }
+
+        // Create 4 new content controllers. We'll use these to trigger a connection closed event.
+        // Right now, there's a max number of 3 open sesssions that use the same token.
+        // We'll open 4 and confirm that an error occurs in the fourth attempt on the oldest client.
+        var controllers = [TestContentController]()
+        for _ in 1...4 {
+            controllers.append(TestContentController(deployment: deployment))
+        }
+        controllers[0].connectionClosed = XCTestExpectation(description: "Wait for the ConnectionClosedEvent")
+        for controller in controllers {
+            controller.startMessengerConnection()
+            delay(3)
+        }
+        let result = XCTWaiter().wait(for: [controllers[0].connectionClosed!], timeout: 30)
+        XCTAssertEqual(result, .completed, "Did not receive a Connection Closed event.")
+
+        // Cleanup. Also verifies that all of the other clients are still connected due to an error being thrown if we disconnect while not being connected.
+        for x in 1...3 {
+            controllers[x].disconnectMessenger()
+        }
     }
 
     func testMessageAttributes() {
@@ -150,4 +218,15 @@ class iosAppTests: XCTestCase {
         contentController.disconnectMessenger()
     }
 
+}
+
+private func delay(_ seconds: Double = 1.0, reason: String? = nil) {
+    if let reason = reason {
+        print("Reason for delay is: \(reason)")
+    }
+    let expectation = XCTestExpectation(description: "Test delay for: \(reason ?? "")")
+    DispatchQueue.main.asyncAfter(deadline: .now() + seconds) {
+        expectation.fulfill()
+    }
+    _ = XCTWaiter.wait(for: [expectation], timeout: seconds + 5)
 }

@@ -40,9 +40,9 @@ internal class MessageStore(
             message = TextMessage(
                 text,
                 metadata = mapOf("customMessageId" to messageToSend.id),
-                content = messageToSend.getUploadedAttachments()
-            ),
-            channel = channel,
+                content = messageToSend.getUploadedAttachments(),
+                channel = channel,
+            )
         )
     }
 

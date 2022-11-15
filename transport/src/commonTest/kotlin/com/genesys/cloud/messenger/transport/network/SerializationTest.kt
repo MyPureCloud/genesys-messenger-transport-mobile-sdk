@@ -7,6 +7,7 @@ import assertk.assertions.isNotNull
 import com.genesys.cloud.messenger.transport.core.Attachment
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
+import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosedEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageType
@@ -18,6 +19,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.TooManyRequestsError
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
+import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.EchoRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
@@ -71,23 +73,25 @@ class SerializationTest {
         assertThat(encodedString, "encoded OnMessageRequest")
             .isEqualTo("""{"token":"<token>","message":{"text":"Hello world","type":"Text"},"action":"onMessage"}""")
 
-        val messageWithAttachmentRequest = OnMessageRequest(
+        val messageWithAttachmentAndCustomAttributesRequest = OnMessageRequest(
             token = "<token>",
             message = TextMessage(
                 text = "Hello world", metadata = mapOf("id" to "aaa-bbb-ccc"),
                 content = listOf(
                     Message.Content(
                         contentType = Message.Content.Type.Attachment,
-                        attachment = Attachment("abcd-1234")
+                        attachment = Attachment("abcd-1234"),
                     )
-                )
+                ),
+                channel = Channel(Channel.Metadata(mapOf("A" to "B"))),
             ),
         )
 
-        encodedString = WebMessagingJson.json.encodeToString(messageWithAttachmentRequest)
+        encodedString =
+            WebMessagingJson.json.encodeToString(messageWithAttachmentAndCustomAttributesRequest)
 
-        assertThat(encodedString, "encoded OnMessageRequest with attachment")
-            .isEqualTo("""{"token":"<token>","message":{"text":"Hello world","metadata":{"id":"aaa-bbb-ccc"},"content":[{"contentType":"Attachment","attachment":{"id":"abcd-1234"}}],"type":"Text"},"action":"onMessage"}""")
+        assertThat(encodedString, "encoded OnMessageRequest with attachment and custom attributes")
+            .isEqualTo("""{"token":"<token>","message":{"text":"Hello world","metadata":{"id":"aaa-bbb-ccc"},"content":[{"contentType":"Attachment","attachment":{"id":"abcd-1234"}}],"channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"action":"onMessage"}""")
     }
 
     @Test
@@ -367,5 +371,15 @@ class SerializationTest {
         val message = decode(json)
 
         assertThat(message).isEqualTo(expectedTooManyRequestsError)
+    }
+
+    @Test
+    fun whenConnectionClosedEventThenDecodes() {
+        val json = """{"type":"message","class":"ConnectionClosedEvent","code":200,"body":{}}"""
+
+        val message = decode(json)
+
+        assertThat(message.body, "WebMessagingMessage body").isNotNull()
+            .hasClass(ConnectionClosedEvent::class)
     }
 }

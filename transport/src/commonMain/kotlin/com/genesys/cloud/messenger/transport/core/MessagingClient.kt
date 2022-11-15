@@ -53,8 +53,8 @@ interface MessagingClient {
         /**
          * In case of fatal, unrecoverable errors MessagingClient will transition to this state.
          *
-         * @property code the [ErrorCode.WebsocketError] for websocket errors.
-         * @property message is an optional message.
+         * @property code the [ErrorCode] representing the reason for the failure.
+         * @property message an optional message describing the error.
          */
         data class Error(val code: ErrorCode, val message: String?) : State()
     }

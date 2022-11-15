@@ -20,6 +20,8 @@ internal sealed class StructuredMessageEvent {
         Typing,
         Error,
         HealthChecked,
+        Presence,
+        ConnectionClosed,
     }
 }
 
@@ -45,11 +47,26 @@ internal data class HealthCheckEvent(
     override val eventType: Type = Type.HealthChecked,
 ) : StructuredMessageEvent()
 
+@Serializable
+internal data class PresenceEvent(
+    override val eventType: Type,
+    val presence: Presence,
+) : StructuredMessageEvent() {
+    @Serializable
+    internal data class Presence(val type: String)
+}
+
+@Serializable
+internal data class ConnectionClosed(
+    override val eventType: Type = Type.ConnectionClosed,
+) : StructuredMessageEvent()
+
 internal object StructuredMessageEventSerializer :
     JsonContentPolymorphicSerializer<StructuredMessageEvent>(StructuredMessageEvent::class) {
     override fun selectDeserializer(element: JsonElement): DeserializationStrategy<out StructuredMessageEvent> {
         return when (element.jsonObject["eventType"]?.jsonPrimitive?.content) {
             Type.Typing.name -> TypingEvent.serializer()
+            Type.Presence.name -> PresenceEvent.serializer()
             else -> throw SerializationException("Unknown EventType: key 'eventType' not found or does not matches any known event type.")
         }
     }
