@@ -175,7 +175,7 @@ class iosAppTests: XCTestCase {
         let receivedMessageText = "Test message sent via API request!"
         contentController.testExpectation = XCTestExpectation(description: "Wait for message to be received from the UI agent.")
         ApiHelper.shared.sendOutboundSmsMessage(conversationId: conversationInfo.conversationId, communicationId: conversationInfo.communicationId, message: receivedMessageText)
-        contentController.waitForExpectation()
+        contentController.waitForTestExpectation()
         contentController.verifyReceivedMessage(expectedMessage: receivedMessageText)
 
         // Disconnect the conversation for the agent and disconnect the session.
@@ -211,11 +211,24 @@ class iosAppTests: XCTestCase {
         // Receive a typing indicator from the agent.
         contentController.testExpectation = XCTestExpectation(description: "Wait for a typing indicator from the agent.")
         ApiHelper.shared.sendTypingIndicator(conversationId: conversationInfo.conversationId, communicationId: conversationInfo.communicationId)
-        contentController.waitForExpectation()
+        contentController.waitForTestExpectation()
 
         // Disconnect the conversation for the agent and disconnect the session.
         ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
         contentController.disconnectMessenger()
+    }
+    
+    func testAccessDenied() {
+        let deployment = try! Deployment()
+        let testController = TestContentController(deployment: Deployment(deploymentId: "InvalidDeploymentId", domain: deployment.domain))
+                 
+        testController.startMessengerConnectionWithErrorExpectation(XCTestExpectation(description: "Expecting access denied."))
+        
+        if let state = testController.client.currentState as? MessagingClientState.Error {
+            XCTAssertTrue(state.code is ErrorCode.WebsocketAccessDenied)
+        } else {
+            XCTFail("Expected Error state, but instead state is: \(testController.client.currentState)")
+        }
     }
 
 }
