@@ -5,6 +5,7 @@ import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageEntityList
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
+import com.genesys.cloud.messenger.transport.shyrka.receive.isInbound
 import com.soywiz.klock.DateTime
 
 internal fun MessageEntityList.toMessageList(): List<Message> {
@@ -15,13 +16,18 @@ internal fun MessageEntityList.toMessageList(): List<Message> {
 
 internal fun StructuredMessage.toMessage(): Message {
     return Message(
-        id = this.metadata["customMessageId"] ?: this.id,
-        direction = if (this.direction == "Inbound") Direction.Inbound else Direction.Outbound,
+        id = metadata["customMessageId"] ?: id,
+        direction = if (direction == "Inbound") Direction.Inbound else Direction.Outbound,
         state = Message.State.Sent,
-        type = this.type.name,
-        text = this.text,
-        timeStamp = this.channel?.time.fromIsoToEpochMilliseconds(),
-        attachments = this.content.toAttachments()
+        type = type.name,
+        text = text,
+        timeStamp = channel?.time.fromIsoToEpochMilliseconds(),
+        attachments = content.toAttachments(),
+        from = Message.Participant(
+            originatingEntity.mapOriginatingEntity {
+                isInbound()
+            }
+        )
     )
 }
 
@@ -41,6 +47,15 @@ internal fun String?.fromIsoToEpochMilliseconds(): Long? {
         }
     } catch (t: Throwable) {
         null
+    }
+}
+
+internal fun String?.mapOriginatingEntity(isInbound: () -> Boolean): Message.Participant.OriginatingEntity {
+    return when {
+        isInbound() -> Message.Participant.OriginatingEntity.Human
+        this == "Human" -> Message.Participant.OriginatingEntity.Human
+        this == "Bot" -> Message.Participant.OriginatingEntity.Bot
+        else -> Message.Participant.OriginatingEntity.Unknown
     }
 }
 
