@@ -87,7 +87,7 @@ class TestContentController: MessengerHandler {
             deploymentConfig = config
             expectation.fulfill()
         }
-        XCTWaiter().wait(for: [expectation], timeout: 30)
+        waitForExpectation(expectation, timeout: 30.0)
         return deploymentConfig
     }
 
@@ -191,13 +191,24 @@ class TestContentController: MessengerHandler {
     }
 
     func waitForTestExpectation(timeout: Double = 60.0) {
-        let result = XCTWaiter().wait(for: [testExpectation!], timeout: timeout)
-        XCTAssertEqual(result, .completed, "Test expectation never fullfilled: \(testExpectation?.description ?? "No description.")")
+        guard let expectation = testExpectation else {
+            XCTFail("No expectation to wait for.")
+            return
+        }
+        waitForExpectation(expectation, timeout: timeout)
     }
     
     func waitForErrorExpectation(timeout: Double = 60.0) {
-        let result = XCTWaiter().wait(for: [errorExpectation!], timeout: timeout)
-        XCTAssertEqual(result, .completed, "Error expectation never fullfilled: \(errorExpectation?.description ?? "No description.")")
+        guard let expectation = errorExpectation else {
+            XCTFail("No expectation to wait for.")
+            return
+        }
+        waitForExpectation(expectation, timeout: timeout)
+    }
+    
+    private func waitForExpectation(_ expectation: XCTestExpectation, timeout: Double = 60.0) {
+        let result = XCTWaiter().wait(for: [expectation], timeout: timeout)
+        XCTAssertEqual(result, .completed, "Test expectation never fullfilled: \(expectation.description)")
     }
 
     func verifyReceivedMessage(expectedMessage: String) {
