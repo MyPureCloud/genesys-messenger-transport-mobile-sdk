@@ -103,7 +103,7 @@ class TestContentController: MessengerHandler {
         do {
             self.errorExpectation = errorExpectation
             try super.connect()
-            waitForErrorExpectatio()
+            waitForErrorExpectation()
         } catch {
             XCTFail("Connect threw other than the expected error: \(error.localizedDescription)", file: file, line: line)
         }
@@ -195,7 +195,7 @@ class TestContentController: MessengerHandler {
         XCTAssertEqual(result, .completed, "Test expectation never fullfilled: \(testExpectation?.description ?? "No description.")")
     }
     
-    func waitForErrorExpectatio(timeout: Double = 60.0) {
+    func waitForErrorExpectation(timeout: Double = 60.0) {
         let result = XCTWaiter().wait(for: [errorExpectation!], timeout: timeout)
         XCTAssertEqual(result, .completed, "Error expectation never fullfilled: \(errorExpectation?.description ?? "No description.")")
     }
