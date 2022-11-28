@@ -23,8 +23,8 @@ class MessengerHandler {
     
     init(deployment: Deployment, reconnectTimeout: Int64 = 60 * 5) {
         self.deployment = deployment
-        self.config = Configuration(deploymentId: deployment.deploymentId!,
-                                    domain: deployment.domain!,
+        self.config = Configuration(deploymentId: deployment.deploymentId,
+                                    domain: deployment.domain,
                                     logging: true,
                                     reconnectionTimeoutInSeconds: reconnectTimeout)
         self.messengerTransport = MessengerTransport(configuration: self.config)

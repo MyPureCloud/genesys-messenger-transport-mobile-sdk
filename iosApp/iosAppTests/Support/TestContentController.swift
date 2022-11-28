@@ -87,7 +87,7 @@ class TestContentController: MessengerHandler {
             deploymentConfig = config
             expectation.fulfill()
         }
-        XCTWaiter().wait(for: [expectation], timeout: 30)
+        waitForExpectation(expectation, timeout: 30.0)
         return deploymentConfig
     }
 
@@ -98,11 +98,21 @@ class TestContentController: MessengerHandler {
             XCTFail("Possible issue with connecting to the backend: \(error.localizedDescription)", file: file, line: line)
         }
     }
+    
+    func startMessengerConnectionWithErrorExpectation(_ errorExpectation: XCTestExpectation, file: StaticString = #file, line: UInt = #line) {
+        do {
+            self.errorExpectation = errorExpectation
+            try super.connect()
+            waitForErrorExpectation()
+        } catch {
+            XCTFail("Connect threw other than the expected error: \(error.localizedDescription)", file: file, line: line)
+        }
+    }
 
     override func connect() throws {
         testExpectation = XCTestExpectation(description: "Wait for Configuration.")
         try super.connect()
-        waitForExpectation()
+        waitForTestExpectation()
     }
 
     func disconnectMessenger(file: StaticString = #file, line: UInt = #line) {
@@ -116,7 +126,7 @@ class TestContentController: MessengerHandler {
     override func disconnect() throws {
         testExpectation = XCTestExpectation(description: "Wait for Disconnect.")
         try super.disconnect()
-        waitForExpectation()
+        waitForTestExpectation()
     }
 
     func sendText(text: String, file: StaticString = #file, line: UInt = #line) {
@@ -138,7 +148,7 @@ class TestContentController: MessengerHandler {
     override func sendMessage(text: String, customAttributes: [String: String] = [:]) throws {
         testExpectation = XCTestExpectation(description: "Wait for message to send.")
         try super.sendMessage(text: text, customAttributes: customAttributes)
-        waitForExpectation()
+        waitForTestExpectation()
         verifyReceivedMessage(expectedMessage: text)
     }
 
@@ -153,7 +163,7 @@ class TestContentController: MessengerHandler {
     override func attachImage(kotlinByteArray: KotlinByteArray) throws {
         testExpectation = XCTestExpectation(description: "Wait for image to attach successfully.")
         try super.attachImage(kotlinByteArray: kotlinByteArray)
-        waitForExpectation()
+        waitForTestExpectation()
     }
 
     func sendUploadedImage(file: StaticString = #file, line: UInt = #line) {
@@ -167,7 +177,7 @@ class TestContentController: MessengerHandler {
         } catch {
             XCTFail("Failed to upload an image.\n\(error.localizedDescription)", file: file, line: line)
         }
-        waitForExpectation()
+        waitForTestExpectation()
         verifyReceivedMessage(expectedMessage: receivedDownloadUrl)
     }
 
@@ -180,9 +190,25 @@ class TestContentController: MessengerHandler {
         }
     }
 
-    func waitForExpectation() {
-        let result = XCTWaiter().wait(for: [testExpectation!], timeout: 60)
-        XCTAssertEqual(result, .completed, "Expectation never fullfilled: \(testExpectation?.description ?? "No description.")")
+    func waitForTestExpectation(timeout: Double = 60.0) {
+        guard let expectation = testExpectation else {
+            XCTFail("No expectation to wait for.")
+            return
+        }
+        waitForExpectation(expectation, timeout: timeout)
+    }
+    
+    func waitForErrorExpectation(timeout: Double = 60.0) {
+        guard let expectation = errorExpectation else {
+            XCTFail("No expectation to wait for.")
+            return
+        }
+        waitForExpectation(expectation, timeout: timeout)
+    }
+    
+    private func waitForExpectation(_ expectation: XCTestExpectation, timeout: Double = 60.0) {
+        let result = XCTWaiter().wait(for: [expectation], timeout: timeout)
+        XCTAssertEqual(result, .completed, "Test expectation never fullfilled: \(expectation.description)")
     }
 
     func verifyReceivedMessage(expectedMessage: String) {
