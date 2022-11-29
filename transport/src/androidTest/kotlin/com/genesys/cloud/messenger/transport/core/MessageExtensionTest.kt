@@ -7,9 +7,12 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses.isoTestTimestamp
+import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.isInbound
 import com.genesys.cloud.messenger.transport.shyrka.receive.isOutbound
 import com.genesys.cloud.messenger.transport.util.extensions.fromIsoToEpochMilliseconds
@@ -39,6 +42,7 @@ internal class MessageExtensionTest {
             type = "Text",
             text = "customer msg 7",
             timeStamp = null,
+            events = listOf(Event.ConversationAutostart),
             from = Message.Participant(Message.Participant.OriginatingEntity.Human),
         )
 
@@ -66,7 +70,13 @@ internal class MessageExtensionTest {
                 )
             ),
             direction = "Inbound",
-            metadata = mapOf("customMessageId" to "test custom id")
+            metadata = mapOf("customMessageId" to "test custom id"),
+            events = listOf(
+                PresenceEvent(
+                    eventType = StructuredMessageEvent.Type.Presence,
+                    presence = PresenceEvent.Presence("Join")
+                )
+            )
         )
         val expectedMessage =
             Message(
@@ -83,8 +93,9 @@ internal class MessageExtensionTest {
                         state = Attachment.State.Sent("http://test.com")
                     )
                 ),
+                events = listOf<Event>(Event.ConversationAutostart),
                 from = Message.Participant(Message.Participant.OriginatingEntity.Human)
-            )
+                )
 
         assertThat(givenStructuredMessage.toMessage()).isEqualTo(expectedMessage)
     }

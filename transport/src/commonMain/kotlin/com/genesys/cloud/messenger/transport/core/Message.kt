@@ -1,5 +1,6 @@
 package com.genesys.cloud.messenger.transport.core
 
+import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.util.Platform
 import kotlinx.serialization.Serializable
 
@@ -13,6 +14,7 @@ import kotlinx.serialization.Serializable
  *  @property text the text payload of the message.
  *  @property timeStamp the time when the message occurred represented in Unix epoch time, the number of milliseconds since January 1, 1970 UTC.
  *  @property attachments a map of [Attachment] files to the message. Empty by default.
+ *  @property events a list of events related to this message. Empty by default.
  *  @property from the [Participant] that sends a message.
  */
 @Serializable
@@ -24,6 +26,7 @@ data class Message(
     val text: String? = null,
     val timeStamp: Long? = null,
     val attachments: Map<String, Attachment> = emptyMap(),
+    val events: List<Event> = emptyList(),
     val from: Participant = Participant(
         originatingEntity = Participant.OriginatingEntity.Human
     ),
