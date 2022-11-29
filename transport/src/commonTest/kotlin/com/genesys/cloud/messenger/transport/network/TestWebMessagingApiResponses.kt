@@ -16,7 +16,7 @@ object TestWebMessagingApiResponses {
 
     internal const val isoTestTimestamp = "2014-04-30T21:09:51.411Z"
     internal const val messageEntityResponseWith2Messages =
-        """{"entities":[{"id":"5befde6373a23f32f20b59b4e1cba0e6","channel":{"time":"$isoTestTimestamp"},"type":"Text","text":"\uD83E\uDD2A","content":[],"direction":"Outbound"},{"id":"46e7001c24abed05e9bcd1a006eb54b7","channel":{"time":null},"type":"Text","metadata":{"customMessageId":"1234567890"},"text":"customer msg 7","content":[],"direction":"Inbound"}],"pageSize":25,"pageNumber":1, "total": 2, "pageCount": 1}"""
+        """{"entities":[{"id":"5befde6373a23f32f20b59b4e1cba0e6","channel":{"time":"$isoTestTimestamp"},"type":"Text","text":"\uD83E\uDD2A","content":[],"direction":"Outbound","originatingEntity":"Bot"},{"id":"46e7001c24abed05e9bcd1a006eb54b7","channel":{"time":null},"type":"Text","metadata":{"customMessageId":"1234567890"},"text":"customer msg 7","content":[],"direction":"Inbound","originatingEntity":"Human"}],"pageSize":25,"pageNumber":1, "total": 2, "pageCount": 1}"""
 
     internal const val messageEntityListResponseWithoutMessages =
         """{"entities":[],"pageSize":0,"pageNumber":1, "total": 0, "pageCount": 0}"""
@@ -71,12 +71,14 @@ object TestWebMessagingApiResponses {
                 time = isoTestTimestamp,
                 text = "\uD83E\uDD2A",
                 isInbound = false,
+                originatingEntity = "Bot"
             ),
             messageEntity(
                 id = "46e7001c24abed05e9bcd1a006eb54b7",
                 time = null,
                 text = "customer msg 7",
                 customMessageId = "1234567890",
+                originatingEntity = "Human"
             )
         )
 
@@ -86,6 +88,7 @@ object TestWebMessagingApiResponses {
         text: String,
         isInbound: Boolean = true,
         customMessageId: String? = null,
+        originatingEntity: String?,
     ): StructuredMessage {
         return StructuredMessage(
             id = id,
@@ -94,7 +97,8 @@ object TestWebMessagingApiResponses {
             text = text,
             content = emptyList(),
             direction = if (isInbound) "Inbound" else "Outbound",
-            metadata = if (customMessageId != null) mapOf("customMessageId" to customMessageId) else emptyMap()
+            metadata = if (customMessageId != null) mapOf("customMessageId" to customMessageId) else emptyMap(),
+            originatingEntity = originatingEntity,
         )
     }
 }
