@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.util.extensions
 import com.genesys.cloud.messenger.transport.core.Attachment
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.Message.Direction
+import com.genesys.cloud.messenger.transport.core.events.toTransportEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageEntityList
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.soywiz.klock.DateTime
@@ -21,7 +22,8 @@ internal fun StructuredMessage.toMessage(): Message {
         type = this.type.name,
         text = this.text,
         timeStamp = this.channel?.time.fromIsoToEpochMilliseconds(),
-        attachments = this.content.toAttachments()
+        attachments = this.content.toAttachments(),
+        events = events.map { it.toTransportEvent() },
     )
 }
 

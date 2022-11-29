@@ -25,7 +25,7 @@ internal class EventHandlerImpl(
     }
 }
 
-private fun StructuredMessageEvent.toTransportEvent(): Event {
+internal fun StructuredMessageEvent.toTransportEvent(): Event {
     return when (this) {
         is TypingEvent -> {
             Event.AgentTyping(typing.duration ?: FALLBACK_TYPING_INDICATOR_DURATION)
