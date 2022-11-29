@@ -95,7 +95,7 @@ internal class MessageExtensionTest {
                 ),
                 events = listOf<Event>(Event.ConversationAutostart),
                 from = Message.Participant(Message.Participant.OriginatingEntity.Human)
-                )
+            )
 
         assertThat(givenStructuredMessage.toMessage()).isEqualTo(expectedMessage)
     }
