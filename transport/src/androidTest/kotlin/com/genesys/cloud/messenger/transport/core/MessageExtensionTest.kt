@@ -33,7 +33,7 @@ internal class MessageExtensionTest {
             type = "Text",
             text = "\uD83E\uDD2A",
             timeStamp = 1398892191411L,
-            from = Message.Participant(Message.Participant.OriginatingEntity.Bot),
+            from = Message.Participant(originatingEntity = Message.Participant.OriginatingEntity.Bot),
         )
         val expectedMessage2 = Message(
             id = "1234567890",
@@ -43,7 +43,7 @@ internal class MessageExtensionTest {
             text = "customer msg 7",
             timeStamp = null,
             events = listOf(Event.ConversationAutostart),
-            from = Message.Participant(Message.Participant.OriginatingEntity.Human),
+            from = Message.Participant(originatingEntity = Message.Participant.OriginatingEntity.Human),
         )
 
         val result = TestWebMessagingApiResponses.testMessageEntityList.toMessageList()
@@ -55,7 +55,13 @@ internal class MessageExtensionTest {
     fun whenInboundStructuredMessageToMessage() {
         val givenStructuredMessage = StructuredMessage(
             id = "id",
-            channel = StructuredMessage.Channel(time = isoTestTimestamp),
+            channel = StructuredMessage.Channel(
+                time = isoTestTimestamp,
+                from = StructuredMessage.Participant(
+                    nickname = "Bob",
+                    image = "http://image.png",
+                )
+            ),
             type = StructuredMessage.Type.Text,
             text = "test text",
             content = listOf(
@@ -94,7 +100,11 @@ internal class MessageExtensionTest {
                     )
                 ),
                 events = listOf<Event>(Event.ConversationAutostart),
-                from = Message.Participant(Message.Participant.OriginatingEntity.Human)
+                from = Message.Participant(
+                    name = "Bob",
+                    imageUrl = "http://image.png",
+                    originatingEntity = Message.Participant.OriginatingEntity.Human
+                )
             )
 
         assertThat(givenStructuredMessage.toMessage()).isEqualTo(expectedMessage)
@@ -143,6 +153,27 @@ internal class MessageExtensionTest {
             )
 
         assertThat(givenMessage.getUploadedAttachments()).isEmpty()
+    }
+
+    @Test
+    fun whenOutboundStructuredMessageToMessageFromParticipantWithUnknownInfo() {
+        val givenStructuredMessage = StructuredMessage(
+            id = "id",
+            type = StructuredMessage.Type.Text,
+            direction = "Outbound",
+        )
+        val expectedMessage =
+            Message(
+                id = "id",
+                direction = Message.Direction.Outbound,
+                state = Message.State.Sent,
+                type = "Text",
+                from = Message.Participant(
+                    originatingEntity = Message.Participant.OriginatingEntity.Unknown
+                )
+            )
+
+        assertThat(givenStructuredMessage.toMessage()).isEqualTo(expectedMessage)
     }
 
     @Test
