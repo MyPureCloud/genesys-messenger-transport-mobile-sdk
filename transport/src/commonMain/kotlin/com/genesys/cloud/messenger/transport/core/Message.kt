@@ -91,9 +91,15 @@ data class Message(
 
     /**
      * Box that contains information about conversation participant.
+     *
+     * @property name the name of the participant.
+     * @property imageUrl the url to the participant avatar.
+     * @property originatingEntity the indicator of participant entity.
      */
     @Serializable
     data class Participant(
+        val name: String? = null,
+        val imageUrl: String? = null,
         val originatingEntity: OriginatingEntity,
     ) {
         /**

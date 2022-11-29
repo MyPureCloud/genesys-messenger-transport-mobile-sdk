@@ -31,6 +31,7 @@ internal data class StructuredMessage(
         val firstName: String? = null,
         val lastName: String? = null,
         val nickname: String? = null,
+        val image: String? = null,
     )
 
     @Serializable

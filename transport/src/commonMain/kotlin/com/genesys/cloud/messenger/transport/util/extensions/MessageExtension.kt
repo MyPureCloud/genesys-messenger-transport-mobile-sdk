@@ -26,7 +26,9 @@ internal fun StructuredMessage.toMessage(): Message {
         attachments = content.toAttachments(),
         events = events.map { it.toTransportEvent() },
         from = Message.Participant(
-            originatingEntity.mapOriginatingEntity {
+            name = channel?.from?.nickname,
+            imageUrl = channel?.from?.image,
+            originatingEntity = originatingEntity.mapOriginatingEntity {
                 isInbound()
             }
         )
