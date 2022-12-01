@@ -1,5 +1,5 @@
 //
-//  ContentViewController.swift
+//  TestbedViewController.swift
 //  iosApp
 //
 //  Created by Chris Rumpf on 10/1/21.
@@ -10,7 +10,7 @@ import UIKit
 import MessengerTransport
 import Combine
 
-class ContentViewController: UIViewController {
+class TestbedViewController: UIViewController {
 
     private let messenger: MessengerInteractor
     private var attachImageName = ""
@@ -270,7 +270,7 @@ class ContentViewController: UIViewController {
 }
 
 // MARK: UITextFieldDelegate
-extension ContentViewController : UITextFieldDelegate {
+extension TestbedViewController : UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         guard let message = textField.text else {
             textField.resignFirstResponder()
