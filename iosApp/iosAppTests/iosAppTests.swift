@@ -11,7 +11,7 @@ import MessengerTransport
 
 class iosAppTests: XCTestCase {
 
-    var contentController: TestContentController?
+    var messengerTester: MessengerInteractorTester?
 
     override class func setUp() {
         super.setUp()
@@ -21,12 +21,12 @@ class iosAppTests: XCTestCase {
     override func setUp() {
         super.setUp()
         continueAfterFailure = false
-        if contentController == nil {
+        if messengerTester == nil {
             do {
                 let deployment = try Deployment()
-                contentController = TestContentController(deployment: deployment)
+                messengerTester = MessengerInteractorTester(deployment: deployment)
             } catch {
-                XCTFail("Failed to initialize Content Controller: \(error.localizedDescription)")
+                XCTFail("Failed to initialize MessengerInteractorTester: \(error.localizedDescription)")
             }
         }
     }
@@ -38,13 +38,13 @@ class iosAppTests: XCTestCase {
     func testAttachments() {
         // Setup the session. Send a message to start the conversation.
         // Setup the session. Send a message.
-        guard let contentController = contentController else {
-            XCTFail("Failed to setup the content controller.")
+        guard let messengerTester = messengerTester else {
+            XCTFail("Failed to setup the Messenger tester.")
             return
         }
 
-        contentController.startMessengerConnection()
-        contentController.sendText(text: "Testing from E2E test.")
+        messengerTester.startMessengerConnection()
+        messengerTester.sendText(text: "Testing from E2E test.")
 
         // Use the public API to answer the new Messenger conversation.
         // Send a message from that agent and make sure we receive it.
@@ -65,17 +65,17 @@ class iosAppTests: XCTestCase {
         for (index, element) in intArray.enumerated() {
             kotlinByteArray.set(index: Int32(index), value: element)
         }
-        contentController.attemptImageAttach(kotlinByteArray: kotlinByteArray)
-        contentController.sendUploadedImage()
+        messengerTester.attemptImageAttach(kotlinByteArray: kotlinByteArray)
+        messengerTester.sendUploadedImage()
 
         // Disconnect the conversation for the agent and disconnect the session.
         ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
-        contentController.disconnectMessenger()
+        messengerTester.disconnectMessenger()
     }
 
     // Test will always fail if the deployment configuration doesn't have AutoStart enabled. See Deployment Configuration options in Admin.
     func testAutoStart() {
-        guard let deploymentConfig = contentController?.pullDeploymentConfig() else {
+        guard let deploymentConfig = messengerTester?.pullDeploymentConfig() else {
             XCTFail("Failed to pull the deployment configuration.")
             return
         }
@@ -84,13 +84,13 @@ class iosAppTests: XCTestCase {
         // Save a new token.
         DefaultTokenStore(storeKey: "com.genesys.cloud.messenger").store(token: UUID().uuidString)
 
-        guard let contentController = contentController else {
-            XCTFail("Failed to setup the content controller.")
+        guard let messengerTester = messengerTester else {
+            XCTFail("Failed to setup the Messenger tester.")
             return
         }
 
         // Should be able to answer the conversation immediately after starting the connection if AutoStart is enabled.
-        contentController.startMessengerConnection()
+        messengerTester.startMessengerConnection()
         guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
             XCTFail("The message we sent may not have connected to an agent.")
             return
@@ -98,7 +98,7 @@ class iosAppTests: XCTestCase {
 
         // Disconnect the conversation for the agent and disconnect the session.
         ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
-        contentController.disconnectMessenger()
+        messengerTester.disconnectMessenger()
     }
 
     func testConnectionClosed() {
@@ -114,43 +114,43 @@ class iosAppTests: XCTestCase {
             return
         }
 
-        // Create 4 new content controllers. We'll use these to trigger a connection closed event.
+        // Create 4 new MessengerInteractorTesters. We'll use these to trigger a connection closed event.
         // Right now, there's a max number of 3 open sesssions that use the same token.
         // We'll open 4 and confirm that an error occurs in the fourth attempt on the oldest client.
-        var controllers = [TestContentController]()
+        var testers = [MessengerInteractorTester]()
         for _ in 1...4 {
-            controllers.append(TestContentController(deployment: deployment))
+            testers.append(MessengerInteractorTester(deployment: deployment))
         }
-        controllers[0].connectionClosed = XCTestExpectation(description: "Wait for the ConnectionClosedEvent")
-        for controller in controllers {
-            controller.startMessengerConnection()
+        testers[0].connectionClosed = XCTestExpectation(description: "Wait for the ConnectionClosedEvent")
+        for tester in testers {
+            tester.startMessengerConnection()
             delay(3)
         }
-        let result = XCTWaiter().wait(for: [controllers[0].connectionClosed!], timeout: 30)
+        let result = XCTWaiter().wait(for: [testers[0].connectionClosed!], timeout: 30)
         XCTAssertEqual(result, .completed, "Did not receive a Connection Closed event.")
 
         // Cleanup. Also verifies that all of the other clients are still connected due to an error being thrown if we disconnect while not being connected.
-        for x in 1...3 {
-            controllers[x].disconnectMessenger()
+        for tester in testers[1..<testers.count] {
+            tester.disconnectMessenger()
         }
     }
 
     func testMessageAttributes() {
         // Setup the session. Send a message.
-        guard let contentController = contentController else {
-            XCTFail("Failed to setup the content controller.")
+        guard let messengerTester = messengerTester else {
+            XCTFail("Failed to setup the Messenger tester.")
             return
         }
 
-        contentController.startMessengerConnection()
-        contentController.sendTextWithAttribute(text: "Testing with a specific name.", attributes: ["name": "Jane Doe"])
+        messengerTester.startMessengerConnection()
+        messengerTester.sendTextWithAttribute(text: "Testing with a specific name.", attributes: ["name": "Jane Doe"])
         guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
             XCTFail("The message we sent may not have connected to an agent.")
             return
         }
 
         // Send a message with a new name via custom attributes.
-        contentController.sendTextWithAttribute(text: "Testing with a new name!", attributes: ["name": "John Doe"])
+        messengerTester.sendTextWithAttribute(text: "Testing with a new name!", attributes: ["name": "John Doe"])
 
         // Cleanup.
         ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
@@ -158,13 +158,13 @@ class iosAppTests: XCTestCase {
 
     func testSendAndReceiveMessage() {
         // Setup the session. Send a message.
-        guard let contentController = contentController else {
-            XCTFail("Failed to setup the content controller.")
+        guard let messengerTester = messengerTester else {
+            XCTFail("Failed to setup the Messenger tester.")
             return
         }
 
-        contentController.startMessengerConnection()
-        contentController.sendText(text: "Testing from E2E test.")
+        messengerTester.startMessengerConnection()
+        messengerTester.sendText(text: "Testing from E2E test.")
 
         // Use the public API to answer the new Messenger conversation.
         // Send a message from that agent and make sure we receive it.
@@ -173,26 +173,26 @@ class iosAppTests: XCTestCase {
             return
         }
         let receivedMessageText = "Test message sent via API request!"
-        contentController.testExpectation = XCTestExpectation(description: "Wait for message to be received from the UI agent.")
+        messengerTester.testExpectation = XCTestExpectation(description: "Wait for message to be received from the UI agent.")
         ApiHelper.shared.sendOutboundSmsMessage(conversationId: conversationInfo.conversationId, communicationId: conversationInfo.communicationId, message: receivedMessageText)
-        contentController.waitForTestExpectation()
-        contentController.verifyReceivedMessage(expectedMessage: receivedMessageText)
+        messengerTester.waitForTestExpectation()
+        messengerTester.verifyReceivedMessage(expectedMessage: receivedMessageText)
 
         // Disconnect the conversation for the agent and disconnect the session.
         ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
-        contentController.disconnectMessenger()
+        messengerTester.disconnectMessenger()
     }
 
     func testTypingIndicators() {
         // Setup the session. Send a message.
-        guard let contentController = contentController else {
-            XCTFail("Failed to setup the content controller.")
+        guard let messengerTester = messengerTester else {
+            XCTFail("Failed to setup the Messenger tester.")
             return
 
         }
 
-        contentController.startMessengerConnection()
-        contentController.sendText(text: "Testing from E2E test.")
+        messengerTester.startMessengerConnection()
+        messengerTester.sendText(text: "Testing from E2E test.")
 
         // Use the public API to answer the new Messenger conversation.
         // Send a message from that agent and make sure we receive it.
@@ -201,33 +201,29 @@ class iosAppTests: XCTestCase {
             return
         }
 
-        // Send a typing indicator. Ensure that we don't receive an error.
-        do {
-            try contentController.indicateTyping()
-        } catch {
-            XCTFail(error.localizedDescription)
-        }
+        // Send a typing indicator.
+        messengerTester.indicateTyping()
 
         // Receive a typing indicator from the agent.
-        contentController.testExpectation = XCTestExpectation(description: "Wait for a typing indicator from the agent.")
+        messengerTester.testExpectation = XCTestExpectation(description: "Wait for a typing indicator from the agent.")
         ApiHelper.shared.sendTypingIndicator(conversationId: conversationInfo.conversationId, communicationId: conversationInfo.communicationId)
-        contentController.waitForTestExpectation()
+        messengerTester.waitForTestExpectation()
 
         // Disconnect the conversation for the agent and disconnect the session.
         ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
-        contentController.disconnectMessenger()
+        messengerTester.disconnectMessenger()
     }
     
     func testAccessDenied() {
         let deployment = try! Deployment()
-        let testController = TestContentController(deployment: Deployment(deploymentId: "InvalidDeploymentId", domain: deployment.domain))
+        let tester = MessengerInteractorTester(deployment: Deployment(deploymentId: "InvalidDeploymentId", domain: deployment.domain))
                  
-        testController.startMessengerConnectionWithErrorExpectation(XCTestExpectation(description: "Expecting access denied."))
+        tester.startMessengerConnectionWithErrorExpectation(XCTestExpectation(description: "Expecting access denied."))
         
-        if let state = testController.client.currentState as? MessagingClientState.Error {
+        if let state = tester.messenger.messagingClient.currentState as? MessagingClientState.Error {
             XCTAssertTrue(state.code is ErrorCode.WebsocketAccessDenied)
         } else {
-            XCTFail("Expected Error state, but instead state is: \(testController.client.currentState)")
+            XCTFail("Expected Error state, but instead state is: \(tester.messenger.messagingClient.currentState)")
         }
     }
 

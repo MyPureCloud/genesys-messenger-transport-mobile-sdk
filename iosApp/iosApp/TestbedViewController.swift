@@ -1,5 +1,5 @@
 //
-//  ContentViewController.swift
+//  TestbedViewController.swift
 //  iosApp
 //
 //  Created by Chris Rumpf on 10/1/21.
@@ -8,83 +8,20 @@
 
 import UIKit
 import MessengerTransport
+import Combine
 
-class ContentViewController: UIViewController {
+class TestbedViewController: UIViewController {
 
-    let messenger: MessengerHandler
+    private let messenger: MessengerInteractor
     private var attachImageName = ""
     private let attachmentName = "image"
     private var byteArray: [UInt8]? = nil
-    var customAttributes: [String: String] = [:]
-
-    init(deployment: Deployment) {
-        self.messenger = MessengerHandler(deployment: deployment)
-        
+    private var customAttributes: [String: String] = [:]
+    private var cancellables = Set<AnyCancellable>()
+    
+    init(messenger: MessengerInteractor) {
+        self.messenger = messenger
         super.init(nibName: nil, bundle: nil)
-        
-        // set up MessengerHandler callbacks
-        
-        messenger.onStateChange = { [weak self] stateChange in
-            let newState = stateChange.newState
-            var stateMessage = "\(newState)"
-            switch newState {
-            case is MessagingClientState.Connecting:
-                stateMessage = "Connecting"
-            case is MessagingClientState.Connected:
-                stateMessage = "Connected"
-            case let configured as MessagingClientState.Configured:
-                stateMessage = "Configured, connected=\(configured.connected) newSession=\(configured.newSession) wasReconnecting=\(stateChange.oldState is MessagingClientState.Reconnecting)"
-            case let closing as MessagingClientState.Closing:
-                stateMessage = "Closing, code=\(closing.code) reason=\(closing.reason)"
-            case let closed as MessagingClientState.Closed:
-                stateMessage = "Closed, code=\(closed.code) reason=\(closed.reason)"
-            case let error as MessagingClientState.Error:
-                stateMessage = "Error, code=\(error.code) message=\(error.message?.description ?? "nil")"
-            case is MessagingClientState.Reconnecting:
-                stateMessage = "Reconnecting"
-            default:
-                break
-            }
-            self?.status.text = "Messenger Status: " + stateMessage
-            self?.info.text = "State changed from \(stateChange.oldState) to \(newState)"
-        }
-        
-        messenger.onMessageEvent = { [weak self] message in
-            var displayMessage = "Unexpected message event: \(message)"
-            switch message {
-            case let messageInserted as MessageEvent.MessageInserted:
-                displayMessage = "Message Inserted: \(messageInserted.message.description)"
-            case let messageUpdated as MessageEvent.MessageUpdated:
-                displayMessage = "Message Updated: \(messageUpdated.message.description)"
-            case let attachmentUpdated as MessageEvent.AttachmentUpdated:
-                displayMessage = "Attachment Updated: \(attachmentUpdated.attachment.description)"
-            case let history as MessageEvent.HistoryFetched:
-                displayMessage = "History Fetched: startOfConversation: <\(history.startOfConversation.description)>, messages: <\(history.messages.description)> "
-                print(displayMessage)
-            default:
-                break
-            }
-            self?.info.text = displayMessage
-        }
-        
-        messenger.onEvent = { [weak self] event in
-            var displayEvent = "Unexpected event: \(event)"
-            switch event {
-            case let typing as Event.AgentTyping:
-                displayEvent = "Event received: \(typing.description)"
-            case let error as Event.Error:
-                displayEvent = "Event received: \(error.description)"
-            case let healthChecked as Event.HealthChecked:
-                displayEvent = "Event received: \(healthChecked.description)"
-            case let conversationAutostart as Event.ConversationAutostart:
-                displayEvent = "Event received: \(conversationAutostart.description)"
-            case let connectionClosed as Event.ConnectionClosed:
-                displayEvent = "Event received: \(connectionClosed.description)"
-            default:
-                break
-            }
-            self?.info.text = displayEvent
-        }
     }
 
     required init?(coder: NSCoder) {
@@ -189,12 +126,85 @@ class ContentViewController: UIViewController {
         configureAutoLayout()
         
         observeKeyboard()
+        
+        // Subscribe to MessengerInteractor Subjects
+        messenger.stateChangeSubject
+            .sink(receiveValue: updateWithStateChange)
+            .store(in: &cancellables)
+        messenger.messageEventSubject
+            .sink(receiveValue: updateWithMessageEvent)
+            .store(in: &cancellables)
+        messenger.eventSubject
+            .sink(receiveValue: updateWithEvent)
+            .store(in: &cancellables)
     }
     
     private func configureAutoLayout() {
         content.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
         content.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
         content.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
+    }
+    
+    private func updateWithStateChange(_ stateChange: StateChange) {
+        let newState = stateChange.newState
+        var stateMessage = "\(newState)"
+        switch newState {
+        case is MessagingClientState.Connecting:
+            stateMessage = "Connecting"
+        case is MessagingClientState.Connected:
+            stateMessage = "Connected"
+        case let configured as MessagingClientState.Configured:
+            stateMessage = "Configured, connected=\(configured.connected) newSession=\(configured.newSession) wasReconnecting=\(stateChange.oldState is MessagingClientState.Reconnecting)"
+        case let closing as MessagingClientState.Closing:
+            stateMessage = "Closing, code=\(closing.code) reason=\(closing.reason)"
+        case let closed as MessagingClientState.Closed:
+            stateMessage = "Closed, code=\(closed.code) reason=\(closed.reason)"
+        case let error as MessagingClientState.Error:
+            stateMessage = "Error, code=\(error.code) message=\(error.message?.description ?? "nil")"
+        case is MessagingClientState.Reconnecting:
+            stateMessage = "Reconnecting"
+        default:
+            break
+        }
+        status.text = "Messenger Status: " + stateMessage
+        info.text = "State changed from \(stateChange.oldState) to \(newState)"
+    }
+    
+    private func updateWithMessageEvent(_ message: MessageEvent) {
+        var displayMessage = "Unexpected message event: \(message)"
+        switch message {
+        case let messageInserted as MessageEvent.MessageInserted:
+            displayMessage = "Message Inserted: \(messageInserted.message.description)"
+        case let messageUpdated as MessageEvent.MessageUpdated:
+            displayMessage = "Message Updated: \(messageUpdated.message.description)"
+        case let attachmentUpdated as MessageEvent.AttachmentUpdated:
+            displayMessage = "Attachment Updated: \(attachmentUpdated.attachment.description)"
+        case let history as MessageEvent.HistoryFetched:
+            displayMessage = "History Fetched: startOfConversation: <\(history.startOfConversation.description)>, messages: <\(history.messages.description)> "
+            print(displayMessage)
+        default:
+            break
+        }
+        info.text = displayMessage
+    }
+    
+    private func updateWithEvent(_ event: Event) {
+        var displayEvent = "Unexpected event: \(event)"
+        switch event {
+        case let typing as Event.AgentTyping:
+            displayEvent = "Event received: \(typing.description)"
+        case let error as Event.Error:
+            displayEvent = "Event received: \(error.description)"
+        case let healthChecked as Event.HealthChecked:
+            displayEvent = "Event received: \(healthChecked.description)"
+        case let conversationAutostart as Event.ConversationAutostart:
+            displayEvent = "Event received: \(conversationAutostart.description)"
+        case let connectionClosed as Event.ConnectionClosed:
+            displayEvent = "Event received: \(connectionClosed.description)"
+        default:
+            break
+        }
+        info.text = displayEvent
     }
         
     private func observeKeyboard() {
@@ -260,7 +270,7 @@ class ContentViewController: UIViewController {
 }
 
 // MARK: UITextFieldDelegate
-extension ContentViewController : UITextFieldDelegate {
+extension TestbedViewController : UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         guard let message = textField.text else {
             textField.resignFirstResponder()

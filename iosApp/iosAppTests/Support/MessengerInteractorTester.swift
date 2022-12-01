@@ -1,5 +1,5 @@
 //
-//  TestContentController.swift
+//  MessengerInteractorTester.swift
 //  iosAppTests
 //
 //  Created by Morehouse, Matthew on 9/8/22.
@@ -8,79 +8,88 @@
 
 import XCTest
 import MessengerTransport
+import Combine
 @testable import iosApp
 
-class TestContentController: MessengerHandler {
+class MessengerInteractorTester {
 
+    let messenger: MessengerInteractor
     var testExpectation: XCTestExpectation?
     var errorExpectation: XCTestExpectation?
     var connectionClosed: XCTestExpectation?
     var receivedMessageText: String? = nil
     var receivedDownloadUrl: String? = nil
+    
+    private var cancellables = Set<AnyCancellable>()
 
-    override init(deployment: Deployment, reconnectTimeout: Int64 = 60 * 5) {
-        super.init(deployment: deployment, reconnectTimeout: reconnectTimeout)
+    init(deployment: Deployment, reconnectTimeout: Int64 = 60 * 5) {
+        messenger = MessengerInteractor(deployment: deployment, reconnectTimeout: reconnectTimeout)
 
-        client.stateChangedListener = { [weak self] stateChange in
-            print("State Event. New state: \(stateChange.newState), old state: \(stateChange.oldState)")
-            let newState = stateChange.newState
-            switch newState {
-            case _ as MessagingClientState.Configured:
-                self?.testExpectation?.fulfill()
-            case _ as MessagingClientState.Closed:
-                self?.testExpectation?.fulfill()
-            case let error as MessagingClientState.Error:
-                print("Socket <error>. code: <\(error.code.description)> , message: <\(error.message ?? "No message")>")
-                self?.errorExpectation?.fulfill()
-            default:
-                break
-            }
-            self?.onStateChange?(stateChange)
-        }
-
-        client.messageListener = { [weak self] message in
-            switch message {
-            case let messageInserted as MessageEvent.MessageInserted:
-                print("Message Inserted: <\(messageInserted.message.description)>")
-                self?.receivedMessageText = messageInserted.message.text
-                self?.testExpectation?.fulfill()
-            case let messageUpdated as MessageEvent.MessageUpdated:
-                print("Message Updated: <\(messageUpdated.message.description)>")
-                self?.testExpectation?.fulfill()
-            case let attachmentUpdated as MessageEvent.AttachmentUpdated:
-                print("Attachment Updated: <\(attachmentUpdated.attachment.description)>")
-                // Only finish the wait when the attachment has finished uploading.
-                if let uploadedAttachment = attachmentUpdated.attachment.state as? Attachment.StateUploaded {
-                    self?.receivedDownloadUrl = uploadedAttachment.downloadUrl
+        messenger.stateChangeSubject
+            .sink { [weak self] stateChange in
+                print("State Event. New state: \(stateChange.newState), old state: \(stateChange.oldState)")
+                let newState = stateChange.newState
+                switch newState {
+                case _ as MessagingClientState.Configured:
                     self?.testExpectation?.fulfill()
+                case _ as MessagingClientState.Closed:
+                    self?.testExpectation?.fulfill()
+                case let error as MessagingClientState.Error:
+                    print("Socket <error>. code: <\(error.code.description)> , message: <\(error.message ?? "No message")>")
+                    self?.errorExpectation?.fulfill()
+                default:
+                    break
                 }
-            case let history as MessageEvent.HistoryFetched:
-                print("start of conversation: <\(history.startOfConversation.description)>, messages: <\(history.messages.description)>")
-                self?.testExpectation?.fulfill()
-            default:
-                print("Unexpected messageListener event: \(message)")
             }
-            self?.onMessageEvent?(message)
-        }
+            .store(in: &cancellables)
+        
+        messenger.messageEventSubject
+            .sink { [weak self] message in
+                switch message {
+                case let messageInserted as MessageEvent.MessageInserted:
+                    print("Message Inserted: <\(messageInserted.message.description)>")
+                    self?.receivedMessageText = messageInserted.message.text
+                    self?.testExpectation?.fulfill()
+                case let messageUpdated as MessageEvent.MessageUpdated:
+                    print("Message Updated: <\(messageUpdated.message.description)>")
+                    self?.testExpectation?.fulfill()
+                case let attachmentUpdated as MessageEvent.AttachmentUpdated:
+                    print("Attachment Updated: <\(attachmentUpdated.attachment.description)>")
+                    // Only finish the wait when the attachment has finished uploading.
+                    if let uploadedAttachment = attachmentUpdated.attachment.state as? Attachment.StateUploaded {
+                        self?.receivedDownloadUrl = uploadedAttachment.downloadUrl
+                        self?.testExpectation?.fulfill()
+                    }
+                case let history as MessageEvent.HistoryFetched:
+                    print("start of conversation: <\(history.startOfConversation.description)>, messages: <\(history.messages.description)>")
+                    self?.testExpectation?.fulfill()
+                default:
+                    print("Unexpected messageListener event: \(message)")
+                }
+            }
+            .store(in: &cancellables)
 
-        client.eventListener = { [weak self] event in
-            switch event {
-            case let typing as Event.AgentTyping:
-                print("Agent is typing: \(typing)")
-                self?.testExpectation?.fulfill()
-            case let closedEvent as Event.ConnectionClosed:
-                print("Connection was closed: \(closedEvent)")
-                self?.connectionClosed?.fulfill()
-            default:
-                print("Other event. \(event)")
+        messenger.eventSubject
+            .sink { [weak self] event in
+                switch event {
+                case let typing as Event.AgentTyping:
+                    print("Agent is typing: \(typing)")
+                    self?.testExpectation?.fulfill()
+                case let closedEvent as Event.ConnectionClosed:
+                    print("Connection was closed: \(closedEvent)")
+                    self?.connectionClosed?.fulfill()
+                default:
+                    print("Other event. \(event)")
+                }
             }
-        }
+            .store(in: &cancellables)
     }
 
     func pullDeploymentConfig() -> DeploymentConfig? {
         var deploymentConfig: DeploymentConfig?
         let expectation = XCTestExpectation(description: "Wait for deployment config.")
-        self.messengerTransport.fetchDeploymentConfig { config, error in
+        
+        messenger.fetchDeployment { config, error in
             if let error = error {
                 XCTFail(error.localizedDescription)
             }
@@ -93,7 +102,9 @@ class TestContentController: MessengerHandler {
 
     func startMessengerConnection(file: StaticString = #file, line: UInt = #line) {
         do {
-            try connect()
+            testExpectation = XCTestExpectation(description: "Wait for Configuration.")
+            try messenger.connect()
+            waitForTestExpectation()
         } catch {
             XCTFail("Possible issue with connecting to the backend: \(error.localizedDescription)", file: file, line: line)
         }
@@ -102,31 +113,21 @@ class TestContentController: MessengerHandler {
     func startMessengerConnectionWithErrorExpectation(_ errorExpectation: XCTestExpectation, file: StaticString = #file, line: UInt = #line) {
         do {
             self.errorExpectation = errorExpectation
-            try super.connect()
+            try messenger.connect()
             waitForErrorExpectation()
         } catch {
             XCTFail("Connect threw other than the expected error: \(error.localizedDescription)", file: file, line: line)
         }
     }
 
-    override func connect() throws {
-        testExpectation = XCTestExpectation(description: "Wait for Configuration.")
-        try super.connect()
-        waitForTestExpectation()
-    }
-
     func disconnectMessenger(file: StaticString = #file, line: UInt = #line) {
         do {
-            try disconnect()
+            testExpectation = XCTestExpectation(description: "Wait for Disconnect.")
+            try messenger.disconnect()
+            waitForTestExpectation()
         } catch {
             XCTFail("Failed to disconnect the session.\n\(error.localizedDescription)", file: file, line: line)
         }
-    }
-
-    override func disconnect() throws {
-        testExpectation = XCTestExpectation(description: "Wait for Disconnect.")
-        try super.disconnect()
-        waitForTestExpectation()
     }
 
     func sendText(text: String, file: StaticString = #file, line: UInt = #line) {
@@ -145,9 +146,9 @@ class TestContentController: MessengerHandler {
         }
     }
 
-    override func sendMessage(text: String, customAttributes: [String: String] = [:]) throws {
+    private func sendMessage(text: String, customAttributes: [String: String] = [:]) throws {
         testExpectation = XCTestExpectation(description: "Wait for message to send.")
-        try super.sendMessage(text: text, customAttributes: customAttributes)
+        try messenger.sendMessage(text: text, customAttributes: customAttributes)
         waitForTestExpectation()
         verifyReceivedMessage(expectedMessage: text)
     }
@@ -160,9 +161,9 @@ class TestContentController: MessengerHandler {
         }
     }
 
-    override func attachImage(kotlinByteArray: KotlinByteArray) throws {
+    private func attachImage(kotlinByteArray: KotlinByteArray) throws {
         testExpectation = XCTestExpectation(description: "Wait for image to attach successfully.")
-        try super.attachImage(kotlinByteArray: kotlinByteArray)
+        try messenger.attachImage(kotlinByteArray: kotlinByteArray)
         waitForTestExpectation()
     }
 
@@ -173,7 +174,7 @@ class TestContentController: MessengerHandler {
             return
         }
         do {
-            try super.sendMessage(text: receivedDownloadUrl)
+            try messenger.sendMessage(text: receivedDownloadUrl)
         } catch {
             XCTFail("Failed to upload an image.\n\(error.localizedDescription)", file: file, line: line)
         }
@@ -181,10 +182,10 @@ class TestContentController: MessengerHandler {
         verifyReceivedMessage(expectedMessage: receivedDownloadUrl)
     }
 
-    override func indicateTyping() throws {
+    func indicateTyping() {
         // No need to wait for an expectation. Just need to make sure the request doesn't fail.
         do {
-            try super.indicateTyping()
+            try messenger.indicateTyping()
         } catch {
             XCTFail(error.localizedDescription)
         }

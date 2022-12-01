@@ -18,10 +18,10 @@
 		8C3B252A2926EAC500599F72 /* PropertiesResource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3B25292926EAC500599F72 /* PropertiesResource.swift */; };
 		8C4A6A1A273C3CD8008B8150 /* deployment.properties in Resources */ = {isa = PBXBuildFile; fileRef = 8C4A6A19273C3CD8008B8150 /* deployment.properties */; };
 		8C4A6A23273C696C008B8150 /* Deployment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4A6A22273C696C008B8150 /* Deployment.swift */; };
-		8CF6294F27074EB400AE0CA8 /* ContentViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CF6294E27074EB400AE0CA8 /* ContentViewController.swift */; };
+		8CF6294F27074EB400AE0CA8 /* TestbedViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CF6294E27074EB400AE0CA8 /* TestbedViewController.swift */; };
 		8CF62953270754C000AE0CA8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF80242A565900829871 /* SceneDelegate.swift */; };
-		BA5B8CD428CA2FEC007C8160 /* TestContentController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5B8CD328CA2FEC007C8160 /* TestContentController.swift */; };
-		BA88FE14284953CA009AA1F8 /* MessengerHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA88FE13284953CA009AA1F8 /* MessengerHandler.swift */; };
+		BA5B8CD428CA2FEC007C8160 /* MessengerInteractorTester.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5B8CD328CA2FEC007C8160 /* MessengerInteractorTester.swift */; };
+		BA88FE14284953CA009AA1F8 /* MessengerInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA88FE13284953CA009AA1F8 /* MessengerInteractor.swift */; };
 		BA88FE16284A54E7009AA1F8 /* config.json in Resources */ = {isa = PBXBuildFile; fileRef = BA88FE15284A54E6009AA1F8 /* config.json */; };
 		BA88FE22284A5501009AA1F8 /* TestConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA88FE18284A5501009AA1F8 /* TestConfig.swift */; };
 		BA88FE24284A5501009AA1F8 /* testPng.png in Resources */ = {isa = PBXBuildFile; fileRef = BA88FE1B284A5501009AA1F8 /* testPng.png */; };
@@ -71,9 +71,9 @@
 		8C3B25292926EAC500599F72 /* PropertiesResource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertiesResource.swift; sourceTree = "<group>"; };
 		8C4A6A19273C3CD8008B8150 /* deployment.properties */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = deployment.properties; path = ../../deployment.properties; sourceTree = "<group>"; };
 		8C4A6A22273C696C008B8150 /* Deployment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deployment.swift; sourceTree = "<group>"; };
-		8CF6294E27074EB400AE0CA8 /* ContentViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewController.swift; sourceTree = "<group>"; };
-		BA5B8CD328CA2FEC007C8160 /* TestContentController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestContentController.swift; sourceTree = "<group>"; };
-		BA88FE13284953CA009AA1F8 /* MessengerHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessengerHandler.swift; sourceTree = "<group>"; };
+		8CF6294E27074EB400AE0CA8 /* TestbedViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestbedViewController.swift; sourceTree = "<group>"; };
+		BA5B8CD328CA2FEC007C8160 /* MessengerInteractorTester.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessengerInteractorTester.swift; sourceTree = "<group>"; };
+		BA88FE13284953CA009AA1F8 /* MessengerInteractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessengerInteractor.swift; sourceTree = "<group>"; };
 		BA88FE15284A54E6009AA1F8 /* config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = config.json; sourceTree = "<group>"; };
 		BA88FE18284A5501009AA1F8 /* TestConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TestConfig.swift; sourceTree = "<group>"; };
 		BA88FE1B284A5501009AA1F8 /* testPng.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = testPng.png; sourceTree = "<group>"; };
@@ -164,8 +164,8 @@
 				7555FF8C242A565B00829871 /* Info.plist */,
 				8C4A6A19273C3CD8008B8150 /* deployment.properties */,
 				7555FF7E242A565900829871 /* AppDelegate.swift */,
-				8CF6294E27074EB400AE0CA8 /* ContentViewController.swift */,
-				BA88FE13284953CA009AA1F8 /* MessengerHandler.swift */,
+				8CF6294E27074EB400AE0CA8 /* TestbedViewController.swift */,
+				BA88FE13284953CA009AA1F8 /* MessengerInteractor.swift */,
 				8C4A6A22273C696C008B8150 /* Deployment.swift */,
 				8C3B25292926EAC500599F72 /* PropertiesResource.swift */,
 				6ADDAC5226A09D23004D2C9B /* NSData+ByteArray.swift */,
@@ -214,7 +214,7 @@
 				BA88FE1C284A5501009AA1F8 /* ConversationInfo.swift */,
 				BA88FE1D284A5501009AA1F8 /* extensions.swift */,
 				BA88FE2A284A57E2009AA1F8 /* WaitHandler.swift */,
-				BA5B8CD328CA2FEC007C8160 /* TestContentController.swift */,
+				BA5B8CD328CA2FEC007C8160 /* MessengerInteractorTester.swift */,
 			);
 			path = Support;
 			sourceTree = "<group>";
@@ -421,9 +421,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				7555FF7F242A565900829871 /* AppDelegate.swift in Sources */,
-				BA88FE14284953CA009AA1F8 /* MessengerHandler.swift in Sources */,
+				BA88FE14284953CA009AA1F8 /* MessengerInteractor.swift in Sources */,
 				8C3B252A2926EAC500599F72 /* PropertiesResource.swift in Sources */,
-				8CF6294F27074EB400AE0CA8 /* ContentViewController.swift in Sources */,
+				8CF6294F27074EB400AE0CA8 /* TestbedViewController.swift in Sources */,
 				6ADDAC5326A09D23004D2C9B /* NSData+ByteArray.swift in Sources */,
 				8C4A6A23273C696C008B8150 /* Deployment.swift in Sources */,
 				8CF62953270754C000AE0CA8 /* SceneDelegate.swift in Sources */,
@@ -442,7 +442,7 @@
 				7555FF96242A565B00829871 /* iosAppTests.swift in Sources */,
 				BA88FE22284A5501009AA1F8 /* TestConfig.swift in Sources */,
 				BA88FE2B284A57E2009AA1F8 /* WaitHandler.swift in Sources */,
-				BA5B8CD428CA2FEC007C8160 /* TestContentController.swift in Sources */,
+				BA5B8CD428CA2FEC007C8160 /* MessengerInteractorTester.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
