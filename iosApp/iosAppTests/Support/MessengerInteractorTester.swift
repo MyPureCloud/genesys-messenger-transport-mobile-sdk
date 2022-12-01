@@ -1,5 +1,5 @@
 //
-//  TestContentController.swift
+//  MessengerInteractorTester.swift
 //  iosAppTests
 //
 //  Created by Morehouse, Matthew on 9/8/22.
@@ -10,7 +10,7 @@ import XCTest
 import MessengerTransport
 @testable import iosApp
 
-class TestContentController: MessengerHandler {
+class MessengerInteractorTester: MessengerInteractor {
 
     var testExpectation: XCTestExpectation?
     var errorExpectation: XCTestExpectation?
@@ -21,7 +21,7 @@ class TestContentController: MessengerHandler {
     override init(deployment: Deployment, reconnectTimeout: Int64 = 60 * 5) {
         super.init(deployment: deployment, reconnectTimeout: reconnectTimeout)
 
-        client.stateChangedListener = { [weak self] stateChange in
+        messagingClient.stateChangedListener = { [weak self] stateChange in
             print("State Event. New state: \(stateChange.newState), old state: \(stateChange.oldState)")
             let newState = stateChange.newState
             switch newState {
@@ -35,10 +35,9 @@ class TestContentController: MessengerHandler {
             default:
                 break
             }
-            self?.onStateChange?(stateChange)
         }
 
-        client.messageListener = { [weak self] message in
+        messagingClient.messageListener = { [weak self] message in
             switch message {
             case let messageInserted as MessageEvent.MessageInserted:
                 print("Message Inserted: <\(messageInserted.message.description)>")
@@ -60,10 +59,9 @@ class TestContentController: MessengerHandler {
             default:
                 print("Unexpected messageListener event: \(message)")
             }
-            self?.onMessageEvent?(message)
         }
 
-        client.eventListener = { [weak self] event in
+        messagingClient.eventListener = { [weak self] event in
             switch event {
             case let typing as Event.AgentTyping:
                 print("Agent is typing: \(typing)")

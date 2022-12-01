@@ -11,7 +11,7 @@ import MessengerTransport
 
 class iosAppTests: XCTestCase {
 
-    var contentController: TestContentController?
+    var contentController: MessengerInteractorTester?
 
     override class func setUp() {
         super.setUp()
@@ -24,7 +24,7 @@ class iosAppTests: XCTestCase {
         if contentController == nil {
             do {
                 let deployment = try Deployment()
-                contentController = TestContentController(deployment: deployment)
+                contentController = MessengerInteractorTester(deployment: deployment)
             } catch {
                 XCTFail("Failed to initialize Content Controller: \(error.localizedDescription)")
             }
@@ -117,9 +117,9 @@ class iosAppTests: XCTestCase {
         // Create 4 new content controllers. We'll use these to trigger a connection closed event.
         // Right now, there's a max number of 3 open sesssions that use the same token.
         // We'll open 4 and confirm that an error occurs in the fourth attempt on the oldest client.
-        var controllers = [TestContentController]()
+        var controllers = [MessengerInteractorTester]()
         for _ in 1...4 {
-            controllers.append(TestContentController(deployment: deployment))
+            controllers.append(MessengerInteractorTester(deployment: deployment))
         }
         controllers[0].connectionClosed = XCTestExpectation(description: "Wait for the ConnectionClosedEvent")
         for controller in controllers {
@@ -220,14 +220,14 @@ class iosAppTests: XCTestCase {
     
     func testAccessDenied() {
         let deployment = try! Deployment()
-        let testController = TestContentController(deployment: Deployment(deploymentId: "InvalidDeploymentId", domain: deployment.domain))
+        let testController = MessengerInteractorTester(deployment: Deployment(deploymentId: "InvalidDeploymentId", domain: deployment.domain))
                  
         testController.startMessengerConnectionWithErrorExpectation(XCTestExpectation(description: "Expecting access denied."))
         
-        if let state = testController.client.currentState as? MessagingClientState.Error {
+        if let state = testController.messagingClient.currentState as? MessagingClientState.Error {
             XCTAssertTrue(state.code is ErrorCode.WebsocketAccessDenied)
         } else {
-            XCTFail("Expected Error state, but instead state is: \(testController.client.currentState)")
+            XCTFail("Expected Error state, but instead state is: \(testController.messagingClient.currentState)")
         }
     }
 
