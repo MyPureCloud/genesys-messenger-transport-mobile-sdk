@@ -10,7 +10,7 @@ import Foundation
 import MessengerTransport
 import Combine
 
-class MessengerInteractor {
+final class MessengerInteractor {
 
     let configuration: Configuration
     let messengerTransport: MessengerTransport
