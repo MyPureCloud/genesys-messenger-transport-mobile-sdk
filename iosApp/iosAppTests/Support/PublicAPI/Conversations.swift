@@ -45,8 +45,7 @@ extension ApiHelper {
 
     public func waitForConversation() -> ConversationInfo? {
         var conversations: JsonDictionary?
-        // 1 minute wait maximum.
-        Wait.queryUntilTrue(queryInfo: "Waiting for a conversation to be available.", attempts: 60) {
+        Wait.queryUntilTrue(queryInfo: "Waiting for a conversation to be available.") {
             conversations = getSmsConversations()
             return (conversations?.value(forKey: "entities") as? [JsonDictionary])?.first != nil
         }

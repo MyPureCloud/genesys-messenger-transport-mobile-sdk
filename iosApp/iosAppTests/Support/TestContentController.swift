@@ -17,7 +17,6 @@ class TestContentController: MessengerHandler {
     var connectionClosed: XCTestExpectation?
     var receivedMessageText: String? = nil
     var receivedDownloadUrl: String? = nil
-    var humanizeEnabled: Bool = true
 
     override init(deployment: Deployment, reconnectTimeout: Int64 = 60 * 5) {
         super.init(deployment: deployment, reconnectTimeout: reconnectTimeout)
@@ -43,13 +42,6 @@ class TestContentController: MessengerHandler {
             switch message {
             case let messageInserted as MessageEvent.MessageInserted:
                 print("Message Inserted: <\(messageInserted.message.description)>")
-                if messageInserted.message.direction.name == "Outbound" {
-                    print("Verifying that the message from the agent has an expected name and an imageUrl attached.")
-                    let expectedName = (self?.humanizeEnabled ?? true) ? TestConfig.shared.config?.agentName : nil
-                    let expectedUrl = (self?.humanizeEnabled ?? true) ? TestConfig.shared.config?.expectedAvatarUrl : nil
-                    XCTAssertEqual(messageInserted.message.from.name, expectedName, "The agent name was not what was expected.")
-                    XCTAssertEqual(messageInserted.message.from.imageUrl, expectedUrl, "The agent avatar url not what was expected.")
-                }
                 self?.receivedMessageText = messageInserted.message.text
                 self?.testExpectation?.fulfill()
             case let messageUpdated as MessageEvent.MessageUpdated:
