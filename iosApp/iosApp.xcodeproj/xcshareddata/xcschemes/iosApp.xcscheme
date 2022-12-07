@@ -87,6 +87,9 @@
                <Test
                   Identifier = "iosAppTests/testAttachments()">
                </Test>
+               <Test
+                  Identifier = "iosAppTests/testUnknownAgent()">
+               </Test>
             </SkippedTests>
          </TestableReference>
          <TestableReference
