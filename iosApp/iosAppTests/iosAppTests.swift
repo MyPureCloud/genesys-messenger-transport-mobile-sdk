@@ -231,6 +231,31 @@ class iosAppTests: XCTestCase {
         }
     }
 
+    func testUnknownAgent() {
+        let deployment = try! Deployment()
+        let testController = TestContentController(deployment: Deployment(deploymentId: TestConfig.shared.config?.humanizeDisableDeploymentId ?? "", domain: deployment.domain))
+        testController.humanizeEnabled = false
+
+        testController.startMessengerConnection()
+        testController.sendText(text: "Testing from E2E test.")
+
+        // Use the public API to answer the new Messenger conversation.
+        // Send a message from that agent and make sure we receive it.
+        guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
+            XCTFail("The message we sent may not have connected to an agent.")
+            return
+        }
+        let receivedMessageText = "Test message sent via API request!"
+        testController.testExpectation = XCTestExpectation(description: "Wait for message to be received from the UI agent.")
+        ApiHelper.shared.sendOutboundSmsMessage(conversationId: conversationInfo.conversationId, communicationId: conversationInfo.communicationId, message: receivedMessageText)
+        testController.waitForTestExpectation()
+        testController.verifyReceivedMessage(expectedMessage: receivedMessageText)
+
+        // Disconnect the conversation for the agent and disconnect the session.
+        ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
+        testController.disconnectMessenger()
+    }
+
 }
 
 private func delay(_ seconds: Double = 1.0, reason: String? = nil) {
