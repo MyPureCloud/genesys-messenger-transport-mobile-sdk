@@ -15,6 +15,7 @@ import kotlinx.serialization.Serializable
  *  @property timeStamp the time when the message occurred represented in Unix epoch time, the number of milliseconds since January 1, 1970 UTC.
  *  @property attachments a map of [Attachment] files to the message. Empty by default.
  *  @property events a list of events related to this message. Empty by default.
+ *  @property from the [Participant] that sends a message.
  */
 @Serializable
 data class Message(
@@ -26,6 +27,9 @@ data class Message(
     val timeStamp: Long? = null,
     val attachments: Map<String, Attachment> = emptyMap(),
     val events: List<Event> = emptyList(),
+    val from: Participant = Participant(
+        originatingEntity = Participant.OriginatingEntity.Human
+    ),
 ) {
     /**
      * Direction of the message.
@@ -82,6 +86,34 @@ data class Message(
         @Serializable
         enum class Type {
             Attachment
+        }
+    }
+
+    /**
+     * Box that contains information about conversation participant.
+     *
+     * @property name the name of the participant.
+     * @property imageUrl the url to the participant avatar.
+     * @property originatingEntity the indicator of participant entity.
+     */
+    @Serializable
+    data class Participant(
+        val name: String? = null,
+        val imageUrl: String? = null,
+        val originatingEntity: OriginatingEntity,
+    ) {
+        /**
+         * Participant type.
+         *
+         * @property Bot if message was originated from bot.
+         * @property Human if message was originated from real person.
+         * @property Unknown if originating entity can not be identified.
+         */
+        @Serializable
+        enum class OriginatingEntity {
+            Bot,
+            Human,
+            Unknown,
         }
     }
 }
