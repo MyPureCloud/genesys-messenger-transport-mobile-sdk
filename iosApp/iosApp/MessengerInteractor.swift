@@ -1,5 +1,5 @@
 //
-//  MessengerHandler.swift
+//  MessengerInteractor.swift
 //  iosApp
 //
 //  Created by Morehouse, Matthew on 6/2/22.
@@ -8,45 +8,43 @@
 
 import Foundation
 import MessengerTransport
-import UIKit
+import Combine
 
-class MessengerHandler {
+final class MessengerInteractor {
 
-    private let deployment: Deployment
-    private let config: Configuration
+    let configuration: Configuration
     let messengerTransport: MessengerTransport
-    let client: MessagingClient
+    let messagingClient: MessagingClient
     
-    public var onStateChange: ((StateChange) -> Void)?
-    public var onMessageEvent: ((MessageEvent) -> Void)?
-    public var onEvent: ((Event) -> Void)?
-    
-    init(deployment: Deployment, reconnectTimeout: Int64 = 60 * 5) {
-        self.deployment = deployment
-        self.config = Configuration(deploymentId: deployment.deploymentId,
-                                    domain: deployment.domain,
-                                    logging: true,
-                                    reconnectionTimeoutInSeconds: reconnectTimeout)
-        self.messengerTransport = MessengerTransport(configuration: self.config)
-        self.client = self.messengerTransport.createMessagingClient()
+    let stateChangeSubject = PassthroughSubject<StateChange, Never>()
+    let messageEventSubject = PassthroughSubject<MessageEvent, Never>()
+    let eventSubject = PassthroughSubject<Event, Never>()
         
-        client.stateChangedListener = { [weak self] stateChange in
+    init(deployment: Deployment, reconnectTimeout: Int64 = 60 * 5) {
+        self.configuration = Configuration(deploymentId: deployment.deploymentId,
+                                           domain: deployment.domain,
+                                           logging: true,
+                                           reconnectionTimeoutInSeconds: reconnectTimeout)
+        self.messengerTransport = MessengerTransport(configuration: self.configuration)
+        self.messagingClient = self.messengerTransport.createMessagingClient()
+        
+        messagingClient.stateChangedListener = { [weak self] stateChange in
             print("State Change: \(stateChange)")
-            self?.onStateChange?(stateChange)
+            self?.stateChangeSubject.send(stateChange)
         }
-        client.messageListener = { [weak self] message in
+        messagingClient.messageListener = { [weak self] message in
             print("Message Event: \(message)")
-            self?.onMessageEvent?(message)
+            self?.messageEventSubject.send(message)
         }
-        client.eventListener = { [weak self] event in
+        messagingClient.eventListener = { [weak self] event in
             print("Event: \(event)")
-            self?.onEvent?(event)
+            self?.eventSubject.send(event)
         }
     }
 
     func connect() throws {
         do {
-            try client.connect()
+            try messagingClient.connect()
         } catch {
             print("connect() failed. \(error.localizedDescription)")
             throw error
@@ -55,7 +53,7 @@ class MessengerHandler {
 
     func disconnect() throws {
         do {
-            try client.disconnect()
+            try messagingClient.disconnect()
         } catch {
             print("disconnect() failed. \(error.localizedDescription)")
             throw error
@@ -64,7 +62,7 @@ class MessengerHandler {
 
     func sendMessage(text: String, customAttributes: [String: String] = [:]) throws {
         do {
-            try client.sendMessage(text: text.trimmingCharacters(in: .whitespaces), customAttributes: customAttributes)
+            try messagingClient.sendMessage(text: text.trimmingCharacters(in: .whitespaces), customAttributes: customAttributes)
         } catch {
             print("sendMessage(text:) failed. \(error.localizedDescription)")
             throw error
@@ -72,14 +70,14 @@ class MessengerHandler {
     }
 
     func fetchNextPage(completion: ((Error?) -> Void)? = nil) {
-        client.fetchNextPage() { _, error in
+        messagingClient.fetchNextPage() { _, error in
             completion?(error)
         }
     }
 
     func sendHealthCheck() throws {
         do {
-            try client.sendHealthCheck()
+            try messagingClient.sendHealthCheck()
         } catch {
             print("sendHealthCheck() failed. \(error.localizedDescription)")
             throw error
@@ -88,7 +86,7 @@ class MessengerHandler {
 
     func attachImage(kotlinByteArray: KotlinByteArray) throws {
         do {
-            try client.attach(byteArray: kotlinByteArray, fileName: "image.png", uploadProgress: { progress in
+            try messagingClient.attach(byteArray: kotlinByteArray, fileName: "image.png", uploadProgress: { progress in
                 print("Attachment upload progress: \(progress)")
             })
         } catch {
@@ -99,7 +97,7 @@ class MessengerHandler {
 
     func detachImage(attachId: String) throws {
         do {
-            try client.detach(attachmentId: attachId)
+            try messagingClient.detach(attachmentId: attachId)
         } catch {
             print("detachImage(attachId:) failed. \(error.localizedDescription)")
             throw error
@@ -111,12 +109,12 @@ class MessengerHandler {
     }
 
     func clearConversation() {
-        client.invalidateConversationCache()
+        messagingClient.invalidateConversationCache()
     }
 
     func indicateTyping() throws {
         do {
-            try client.indicateTyping()
+            try messagingClient.indicateTyping()
         } catch {
             print("indicateTyping() failed. \(error.localizedDescription)")
             throw error
