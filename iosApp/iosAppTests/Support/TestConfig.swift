@@ -18,6 +18,7 @@ struct Config: Codable {
     public let apiBaseAddress: String
     public let deploymentId: String
     public let humanizeDisableDeploymentId: String
+    public let botDeploymentId: String
     public let domain: String
 }
 

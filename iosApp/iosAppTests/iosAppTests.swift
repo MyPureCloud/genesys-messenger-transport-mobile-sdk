@@ -101,6 +101,23 @@ class iosAppTests: XCTestCase {
         contentController.disconnectMessenger()
     }
 
+    func testBotConversation() {
+        let deployment = try! Deployment()
+        let testController = TestContentController(deployment: Deployment(deploymentId: TestConfig.shared.config?.botDeploymentId ?? "", domain: deployment.domain))
+        testController.humanizeEnabled = false
+
+        testController.startMessengerConnection()
+        delay(3, reason: "Allow time for the bot to start.")
+        testController.receivedMessageExpectation = XCTestExpectation(description: "Wait for message to be received from the bot.")
+        testController.sendText(text: "Yes") // Bot is configured to send a message if a "Yes" is sent.
+        testController.waitForMessageReceiveExpectation()
+        testController.verifyReceivedMessage(expectedMessage: "Ok! Here's another message.") // Bot is configured to send this text.
+
+        // Disconnect the conversation for the bot and disconnect the session.
+        testController.sendText(text: "No") // Bot is configured to disconnect if a "No" is sent.
+        testController.disconnectMessenger()
+    }
+
     func testConnectionClosed() {
         // Pull the deployment for use later.
         var deployment: Deployment?
@@ -173,9 +190,9 @@ class iosAppTests: XCTestCase {
             return
         }
         let receivedMessageText = "Test message sent via API request!"
-        contentController.testExpectation = XCTestExpectation(description: "Wait for message to be received from the UI agent.")
+        contentController.receivedMessageExpectation = XCTestExpectation(description: "Wait for message to be received from the UI agent.")
         ApiHelper.shared.sendOutboundSmsMessage(conversationId: conversationInfo.conversationId, communicationId: conversationInfo.communicationId, message: receivedMessageText)
-        contentController.waitForTestExpectation()
+        contentController.waitForMessageReceiveExpectation()
         contentController.verifyReceivedMessage(expectedMessage: receivedMessageText)
 
         // Disconnect the conversation for the agent and disconnect the session.

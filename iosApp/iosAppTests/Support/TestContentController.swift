@@ -13,6 +13,7 @@ import MessengerTransport
 class TestContentController: MessengerHandler {
 
     var testExpectation: XCTestExpectation?
+    var receivedMessageExpectation: XCTestExpectation?
     var errorExpectation: XCTestExpectation?
     var connectionClosed: XCTestExpectation?
     var receivedMessageText: String? = nil
@@ -43,12 +44,29 @@ class TestContentController: MessengerHandler {
             switch message {
             case let messageInserted as MessageEvent.MessageInserted:
                 print("Message Inserted: <\(messageInserted.message.description)>")
+
+                // Handling for received messages.
                 if messageInserted.message.direction.name == "Outbound" {
-                    print("Verifying that the message from the agent has an expected name and an imageUrl attached.")
+                    print("Verifying that the message from the agent/bot has an expected name and an imageUrl attached.")
                     let expectedName = (self?.humanizeEnabled ?? true) ? TestConfig.shared.config?.agentName : nil
                     let expectedUrl = (self?.humanizeEnabled ?? true) ? TestConfig.shared.config?.expectedAvatarUrl : nil
-                    XCTAssertEqual(messageInserted.message.from.name, expectedName, "The agent name was not what was expected.")
-                    XCTAssertEqual(messageInserted.message.from.imageUrl, expectedUrl, "The agent avatar url not what was expected.")
+
+                    // Different checks applied depending on the originating entity.
+                    // Expecting the bot to not have a name or avatar. If the deployment config is updated, this may need to change.
+                    switch messageInserted.message.from.originatingEntity {
+                    case .human:
+                        XCTAssertEqual(messageInserted.message.from.name, expectedName, "The agent name was not what was expected.")
+                        XCTAssertEqual(messageInserted.message.from.imageUrl, expectedUrl, "The agent avatar url not what was expected.")
+                    case .bot:
+                        XCTAssertNil(messageInserted.message.from.name, "The bot name was not what was expected.")
+                        XCTAssertNil(messageInserted.message.from.imageUrl, "The bot image was not what was expected.")
+                    default:
+                        XCTFail("Unexpected orginating entity: \(messageInserted.message.from.originatingEntity)")
+                    }
+
+                    // Specific expectation to make sure a RECEIVED message is handled.
+                    // The normal TestExpectation will just check that ANY messageInserted event is handled.
+                    self?.receivedMessageExpectation?.fulfill()
                 }
                 self?.receivedMessageText = messageInserted.message.text
                 self?.testExpectation?.fulfill()
@@ -205,6 +223,14 @@ class TestContentController: MessengerHandler {
         }
         waitForExpectation(expectation, timeout: timeout)
     }
+
+    func waitForMessageReceiveExpectation(timeout: Double = 60.0) {
+        guard let receivedMessageExpectation = receivedMessageExpectation else {
+            XCTFail("No received message expectation to wait for.")
+            return
+        }
+        waitForExpectation(receivedMessageExpectation, timeout: timeout)
+    }
     
     func waitForErrorExpectation(timeout: Double = 60.0) {
         guard let expectation = errorExpectation else {
@@ -220,7 +246,7 @@ class TestContentController: MessengerHandler {
     }
 
     func verifyReceivedMessage(expectedMessage: String) {
-        print("Checking the received message...")
+        print("Checking the received message.\nExpecting: '\(expectedMessage)'")
         XCTAssertEqual(expectedMessage, receivedMessageText, "The received message: '\(receivedMessageText ?? "")' didn't match what was expected: '\(expectedMessage)'.")
         receivedMessageText = nil
     }
