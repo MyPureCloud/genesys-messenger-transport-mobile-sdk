@@ -54,17 +54,18 @@ class MessengerInteractorTester {
                     // Handling for received messages.
                     if messageInserted.message.direction.name == "Outbound" {
                         print("Verifying that the message from the agent/bot has an expected name and an imageUrl attached.")
-                        let expectedName = (self?.humanizeEnabled ?? true) ? TestConfig.shared.config?.agentName : nil
-                        let expectedUrl = (self?.humanizeEnabled ?? true) ? TestConfig.shared.config?.expectedAvatarUrl : nil
 
                         // Different checks applied depending on the originating entity.
                         // Expecting the bot to not have a name or avatar. If the deployment config is updated, this may need to change.
                         switch messageInserted.message.from.originatingEntity {
                         case .human:
+                            let expectedName = (self?.humanizeEnabled ?? true) ? TestConfig.shared.config?.agentName : nil
+                            let expectedUrl = (self?.humanizeEnabled ?? true) ? TestConfig.shared.config?.expectedAvatarUrl : nil
                             XCTAssertEqual(messageInserted.message.from.name, expectedName, "The agent name was not what was expected.")
                             XCTAssertEqual(messageInserted.message.from.imageUrl, expectedUrl, "The agent avatar url not what was expected.")
                         case .bot:
-                            XCTAssertNil(messageInserted.message.from.name, "The bot name was not what was expected.")
+                            let expectedName = TestConfig.shared.config?.botName ?? ""
+                            XCTAssertEqual(messageInserted.message.from.name, expectedName, "The bot name was not what was expected.")
                             XCTAssertNil(messageInserted.message.from.imageUrl, "The bot image was not what was expected.")
                         default:
                             XCTFail("Unexpected orginating entity: \(messageInserted.message.from.originatingEntity)")
