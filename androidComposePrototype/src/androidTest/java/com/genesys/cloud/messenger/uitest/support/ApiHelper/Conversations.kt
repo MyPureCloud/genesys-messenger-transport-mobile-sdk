@@ -41,8 +41,6 @@ data class Participant(
     var messages: Array<CallDetails>
 )
 
-var statusPayload = "{\"state\": \"CONNECTED\"}"
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class CallDetails(
     val state: String,
@@ -102,15 +100,18 @@ fun API.answerNewConversation(): Conversation? {
 }
 
 fun API.sendConnectOrDisconnect(conversationInfo: Conversation, connecting: Boolean, wrapup: Boolean = true) {
+    var statusPayload = ""
     println("Sending $connecting request to: ${conversationInfo.id} from a conversation.")
     val agentParticipant = conversationInfo.getParticipantFromPurpose("agent")
     var wrapupCodePayload: JsonNode? = null
     if (!connecting) {
         statusPayload = "{\"state\": \"DISCONNECTED\"}"
         wrapupCodePayload = getDefaultWrapupCodeId(conversationInfo.id, agentParticipant!!.id)
+    } else {
+        statusPayload = "{\"state\": \"CONNECTED\"}"
     }
-    // Send requests to disconnect the conversation and send the wrapup code.
-    sendStatusToParticipant(conversationInfo.id, agentParticipant!!.id)
+    // Send requests to connect/disconnect the conversation and send the wrapup code.
+    sendStatusToParticipant(conversationInfo.id, agentParticipant!!.id, statusPayload)
     if (connecting) {
         waitForParticipantToConnect(conversationInfo.id)
     } else if (wrapup) {
@@ -133,7 +134,7 @@ private fun API.waitForParticipantToConnect(conversationId: String) {
         }
 }
 
-fun API.sendStatusToParticipant(conversationId: String, participantId: String) {
+fun API.sendStatusToParticipant(conversationId: String, participantId: String, statusPayload: String) {
     publicApiCall("PATCH", "/api/v2/conversations/messages/$conversationId/participants/$participantId", statusPayload.toByteArray())
 }
 

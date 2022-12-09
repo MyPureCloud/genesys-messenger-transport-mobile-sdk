@@ -155,8 +155,8 @@ class ComposePrototypeUITest : BaseTests() {
     @Test
     fun testSendTypingIndicator() {
         enterDeploymentInfo()
+        DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
         connect()
-        sendMsg("howdy")
         val conversationInfo = apiHelper.answerNewConversation()
         if (conversationInfo != null) {
             apiHelper.sendTypingIndicatorFromAgentToUser(conversationInfo)
@@ -188,21 +188,29 @@ class ComposePrototypeUITest : BaseTests() {
     @Test
     fun testHealthCheck() {
         enterDeploymentInfo()
+        DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
         connect()
-        healthcheckTest()
+        val conversationInfo = apiHelper.answerNewConversation()
+        if (conversationInfo == null) AssertionError("Unable to answer conversation with autoStart enabled.")
+        else {
+            Log.i(TAG, "Conversation started successfully with autoStart enabled.")
+            healthcheckTest()
+            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+        }
         bye()
     }
 
     @Test
     fun testSendMessage() {
         enterDeploymentInfo()
+        DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
         connect()
-        sendMsg(helloText)
         val conversationInfo = apiHelper.answerNewConversation()
         if (conversationInfo == null) AssertionError("Unable to answer conversation.")
         else {
             Log.i(TAG, "Conversation started successfully.")
             sleep(3000)
+            sendMsg(helloText)
             apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
         }
         bye()
@@ -211,13 +219,14 @@ class ComposePrototypeUITest : BaseTests() {
     @Test
     fun testAttachments() {
         enterDeploymentInfo()
+        DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
         connect()
-        sendMsg(helloText)
         val conversationInfo = apiHelper.answerNewConversation()
         if (conversationInfo == null) AssertionError("Unable to answer conversation.")
         else {
             Log.i(TAG, "Conversation started successfully.")
             attachImage()
+            // wait for image to load
             sleep(3000)
             apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
         }
@@ -227,8 +236,8 @@ class ComposePrototypeUITest : BaseTests() {
     @Test
     fun testCustomAttributes() {
         enterDeploymentInfo()
+        DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
         connect()
-        sendMsg(helloText)
         val conversationInfo = apiHelper.answerNewConversation()
         if (conversationInfo == null) AssertionError("Unable to answer conversation.")
         else {
