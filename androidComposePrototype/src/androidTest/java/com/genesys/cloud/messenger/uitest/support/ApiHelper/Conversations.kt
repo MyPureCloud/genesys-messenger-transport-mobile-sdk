@@ -1,11 +1,15 @@
 package com.genesys.cloud.messenger.uitest.support.ApiHelper
 
+import android.util.Log
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.JsonNode
+import com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed.TestBedViewModel
 import com.genesys.cloud.messenger.uitest.support.testConfig
 import org.awaitility.Awaitility
 import java.lang.Thread.sleep
 import java.util.concurrent.TimeUnit
+
+private val TAG = TestBedViewModel::class.simpleName
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Conversation(
@@ -69,12 +73,12 @@ fun API.waitForConversation(): Conversation? {
 }
 
 fun API.getAllConversations(): Array<Conversation> {
-    val result = publicApiCall(httpMethod = "GET", httpURL = "/api/v2/conversations")?.get("entities")?.toList()
+    val result = publicApiCall("GET", "/api/v2/conversations")?.get("entities")?.toList()
     return parseJsonToClass(result)
 }
 
 fun API.getConversationInfo(conversationId: String): Conversation {
-    val result = publicApiCall(httpMethod = "GET", httpURL = "/api/v2/conversations/$conversationId")
+    val result = publicApiCall("GET", "/api/v2/conversations/$conversationId")
     return parseJsonToClass(result)
 }
 
@@ -103,7 +107,7 @@ fun API.sendConnectOrDisconnect(conversationInfo: Conversation, connecting: Bool
     var wrapupCodePayload: JsonNode? = null
     if (!connecting) {
         statusPayload = "{\"state\": \"DISCONNECTED\"}"
-        wrapupCodePayload = getDefaultWrapupCodeId(conversationInfo.id, agentParticipant!!.id!!)
+        wrapupCodePayload = getDefaultWrapupCodeId(conversationInfo.id, agentParticipant!!.id)
     }
     // Send requests to disconnect the conversation and send the wrapup code.
     sendStatusToParticipant(conversationInfo.id, agentParticipant!!.id)
@@ -141,4 +145,12 @@ fun API.sendWrapupCode(conversationInfo: Conversation, wrapupPayload: JsonNode?)
         "/api/v2/conversations/messages/${conversationInfo.id}/participants/${agentParticipant?.id}/communications/$communicationId/wrapup",
         ("{ \"code\": \"${wrapupPayload?.get("id")}\", \"notes\": \"\"}").toByteArray()
     )
+}
+
+fun API.disconnectAllConversations() {
+    val conversationList = getAllConversations()
+    conversationList.forEach { conversation ->
+        Log.i(TAG, "disconnecting conversationId: ${conversation.id}")
+        sendConnectOrDisconnect(conversation, false, true)
+    }
 }
