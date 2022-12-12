@@ -61,6 +61,9 @@ class MessengerInteractorTester {
                         case .human:
                             let expectedName = (self?.humanizeEnabled ?? true) ? TestConfig.shared.config?.agentName : nil
                             let expectedUrl = (self?.humanizeEnabled ?? true) ? TestConfig.shared.config?.expectedAvatarUrl : nil
+                            print("Expecting humanize: \(self?.humanizeEnabled ?? true)")
+                            print("Expected Name: \(expectedName ?? "N/A")")
+                            print("Expected avatar url: \(expectedUrl ?? "N/A")")
                             XCTAssertEqual(messageInserted.message.from.name, expectedName, "The agent name was not what was expected.")
                             XCTAssertEqual(messageInserted.message.from.imageUrl, expectedUrl, "The agent avatar url not what was expected.")
                         case .bot:
