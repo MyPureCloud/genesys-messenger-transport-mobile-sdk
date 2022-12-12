@@ -13,18 +13,18 @@ import java.util.concurrent.atomic.AtomicBoolean
 class API : IdlingResource {
 
     val mapper = jacksonObjectMapper()
-    val token = testConfig.token
-    val agentId = testConfig.agentId
+    val agentToken = testConfig.agentToken
+    val agentEmail = testConfig.agentEmail
 
     fun publicApiCall(httpMethod: String, httpURL: String, payload: ByteArray? = null): JsonNode? {
-        val url = URL("https://api.inindca.com$httpURL")
+        val url = URL("${testConfig.apiBaseAddress}$httpURL")
         var output: JsonNode? = null
         setIdle(false)
         println("Sending $httpMethod to $httpURL.")
 
         with(url.openConnection() as HttpURLConnection) {
             requestMethod = httpMethod
-            setRequestProperty("Authorization", "bearer $token")
+            setRequestProperty("Authorization", "bearer $agentToken")
             setRequestProperty("User-Agent", "Android-MTSDK-Testing")
             setRequestProperty("Content-Type", "application/json")
 

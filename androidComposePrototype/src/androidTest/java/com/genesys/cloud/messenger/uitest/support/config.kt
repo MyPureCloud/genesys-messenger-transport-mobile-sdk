@@ -7,11 +7,13 @@ import com.fasterxml.jackson.module.kotlin.readValue
 val testConfig by lazy { pullConfig() }
 
 data class Config(
-    val token: String,
-    val agentId: String,
+    val agentToken: String,
+    val agentEmail: String,
     val agentUserId: String,
     val deploymentId: String,
-    val password: String
+    val password: String,
+    val domain: String,
+    val apiBaseAddress: String
 )
 
 private fun pullConfig(): Config {
