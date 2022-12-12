@@ -170,7 +170,7 @@ class ComposePrototypeUITest : BaseTests() {
 
     @Test
     // Adjusting the test name to force this test to run first
-    fun testAAVerifyAutoStart() {
+    fun test1VerifyAutoStart() {
         enterDeploymentInfo()
         // Force a new session. AutoStart is enabled and newSession is true
         DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
