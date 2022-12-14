@@ -44,7 +44,7 @@ class iosAppTests: XCTestCase {
         }
 
         messengerTester.startMessengerConnection()
-        messengerTester.sendText(text: "Testing from E2E test.")
+        messengerTester.sendText(text: "Starting Attachment test.")
 
         // Use the public API to answer the new Messenger conversation.
         // Send a message from that agent and make sure we receive it.
@@ -54,7 +54,7 @@ class iosAppTests: XCTestCase {
         }
 
         // Send an attachment from the transport SDK. Ensure it's received
-        guard let image = TestConfig.shared.pullTestPng(), let data = image.pngData() as NSData? else {
+        guard let image = UIImage(named: "image"), let data = image.pngData() as NSData? else {
             XCTFail("Failed to pull the test image.")
             return
         }

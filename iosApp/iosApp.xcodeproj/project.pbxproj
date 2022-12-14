@@ -24,7 +24,6 @@
 		BA88FE14284953CA009AA1F8 /* MessengerInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA88FE13284953CA009AA1F8 /* MessengerInteractor.swift */; };
 		BA88FE16284A54E7009AA1F8 /* config.json in Resources */ = {isa = PBXBuildFile; fileRef = BA88FE15284A54E6009AA1F8 /* config.json */; };
 		BA88FE22284A5501009AA1F8 /* TestConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA88FE18284A5501009AA1F8 /* TestConfig.swift */; };
-		BA88FE24284A5501009AA1F8 /* testPng.png in Resources */ = {isa = PBXBuildFile; fileRef = BA88FE1B284A5501009AA1F8 /* testPng.png */; };
 		BA88FE25284A5501009AA1F8 /* ConversationInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA88FE1C284A5501009AA1F8 /* ConversationInfo.swift */; };
 		BA88FE26284A5501009AA1F8 /* extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA88FE1D284A5501009AA1F8 /* extensions.swift */; };
 		BA88FE27284A5501009AA1F8 /* ApiHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA88FE1F284A5501009AA1F8 /* ApiHelper.swift */; };
@@ -76,7 +75,6 @@
 		BA88FE13284953CA009AA1F8 /* MessengerInteractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessengerInteractor.swift; sourceTree = "<group>"; };
 		BA88FE15284A54E6009AA1F8 /* config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = config.json; sourceTree = "<group>"; };
 		BA88FE18284A5501009AA1F8 /* TestConfig.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TestConfig.swift; sourceTree = "<group>"; };
-		BA88FE1B284A5501009AA1F8 /* testPng.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = testPng.png; sourceTree = "<group>"; };
 		BA88FE1C284A5501009AA1F8 /* ConversationInfo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConversationInfo.swift; sourceTree = "<group>"; };
 		BA88FE1D284A5501009AA1F8 /* extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = extensions.swift; sourceTree = "<group>"; };
 		BA88FE1F284A5501009AA1F8 /* ApiHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ApiHelper.swift; sourceTree = "<group>"; };
@@ -208,7 +206,6 @@
 		BA88FE17284A5501009AA1F8 /* Support */ = {
 			isa = PBXGroup;
 			children = (
-				BA88FE1A284A5501009AA1F8 /* Images */,
 				BA88FE1E284A5501009AA1F8 /* PublicAPI */,
 				BA88FE18284A5501009AA1F8 /* TestConfig.swift */,
 				BA88FE1C284A5501009AA1F8 /* ConversationInfo.swift */,
@@ -217,14 +214,6 @@
 				BA5B8CD328CA2FEC007C8160 /* MessengerInteractorTester.swift */,
 			);
 			path = Support;
-			sourceTree = "<group>";
-		};
-		BA88FE1A284A5501009AA1F8 /* Images */ = {
-			isa = PBXGroup;
-			children = (
-				BA88FE1B284A5501009AA1F8 /* testPng.png */,
-			);
-			path = Images;
 			sourceTree = "<group>";
 		};
 		BA88FE1E284A5501009AA1F8 /* PublicAPI */ = {
@@ -248,6 +237,7 @@
 				7555FF77242A565900829871 /* Sources */,
 				7555FF78242A565900829871 /* Frameworks */,
 				7555FF79242A565900829871 /* Resources */,
+				E60CDF7633BDE01A13072AFC /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -355,7 +345,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				BA88FE16284A54E7009AA1F8 /* config.json in Resources */,
-				BA88FE24284A5501009AA1F8 /* testPng.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -389,6 +378,23 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		E60CDF7633BDE01A13072AFC /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-iosApp/Pods-iosApp-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-iosApp/Pods-iosApp-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-iosApp/Pods-iosApp-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		FB4551F60593F9B54B5A2676 /* [CP] Check Pods Manifest.lock */ = {

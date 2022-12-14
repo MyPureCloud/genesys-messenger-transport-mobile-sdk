@@ -148,7 +148,7 @@ extension ApiHelper {
         }
 
         // Send the file.
-        guard let image = TestConfig.shared.pullTestPng(), let imageData = image.pngData() else {
+        guard let imageData = UIImage(named: "image")?.pngData() else {
             XCTFail("Failed to get Image information.")
             return nil
         }
