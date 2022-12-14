@@ -82,15 +82,27 @@ class iosAppTests: XCTestCase {
         XCTAssertTrue(deploymentConfig.messenger.apps.conversations.autoStart.enabled, "AutoStart was not enabled for this deployment config.")
 
         // Save a new token.
-        DefaultTokenStore(storeKey: "com.genesys.cloud.messenger").store(token: UUID().uuidString)
+        let newToken = UUID().uuidString
+        DefaultTokenStore(storeKey: "com.genesys.cloud.messenger").store(token: newToken)
+        print("New token: \(newToken)")
 
-        guard let messengerTester = messengerTester else {
+        // Initializing a new MessengerInteractorTester object.
+        // Doing this because the global messenger object will still use the cached token for this test.
+        let messengerHandler: MessengerInteractorTester?
+        do {
+            let deployment = try Deployment()
+            messengerHandler = MessengerInteractorTester(deployment: deployment)
+        } catch {
+            XCTFail(error.localizedDescription)
+            return
+        }
+        guard let messengerHandler = messengerHandler else {
             XCTFail("Failed to setup the Messenger tester.")
             return
         }
 
         // Should be able to answer the conversation immediately after starting the connection if AutoStart is enabled.
-        messengerTester.startMessengerConnection()
+        messengerHandler.startMessengerConnection()
         guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
             XCTFail("The message we sent may not have connected to an agent.")
             return
@@ -98,7 +110,7 @@ class iosAppTests: XCTestCase {
 
         // Disconnect the conversation for the agent and disconnect the session.
         ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
-        messengerTester.disconnectMessenger()
+        messengerHandler.disconnectMessenger()
     }
 
     func testBotConversation() {
