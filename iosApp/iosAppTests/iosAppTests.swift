@@ -101,6 +101,22 @@ class iosAppTests: XCTestCase {
         messengerTester.disconnectMessenger()
     }
 
+    func testBotConversation() {
+        let deployment = try! Deployment()
+        let testController = MessengerInteractorTester(deployment: Deployment(deploymentId: TestConfig.shared.config?.botDeploymentId ?? "", domain: deployment.domain))
+
+        testController.startMessengerConnection()
+        delay(3, reason: "Allow time for the bot to start.")
+        testController.receivedMessageExpectation = XCTestExpectation(description: "Wait for message to be received from the bot.")
+        testController.sendText(text: "Yes") // Bot is configured to send a message if a "Yes" is sent.
+        testController.waitForMessageReceiveExpectation()
+        testController.verifyReceivedMessage(expectedMessage: "Ok! Here's another message.") // Bot is configured to send this text.
+
+        // Disconnect the conversation for the bot and disconnect the session.
+        testController.sendText(text: "No") // Bot is configured to disconnect if a "No" is sent.
+        testController.disconnectMessenger()
+    }
+
     func testConnectionClosed() {
         // Pull the deployment for use later.
         var deployment: Deployment?
@@ -225,6 +241,31 @@ class iosAppTests: XCTestCase {
         } else {
             XCTFail("Expected Error state, but instead state is: \(tester.messenger.messagingClient.currentState)")
         }
+    }
+
+    func testUnknownAgent() {
+        let deployment = try! Deployment()
+        let testController = MessengerInteractorTester(deployment: Deployment(deploymentId: TestConfig.shared.config?.humanizeDisableDeploymentId ?? "", domain: deployment.domain))
+        testController.humanizeEnabled = false
+
+        testController.startMessengerConnection()
+        testController.sendText(text: "Testing from E2E test.")
+
+        // Use the public API to answer the new Messenger conversation.
+        // Send a message from that agent and make sure we receive it.
+        guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
+            XCTFail("The message we sent may not have connected to an agent.")
+            return
+        }
+        let receivedMessageText = "Test message sent via API request!"
+        testController.testExpectation = XCTestExpectation(description: "Wait for message to be received from the UI agent.")
+        ApiHelper.shared.sendOutboundSmsMessage(conversationId: conversationInfo.conversationId, communicationId: conversationInfo.communicationId, message: receivedMessageText)
+        testController.waitForTestExpectation()
+        testController.verifyReceivedMessage(expectedMessage: receivedMessageText)
+
+        // Disconnect the conversation for the agent and disconnect the session.
+        ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
+        testController.disconnectMessenger()
     }
 
 }
