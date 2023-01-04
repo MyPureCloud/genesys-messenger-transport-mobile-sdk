@@ -3,12 +3,13 @@ package com.genesys.cloud.messenger.transport.network
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import io.ktor.client.HttpClient
-import io.ktor.client.features.HttpCallValidator
-import io.ktor.client.features.HttpTimeout
-import io.ktor.client.features.json.JsonFeature
-import io.ktor.client.features.json.serializer.KotlinxSerializer
-import io.ktor.client.features.logging.LogLevel
-import io.ktor.client.features.logging.Logging
+import io.ktor.client.plugins.HttpCallValidator
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logging
+import io.ktor.serialization.kotlinx.json.*
+import kotlinx.serialization.json.Json
 
 private const val TIMEOUT_IN_MS = 30000L
 
@@ -19,13 +20,14 @@ internal fun defaultHttpClient(logging: Boolean = false): HttpClient = HttpClien
             level = LogLevel.ALL
         }
     }
-    install(JsonFeature) {
-        serializer = KotlinxSerializer(
-            kotlinx.serialization.json.Json {
+    install(ContentNegotiation) {
+        json(
+            Json {
                 ignoreUnknownKeys = true
                 useAlternativeNames = false
             }
         )
+
     }
     install(HttpCallValidator)
     install(HttpTimeout) {

@@ -41,6 +41,7 @@ android {
             excludes += "META-INF/LICENSE-notice.md"
         }
     }
+    namespace = "com.genesys.cloud.messenger"
 }
 
 val iosFrameworkName = "MessengerTransport"
@@ -101,6 +102,8 @@ kotlin {
                 implementation(Deps.Libs.Ktor.serialization)
                 implementation(Deps.Libs.Ktor.json)
                 implementation(Deps.Libs.Ktor.logging)
+                implementation(Deps.Libs.Ktor.contentNegotiation)
+                implementation(Deps.Libs.Ktor.kotlinxSerialization)
                 implementation(Deps.Libs.klock)
                 api(Deps.Libs.kermit)
             }

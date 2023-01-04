@@ -26,7 +26,7 @@ plugins {
 }
 
 android {
-    compileSdkVersion 32
+    compileSdkVersion 33
     buildToolsVersion "30.0.3"
 
     defaultConfig {
@@ -54,7 +54,6 @@ android {
     }
     kotlinOptions {
         jvmTarget = '1.8'
-        useIR = true
     }
     buildFeatures {
         compose true
@@ -69,6 +68,7 @@ android {
             }
         }
     }
+    namespace 'com.genesys.cloud.messenger.androidcomposeprototype'
 }
 
 dependencies {
