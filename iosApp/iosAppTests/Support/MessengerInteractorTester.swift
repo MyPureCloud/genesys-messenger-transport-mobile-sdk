@@ -193,7 +193,7 @@ class MessengerInteractorTester {
 
     private func attachImage(kotlinByteArray: KotlinByteArray) throws {
         testExpectation = XCTestExpectation(description: "Wait for image to attach successfully.")
-        try messenger.attachImage(kotlinByteArray: kotlinByteArray)
+        try messenger.attachImage(kotlinByteArray: kotlinByteArray, fileName: "AttachmentTest.jpg")
         waitForTestExpectation()
     }
 
