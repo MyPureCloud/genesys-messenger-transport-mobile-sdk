@@ -332,7 +332,7 @@ internal class MessagingClientImpl(
                     is SessionResponse -> {
                         decoded.body.run {
                             reconnectionHandler.clear()
-                            stateMachine.onSessionConfigured(connected, newSession)
+                            stateMachine.onSessionConfigured(connected, newSession, readOnly)
                             if (newSession && deploymentConfig.isAutostartEnabled()) {
                                 sendAutoStart()
                             }

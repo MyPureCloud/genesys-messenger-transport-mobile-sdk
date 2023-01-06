@@ -40,8 +40,9 @@ internal class StateMachineImpl(
     override fun onSessionConfigured(
         connected: Boolean,
         newSession: Boolean,
+        readOnly: Boolean,
     ) {
-        currentState = State.Configured(connected, newSession)
+        currentState = State.Configured(connected, newSession, readOnly)
     }
 
     @Throws(IllegalStateException::class)

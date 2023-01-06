@@ -154,7 +154,7 @@ class MessagingClientImplTest {
     fun whenConnect() {
         subject.connect()
 
-        assertThat(subject).isConfigured(connected = true, newSession = true)
+        assertThat(subject).isConfigured(connected = true, newSession = true, readOnly = false)
         verifySequence {
             connectSequence()
         }
@@ -859,7 +859,7 @@ class MessagingClientImplTest {
         expectedCloseReason: String = "The user has closed the connection.",
     ) {
         val fromConfiguredToClosing = StateChange(
-            oldState = State.Configured(connected = true, newSession = true),
+            oldState = State.Configured(connected = true, newSession = true, readOnly = false),
             newState = State.Closing(expectedCloseCode, expectedCloseReason)
         )
         val fromClosingToClosed = StateChange(
@@ -896,7 +896,7 @@ class MessagingClientImplTest {
     private val fromConnectedToConfigured =
         StateChange(
             oldState = State.Connected,
-            newState = State.Configured(connected = true, newSession = true)
+            newState = State.Configured(connected = true, newSession = true, readOnly = false)
         )
 
     private fun fromConnectedToError(errorState: State) =
@@ -904,7 +904,7 @@ class MessagingClientImplTest {
 
     private fun fromConfiguredToError(errorState: State) =
         StateChange(
-            oldState = State.Configured(connected = true, newSession = true),
+            oldState = State.Configured(connected = true, newSession = true, readOnly = false),
             newState = errorState,
         )
 }

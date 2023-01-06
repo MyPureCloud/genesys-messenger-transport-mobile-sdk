@@ -9,7 +9,7 @@ internal interface StateMachine {
     @Throws(IllegalStateException::class)
     fun onConnect()
     fun onReconnect()
-    fun onSessionConfigured(connected: Boolean, newSession: Boolean)
+    fun onSessionConfigured(connected: Boolean, newSession: Boolean, readOnly: Boolean)
     @Throws(IllegalStateException::class)
     fun onClosing(code: Int, reason: String)
     fun onClosed(code: Int, reason: String)
