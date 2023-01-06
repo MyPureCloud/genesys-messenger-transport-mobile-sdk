@@ -82,7 +82,7 @@ class StateMachineTest {
 
     @Test
     fun whenOnConnectAndCurrentStateIsConfigured() {
-        subject.onSessionConfigured(connected = true, newSession = true)
+        subject.onSessionConfigured(connected = true, newSession = true, readOnly = false)
 
         assertFailsWith<IllegalStateException> { subject.onConnect() }
     }
@@ -101,16 +101,17 @@ class StateMachineTest {
     @Test
     fun whenOnSessionConfigured() {
         val expectedStateChange =
-            StateChange(State.Idle, State.Configured(connected = true, newSession = true))
+            StateChange(State.Idle, State.Configured(connected = true, newSession = true, readOnly = false))
 
-        subject.onSessionConfigured(connected = true, newSession = true)
+        subject.onSessionConfigured(connected = true, newSession = true, readOnly = false)
 
         assertThat(subject).isConfigured(
             connected = true,
             newSession = true,
+            readOnly = false,
         )
         verify {
-            mockStateListener(State.Configured(connected = true, newSession = true))
+            mockStateListener(State.Configured(connected = true, newSession = true, readOnly = false))
         }
         verify { mockStateChangedListener(expectedStateChange) }
     }
@@ -118,20 +119,22 @@ class StateMachineTest {
     @Test
     fun whenOnSessionConfiguredAfterOnReconnect() {
         val expectedStateChange =
-            StateChange(State.Reconnecting, State.Configured(connected = true, newSession = true))
+            StateChange(State.Reconnecting, State.Configured(connected = true, newSession = true, readOnly = false))
 
         subject.onReconnect()
-        subject.onSessionConfigured(connected = true, newSession = true)
+        subject.onSessionConfigured(connected = true, newSession = true, readOnly = false)
 
         assertThat(subject).isConfigured(
             connected = true,
             newSession = true,
+            readOnly = false,
         )
         verify {
             mockStateListener(
                 State.Configured(
                     connected = true,
                     newSession = true,
+                    readOnly = false,
                 )
             )
         }
@@ -210,16 +213,16 @@ class StateMachineTest {
         assertThat(subject).isConnecting()
         subject.onConnectionOpened()
         assertThat(subject).isConnected()
-        subject.onSessionConfigured(connected = true, newSession = true)
-        assertThat(subject).isConfigured(connected = true, newSession = true)
+        subject.onSessionConfigured(connected = true, newSession = true, readOnly = false)
+        assertThat(subject).isConfigured(connected = true, newSession = true, readOnly = false)
         subject.onReconnect()
         assertThat(subject).isReconnecting()
         subject.onConnect()
         assertThat(subject).isReconnecting()
         subject.onConnectionOpened()
         assertThat(subject).isReconnecting()
-        subject.onSessionConfigured(connected = true, newSession = false)
-        assertThat(subject).isConfigured(connected = true, newSession = false)
+        subject.onSessionConfigured(connected = true, newSession = false, readOnly = false)
+        assertThat(subject).isConfigured(connected = true, newSession = false, readOnly = false)
         subject.onClosing(100, "sss")
         assertThat(subject).isClosing(100, "sss")
         subject.onClosed(100, "sss")
@@ -246,11 +249,13 @@ class StateMachineTest {
     private fun Assert<StateMachine>.isConfigured(
         connected: Boolean,
         newSession: Boolean,
+        readOnly: Boolean,
     ) =
         currentState().isEqualTo(
             State.Configured(
                 connected,
                 newSession,
+                readOnly,
             )
         )
 
