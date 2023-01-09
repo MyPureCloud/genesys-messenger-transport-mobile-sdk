@@ -41,9 +41,20 @@ data class Conversations(
     val showAgentTypingIndicator: Boolean = false,
     val showUserTypingIndicator: Boolean = false,
     val autoStart: AutoStart = AutoStart(),
+    val conversationDisconnect: ConversationDisconnect = ConversationDisconnect()
 ) {
     @Serializable
     data class AutoStart(val enabled: Boolean = false)
+
+    @Serializable
+    data class ConversationDisconnect(val enabled: Boolean = false, val type: Type = Type.Send) {
+
+        @Serializable
+        enum class Type {
+            ReadOnly,
+            Send,
+        }
+    }
 }
 
 @Serializable
