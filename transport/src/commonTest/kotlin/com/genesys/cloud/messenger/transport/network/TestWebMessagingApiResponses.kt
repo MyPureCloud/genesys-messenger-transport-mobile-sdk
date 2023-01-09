@@ -50,13 +50,15 @@ object TestWebMessagingApiResponses {
         apiEndpoint = "https://api.inindca.com",
         messenger = Messenger(
             enabled = true,
-            apps = Apps(conversations = Conversations(
-                messagingEndpoint = "wss://webmessaging.inindca.com",
-                conversationDisconnect = Conversations.ConversationDisconnect(
-                    enabled = true,
-                    type = Conversations.ConversationDisconnect.Type.ReadOnly
+            apps = Apps(
+                conversations = Conversations(
+                    messagingEndpoint = "wss://webmessaging.inindca.com",
+                    conversationDisconnect = Conversations.ConversationDisconnect(
+                        enabled = true,
+                        type = Conversations.ConversationDisconnect.Type.ReadOnly
+                    )
                 )
-            )),
+            ),
             styles = Styles(primaryColor = "#ff0000"),
             launcherButton = LauncherButton(visibility = "On"),
             fileUpload = FileUpload(
