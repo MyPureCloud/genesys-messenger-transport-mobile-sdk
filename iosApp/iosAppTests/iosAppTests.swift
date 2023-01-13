@@ -44,7 +44,7 @@ class iosAppTests: XCTestCase {
         }
 
         messengerTester.startMessengerConnection()
-        messengerTester.sendText(text: "Testing from E2E test.")
+        messengerTester.sendText(text: "Starting Attachment test.")
 
         // Use the public API to answer the new Messenger conversation.
         // Send a message from that agent and make sure we receive it.
@@ -54,7 +54,7 @@ class iosAppTests: XCTestCase {
         }
 
         // Send an attachment from the transport SDK. Ensure it's received
-        guard let image = TestConfig.shared.pullTestPng(), let data = image.pngData() as NSData? else {
+        guard let image = UIImage(named: "image"), let data = image.pngData() as NSData? else {
             XCTFail("Failed to pull the test image.")
             return
         }
@@ -82,15 +82,27 @@ class iosAppTests: XCTestCase {
         XCTAssertTrue(deploymentConfig.messenger.apps.conversations.autoStart.enabled, "AutoStart was not enabled for this deployment config.")
 
         // Save a new token.
-        DefaultTokenStore(storeKey: "com.genesys.cloud.messenger").store(token: UUID().uuidString)
+        let newToken = UUID().uuidString
+        DefaultTokenStore(storeKey: "com.genesys.cloud.messenger").store(token: newToken)
+        print("New token: \(newToken)")
 
-        guard let messengerTester = messengerTester else {
+        // Initializing a new MessengerInteractorTester object.
+        // Doing this because the global messenger object will still use the cached token for this test.
+        let messengerHandler: MessengerInteractorTester?
+        do {
+            let deployment = try Deployment()
+            messengerHandler = MessengerInteractorTester(deployment: deployment)
+        } catch {
+            XCTFail(error.localizedDescription)
+            return
+        }
+        guard let messengerHandler = messengerHandler else {
             XCTFail("Failed to setup the Messenger tester.")
             return
         }
 
         // Should be able to answer the conversation immediately after starting the connection if AutoStart is enabled.
-        messengerTester.startMessengerConnection()
+        messengerHandler.startMessengerConnection()
         guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
             XCTFail("The message we sent may not have connected to an agent.")
             return
@@ -98,7 +110,23 @@ class iosAppTests: XCTestCase {
 
         // Disconnect the conversation for the agent and disconnect the session.
         ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
-        messengerTester.disconnectMessenger()
+        messengerHandler.disconnectMessenger()
+    }
+
+    func testBotConversation() {
+        let deployment = try! Deployment()
+        let testController = MessengerInteractorTester(deployment: Deployment(deploymentId: TestConfig.shared.config?.botDeploymentId ?? "", domain: deployment.domain))
+
+        testController.startMessengerConnection()
+        delay(3, reason: "Allow time for the bot to start.")
+        testController.receivedMessageExpectation = XCTestExpectation(description: "Wait for message to be received from the bot.")
+        testController.sendText(text: "Yes") // Bot is configured to send a message if a "Yes" is sent.
+        testController.waitForMessageReceiveExpectation()
+        testController.verifyReceivedMessage(expectedMessage: "Ok! Here's another message.") // Bot is configured to send this text.
+
+        // Disconnect the conversation for the bot and disconnect the session.
+        testController.sendText(text: "No") // Bot is configured to disconnect if a "No" is sent.
+        testController.disconnectMessenger()
     }
 
     func testConnectionClosed() {
@@ -225,6 +253,31 @@ class iosAppTests: XCTestCase {
         } else {
             XCTFail("Expected Error state, but instead state is: \(tester.messenger.messagingClient.currentState)")
         }
+    }
+
+    func testUnknownAgent() {
+        let deployment = try! Deployment()
+        let testController = MessengerInteractorTester(deployment: Deployment(deploymentId: TestConfig.shared.config?.humanizeDisableDeploymentId ?? "", domain: deployment.domain))
+        testController.humanizeEnabled = false
+
+        testController.startMessengerConnection()
+        testController.sendText(text: "Testing from E2E test.")
+
+        // Use the public API to answer the new Messenger conversation.
+        // Send a message from that agent and make sure we receive it.
+        guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
+            XCTFail("The message we sent may not have connected to an agent.")
+            return
+        }
+        let receivedMessageText = "Test message sent via API request!"
+        testController.testExpectation = XCTestExpectation(description: "Wait for message to be received from the UI agent.")
+        ApiHelper.shared.sendOutboundSmsMessage(conversationId: conversationInfo.conversationId, communicationId: conversationInfo.communicationId, message: receivedMessageText)
+        testController.waitForTestExpectation()
+        testController.verifyReceivedMessage(expectedMessage: receivedMessageText)
+
+        // Disconnect the conversation for the agent and disconnect the session.
+        ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
+        testController.disconnectMessenger()
     }
 
 }

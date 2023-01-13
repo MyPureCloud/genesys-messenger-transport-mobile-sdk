@@ -13,8 +13,13 @@ struct Config: Codable {
     public let agentToken: String
     public let agentEmail: String
     public let agentId: String
+    public let agentName: String
+    public let expectedAvatarUrl: String
     public let apiBaseAddress: String
     public let deploymentId: String
+    public let humanizeDisableDeploymentId: String
+    public let botDeploymentId: String
+    public let botName: String
     public let domain: String
 }
 

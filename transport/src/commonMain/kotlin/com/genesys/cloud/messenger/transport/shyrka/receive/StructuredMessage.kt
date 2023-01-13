@@ -24,12 +24,14 @@ internal data class StructuredMessage(
     val content: List<Content> = emptyList(),
     val metadata: Map<String, String> = emptyMap(),
     val events: List<StructuredMessageEvent> = emptyList(),
+    val originatingEntity: String? = null,
 ) {
     @Serializable
     data class Participant(
         val firstName: String? = null,
         val lastName: String? = null,
         val nickname: String? = null,
+        val image: String? = null,
     )
 
     @Serializable
@@ -70,6 +72,9 @@ internal data class StructuredMessage(
 
 internal fun StructuredMessage.isOutbound(): Boolean =
     this.direction == Message.Direction.Outbound.name
+
+internal fun StructuredMessage.isInbound(): Boolean =
+    this.direction == Message.Direction.Inbound.name
 
 internal fun StructuredMessage.isHealthCheckResponse(): Boolean =
     this.metadata["customMessageId"] == HealthCheckID
