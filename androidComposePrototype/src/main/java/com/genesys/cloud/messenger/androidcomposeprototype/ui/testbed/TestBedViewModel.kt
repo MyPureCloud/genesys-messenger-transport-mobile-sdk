@@ -228,8 +228,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             is State.Configured ->
                 "connected: ${newState.connected}," +
                     " newSession: ${newState.newSession}," +
-                    " wasReconnecting: ${oldState is State.Reconnecting}," +
-                    " readOnly: ${newState.readOnly}"
+                    " wasReconnecting: ${oldState is State.Reconnecting}"
             is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Closed -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Error -> "code: ${newState.code}, message: ${newState.message}"

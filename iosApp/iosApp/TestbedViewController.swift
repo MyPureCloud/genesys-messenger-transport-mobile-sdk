@@ -154,7 +154,7 @@ class TestbedViewController: UIViewController {
         case is MessagingClientState.Connected:
             stateMessage = "Connected"
         case let configured as MessagingClientState.Configured:
-            stateMessage = "Configured, connected=\(configured.connected) newSession=\(configured.newSession) wasReconnecting=\(stateChange.oldState is MessagingClientState.Reconnecting) readOnly=\(configured.readOnly)"
+            stateMessage = "Configured, connected=\(configured.connected) newSession=\(configured.newSession) wasReconnecting=\(stateChange.oldState is MessagingClientState.Reconnecting)"
         case let closing as MessagingClientState.Closing:
             stateMessage = "Closing, code=\(closing.code) reason=\(closing.reason)"
         case let closed as MessagingClientState.Closed:
@@ -163,6 +163,8 @@ class TestbedViewController: UIViewController {
             stateMessage = "Error, code=\(error.code) message=\(error.message?.description ?? "nil")"
         case is MessagingClientState.Reconnecting:
             stateMessage = "Reconnecting"
+        case is MessagingClientState.ReadOnly:
+            stateMessage = "ReadOnly"
         default:
             break
         }

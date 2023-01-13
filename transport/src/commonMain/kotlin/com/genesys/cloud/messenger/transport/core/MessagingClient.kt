@@ -37,15 +37,17 @@ interface MessagingClient {
          *
          * @property connected true if session has been configured and connection is established.
          * @property newSession indicates if configured session is new. When configuring an existing session, [newSession] will be false.
-         * @property readOnly represents the session state. When [readOnly] is set to true, the user will not be able to send or receive any new messages,
-         * but they will still be able to fetch and read existing message history.
-         * When [readOnly] is set to false, the user will be able to send and receive messages.
          */
         data class Configured(
             val connected: Boolean,
             val newSession: Boolean,
-            val readOnly: Boolean,
         ) : State()
+
+        /**
+         * MessagingClient is only allowed to perform read actions while in this state. For example, [fetchNextPage].
+         * An InvalidState exception will be thrown on any attempt to send an action.
+         */
+        object ReadOnly : State()
 
         /**
          * Remote peer has indicated that no more incoming messages will be transmitted.

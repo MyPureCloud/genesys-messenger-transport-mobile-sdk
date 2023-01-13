@@ -15,11 +15,13 @@ import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.AttachmentDeletedResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosed
 import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosedEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
 import com.genesys.cloud.messenger.transport.shyrka.receive.HealthCheckEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionExpiredEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
@@ -178,7 +180,7 @@ internal class MessagingClientImpl(
 
     @Throws(Exception::class)
     override suspend fun fetchNextPage() {
-        stateMachine.checkIfConfigured()
+        stateMachine.checkIfConfiguredOrReadOnly()
         if (messageStore.startOfConversation) {
             log.i { "All history has been fetched." }
             messageStore.updateMessageHistory(emptyList(), conversation.size)
@@ -284,7 +286,14 @@ internal class MessagingClientImpl(
             StructuredMessage.Type.Event -> {
                 if (structuredMessage.isOutbound()) {
                     structuredMessage.events.forEach {
-                        eventHandler.onEvent(it)
+                        if (it.isDisconnectionEvent()) {
+                            if (deploymentConfig.isConversationDisconnectEnabled()) {
+                                eventHandler.onEvent(it)
+                                if (deploymentConfig.isReadOnly()) stateMachine.onReadOnly()
+                            }
+                        } else {
+                            eventHandler.onEvent(it)
+                        }
                     }
                 } else {
                     structuredMessage.events.forEach {
@@ -332,9 +341,13 @@ internal class MessagingClientImpl(
                     is SessionResponse -> {
                         decoded.body.run {
                             reconnectionHandler.clear()
-                            stateMachine.onSessionConfigured(connected, newSession, readOnly)
-                            if (newSession && deploymentConfig.isAutostartEnabled()) {
-                                sendAutoStart()
+                            if (readOnly) {
+                                stateMachine.onReadOnly()
+                            } else {
+                                stateMachine.onSessionConfigured(connected, newSession)
+                                if (newSession && deploymentConfig.isAutostartEnabled()) {
+                                    sendAutoStart()
+                                }
                             }
                         }
                     }
@@ -398,6 +411,15 @@ internal class MessagingClientImpl(
         }
     }
 }
+
+private fun StructuredMessageEvent.isDisconnectionEvent(): Boolean =
+    this is PresenceEvent && presence.type == PresenceEvent.Presence.Type.Disconnect
+
+private fun KProperty0<DeploymentConfig?>.isConversationDisconnectEnabled(): Boolean =
+    this.get()?.messenger?.apps?.conversations?.conversationDisconnect?.enabled == true
+
+private fun KProperty0<DeploymentConfig?>.isReadOnly(): Boolean =
+    this.get()?.messenger?.apps?.conversations?.conversationDisconnect?.type == Conversations.ConversationDisconnect.Type.ReadOnly
 
 private fun KProperty0<DeploymentConfig?>.isAutostartEnabled(): Boolean =
     this.get()?.messenger?.apps?.conversations?.autoStart?.enabled == true
