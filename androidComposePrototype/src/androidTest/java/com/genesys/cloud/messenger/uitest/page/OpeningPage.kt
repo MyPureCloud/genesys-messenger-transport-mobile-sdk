@@ -4,7 +4,7 @@ import android.app.Activity
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiSelector
-import com.genesys.cloud.messenger.uitest.support.testConfig
+
 
 class OpeningPage(activity: Activity) : BasePage(activity) {
 
@@ -23,11 +23,11 @@ class OpeningPage(activity: Activity) : BasePage(activity) {
     }
 
     // Enter the deployment ID contained in the assets>testConfig.json file
-    fun enterDeploymentID() {
+    fun enterDeploymentID(deploymentId: String) {
         val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         val deploymentIdField = mDevice.findObject(UiSelector().text(title))
         deploymentIdField.click()
         deploymentIdField.clearTextField()
-        deploymentIdField.legacySetText(testConfig.deploymentId)
+        deploymentIdField.legacySetText(deploymentId)
     }
 }

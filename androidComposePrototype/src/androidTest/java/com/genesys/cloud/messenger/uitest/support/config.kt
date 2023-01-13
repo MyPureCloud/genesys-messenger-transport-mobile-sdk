@@ -11,6 +11,9 @@ data class Config(
     val agentEmail: String,
     val agentUserId: String,
     val deploymentId: String,
+    val humanizeDisableDeploymentId: String,
+    val botDeploymentId: String,
+    val botName: String,
     val password: String,
     val domain: String,
     val apiBaseAddress: String
