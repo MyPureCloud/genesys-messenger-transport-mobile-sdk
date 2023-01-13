@@ -54,8 +54,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     suspend fun init(context: Context) {
         val mmsdkConfiguration = Configuration(
-            deploymentId = BuildConfig.DEPLOYMENT_ID,
-            domain = BuildConfig.DEPLOYMENT_DOMAIN,
+            deploymentId = deploymentId,
+            domain = region,
             logging = true
         )
         DefaultTokenStore.context = context
