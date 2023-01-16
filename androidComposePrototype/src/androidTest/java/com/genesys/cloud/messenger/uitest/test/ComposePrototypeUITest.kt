@@ -56,8 +56,11 @@ class ComposePrototypeUITest : BaseTests() {
     private val avatarText = "imageUrl=https://dev-inin-directory-service-profile.s3.amazonaws.com"
     private val humanText = "originatingEntity=Human"
     private val deploymentText = "Deployment"
-    private val humanizeDisabledText = "Humanize(enabled=false"
-    private val blankName = "name=\"\""
+    private val humanizeDisabledText = "from=Participant(name=null, imageUrl=null"
+    private val botImageName = "from=Participant(name=Test-Bot-Name, imageUrl=null"
+    private val botEntity = "originatingEntity=Bot"
+    private val yesText = "Yes"
+    private val anotherBotMessage = "Ok! Here's another message."
 
     private val TAG = TestBedViewModel::class.simpleName
 
@@ -293,31 +296,24 @@ class ComposePrototypeUITest : BaseTests() {
             sleep(3000)
             apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
             verifyResponse(outboundMessage)
-            //verify name is blank
-            //verify avatar is blank
+            verifyResponse(humanizeDisabledText)
+            verifyResponse(humanText)
             apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
         }
         bye()
     }
 
     @Test
-    fun botAgent() {
+    fun testBotAgent() {
         apiHelper.disconnectAllConversations()
         enterDeploymentInfo(testConfig.botDeploymentId)
         DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
         connect()
-        val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-        else {
-            Log.i(TAG, "Conversation started successfully.")
-            sendMsg(helloText)
-            sleep(3000)
-            apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
-            verifyResponse(outboundMessage)
-            //verify botname
-            //verify botavatar
-            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
-        }
+        verifyResponse(botImageName)
+        verifyResponse(botEntity)
+        sleep(3000)
+        sendMsg(yesText)
+        verifyResponse(anotherBotMessage)
         bye()
     }
 }
