@@ -96,6 +96,14 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
+    fun sendBotResponseAndCheckReply(messageText: String) {
+        messenger {
+            verifyPageIsVisible()
+            enterCommand("$sendMsgText $messageText")
+            verifyResponse(anotherBotMessage)
+        }
+    }
+
     // Send a healthCheck command, wait for the response, and verify it is correct
     fun healthcheckTest() {
         messenger {
@@ -288,12 +296,11 @@ class ComposePrototypeUITest : BaseTests() {
         enterDeploymentInfo(testConfig.humanizeDisableDeploymentId)
         DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
         connect()
+        sendMsg(helloText)
         val conversationInfo = apiHelper.answerNewConversation()
         if (conversationInfo == null) AssertionError("Unable to answer conversation.")
         else {
             Log.i(TAG, "Conversation started successfully.")
-            sendMsg(helloText)
-            sleep(3000)
             apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
             verifyResponse(outboundMessage)
             verifyResponse(humanizeDisabledText)
@@ -312,8 +319,7 @@ class ComposePrototypeUITest : BaseTests() {
         verifyResponse(botImageName)
         verifyResponse(botEntity)
         sleep(3000)
-        sendMsg(yesText)
-        verifyResponse(anotherBotMessage)
+        sendBotResponseAndCheckReply(yesText)
         bye()
     }
 }
