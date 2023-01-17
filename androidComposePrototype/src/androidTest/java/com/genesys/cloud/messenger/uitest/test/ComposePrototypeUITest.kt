@@ -52,8 +52,10 @@ class ComposePrototypeUITest : BaseTests() {
     private val typingIndicatorResponse = "AgentTyping"
     private val outboundMessage = "Right back at you"
     private val autoStartEnabledText = "ConversationAutostart"
-    private val humanNameText = "name=Nellie Hay"
-    private val avatarText = "imageUrl=https://dev-inin-directory-service-profile.s3.amazonaws.com"
+    private var humanNameText = "name=Nellie Hay"
+    private val prodHumanNameText = "name=Beagle Puppy"
+    private var avatarText = "imageUrl=https://dev-inin-directory-service-profile.s3.amazonaws.com"
+    private val prodAvatorText = "imageUrl=https://prod-inin-directory-service-profile.s3.amazonaws.com"
     private val humanText = "originatingEntity=Human"
     private val deploymentText = "Deployment"
     private val humanizeDisabledText = "from=Participant(name=null, imageUrl=null"
@@ -247,6 +249,10 @@ class ComposePrototypeUITest : BaseTests() {
             sleep(3000)
             apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
             verifyResponse(outboundMessage)
+            if (testConfig.domain == "mypurecloud.com") {
+                humanNameText = prodHumanNameText
+                avatarText = prodAvatorText
+            }
             verifyResponse(humanNameText)
             verifyResponse(avatarText)
             verifyResponse(humanText)

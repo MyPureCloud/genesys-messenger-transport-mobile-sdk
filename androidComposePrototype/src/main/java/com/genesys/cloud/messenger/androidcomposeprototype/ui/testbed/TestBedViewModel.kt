@@ -49,7 +49,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     var region: String by mutableStateOf("inindca.com")
         private set
 
-    val regions = listOf("inindca.com")
+    val regions = listOf("inindca.com", "mypurecloud.com")
     private val customAttributes = mutableMapOf<String, String>()
 
     suspend fun init(context: Context) {
