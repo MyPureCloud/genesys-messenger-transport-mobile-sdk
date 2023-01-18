@@ -62,7 +62,7 @@ class ComposePrototypeUITest : BaseTests() {
     private val botImageName = "from=Participant(name=Test-Bot-Name, imageUrl=null"
     private val botEntity = "originatingEntity=Bot"
     private val yesText = "Yes"
-    private val anotherBotMessage = "Ok! Here's another message."
+    private val anotherBotMessage = "Would you like to continue"
 
     private val TAG = TestBedViewModel::class.simpleName
 
@@ -172,11 +172,11 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
-    fun enterDeploymentCommand(responsLookingFor: String) {
+    fun enterDeploymentCommand(responseLookingFor: String) {
         messenger {
             verifyPageIsVisible()
             enterCommand(deploymentText)
-            waitForProperResponse(responsLookingFor)
+            waitForProperResponse(responseLookingFor)
         }
     }
 
