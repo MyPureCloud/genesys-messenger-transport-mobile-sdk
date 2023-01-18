@@ -187,38 +187,38 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
-//    @Test
-//    fun testSendTypingIndicator() {
-//        apiHelper.disconnectAllConversations()
-//        enterDeploymentInfo(testConfig.deploymentId)
-//        DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
-//        connect()
-//        val conversationInfo = apiHelper.answerNewConversation()
-//        if (conversationInfo != null) {
-//            apiHelper.sendTypingIndicatorFromAgentToUser(conversationInfo)
-//            verifyResponse(typingIndicatorResponse)
-//            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
-//        } else AssertionError("Agent did not answer conversation.")
-//        apiHelper.disconnectAllConversations()
-//    }
+    @Test
+    fun testSendTypingIndicator() {
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.deploymentId)
+        DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
+        connect()
+        val conversationInfo = apiHelper.answerNewConversation()
+        if (conversationInfo != null) {
+            apiHelper.sendTypingIndicatorFromAgentToUser(conversationInfo)
+            verifyResponse(typingIndicatorResponse)
+            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+        } else AssertionError("Agent did not answer conversation.")
+        apiHelper.disconnectAllConversations()
+    }
 
-//    @Test
-//    // Adjusting the test name to force this test to run first
-//    fun test1VerifyAutoStart() {
-//        apiHelper.disconnectAllConversations()
-//        enterDeploymentInfo(testConfig.deploymentId)
-//        // Force a new session. AutoStart is enabled and newSession is true
-//        DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
-//        connect()
-//        verifyResponse(autoStartEnabledText)
-//        val conversationInfo = apiHelper.answerNewConversation()
-//        if (conversationInfo == null) AssertionError("Unable to answer conversation with autoStart enabled.")
-//        else {
-//            Log.i(TAG, "Conversation started successfully with autoStart enabled.")
-//            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
-//        }
-//        apiHelper.disconnectAllConversations()
-//    }
+    @Test
+    // Adjusting the test name to force this test to run first
+    fun test1VerifyAutoStart() {
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.deploymentId)
+        // Force a new session. AutoStart is enabled and newSession is true
+        DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
+        connect()
+        verifyResponse(autoStartEnabledText)
+        val conversationInfo = apiHelper.answerNewConversation()
+        if (conversationInfo == null) AssertionError("Unable to answer conversation with autoStart enabled.")
+        else {
+            Log.i(TAG, "Conversation started successfully with autoStart enabled.")
+            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+        }
+        apiHelper.disconnectAllConversations()
+    }
 
     @Test
     fun testHealthCheck() {
@@ -262,23 +262,23 @@ class ComposePrototypeUITest : BaseTests() {
         bye()
     }
 
-//    @Test
-//    fun testAttachments() {
-//        apiHelper.disconnectAllConversations()
-//        enterDeploymentInfo(testConfig.deploymentId)
-//        DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
-//        connect()
-//        val conversationInfo = apiHelper.answerNewConversation()
-//        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-//        else {
-//            Log.i(TAG, "Conversation started successfully.")
-//            attachImage()
-//            // wait for image to load
-//            sleep(3000)
-//            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
-//        }
-//        bye()
-//    }
+    @Test
+    fun testAttachments() {
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.deploymentId)
+        DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
+        connect()
+        val conversationInfo = apiHelper.answerNewConversation()
+        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
+        else {
+            Log.i(TAG, "Conversation started successfully.")
+            attachImage()
+            // wait for image to load
+            sleep(3000)
+            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+        }
+        bye()
+    }
 
     @Test
     fun testCustomAttributes() {
@@ -297,36 +297,36 @@ class ComposePrototypeUITest : BaseTests() {
         bye()
     }
 
-//    @Test
-//    fun testUnknownAgent() {
-//        apiHelper.disconnectAllConversations()
-//        enterDeploymentInfo(testConfig.humanizeDisableDeploymentId)
-//        DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
-//        connect()
-//        sendMsg(helloText)
-//        val conversationInfo = apiHelper.answerNewConversation()
-//        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-//        else {
-//            Log.i(TAG, "Conversation started successfully.")
-//            apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
-//            verifyResponse(outboundMessage)
-//            verifyResponse(humanizeDisabledText)
-//            verifyResponse(humanText)
-//            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
-//        }
-//        bye()
-//    }
-//
-//    @Test
-//    fun testBotAgent() {
-//        apiHelper.disconnectAllConversations()
-//        enterDeploymentInfo(testConfig.botDeploymentId)
-//        DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
-//        connect()
-//        verifyResponse(botImageName)
-//        verifyResponse(botEntity)
-//        sleep(3000)
-//        sendBotResponseAndCheckReply(yesText)
-//        bye()
-//    }
+    @Test
+    fun testUnknownAgent() {
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.humanizeDisableDeploymentId)
+        DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
+        connect()
+        sendMsg(helloText)
+        val conversationInfo = apiHelper.answerNewConversation()
+        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
+        else {
+            Log.i(TAG, "Conversation started successfully.")
+            apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
+            verifyResponse(outboundMessage)
+            verifyResponse(humanizeDisabledText)
+            verifyResponse(humanText)
+            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+        }
+        bye()
+    }
+
+    @Test
+    fun testBotAgent() {
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.botDeploymentId)
+        DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
+        connect()
+        verifyResponse(botImageName)
+        verifyResponse(botEntity)
+        sleep(3000)
+        sendBotResponseAndCheckReply(yesText)
+        bye()
+    }
 }
