@@ -7,7 +7,6 @@ import androidx.test.uiautomator.UiSelector
 import com.genesys.cloud.messenger.uitest.support.testConfig
 import java.lang.Thread.sleep
 
-
 class OpeningPage(activity: Activity) : BasePage(activity) {
 
     val title = "Deployment ID"
@@ -39,8 +38,7 @@ class OpeningPage(activity: Activity) : BasePage(activity) {
         if (testConfig.domain != regionDefault) {
             val prodRegionField = mDevice.findObject(UiSelector().text(testConfig.domain))
             prodRegionField.click()
-        }
-        else {
+        } else {
             val dcaRegionField = mDevice.findObject(UiSelector().text(regionDefault))
             dcaRegionField.click()
         }

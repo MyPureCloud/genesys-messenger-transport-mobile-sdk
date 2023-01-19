@@ -1,26 +1,23 @@
 package com.genesys.cloud.messenger.uitest.test
 
-import android.os.Environment
 import android.util.Log
 import androidx.test.filters.LargeTest
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed.TestBedViewModel
 import com.genesys.cloud.messenger.transport.util.DefaultTokenStore
-import com.genesys.cloud.messenger.uitest.support.ApiHelper.*
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.API
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.answerNewConversation
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.disconnectAllConversations
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendConnectOrDisconnect
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendOutboundMessageFromAgentToUser
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendTypingIndicatorFromAgentToUser
 import com.genesys.cloud.messenger.uitest.support.testConfig
 import org.junit.FixMethodOrder
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
-import java.io.File
-import java.io.IOException
 import java.lang.Thread.sleep
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.util.*
-
+import java.util.UUID
 
 @Suppress("FunctionName")
 @LargeTest
@@ -66,7 +63,6 @@ class ComposePrototypeUITest : BaseTests() {
     private val anotherBotMessage = "Would you like to continue"
 
     private val TAG = TestBedViewModel::class.simpleName
-
 
     fun enterDeploymentInfo(deploymentId: String) {
         opening {

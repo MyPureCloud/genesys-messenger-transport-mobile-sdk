@@ -91,7 +91,7 @@ fun API.sendOutboundMessageFromAgentToUser(conversationInfo: Conversation, messa
     val agentParticipant = conversationInfo.getParticipantFromPurpose("agent")
     val communicationId = conversationInfo.getCommunicationId(agentParticipant!!)
     val payload = "{\"textBody\": \"${message}\"}".toByteArray()
-    publicApiCall("POST", "/api/v2/conversations/messages/${conversationInfo.id}/communications/${communicationId}/messages", payload)
+    publicApiCall("POST", "/api/v2/conversations/messages/${conversationInfo.id}/communications/$communicationId/messages", payload)
 }
 
 fun API.answerNewConversation(): Conversation? {
