@@ -297,7 +297,6 @@ class ComposePrototypeUITest : BaseTests() {
     fun testUnknownAgent() {
         apiHelper.disconnectAllConversations()
         enterDeploymentInfo(testConfig.humanizeDisableDeploymentId)
-        DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
         connect()
         sendMsg(helloText)
         val conversationInfo = apiHelper.answerNewConversation()
@@ -317,7 +316,6 @@ class ComposePrototypeUITest : BaseTests() {
     fun testBotAgent() {
         apiHelper.disconnectAllConversations()
         enterDeploymentInfo(testConfig.botDeploymentId)
-        DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
         connect()
         verifyResponse(botImageName)
         verifyResponse(botEntity)
