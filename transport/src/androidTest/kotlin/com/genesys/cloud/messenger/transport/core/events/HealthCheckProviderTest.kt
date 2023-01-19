@@ -20,8 +20,7 @@ class HealthCheckProviderTest {
     @Test
     fun whenEncode() {
         val expected = Request.echoRequest
-
-        val result = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
+        val result = subject.encodeRequest(token = Request.token)
 
         assertThat(result).isEqualTo(expected)
     }
@@ -30,10 +29,9 @@ class HealthCheckProviderTest {
     fun whenEncodeWithCoolDown() {
         val healthCheckCoolDownInMilliseconds = 30000
         val expected = Request.echoRequest
-
-        val firstResult = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
+        val firstResult = subject.encodeRequest(token = Request.token)
         every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + healthCheckCoolDownInMilliseconds }
-        val secondResult = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
+        val secondResult = subject.encodeRequest(token = Request.token)
 
         assertThat(firstResult).isEqualTo(expected)
         assertThat(secondResult).isEqualTo(expected)
@@ -42,9 +40,8 @@ class HealthCheckProviderTest {
     @Test
     fun whenEncodeWithoutCoolDown() {
         val expected = Request.echoRequest
-
-        val firstResult = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
-        val secondResult = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
+        val firstResult = subject.encodeRequest(token = Request.token)
+        val secondResult = subject.encodeRequest(token = Request.token)
 
         assertThat(firstResult).isEqualTo(expected)
         assertThat(secondResult).isNull()
@@ -53,10 +50,9 @@ class HealthCheckProviderTest {
     @Test
     fun whenEncodeWithoutCoolDownButWithClear() {
         val expected = Request.echoRequest
-
-        val firstResult = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
+        val firstResult = subject.encodeRequest(token = Request.token)
         subject.clear()
-        val secondResult = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
+        val secondResult = subject.encodeRequest(token = Request.token)
 
         assertThat(firstResult).isEqualTo(expected)
         assertThat(secondResult).isEqualTo(expected)

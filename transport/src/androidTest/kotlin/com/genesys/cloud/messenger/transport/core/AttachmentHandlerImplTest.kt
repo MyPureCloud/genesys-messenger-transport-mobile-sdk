@@ -12,7 +12,8 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
-import io.ktor.client.features.ClientRequestException
+import com.genesys.cloud.messenger.transport.util.Request
+import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.request
 import io.ktor.http.HttpStatusCode
@@ -45,7 +46,7 @@ internal class AttachmentHandlerImplTest {
     private val mockAttachmentListener: (Attachment) -> Unit = spyk()
     private val processedAttachments = mutableMapOf<String, ProcessedAttachment>()
 
-    private val givenToken = "00000000-0000-0000-0000-000000000000"
+    private val givenToken = Request.token
     private val givenAttachmentId = "99999999-9999-9999-9999-999999999999"
     private val givenUploadSuccessEvent = uploadSuccessEvent()
     private val givenPresignedUrlResponse = presignedUrlResponse()
@@ -77,10 +78,9 @@ internal class AttachmentHandlerImplTest {
     @Test
     fun whenPrepareCalled() {
         val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Presigning)
-        val expectedProcessedAttachment =
-            ProcessedAttachment(expectedAttachment, ByteArray(1))
+        val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(1))
         val expectedOnAttachmentRequest = OnAttachmentRequest(
-            token = "00000000-0000-0000-0000-000000000000",
+            token = givenToken,
             attachmentId = "99999999-9999-9999-9999-999999999999",
             fileName = "image.png",
             fileType = "image/png",
@@ -145,7 +145,7 @@ internal class AttachmentHandlerImplTest {
             id = givenAttachmentId,
             state = State.Error(
                 ErrorCode.ClientResponseError(404),
-                "Client request(http://someurl.com) invalid: 404 page not found. Text: \"something went wrong\""
+                "Client request( http://someurl.com) invalid: 404 page not found. Text: \"something went wrong\""
             )
         )
         givenPrepareCalled()

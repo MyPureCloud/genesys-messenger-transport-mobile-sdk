@@ -8,6 +8,7 @@ import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
+import com.genesys.cloud.messenger.transport.util.Request
 import io.mockk.Called
 import io.mockk.clearMocks
 import io.mockk.mockk
@@ -22,7 +23,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 internal class MessageStoreTest {
-    private val givenToken = "00000000-0000-0000-0000-000000000000"
+    private val givenToken = Request.token
     private val messageSlot = slot<MessageEvent>()
     private val mockMessageListener: ((MessageEvent) -> Unit) = mockk(relaxed = true)
 
