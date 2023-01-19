@@ -13,10 +13,8 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.put
-import io.ktor.client.request.request
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpMethod
 import kotlin.coroutines.cancellation.CancellationException
 
 internal class WebMessagingApi(

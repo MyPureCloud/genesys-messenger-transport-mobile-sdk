@@ -8,7 +8,7 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
-import io.ktor.serialization.kotlinx.json.*
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 private const val TIMEOUT_IN_MS = 30000L
@@ -27,7 +27,6 @@ internal fun defaultHttpClient(logging: Boolean = false): HttpClient = HttpClien
                 useAlternativeNames = false
             }
         )
-
     }
     install(HttpCallValidator)
     install(HttpTimeout) {
