@@ -84,9 +84,9 @@ final class MessengerInteractor {
         }
     }
 
-    func attachImage(kotlinByteArray: KotlinByteArray) throws {
+    func attachImage(kotlinByteArray: KotlinByteArray, fileName: String = "image.png") throws {
         do {
-            try messagingClient.attach(byteArray: kotlinByteArray, fileName: "image.png", uploadProgress: { progress in
+            try messagingClient.attach(byteArray: kotlinByteArray, fileName: fileName, uploadProgress: { progress in
                 print("Attachment upload progress: \(progress)")
             })
         } catch {

@@ -87,6 +87,13 @@ fun API.sendTypingIndicatorFromAgentToUser(conversationInfo: Conversation) {
     publicApiCall("POST", "/api/v2/conversations/messages/${conversationInfo.id}/communications/${conversationInfo.getCommunicationId(participant!!)}/typing", payload = payload)
 }
 
+fun API.sendOutboundMessageFromAgentToUser(conversationInfo: Conversation, message: String) {
+    val agentParticipant = conversationInfo.getParticipantFromPurpose("agent")
+    val communicationId = conversationInfo.getCommunicationId(agentParticipant!!)
+    val payload = "{\"textBody\": \"${message}\"}".toByteArray()
+    publicApiCall("POST", "/api/v2/conversations/messages/${conversationInfo.id}/communications/$communicationId/messages", payload)
+}
+
 fun API.answerNewConversation(): Conversation? {
     changePresence("On Queue", testConfig.agentUserId)
     val conversation = waitForConversation()

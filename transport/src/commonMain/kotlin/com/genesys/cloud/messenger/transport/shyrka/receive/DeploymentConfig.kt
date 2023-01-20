@@ -41,9 +41,13 @@ data class Conversations(
     val showAgentTypingIndicator: Boolean = false,
     val showUserTypingIndicator: Boolean = false,
     val autoStart: AutoStart = AutoStart(),
+    val humanize: Humanize = Humanize()
 ) {
     @Serializable
     data class AutoStart(val enabled: Boolean = false)
+
+    @Serializable
+    data class Humanize(val enabled: Boolean = false)
 }
 
 @Serializable
