@@ -34,7 +34,7 @@ class UserTypingProviderTest {
 
     @Test
     fun whenEncodeWithCoolDown() {
-        val typingIndicatorCoolDownInMilliseconds = 5000
+        val typingIndicatorCoolDownInMilliseconds = UserTypingProvider.TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND + 250
         val expected = Request.userTypingRequest
         val firstResult = subject.encodeRequest(token = Request.token)
         every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + typingIndicatorCoolDownInMilliseconds }

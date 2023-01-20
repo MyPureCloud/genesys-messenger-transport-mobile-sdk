@@ -219,7 +219,7 @@ class MessagingClientImplTest {
 
     @Test
     fun whenSendHealthCheckTwiceWithCoolDown() {
-        val healthCheckCoolDownInMilliseconds = 30000
+        val healthCheckCoolDownInMilliseconds = HealthCheckProvider.HEALTH_CHECK_COOL_DOWN_IN_MILLISECOND + 250
         val expectedMessage = Request.echoRequest
 
         subject.connect()
@@ -708,7 +708,7 @@ class MessagingClientImplTest {
 
     @Test
     fun whenIndicateTypingTwiceWithCoolDown() {
-        val typingIndicatorCoolDownInMilliseconds = 5000
+        val typingIndicatorCoolDownInMilliseconds = UserTypingProvider.TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND + 250
         val expectedMessage = Request.userTypingRequest
 
         subject.connect()
