@@ -67,7 +67,7 @@ internal fun StateMachine.isConnected(): Boolean = currentState is State.Connect
 
 @Throws(IllegalStateException::class)
 internal fun StateMachine.checkIfConfigured() =
-    check(currentState is State.Configured) { "MessagingClient is not configured or in ReadOnly state." }
+    check(currentState is State.Configured) { "MessagingClient is not Configured or in ReadOnly state." }
 
 @Throws(IllegalStateException::class)
 internal fun StateMachine.checkIfConfiguredOrReadOnly() =
