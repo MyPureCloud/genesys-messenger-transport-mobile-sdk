@@ -37,6 +37,8 @@ android {
     packagingOptions {
         resources {
             excludes += "META-INF/*.kotlin_module"
+            excludes += "META-INF/LICENSE.md"
+            excludes += "META-INF/LICENSE-notice.md"
         }
     }
 }

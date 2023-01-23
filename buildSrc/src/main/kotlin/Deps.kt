@@ -6,7 +6,7 @@ object Deps {
     private const val kotlinxSerializationJsonVersion = "1.3.2"
     private const val ktorVersion = "1.6.8"
     private const val mockWebServerVersion = "4.9.0"
-    private const val mockkVersion = "1.12.2"
+    private const val mockkVersion = "1.13.3"
     private const val okhttpVersion = "4.10.0"
     private const val klockVersion = "2.4.13"
 

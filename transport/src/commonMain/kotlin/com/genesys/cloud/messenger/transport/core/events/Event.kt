@@ -6,6 +6,7 @@ import com.genesys.cloud.messenger.transport.core.ErrorCode
 /**
  * Base class for Transport events.
  */
+@kotlinx.serialization.Serializable
 sealed class Event {
     /**
      *  This event indicates that the agent has begun typing a message.

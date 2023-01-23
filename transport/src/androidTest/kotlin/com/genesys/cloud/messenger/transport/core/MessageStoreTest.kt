@@ -155,10 +155,17 @@ internal class MessageStoreTest {
 
     @Test
     fun whenUpdateInboundWithIdThatDoesNotPresentInConversation() {
-        subject.update(message = Message("some id"))
+        val givenMessage =
+            Message(id = "randomId", state = Message.State.Sent, text = "test message")
 
-        assertTrue { subject.getConversation().isEmpty() }
-        verify { mockMessageListener wasNot Called }
+        subject.update(message = givenMessage)
+
+        verify { mockMessageListener(capture(messageSlot)) }
+        assertTrue { subject.getConversation().size == 1 }
+        assertEquals(
+            givenMessage,
+            (messageSlot.captured as MessageEvent.MessageInserted).message
+        )
     }
 
     @Test

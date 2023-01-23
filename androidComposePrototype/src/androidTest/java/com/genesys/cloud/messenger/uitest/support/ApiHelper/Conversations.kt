@@ -1,11 +1,15 @@
 package com.genesys.cloud.messenger.uitest.support.ApiHelper
 
+import android.util.Log
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.JsonNode
+import com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed.TestBedViewModel
 import com.genesys.cloud.messenger.uitest.support.testConfig
 import org.awaitility.Awaitility
 import java.lang.Thread.sleep
 import java.util.concurrent.TimeUnit
+
+private val TAG = TestBedViewModel::class.simpleName
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Conversation(
@@ -37,8 +41,6 @@ data class Participant(
     var messages: Array<CallDetails>
 )
 
-var statusPayload = "{\"state\": \"CONNECTED\"}"
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class CallDetails(
     val state: String,
@@ -69,12 +71,12 @@ fun API.waitForConversation(): Conversation? {
 }
 
 fun API.getAllConversations(): Array<Conversation> {
-    val result = publicApiCall(httpMethod = "GET", httpURL = "/api/v2/conversations")?.get("entities")?.toList()
+    val result = publicApiCall("GET", "/api/v2/conversations")?.get("entities")?.toList()
     return parseJsonToClass(result)
 }
 
 fun API.getConversationInfo(conversationId: String): Conversation {
-    val result = publicApiCall(httpMethod = "GET", httpURL = "/api/v2/conversations/$conversationId")
+    val result = publicApiCall("GET", "/api/v2/conversations/$conversationId")
     return parseJsonToClass(result)
 }
 
@@ -83,6 +85,13 @@ fun API.sendTypingIndicatorFromAgentToUser(conversationInfo: Conversation) {
     val participant = conversationInfo.getParticipantForUserId(agentParticipant!!.userId!!)
     val payload = "{\"typing\": {\"type\": \"On\"}}".toByteArray()
     publicApiCall("POST", "/api/v2/conversations/messages/${conversationInfo.id}/communications/${conversationInfo.getCommunicationId(participant!!)}/typing", payload = payload)
+}
+
+fun API.sendOutboundMessageFromAgentToUser(conversationInfo: Conversation, message: String) {
+    val agentParticipant = conversationInfo.getParticipantFromPurpose("agent")
+    val communicationId = conversationInfo.getCommunicationId(agentParticipant!!)
+    val payload = "{\"textBody\": \"${message}\"}".toByteArray()
+    publicApiCall("POST", "/api/v2/conversations/messages/${conversationInfo.id}/communications/$communicationId/messages", payload)
 }
 
 fun API.answerNewConversation(): Conversation? {
@@ -98,15 +107,18 @@ fun API.answerNewConversation(): Conversation? {
 }
 
 fun API.sendConnectOrDisconnect(conversationInfo: Conversation, connecting: Boolean, wrapup: Boolean = true) {
+    var statusPayload = ""
     println("Sending $connecting request to: ${conversationInfo.id} from a conversation.")
     val agentParticipant = conversationInfo.getParticipantFromPurpose("agent")
     var wrapupCodePayload: JsonNode? = null
     if (!connecting) {
         statusPayload = "{\"state\": \"DISCONNECTED\"}"
-        wrapupCodePayload = getDefaultWrapupCodeId(conversationInfo.id, agentParticipant!!.id!!)
+        wrapupCodePayload = getDefaultWrapupCodeId(conversationInfo.id, agentParticipant!!.id)
+    } else {
+        statusPayload = "{\"state\": \"CONNECTED\"}"
     }
-    // Send requests to disconnect the conversation and send the wrapup code.
-    sendStatusToParticipant(conversationInfo.id, agentParticipant!!.id)
+    // Send requests to connect/disconnect the conversation and send the wrapup code.
+    sendStatusToParticipant(conversationInfo.id, agentParticipant!!.id, statusPayload)
     if (connecting) {
         waitForParticipantToConnect(conversationInfo.id)
     } else if (wrapup) {
@@ -129,7 +141,7 @@ private fun API.waitForParticipantToConnect(conversationId: String) {
         }
 }
 
-fun API.sendStatusToParticipant(conversationId: String, participantId: String) {
+fun API.sendStatusToParticipant(conversationId: String, participantId: String, statusPayload: String) {
     publicApiCall("PATCH", "/api/v2/conversations/messages/$conversationId/participants/$participantId", statusPayload.toByteArray())
 }
 
@@ -141,4 +153,12 @@ fun API.sendWrapupCode(conversationInfo: Conversation, wrapupPayload: JsonNode?)
         "/api/v2/conversations/messages/${conversationInfo.id}/participants/${agentParticipant?.id}/communications/$communicationId/wrapup",
         ("{ \"code\": \"${wrapupPayload?.get("id")}\", \"notes\": \"\"}").toByteArray()
     )
+}
+
+fun API.disconnectAllConversations() {
+    val conversationList = getAllConversations()
+    conversationList.forEach { conversation ->
+        Log.i(TAG, "disconnecting conversationId: ${conversation.id}")
+        sendConnectOrDisconnect(conversation, false, true)
+    }
 }

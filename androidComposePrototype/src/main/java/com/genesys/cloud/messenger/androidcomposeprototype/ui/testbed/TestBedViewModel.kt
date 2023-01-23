@@ -6,7 +6,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.genesys.cloud.messenger.androidcomposeprototype.BuildConfig
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.MessageEvent
@@ -46,16 +45,16 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         private set
     var deploymentId: String by mutableStateOf("")
         private set
-    var region: String by mutableStateOf("inindca")
+    var region: String by mutableStateOf("inindca.com")
         private set
 
-    val regions = listOf("inindca")
+    val regions = listOf("inindca.com", "mypurecloud.com")
     private val customAttributes = mutableMapOf<String, String>()
 
     suspend fun init(context: Context) {
         val mmsdkConfiguration = Configuration(
-            deploymentId = BuildConfig.DEPLOYMENT_ID,
-            domain = BuildConfig.DEPLOYMENT_DOMAIN,
+            deploymentId = deploymentId,
+            domain = region,
             logging = true
         )
         DefaultTokenStore.context = context

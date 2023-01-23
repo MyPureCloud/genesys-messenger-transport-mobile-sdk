@@ -7,12 +7,17 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses.isoTestTimestamp
+import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.isInbound
 import com.genesys.cloud.messenger.transport.shyrka.receive.isOutbound
 import com.genesys.cloud.messenger.transport.util.extensions.fromIsoToEpochMilliseconds
 import com.genesys.cloud.messenger.transport.util.extensions.getUploadedAttachments
+import com.genesys.cloud.messenger.transport.util.extensions.mapOriginatingEntity
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import org.junit.Test
@@ -27,7 +32,8 @@ internal class MessageExtensionTest {
             state = Message.State.Sent,
             type = "Text",
             text = "\uD83E\uDD2A",
-            timeStamp = 1398892191411L
+            timeStamp = 1398892191411L,
+            from = Message.Participant(originatingEntity = Message.Participant.OriginatingEntity.Bot),
         )
         val expectedMessage2 = Message(
             id = "1234567890",
@@ -36,6 +42,8 @@ internal class MessageExtensionTest {
             type = "Text",
             text = "customer msg 7",
             timeStamp = null,
+            events = listOf(Event.ConversationAutostart),
+            from = Message.Participant(originatingEntity = Message.Participant.OriginatingEntity.Human),
         )
 
         val result = TestWebMessagingApiResponses.testMessageEntityList.toMessageList()
@@ -44,10 +52,16 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun whenStructuredMessageToMessage() {
+    fun whenInboundStructuredMessageToMessage() {
         val givenStructuredMessage = StructuredMessage(
             id = "id",
-            channel = StructuredMessage.Channel(time = isoTestTimestamp),
+            channel = StructuredMessage.Channel(
+                time = isoTestTimestamp,
+                from = StructuredMessage.Participant(
+                    nickname = "Bob",
+                    image = "http://image.png",
+                )
+            ),
             type = StructuredMessage.Type.Text,
             text = "test text",
             content = listOf(
@@ -62,7 +76,13 @@ internal class MessageExtensionTest {
                 )
             ),
             direction = "Inbound",
-            metadata = mapOf("customMessageId" to "test custom id")
+            metadata = mapOf("customMessageId" to "test custom id"),
+            events = listOf(
+                PresenceEvent(
+                    eventType = StructuredMessageEvent.Type.Presence,
+                    presence = PresenceEvent.Presence("Join")
+                )
+            )
         )
         val expectedMessage =
             Message(
@@ -78,6 +98,12 @@ internal class MessageExtensionTest {
                         fileName = "test.png",
                         state = Attachment.State.Sent("http://test.com")
                     )
+                ),
+                events = listOf<Event>(Event.ConversationAutostart),
+                from = Message.Participant(
+                    name = "Bob",
+                    imageUrl = "http://image.png",
+                    originatingEntity = Message.Participant.OriginatingEntity.Human
                 )
             )
 
@@ -130,6 +156,27 @@ internal class MessageExtensionTest {
     }
 
     @Test
+    fun whenOutboundStructuredMessageToMessageFromParticipantWithUnknownInfo() {
+        val givenStructuredMessage = StructuredMessage(
+            id = "id",
+            type = StructuredMessage.Type.Text,
+            direction = "Outbound",
+        )
+        val expectedMessage =
+            Message(
+                id = "id",
+                direction = Message.Direction.Outbound,
+                state = Message.State.Sent,
+                type = "Text",
+                from = Message.Participant(
+                    originatingEntity = Message.Participant.OriginatingEntity.Unknown
+                )
+            )
+
+        assertThat(givenStructuredMessage.toMessage()).isEqualTo(expectedMessage)
+    }
+
+    @Test
     fun whenFromIsoToEpochMillisecondsOnValidISOString() {
         val expectedTimestamp = 1398892191411L
 
@@ -172,5 +219,82 @@ internal class MessageExtensionTest {
         )
 
         assertThat(givenStructuredMessage.isOutbound()).isFalse()
+    }
+
+    @Test
+    fun whenInboundStructuredMessageCheckedForIsInbound() {
+        val givenStructuredMessage = StructuredMessage(
+            id = "some_id",
+            type = StructuredMessage.Type.Text,
+            direction = "Inbound"
+        )
+
+        assertThat(givenStructuredMessage.isInbound()).isTrue()
+    }
+
+    @Test
+    fun whenOutboundStructuredMessageCheckedForIsInbound() {
+        val givenStructuredMessage = StructuredMessage(
+            id = "some_id",
+            type = StructuredMessage.Type.Text,
+            direction = "Outbound"
+        )
+
+        assertThat(givenStructuredMessage.isInbound()).isFalse()
+    }
+
+    @Test
+    fun whenMapOriginatingEntityHumanWithInboundFalse() {
+        val givenIsInbound = false
+        val originatingEntity = "Human"
+        val expectedOriginatingEntity = Message.Participant.OriginatingEntity.Human
+
+        val result = originatingEntity.mapOriginatingEntity { givenIsInbound }
+
+        assertThat(result).isEqualTo(expectedOriginatingEntity)
+    }
+
+    @Test
+    fun whenMapOriginatingEntityBotWithInboundFalse() {
+        val givenIsInbound = false
+        val originatingEntity = "Bot"
+        val expectedOriginatingEntity = Message.Participant.OriginatingEntity.Bot
+
+        val result = originatingEntity.mapOriginatingEntity { givenIsInbound }
+
+        assertThat(result).isEqualTo(expectedOriginatingEntity)
+    }
+
+    @Test
+    fun whenMapOriginatingEntityUnknownWithInboundFalse() {
+        val givenIsInbound = false
+        val originatingEntity = "any value"
+        val expectedOriginatingEntity = Message.Participant.OriginatingEntity.Unknown
+
+        val result = originatingEntity.mapOriginatingEntity { givenIsInbound }
+
+        assertThat(result).isEqualTo(expectedOriginatingEntity)
+    }
+
+    @Test
+    fun whenMapOriginatingEntityNullWithInboundFalse() {
+        val givenIsInbound = false
+        val originatingEntity = null
+        val expectedOriginatingEntity = Message.Participant.OriginatingEntity.Unknown
+
+        val result = originatingEntity.mapOriginatingEntity { givenIsInbound }
+
+        assertThat(result).isEqualTo(expectedOriginatingEntity)
+    }
+
+    @Test
+    fun whenMapOriginatingEntityBotWithInboundTrue() {
+        val givenIsInbound = true
+        val originatingEntity = "Bot"
+        val expectedOriginatingEntity = Message.Participant.OriginatingEntity.Human
+
+        val result = originatingEntity.mapOriginatingEntity { givenIsInbound }
+
+        assertThat(result).isEqualTo(expectedOriginatingEntity)
     }
 }

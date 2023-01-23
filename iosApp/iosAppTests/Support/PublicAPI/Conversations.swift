@@ -45,7 +45,8 @@ extension ApiHelper {
 
     public func waitForConversation() -> ConversationInfo? {
         var conversations: JsonDictionary?
-        Wait.queryUntilTrue(queryInfo: "Waiting for a conversation to be available.") {
+        // 1 minute wait maximum.
+        Wait.queryUntilTrue(queryInfo: "Waiting for a conversation to be available.", attempts: 60) {
             conversations = getSmsConversations()
             return (conversations?.value(forKey: "entities") as? [JsonDictionary])?.first != nil
         }
@@ -147,7 +148,7 @@ extension ApiHelper {
         }
 
         // Send the file.
-        guard let image = TestConfig.shared.pullTestPng(), let imageData = image.pngData() else {
+        guard let imageData = UIImage(named: "image")?.pngData() else {
             XCTFail("Failed to get Image information.")
             return nil
         }
