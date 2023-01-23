@@ -40,9 +40,8 @@ internal class StateMachineImpl(
     override fun onSessionConfigured(
         connected: Boolean,
         newSession: Boolean,
-        readOnly: Boolean,
     ) {
-        currentState = State.Configured(connected, newSession, readOnly)
+        currentState = State.Configured(connected, newSession)
     }
 
     @Throws(IllegalStateException::class)
@@ -58,13 +57,21 @@ internal class StateMachineImpl(
     override fun onError(code: ErrorCode, message: String?) {
         currentState = State.Error(code, message)
     }
+
+    override fun onReadOnly() {
+        currentState = State.ReadOnly
+    }
 }
 
 internal fun StateMachine.isConnected(): Boolean = currentState is State.Connected
 
 @Throws(IllegalStateException::class)
 internal fun StateMachine.checkIfConfigured() =
-    check(currentState is State.Configured) { "WebMessaging client is not configured." }
+    check(currentState is State.Configured) { "MessagingClient is not Configured or in ReadOnly state." }
+
+@Throws(IllegalStateException::class)
+internal fun StateMachine.checkIfConfiguredOrReadOnly() =
+    check(currentState is State.Configured || currentState is State.ReadOnly) { "To perform this action MessagingClient must be either Configured or in ReadOnly state. " }
 
 internal fun StateMachine.isClosed(): Boolean = currentState is State.Closed
 

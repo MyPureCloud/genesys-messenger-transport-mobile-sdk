@@ -95,7 +95,7 @@ class MessagingClientImplTest {
             slot.captured.onMessage("")
         }
         every { sendMessage(Request.configureRequest) } answers {
-            slot.captured.onMessage(Response.configureSuccess)
+            slot.captured.onMessage(Response.configureSuccess())
         }
     }
 
@@ -154,7 +154,7 @@ class MessagingClientImplTest {
     fun whenConnect() {
         subject.connect()
 
-        assertThat(subject).isConfigured(connected = true, newSession = true, readOnly = false)
+        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
         verifySequence {
             connectSequence()
         }
@@ -167,7 +167,7 @@ class MessagingClientImplTest {
 
         subject.disconnect()
 
-        assertThat(subject).isClosed(expectedState.code, expectedState.reason)
+        assertThat(subject.currentState).isClosed(expectedState.code, expectedState.reason)
         verifySequence {
             connectSequence()
             disconnectSequence(expectedState.code, expectedState.reason)
@@ -349,7 +349,7 @@ class MessagingClientImplTest {
 
         slot.captured.onFailure(expectedException, ErrorCode.WebsocketError)
 
-        assertThat(subject).isError(expectedErrorState.code, expectedErrorState.message)
+        assertThat(subject.currentState).isError(expectedErrorState.code, expectedErrorState.message)
         verifySequence {
             connectSequence()
             mockMessageStore.invalidateConversationCache()
@@ -372,12 +372,17 @@ class MessagingClientImplTest {
 
         subject.connect()
 
-        assertThat(subject).isError(expectedErrorState.code, expectedErrorState.message)
+        assertThat(subject.currentState).isError(expectedErrorState.code, expectedErrorState.message)
         verifySequence {
             mockStateChangedListener(fromIdleToConnecting)
             mockPlatformSocket.openSocket(any())
             mockMessageStore.invalidateConversationCache()
-            mockStateChangedListener(StateChange(oldState = State.Connecting, newState = expectedErrorState))
+            mockStateChangedListener(
+                StateChange(
+                    oldState = State.Connecting,
+                    newState = expectedErrorState,
+                )
+            )
             mockAttachmentHandler.clearAll()
             mockReconnectionHandler.clear()
         }
@@ -394,7 +399,7 @@ class MessagingClientImplTest {
 
         subject.connect()
 
-        assertThat(subject).isError(expectedErrorState.code, expectedErrorState.message)
+        assertThat(subject.currentState).isError(expectedErrorState.code, expectedErrorState.message)
         verifySequence {
             connectWithFailedConfigureSequence()
             mockStateChangedListener(fromConnectedToError(expectedErrorState))
@@ -608,7 +613,7 @@ class MessagingClientImplTest {
 
         subject.connect()
 
-        assertThat(subject).isError(expectedErrorCode, expectedErrorMessage)
+        assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
         verifySequence {
             connectWithFailedConfigureSequence()
             mockStateChangedListener(fromConnectedToError(expectedErrorState))
@@ -816,7 +821,10 @@ class MessagingClientImplTest {
     @Test
     fun whenEventPresenceJoinReceived() {
         val givenPresenceJoinEvent = """{"eventType":"Presence","presence":{"type":"Join"}}"""
-        val expectedEvent = PresenceEvent(eventType = StructuredMessageEvent.Type.Presence, PresenceEvent.Presence("Join"))
+        val expectedEvent = PresenceEvent(
+            eventType = StructuredMessageEvent.Type.Presence,
+            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Join)
+        )
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceJoinEvent))
@@ -840,6 +848,173 @@ class MessagingClientImplTest {
         }
     }
 
+    @Test
+    fun whenDisconnectEventReceivedAndConversationDisconnectInDeploymentConfigIsSetToSendAndEnabled() {
+        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
+            messenger = createMessengerVOForTesting(
+                apps = Apps(
+                    conversations = createConversationsVOForTesting(
+                        conversationDisconnect = Conversations.ConversationDisconnect(
+                            enabled = true,
+                            type = Conversations.ConversationDisconnect.Type.Send
+                        ),
+                    )
+                )
+            )
+        )
+        val givenPresenceDisconnectEvent =
+            """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
+        val expectedEvent = PresenceEvent(
+            eventType = StructuredMessageEvent.Type.Presence,
+            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
+        )
+
+        subject.connect()
+        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
+
+        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
+        verify { mockEventHandler.onEvent(eq(expectedEvent)) }
+        verify(exactly = 0) {
+            mockStateChangedListener.invoke(fromConfiguredToReadOnly())
+            mockStateChangedListener.invoke(fromConnectedToReadOnly)
+        }
+    }
+
+    @Test
+    fun whenDisconnectEventReceivedAndConversationDisconnectInDeploymentConfigIsSetToSendAndDisabled() {
+        val givenPresenceDisconnectEvent =
+            """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
+        val expectedEvent = PresenceEvent(
+            eventType = StructuredMessageEvent.Type.Presence,
+            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
+        )
+
+        subject.connect()
+        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
+
+        verify(exactly = 0) {
+            mockEventHandler.onEvent(eq(expectedEvent))
+            mockStateChangedListener.invoke(fromConfiguredToReadOnly())
+            mockStateChangedListener.invoke(fromConnectedToReadOnly)
+        }
+    }
+
+    @Test
+    fun whenDisconnectEventReceivedAndConversationDisconnectInDeploymentConfigIsSetToReadOnlyAndEnabled() {
+        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
+            messenger = createMessengerVOForTesting(
+                apps = Apps(
+                    conversations = createConversationsVOForTesting(
+                        conversationDisconnect = Conversations.ConversationDisconnect(
+                            enabled = true,
+                            type = Conversations.ConversationDisconnect.Type.ReadOnly
+                        ),
+                    )
+                )
+            )
+        )
+
+        val givenPresenceDisconnectEvent =
+            """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
+        val expectedEvent = PresenceEvent(
+            eventType = StructuredMessageEvent.Type.Presence,
+            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
+        )
+
+        subject.connect()
+        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
+
+        verify { mockEventHandler.onEvent(eq(expectedEvent)) }
+        verify { mockStateChangedListener.invoke(fromConfiguredToReadOnly()) }
+    }
+
+    @Test
+    fun whenDisconnectEventReceivedAndConversationDisconnectInDeploymentConfigIsSetToReadOnlyAndDisabled() {
+        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
+            messenger = createMessengerVOForTesting(
+                apps = Apps(
+                    conversations = createConversationsVOForTesting(
+                        conversationDisconnect = Conversations.ConversationDisconnect(
+                            enabled = false,
+                            type = Conversations.ConversationDisconnect.Type.ReadOnly
+                        ),
+                    )
+                )
+            )
+        )
+
+        val givenPresenceDisconnectEvent =
+            """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
+        val expectedEvent = PresenceEvent(
+            eventType = StructuredMessageEvent.Type.Presence,
+            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
+        )
+
+        subject.connect()
+        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
+
+        verify(exactly = 0) {
+            mockEventHandler.onEvent(eq(expectedEvent))
+            mockStateChangedListener.invoke(fromConfiguredToReadOnly())
+            mockStateChangedListener.invoke(fromConnectedToReadOnly)
+        }
+    }
+
+    @Test
+    fun whenConfigureSessionInReadOnly() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest) } answers {
+            slot.captured.onMessage(Response.configureSuccess(readOnly = true))
+        }
+
+        subject.connect()
+
+        assertThat(subject.currentState).isReadOnly()
+
+        verifySequence {
+            connectToReadOnlySequence()
+        }
+    }
+
+    @Test
+    fun whenConfigureSessionInReadOnlyAndAutostartEnabled() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest) } answers {
+            slot.captured.onMessage(Response.configureSuccess(readOnly = true))
+        }
+        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
+            messenger = createMessengerVOForTesting(
+                apps = Apps(
+                    conversations = createConversationsVOForTesting(
+                        autoStart = Conversations.AutoStart(enabled = true),
+                    )
+                )
+            )
+        )
+
+        subject.connect()
+
+        assertThat(subject.currentState).isReadOnly()
+        verifySequence {
+            connectToReadOnlySequence()
+        }
+        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart) }
+    }
+
+    @Test
+    fun whenSessionInReadOnlyAndSendActionsArePerformed() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest) } answers {
+            slot.captured.onMessage(Response.configureSuccess(readOnly = true))
+        }
+
+        subject.connect()
+
+        assertThat(subject.currentState).isReadOnly()
+        assertFailsWith<IllegalStateException> { subject.sendMessage("Hello!") }
+        assertFailsWith<IllegalStateException> { subject.attach(ByteArray(0), "test") }
+        assertFailsWith<IllegalStateException> { subject.sendHealthCheck() }
+        assertFailsWith<IllegalStateException> { subject.detach("abc") }
+        assertFailsWith<IllegalStateException> { subject.indicateTyping() }
+    }
+
     private fun configuration(): Configuration = Configuration(
         deploymentId = "deploymentId",
         domain = "inindca.com",
@@ -854,12 +1029,21 @@ class MessagingClientImplTest {
         mockStateChangedListener(fromConnectedToConfigured)
     }
 
+    private fun MockKVerificationScope.connectToReadOnlySequence() {
+        mockStateChangedListener(fromIdleToConnecting)
+        mockPlatformSocket.openSocket(any())
+        mockStateChangedListener(fromConnectingToConnected)
+        mockPlatformSocket.sendMessage(Request.configureRequest)
+        mockReconnectionHandler.clear()
+        mockStateChangedListener(fromConnectedToReadOnly)
+    }
+
     private fun MockKVerificationScope.disconnectSequence(
         expectedCloseCode: Int = 1000,
         expectedCloseReason: String = "The user has closed the connection.",
     ) {
         val fromConfiguredToClosing = StateChange(
-            oldState = State.Configured(connected = true, newSession = true, readOnly = false),
+            oldState = State.Configured(connected = true, newSession = true),
             newState = State.Closing(expectedCloseCode, expectedCloseReason)
         )
         val fromClosingToClosed = StateChange(
@@ -896,7 +1080,7 @@ class MessagingClientImplTest {
     private val fromConnectedToConfigured =
         StateChange(
             oldState = State.Connected,
-            newState = State.Configured(connected = true, newSession = true, readOnly = false)
+            newState = State.Configured(connected = true, newSession = true)
         )
 
     private fun fromConnectedToError(errorState: State) =
@@ -904,14 +1088,27 @@ class MessagingClientImplTest {
 
     private fun fromConfiguredToError(errorState: State) =
         StateChange(
-            oldState = State.Configured(connected = true, newSession = true, readOnly = false),
+            oldState = State.Configured(connected = true, newSession = true),
             newState = errorState,
+        )
+
+    private fun fromConfiguredToReadOnly() =
+        StateChange(
+            oldState = State.Configured(connected = true, newSession = true),
+            newState = State.ReadOnly,
+        )
+
+    private val fromConnectedToReadOnly =
+        StateChange(
+            oldState = State.Connected,
+            newState = State.ReadOnly,
         )
 }
 
 private object Response {
-    const val configureSuccess =
-        """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":true}}"""
+    fun configureSuccess(readOnly: Boolean = false): String =
+        """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":true,"readOnly":$readOnly}}"""
+
     const val configureSuccessWithNewSessionFalse =
         """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":false}}"""
     const val configureFail =
@@ -938,7 +1135,8 @@ private object Response {
         """{"type":"response","class":"TooManyRequestsErrorMessage","code":429,"body":{"retryAfter":3,"errorCode":4029,"errorMessage":"Message rate too high for this session"}}"""
     const val customAttributeSizeTooLarge =
         """{"type": "response","class": "string","code": 4013,"body": "Custom Attributes in channel metadata is larger than 2048 bytes"}"""
-    const val connectionClosedEvent = """{"type":"message","class":"ConnectionClosedEvent","code":200,"body":{}}"""
+    const val connectionClosedEvent =
+        """{"type":"message","class":"ConnectionClosedEvent","code":200,"body":{}}"""
 
     fun structuredMessageWithEvents(
         events: String = defaultStructuredEvents,

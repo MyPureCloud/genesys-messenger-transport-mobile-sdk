@@ -91,7 +91,7 @@ object TestWebMessagingApiResponses {
                 events = listOf(
                     PresenceEvent(
                         eventType = StructuredMessageEvent.Type.Presence,
-                        presence = PresenceEvent.Presence("Join")
+                        presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Join)
                     )
                 ),
                 originatingEntity = "Human",
