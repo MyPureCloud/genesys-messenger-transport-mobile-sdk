@@ -6,12 +6,10 @@ import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import kotlinx.serialization.encodeToString
 
+internal const val HEALTH_CHECK_COOL_DOWN_IN_MILLISECOND = 30000L
+
 internal class HealthCheckProvider(val log: Log, val getCurrentTimestamp: () -> Long = { Platform().epochMillis() }) {
     private var lastSentHealthCheckTimestamp = 0L
-
-    internal companion object {
-        const val HEALTH_CHECK_COOL_DOWN_IN_MILLISECOND = 30000L
-    }
 
     @Throws(Exception::class)
     fun encodeRequest(token: String): String? {

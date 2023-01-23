@@ -27,7 +27,7 @@ class HealthCheckProviderTest {
 
     @Test
     fun whenEncodeWithCoolDown() {
-        val healthCheckCoolDownInMilliseconds = HealthCheckProvider.HEALTH_CHECK_COOL_DOWN_IN_MILLISECOND + 250
+        val healthCheckCoolDownInMilliseconds = HEALTH_CHECK_COOL_DOWN_IN_MILLISECOND + 250
         val expected = Request.echoRequest
         val firstResult = subject.encodeRequest(token = Request.token)
         every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + healthCheckCoolDownInMilliseconds }

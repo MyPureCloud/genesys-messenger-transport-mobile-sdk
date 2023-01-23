@@ -4,7 +4,9 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
+import com.genesys.cloud.messenger.transport.core.events.HEALTH_CHECK_COOL_DOWN_IN_MILLISECOND
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
+import com.genesys.cloud.messenger.transport.core.events.TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
@@ -219,13 +221,13 @@ class MessagingClientImplTest {
 
     @Test
     fun whenSendHealthCheckTwiceWithCoolDown() {
-        val healthCheckCoolDownInMilliseconds = HealthCheckProvider.HEALTH_CHECK_COOL_DOWN_IN_MILLISECOND + 250
+        val healthCheckCoolDownInMilliseconds = HEALTH_CHECK_COOL_DOWN_IN_MILLISECOND + 250
         val expectedMessage = Request.echoRequest
 
         subject.connect()
 
         subject.sendHealthCheck()
-        // Fast forward epochMillis by HEALTH_CHECK_COOL_DOWN_IN_MILLISECOND.
+        // Fast forward epochMillis by healthCheckCoolDownInMilliseconds.
         every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + healthCheckCoolDownInMilliseconds }
         subject.sendHealthCheck()
 
@@ -708,13 +710,13 @@ class MessagingClientImplTest {
 
     @Test
     fun whenIndicateTypingTwiceWithCoolDown() {
-        val typingIndicatorCoolDownInMilliseconds = UserTypingProvider.TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND + 250
+        val typingIndicatorCoolDownInMilliseconds = TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND + 250
         val expectedMessage = Request.userTypingRequest
 
         subject.connect()
 
         subject.indicateTyping()
-        // Fast forward epochMillis by TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND.
+        // Fast forward epochMillis by typingIndicatorCoolDownInMilliseconds.
         every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + typingIndicatorCoolDownInMilliseconds }
         subject.indicateTyping()
 
