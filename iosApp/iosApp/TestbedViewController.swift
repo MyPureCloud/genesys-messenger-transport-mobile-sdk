@@ -33,6 +33,7 @@ class TestbedViewController: UIViewController {
      */
     enum UserCommand: String, CaseIterable {
         case connect
+        case newChat
         case send
         case history
         case selectAttachment
@@ -287,6 +288,8 @@ extension TestbedViewController : UITextFieldDelegate {
             switch command {
             case (.connect, _):
                 try messenger.connect()
+            case (.newChat, _):
+                try messenger.newChat()
             case (.bye, _):
                 try messenger.disconnect()
             case (.send, let msg?):

@@ -108,6 +108,16 @@ interface MessagingClient {
     fun connect()
 
     /**
+     * Configure a new chat once the previous one is in State.ReadOnly.
+     * It is important to note that once new chat started,
+     * all information regarding previous conversations will be lost.
+     *
+     * @throws IllegalStateException if MessagingClient not in ReadOnly state.
+     */
+    @Throws(IllegalStateException::class)
+    fun startNewChat()
+
+    /**
      * Send a message to the conversation as plain text.
      *
      * @param text the plain text to send.
