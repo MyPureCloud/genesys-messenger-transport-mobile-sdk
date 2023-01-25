@@ -44,8 +44,12 @@ interface MessagingClient {
         ) : State()
 
         /**
-         * MessagingClient is only allowed to perform read actions while in this state. For example, [fetchNextPage].
-         * An InvalidState exception will be thrown on any attempt to send an action.
+         * MessagingClient will transition to this state, once [Event.ConversationDisconnect] is received AND
+         * messenger is configured to display conversation status and disconnect session OR when SessionResponse indicates that session is `readOnly=true`.
+         * For more information on this state, please visit official [documentation](https://developer.genesys.cloud/commdigital/digital/webmessaging/messenger-transport-mobile-sdk/)
+         * While in this state, it is only allowed to perform read actions. For example, [fetchNextPage].
+         *
+         * An IllegalStateException will be thrown on any attempt to send an action.
          */
         object ReadOnly : State()
 
