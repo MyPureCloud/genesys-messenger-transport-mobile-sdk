@@ -10,11 +10,11 @@ import XCTest
 
 extension ApiHelper {
 
-    public func answerNewConversation() -> ConversationInfo? {
+    public func answerNewConversation(timeout: Int = 60) -> ConversationInfo? {
         let agentId = TestConfig.shared.config?.agentId ?? ""
         changePresence(presenceName: "On Queue", userID: agentId)
-        guard let conversation = waitForConversation() else {
-            print("Failed to receive a new conversation to answer.")
+        guard let conversation = waitForConversation(timeout: timeout) else {
+            print("Did not receive a new conversation to answer.")
             return nil
         }
         sendConnectOrDisconnect(conversationInfo: conversation, connecting: true, wrapup: false)
@@ -23,12 +23,19 @@ extension ApiHelper {
     }
 
     public func disconnectExistingConversations() {
+        let agentId = TestConfig.shared.config?.agentId ?? ""
+        changePresence(presenceName: "Available", userID: agentId)
         guard let conversationList = getSmsConversations()?.value(forKey: "entities") as? [JsonDictionary] else {
             XCTFail("Failed to get the existing conversation list.")
             return
         }
         for conversation in conversationList {
-            sendConnectOrDisconnect(conversationInfo: ConversationInfo(json: conversation), connecting: false)
+            sendConnectOrDisconnect(conversationInfo: ConversationInfo(json: conversation), connecting: false, wrapup: true)
+        }
+
+        // Answer and disconnect any potential conversations in the queue but not yet routed to the agent.
+        if let conversationInfo = answerNewConversation(timeout: 2) {
+            sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
         }
     }
 
@@ -43,19 +50,27 @@ extension ApiHelper {
         return nil
     }
 
-    public func waitForConversation() -> ConversationInfo? {
-        var conversations: JsonDictionary?
+    public func waitForConversation(timeout: Int = 60) -> ConversationInfo? {
+        var entities: [JsonDictionary] = []
         // 1 minute wait maximum.
-        Wait.queryUntilTrue(queryInfo: "Waiting for a conversation to be available.", attempts: 60) {
-            conversations = getSmsConversations()
-            return (conversations?.value(forKey: "entities") as? [JsonDictionary])?.first != nil
+        // Waiting for the first conversation that matches this criteria:
+        //   - An agent is on the conversation.
+        //   - That agent is alerting.
+        Wait.queryUntilTrue(queryInfo: "Waiting for a conversation to be available.", attempts: timeout, canFailTest: false) {
+            entities = (getSmsConversations()?.value(forKey: "entities") as? [JsonDictionary] ?? []).filter {
+                let agentParticipant = ($0.value(forKey: "participants") as? [JsonDictionary] ?? []).filter {
+                    return $0.value(forKey: "purpose") as? String == "agent"
+                }.first
+                return (agentParticipant?.value(forKey: "messages") as? [JsonDictionary])?.first?.value(forKey: "state") as? String == "alerting"
+            }
+            return !entities.isEmpty
         }
-        let entities = ((conversations?.value(forKey: "entities") as? [JsonDictionary]) ?? []).map {
+        let conversations = entities.map {
             return ConversationInfo(json: $0)
         }.filter {
             return $0.isAvailable
         }
-        return entities.first
+        return conversations.first
     }
 
     public func sendOutboundSmsMessage(conversationId: String, communicationId: String, message: String = "Test from agent.") {
