@@ -232,6 +232,60 @@ class iosAppTests: XCTestCase {
         testController.disconnectMessenger()
     }
 
+    func testHistoryPull() {
+        guard let messengerTester = messengerTester else {
+            XCTFail("Failed to setup the Messenger tester.")
+            return
+        }
+
+        messengerTester.startNewMessengerConnection()
+        messengerTester.sendText(text: "Starting message history test.")
+
+        // Use the public API to answer the new Messenger conversation.
+        // Send a message from that agent and make sure we receive it.
+        guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
+            XCTFail("The message we sent may not have connected to an agent.")
+            return
+        }
+
+        // Disconnect the conversation for the agent and make sure the client state changes.
+        messengerTester.disconnectedSession = XCTestExpectation(description: "Wait for the session to be disconnected.")
+        messengerTester.readOnlyStateExpectation = XCTestExpectation(description: "Wait for the client state to be set to read only.")
+        ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
+        messengerTester.waitForAgentDisconnect()
+        messengerTester.waitForReadOnlyState()
+
+        // Pull messages from the backend.
+        let messages = messengerTester.pullHistory()
+
+        // Create a list of Events to check.
+        var checkList: [String: (check: Bool, test: (Event) -> Bool)] = [:]
+        checkList["ConversationAutostart"] = (check: false, test: { event in
+            return event is Event.ConversationAutostart
+        })
+        checkList["ConversationDisconnect"] = (check: false, test: { event in
+            return event is Event.ConversationDisconnect
+        })
+
+        // Go through the list of received messages. Ensure that every expected event was pulled.
+        for message in messages {
+            if let event = message.events.first {
+                for testInfo in checkList where !testInfo.value.check {
+                    if testInfo.value.test(event) {
+                        checkList[testInfo.key]?.check = true
+                        break
+                    }
+                }
+            }
+        }
+
+        let missingEvents = checkList.filter { !$0.value.check }
+        XCTAssertTrue(missingEvents.isEmpty, "The following events were not found in the history: \(missingEvents.keys)")
+
+        // Disconnect the conversation for the agent and disconnect the session.
+        messengerTester.disconnectMessenger()
+    }
+
     func testMessageAttributes() {
         // Setup the session. Send a message.
         guard let messengerTester = messengerTester else {

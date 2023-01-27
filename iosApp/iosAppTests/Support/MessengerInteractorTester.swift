@@ -25,6 +25,9 @@ class MessengerInteractorTester {
     var receivedDownloadUrl: String? = nil
     var humanizeEnabled: Bool = true
     var currentClientState: MessagingClientState?
+
+    private var historyExpectation: XCTestExpectation?
+    private var historyMessages: [Message] = []
     
     private var cancellables = Set<AnyCancellable>()
 
@@ -100,8 +103,12 @@ class MessengerInteractorTester {
                         self?.testExpectation?.fulfill()
                     }
                 case let history as MessageEvent.HistoryFetched:
-                    print("start of conversation: <\(history.startOfConversation.description)>, messages: <\(history.messages.description)>")
-                    self?.testExpectation?.fulfill()
+                    print("HistoryEvent: <\(history.startOfConversation.description)>, messages:")
+                    for message in history.messages {
+                        print(message.description())
+                    }
+                    self?.historyMessages = history.messages
+                    self?.historyExpectation?.fulfill()
                 default:
                     print("Unexpected messageListener event: \(message)")
                 }
@@ -259,6 +266,18 @@ class MessengerInteractorTester {
         } catch {
             XCTFail(error.localizedDescription)
         }
+    }
+
+    func pullHistory() -> [Message] {
+        historyExpectation = XCTestExpectation(description: "Wait for history results.")
+        messenger.fetchNextPage { error in
+            if let error = error {
+                XCTFail(error.localizedDescription)
+            }
+        }
+        let result = XCTWaiter().wait(for: [historyExpectation!], timeout: 30)
+        XCTAssertEqual(result, .completed, "Did not successfully pull the message history.")
+        return historyMessages
     }
 
     func waitForTestExpectation(timeout: Double = 60.0) {
