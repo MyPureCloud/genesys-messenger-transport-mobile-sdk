@@ -112,6 +112,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "clearConversation" -> doClearConversation()
             "addAttribute" -> doAddCustomAttributes(input)
             "typing" -> doIndicateTyping()
+            "newChat" -> doStartNewChat()
             else -> {
                 Log.e(TAG, "Invalid command")
                 withContext(Dispatchers.Main) {
@@ -136,6 +137,14 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             client.connect()
         } catch (t: Throwable) {
             handleException(t, "connect")
+        }
+    }
+
+    private suspend fun doStartNewChat() {
+        try {
+            client.startNewChat()
+        } catch (t: Throwable) {
+            handleException(t, "start new chat")
         }
     }
 
