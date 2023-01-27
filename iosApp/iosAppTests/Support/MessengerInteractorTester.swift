@@ -125,7 +125,7 @@ class MessengerInteractorTester {
                     print("Connection was closed: \(closedEvent)")
                     self?.connectionClosed?.fulfill()
                 case let disconnectedEvent as Event.ConversationDisconnect:
-                    print("Conversation was disconnected from the agent. \(disconnectedEvent.description)")
+                    print("Conversation was disconnected by the agent. \(disconnectedEvent.description)")
                     self?.disconnectedSession?.fulfill()
                 default:
                     print("Other event. \(event)")
