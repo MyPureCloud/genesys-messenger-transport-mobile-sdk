@@ -29,6 +29,7 @@ class iosAppTests: XCTestCase {
                 XCTFail("Failed to initialize MessengerInteractorTester: \(error.localizedDescription)")
             }
         }
+        ApiHelper.shared.disconnectExistingConversations()
     }
 
     override func tearDown() {
@@ -43,7 +44,7 @@ class iosAppTests: XCTestCase {
             return
         }
 
-        messengerTester.startMessengerConnection()
+        messengerTester.startNewMessengerConnection()
         messengerTester.sendText(text: "Starting Attachment test.")
 
         // Use the public API to answer the new Messenger conversation.
@@ -102,7 +103,7 @@ class iosAppTests: XCTestCase {
         }
 
         // Should be able to answer the conversation immediately after starting the connection if AutoStart is enabled.
-        messengerHandler.startMessengerConnection()
+        messengerHandler.startNewMessengerConnection()
         guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
             XCTFail("The message we sent may not have connected to an agent.")
             return
@@ -117,7 +118,7 @@ class iosAppTests: XCTestCase {
         let deployment = try! Deployment()
         let testController = MessengerInteractorTester(deployment: Deployment(deploymentId: TestConfig.shared.config?.botDeploymentId ?? "", domain: deployment.domain))
 
-        testController.startMessengerConnection()
+        testController.startNewMessengerConnection()
         delay(3, reason: "Allow time for the bot to start.")
         testController.receivedMessageExpectation = XCTestExpectation(description: "Wait for message to be received from the bot.")
         testController.sendText(text: "Yes") // Bot is configured to send a message if a "Yes" is sent.
@@ -151,7 +152,7 @@ class iosAppTests: XCTestCase {
         }
         testers[0].connectionClosed = XCTestExpectation(description: "Wait for the ConnectionClosedEvent")
         for tester in testers {
-            tester.startMessengerConnection()
+            tester.startNewMessengerConnection()
             delay(3)
         }
         let result = XCTWaiter().wait(for: [testers[0].connectionClosed!], timeout: 30)
@@ -163,6 +164,128 @@ class iosAppTests: XCTestCase {
         }
     }
 
+    func testDisconnectAgent_ReadOnly() {
+        // Setup the session. Send a message.
+        guard let messengerTester = messengerTester else {
+            XCTFail("Failed to setup the Messenger tester.")
+            return
+        }
+
+        messengerTester.startNewMessengerConnection()
+        messengerTester.sendText(text: "Testing from E2E test.")
+
+        // Use the public API to answer the new Messenger conversation.
+        guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
+            XCTFail("The message we sent may not have connected to an agent.")
+            return
+        }
+
+        // Disconnect the conversation for the agent and make sure the client state changes.
+        messengerTester.disconnectedSession = XCTestExpectation(description: "Wait for the session to be disconnected.")
+        messengerTester.readOnlyStateExpectation = XCTestExpectation(description: "Wait for the client state to be set to read only.")
+        ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
+        messengerTester.waitForAgentDisconnect()
+        messengerTester.waitForReadOnlyState()
+
+        // Disconnect the messenger. When we connect again, check to make sure the state is set to read only.
+        messengerTester.disconnectMessenger()
+        messengerTester.readOnlyStateExpectation = XCTestExpectation(description: "Wait for the client state to be set to read only.")
+        messengerTester.startMessengerConnection() // With the deployment config setup this way, we'll be put into a read only state. Will automatically wait for readOnly state.
+        messengerTester.disconnectMessenger()
+    }
+
+    func testDisconnectAgent_NotReadOnly() {
+        let deployment = try! Deployment()
+        let testController = MessengerInteractorTester(deployment: Deployment(deploymentId: TestConfig.shared.config?.agentDisconnectDeploymentId ?? "", domain: deployment.domain))
+
+        testController.startNewMessengerConnection()
+        testController.sendText(text: "Testing from E2E test.")
+
+        // Use the public API to answer the new Messenger conversation.
+        // Send a message from that agent and make sure we receive it.
+        guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
+            XCTFail("The message we sent may not have connected to an agent.")
+            return
+        }
+
+        // Disconnect the conversation for the agent and make sure the client state changes.
+        testController.disconnectedSession = XCTestExpectation(description: "Wait for the session to be disconnected.")
+        ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
+        testController.waitForAgentDisconnect()
+        if testController.currentClientState is MessagingClientState.ReadOnly {
+            XCTFail("The client should NOT be in a ReadOnly state.")
+            return
+        }
+
+        // Connect again. The conversation should match
+        testController.sendText(text: "Testing from E2E test.")
+        guard let conversationInfo2 = ApiHelper.shared.answerNewConversation() else {
+            XCTFail("The message we sent may not have connected to an agent.")
+            return
+        }
+        XCTAssertEqual(conversationInfo.conversationId, conversationInfo2.conversationId, "The reconnect conversation may not have matched.")
+
+        // Cleanup. Wait for the agent disconnect again, because why not.
+        testController.disconnectedSession = XCTestExpectation(description: "Wait for the session to be disconnected.")
+        ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo2, connecting: false, wrapup: true)
+        testController.waitForAgentDisconnect()
+        testController.disconnectMessenger()
+    }
+
+    func testHistoryPull() {
+        guard let messengerTester = messengerTester else {
+            XCTFail("Failed to setup the Messenger tester.")
+            return
+        }
+
+        messengerTester.startNewMessengerConnection()
+        messengerTester.sendText(text: "Starting message history test.")
+
+        // Use the public API to answer the new Messenger conversation.
+        // Send a message from that agent and make sure we receive it.
+        guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
+            XCTFail("The message we sent may not have connected to an agent.")
+            return
+        }
+
+        // Disconnect the conversation for the agent and make sure the client state changes.
+        messengerTester.disconnectedSession = XCTestExpectation(description: "Wait for the session to be disconnected.")
+        messengerTester.readOnlyStateExpectation = XCTestExpectation(description: "Wait for the client state to be set to read only.")
+        ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
+        messengerTester.waitForAgentDisconnect()
+        messengerTester.waitForReadOnlyState()
+
+        // Pull messages from the backend.
+        let messages = messengerTester.pullHistory()
+
+        // Create a list of Events to check.
+        var checkList: [String: (check: Bool, test: (Event) -> Bool)] = [:]
+        checkList["ConversationAutostart"] = (check: false, test: { event in
+            return event is Event.ConversationAutostart
+        })
+        checkList["ConversationDisconnect"] = (check: false, test: { event in
+            return event is Event.ConversationDisconnect
+        })
+
+        // Go through the list of received messages. Ensure that every expected event was pulled.
+        for message in messages {
+            if let event = message.events.first {
+                for testInfo in checkList where !testInfo.value.check {
+                    if testInfo.value.test(event) {
+                        checkList[testInfo.key]?.check = true
+                        break
+                    }
+                }
+            }
+        }
+
+        let missingEvents = checkList.filter { !$0.value.check }
+        XCTAssertTrue(missingEvents.isEmpty, "The following events were not found in the history: \(missingEvents.keys)")
+
+        // Disconnect the conversation for the agent and disconnect the session.
+        messengerTester.disconnectMessenger()
+    }
+
     func testMessageAttributes() {
         // Setup the session. Send a message.
         guard let messengerTester = messengerTester else {
@@ -170,7 +293,7 @@ class iosAppTests: XCTestCase {
             return
         }
 
-        messengerTester.startMessengerConnection()
+        messengerTester.startNewMessengerConnection()
         messengerTester.sendTextWithAttribute(text: "Testing with a specific name.", attributes: ["name": "Jane Doe"])
         guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
             XCTFail("The message we sent may not have connected to an agent.")
@@ -182,6 +305,7 @@ class iosAppTests: XCTestCase {
 
         // Cleanup.
         ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
+        messengerTester.disconnectMessenger()
     }
 
     func testSendAndReceiveMessage() {
@@ -191,7 +315,7 @@ class iosAppTests: XCTestCase {
             return
         }
 
-        messengerTester.startMessengerConnection()
+        messengerTester.startNewMessengerConnection()
         messengerTester.sendText(text: "Testing from E2E test.")
 
         // Use the public API to answer the new Messenger conversation.
@@ -219,7 +343,7 @@ class iosAppTests: XCTestCase {
 
         }
 
-        messengerTester.startMessengerConnection()
+        messengerTester.startNewMessengerConnection()
         messengerTester.sendText(text: "Testing from E2E test.")
 
         // Use the public API to answer the new Messenger conversation.
@@ -260,7 +384,7 @@ class iosAppTests: XCTestCase {
         let testController = MessengerInteractorTester(deployment: Deployment(deploymentId: TestConfig.shared.config?.humanizeDisableDeploymentId ?? "", domain: deployment.domain))
         testController.humanizeEnabled = false
 
-        testController.startMessengerConnection()
+        testController.startNewMessengerConnection()
         testController.sendText(text: "Testing from E2E test.")
 
         // Use the public API to answer the new Messenger conversation.

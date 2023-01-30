@@ -16,11 +16,18 @@ class MessengerInteractorTester {
     let messenger: MessengerInteractor
     var testExpectation: XCTestExpectation?
     var receivedMessageExpectation: XCTestExpectation?
+    var readOnlyStateExpectation: XCTestExpectation?
+    var connectedExpectation: XCTestExpectation?
     var errorExpectation: XCTestExpectation?
+    var disconnectedSession: XCTestExpectation?
     var connectionClosed: XCTestExpectation?
     var receivedMessageText: String? = nil
     var receivedDownloadUrl: String? = nil
     var humanizeEnabled: Bool = true
+    var currentClientState: MessagingClientState?
+
+    private var historyExpectation: XCTestExpectation?
+    private var historyMessages: [Message] = []
     
     private var cancellables = Set<AnyCancellable>()
 
@@ -30,10 +37,15 @@ class MessengerInteractorTester {
         messenger.stateChangeSubject
             .sink { [weak self] stateChange in
                 print("State Event. New state: \(stateChange.newState), old state: \(stateChange.oldState)")
+                self?.currentClientState = stateChange.newState
                 let newState = stateChange.newState
                 switch newState {
                 case _ as MessagingClientState.Configured:
                     self?.testExpectation?.fulfill()
+                case _ as MessagingClientState.Connected:
+                    self?.connectedExpectation?.fulfill()
+                case _ as MessagingClientState.ReadOnly:
+                    self?.readOnlyStateExpectation?.fulfill()
                 case _ as MessagingClientState.Closed:
                     self?.testExpectation?.fulfill()
                 case let error as MessagingClientState.Error:
@@ -91,8 +103,12 @@ class MessengerInteractorTester {
                         self?.testExpectation?.fulfill()
                     }
                 case let history as MessageEvent.HistoryFetched:
-                    print("start of conversation: <\(history.startOfConversation.description)>, messages: <\(history.messages.description)>")
-                    self?.testExpectation?.fulfill()
+                    print("HistoryEvent: <\(history.startOfConversation.description)>, messages:")
+                    for message in history.messages {
+                        print(message.description())
+                    }
+                    self?.historyMessages = history.messages
+                    self?.historyExpectation?.fulfill()
                 default:
                     print("Unexpected messageListener event: \(message)")
                 }
@@ -108,6 +124,9 @@ class MessengerInteractorTester {
                 case let closedEvent as Event.ConnectionClosed:
                     print("Connection was closed: \(closedEvent)")
                     self?.connectionClosed?.fulfill()
+                case let disconnectedEvent as Event.ConversationDisconnect:
+                    print("Conversation was disconnected by the agent. \(disconnectedEvent.description)")
+                    self?.disconnectedSession?.fulfill()
                 default:
                     print("Other event. \(event)")
                 }
@@ -130,11 +149,39 @@ class MessengerInteractorTester {
         return deploymentConfig
     }
 
+    // Attempts to return to a previous session.
+    // If readOnly is enabled, this will bring the user to the read only state.
     func startMessengerConnection(file: StaticString = #file, line: UInt = #line) {
         do {
-            testExpectation = XCTestExpectation(description: "Wait for Configuration.")
+            readOnlyStateExpectation = XCTestExpectation(description: "Wait for Configuration.")
             try messenger.connect()
-            waitForTestExpectation()
+            waitForExpectation(readOnlyStateExpectation!)
+        } catch {
+            XCTFail("Possible issue with connecting to the backend: \(error.localizedDescription)", file: file, line: line)
+        }
+    }
+
+    // Starts a new messaging session.
+    // Should be used if ReadOnly is enabled and the user wants to start a new chat.
+    func startNewMessengerConnection(file: StaticString = #file, line: UInt = #line) {
+        do {
+            testExpectation = XCTestExpectation(description: "Wait for Configuration.")
+            if currentClientState is MessagingClientState.ReadOnly {
+                try messenger.newChat()
+            } else {
+                connectedExpectation = XCTestExpectation(description: "Check for the connected state.")
+                try messenger.connect()
+                let connectedCheck = XCTWaiter().wait(for: [connectedExpectation!], timeout: 5) == .completed // If we're connecting to a new conversation, we will be connected first. Waiting for the configured check will give the back end enough time to send the ReadOnly state to the user.
+                let configuredCheck = XCTWaiter().wait(for: [testExpectation!], timeout: 5) == .completed
+                XCTAssertTrue(configuredCheck || connectedCheck, "Did not successfully connect to messenger.")
+
+                // If after we connect we end up in the ReadOnly state, we should run messenger.newChat() and wait again.
+                if currentClientState is MessagingClientState.ReadOnly {
+                    testExpectation = XCTestExpectation(description: "Wait for Configuration.")
+                    try messenger.newChat()
+                    waitForTestExpectation()
+                }
+            }
         } catch {
             XCTFail("Possible issue with connecting to the backend: \(error.localizedDescription)", file: file, line: line)
         }
@@ -221,6 +268,18 @@ class MessengerInteractorTester {
         }
     }
 
+    func pullHistory() -> [Message] {
+        historyExpectation = XCTestExpectation(description: "Wait for history results.")
+        messenger.fetchNextPage { error in
+            if let error = error {
+                XCTFail(error.localizedDescription)
+            }
+        }
+        let result = XCTWaiter().wait(for: [historyExpectation!], timeout: 30)
+        XCTAssertEqual(result, .completed, "Did not successfully pull the message history.")
+        return historyMessages
+    }
+
     func waitForTestExpectation(timeout: Double = 60.0) {
         guard let expectation = testExpectation else {
             XCTFail("No expectation to wait for.")
@@ -243,6 +302,23 @@ class MessengerInteractorTester {
             return
         }
         waitForExpectation(expectation, timeout: timeout)
+    }
+
+    // When the agent disconnects the session,
+    func waitForAgentDisconnect() {
+        guard let disconnectedSession = disconnectedSession else {
+            XCTFail("The disconnect session expectation was never initialized.")
+            return
+        }
+        waitForExpectation(disconnectedSession)
+    }
+
+    func waitForReadOnlyState() {
+        guard let readOnlyStateExpectation = readOnlyStateExpectation else {
+            XCTFail("The read only state expectation was never initialized.")
+            return
+        }
+        waitForExpectation(readOnlyStateExpectation)
     }
     
     private func waitForExpectation(_ expectation: XCTestExpectation, timeout: Double = 60.0) {
