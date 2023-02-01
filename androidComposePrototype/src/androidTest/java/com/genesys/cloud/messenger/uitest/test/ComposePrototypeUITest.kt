@@ -9,8 +9,8 @@ import com.genesys.cloud.messenger.uitest.support.ApiHelper.API
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.answerNewConversation
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.disconnectAllConversations
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendConnectOrDisconnect
-import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendTypingIndicatorFromAgentToUser
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendOutboundMessageFromAgentToUser
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendTypingIndicatorFromAgentToUser
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.waitForParticipantToConnectOrDisconnect
 import com.genesys.cloud.messenger.uitest.support.testConfig
 import org.junit.FixMethodOrder
@@ -352,12 +352,12 @@ class ComposePrototypeUITest : BaseTests() {
         else {
             Log.i(TAG, "Conversation started successfully.")
             apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
-            //wait for agent to disconnect
+            // wait for agent to disconnect
             apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id, "disconnected")
             checkForReadOnly()
             bye()
             sleep(2000)
-            //connect again and check for readOnly
+            // connect again and check for readOnly
             reconnectReadOnly()
             bye()
         }
@@ -376,7 +376,7 @@ class ComposePrototypeUITest : BaseTests() {
             apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
             verifyResponse(outboundMessage)
             apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
-            //wait for agent to disconnect
+            // wait for agent to disconnect
             apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id, "disconnected")
             sendMsg(helloText)
             val conversation2Info = apiHelper.answerNewConversation()
@@ -384,14 +384,14 @@ class ComposePrototypeUITest : BaseTests() {
             else {
                 Log.i(TAG, "Conversation started successfully.")
                 if (conversationInfo.id != conversation2Info.id) AssertionError("Reconnecting a conversation may not have matching conversation IDs.")
-                else (Log.i(TAG, "Conversation ids matched as expected." ))
+                else (Log.i(TAG, "Conversation ids matched as expected."))
                 apiHelper.sendConnectOrDisconnect(conversation2Info, false, true)
-                //wait for agent to disconnect
+                // wait for agent to disconnect
                 apiHelper.waitForParticipantToConnectOrDisconnect(conversation2Info.id, "disconnected")
             }
         }
     }
-    
+
     @Test
     fun testHistoryPull() {
         apiHelper.disconnectAllConversations()
@@ -403,19 +403,19 @@ class ComposePrototypeUITest : BaseTests() {
         else {
             Log.i(TAG, "Conversation started successfully.")
             apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
-            //wait for agent to disconnect
+            // wait for agent to disconnect
             apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id, "disconnected")
             checkForReadOnly()
-            //enter history and check for ConversationDisconnect and ConversationAutostart events
+            // enter history and check for ConversationDisconnect and ConversationAutostart events
             history()
-            //Just to clear things up, let's start a new chat, wait for configured
+            // Just to clear things up, let's start a new chat, wait for configured
             startNewChat()
             val conversation2Info = apiHelper.answerNewConversation()
             if (conversation2Info == null) AssertionError("Unable to answer conversation.")
             else {
                 Log.i(TAG, "Conversation started successfully.")
                 apiHelper.sendConnectOrDisconnect(conversation2Info, false, true)
-                //wait for agent to disconnect
+                // wait for agent to disconnect
                 apiHelper.waitForParticipantToConnectOrDisconnect(conversation2Info.id, "disconnected")
             }
             bye()
