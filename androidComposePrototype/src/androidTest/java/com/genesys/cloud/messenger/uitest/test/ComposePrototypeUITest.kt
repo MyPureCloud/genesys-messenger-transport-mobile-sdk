@@ -392,6 +392,7 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
+    
     @Test
     fun testHistoryPull() {
         apiHelper.disconnectAllConversations()
