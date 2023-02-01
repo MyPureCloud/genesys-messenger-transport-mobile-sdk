@@ -391,7 +391,6 @@ class ComposePrototypeUITest : BaseTests() {
             }
         }
     }
-
     
     @Test
     fun testHistoryPull() {
