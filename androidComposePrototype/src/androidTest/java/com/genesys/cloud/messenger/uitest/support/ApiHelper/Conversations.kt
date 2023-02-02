@@ -101,12 +101,12 @@ fun API.answerNewConversation(): Conversation? {
         println("Failed to receive a new conversation to answer.")
         return null
     }
-    sendConnectOrDisconnect(conversation, true, false)
+    sendConnectOrDisconnect(conversation, connecting = true, wrapup = false)
     changePresence("Available", testConfig.agentUserId)
     return getConversationInfo(conversation.id)
 }
 
-fun API.sendConnectOrDisconnect(conversationInfo: Conversation, connecting: Boolean, wrapup: Boolean = true) {
+fun API.sendConnectOrDisconnect(conversationInfo: Conversation, connecting: Boolean = false, wrapup: Boolean = true) {
     var statusPayload = ""
     println("Sending $connecting request to: ${conversationInfo.id} from a conversation.")
     val agentParticipant = conversationInfo.getParticipantFromPurpose("agent")
@@ -120,7 +120,7 @@ fun API.sendConnectOrDisconnect(conversationInfo: Conversation, connecting: Bool
     // Send requests to connect/disconnect the conversation and send the wrapup code.
     sendStatusToParticipant(conversationInfo.id, agentParticipant!!.id, statusPayload)
     if (connecting) {
-        waitForParticipantToConnectOrDisconnect(conversationInfo.id, "connected")
+        waitForParticipantToConnectOrDisconnect(conversationInfo.id, connectionState = "connected")
     } else if (wrapup) {
         sleep(2000)
         print("Sending wrapup code.")
@@ -133,7 +133,7 @@ fun API.getDefaultWrapupCodeId(conversationId: String, participantId: String): J
     return wrapupCodeId
 }
 
-fun API.waitForParticipantToConnectOrDisconnect(conversationId: String, connectionState: String) {
+fun API.waitForParticipantToConnectOrDisconnect(conversationId: String, connectionState: String = "disconnected") {
     Awaitility.await().atMost(60, TimeUnit.SECONDS).ignoreExceptions()
         .untilAsserted {
             val listOfMessages = getConversationInfo(conversationId).getParticipantFromPurpose("agent")?.messages?.toList()
@@ -159,6 +159,6 @@ fun API.disconnectAllConversations() {
     val conversationList = getAllConversations()
     conversationList.forEach { conversation ->
         Log.i(TAG, "disconnecting conversationId: ${conversation.id}")
-        sendConnectOrDisconnect(conversation, false, true)
+        sendConnectOrDisconnect(conversation)
     }
 }

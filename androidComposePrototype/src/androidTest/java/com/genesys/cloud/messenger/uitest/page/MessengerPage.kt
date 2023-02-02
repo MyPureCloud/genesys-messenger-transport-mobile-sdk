@@ -19,6 +19,7 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     private val autostartEventText = "Event\$ConversationAutostart"
     private val disconnectEventText = "Event\$ConversationDisconnect"
     private val newChatText = "newChat"
+    private val readOnlyText = "ReadOnly"
 
     // Wait until android compose prototype begins
     fun verifyPageIsVisible(waitTime: Long = 20) {
@@ -110,11 +111,19 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         if (!(response.contains(messageResultText2, ignoreCase = true))) AssertionError("Response does not contain MessageUpdated")
     }
 
-    // Verify response for the history command
-    fun checkHistoryFullResponse() {
+    // Verify response contains events for autostart and conversationDisconnect
+    fun checkHistoryForAutoStartAndDisconnectEventsResponse() {
         val response = getFullResponse()
         if (!(response.contains(autostartEventText, ignoreCase = true))) AssertionError("Response does not contain Autostart event")
-        if (!(response.contains(disconnectEventText, ignoreCase = true))) AssertionError("Response does not contain Disconnect event")
+        if (!(response.contains(disconnectEventText, ignoreCase = true))) AssertionError("Response does not contain conversationDisconnect event")
+    }
+
+    // Verify response does not contain readOnly or an event for conversationDisconnect
+    fun checkHistoryDoesNotContainDisconnectEventOrReadOnlyResponse() {
+        val response = getFullResponse()
+        if (response.contains(disconnectEventText, ignoreCase = true)) AssertionError("Response does contain conversationDisconnect event but should not")
+        val clientResponse = getClientResponse()
+        if (clientResponse == readOnlyText) AssertionError("Client response is in ReadOnly but should not be.")
     }
 
     fun pullAttachmentId(response: String): String {

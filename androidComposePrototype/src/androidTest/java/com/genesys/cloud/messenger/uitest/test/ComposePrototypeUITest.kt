@@ -133,12 +133,13 @@ class ComposePrototypeUITest : BaseTests() {
     }
 
     // Send a history command, wait for the response, and verify it is correct
-    fun history() {
+    fun history(withConversationDisconnectEvent: Boolean = true) {
         messenger {
             verifyPageIsVisible()
             enterCommand(historyText)
             waitForProperResponse(startOfConversationText)
-            checkHistoryFullResponse()
+            if (withConversationDisconnectEvent) checkHistoryForAutoStartAndDisconnectEventsResponse()
+            else checkHistoryDoesNotContainDisconnectEventOrReadOnlyResponse()
         }
     }
 
@@ -213,7 +214,7 @@ class ComposePrototypeUITest : BaseTests() {
         if (conversationInfo != null) {
             apiHelper.sendTypingIndicatorFromAgentToUser(conversationInfo)
             verifyResponse(typingIndicatorResponse)
-            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
         } else AssertionError("Agent did not answer conversation.")
         apiHelper.disconnectAllConversations()
     }
@@ -231,7 +232,7 @@ class ComposePrototypeUITest : BaseTests() {
         if (conversationInfo == null) AssertionError("Unable to answer conversation with autoStart enabled.")
         else {
             Log.i(TAG, "Conversation started successfully with autoStart enabled.")
-            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
         }
         apiHelper.disconnectAllConversations()
     }
@@ -246,7 +247,7 @@ class ComposePrototypeUITest : BaseTests() {
         else {
             Log.i(TAG, "Conversation started successfully with autoStart enabled.")
             healthcheckTest()
-            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
         }
         bye()
     }
@@ -271,7 +272,7 @@ class ComposePrototypeUITest : BaseTests() {
             verifyResponse(humanNameText)
             verifyResponse(avatarText)
             verifyResponse(humanText)
-            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
         }
         bye()
     }
@@ -289,7 +290,7 @@ class ComposePrototypeUITest : BaseTests() {
             attachImage()
             // wait for image to load
             sleep(3000)
-            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
         }
         bye()
     }
@@ -305,7 +306,7 @@ class ComposePrototypeUITest : BaseTests() {
             Log.i(TAG, "Conversation started successfully.")
             addCustomAttribute(nameText, newNameText)
             sleep(3000)
-            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
         }
         bye()
     }
@@ -324,7 +325,7 @@ class ComposePrototypeUITest : BaseTests() {
             verifyResponse(outboundMessage)
             verifyResponse(humanizeDisabledText)
             verifyResponse(humanText)
-            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
         }
         bye()
     }
@@ -338,6 +339,8 @@ class ComposePrototypeUITest : BaseTests() {
         verifyResponse(botEntity)
         sleep(3000)
         sendBotResponseAndCheckReply(yesText)
+        sleep(2000)
+        history(withConversationDisconnectEvent = false)
         bye()
     }
 
@@ -351,9 +354,10 @@ class ComposePrototypeUITest : BaseTests() {
         if (conversationInfo == null) AssertionError("Unable to answer conversation.")
         else {
             Log.i(TAG, "Conversation started successfully.")
-            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+            // conversationInfo: Conversation, connecting: Boolean, wrapup: Boolean = true
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
             // wait for agent to disconnect
-            apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id, "disconnected")
+            apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id)
             checkForReadOnly()
             bye()
             sleep(2000)
@@ -375,9 +379,9 @@ class ComposePrototypeUITest : BaseTests() {
             Log.i(TAG, "Conversation started successfully.")
             apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
             verifyResponse(outboundMessage)
-            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
             // wait for agent to disconnect
-            apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id, "disconnected")
+            apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id)
             sendMsg(helloText)
             val conversation2Info = apiHelper.answerNewConversation()
             if (conversation2Info == null) AssertionError("Unable to answer conversation.")
@@ -385,9 +389,9 @@ class ComposePrototypeUITest : BaseTests() {
                 Log.i(TAG, "Conversation started successfully.")
                 if (conversationInfo.id != conversation2Info.id) AssertionError("Reconnecting a conversation may not have matching conversation IDs.")
                 else (Log.i(TAG, "Conversation ids matched as expected."))
-                apiHelper.sendConnectOrDisconnect(conversation2Info, false, true)
+                apiHelper.sendConnectOrDisconnect(conversation2Info)
                 // wait for agent to disconnect
-                apiHelper.waitForParticipantToConnectOrDisconnect(conversation2Info.id, "disconnected")
+                apiHelper.waitForParticipantToConnectOrDisconnect(conversation2Info.id)
             }
         }
     }
@@ -402,9 +406,9 @@ class ComposePrototypeUITest : BaseTests() {
         if (conversationInfo == null) AssertionError("Unable to answer conversation.")
         else {
             Log.i(TAG, "Conversation started successfully.")
-            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
             // wait for agent to disconnect
-            apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id, "disconnected")
+            apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id)
             checkForReadOnly()
             // enter history and check for ConversationDisconnect and ConversationAutostart events
             history()
@@ -414,9 +418,9 @@ class ComposePrototypeUITest : BaseTests() {
             if (conversation2Info == null) AssertionError("Unable to answer conversation.")
             else {
                 Log.i(TAG, "Conversation started successfully.")
-                apiHelper.sendConnectOrDisconnect(conversation2Info, false, true)
+                apiHelper.sendConnectOrDisconnect(conversation2Info)
                 // wait for agent to disconnect
-                apiHelper.waitForParticipantToConnectOrDisconnect(conversation2Info.id, "disconnected")
+                apiHelper.waitForParticipantToConnectOrDisconnect(conversation2Info.id)
             }
             bye()
         }
