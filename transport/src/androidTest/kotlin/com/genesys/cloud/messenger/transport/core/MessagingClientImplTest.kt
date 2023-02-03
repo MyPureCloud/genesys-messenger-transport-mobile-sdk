@@ -4,7 +4,9 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
+import com.genesys.cloud.messenger.transport.core.events.HEALTH_CHECK_COOL_DOWN_MILLISECONDS
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
+import com.genesys.cloud.messenger.transport.core.events.TYPING_INDICATOR_COOL_DOWN_MILLISECONDS
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
@@ -59,8 +61,8 @@ class MessagingClientImplTest {
     private val mockStateChangedListener: (StateChange) -> Unit = spyk()
     private val mockMessageStore: MessageStore = mockk(relaxed = true) {
         every { prepareMessage(any(), any()) } returns OnMessageRequest(
-            "00000000-0000-0000-0000-000000000000",
-            TextMessage("Hello world")
+            token = Request.token,
+            message = TextMessage("Hello world")
         )
     }
     private val mockAttachmentHandler: AttachmentHandler = mockk(relaxed = true) {
@@ -72,7 +74,7 @@ class MessagingClientImplTest {
                 any()
             )
         } returns OnAttachmentRequest(
-            token = "00000000-0000-0000-0000-000000000000",
+            token = Request.token,
             attachmentId = "88888888-8888-8888-8888-888888888888",
             fileName = "test_attachment.png",
             fileType = "image/png",
@@ -80,8 +82,8 @@ class MessagingClientImplTest {
         )
 
         every { detach(any()) } returns DeleteAttachmentRequest(
-            "00000000-0000-0000-0000-000000000000",
-            "88888888-8888-8888-8888-888888888888"
+            token = Request.token,
+            attachmentId = "88888888-8888-8888-8888-888888888888"
         )
     }
     private val mockPlatformSocket: PlatformSocket = mockk {
@@ -134,7 +136,7 @@ class MessagingClientImplTest {
         configuration = configuration,
         webSocket = mockPlatformSocket,
         api = mockWebMessagingApi,
-        token = "00000000-0000-0000-0000-000000000000",
+        token = Request.token,
         jwtHandler = mockk(),
         attachmentHandler = mockAttachmentHandler,
         messageStore = mockMessageStore,
@@ -177,7 +179,7 @@ class MessagingClientImplTest {
     @Test
     fun whenConnectAndThenSendMessage() {
         val expectedMessage =
-            """{"token":"00000000-0000-0000-0000-000000000000","message":{"text":"Hello world","type":"Text"},"action":"onMessage"}"""
+            """{"token":"${Request.token}","message":{"text":"Hello world","type":"Text"},"action":"onMessage"}"""
         val expectedText = "Hello world"
         subject.connect()
 
@@ -194,7 +196,7 @@ class MessagingClientImplTest {
     @Test
     fun whenSendHealthCheckWithToken() {
         val expectedMessage =
-            """{"token":"00000000-0000-0000-0000-000000000000","action":"echo","message":{"text":"ping","metadata":{"customMessageId":"$HealthCheckID"},"type":"Text"}}"""
+            """{"token":"${Request.token}","action":"echo","message":{"text":"ping","metadata":{"customMessageId":"$HealthCheckID"},"type":"Text"}}"""
         subject.connect()
 
         subject.sendHealthCheck()
@@ -219,13 +221,13 @@ class MessagingClientImplTest {
 
     @Test
     fun whenSendHealthCheckTwiceWithCoolDown() {
-        val healthCheckCoolDownInMilliseconds = 30000
+        val healthCheckCoolDownInMilliseconds = HEALTH_CHECK_COOL_DOWN_MILLISECONDS + 250
         val expectedMessage = Request.echoRequest
 
         subject.connect()
 
         subject.sendHealthCheck()
-        // Fast forward epochMillis by HEALTH_CHECK_COOL_DOWN_IN_MILLISECOND.
+        // Fast forward epochMillis by healthCheckCoolDownInMilliseconds.
         every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + healthCheckCoolDownInMilliseconds }
         subject.sendHealthCheck()
 
@@ -260,7 +262,7 @@ class MessagingClientImplTest {
     fun whenAttach() {
         val expectedAttachmentId = "88888888-8888-8888-8888-888888888888"
         val expectedMessage =
-            """{"token":"00000000-0000-0000-0000-000000000000","attachmentId":"88888888-8888-8888-8888-888888888888","fileName":"test_attachment.png","fileType":"image/png","errorsAsJson":true,"action":"onAttachment"}"""
+            """{"token":"${Request.token}","attachmentId":"88888888-8888-8888-8888-888888888888","fileName":"test_attachment.png","fileType":"image/png","errorsAsJson":true,"action":"onAttachment"}"""
         subject.connect()
 
         val result = subject.attach(ByteArray(1), "test.png")
@@ -277,7 +279,7 @@ class MessagingClientImplTest {
     fun whenDetach() {
         val expectedAttachmentId = "88888888-8888-8888-8888-888888888888"
         val expectedMessage =
-            """{"token":"00000000-0000-0000-0000-000000000000","attachmentId":"88888888-8888-8888-8888-888888888888","action":"deleteAttachment"}"""
+            """{"token":"${Request.token}","attachmentId":"88888888-8888-8888-8888-888888888888","action":"deleteAttachment"}"""
         val attachmentIdSlot = slot<String>()
         subject.connect()
 
@@ -561,11 +563,11 @@ class MessagingClientImplTest {
     @Test
     fun whenSendMessageWithCustomAttributes() {
         val expectedMessage =
-            """{"token":"00000000-0000-0000-0000-000000000000","message":{"text":"Hello world","channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"action":"onMessage"}"""
+            """{"token":"${Request.token}","message":{"text":"Hello world","channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"action":"onMessage"}"""
         val expectedText = "Hello world"
         val expectedCustomAttributes = mapOf("A" to "B")
         every { mockMessageStore.prepareMessage(any(), any()) } returns OnMessageRequest(
-            token = "00000000-0000-0000-0000-000000000000",
+            token = Request.token,
             message = TextMessage(
                 text = "Hello world",
                 channel = Channel(Metadata(expectedCustomAttributes)),
@@ -685,7 +687,7 @@ class MessagingClientImplTest {
         verify(exactly = 0) {
             mockPlatformSocket.sendMessage(expectedMessage)
         }
-        assertNull(userTypingProvider.encodeRequest(token = "00000000-0000-0000-0000-000000000000"))
+        assertNull(userTypingProvider.encodeRequest(token = Request.token))
     }
 
     @Test
@@ -708,13 +710,13 @@ class MessagingClientImplTest {
 
     @Test
     fun whenIndicateTypingTwiceWithCoolDown() {
-        val typingIndicatorCoolDownInMilliseconds = 5000
+        val typingIndicatorCoolDownInMilliseconds = TYPING_INDICATOR_COOL_DOWN_MILLISECONDS + 250
         val expectedMessage = Request.userTypingRequest
 
         subject.connect()
 
         subject.indicateTyping()
-        // Fast forward epochMillis by TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND.
+        // Fast forward epochMillis by typingIndicatorCoolDownInMilliseconds.
         every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + typingIndicatorCoolDownInMilliseconds }
         subject.indicateTyping()
 

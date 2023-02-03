@@ -1,6 +1,6 @@
 package com.genesys.cloud.messenger.transport.util.logs
 
-import io.ktor.client.features.logging.Logger
+import io.ktor.client.plugins.logging.Logger
 
 internal class KermitKtorLogger(
     private val kermit: co.touchlab.kermit.Logger
