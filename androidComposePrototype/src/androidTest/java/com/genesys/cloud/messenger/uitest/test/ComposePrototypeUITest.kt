@@ -9,7 +9,10 @@ import com.genesys.cloud.messenger.uitest.support.ApiHelper.API
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.answerNewConversation
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.disconnectAllConversations
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendConnectOrDisconnect
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendOutboundMessageFromAgentToUser
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendTypingIndicatorFromAgentToUser
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.waitForParticipantToConnectOrDisconnect
+import com.genesys.cloud.messenger.uitest.support.testConfig
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,7 +31,7 @@ class ComposePrototypeUITest : BaseTests() {
     private val sendMsgText = "send"
     private val helloText = "hello"
     private val healthCheckText = "healthCheck"
-    private val historyText = "history 1 1"
+    private val historyText = "history"
     private val attachImageText = "attach"
     private val detachImageText = "detach"
     private val byeText = "bye"
@@ -42,17 +45,30 @@ class ComposePrototypeUITest : BaseTests() {
     private val customAttributeAddedText = "Custom attribute added"
     private val oneThousandText = "Code: 1000"
     private val healthCheckResponse = "HealthChecked"
-    private val historyFetchedText = "HistoryFetched"
     private val longClosedText = "The user has closed the connection"
     private val connectedText = "Connected: true"
+    private val newChatText = "newChat"
     private val typingIndicatorResponse = "AgentTyping"
+    private val outboundMessage = "Right back at you"
     private val autoStartEnabledText = "ConversationAutostart"
+    private var humanNameText = "name=Nellie Hay"
+    private val prodHumanNameText = "name=Beagle Puppy"
+    private var avatarText = "imageUrl=https://dev-inin-directory-service-profile.s3.amazonaws.com"
+    private val prodAvatorText = "imageUrl=https://prod-inin-directory-service-profile.s3.amazonaws.com"
+    private val humanText = "originatingEntity=Human"
+    private val deploymentText = "Deployment"
+    private val humanizeDisabledText = "from=Participant(name=null, imageUrl=null"
+    private val botImageName = "from=Participant(name=Test-Bot-Name, imageUrl=null"
+    private val botEntity = "originatingEntity=Bot"
+    private val yesText = "Yes"
+    private val anotherBotMessage = "Would you like to continue"
+    private val startOfConversationText = "Start of conversation"
     private val TAG = TestBedViewModel::class.simpleName
 
-    fun enterDeploymentInfo() {
+    fun enterDeploymentInfo(deploymentId: String) {
         opening {
             verifyPageIsVisible()
-            enterDeploymentID()
+            enterDeploymentID(deploymentId)
             selectView(testBedViewText)
         }
         messenger {
@@ -65,7 +81,26 @@ class ComposePrototypeUITest : BaseTests() {
         messenger {
             verifyPageIsVisible()
             enterCommand(connectText)
-            waitForProperResponse(connectedText)
+            waitForConfigured()
+        }
+    }
+
+    fun checkForReadOnly() {
+        messenger {
+            waitForReadOnly()
+        }
+    }
+
+    fun reconnectReadOnly() {
+        messenger {
+            enterCommand(connectText)
+            waitForReadOnly()
+        }
+    }
+
+    fun startNewChat() {
+        messenger {
+            enterCommand(newChatText)
             waitForConfigured()
         }
     }
@@ -80,6 +115,14 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
+    fun sendBotResponseAndCheckReply(messageText: String) {
+        messenger {
+            verifyPageIsVisible()
+            enterCommand("$sendMsgText $messageText")
+            verifyResponse(anotherBotMessage)
+        }
+    }
+
     // Send a healthCheck command, wait for the response, and verify it is correct
     fun healthcheckTest() {
         messenger {
@@ -90,12 +133,13 @@ class ComposePrototypeUITest : BaseTests() {
     }
 
     // Send a history command, wait for the response, and verify it is correct
-    fun history() {
+    fun history(withConversationDisconnectEvent: Boolean = true) {
         messenger {
             verifyPageIsVisible()
             enterCommand(historyText)
-            waitForProperResponse(historyFetchedText)
-            checkHistoryFullResponse()
+            waitForProperResponse(startOfConversationText)
+            if (withConversationDisconnectEvent) checkHistoryForAutoStartAndDisconnectEventsResponse()
+            else checkHistoryDoesNotContainDisconnectEventOrReadOnlyResponse()
         }
     }
 
@@ -146,24 +190,31 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
-    fun verifyAutoStartResponse() {
+    fun enterDeploymentCommand(responseLookingFor: String) {
         messenger {
-            waitForProperResponse(autoStartEnabledText)
+            verifyPageIsVisible()
+            enterCommand(deploymentText)
+            waitForProperResponse(responseLookingFor)
+        }
+    }
+
+    fun verifyResponse(response: String) {
+        messenger {
+            waitForProperResponse(response)
         }
     }
 
     @Test
     fun testSendTypingIndicator() {
-        enterDeploymentInfo()
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.deploymentId)
         DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
         connect()
         val conversationInfo = apiHelper.answerNewConversation()
         if (conversationInfo != null) {
             apiHelper.sendTypingIndicatorFromAgentToUser(conversationInfo)
-            messenger {
-                waitForProperResponse(typingIndicatorResponse)
-            }
-            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+            verifyResponse(typingIndicatorResponse)
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
         } else AssertionError("Agent did not answer conversation.")
         apiHelper.disconnectAllConversations()
     }
@@ -171,56 +222,67 @@ class ComposePrototypeUITest : BaseTests() {
     @Test
     // Adjusting the test name to force this test to run first
     fun test1VerifyAutoStart() {
-        enterDeploymentInfo()
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.deploymentId)
         // Force a new session. AutoStart is enabled and newSession is true
         DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
         connect()
-        verifyAutoStartResponse()
+        verifyResponse(autoStartEnabledText)
         val conversationInfo = apiHelper.answerNewConversation()
         if (conversationInfo == null) AssertionError("Unable to answer conversation with autoStart enabled.")
         else {
             Log.i(TAG, "Conversation started successfully with autoStart enabled.")
-            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
         }
         apiHelper.disconnectAllConversations()
     }
 
     @Test
     fun testHealthCheck() {
-        enterDeploymentInfo()
-        DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.deploymentId)
         connect()
         val conversationInfo = apiHelper.answerNewConversation()
         if (conversationInfo == null) AssertionError("Unable to answer conversation with autoStart enabled.")
         else {
             Log.i(TAG, "Conversation started successfully with autoStart enabled.")
             healthcheckTest()
-            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
         }
         bye()
     }
 
     @Test
-    fun testSendMessage() {
-        enterDeploymentInfo()
-        DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
+    fun testSendAndReceiveMessage() {
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.deploymentId)
         connect()
         val conversationInfo = apiHelper.answerNewConversation()
         if (conversationInfo == null) AssertionError("Unable to answer conversation.")
         else {
             Log.i(TAG, "Conversation started successfully.")
-            sleep(3000)
             sendMsg(helloText)
-            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+            sleep(3000)
+            apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
+            verifyResponse(outboundMessage)
+            if (testConfig.domain == "mypurecloud.com") {
+                humanNameText = prodHumanNameText
+                avatarText = prodAvatorText
+            }
+            verifyResponse(humanNameText)
+            verifyResponse(avatarText)
+            verifyResponse(humanText)
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
         }
         bye()
     }
 
     @Test
     fun testAttachments() {
-        enterDeploymentInfo()
-        DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.deploymentId)
         connect()
+        sendMsg(helloText)
         val conversationInfo = apiHelper.answerNewConversation()
         if (conversationInfo == null) AssertionError("Unable to answer conversation.")
         else {
@@ -228,15 +290,15 @@ class ComposePrototypeUITest : BaseTests() {
             attachImage()
             // wait for image to load
             sleep(3000)
-            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
         }
         bye()
     }
 
     @Test
     fun testCustomAttributes() {
-        enterDeploymentInfo()
-        DefaultTokenStore("com.genesys.cloud.messenger").store(UUID.randomUUID().toString())
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.deploymentId)
         connect()
         val conversationInfo = apiHelper.answerNewConversation()
         if (conversationInfo == null) AssertionError("Unable to answer conversation.")
@@ -244,8 +306,123 @@ class ComposePrototypeUITest : BaseTests() {
             Log.i(TAG, "Conversation started successfully.")
             addCustomAttribute(nameText, newNameText)
             sleep(3000)
-            apiHelper.sendConnectOrDisconnect(conversationInfo, false, true)
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
         }
         bye()
+    }
+
+    @Test
+    fun testUnknownAgent() {
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.humanizeDisableDeploymentId)
+        connect()
+        sendMsg(helloText)
+        val conversationInfo = apiHelper.answerNewConversation()
+        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
+        else {
+            Log.i(TAG, "Conversation started successfully.")
+            apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
+            verifyResponse(outboundMessage)
+            verifyResponse(humanizeDisabledText)
+            verifyResponse(humanText)
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
+        }
+        bye()
+    }
+
+    @Test
+    fun testBotAgent() {
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.botDeploymentId)
+        connect()
+        verifyResponse(botImageName)
+        verifyResponse(botEntity)
+        sleep(3000)
+        sendBotResponseAndCheckReply(yesText)
+        sleep(2000)
+        history(withConversationDisconnectEvent = false)
+        bye()
+    }
+
+    @Test
+    fun testDisconnectAgent_ReadOnly() {
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.agentDisconnectDeploymentId)
+        connect()
+        sendMsg(helloText)
+        val conversationInfo = apiHelper.answerNewConversation()
+        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
+        else {
+            Log.i(TAG, "Conversation started successfully.")
+            // conversationInfo: Conversation, connecting: Boolean, wrapup: Boolean = true
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
+            // wait for agent to disconnect
+            apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id)
+            checkForReadOnly()
+            bye()
+            sleep(2000)
+            // connect again and check for readOnly
+            reconnectReadOnly()
+            bye()
+        }
+    }
+
+    @Test
+    fun testDisconnectAgent_NotReadOnly() {
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.deploymentId)
+        connect()
+        sendMsg(helloText)
+        val conversationInfo = apiHelper.answerNewConversation()
+        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
+        else {
+            Log.i(TAG, "Conversation started successfully.")
+            apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
+            verifyResponse(outboundMessage)
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
+            // wait for agent to disconnect
+            apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id)
+            sendMsg(helloText)
+            val conversation2Info = apiHelper.answerNewConversation()
+            if (conversation2Info == null) AssertionError("Unable to answer conversation.")
+            else {
+                Log.i(TAG, "Conversation started successfully.")
+                if (conversationInfo.id != conversation2Info.id) AssertionError("Reconnecting a conversation may not have matching conversation IDs.")
+                else (Log.i(TAG, "Conversation ids matched as expected."))
+                apiHelper.sendConnectOrDisconnect(conversation2Info)
+                // wait for agent to disconnect
+                apiHelper.waitForParticipantToConnectOrDisconnect(conversation2Info.id)
+            }
+        }
+    }
+
+    @Test
+    fun testHistoryPull() {
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.agentDisconnectDeploymentId)
+        connect()
+        sendMsg(helloText)
+        val conversationInfo = apiHelper.answerNewConversation()
+        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
+        else {
+            Log.i(TAG, "Conversation started successfully.")
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
+            // wait for agent to disconnect
+            apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id)
+            checkForReadOnly()
+            // enter history and check for ConversationDisconnect and ConversationAutostart events
+            history()
+            // Just to clear things up, let's start a new chat, wait for configured
+            startNewChat()
+            val conversation2Info = apiHelper.answerNewConversation()
+            if (conversation2Info == null) AssertionError("Unable to answer conversation.")
+            else {
+                Log.i(TAG, "Conversation started successfully.")
+                apiHelper.sendConnectOrDisconnect(conversation2Info)
+                // wait for agent to disconnect
+                apiHelper.waitForParticipantToConnectOrDisconnect(conversation2Info.id)
+            }
+            bye()
+        }
     }
 }

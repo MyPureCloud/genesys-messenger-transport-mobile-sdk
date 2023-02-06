@@ -43,7 +43,7 @@ class API : IdlingResource {
                 }
             } catch (error: FileNotFoundException) {
                 // FileNotFoundException can be received when a 404 is returned by an endpoint.
-                throw Error("An error was received while sending an HTTP Request. The target endpoint was: $error.message \n$responseCode \n$responseMessage")
+                throw Error("An error was received while sending an HTTP Request. The target endpoint was: ${error.message} \n$responseCode \n$responseMessage")
                 setIdle(false)
             }
         }
