@@ -53,6 +53,9 @@ internal class MessageStore(
                 activeConversation.find { it.id == message.id }?.let {
                     activeConversation[it.getIndex()] = message
                     messageListener?.invoke(MessageEvent.MessageUpdated(message))
+                } ?: run {
+                    activeConversation.add(message)
+                    messageListener?.invoke(MessageEvent.MessageInserted(message))
                 }
             }
             Direction.Outbound -> {

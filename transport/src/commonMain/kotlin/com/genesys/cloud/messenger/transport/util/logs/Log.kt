@@ -1,7 +1,7 @@
 package com.genesys.cloud.messenger.transport.util.logs
 
 import co.touchlab.kermit.Severity
-import io.ktor.client.features.logging.Logger
+import io.ktor.client.plugins.logging.Logger
 
 internal class Log(private val enableLogs: Boolean, tag: String) {
 

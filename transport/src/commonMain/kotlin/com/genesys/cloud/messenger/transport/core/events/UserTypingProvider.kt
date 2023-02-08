@@ -6,7 +6,7 @@ import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import kotlinx.serialization.encodeToString
 
-private const val TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND = 5000L
+internal const val TYPING_INDICATOR_COOL_DOWN_MILLISECONDS = 5000L
 
 internal class UserTypingProvider(
     private val log: Log,
@@ -20,12 +20,12 @@ internal class UserTypingProvider(
         return if (showUserTypingEnabled()) {
             val currentTimestamp = getCurrentTimestamp()
             val delta = currentTimestamp - lastSentUserTypingTimestamp
-            if (delta > TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND) {
+            if (delta > TYPING_INDICATOR_COOL_DOWN_MILLISECONDS) {
                 lastSentUserTypingTimestamp = currentTimestamp
                 val request = UserTypingRequest(token = token)
                 WebMessagingJson.json.encodeToString(request)
             } else {
-                log.w { "Typing event can be sent only once every $TYPING_INDICATOR_COOL_DOWN_IN_MILLISECOND milliseconds." }
+                log.w { "Typing event can be sent only once every $TYPING_INDICATOR_COOL_DOWN_MILLISECONDS milliseconds." }
                 null
             }
         } else {

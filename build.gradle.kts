@@ -1,5 +1,5 @@
 buildscript {
-    val compose_version by extra("1.2.0-rc02")
+    val compose_version by extra("1.4.0-alpha02")
 
     repositories {
         gradlePluginPortal()
@@ -7,8 +7,8 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.21")
-        classpath("com.android.tools.build:gradle:7.2.1")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.21")
+        classpath("com.android.tools.build:gradle:7.3.1")
         classpath("org.jmailen.gradle:kotlinter-gradle:3.4.0")
         classpath("com.vanniktech:gradle-android-junit-jacoco-plugin:0.16.0")
     }
@@ -26,7 +26,7 @@ plugins {
 }
 
 // CocoaPods requires the podspec to have a `version`.
-val buildVersion = "2.1.0"
+val buildVersion = "2.2.0"
 val snapshot = System.getenv("SNAPSHOT_BUILD") ?: ""
 version = "${buildVersion}${snapshot}"
 group = "cloud.genesys"

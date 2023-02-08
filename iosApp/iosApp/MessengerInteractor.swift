@@ -79,7 +79,7 @@ final class MessengerInteractor {
     }
 
     func fetchNextPage(completion: ((Error?) -> Void)? = nil) {
-        messagingClient.fetchNextPage() { _, error in
+        messagingClient.fetchNextPage() { error in
             completion?(error)
         }
     }
