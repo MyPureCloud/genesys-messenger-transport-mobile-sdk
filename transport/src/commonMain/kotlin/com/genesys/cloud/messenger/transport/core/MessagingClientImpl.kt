@@ -385,11 +385,6 @@ internal class MessagingClientImpl(
                                 if (!connected && isStartingANewSession) {
                                     cleanUp()
                                     configureSession(startNew = true)
-                                } else {
-                                    // Normally should not happen.
-                                    log.w {
-                                        "Unexpected SessionResponse configuration: connected: $connected, readOnly: $readOnly, isStartingANewSession: $isStartingANewSession"
-                                    }
                                 }
                             } else {
                                 isStartingANewSession = false
