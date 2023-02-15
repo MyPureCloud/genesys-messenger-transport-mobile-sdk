@@ -1,5 +1,6 @@
 package com.genesys.cloud.messenger.androidcomposeprototype
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.compose.setContent
@@ -8,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.launcher.PrototypeLauncherView
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed.TestBedFragment
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed.TestBedViewModel
+import com.genesys.cloud.messenger.androidcomposeprototype.util.getSharedPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -46,6 +48,16 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         if (supportFragmentManager.fragments.isNotEmpty()) {
             setPrototypeLauncherView()
             supportFragmentManager.popBackStackImmediate()
+        }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        intent?.data?.getQueryParameter("code")?.let { authCode ->
+            getSharedPreferences().edit().run {
+                putString("authCode", authCode)
+                apply()
+            }
         }
     }
 }
