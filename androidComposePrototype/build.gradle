@@ -1,4 +1,3 @@
-
 buildscript {
     ext {
         deploymentProperties = new Properties()
@@ -13,6 +12,12 @@ buildscript {
                 deploymentProperties.load(deploymentPropertiesFile.newReader())
             } else {
                 throw new GradleException("Deployment id and domain must be specified in either environmental variables for Jenkins or ${rootDir.absolutePath}/deployment.properties locally.")
+            }
+            try {
+                oktaProperties = new Properties()
+                rootProject.file("okta.properties").withInputStream { oktaProperties.load(it) }
+            } catch (FileNotFoundException ex) {
+                logger.warn("okta.properties does not exist in the path and will be ignored.")
             }
         }
     }
@@ -38,6 +43,12 @@ android {
 
         buildConfigField "String", "DEPLOYMENT_ID", '"' + deploymentProperties["deploymentId"] + '"'
         buildConfigField "String", "DEPLOYMENT_DOMAIN", '"' + deploymentProperties["deploymentDomain"] + '"'
+        // OKTA
+        buildConfigField "String", "OKTA_DOMAIN", '"' + oktaProperties["oktaDomain"] + '"'
+        buildConfigField "String", "CLIENT_ID", '"' + oktaProperties["clientId"] + '"'
+        buildConfigField "String", "SIGN_IN_REDIRECT_URI", '"' + oktaProperties["signInRedirectUri"] + '"'
+        buildConfigField "String", "SIGN_OUT_REDIRECT_URI", '"' + oktaProperties["signOutRedirectUri"] + '"'
+        buildConfigField "String", "OKTA_STATE", '"' + oktaProperties["oktaState"] + '"'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
