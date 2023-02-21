@@ -90,6 +90,18 @@ pipeline{
                       echo "deploymentId=${DEPLOYMENT_ID}" >> deployment.properties
                       echo "deploymentDomain=${DEPLOYMENT_DOMAIN}" >> deployment.properties
                     fi
+                    if [ -e okta.properties ]; then
+                      echo "okta.properties file already exists"
+                    else
+                      echo "creating okta.properties file based on environment variables"
+                      echo "oktaDomain=${OKTA_DOMAIN}" >> okta.properties
+                      echo "clientId=${CLIENT_ID}" >> okta.properties
+                      echo "signInRedirectUri=${SIGN_IN_REDIRECT_URI}" >> okta.properties
+                      echo "signOutRedirectUri=${SIGN_OUT_REDIRECT_URI}" >> okta.properties
+                      echo "oktaState=${OKTA_STATE}" >> okta.properties
+                      echo "clientId=${CLIENT_ID}" >> okta.properties
+                      echo "clientId=${CLIENT_ID}" >> okta.properties
+                    fi
                     ./gradlew -p "transport" :transport:syncFramework \
                       -Pkotlin.native.cocoapods.platform=iphoneos\
                       -Pkotlin.native.cocoapods.archs="arm64" \

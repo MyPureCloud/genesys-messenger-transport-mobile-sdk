@@ -6,10 +6,11 @@ buildscript {
             // when executing on jenkins, use environment variable-injected credentials
             deploymentProperties["deploymentId"] = System.env.DEPLOYMENT_ID
             deploymentProperties["deploymentDomain"] = System.env.DEPLOYMENT_DOMAIN
+            oktaProperties["oktaDomain"] = System.env.OKTA_DOMAIN
             oktaProperties["clientId"] = System.env.CLIENT_ID
             oktaProperties["signInRedirectUri"] = System.env.SIGN_IN_REDIRECT_URI
             oktaProperties["signOutRedirectUri"] = System.env.SIGN_OUT_REDIRECT_URI
-            oktaState["signOutRedirectUri"] = System.env.OKTA_STATE
+            oktaProperties["oktaState"] = System.env.OKTA_STATE
         } else {
             // when executing elsewhere (dev laptops, etc), use the secure.properties file on disk
             deploymentPropertiesFile = new File(rootDir.absolutePath + "/deployment.properties")
