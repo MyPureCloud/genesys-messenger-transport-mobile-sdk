@@ -85,7 +85,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
 
         val authCode = context.getSharedPreferences().getString("authCode", null)
-        authState = if(authCode != null) AuthState.AuthCodeReceived(authCode) else AuthState.NoAuth
+        authState = if (authCode != null) AuthState.AuthCodeReceived(authCode) else AuthState.NoAuth
     }
 
     fun onCommandChanged(newCommand: String) {
