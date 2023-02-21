@@ -1,10 +1,15 @@
 buildscript {
     ext {
         deploymentProperties = new Properties()
+        oktaProperties = new Properties()
         if (System.env.JENKINS_HOME != null) {
             // when executing on jenkins, use environment variable-injected credentials
             deploymentProperties["deploymentId"] = System.env.DEPLOYMENT_ID
             deploymentProperties["deploymentDomain"] = System.env.DEPLOYMENT_DOMAIN
+            oktaProperties["clientId"] = System.env.CLIENT_ID
+            oktaProperties["signInRedirectUri"] = System.env.SIGN_IN_REDIRECT_URI
+            oktaProperties["signOutRedirectUri"] = System.env.SIGN_OUT_REDIRECT_URI
+            oktaState["signOutRedirectUri"] = System.env.OKTA_STATE
         } else {
             // when executing elsewhere (dev laptops, etc), use the secure.properties file on disk
             deploymentPropertiesFile = new File(rootDir.absolutePath + "/deployment.properties")
@@ -14,7 +19,6 @@ buildscript {
                 throw new GradleException("Deployment id and domain must be specified in either environmental variables for Jenkins or ${rootDir.absolutePath}/deployment.properties locally.")
             }
             try {
-                oktaProperties = new Properties()
                 rootProject.file("okta.properties").withInputStream { oktaProperties.load(it) }
             } catch (FileNotFoundException ex) {
                 logger.warn("okta.properties does not exist in the path and will be ignored.")
