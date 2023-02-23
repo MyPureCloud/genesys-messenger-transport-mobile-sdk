@@ -99,8 +99,6 @@ pipeline{
                       echo "signInRedirectUri=${SIGN_IN_REDIRECT_URI}" >> okta.properties
                       echo "signOutRedirectUri=${SIGN_OUT_REDIRECT_URI}" >> okta.properties
                       echo "oktaState=${OKTA_STATE}" >> okta.properties
-                      echo "clientId=${CLIENT_ID}" >> okta.properties
-                      echo "clientId=${CLIENT_ID}" >> okta.properties
                     fi
                     ./gradlew -p "transport" :transport:syncFramework \
                       -Pkotlin.native.cocoapods.platform=iphoneos\
