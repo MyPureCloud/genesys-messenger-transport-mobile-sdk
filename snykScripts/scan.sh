@@ -20,6 +20,11 @@ fi
 # ensure these get modified accordingly.
 deployment_id="1"
 deployment_domain="1"
+okta_domain="1"
+client_id="1"
+sign_in_redirect_uri="1"
+sign_out_redirect_uri="1"
+okta_state="1"
 
 snyk_org="messenger-mobile-sdk"
 snyk_project_name="genesys-messenger-transport-mobile-sdk"
@@ -91,6 +96,11 @@ docker exec \
   --env DEPLOYMENT_ID="$deployment_id" \
   --env DEPLOYMENT_DOMAIN="$deployment_domain" \
   --env SNYK_TOKEN="$SNYK_TOKEN" \
+  --env OKTA_DOMAIN="$okta_domain" \
+  --env CLIENT_ID="$client_id" \
+  --env SIGN_IN_REDIRECT_URI="$sign_in_redirect_uri" \
+  --env SIGN_OUT_REDIRECT_URI="$sign_out_redirect_uri" \
+  --env OKTA_STATE="$okta_state" \
   -w /home/repo \
   "$container" \
   snyk test \
@@ -115,6 +125,11 @@ docker exec \
   --env DEPLOYMENT_ID="$deployment_id" \
   --env DEPLOYMENT_DOMAIN="$deployment_domain" \
   --env SNYK_TOKEN="$SNYK_TOKEN" \
+  --env OKTA_DOMAIN="$okta_domain" \
+  --env CLIENT_ID="$client_id" \
+  --env SIGN_IN_REDIRECT_URI="$sign_in_redirect_uri" \
+  --env SIGN_OUT_REDIRECT_URI="$sign_out_redirect_uri" \
+  --env OKTA_STATE="$okta_state" \
   -w /home/repo \
   "$container" \
   snyk monitor \
