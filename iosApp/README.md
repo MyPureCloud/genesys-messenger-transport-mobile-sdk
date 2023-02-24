@@ -10,7 +10,7 @@ This project depends on a `deployment.properties` file in the parent KMM project
 
 ## Okta Properties
 
-Providing an `okta.properties` file at the project's root directory is required to enable the Authenticated Message behavior. However, it is not mandatory to use this feature, and the file is only necessary if you intend to utilize this functionality. An example file named okta.properties.example can be found in the same folder to help you get started.
+Providing an `okta.properties` file at the parent KMM project directory is required to enable the Authenticated Message behavior. However, it is not mandatory to use this feature, and the file is only necessary if you intend to utilize this functionality. An example file named okta.properties.example can be found in the same folder to help you get started.
 
 ## Cocoapods
 

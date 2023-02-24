@@ -24,10 +24,10 @@ pipeline{
         DEPLOYMENT_ID = credentials("messenger-mobile-sdk-deployment-id")
         DEPLOYMENT_DOMAIN = 'inindca.com'
         OKTA_DOMAIN = 'dev-2518047.okta.com'
-        CLIENT_ID = '0oa7nb5ac1PfdBqZa5d7'
+        CLIENT_ID = credentials("messenger-mobile-sdk-okta-client-id")
         SIGN_IN_REDIRECT_URI = 'com.okta.dev-2518047://oauth2/code'
         SIGN_OUT_REDIRECT_URI = 'com.okta.dev-2518047:/'
-        OKTA_STATE = 'state-296bc9a0-a2a2-4a57-be1a-d0e2fd9bb601'
+        OKTA_STATE = credentials("messenger-mobile-sdk-okta-state")
         HOME = """${sh(
             returnStdout: true,
             script: 'if [ -z "$HOME" ]; then echo "/Users/$(whoami)"; else echo "$HOME"; fi'
