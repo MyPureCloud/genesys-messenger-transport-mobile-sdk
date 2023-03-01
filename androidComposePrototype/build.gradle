@@ -11,6 +11,8 @@ buildscript {
             oktaProperties["signInRedirectUri"] = System.env.SIGN_IN_REDIRECT_URI
             oktaProperties["signOutRedirectUri"] = System.env.SIGN_OUT_REDIRECT_URI
             oktaProperties["oktaState"] = System.env.OKTA_STATE
+            oktaProperties["codeChallenge"] = System.env.OKTA_CODE_CHALLENGE
+            oktaProperties["codeChallengeMethod"] = System.env.OKTA_CODE_CHALLENGE_METHOD
         } else {
             // when executing elsewhere (dev laptops, etc), use the secure.properties file on disk
             deploymentPropertiesFile = new File(rootDir.absolutePath + "/deployment.properties")
@@ -54,6 +56,8 @@ android {
         buildConfigField "String", "SIGN_IN_REDIRECT_URI", '"' + oktaProperties["signInRedirectUri"] + '"'
         buildConfigField "String", "SIGN_OUT_REDIRECT_URI", '"' + oktaProperties["signOutRedirectUri"] + '"'
         buildConfigField "String", "OKTA_STATE", '"' + oktaProperties["oktaState"] + '"'
+        buildConfigField "String", 'CODE_CHALLENGE', "\"${oktaProperties.getProperty('codeChallenge')}\""
+        buildConfigField "String", 'CODE_CHALLENGE_METHOD', "\"${oktaProperties.getProperty('codeChallengeMethod')}\""
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
