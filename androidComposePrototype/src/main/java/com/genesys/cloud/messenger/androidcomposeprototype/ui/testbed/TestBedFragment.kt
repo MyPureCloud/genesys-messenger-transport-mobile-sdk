@@ -9,12 +9,13 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import com.genesys.cloud.messenger.androidcomposeprototype.util.OKTA_AUTHORIZE_URL
 import kotlinx.coroutines.runBlocking
 
 class TestBedFragment : Fragment() {
 
     private val viewModel: TestBedViewModel by activityViewModels()
-    private val onOktaSignIn: (url: String) -> Unit = { url -> launchCustomTabs(url) }
+    private val onOktaSignIn: () -> Unit = { launchCustomTabs() }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -37,9 +38,8 @@ class TestBedFragment : Fragment() {
         }
     }
 
-    private fun launchCustomTabs(url: String) {
+    private fun launchCustomTabs() {
         val customTabsIntent = CustomTabsIntent.Builder().build()
-        println("Launching chrome custom tab with url: $url")
-        customTabsIntent.launchUrl(requireContext(), Uri.parse(url))
+        customTabsIntent.launchUrl(requireContext(), Uri.parse(OKTA_AUTHORIZE_URL))
     }
 }

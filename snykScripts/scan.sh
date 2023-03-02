@@ -25,8 +25,6 @@ client_id="1"
 sign_in_redirect_uri="1"
 sign_out_redirect_uri="1"
 okta_state="1"
-code_challenge="1"
-code_challenge_method="1"
 
 snyk_org="messenger-mobile-sdk"
 snyk_project_name="genesys-messenger-transport-mobile-sdk"
@@ -103,8 +101,6 @@ docker exec \
   --env SIGN_IN_REDIRECT_URI="$sign_in_redirect_uri" \
   --env SIGN_OUT_REDIRECT_URI="$sign_out_redirect_uri" \
   --env OKTA_STATE="$okta_state" \
-  --env CODE_CHALLENGE="$code_challenge" \
-  --env CODE_CHALLENGE_METHOD="$code_challenge_method" \
   -w /home/repo \
   "$container" \
   snyk test \
@@ -134,8 +130,6 @@ docker exec \
   --env SIGN_IN_REDIRECT_URI="$sign_in_redirect_uri" \
   --env SIGN_OUT_REDIRECT_URI="$sign_out_redirect_uri" \
   --env OKTA_STATE="$okta_state" \
-  --env CODE_CHALLENGE="$code_challenge" \
-  --env CODE_CHALLENGE_METHOD="$code_challenge_method" \
   -w /home/repo \
   "$container" \
   snyk monitor \

@@ -61,7 +61,7 @@ fun TestBedContent(
             style = typography.h5
         )
         Text(
-            "Commands: login, loginWithPKCE, connect, send <msg>, history, clearConversation, attach, detach, delete <attachmentId> , deployment, bye, healthCheck, addAttribute <key> <value>, typing",
+            "Commands: login, connect, send <msg>, history, clearConversation, attach, detach, delete <attachmentId> , deployment, bye, healthCheck, addAttribute <key> <value>, typing",
             style = typography.caption,
             softWrap = true
         )
