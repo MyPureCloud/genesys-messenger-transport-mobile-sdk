@@ -6,6 +6,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.genesys.cloud.messenger.androidcomposeprototype.BuildConfig
 import com.genesys.cloud.messenger.androidcomposeprototype.util.getSharedPreferences
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
 import com.genesys.cloud.messenger.transport.core.Configuration
@@ -16,6 +18,7 @@ import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.MessengerTransport
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.util.DefaultTokenStore
+import io.ktor.http.URLBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -46,20 +49,20 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         private set
     var deploymentId: String by mutableStateOf("")
         private set
-    var region: String by mutableStateOf("inindca.com")
+    var region: String by mutableStateOf("")
         private set
     var authState: AuthState by mutableStateOf(AuthState.NoAuth)
         private set
 
-    val regions = listOf("inindca.com", "mypurecloud.com")
+    val regions = listOf("inindca.com", "inintca.com", "mypurecloud.com")
     private val customAttributes = mutableMapOf<String, String>()
-    private lateinit var onOktaSingIn: () -> Unit
+    private lateinit var onOktaSingIn: (url: String) -> Unit
 
-    suspend fun init(context: Context, onOktaSignIn: () -> Unit) {
+    suspend fun init(context: Context, onOktaSignIn: (url: String) -> Unit) {
         onOktaSingIn = onOktaSignIn
         val mmsdkConfiguration = Configuration(
-            deploymentId = deploymentId,
-            domain = region,
+            deploymentId = deploymentId.ifEmpty { BuildConfig.DEPLOYMENT_ID },
+            domain = region.ifEmpty { BuildConfig.DEPLOYMENT_DOMAIN },
             logging = true
         )
         DefaultTokenStore.context = context
@@ -85,7 +88,14 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
 
         val authCode = context.getSharedPreferences().getString("authCode", null)
-        authState = if (authCode != null) AuthState.AuthCodeReceived(authCode) else AuthState.NoAuth
+        viewModelScope.launch {
+            authState = if (authCode != null) {
+                onSocketMessageReceived("AuthCode: $authCode")
+                AuthState.AuthCodeReceived(authCode)
+            } else {
+                AuthState.NoAuth
+            }
+        }
     }
 
     fun onCommandChanged(newCommand: String) {
@@ -119,7 +129,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "clearConversation" -> doClearConversation()
             "addAttribute" -> doAddCustomAttributes(input)
             "typing" -> doIndicateTyping()
-            "login" -> doLogin()
+            "login" -> doLogin(false)
+            "loginWithPKCE" -> doLogin(true)
             else -> {
                 Log.e(TAG, "Invalid command")
                 withContext(Dispatchers.Main) {
@@ -129,8 +140,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private fun doLogin() {
-        onOktaSingIn()
+    private fun doLogin(isPKCEEnabled: Boolean) {
+        onOktaSingIn(buildOktaAuthorizeUrl(isPKCEEnabled))
         commandWaiting = false
     }
 
@@ -297,6 +308,22 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private fun onEvent(event: Event) {
         launch { onSocketMessageReceived(event.toString()) }
+    }
+
+    private fun buildOktaAuthorizeUrl(isPKCEEnabled: Boolean): String {
+        val builder =
+            URLBuilder("https://${BuildConfig.OKTA_DOMAIN}/oauth2/default/v1/authorize").apply {
+                parameters.append("client_id", BuildConfig.CLIENT_ID)
+                parameters.append("response_type", "code")
+                parameters.append("scope", "openid profile")
+                parameters.append("redirect_uri", BuildConfig.SIGN_IN_REDIRECT_URI)
+                parameters.append("state", BuildConfig.OKTA_STATE)
+                if (isPKCEEnabled) {
+                    parameters.append("code_challenge_method", BuildConfig.CODE_CHALLENGE_METHOD)
+                    parameters.append("code_challenge", BuildConfig.CODE_CHALLENGE)
+                }
+            }
+        return builder.build().toString()
     }
 }
 

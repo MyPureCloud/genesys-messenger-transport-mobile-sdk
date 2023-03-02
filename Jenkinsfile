@@ -28,6 +28,8 @@ pipeline{
         SIGN_IN_REDIRECT_URI = 'com.okta.dev-2518047://oauth2/code'
         SIGN_OUT_REDIRECT_URI = 'com.okta.dev-2518047:/'
         OKTA_STATE = credentials("messenger-mobile-sdk-okta-state")
+        CODE_CHALLENGE = 'Cc6VZuBMOjDa9wKlFZLK-9lLPr_Q5e7mJsnVooFnBWA'
+        CODE_CHALLENGE_METHOD = 'S256'
         HOME = """${sh(
             returnStdout: true,
             script: 'if [ -z "$HOME" ]; then echo "/Users/$(whoami)"; else echo "$HOME"; fi'
@@ -99,6 +101,8 @@ pipeline{
                       echo "signInRedirectUri=${SIGN_IN_REDIRECT_URI}" >> okta.properties
                       echo "signOutRedirectUri=${SIGN_OUT_REDIRECT_URI}" >> okta.properties
                       echo "oktaState=${OKTA_STATE}" >> okta.properties
+                      echo "codeChallenge=${CODE_CHALLENGE}" >> okta.properties
+                      echo "codeChallengeMethod=${CODE_CHALLENGE_METHOD}" >> okta.properties
                     fi
                     ./gradlew -p "transport" :transport:syncFramework \
                       -Pkotlin.native.cocoapods.platform=iphoneos\
