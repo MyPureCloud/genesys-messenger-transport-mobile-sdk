@@ -119,7 +119,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "clearConversation" -> doClearConversation()
             "addAttribute" -> doAddCustomAttributes(input)
             "typing" -> doIndicateTyping()
-            "login" -> doLogin()
+            "oktaSignIn" -> doOktaSignIn()
             else -> {
                 Log.e(TAG, "Invalid command")
                 withContext(Dispatchers.Main) {
@@ -129,7 +129,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private fun doLogin() {
+    private fun doOktaSignIn() {
         onOktaSingIn()
         commandWaiting = false
     }
