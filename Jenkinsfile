@@ -30,6 +30,7 @@ pipeline{
         OKTA_STATE = credentials("messenger-mobile-sdk-okta-state")
         CODE_CHALLENGE = 'Cc6VZuBMOjDa9wKlFZLK-9lLPr_Q5e7mJsnVooFnBWA'
         CODE_CHALLENGE_METHOD = 'S256'
+        CODE_VERIFIER = 'BtNSLgCNFlZPEOodtxgIp7c-SlnC0RaLilxRaYuZ7DI'
         HOME = """${sh(
             returnStdout: true,
             script: 'if [ -z "$HOME" ]; then echo "/Users/$(whoami)"; else echo "$HOME"; fi'
@@ -103,6 +104,7 @@ pipeline{
                       echo "oktaState=${OKTA_STATE}" >> okta.properties
                       echo "codeChallenge=${CODE_CHALLENGE}" >> okta.properties
                       echo "codeChallengeMethod=${CODE_CHALLENGE_METHOD}" >> okta.properties
+                      echo "codeVerifier=${CODE_VERIFIER}" >> okta.properties
                     fi
                     ./gradlew -p "transport" :transport:syncFramework \
                       -Pkotlin.native.cocoapods.platform=iphoneos\

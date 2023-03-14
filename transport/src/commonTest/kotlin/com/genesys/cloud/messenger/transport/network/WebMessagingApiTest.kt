@@ -2,14 +2,13 @@ package com.genesys.cloud.messenger.transport.network
 
 import com.genesys.cloud.messenger.transport.DEFAULT_TIMEOUT
 import com.genesys.cloud.messenger.transport.core.Configuration
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.mock.MockEngine
+import com.genesys.cloud.messenger.transport.mockHttpClientWith
+import io.ktor.client.HttpClientConfig
+import io.ktor.client.engine.mock.MockEngineConfig
 import io.ktor.client.engine.mock.respond
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.ContentType
 import io.ktor.http.fullPath
 import io.ktor.http.headersOf
-import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
@@ -26,7 +25,7 @@ class WebMessagingApiTest {
             val configuration = configuration()
             return WebMessagingApi(
                 configuration = configuration,
-                client = mockHttpClient()
+                client = mockHttpClientWith { historyEngine() }
             )
         }
 
@@ -62,10 +61,7 @@ class WebMessagingApiTest {
         logging = false
     )
 
-    private fun mockHttpClient(): HttpClient = HttpClient(MockEngine) {
-        install(ContentNegotiation) {
-            json()
-        }
+    private fun HttpClientConfig<MockEngineConfig>.historyEngine() {
         engine {
             val responseHeaders =
                 headersOf("Content-Type" to listOf(ContentType.Application.Json.toString()))
