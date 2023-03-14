@@ -129,8 +129,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "clearConversation" -> doClearConversation()
             "addAttribute" -> doAddCustomAttributes(input)
             "typing" -> doIndicateTyping()
-            "login" -> doLogin(false)
-            "loginWithPKCE" -> doLogin(true)
+            "oktaSignIn" -> doOktaSignIn(false)
+            "oktaSignInWithPKCE" -> doOktaSignIn(true)
             else -> {
                 Log.e(TAG, "Invalid command")
                 withContext(Dispatchers.Main) {
@@ -140,7 +140,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private fun doLogin(isPKCEEnabled: Boolean) {
+    private fun doOktaSignIn(isPKCEEnabled: Boolean) {
         onOktaSingIn(buildOktaAuthorizeUrl(isPKCEEnabled))
         commandWaiting = false
     }
