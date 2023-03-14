@@ -36,6 +36,7 @@ fun TestBedScreen(testBedViewModel: TestBedViewModel) {
                 clientState = testBedViewModel.clientState,
                 socketMessage = testBedViewModel.socketMessage,
                 commandWaiting = testBedViewModel.commandWaiting,
+                currentAuthState = testBedViewModel.authState,
             )
         }
     }
@@ -49,6 +50,7 @@ fun TestBedContent(
     clientState: MessagingClient.State,
     socketMessage: String,
     commandWaiting: Boolean,
+    currentAuthState: AuthState,
 ) {
     Column(
         modifier = Modifier.padding(8.dp)
@@ -59,13 +61,14 @@ fun TestBedContent(
             style = typography.h5
         )
         Text(
-            "Commands: connect, send <msg>, history, clearConversation, attach, detach, delete <attachmentId> , deployment, bye, healthCheck, addAttribute <key> <value>, typing",
+            "Commands: oktaSignIn, connect, send <msg>, history, clearConversation, attach, detach, delete <attachmentId> , deployment, bye, healthCheck, addAttribute <key> <value>, typing",
             style = typography.caption,
             softWrap = true
         )
         CommandView(command, onCommandChange, onCommandSend, commandWaiting)
         Spacer(modifier = Modifier.height(16.dp))
         ConnectionStateView(clientState)
+        AuthStateView(currentAuthState)
         SocketMessageView(socketMessage)
     }
 }
@@ -106,6 +109,19 @@ private fun ConnectionStateView(clientState: MessagingClient.State) {
         value = clientState.javaClass.simpleName,
         onValueChange = { /* no-op */ },
         label = { Text("Client") },
+        readOnly = true,
+        textStyle = MaterialTheme.typography.body2,
+        modifier = Modifier
+            .fillMaxWidth()
+    )
+}
+
+@Composable
+fun AuthStateView(authState: AuthState) {
+    OutlinedTextField(
+        value = " ${authState.javaClass.simpleName}",
+        onValueChange = { /* no-op */ },
+        label = { Text("Auth state") },
         readOnly = true,
         textStyle = MaterialTheme.typography.body2,
         modifier = Modifier

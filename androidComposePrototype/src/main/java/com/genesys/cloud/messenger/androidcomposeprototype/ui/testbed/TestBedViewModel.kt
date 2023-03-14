@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import com.genesys.cloud.messenger.androidcomposeprototype.util.getSharedPreferences
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.MessageEvent
@@ -47,11 +48,15 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         private set
     var region: String by mutableStateOf("inindca.com")
         private set
+    var authState: AuthState by mutableStateOf(AuthState.NoAuth)
+        private set
 
     val regions = listOf("inindca.com", "mypurecloud.com")
     private val customAttributes = mutableMapOf<String, String>()
+    private lateinit var onOktaSingIn: () -> Unit
 
-    suspend fun init(context: Context) {
+    suspend fun init(context: Context, onOktaSignIn: () -> Unit) {
+        onOktaSingIn = onOktaSignIn
         val mmsdkConfiguration = Configuration(
             deploymentId = deploymentId,
             domain = region,
@@ -78,6 +83,9 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
                 inputStream.readBytes().also { attachment = it }
             }
         }
+
+        val authCode = context.getSharedPreferences().getString("authCode", null)
+        authState = if (authCode != null) AuthState.AuthCodeReceived(authCode) else AuthState.NoAuth
     }
 
     fun onCommandChanged(newCommand: String) {
@@ -111,6 +119,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "clearConversation" -> doClearConversation()
             "addAttribute" -> doAddCustomAttributes(input)
             "typing" -> doIndicateTyping()
+            "oktaSignIn" -> doOktaSignIn()
             else -> {
                 Log.e(TAG, "Invalid command")
                 withContext(Dispatchers.Main) {
@@ -118,6 +127,11 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
                 }
             }
         }
+    }
+
+    private fun doOktaSignIn() {
+        onOktaSingIn()
+        commandWaiting = false
     }
 
     private suspend fun doDeployment() {
@@ -292,4 +306,9 @@ private fun String.toKeyValuePair(): Pair<String, String> {
         val value = getOrNull(1) ?: ""
         Pair(key, value)
     }
+}
+
+sealed class AuthState {
+    object NoAuth : AuthState()
+    data class AuthCodeReceived(val authCode: String) : AuthState()
 }

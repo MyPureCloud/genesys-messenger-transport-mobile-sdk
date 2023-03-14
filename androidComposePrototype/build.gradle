@@ -1,11 +1,17 @@
-
 buildscript {
     ext {
         deploymentProperties = new Properties()
+        oktaProperties = new Properties()
         if (System.env.JENKINS_HOME != null) {
             // when executing on jenkins, use environment variable-injected credentials
             deploymentProperties["deploymentId"] = System.env.DEPLOYMENT_ID
             deploymentProperties["deploymentDomain"] = System.env.DEPLOYMENT_DOMAIN
+            //Okta variables
+            oktaProperties["oktaDomain"] = System.env.OKTA_DOMAIN
+            oktaProperties["clientId"] = System.env.CLIENT_ID
+            oktaProperties["signInRedirectUri"] = System.env.SIGN_IN_REDIRECT_URI
+            oktaProperties["signOutRedirectUri"] = System.env.SIGN_OUT_REDIRECT_URI
+            oktaProperties["oktaState"] = System.env.OKTA_STATE
         } else {
             // when executing elsewhere (dev laptops, etc), use the secure.properties file on disk
             deploymentPropertiesFile = new File(rootDir.absolutePath + "/deployment.properties")
@@ -13,6 +19,12 @@ buildscript {
                 deploymentProperties.load(deploymentPropertiesFile.newReader())
             } else {
                 throw new GradleException("Deployment id and domain must be specified in either environmental variables for Jenkins or ${rootDir.absolutePath}/deployment.properties locally.")
+            }
+            oktaPropertiesFile = new File(rootDir.absolutePath + "/okta.properties")
+            if (oktaPropertiesFile.exists()) {
+                oktaProperties.load(oktaPropertiesFile.newReader())
+            } else {
+                logger.warn("okta.properties does not exist in the path and will be ignored.")
             }
         }
     }
@@ -32,12 +44,18 @@ android {
     defaultConfig {
         applicationId "com.genesys.cloud.webmessaging.androidcomposeprototype"
         minSdkVersion 21
-        targetSdkVersion 30
+        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
 
         buildConfigField "String", "DEPLOYMENT_ID", '"' + deploymentProperties["deploymentId"] + '"'
         buildConfigField "String", "DEPLOYMENT_DOMAIN", '"' + deploymentProperties["deploymentDomain"] + '"'
+        // OKTA
+        buildConfigField "String", "OKTA_DOMAIN", '"' + oktaProperties["oktaDomain"] + '"'
+        buildConfigField "String", "CLIENT_ID", '"' + oktaProperties["clientId"] + '"'
+        buildConfigField "String", "SIGN_IN_REDIRECT_URI", '"' + oktaProperties["signInRedirectUri"] + '"'
+        buildConfigField "String", "SIGN_OUT_REDIRECT_URI", '"' + oktaProperties["signOutRedirectUri"] + '"'
+        buildConfigField "String", "OKTA_STATE", '"' + oktaProperties["oktaState"] + '"'
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -97,6 +115,8 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycle_viewmodel_compose_version"
     // Integration with activities
     implementation "androidx.activity:activity-compose:$activity_compose_version"
+    // Chrome Custom Tabs
+    implementation 'androidx.browser:browser:1.4.0'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
