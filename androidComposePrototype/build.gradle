@@ -12,8 +12,8 @@ buildscript {
             oktaProperties["signInRedirectUri"] = System.env.SIGN_IN_REDIRECT_URI
             oktaProperties["signOutRedirectUri"] = System.env.SIGN_OUT_REDIRECT_URI
             oktaProperties["oktaState"] = System.env.OKTA_STATE
-            oktaProperties["codeChallenge"] = System.env.OKTA_CODE_CHALLENGE
-            oktaProperties["codeChallengeMethod"] = System.env.OKTA_CODE_CHALLENGE_METHOD
+            oktaProperties["codeChallenge"] = System.env.CODE_CHALLENGE
+            oktaProperties["codeChallengeMethod"] = System.env.CODE_CHALLENGE_METHOD
         } else {
             // when executing elsewhere (dev laptops, etc), use the secure.properties file on disk
             deploymentPropertiesFile = new File(rootDir.absolutePath + "/deployment.properties")
