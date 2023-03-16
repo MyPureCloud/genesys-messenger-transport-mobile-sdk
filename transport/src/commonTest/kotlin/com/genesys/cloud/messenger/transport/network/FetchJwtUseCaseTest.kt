@@ -42,19 +42,15 @@ class FetchJwtUseCaseTest {
     @Test
     fun fetchShouldReturnExpectedAuthJwtWhenRequestIsSuccessful() =
         runBlocking {
-            // given
             val expectedAuthJwt = AuthJwt(TestJwtToken, TestRefreshToken)
 
-            // when
             val actualAuthJwt = subject.fetch()
 
-            // then
             assertEquals(expectedAuthJwt, actualAuthJwt)
         }
 
     @Test
     fun fetchShouldThrowExceptionWhenRequestIsSuccessfulWithInvalidParameters() {
-        // given
         val expectedException = Exception("Auth JWT fetch failed: Not found")
         subject = FetchJwtUseCase(
             logging = false,
@@ -66,7 +62,6 @@ class FetchJwtUseCaseTest {
             client = mockHttpClientWith { authJwtEngine() }
         )
 
-        // when
         runBlocking {
             val actualException = assertFailsWith<Exception> {
                 subject.fetch()
