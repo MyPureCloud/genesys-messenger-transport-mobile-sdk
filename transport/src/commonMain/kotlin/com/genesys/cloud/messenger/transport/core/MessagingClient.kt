@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
 import com.genesys.cloud.messenger.transport.core.events.Event
+import com.genesys.cloud.messenger.transport.model.AuthJwt
 
 /**
  * The main SDK interface providing bi-directional communication between a guest and Genesys Cloud
@@ -97,6 +98,17 @@ interface MessagingClient {
      */
     @Throws(IllegalStateException::class)
     fun connect()
+
+    /**
+     * Open and configure a secure WebSocket connection to the Web Messaging service using the url and deploymentId
+     * configured on this MessagingClient instance, authenticating the session with the provided JWT.
+     *
+     * @param jwt the AuthJwt used to authenticate the session.
+     *
+     * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
+     */
+    @Throws(IllegalStateException::class)
+    fun connectAuthenticatedSession(jwt: AuthJwt)
 
     /**
      * Send a message to the conversation as plain text.

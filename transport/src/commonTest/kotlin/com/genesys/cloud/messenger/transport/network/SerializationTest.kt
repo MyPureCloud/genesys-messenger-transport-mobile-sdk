@@ -20,6 +20,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
+import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureAuthenticatedSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.EchoRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
@@ -381,5 +382,25 @@ class SerializationTest {
 
         assertThat(message.body, "WebMessagingMessage body").isNotNull()
             .hasClass(ConnectionClosedEvent::class)
+    }
+
+    @Test
+    fun whenConfigureAuthenticatedSessionRequestThenEncodes() {
+        val journeyContext = JourneyContext(
+            JourneyCustomer("00000000-0000-0000-0000-000000000000", "cookie"),
+            JourneyCustomerSession("", "web"),
+        )
+        val data = ConfigureAuthenticatedSessionRequest.Data("<auth_token>")
+        val encodedString = WebMessagingJson.json.encodeToString(
+            ConfigureAuthenticatedSessionRequest(
+                token = "<token>",
+                deploymentId = "<deploymentId>",
+                journeyContext = journeyContext,
+                data = data,
+            )
+        )
+
+        assertThat(encodedString, "encoded ConfigureAuthenticatedSessionRequest")
+            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"data":{"code":"<auth_token>"},"action":"configureAuthenticatedSession"}""")
     }
 }

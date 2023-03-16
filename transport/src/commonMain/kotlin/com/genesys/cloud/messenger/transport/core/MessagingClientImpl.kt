@@ -6,6 +6,7 @@ import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
+import com.genesys.cloud.messenger.transport.model.AuthJwt
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
@@ -31,6 +32,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.isHealthCheckResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.isOutbound
 import com.genesys.cloud.messenger.transport.shyrka.send.AutoStartRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureAuthenticatedSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
@@ -64,6 +66,8 @@ internal class MessagingClientImpl(
             { deploymentConfig.isShowUserTypingEnabled() },
         ),
 ) : MessagingClient {
+
+    private var authJwt: AuthJwt? = null
 
     override val currentState: State
         get() {
@@ -102,6 +106,14 @@ internal class MessagingClientImpl(
     }
 
     @Throws(IllegalStateException::class)
+    override fun connectAuthenticatedSession(jwt: AuthJwt) {
+        authJwt = jwt
+        log.i { "connect()" }
+        stateMachine.onConnect()
+        webSocket.openSocket(socketListener)
+    }
+
+    @Throws(IllegalStateException::class)
     override fun disconnect() {
         log.i { "disconnect()" }
         val code = SocketCloseCode.NORMAL_CLOSURE.value
@@ -113,15 +125,11 @@ internal class MessagingClientImpl(
 
     private fun configureSession() {
         log.i { "configureSession(token = $token)" }
-        val request = ConfigureSessionRequest(
-            token = token,
-            deploymentId = configuration.deploymentId,
-            journeyContext = JourneyContext(
-                JourneyCustomer(token, "cookie"),
-                JourneyCustomerSession("", "web")
-            )
-        )
-        val encodedJson = WebMessagingJson.json.encodeToString(request)
+        val encodedJson = if (authJwt != null) {
+            encodeAuthenticatedConfigureSessionRequest()
+        } else {
+            encodeAnonymousConfigureSessionRequest()
+        }
         webSocket.sendMessage(encodedJson)
     }
 
@@ -219,8 +227,7 @@ internal class MessagingClientImpl(
         when (code) {
             is ErrorCode.SessionHasExpired,
             is ErrorCode.SessionNotFound,
-            ->
-                stateMachine.onError(code, message)
+            -> transitionToStateError(code, message)
             is ErrorCode.MessageTooLong,
             is ErrorCode.RequestRateTooHigh,
             is ErrorCode.CustomAttributeSizeTooLarge,
@@ -233,7 +240,7 @@ internal class MessagingClientImpl(
             is ErrorCode.RedirectResponseError,
             -> {
                 if (stateMachine.isConnected()) {
-                    stateMachine.onError(code, message)
+                    transitionToStateError(code, message)
                 } else {
                     eventHandler.onEvent(ErrorEvent(errorCode = code, message = message))
                 }
@@ -252,20 +259,14 @@ internal class MessagingClientImpl(
                     stateMachine.onReconnect()
                     reconnectionHandler.reconnect { connect() }
                 } else {
-                    stateMachine.onError(errorCode, ErrorMessage.FailedToReconnect)
-                    attachmentHandler.clearAll()
-                    reconnectionHandler.clear()
+                    transitionToStateError(errorCode, ErrorMessage.FailedToReconnect)
                 }
             }
             is ErrorCode.WebsocketAccessDenied -> {
-                stateMachine.onError(errorCode, CorrectiveAction.Forbidden.message)
-                attachmentHandler.clearAll()
-                reconnectionHandler.clear()
+                transitionToStateError(errorCode, CorrectiveAction.Forbidden.message)
             }
             is ErrorCode.NetworkDisabled -> {
-                stateMachine.onError(errorCode, ErrorMessage.InternetConnectionIsOffline)
-                attachmentHandler.clearAll()
-                reconnectionHandler.clear()
+                transitionToStateError(errorCode, ErrorMessage.InternetConnectionIsOffline)
             }
             else -> log.w { "Unhandled WebSocket errorCode. ErrorCode: $errorCode" }
         }
@@ -296,6 +297,36 @@ internal class MessagingClientImpl(
             }
         }
     }
+
+    private fun transitionToStateError(errorCode: ErrorCode, errorMessage: String?) {
+        stateMachine.onError(errorCode, errorMessage)
+        attachmentHandler.clearAll()
+        reconnectionHandler.clear()
+        authJwt = null
+    }
+
+    private fun encodeAnonymousConfigureSessionRequest() = WebMessagingJson.json.encodeToString(
+        ConfigureSessionRequest(
+            token = token,
+            deploymentId = configuration.deploymentId,
+            journeyContext = JourneyContext(
+                JourneyCustomer(token, "cookie"),
+                JourneyCustomerSession("", "web")
+            )
+        )
+    )
+
+    private fun encodeAuthenticatedConfigureSessionRequest() = WebMessagingJson.json.encodeToString(
+        ConfigureAuthenticatedSessionRequest(
+            token = token,
+            deploymentId = configuration.deploymentId,
+            journeyContext = JourneyContext(
+                JourneyCustomer(token, "cookie"),
+                JourneyCustomerSession("", "web")
+            ),
+            data = ConfigureAuthenticatedSessionRequest.Data(authJwt?.jwt ?: "")
+        )
+    )
 
     private val socketListener = SocketListener(
         log = log.withTag(LogTag.WEBSOCKET)
@@ -395,6 +426,7 @@ internal class MessagingClientImpl(
             userTypingProvider.clear()
             healthCheckProvider.clear()
             attachmentHandler.clearAll()
+            authJwt = null
         }
     }
 }

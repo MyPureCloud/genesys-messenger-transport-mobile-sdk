@@ -121,6 +121,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         val input = components.getOrNull(1) ?: ""
         when (command) {
             "connect" -> doConnect()
+            "connectAuthenticated" -> doConnectAuthenticated()
             "bye" -> doDisconnect()
             "send" -> doSendMessage(input)
             "history" -> fetchNextPage()
@@ -164,6 +165,18 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             client.connect()
         } catch (t: Throwable) {
             handleException(t, "connect")
+        }
+    }
+
+    private suspend fun doConnectAuthenticated() {
+        try {
+            if (authState is AuthState.JwtFetched) {
+                client.connectAuthenticatedSession((authState as AuthState.JwtFetched).authJwt)
+            } else {
+                throw IllegalStateException("Auth jwt was not fetched. Please, fetch and try again.")
+            }
+        } catch (t: Throwable) {
+            handleException(t, "connectAuthenticated")
         }
     }
 
