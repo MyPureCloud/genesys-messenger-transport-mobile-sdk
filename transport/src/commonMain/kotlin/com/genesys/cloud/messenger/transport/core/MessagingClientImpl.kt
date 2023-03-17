@@ -6,6 +6,8 @@ import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
+import com.genesys.cloud.messenger.transport.model.AuthJwt
+import com.genesys.cloud.messenger.transport.network.FetchJwtUseCase
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
@@ -63,6 +65,11 @@ internal class MessagingClientImpl(
             log.withTag(LogTag.TYPING_INDICATOR_PROVIDER),
             { deploymentConfig.isShowUserTypingEnabled() },
         ),
+    private val fetchJwtUseCase: FetchJwtUseCase = FetchJwtUseCase(
+        configuration.logging,
+        configuration.deploymentId,
+        configuration.jwtAuthUrl,
+    ),
 ) : MessagingClient {
 
     override val currentState: State
@@ -205,6 +212,15 @@ internal class MessagingClientImpl(
             log.i { "indicateTyping()" }
             send(it)
         }
+    }
+
+    @Throws(Exception::class)
+    override suspend fun fetchAuthJwt(
+        authCode: String,
+        redirectUri: String,
+        codeVerifier: String?,
+    ): AuthJwt {
+        return fetchJwtUseCase.fetch(authCode, redirectUri, codeVerifier)
     }
 
     @Throws(IllegalStateException::class)

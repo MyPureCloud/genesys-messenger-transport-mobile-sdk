@@ -1,9 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
-import com.genesys.cloud.messenger.transport.model.AuthJwt
 import com.genesys.cloud.messenger.transport.network.DEFAULT_PING_INTERVAL_IN_SECONDS
 import com.genesys.cloud.messenger.transport.network.DeploymentConfigUseCase
-import com.genesys.cloud.messenger.transport.network.FetchJwtUseCase
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
@@ -88,32 +86,5 @@ class MessengerTransport(
         ).fetch().also {
             deploymentConfig = it
         }
-    }
-
-    /**
-     * Fetches an Auth JWT using the provided authentication token, redirect URI, and code verifier.
-     *
-     * @param authCode The authentication code to use for fetching the Auth JWT.
-     * @param redirectUri The redirect URI to use for fetching the Auth JWT.
-     * @param codeVerifier The code verifier to use for fetching the Auth JWT (optional).
-     *
-     * @throws Exception If the Auth JWT fetch failed.
-     *
-     * @return The fetched Auth JWT with jwt and refreshToken.
-     */
-    @Throws(Exception::class)
-    suspend fun fetchAuthJwt(
-        authCode: String,
-        redirectUri: String,
-        codeVerifier: String?,
-    ): AuthJwt {
-        return FetchJwtUseCase(
-            configuration.logging,
-            configuration.deploymentId,
-            configuration.jwtAuthUrl,
-            authCode,
-            redirectUri,
-            codeVerifier,
-        ).fetch()
     }
 }

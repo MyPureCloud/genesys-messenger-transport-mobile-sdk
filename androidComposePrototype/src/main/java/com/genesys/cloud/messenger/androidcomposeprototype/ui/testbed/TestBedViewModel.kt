@@ -252,7 +252,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     private suspend fun doFetchAuthJwt() {
         if (authState is AuthState.AuthCodeReceived) {
             try {
-                messengerTransport.fetchAuthJwt(
+                client.fetchAuthJwt(
                     authCode = (authState as AuthState.AuthCodeReceived).authCode,
                     redirectUri = BuildConfig.SIGN_IN_REDIRECT_URI,
                     codeVerifier = if (pkceEnabled) BuildConfig.CODE_VERIFIER else null,

@@ -15,13 +15,14 @@ internal class FetchJwtUseCase(
     logging: Boolean,
     private val deploymentId: String,
     private val jwtAuthUrl: Url,
-    private val authCode: String,
-    private val redirectUri: String,
-    private val codeVerifier: String?,
     private val client: HttpClient = defaultHttpClient(logging),
 ) {
 
-    suspend fun fetch(): AuthJwt {
+    suspend fun fetch(
+        authCode: String,
+        redirectUri: String,
+        codeVerifier: String?,
+    ): AuthJwt {
         val requestBody = AuthJWTRequest(
             deploymentId = deploymentId,
             oauth = OAuth(
