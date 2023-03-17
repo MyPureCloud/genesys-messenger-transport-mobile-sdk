@@ -48,7 +48,6 @@ import io.mockk.clearAllMocks
 import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -836,7 +835,10 @@ class MessagingClientImplTest {
     @Test
     fun whenEventPresenceJoinReceived() {
         val givenPresenceJoinEvent = """{"eventType":"Presence","presence":{"type":"Join"}}"""
-        val expectedEvent = PresenceEvent(eventType = StructuredMessageEvent.Type.Presence, PresenceEvent.Presence("Join"))
+        val expectedEvent = PresenceEvent(
+            eventType = StructuredMessageEvent.Type.Presence,
+            PresenceEvent.Presence("Join")
+        )
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceJoinEvent))
@@ -876,7 +878,11 @@ class MessagingClientImplTest {
 
     @Test
     fun whenFetchAuthJwtResultInExceptionVerifyThatExceptionIsForwarded() {
-        coEvery { mockFetchJwtUseCase.fetch(any(), any(), any()) } throws Exception("Something went wrong.")
+        coEvery {
+            mockFetchJwtUseCase.fetch(any(),
+                any(),
+                any())
+        } throws Exception("Something went wrong.")
 
         assertFailsWith<Exception> {
             runBlocking { subject.fetchAuthJwt(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier) }
@@ -947,7 +953,8 @@ class MessagingClientImplTest {
     )
 
     private fun MockKVerificationScope.connectSequence(shouldConfigureAuth: Boolean = false) {
-        val configureRequest = if (shouldConfigureAuth) Request.configureAuthenticatedRequest else Request.configureRequest
+        val configureRequest =
+            if (shouldConfigureAuth) Request.configureAuthenticatedRequest else Request.configureRequest
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
@@ -977,7 +984,8 @@ class MessagingClientImplTest {
     }
 
     private fun MockKVerificationScope.connectWithFailedConfigureSequence(shouldConfigureAuth: Boolean = false) {
-        val configureRequest = if (shouldConfigureAuth) Request.configureAuthenticatedRequest else Request.configureRequest
+        val configureRequest =
+            if (shouldConfigureAuth) Request.configureAuthenticatedRequest else Request.configureRequest
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
@@ -1050,7 +1058,8 @@ private object Response {
         """{"type":"response","class":"TooManyRequestsErrorMessage","code":429,"body":{"retryAfter":3,"errorCode":4029,"errorMessage":"Message rate too high for this session"}}"""
     const val customAttributeSizeTooLarge =
         """{"type": "response","class": "string","code": 4013,"body": "Custom Attributes in channel metadata is larger than 2048 bytes"}"""
-    const val connectionClosedEvent = """{"type":"message","class":"ConnectionClosedEvent","code":200,"body":{}}"""
+    const val connectionClosedEvent =
+        """{"type":"message","class":"ConnectionClosedEvent","code":200,"body":{}}"""
 
     fun structuredMessageWithEvents(
         events: String = defaultStructuredEvents,
