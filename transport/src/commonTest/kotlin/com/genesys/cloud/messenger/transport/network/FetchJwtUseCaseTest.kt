@@ -19,57 +19,54 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-private const val TestDeploymentId = "validDeploymentId"
-private val TestJwtAuthUrl = Url("https://example.com/auth")
-private const val TestAuthCode = "validAuthCode"
-private const val TestRedirectUri = "https://example.com/redirect"
-private const val TestCodeVerifier = "validCodeVerifier"
-private const val TestJwtToken = "validJwtToken"
-private const val TestRefreshToken = "validRefreshToken"
+internal const val TestDeploymentId = "validDeploymentId"
+internal const val TestJwtAuthUrl = "https://example.com/auth"
+internal const val TestAuthCode = "validAuthCode"
+internal const val TestRedirectUri = "https://example.com/redirect"
+internal const val TestCodeVerifier = "validCodeVerifier"
+internal const val TestJwtToken = "validJwtToken"
+internal const val TestRefreshToken = "validRefreshToken"
 
 class FetchJwtUseCaseTest {
 
     private var subject = FetchJwtUseCase(
         logging = false,
         deploymentId = TestDeploymentId,
-        jwtAuthUrl = TestJwtAuthUrl,
-        authCode = TestAuthCode,
-        redirectUri = TestRedirectUri,
-        codeVerifier = TestCodeVerifier,
+        jwtAuthUrl = Url(TestJwtAuthUrl),
         client = mockHttpClientWith { authJwtEngine() },
     )
 
     @Test
     fun fetchShouldReturnExpectedAuthJwtWhenRequestIsSuccessful() =
         runBlocking {
-            // given
             val expectedAuthJwt = AuthJwt(TestJwtToken, TestRefreshToken)
 
-            // when
-            val actualAuthJwt = subject.fetch()
+            val actualAuthJwt = subject.fetch(
+                authCode = TestAuthCode,
+                redirectUri = TestRedirectUri,
+                codeVerifier = TestCodeVerifier,
+            )
 
-            // then
             assertEquals(expectedAuthJwt, actualAuthJwt)
         }
 
     @Test
     fun fetchShouldThrowExceptionWhenRequestIsSuccessfulWithInvalidParameters() {
-        // given
         val expectedException = Exception("Auth JWT fetch failed: Not found")
         subject = FetchJwtUseCase(
             logging = false,
             deploymentId = "InvalidDeploymentId",
             jwtAuthUrl = Url("InvalidAuthUrl"),
-            authCode = "InvalidAuthCode",
-            redirectUri = "InvalidRedirectUri",
-            codeVerifier = TestCodeVerifier,
             client = mockHttpClientWith { authJwtEngine() }
         )
 
-        // when
         runBlocking {
             val actualException = assertFailsWith<Exception> {
-                subject.fetch()
+                subject.fetch(
+                    authCode = "InvalidAuthCode",
+                    redirectUri = "InvalidRedirectUri",
+                    codeVerifier = TestCodeVerifier,
+                )
             }
             assertEquals(expectedException.message, actualException.message)
         }

@@ -146,7 +146,7 @@ interface MessagingClient {
     fun attach(
         byteArray: ByteArray,
         fileName: String,
-        uploadProgress: ((Float) -> Unit)? = null
+        uploadProgress: ((Float) -> Unit)? = null,
     ): String
 
     /**
@@ -191,4 +191,22 @@ interface MessagingClient {
      */
     @Throws(IllegalStateException::class)
     fun indicateTyping()
+
+    /**
+     * Fetches an Auth JWT using the provided authentication token, redirect URI, and code verifier.
+     *
+     * @param authCode The authentication code to use for fetching the Auth JWT.
+     * @param redirectUri The redirect URI to use for fetching the Auth JWT.
+     * @param codeVerifier The code verifier to use for fetching the Auth JWT (optional).
+     *
+     * @throws Exception If the Auth JWT fetch failed.
+     *
+     * @return The fetched Auth JWT with jwt and refreshToken.
+     */
+    @Throws(Exception::class)
+    suspend fun fetchAuthJwt(
+        authCode: String,
+        redirectUri: String,
+        codeVerifier: String?,
+    ): AuthJwt
 }

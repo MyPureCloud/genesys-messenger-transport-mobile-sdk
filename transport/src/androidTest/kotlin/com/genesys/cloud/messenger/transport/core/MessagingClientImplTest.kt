@@ -9,9 +9,15 @@ import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.TYPING_INDICATOR_COOL_DOWN_MILLISECONDS
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
 import com.genesys.cloud.messenger.transport.model.AuthJwt
+import com.genesys.cloud.messenger.transport.network.FetchJwtUseCase
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
+import com.genesys.cloud.messenger.transport.network.TestAuthCode
+import com.genesys.cloud.messenger.transport.network.TestCodeVerifier
+import com.genesys.cloud.messenger.transport.network.TestJwtAuthUrl
+import com.genesys.cloud.messenger.transport.network.TestJwtToken
+import com.genesys.cloud.messenger.transport.network.TestRefreshToken
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
@@ -41,6 +47,8 @@ import io.mockk.MockKVerificationScope
 import io.mockk.clearAllMocks
 import io.mockk.clearMocks
 import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -135,6 +143,10 @@ class MessagingClientImplTest {
         getCurrentTimestamp = mockTimestampFunction,
     )
 
+    private val mockFetchJwtUseCase: FetchJwtUseCase = mockk {
+        coEvery { fetch(any(), any(), any()) } returns AuthJwt(TestJwtToken, TestRefreshToken)
+    }
+
     private val subject = MessagingClientImpl(
         log = log,
         configuration = configuration,
@@ -149,6 +161,7 @@ class MessagingClientImplTest {
         userTypingProvider = userTypingProvider,
         healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),
         deploymentConfig = mockDeploymentConfig,
+        fetchJwtUseCase = mockFetchJwtUseCase
     ).also {
         it.stateChangedListener = mockStateChangedListener
     }
@@ -381,7 +394,12 @@ class MessagingClientImplTest {
             mockStateChangedListener(fromIdleToConnecting)
             mockPlatformSocket.openSocket(any())
             mockMessageStore.invalidateConversationCache()
-            mockStateChangedListener(StateChange(oldState = State.Connecting, newState = expectedErrorState))
+            mockStateChangedListener(
+                StateChange(
+                    oldState = State.Connecting,
+                    newState = expectedErrorState
+                )
+            )
             mockAttachmentHandler.clearAll()
             mockReconnectionHandler.clear()
         }
@@ -839,6 +857,29 @@ class MessagingClientImplTest {
             connectSequence()
             disconnectSequence()
             mockEventHandler.onEvent(eq(expectedEvent))
+        }
+    }
+
+    @Test
+    fun whenFetchAuthJwtIsCalled() {
+        val expectedResult = AuthJwt(TestJwtToken, TestRefreshToken)
+
+        val result = runBlocking {
+            subject.fetchAuthJwt(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier)
+        }
+
+        assertEquals(expectedResult, result)
+        coVerify {
+            mockFetchJwtUseCase.fetch(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier)
+        }
+    }
+
+    @Test
+    fun whenFetchAuthJwtResultInExceptionVerifyThatExceptionIsForwarded() {
+        coEvery { mockFetchJwtUseCase.fetch(any(), any(), any()) } throws Exception("Something went wrong.")
+
+        assertFailsWith<Exception> {
+            runBlocking { subject.fetchAuthJwt(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier) }
         }
     }
 
