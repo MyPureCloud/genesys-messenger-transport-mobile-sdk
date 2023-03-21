@@ -879,9 +879,11 @@ class MessagingClientImplTest {
     @Test
     fun whenFetchAuthJwtResultInExceptionVerifyThatExceptionIsForwarded() {
         coEvery {
-            mockFetchJwtUseCase.fetch(any(),
+            mockFetchJwtUseCase.fetch(
                 any(),
-                any())
+                any(),
+                any()
+            )
         } throws Exception("Something went wrong.")
 
         assertFailsWith<Exception> {
