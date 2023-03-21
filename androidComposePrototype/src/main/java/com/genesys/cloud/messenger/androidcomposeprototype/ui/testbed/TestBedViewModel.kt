@@ -17,6 +17,7 @@ import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.MessengerTransport
 import com.genesys.cloud.messenger.transport.core.events.Event
+import com.genesys.cloud.messenger.transport.model.AuthJwt
 import com.genesys.cloud.messenger.transport.util.DefaultTokenStore
 import io.ktor.http.URLBuilder
 import kotlinx.coroutines.CoroutineScope
@@ -49,10 +50,11 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         private set
     var deploymentId: String by mutableStateOf("")
         private set
-    var region: String by mutableStateOf("")
+    var region: String by mutableStateOf("inintca.com")
         private set
     var authState: AuthState by mutableStateOf(AuthState.NoAuth)
         private set
+    var pkceEnabled by mutableStateOf(false)
 
     val regions = listOf("inindca.com", "inintca.com", "mypurecloud.com")
     private val customAttributes = mutableMapOf<String, String>()
@@ -131,6 +133,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "typing" -> doIndicateTyping()
             "oktaSignIn" -> doOktaSignIn(false)
             "oktaSignInWithPKCE" -> doOktaSignIn(true)
+            "fetchAuthJwt" -> doFetchAuthJwt()
             else -> {
                 Log.e(TAG, "Invalid command")
                 withContext(Dispatchers.Main) {
@@ -140,8 +143,9 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private fun doOktaSignIn(isPKCEEnabled: Boolean) {
-        onOktaSingIn(buildOktaAuthorizeUrl(isPKCEEnabled))
+    private fun doOktaSignIn(withPKCE: Boolean) {
+        pkceEnabled = withPKCE
+        onOktaSingIn(buildOktaAuthorizeUrl())
         commandWaiting = false
     }
 
@@ -245,6 +249,28 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
+    private suspend fun doFetchAuthJwt() {
+        if (authState is AuthState.AuthCodeReceived) {
+            try {
+                client.fetchAuthJwt(
+                    authCode = (authState as AuthState.AuthCodeReceived).authCode,
+                    redirectUri = BuildConfig.SIGN_IN_REDIRECT_URI,
+                    codeVerifier = if (pkceEnabled) BuildConfig.CODE_VERIFIER else null,
+                ).let {
+                    authState = AuthState.JwtFetched(it)
+                    onSocketMessageReceived("AuthJwt: $it")
+                }
+            } catch (t: Throwable) {
+                handleException(t, "failed to fetch auth jwt.")
+                authState = AuthState.Error(t.cause, t.message)
+            }
+        } else {
+            onSocketMessageReceived("Please, first obtain authCode from login.")
+        }
+
+        commandWaiting = false
+    }
+
     private suspend fun onClientStateChanged(oldState: State, newState: State) {
         Log.v(TAG, "onClientStateChanged(oldState = $oldState, newState = $newState)")
         clientState = newState
@@ -310,7 +336,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         launch { onSocketMessageReceived(event.toString()) }
     }
 
-    private fun buildOktaAuthorizeUrl(isPKCEEnabled: Boolean): String {
+    private fun buildOktaAuthorizeUrl(): String {
         val builder =
             URLBuilder("https://${BuildConfig.OKTA_DOMAIN}/oauth2/default/v1/authorize").apply {
                 parameters.append("client_id", BuildConfig.CLIENT_ID)
@@ -318,7 +344,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
                 parameters.append("scope", "openid profile")
                 parameters.append("redirect_uri", BuildConfig.SIGN_IN_REDIRECT_URI)
                 parameters.append("state", BuildConfig.OKTA_STATE)
-                if (isPKCEEnabled) {
+                if (pkceEnabled) {
                     parameters.append("code_challenge_method", BuildConfig.CODE_CHALLENGE_METHOD)
                     parameters.append("code_challenge", BuildConfig.CODE_CHALLENGE)
                 }
@@ -338,4 +364,6 @@ private fun String.toKeyValuePair(): Pair<String, String> {
 sealed class AuthState {
     object NoAuth : AuthState()
     data class AuthCodeReceived(val authCode: String) : AuthState()
+    data class Error(val cause: Throwable? = null, val message: String? = null) : AuthState()
+    data class JwtFetched(val authJwt: AuthJwt) : AuthState()
 }

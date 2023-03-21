@@ -14,6 +14,7 @@ buildscript {
             oktaProperties["oktaState"] = System.env.OKTA_STATE
             oktaProperties["codeChallenge"] = System.env.CODE_CHALLENGE
             oktaProperties["codeChallengeMethod"] = System.env.CODE_CHALLENGE_METHOD
+            oktaProperties["codeVerifier"] = System.env.CODE_VERIFIER
         } else {
             // when executing elsewhere (dev laptops, etc), use the secure.properties file on disk
             deploymentPropertiesFile = new File(rootDir.absolutePath + "/deployment.properties")
@@ -60,6 +61,7 @@ android {
         buildConfigField "String", "OKTA_STATE", '"' + oktaProperties["oktaState"] + '"'
         buildConfigField "String", 'CODE_CHALLENGE', "\"${oktaProperties.getProperty('codeChallenge')}\""
         buildConfigField "String", 'CODE_CHALLENGE_METHOD', "\"${oktaProperties.getProperty('codeChallengeMethod')}\""
+        buildConfigField "String", 'CODE_VERIFIER', "\"${oktaProperties.getProperty('codeVerifier')}\""
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }

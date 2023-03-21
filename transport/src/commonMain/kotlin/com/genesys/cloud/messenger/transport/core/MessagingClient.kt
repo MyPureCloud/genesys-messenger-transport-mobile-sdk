@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
 import com.genesys.cloud.messenger.transport.core.events.Event
+import com.genesys.cloud.messenger.transport.model.AuthJwt
 
 /**
  * The main SDK interface providing bi-directional communication between a guest and Genesys Cloud
@@ -134,7 +135,7 @@ interface MessagingClient {
     fun attach(
         byteArray: ByteArray,
         fileName: String,
-        uploadProgress: ((Float) -> Unit)? = null
+        uploadProgress: ((Float) -> Unit)? = null,
     ): String
 
     /**
@@ -179,4 +180,22 @@ interface MessagingClient {
      */
     @Throws(IllegalStateException::class)
     fun indicateTyping()
+
+    /**
+     * Fetches an Auth JWT using the provided authentication token, redirect URI, and code verifier.
+     *
+     * @param authCode The authentication code to use for fetching the Auth JWT.
+     * @param redirectUri The redirect URI to use for fetching the Auth JWT.
+     * @param codeVerifier The code verifier to use for fetching the Auth JWT (optional).
+     *
+     * @throws Exception If the Auth JWT fetch failed.
+     *
+     * @return The fetched Auth JWT with jwt and refreshToken.
+     */
+    @Throws(Exception::class)
+    suspend fun fetchAuthJwt(
+        authCode: String,
+        redirectUri: String,
+        codeVerifier: String?,
+    ): AuthJwt
 }

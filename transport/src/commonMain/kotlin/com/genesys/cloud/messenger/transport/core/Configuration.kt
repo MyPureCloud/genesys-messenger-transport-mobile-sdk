@@ -35,4 +35,10 @@ data class Configuration(
             path("webdeployments/v1/deployments/$deploymentId/config.json")
         }.build()
     }
+
+    internal val jwtAuthUrl: Url by lazy {
+        URLBuilder("https://api.$domain").apply {
+            path("api/v2/webdeployments/token/oauthcodegrantjwtexchange")
+        }.build()
+    }
 }

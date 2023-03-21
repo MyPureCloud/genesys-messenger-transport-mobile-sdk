@@ -27,6 +27,7 @@ sign_out_redirect_uri="1"
 okta_state="1"
 code_challenge="1"
 code_challenge_method="1"
+code_verifier="1"
 
 snyk_org="messenger-mobile-sdk"
 snyk_project_name="genesys-messenger-transport-mobile-sdk"
@@ -105,6 +106,7 @@ docker exec \
   --env OKTA_STATE="$okta_state" \
   --env CODE_CHALLENGE="$code_challenge" \
   --env CODE_CHALLENGE_METHOD="$code_challenge_method" \
+  --env CODE_VERIFIER="$code_verifier" \
   -w /home/repo \
   "$container" \
   snyk test \
@@ -136,6 +138,7 @@ docker exec \
   --env OKTA_STATE="$okta_state" \
   --env CODE_CHALLENGE="$code_challenge" \
   --env CODE_CHALLENGE_METHOD="$code_challenge_method" \
+  --env CODE_VERIFIER="$code_verifier" \
   -w /home/repo \
   "$container" \
   snyk monitor \
