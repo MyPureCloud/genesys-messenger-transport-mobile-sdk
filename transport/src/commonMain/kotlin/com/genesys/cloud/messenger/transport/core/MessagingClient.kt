@@ -100,6 +100,17 @@ interface MessagingClient {
     fun connect()
 
     /**
+     * Open and configure a secure WebSocket connection to the Web Messaging service using the url and deploymentId
+     * configured on this MessagingClient instance, authenticating the session with the provided JWT.
+     *
+     * @param jwt the AuthJwt used to authenticate the session.
+     *
+     * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
+     */
+    @Throws(IllegalStateException::class)
+    fun connectAuthenticatedSession(jwt: AuthJwt)
+
+    /**
      * Send a message to the conversation as plain text.
      *
      * @param text the plain text to send.

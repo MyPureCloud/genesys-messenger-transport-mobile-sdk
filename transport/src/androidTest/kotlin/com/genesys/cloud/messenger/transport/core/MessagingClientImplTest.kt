@@ -107,6 +107,9 @@ class MessagingClientImplTest {
         every { sendMessage(Request.configureRequest) } answers {
             slot.captured.onMessage(Response.configureSuccess)
         }
+        every { sendMessage(Request.configureAuthenticatedRequest) } answers {
+            slot.captured.onMessage(Response.configureSuccess)
+        }
     }
 
     private val mockWebMessagingApi: WebMessagingApi = mockk {
@@ -369,9 +372,7 @@ class MessagingClientImplTest {
             connectSequence()
             mockMessageStore.invalidateConversationCache()
             mockReconnectionHandler.shouldReconnect
-            mockStateChangedListener(fromConfiguredToError(expectedErrorState))
-            mockAttachmentHandler.clearAll()
-            mockReconnectionHandler.clear()
+            errorSequence(fromConfiguredToError(expectedErrorState))
         }
     }
 
@@ -417,9 +418,7 @@ class MessagingClientImplTest {
         assertThat(subject).isError(expectedErrorState.code, expectedErrorState.message)
         verifySequence {
             connectWithFailedConfigureSequence()
-            mockStateChangedListener(fromConnectedToError(expectedErrorState))
-            mockAttachmentHandler.clearAll()
-            mockReconnectionHandler.clear()
+            errorSequence(fromConnectedToError(expectedErrorState))
         }
     }
 
@@ -433,7 +432,7 @@ class MessagingClientImplTest {
 
         verifySequence {
             connectSequence()
-            mockStateChangedListener(fromConfiguredToError(expectedErrorState))
+            errorSequence(fromConfiguredToError(expectedErrorState))
         }
     }
 
@@ -449,7 +448,7 @@ class MessagingClientImplTest {
 
         verifySequence {
             connectWithFailedConfigureSequence()
-            mockStateChangedListener(fromConnectedToError(expectedErrorState))
+            errorSequence(fromConnectedToError(expectedErrorState))
         }
     }
 
@@ -494,7 +493,7 @@ class MessagingClientImplTest {
 
         verifySequence {
             connectSequence()
-            mockStateChangedListener(fromConfiguredToError(expectedErrorState))
+            errorSequence(fromConfiguredToError(expectedErrorState))
         }
     }
 
@@ -631,7 +630,7 @@ class MessagingClientImplTest {
         assertThat(subject).isError(expectedErrorCode, expectedErrorMessage)
         verifySequence {
             connectWithFailedConfigureSequence()
-            mockStateChangedListener(fromConnectedToError(expectedErrorState))
+            errorSequence(fromConnectedToError(expectedErrorState))
         }
     }
 
@@ -879,10 +878,74 @@ class MessagingClientImplTest {
 
     @Test
     fun whenFetchAuthJwtResultInExceptionVerifyThatExceptionIsForwarded() {
-        coEvery { mockFetchJwtUseCase.fetch(any(), any(), any()) } throws Exception("Something went wrong.")
+        coEvery {
+            mockFetchJwtUseCase.fetch(
+                any(),
+                any(),
+                any()
+            )
+        } throws Exception("Something went wrong.")
 
         assertFailsWith<Exception> {
             runBlocking { subject.fetchAuthJwt(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier) }
+        }
+    }
+
+    @Test
+    fun whenConnectAuthenticated() {
+        val givenAuthJwt = AuthJwt("auth_token", "refresh_token")
+
+        subject.connectAuthenticatedSession(givenAuthJwt)
+
+        assertThat(subject).isConfigured(connected = true, newSession = true)
+        verifySequence {
+            connectSequence(shouldConfigureAuth = true)
+        }
+    }
+
+    @Test
+    fun whenConnectAuthenticatedAndThenDisconnectAndThenConnect() {
+        val givenAuthJwt = AuthJwt("auth_token", "refresh_token")
+
+        subject.connectAuthenticatedSession(givenAuthJwt)
+        subject.disconnect()
+        subject.connect()
+
+        assertThat(subject).isConfigured(connected = true, newSession = true)
+        verifySequence {
+            connectSequence(shouldConfigureAuth = true)
+            disconnectSequence()
+            mockStateChangedListener(fromClosedToConnecting)
+            mockPlatformSocket.openSocket(any())
+            mockStateChangedListener(fromConnectingToConnected)
+            mockPlatformSocket.sendMessage(Request.configureRequest)
+            mockReconnectionHandler.clear()
+            mockStateChangedListener(fromConnectedToConfigured)
+        }
+    }
+
+    @Test
+    fun whenConnectAuthenticatedAndThenErrorStateAndThenConnect() {
+        val givenAuthJwt = AuthJwt("auth_token", "refresh_token")
+        val expectedErrorState =
+            State.Error(ErrorCode.SessionHasExpired, "session expired error message")
+        every { mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest) } answers {
+            slot.captured.onMessage(Response.sessionExpired)
+        }
+
+        subject.connectAuthenticatedSession(givenAuthJwt)
+        subject.connect()
+
+        assertThat(subject).isConfigured(connected = true, newSession = true)
+        verifySequence {
+            connectWithFailedConfigureSequence(shouldConfigureAuth = true)
+            errorSequence(fromConnectedToError(expectedErrorState))
+            mockStateChangedListener(fromErrorToConnecting(expectedErrorState))
+            mockPlatformSocket.openSocket(any())
+            mockStateChangedListener(fromConnectingToConnected)
+            mockPlatformSocket.sendMessage(Request.configureRequest)
+            mockReconnectionHandler.clear()
+            mockStateChangedListener(fromConnectedToConfigured)
         }
     }
 
@@ -891,11 +954,13 @@ class MessagingClientImplTest {
         domain = "inindca.com",
     )
 
-    private fun MockKVerificationScope.connectSequence() {
+    private fun MockKVerificationScope.connectSequence(shouldConfigureAuth: Boolean = false) {
+        val configureRequest =
+            if (shouldConfigureAuth) Request.configureAuthenticatedRequest else Request.configureRequest
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
-        mockPlatformSocket.sendMessage(Request.configureRequest)
+        mockPlatformSocket.sendMessage(configureRequest)
         mockReconnectionHandler.clear()
         mockStateChangedListener(fromConnectedToConfigured)
     }
@@ -920,11 +985,19 @@ class MessagingClientImplTest {
         mockAttachmentHandler.clearAll()
     }
 
-    private fun MockKVerificationScope.connectWithFailedConfigureSequence() {
+    private fun MockKVerificationScope.connectWithFailedConfigureSequence(shouldConfigureAuth: Boolean = false) {
+        val configureRequest =
+            if (shouldConfigureAuth) Request.configureAuthenticatedRequest else Request.configureRequest
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
-        mockPlatformSocket.sendMessage(Request.configureRequest)
+        mockPlatformSocket.sendMessage(configureRequest)
+    }
+
+    private fun errorSequence(stateChange: StateChange) {
+        this.mockStateChangedListener(stateChange)
+        mockAttachmentHandler.clearAll()
+        mockReconnectionHandler.clear()
     }
 
     private val fromIdleToConnecting =
@@ -953,6 +1026,9 @@ class MessagingClientImplTest {
             oldState = State.Configured(connected = true, newSession = true),
             newState = errorState,
         )
+
+    private fun fromErrorToConnecting(errorState: State) =
+        StateChange(oldState = errorState, newState = State.Connecting)
 }
 
 private object Response {
