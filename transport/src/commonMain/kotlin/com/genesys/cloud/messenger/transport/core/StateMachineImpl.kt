@@ -24,13 +24,13 @@ internal class StateMachineImpl(
     override var stateChangedListener: ((StateChange) -> Unit)? = null
 
     override fun onConnectionOpened() {
-        currentState = if (currentState.isReconnecting()) State.Reconnecting else State.Connected
+        currentState = if (isReconnecting()) State.Reconnecting else State.Connected
     }
 
     @Throws(IllegalStateException::class)
     override fun onConnect() {
         check(currentState.canConnect()) { "MessagingClient state must be Closed, Idle or Error" }
-        currentState = if (currentState.isReconnecting()) State.Reconnecting else State.Connecting
+        currentState = if (isReconnecting()) State.Reconnecting else State.Connecting
     }
 
     override fun onReconnect() {
@@ -61,16 +61,19 @@ internal class StateMachineImpl(
 
 internal fun StateMachine.isConnected(): Boolean = currentState is State.Connected
 
+internal fun StateMachine.isReconnecting(): Boolean = currentState is State.Reconnecting
+
 @Throws(IllegalStateException::class)
 internal fun StateMachine.checkIfConfigured() =
     check(currentState is State.Configured) { "WebMessaging client is not configured." }
+
+internal fun StateMachine.isInactive(): Boolean =
+    currentState is State.Idle || currentState is State.Closing || currentState is State.Closed || currentState is State.Error
 
 internal fun StateMachine.isClosed(): Boolean = currentState is State.Closed
 
 private fun State.canConnect(): Boolean =
     this is State.Closed || this is State.Idle || this is State.Error || this is State.Reconnecting
-
-private fun State.isReconnecting(): Boolean = this is State.Reconnecting
 
 private fun State.canDisconnect(): Boolean =
     this !is State.Closed && this !is State.Idle && this !is State.Error

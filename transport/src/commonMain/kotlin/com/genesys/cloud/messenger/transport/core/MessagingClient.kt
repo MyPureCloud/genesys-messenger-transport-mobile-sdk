@@ -183,6 +183,13 @@ interface MessagingClient {
     fun invalidateConversationCache()
 
     /**
+     * Logs out user from authenticated session on all devices that shares the same auth session.
+     * Performing this function on `anonymous` session will not have any effect.
+     */
+    @Throws(Exception::class)
+    suspend fun logoutFromAuthenticatedSession()
+
+    /**
      * Notify the agent that the customer is typing a message.
      * This command sends a single typing indicator event and should be called a maximum of once every 5 seconds.
      * If called more frequently, this command will be rate limited in order to optimize network traffic.

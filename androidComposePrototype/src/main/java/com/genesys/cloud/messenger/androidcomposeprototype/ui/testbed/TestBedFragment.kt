@@ -9,12 +9,18 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import com.genesys.cloud.messenger.androidcomposeprototype.util.getSharedPreferences
 import kotlinx.coroutines.runBlocking
 
 class TestBedFragment : Fragment() {
 
     private val viewModel: TestBedViewModel by activityViewModels()
     private val onOktaSignIn: (url: String) -> Unit = { url -> launchCustomTabs(url) }
+    private val onOktaLogout: () -> Unit = {
+        context?.getSharedPreferences()?.edit()?.run {
+            remove("authCode")
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -27,7 +33,7 @@ class TestBedFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         runBlocking {
-            viewModel.init(requireContext(), onOktaSignIn)
+            viewModel.init(requireContext(), onOktaSignIn, onOktaLogout)
         }
     }
 
