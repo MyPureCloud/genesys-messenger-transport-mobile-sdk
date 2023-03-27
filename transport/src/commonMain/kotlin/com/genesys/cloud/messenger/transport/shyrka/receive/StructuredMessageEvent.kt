@@ -22,6 +22,7 @@ internal sealed class StructuredMessageEvent {
         HealthChecked,
         Presence,
         ConnectionClosed,
+        Logout,
     }
 }
 
@@ -59,6 +60,11 @@ internal data class PresenceEvent(
 @Serializable
 internal data class ConnectionClosed(
     override val eventType: Type = Type.ConnectionClosed,
+) : StructuredMessageEvent()
+
+@Serializable
+internal data class Logout(
+    override val eventType: Type = Type.Logout,
 ) : StructuredMessageEvent()
 
 internal object StructuredMessageEventSerializer :
