@@ -47,14 +47,14 @@ import io.mockk.spyk
 import io.mockk.verify
 import io.mockk.verifySequence
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlin.reflect.KProperty0
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 
 class MessagingClientImplTest {
     private val configuration = configuration()
