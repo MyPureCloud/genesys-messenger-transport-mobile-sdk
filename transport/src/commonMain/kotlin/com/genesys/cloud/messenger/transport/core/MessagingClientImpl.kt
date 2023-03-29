@@ -320,7 +320,12 @@ internal class MessagingClientImpl(
                         if (it.isDisconnectionEvent()) {
                             if (deploymentConfig.isConversationDisconnectEnabled()) {
                                 eventHandler.onEvent(it)
-                                if (deploymentConfig.isReadOnly()) stateMachine.onReadOnly()
+                                // Prefer readOnly value provided by Shyrka and as fallback use DeploymentConfig.
+                                if (structuredMessage.metadata.containsKey("readOnly")) {
+                                    if (structuredMessage.metadata["readOnly"].toBoolean()) stateMachine.onReadOnly()
+                                } else {
+                                    if (deploymentConfig.isReadOnly()) stateMachine.onReadOnly()
+                                }
                             }
                         } else {
                             eventHandler.onEvent(it)

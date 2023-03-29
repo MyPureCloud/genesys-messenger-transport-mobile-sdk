@@ -47,6 +47,8 @@ import io.mockk.spyk
 import io.mockk.verify
 import io.mockk.verifySequence
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlin.reflect.KProperty0
 import kotlin.test.AfterTest
 import kotlin.test.Test
@@ -860,7 +862,7 @@ class MessagingClientImplTest {
     }
 
     @Test
-    fun whenDisconnectEventReceivedAndConversationDisconnectInDeploymentConfigIsSetToSendAndEnabled() {
+    fun whenDisconnectEventReceivedAndThereAreNoReadOnlyInMetadataAndConversationDisconnectInDeploymentConfigIsSetToSendAndEnabled() {
         every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
             messenger = createMessengerVOForTesting(
                 apps = Apps(
@@ -892,7 +894,7 @@ class MessagingClientImplTest {
     }
 
     @Test
-    fun whenDisconnectEventReceivedAndConversationDisconnectInDeploymentConfigIsSetToSendAndDisabled() {
+    fun whenDisconnectEventReceivedAndThereAreNoReadOnlyInMetadataAndConversationDisconnectInDeploymentConfigIsSetToSendAndDisabled() {
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
         val expectedEvent = PresenceEvent(
@@ -911,7 +913,7 @@ class MessagingClientImplTest {
     }
 
     @Test
-    fun whenDisconnectEventReceivedAndConversationDisconnectInDeploymentConfigIsSetToReadOnlyAndEnabled() {
+    fun whenDisconnectEventReceivedAndThereAreNoReadOnlyInMetadataAndConversationDisconnectInDeploymentConfigIsSetToReadOnlyAndEnabled() {
         every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
             messenger = createMessengerVOForTesting(
                 apps = Apps(
@@ -940,7 +942,7 @@ class MessagingClientImplTest {
     }
 
     @Test
-    fun whenDisconnectEventReceivedAndConversationDisconnectInDeploymentConfigIsSetToReadOnlyAndDisabled() {
+    fun whenDisconnectEventReceivedAndThereAreNoReadOnlyInMetadataAndConversationDisconnectInDeploymentConfigIsSetToReadOnlyAndDisabled() {
         every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
             messenger = createMessengerVOForTesting(
                 apps = Apps(
@@ -969,6 +971,64 @@ class MessagingClientImplTest {
             mockStateChangedListener.invoke(fromConfiguredToReadOnly())
             mockStateChangedListener.invoke(fromConnectedToReadOnly)
         }
+    }
+
+    @Test
+    fun whenDisconnectEventReceivedAndReadOnlyFieldInMetadataIsTrue() {
+        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
+            messenger = createMessengerVOForTesting(
+                apps = Apps(
+                    conversations = createConversationsVOForTesting(
+                        conversationDisconnect = Conversations.ConversationDisconnect(
+                            enabled = true,
+                            type = Conversations.ConversationDisconnect.Type.ReadOnly
+                        ),
+                    )
+                )
+            )
+        )
+
+        val givenPresenceDisconnectEvent =
+            """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
+        val expectedEvent = PresenceEvent(
+            eventType = StructuredMessageEvent.Type.Presence,
+            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect),
+        )
+
+        subject.connect()
+        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent, metadata = mapOf("readOnly" to "true")))
+
+        verify { mockEventHandler.onEvent(eq(expectedEvent)) }
+        verify { mockStateChangedListener.invoke(fromConfiguredToReadOnly()) }
+    }
+
+    @Test
+    fun whenDisconnectEventReceivedAndReadOnlyFieldInMetadataIsFalse() {
+        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
+            messenger = createMessengerVOForTesting(
+                apps = Apps(
+                    conversations = createConversationsVOForTesting(
+                        conversationDisconnect = Conversations.ConversationDisconnect(
+                            enabled = true,
+                            type = Conversations.ConversationDisconnect.Type.ReadOnly
+                        ),
+                    )
+                )
+            )
+        )
+
+        val givenPresenceDisconnectEvent =
+            """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
+        val expectedEvent = PresenceEvent(
+            eventType = StructuredMessageEvent.Type.Presence,
+            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect),
+        )
+
+        subject.connect()
+        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent, metadata = mapOf("readOnly" to "false")))
+
+        verify { mockEventHandler.onEvent(eq(expectedEvent)) }
+        verify(exactly = 0) { mockStateChangedListener.invoke(fromConfiguredToReadOnly()) }
     }
 
     @Test
@@ -1307,7 +1367,8 @@ private object Response {
     fun structuredMessageWithEvents(
         events: String = defaultStructuredEvents,
         direction: Message.Direction = Message.Direction.Outbound,
+        metadata: Map<String, String> = mapOf("correlationId" to "0000000-0000-0000-0000-0000000000")
     ): String {
-        return """{"type": "message","class": "StructuredMessage","code": 200,"body": {"direction": "${direction.name}","id": "0000000-0000-0000-0000-0000000000","channel": {"time": "2022-03-09T13:35:31.104Z","messageId": "0000000-0000-0000-0000-0000000000"},"type": "Event","metadata": {"correlationId": "0000000-0000-0000-0000-0000000000"},"events": [$events]}}"""
+        return """{"type": "message","class": "StructuredMessage","code": 200,"body": {"direction": "${direction.name}","id": "0000000-0000-0000-0000-0000000000","channel": {"time": "2022-03-09T13:35:31.104Z","messageId": "0000000-0000-0000-0000-0000000000"},"type": "Event","metadata": ${Json.encodeToString(metadata)},"events": [$events]}}"""
     }
 }
