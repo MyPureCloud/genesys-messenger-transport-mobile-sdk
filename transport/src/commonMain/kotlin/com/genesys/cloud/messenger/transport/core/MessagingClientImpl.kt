@@ -15,11 +15,13 @@ import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.AttachmentDeletedResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosed
 import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosedEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
 import com.genesys.cloud.messenger.transport.shyrka.receive.HealthCheckEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionExpiredEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
@@ -31,6 +33,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.isHealthCheckResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.isOutbound
 import com.genesys.cloud.messenger.transport.shyrka.send.AutoStartRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.CloseSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
@@ -64,6 +67,8 @@ internal class MessagingClientImpl(
             { deploymentConfig.isShowUserTypingEnabled() },
         ),
 ) : MessagingClient {
+
+    private var isStartingANewSession = false
 
     override val currentState: State
         get() {
@@ -102,6 +107,13 @@ internal class MessagingClientImpl(
     }
 
     @Throws(IllegalStateException::class)
+    override fun startNewChat() {
+        stateMachine.checkIfCanStartANewChat()
+        isStartingANewSession = true
+        closeAllConnectionsForTheSession()
+    }
+
+    @Throws(IllegalStateException::class)
     override fun disconnect() {
         log.i { "disconnect()" }
         val code = SocketCloseCode.NORMAL_CLOSURE.value
@@ -111,11 +123,12 @@ internal class MessagingClientImpl(
         webSocket.closeSocket(code, reason)
     }
 
-    private fun configureSession() {
-        log.i { "configureSession(token = $token)" }
+    private fun configureSession(startNew: Boolean = false) {
+        log.i { "configureSession(token = $token, startNew: $startNew)" }
         val request = ConfigureSessionRequest(
             token = token,
             deploymentId = configuration.deploymentId,
+            startNew = startNew,
             journeyContext = JourneyContext(
                 JourneyCustomer(token, "cookie"),
                 JourneyCustomerSession("", "web")
@@ -178,7 +191,7 @@ internal class MessagingClientImpl(
 
     @Throws(Exception::class)
     override suspend fun fetchNextPage() {
-        stateMachine.checkIfConfigured()
+        stateMachine.checkIfConfiguredOrReadOnly()
         if (messageStore.startOfConversation) {
             log.i { "All history has been fetched." }
             messageStore.updateMessageHistory(emptyList(), conversation.size)
@@ -215,6 +228,26 @@ internal class MessagingClientImpl(
         }
     }
 
+    /**
+     * This function executes [CloseSessionRequest]. This request will trigger closure of
+     * all opened connections on all other devices that share the same session token,
+     * by sending them a [ConnectionClosedEvent].
+     * After successful closure an event [SessionResponse] with `connected=false` will be received,
+     * indicating that new chat should be configured.
+     *
+     */
+    private fun closeAllConnectionsForTheSession() {
+        WebMessagingJson.json.encodeToString(
+            CloseSessionRequest(
+                token = token,
+                closeAllConnections = true
+            )
+        ).also {
+            log.i { "closeSession()" }
+            webSocket.sendMessage(it)
+        }
+    }
+
     private fun handleError(code: ErrorCode, message: String? = null) {
         when (code) {
             is ErrorCode.SessionHasExpired,
@@ -232,7 +265,7 @@ internal class MessagingClientImpl(
             is ErrorCode.ServerResponseError,
             is ErrorCode.RedirectResponseError,
             -> {
-                if (stateMachine.isConnected()) {
+                if (stateMachine.isConnected() || isStartingANewSession) {
                     stateMachine.onError(code, message)
                 } else {
                     eventHandler.onEvent(ErrorEvent(errorCode = code, message = message))
@@ -284,7 +317,19 @@ internal class MessagingClientImpl(
             StructuredMessage.Type.Event -> {
                 if (structuredMessage.isOutbound()) {
                     structuredMessage.events.forEach {
-                        eventHandler.onEvent(it)
+                        if (it.isDisconnectionEvent()) {
+                            if (deploymentConfig.isConversationDisconnectEnabled()) {
+                                eventHandler.onEvent(it)
+                                // Prefer readOnly value provided by Shyrka and as fallback use DeploymentConfig.
+                                if (structuredMessage.metadata.containsKey("readOnly")) {
+                                    if (structuredMessage.metadata["readOnly"].toBoolean()) stateMachine.onReadOnly()
+                                } else {
+                                    if (deploymentConfig.isReadOnly()) stateMachine.onReadOnly()
+                                }
+                            }
+                        } else {
+                            eventHandler.onEvent(it)
+                        }
                     }
                 } else {
                     structuredMessage.events.forEach {
@@ -295,6 +340,14 @@ internal class MessagingClientImpl(
                 }
             }
         }
+    }
+
+    private fun cleanUp() {
+        invalidateConversationCache()
+        userTypingProvider.clear()
+        healthCheckProvider.clear()
+        attachmentHandler.clearAll()
+        reconnectionHandler.clear()
     }
 
     private val socketListener = SocketListener(
@@ -332,9 +385,23 @@ internal class MessagingClientImpl(
                     is SessionResponse -> {
                         decoded.body.run {
                             reconnectionHandler.clear()
-                            stateMachine.onSessionConfigured(connected, newSession)
-                            if (newSession && deploymentConfig.isAutostartEnabled()) {
-                                sendAutoStart()
+                            if (readOnly) {
+                                stateMachine.onReadOnly()
+                                if (!connected && isStartingANewSession) {
+                                    cleanUp()
+                                    configureSession(startNew = true)
+                                } else {
+                                    // Normally should not happen.
+                                    log.w {
+                                        "Unexpected SessionResponse configuration: connected: $connected, readOnly: $readOnly, isStartingANewSession: $isStartingANewSession"
+                                    }
+                                }
+                            } else {
+                                isStartingANewSession = false
+                                stateMachine.onSessionConfigured(connected, newSession)
+                                if (newSession && deploymentConfig.isAutostartEnabled()) {
+                                    sendAutoStart()
+                                }
                             }
                         }
                     }
@@ -391,13 +458,19 @@ internal class MessagingClientImpl(
         override fun onClosed(code: Int, reason: String) {
             log.i { "onClosed(code = $code, reason = $reason)" }
             stateMachine.onClosed(code, reason)
-            invalidateConversationCache()
-            userTypingProvider.clear()
-            healthCheckProvider.clear()
-            attachmentHandler.clearAll()
+            cleanUp()
         }
     }
 }
+
+private fun StructuredMessageEvent.isDisconnectionEvent(): Boolean =
+    this is PresenceEvent && presence.type == PresenceEvent.Presence.Type.Disconnect
+
+private fun KProperty0<DeploymentConfig?>.isConversationDisconnectEnabled(): Boolean =
+    this.get()?.messenger?.apps?.conversations?.conversationDisconnect?.enabled == true
+
+private fun KProperty0<DeploymentConfig?>.isReadOnly(): Boolean =
+    this.get()?.messenger?.apps?.conversations?.conversationDisconnect?.type == Conversations.ConversationDisconnect.Type.ReadOnly
 
 private fun KProperty0<DeploymentConfig?>.isAutostartEnabled(): Boolean =
     this.get()?.messenger?.apps?.conversations?.autoStart?.enabled == true

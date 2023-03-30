@@ -47,6 +47,8 @@ import io.mockk.spyk
 import io.mockk.verify
 import io.mockk.verifySequence
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlin.reflect.KProperty0
 import kotlin.test.AfterTest
 import kotlin.test.Test
@@ -96,8 +98,8 @@ class MessagingClientImplTest {
         every { sendMessage(any()) } answers {
             slot.captured.onMessage("")
         }
-        every { sendMessage(Request.configureRequest) } answers {
-            slot.captured.onMessage(Response.configureSuccess)
+        every { sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.configureSuccess())
         }
     }
 
@@ -156,7 +158,7 @@ class MessagingClientImplTest {
     fun whenConnect() {
         subject.connect()
 
-        assertThat(subject).isConfigured(connected = true, newSession = true)
+        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
         verifySequence {
             connectSequence()
         }
@@ -169,7 +171,7 @@ class MessagingClientImplTest {
 
         subject.disconnect()
 
-        assertThat(subject).isClosed(expectedState.code, expectedState.reason)
+        assertThat(subject.currentState).isClosed(expectedState.code, expectedState.reason)
         verifySequence {
             connectSequence()
             disconnectSequence(expectedState.code, expectedState.reason)
@@ -251,7 +253,7 @@ class MessagingClientImplTest {
             mockStateChangedListener(fromClosedToConnecting)
             mockPlatformSocket.openSocket(any())
             mockStateChangedListener(fromConnectingToConnected)
-            mockPlatformSocket.sendMessage(Request.configureRequest)
+            mockPlatformSocket.sendMessage(Request.configureRequest())
             mockReconnectionHandler.clear()
             mockStateChangedListener(fromConnectedToConfigured)
             mockPlatformSocket.sendMessage(expectedMessage)
@@ -351,7 +353,10 @@ class MessagingClientImplTest {
 
         slot.captured.onFailure(expectedException, ErrorCode.WebsocketError)
 
-        assertThat(subject).isError(expectedErrorState.code, expectedErrorState.message)
+        assertThat(subject.currentState).isError(
+            expectedErrorState.code,
+            expectedErrorState.message
+        )
         verifySequence {
             connectSequence()
             mockMessageStore.invalidateConversationCache()
@@ -374,12 +379,20 @@ class MessagingClientImplTest {
 
         subject.connect()
 
-        assertThat(subject).isError(expectedErrorState.code, expectedErrorState.message)
+        assertThat(subject.currentState).isError(
+            expectedErrorState.code,
+            expectedErrorState.message
+        )
         verifySequence {
             mockStateChangedListener(fromIdleToConnecting)
             mockPlatformSocket.openSocket(any())
             mockMessageStore.invalidateConversationCache()
-            mockStateChangedListener(StateChange(oldState = State.Connecting, newState = expectedErrorState))
+            mockStateChangedListener(
+                StateChange(
+                    oldState = State.Connecting,
+                    newState = expectedErrorState,
+                )
+            )
             mockAttachmentHandler.clearAll()
             mockReconnectionHandler.clear()
         }
@@ -390,13 +403,16 @@ class MessagingClientImplTest {
         val givenException = Exception(ErrorMessage.InternetConnectionIsOffline)
         val expectedErrorState =
             State.Error(ErrorCode.NetworkDisabled, ErrorMessage.InternetConnectionIsOffline)
-        every { mockPlatformSocket.sendMessage(Request.configureRequest) } answers {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             slot.captured.onFailure(givenException, ErrorCode.NetworkDisabled)
         }
 
         subject.connect()
 
-        assertThat(subject).isError(expectedErrorState.code, expectedErrorState.message)
+        assertThat(subject.currentState).isError(
+            expectedErrorState.code,
+            expectedErrorState.message
+        )
         verifySequence {
             connectWithFailedConfigureSequence()
             mockStateChangedListener(fromConnectedToError(expectedErrorState))
@@ -423,7 +439,7 @@ class MessagingClientImplTest {
     fun whenSocketListenerInvokeOnMessageWithSessionNotFoundStringMessage() {
         val expectedErrorState =
             State.Error(ErrorCode.SessionNotFound, "session not found error message")
-        every { mockPlatformSocket.sendMessage(Request.configureRequest) } answers {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             slot.captured.onMessage(Response.sessionNotFound)
         }
 
@@ -602,15 +618,15 @@ class MessagingClientImplTest {
     @Test
     fun whenConnectHasClientResponseError() {
         val expectedErrorCode = ErrorCode.ClientResponseError(400)
-        val expectedErrorMessage = "Deployment not found"
+        val expectedErrorMessage = "Request failed."
         val expectedErrorState = State.Error(expectedErrorCode, expectedErrorMessage)
-        every { mockPlatformSocket.sendMessage(Request.configureRequest) } answers {
-            slot.captured.onMessage(Response.configureFail)
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.webSocketRequestFailed)
         }
 
         subject.connect()
 
-        assertThat(subject).isError(expectedErrorCode, expectedErrorMessage)
+        assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
         verifySequence {
             connectWithFailedConfigureSequence()
             mockStateChangedListener(fromConnectedToError(expectedErrorState))
@@ -770,7 +786,7 @@ class MessagingClientImplTest {
 
     @Test
     fun whenOldSessionAndAutostartEnabled() {
-        every { mockPlatformSocket.sendMessage(Request.configureRequest) } answers {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             slot.captured.onMessage(Response.configureSuccessWithNewSessionFalse)
         }
         every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
@@ -790,7 +806,7 @@ class MessagingClientImplTest {
 
     @Test
     fun whenOldSessionAndAutostartDisabled() {
-        every { mockPlatformSocket.sendMessage(Request.configureRequest) } answers {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             slot.captured.onMessage(Response.configureSuccessWithNewSessionFalse)
         }
 
@@ -818,7 +834,10 @@ class MessagingClientImplTest {
     @Test
     fun whenEventPresenceJoinReceived() {
         val givenPresenceJoinEvent = """{"eventType":"Presence","presence":{"type":"Join"}}"""
-        val expectedEvent = PresenceEvent(eventType = StructuredMessageEvent.Type.Presence, PresenceEvent.Presence("Join"))
+        val expectedEvent = PresenceEvent(
+            eventType = StructuredMessageEvent.Type.Presence,
+            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Join)
+        )
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceJoinEvent))
@@ -842,6 +861,381 @@ class MessagingClientImplTest {
         }
     }
 
+    @Test
+    fun whenDisconnectEventReceivedAndThereAreNoReadOnlyInMetadataAndConversationDisconnectInDeploymentConfigIsSetToSendAndEnabled() {
+        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
+            messenger = createMessengerVOForTesting(
+                apps = Apps(
+                    conversations = createConversationsVOForTesting(
+                        conversationDisconnect = Conversations.ConversationDisconnect(
+                            enabled = true,
+                            type = Conversations.ConversationDisconnect.Type.Send
+                        ),
+                    )
+                )
+            )
+        )
+        val givenPresenceDisconnectEvent =
+            """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
+        val expectedEvent = PresenceEvent(
+            eventType = StructuredMessageEvent.Type.Presence,
+            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
+        )
+
+        subject.connect()
+        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
+
+        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
+        verify { mockEventHandler.onEvent(eq(expectedEvent)) }
+        verify(exactly = 0) {
+            mockStateChangedListener.invoke(fromConfiguredToReadOnly())
+            mockStateChangedListener.invoke(fromConnectedToReadOnly)
+        }
+    }
+
+    @Test
+    fun whenDisconnectEventReceivedAndThereAreNoReadOnlyInMetadataAndConversationDisconnectInDeploymentConfigIsSetToSendAndDisabled() {
+        val givenPresenceDisconnectEvent =
+            """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
+        val expectedEvent = PresenceEvent(
+            eventType = StructuredMessageEvent.Type.Presence,
+            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
+        )
+
+        subject.connect()
+        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
+
+        verify(exactly = 0) {
+            mockEventHandler.onEvent(eq(expectedEvent))
+            mockStateChangedListener.invoke(fromConfiguredToReadOnly())
+            mockStateChangedListener.invoke(fromConnectedToReadOnly)
+        }
+    }
+
+    @Test
+    fun whenDisconnectEventReceivedAndThereAreNoReadOnlyInMetadataAndConversationDisconnectInDeploymentConfigIsSetToReadOnlyAndEnabled() {
+        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
+            messenger = createMessengerVOForTesting(
+                apps = Apps(
+                    conversations = createConversationsVOForTesting(
+                        conversationDisconnect = Conversations.ConversationDisconnect(
+                            enabled = true,
+                            type = Conversations.ConversationDisconnect.Type.ReadOnly
+                        ),
+                    )
+                )
+            )
+        )
+
+        val givenPresenceDisconnectEvent =
+            """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
+        val expectedEvent = PresenceEvent(
+            eventType = StructuredMessageEvent.Type.Presence,
+            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
+        )
+
+        subject.connect()
+        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
+
+        verify { mockEventHandler.onEvent(eq(expectedEvent)) }
+        verify { mockStateChangedListener.invoke(fromConfiguredToReadOnly()) }
+    }
+
+    @Test
+    fun whenDisconnectEventReceivedAndThereAreNoReadOnlyInMetadataAndConversationDisconnectInDeploymentConfigIsSetToReadOnlyAndDisabled() {
+        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
+            messenger = createMessengerVOForTesting(
+                apps = Apps(
+                    conversations = createConversationsVOForTesting(
+                        conversationDisconnect = Conversations.ConversationDisconnect(
+                            enabled = false,
+                            type = Conversations.ConversationDisconnect.Type.ReadOnly
+                        ),
+                    )
+                )
+            )
+        )
+
+        val givenPresenceDisconnectEvent =
+            """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
+        val expectedEvent = PresenceEvent(
+            eventType = StructuredMessageEvent.Type.Presence,
+            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
+        )
+
+        subject.connect()
+        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
+
+        verify(exactly = 0) {
+            mockEventHandler.onEvent(eq(expectedEvent))
+            mockStateChangedListener.invoke(fromConfiguredToReadOnly())
+            mockStateChangedListener.invoke(fromConnectedToReadOnly)
+        }
+    }
+
+    @Test
+    fun whenDisconnectEventReceivedAndReadOnlyFieldInMetadataIsTrue() {
+        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
+            messenger = createMessengerVOForTesting(
+                apps = Apps(
+                    conversations = createConversationsVOForTesting(
+                        conversationDisconnect = Conversations.ConversationDisconnect(
+                            enabled = true,
+                            type = Conversations.ConversationDisconnect.Type.ReadOnly
+                        ),
+                    )
+                )
+            )
+        )
+
+        val givenPresenceDisconnectEvent =
+            """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
+        val expectedEvent = PresenceEvent(
+            eventType = StructuredMessageEvent.Type.Presence,
+            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect),
+        )
+
+        subject.connect()
+        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent, metadata = mapOf("readOnly" to "true")))
+
+        verify { mockEventHandler.onEvent(eq(expectedEvent)) }
+        verify { mockStateChangedListener.invoke(fromConfiguredToReadOnly()) }
+    }
+
+    @Test
+    fun whenDisconnectEventReceivedAndReadOnlyFieldInMetadataIsFalse() {
+        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
+            messenger = createMessengerVOForTesting(
+                apps = Apps(
+                    conversations = createConversationsVOForTesting(
+                        conversationDisconnect = Conversations.ConversationDisconnect(
+                            enabled = true,
+                            type = Conversations.ConversationDisconnect.Type.ReadOnly
+                        ),
+                    )
+                )
+            )
+        )
+
+        val givenPresenceDisconnectEvent =
+            """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
+        val expectedEvent = PresenceEvent(
+            eventType = StructuredMessageEvent.Type.Presence,
+            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect),
+        )
+
+        subject.connect()
+        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent, metadata = mapOf("readOnly" to "false")))
+
+        verify { mockEventHandler.onEvent(eq(expectedEvent)) }
+        verify(exactly = 0) { mockStateChangedListener.invoke(fromConfiguredToReadOnly()) }
+    }
+
+    @Test
+    fun whenConfigureSessionInReadOnly() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.configureSuccess(readOnly = true))
+        }
+
+        subject.connect()
+
+        assertThat(subject.currentState).isReadOnly()
+        verifySequence {
+            connectToReadOnlySequence()
+        }
+    }
+
+    @Test
+    fun whenConfigureSessionInReadOnlyAndAutostartEnabled() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.configureSuccess(readOnly = true))
+        }
+        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
+            messenger = createMessengerVOForTesting(
+                apps = Apps(
+                    conversations = createConversationsVOForTesting(
+                        autoStart = Conversations.AutoStart(enabled = true),
+                    )
+                )
+            )
+        )
+
+        subject.connect()
+
+        assertThat(subject.currentState).isReadOnly()
+        verifySequence {
+            connectToReadOnlySequence()
+        }
+        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart) }
+    }
+
+    @Test
+    fun whenSessionInReadOnlyAndSendActionsArePerformed() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.configureSuccess(readOnly = true))
+        }
+
+        subject.connect()
+
+        assertThat(subject.currentState).isReadOnly()
+        assertFailsWith<IllegalStateException> { subject.sendMessage("Hello!") }
+        assertFailsWith<IllegalStateException> { subject.attach(ByteArray(0), "test") }
+        assertFailsWith<IllegalStateException> { subject.sendHealthCheck() }
+        assertFailsWith<IllegalStateException> { subject.detach("abc") }
+        assertFailsWith<IllegalStateException> { subject.indicateTyping() }
+    }
+
+    @Test
+    fun whenStartNewChatFromAnyNonReadOnlyState() {
+        // currentState = Idle
+        assertThat(subject.currentState).isIdle()
+        assertFailsWith<IllegalStateException>("MessagingClient is not in ReadOnly state.") { subject.startNewChat() }
+
+        // currentState = Configured
+        subject.connect()
+
+        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
+        assertFailsWith<IllegalStateException>("MessagingClient is not in ReadOnly state.") { subject.startNewChat() }
+
+        // currentState = Reconnecting
+        every { mockReconnectionHandler.shouldReconnect } returns true
+        val givenException = Exception(ErrorMessage.InternetConnectionIsOffline)
+        slot.captured.onFailure(givenException, ErrorCode.WebsocketError)
+
+        assertThat(subject.currentState).isReconnecting()
+        assertFailsWith<IllegalStateException>("MessagingClient is not in ReadOnly state.") { subject.startNewChat() }
+
+        // currentState = Error
+        subject.connect()
+        every { mockReconnectionHandler.shouldReconnect } returns false
+        val givenException2 = Exception(ErrorMessage.FailedToReconnect)
+        slot.captured.onFailure(givenException2, ErrorCode.WebsocketError)
+
+        assertThat(subject.currentState).isError(
+            ErrorCode.WebsocketError,
+            ErrorMessage.FailedToReconnect
+        )
+        assertFailsWith<IllegalStateException>("MessagingClient is not in ReadOnly state.") { subject.startNewChat() }
+
+        // currentState = Closed
+        subject.connect()
+        subject.disconnect()
+
+        assertThat(subject.currentState).isClosed(1000, "The user has closed the connection.")
+        assertFailsWith<IllegalStateException>("MessagingClient is not in ReadOnly state.") { subject.startNewChat() }
+    }
+
+    @Test
+    fun whenStartNewChatFromReadOnlyState() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.configureSuccess(readOnly = true))
+        }
+
+        subject.connect()
+        subject.startNewChat()
+
+        assertThat(subject.currentState).isReadOnly()
+        verifySequence {
+            connectToReadOnlySequence()
+            mockPlatformSocket.sendMessage(Request.closeAllConnections)
+        }
+    }
+
+    @Test
+    fun whenNetworkRequestErrorDuringStartNewChat() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.configureSuccess(readOnly = true))
+        }
+        val expectedErrorCode = ErrorCode.ClientResponseError(400)
+        val expectedErrorMessage = "Request failed."
+        val expectedErrorState = State.Error(expectedErrorCode, expectedErrorMessage)
+        every { mockPlatformSocket.sendMessage(Request.closeAllConnections) } answers {
+            slot.captured.onMessage(Response.webSocketRequestFailed)
+        }
+
+        subject.connect()
+        subject.startNewChat()
+
+        assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
+        verifySequence {
+            connectToReadOnlySequence()
+            mockPlatformSocket.sendMessage(Request.closeAllConnections)
+            mockStateChangedListener(fromReadOnlyToError(errorState = expectedErrorState))
+        }
+    }
+
+    @Test
+    fun whenStartNewChatAndWebSocketReceivesASessionResponseThatNotConnectedAndReadOnly() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.configureSuccess(readOnly = true))
+        }
+        every { mockPlatformSocket.sendMessage(Request.closeAllConnections) } answers {
+            slot.captured.onMessage(Response.configureSuccess(connected = false, readOnly = true))
+        }
+
+        subject.connect()
+        subject.startNewChat()
+
+        assertThat(subject.currentState).isReadOnly()
+        verifySequence {
+            connectToReadOnlySequence()
+            mockPlatformSocket.sendMessage(Request.closeAllConnections)
+            mockReconnectionHandler.clear()
+            verifyCleanUp()
+            mockPlatformSocket.sendMessage(Request.configureRequest(startNew = true))
+        }
+    }
+
+    @Test
+    fun whenStartNewChatAndWebSocketReceivesASessionResponseThatConnectedAndReadOnly() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.configureSuccess(readOnly = true))
+        }
+        every { mockPlatformSocket.sendMessage(Request.closeAllConnections) } answers {
+            slot.captured.onMessage(Response.configureSuccess(connected = true, readOnly = true))
+        }
+
+        subject.connect()
+        subject.startNewChat()
+
+        assertThat(subject.currentState).isReadOnly()
+        verifySequence {
+            connectToReadOnlySequence()
+            mockPlatformSocket.sendMessage(Request.closeAllConnections)
+            mockReconnectionHandler.clear()
+        }
+        verify(exactly = 0) {
+            mockMessageStore.invalidateConversationCache()
+            mockAttachmentHandler.clearAll()
+            mockPlatformSocket.sendMessage(Request.configureRequest(startNew = true))
+        }
+    }
+
+    @Test
+    fun whenWebSocketReceivesASessionResponseThatNotConnectedAndReadOnlyButStartNewChatWasNotInvoked() {
+        subject.connect()
+
+        slot.captured.onMessage(Response.configureSuccess(connected = false, readOnly = true))
+
+        assertThat(subject.currentState).isReadOnly()
+        verifySequence {
+            connectSequence()
+            mockReconnectionHandler.clear()
+            mockStateChangedListener(fromConfiguredToReadOnly())
+        }
+        verify(exactly = 0) {
+            mockMessageStore.invalidateConversationCache()
+            mockAttachmentHandler.clearAll()
+            mockPlatformSocket.sendMessage(Request.configureRequest(startNew = true))
+        }
+    }
+
+    private fun verifyCleanUp() {
+        mockMessageStore.invalidateConversationCache()
+        mockAttachmentHandler.clearAll()
+        mockReconnectionHandler.clear()
+    }
+
     private fun configuration(): Configuration = Configuration(
         deploymentId = "deploymentId",
         domain = "inindca.com",
@@ -851,9 +1245,18 @@ class MessagingClientImplTest {
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
-        mockPlatformSocket.sendMessage(Request.configureRequest)
+        mockPlatformSocket.sendMessage(Request.configureRequest())
         mockReconnectionHandler.clear()
         mockStateChangedListener(fromConnectedToConfigured)
+    }
+
+    private fun MockKVerificationScope.connectToReadOnlySequence() {
+        mockStateChangedListener(fromIdleToConnecting)
+        mockPlatformSocket.openSocket(any())
+        mockStateChangedListener(fromConnectingToConnected)
+        mockPlatformSocket.sendMessage(Request.configureRequest())
+        mockReconnectionHandler.clear()
+        mockStateChangedListener(fromConnectedToReadOnly)
     }
 
     private fun MockKVerificationScope.disconnectSequence(
@@ -872,15 +1275,14 @@ class MessagingClientImplTest {
         mockStateChangedListener(fromConfiguredToClosing)
         mockPlatformSocket.closeSocket(expectedCloseCode, expectedCloseReason)
         mockStateChangedListener(fromClosingToClosed)
-        mockMessageStore.invalidateConversationCache()
-        mockAttachmentHandler.clearAll()
+        verifyCleanUp()
     }
 
     private fun MockKVerificationScope.connectWithFailedConfigureSequence() {
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
-        mockPlatformSocket.sendMessage(Request.configureRequest)
+        mockPlatformSocket.sendMessage(Request.configureRequest())
     }
 
     private val fromIdleToConnecting =
@@ -909,15 +1311,34 @@ class MessagingClientImplTest {
             oldState = State.Configured(connected = true, newSession = true),
             newState = errorState,
         )
+
+    private fun fromReadOnlyToError(errorState: State) =
+        StateChange(
+            oldState = State.ReadOnly,
+            newState = errorState,
+        )
+
+    private fun fromConfiguredToReadOnly() =
+        StateChange(
+            oldState = State.Configured(connected = true, newSession = true),
+            newState = State.ReadOnly,
+        )
+
+    private val fromConnectedToReadOnly =
+        StateChange(
+            oldState = State.Connected,
+            newState = State.ReadOnly,
+        )
 }
 
 private object Response {
-    const val configureSuccess =
-        """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":true}}"""
+    fun configureSuccess(connected: Boolean = true, readOnly: Boolean = false): String =
+        """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":$connected,"newSession":true,"readOnly":$readOnly}}"""
+
     const val configureSuccessWithNewSessionFalse =
         """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":false}}"""
-    const val configureFail =
-        """{"type":"response","class":"string","code":400,"body":"Deployment not found"}"""
+    const val webSocketRequestFailed =
+        """{"type":"response","class":"string","code":400,"body":"Request failed."}"""
     const val defaultStructuredEvents =
         """{"eventType": "Typing","typing": {"type": "Off","duration": 1000}},{"eventType": "Typing","typing": {"type": "On","duration": 5000}}"""
     const val onMessage =
@@ -940,12 +1361,14 @@ private object Response {
         """{"type":"response","class":"TooManyRequestsErrorMessage","code":429,"body":{"retryAfter":3,"errorCode":4029,"errorMessage":"Message rate too high for this session"}}"""
     const val customAttributeSizeTooLarge =
         """{"type": "response","class": "string","code": 4013,"body": "Custom Attributes in channel metadata is larger than 2048 bytes"}"""
-    const val connectionClosedEvent = """{"type":"message","class":"ConnectionClosedEvent","code":200,"body":{}}"""
+    const val connectionClosedEvent =
+        """{"type":"message","class":"ConnectionClosedEvent","code":200,"body":{}}"""
 
     fun structuredMessageWithEvents(
         events: String = defaultStructuredEvents,
         direction: Message.Direction = Message.Direction.Outbound,
+        metadata: Map<String, String> = mapOf("correlationId" to "0000000-0000-0000-0000-0000000000")
     ): String {
-        return """{"type": "message","class": "StructuredMessage","code": 200,"body": {"direction": "${direction.name}","id": "0000000-0000-0000-0000-0000000000","channel": {"time": "2022-03-09T13:35:31.104Z","messageId": "0000000-0000-0000-0000-0000000000"},"type": "Event","metadata": {"correlationId": "0000000-0000-0000-0000-0000000000"},"events": [$events]}}"""
+        return """{"type": "message","class": "StructuredMessage","code": 200,"body": {"direction": "${direction.name}","id": "0000000-0000-0000-0000-0000000000","channel": {"time": "2022-03-09T13:35:31.104Z","messageId": "0000000-0000-0000-0000-0000000000"},"type": "Event","metadata": ${Json.encodeToString(metadata)},"events": [$events]}}"""
     }
 }

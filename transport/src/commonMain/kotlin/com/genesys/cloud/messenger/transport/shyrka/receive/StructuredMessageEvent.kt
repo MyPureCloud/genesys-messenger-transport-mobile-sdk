@@ -53,7 +53,13 @@ internal data class PresenceEvent(
     val presence: Presence,
 ) : StructuredMessageEvent() {
     @Serializable
-    internal data class Presence(val type: String)
+    internal data class Presence(val type: Type) {
+        @Serializable
+        internal enum class Type {
+            Disconnect,
+            Join,
+        }
+    }
 }
 
 @Serializable

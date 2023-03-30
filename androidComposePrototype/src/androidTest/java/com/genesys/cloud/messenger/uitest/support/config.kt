@@ -13,6 +13,7 @@ data class Config(
     val deploymentId: String,
     val humanizeDisableDeploymentId: String,
     val botDeploymentId: String,
+    val agentDisconnectDeploymentId: String,
     val botName: String,
     val password: String,
     val domain: String,

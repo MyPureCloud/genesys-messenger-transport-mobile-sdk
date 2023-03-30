@@ -50,6 +50,15 @@ final class MessengerInteractor {
             throw error
         }
     }
+    
+    func newChat() throws {
+        do {
+            try messagingClient.startNewChat()
+        } catch {
+            print("startNewChat() failed. \(error.localizedDescription)")
+            throw error
+        }
+    }
 
     func disconnect() throws {
         do {

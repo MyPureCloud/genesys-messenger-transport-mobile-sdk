@@ -16,7 +16,7 @@ internal data class AutoStartRequest(
         listOf(
             PresenceEvent(
                 eventType = StructuredMessageEvent.Type.Presence,
-                presence = PresenceEvent.Presence(type = "Join"),
+                presence = PresenceEvent.Presence(type = PresenceEvent.Presence.Type.Join),
             )
         )
     )

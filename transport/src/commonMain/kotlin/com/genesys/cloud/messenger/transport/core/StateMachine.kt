@@ -14,4 +14,5 @@ internal interface StateMachine {
     fun onClosing(code: Int, reason: String)
     fun onClosed(code: Int, reason: String)
     fun onError(code: ErrorCode, message: String?)
+    fun onReadOnly()
 }
