@@ -19,6 +19,7 @@ class TestBedFragment : Fragment() {
     private val onOktaLogout: () -> Unit = {
         context?.getSharedPreferences()?.edit()?.run {
             remove("authCode")
+            apply()
         }
     }
 

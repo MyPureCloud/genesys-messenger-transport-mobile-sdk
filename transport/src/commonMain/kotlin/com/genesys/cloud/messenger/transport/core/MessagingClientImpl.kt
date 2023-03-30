@@ -213,11 +213,11 @@ internal class MessagingClientImpl(
 
     @Throws(Exception::class)
     override suspend fun logoutFromAuthenticatedSession() {
-        if (authJwt == null) {
+        val authJwt = authJwt ?: run {
             log.w { "Logout from anonymous session is not supported." }
             return
         }
-        logoutUseCase.logout(authJwt!!.jwt)
+        logoutUseCase.logout(authJwt.jwt)
     }
 
     override fun invalidateConversationCache() {
