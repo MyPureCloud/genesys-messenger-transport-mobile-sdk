@@ -33,6 +33,7 @@ class TestbedViewController: UIViewController {
      */
     enum UserCommand: String, CaseIterable {
         case connect
+        case newChat
         case send
         case history
         case selectAttachment
@@ -163,6 +164,8 @@ class TestbedViewController: UIViewController {
             stateMessage = "Error, code=\(error.code) message=\(error.message?.description ?? "nil")"
         case is MessagingClientState.Reconnecting:
             stateMessage = "Reconnecting"
+        case is MessagingClientState.ReadOnly:
+            stateMessage = "ReadOnly"
         default:
             break
         }
@@ -285,6 +288,8 @@ extension TestbedViewController : UITextFieldDelegate {
             switch command {
             case (.connect, _):
                 try messenger.connect()
+            case (.newChat, _):
+                try messenger.newChat()
             case (.bye, _):
                 try messenger.disconnect()
             case (.send, let msg?):

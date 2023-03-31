@@ -5,11 +5,11 @@ import com.genesys.cloud.messenger.transport.core.Configuration
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
-import io.ktor.client.features.json.JsonFeature
-import io.ktor.client.features.json.serializer.KotlinxSerializer
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.ContentType
 import io.ktor.http.fullPath
 import io.ktor.http.headersOf
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
@@ -63,8 +63,8 @@ class WebMessagingApiTest {
     )
 
     private fun mockHttpClient(): HttpClient = HttpClient(MockEngine) {
-        install(JsonFeature) {
-            serializer = KotlinxSerializer()
+        install(ContentNegotiation) {
+            json()
         }
         engine {
             val responseHeaders =

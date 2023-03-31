@@ -1,7 +1,7 @@
 package com.genesys.cloud.messenger.transport.shyrka.receive
 
 fun createDeploymentConfigForTesting(
-    messenger: Messenger = createMessengerVOForTesting()
+    messenger: Messenger = createMessengerVOForTesting(),
 ) = DeploymentConfig(
     id = "id",
     version = "1",
@@ -14,7 +14,7 @@ fun createDeploymentConfigForTesting(
 )
 
 fun createMessengerVOForTesting(
-    apps: Apps = Apps(createConversationsVOForTesting())
+    apps: Apps = Apps(createConversationsVOForTesting()),
 ) = Messenger(
     enabled = true,
     apps = apps,
@@ -31,8 +31,10 @@ fun createMessengerVOForTesting(
 )
 
 fun createConversationsVOForTesting(
-    autoStart: Conversations.AutoStart = Conversations.AutoStart()
+    autoStart: Conversations.AutoStart = Conversations.AutoStart(),
+    conversationDisconnect: Conversations.ConversationDisconnect = Conversations.ConversationDisconnect(),
 ): Conversations = Conversations(
     messagingEndpoint = "messaging_endpoint",
     autoStart = autoStart,
+    conversationDisconnect = conversationDisconnect,
 )

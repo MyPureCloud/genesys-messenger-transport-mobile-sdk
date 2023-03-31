@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
     spec.name                     = 'transport'
-    spec.version                  = '2.2.0'
+    spec.version                  = '2.3.0'
     spec.homepage                 = 'https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk'
     spec.source                   = { :http=> ''}
     spec.authors                  = 'Genesys Cloud Services, Inc.'
@@ -22,8 +22,8 @@ Pod::Spec.new do |spec|
             :execution_position => :before_compile,
             :shell_path => '/bin/sh',
             :script => <<-SCRIPT
-                if [ "YES" = "$COCOAPODS_SKIP_KOTLIN_BUILD" ]; then
-                  echo "Skipping Gradle build task invocation due to COCOAPODS_SKIP_KOTLIN_BUILD environment variable set to \"YES\""
+                if [ "YES" = "$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED" ]; then
+                  echo "Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \"YES\""
                   exit 0
                 fi
                 set -ev

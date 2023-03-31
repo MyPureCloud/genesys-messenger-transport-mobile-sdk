@@ -1,0 +1,40 @@
+@startuml
+skinparam {
+        ArrowColor darkBlue
+        backgroundColor #EEEBDC
+        NoteBackgroundColor #lightyellow
+        NoteBorderColor gray
+        sequenceGroupHeaderFontColor midnightblue
+        padding 6
+}
+
+participant Idle #yellow
+participant Connecting #lightGreen
+participant Connected #lightGreen
+participant Configured #green
+participant ReadOnly #green
+participant Reconnecting #orange
+participant Closing #yellow
+participant Closed #yellow
+participant Error #red
+
+Idle --> Connecting : connect
+Connecting --> Connected : WS opened
+Connected --> Configured : SessionResponse(readOnly = false)
+Connected --> ReadOnly : SessionResponse(readOnly = true)
+Configured --> ReadOnly : Event.ConversationDisconnect && DeploymentConfig.ReadOnly
+Configured --> Reconnecting : Network lost
+Reconnecting -> Configured : Network reestablished && SessionResponse(readOnly = false)
+ReadOnly --> Reconnecting : Network lost
+Reconnecting -> ReadOnly : Network reestablished && SessionResponse(readOnly = true)
+ReadOnly -> Configured : startNewChat()
+ReadOnly --> Error : Unexpected error
+Configured --> Error : Unexpected error
+Connecting --> Error : Failed to connect
+Connected --> Error : Failed to configure session
+Reconnecting --> Error : Exhausted reconnection attempts.
+Configured --> Closing : disconnect()
+ReadOnly --> Closing : disconnect()
+Closing --> Closed : WS closed
+
+@enduml

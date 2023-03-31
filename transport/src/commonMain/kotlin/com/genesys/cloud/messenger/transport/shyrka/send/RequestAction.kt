@@ -7,5 +7,6 @@ internal enum class RequestAction(val value: String) {
     ON_ATTACHMENT("onAttachment"),
     GET_ATTACHMENT("getAttachment"),
     DELETE_ATTACHMENT("deleteAttachment"),
-    GET_JWT("getJwt")
+    GET_JWT("getJwt"),
+    CLOSE_SESSION("closeSession"),
 }

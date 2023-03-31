@@ -27,20 +27,18 @@ class UserTypingProviderTest {
     @Test
     fun whenEncode() {
         val expected = Request.userTypingRequest
-
-        val result = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
+        val result = subject.encodeRequest(token = Request.token)
 
         assertThat(result).isEqualTo(expected)
     }
 
     @Test
     fun whenEncodeWithCoolDown() {
-        val typingIndicatorCoolDownInMilliseconds = 5000
+        val typingIndicatorCoolDownInMilliseconds = TYPING_INDICATOR_COOL_DOWN_MILLISECONDS + 250
         val expected = Request.userTypingRequest
-
-        val firstResult = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
+        val firstResult = subject.encodeRequest(token = Request.token)
         every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + typingIndicatorCoolDownInMilliseconds }
-        val secondResult = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
+        val secondResult = subject.encodeRequest(token = Request.token)
 
         assertThat(firstResult).isEqualTo(expected)
         assertThat(secondResult).isEqualTo(expected)
@@ -49,9 +47,8 @@ class UserTypingProviderTest {
     @Test
     fun whenEncodeWithoutCoolDown() {
         val expected = Request.userTypingRequest
-
-        val firstResult = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
-        val secondResult = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
+        val firstResult = subject.encodeRequest(token = Request.token)
+        val secondResult = subject.encodeRequest(token = Request.token)
 
         assertThat(firstResult).isEqualTo(expected)
         assertThat(secondResult).isNull()
@@ -60,10 +57,9 @@ class UserTypingProviderTest {
     @Test
     fun whenEncodeWithoutCoolDownButWithClear() {
         val expected = Request.userTypingRequest
-
-        val firstResult = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
+        val firstResult = subject.encodeRequest(token = Request.token)
         subject.clear()
-        val secondResult = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
+        val secondResult = subject.encodeRequest(token = Request.token)
 
         assertThat(firstResult).isEqualTo(expected)
         assertThat(secondResult).isEqualTo(expected)
@@ -73,7 +69,7 @@ class UserTypingProviderTest {
     fun whenEncodeAndShowUserTypingIsDisabled() {
         every { mockShowUserTypingIndicatorFunction.invoke() } returns false
 
-        val result = subject.encodeRequest("00000000-0000-0000-0000-000000000000")
+        val result = subject.encodeRequest(token = Request.token)
 
         assertThat(result).isNull()
     }

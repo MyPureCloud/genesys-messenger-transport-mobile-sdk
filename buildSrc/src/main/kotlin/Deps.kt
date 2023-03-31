@@ -4,7 +4,7 @@ object Deps {
     private const val junitVersion = "4.13.2"
     private const val kermitVersion = "1.1.2"
     private const val kotlinxSerializationJsonVersion = "1.3.2"
-    private const val ktorVersion = "1.6.8"
+    private const val ktorVersion = "2.2.2"
     private const val mockWebServerVersion = "4.9.0"
     private const val mockkVersion = "1.13.3"
     private const val okhttpVersion = "4.10.0"
@@ -47,6 +47,8 @@ object Deps {
             const val android = "io.ktor:ktor-client-android:$ktorVersion"
             const val ios = "io.ktor:ktor-client-ios:$ktorVersion"
             const val mock = "io.ktor:ktor-client-mock:$ktorVersion"
+            const val contentNegotiation = "io.ktor:ktor-client-content-negotiation:$ktorVersion"
+            const val kotlinxSerialization = "io.ktor:ktor-serialization-kotlinx-json:$ktorVersion"
         }
     }
 

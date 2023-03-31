@@ -38,7 +38,20 @@ interface MessagingClient {
          * @property connected true if session has been configured and connection is established.
          * @property newSession indicates if configured session is new. When configuring an existing session, [newSession] will be false.
          */
-        data class Configured(val connected: Boolean, val newSession: Boolean) : State()
+        data class Configured(
+            val connected: Boolean,
+            val newSession: Boolean,
+        ) : State()
+
+        /**
+         * MessagingClient will transition to this state, once [Event.ConversationDisconnect] is received AND
+         * messenger is configured to display conversation status and disconnect session OR when SessionResponse indicates that session is `readOnly=true`.
+         * For more information on this state, please visit official [documentation](https://developer.genesys.cloud/commdigital/digital/webmessaging/messenger-transport-mobile-sdk/)
+         * While in this state, it is only allowed to perform read actions. For example, [fetchNextPage].
+         *
+         * An IllegalStateException will be thrown on any attempt to send an action.
+         */
+        object ReadOnly : State()
 
         /**
          * Remote peer has indicated that no more incoming messages will be transmitted.
@@ -99,6 +112,16 @@ interface MessagingClient {
     fun connect()
 
     /**
+     * Configure a new chat once the previous one is in State.ReadOnly.
+     * It is important to note that once new chat started,
+     * all information regarding previous conversations will be lost.
+     *
+     * @throws IllegalStateException if MessagingClient not in ReadOnly state.
+     */
+    @Throws(IllegalStateException::class)
+    fun startNewChat()
+
+    /**
      * Send a message to the conversation as plain text.
      *
      * @param text the plain text to send.
@@ -134,7 +157,7 @@ interface MessagingClient {
     fun attach(
         byteArray: ByteArray,
         fileName: String,
-        uploadProgress: ((Float) -> Unit)? = null
+        uploadProgress: ((Float) -> Unit)? = null,
     ): String
 
     /**
