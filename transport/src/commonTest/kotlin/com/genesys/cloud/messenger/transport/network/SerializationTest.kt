@@ -21,6 +21,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureAuthenticatedSessionRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.CloseSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.EchoRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
@@ -45,14 +46,15 @@ class SerializationTest {
         )
         val encodedString = WebMessagingJson.json.encodeToString(
             ConfigureSessionRequest(
-                "<token>",
-                "<deploymentId>",
-                journeyContext,
+                token = "<token>",
+                deploymentId = "<deploymentId>",
+                startNew = false,
+                journeyContext = journeyContext,
             )
         )
 
         assertThat(encodedString, "encoded ConfigureSessionRequest")
-            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"action":"configureSession"}""")
+            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","startNew":false,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"action":"configureSession"}""")
     }
 
     @Test
@@ -382,6 +384,19 @@ class SerializationTest {
 
         assertThat(message.body, "WebMessagingMessage body").isNotNull()
             .hasClass(ConnectionClosedEvent::class)
+    }
+
+    @Test
+    fun whenCloseSessionRequestThenEncodes() {
+        val encodedString = WebMessagingJson.json.encodeToString(
+            CloseSessionRequest(
+                token = "<token>",
+                closeAllConnections = true,
+            )
+        )
+
+        assertThat(encodedString, "encoded CloseSessionRequest")
+            .isEqualTo("""{"token":"<token>","closeAllConnections":true,"action":"closeSession"}""")
     }
 
     @Test
