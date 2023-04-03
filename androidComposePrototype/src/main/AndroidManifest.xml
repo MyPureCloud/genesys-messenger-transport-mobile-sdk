@@ -15,16 +15,20 @@
         <activity
             android:name="com.genesys.cloud.messenger.androidcomposeprototype.MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.WebMessaging.NoActionBar"
             android:launchMode="singleTop"
+            android:theme="@style/Theme.WebMessaging.NoActionBar"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+
                 <data
                     android:host="oauth2"
                     android:pathPrefix="/code"

@@ -35,8 +35,8 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.isHealthCheckResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.isOutbound
 import com.genesys.cloud.messenger.transport.shyrka.send.AutoStartRequest
-import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureAuthenticatedSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.CloseSessionRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureAuthenticatedSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
@@ -140,25 +140,12 @@ internal class MessagingClientImpl(
         webSocket.closeSocket(code, reason)
     }
 
-    private fun configureSession() {
-        // TODO resolve
-//        log.i { "configureSession(token = $token, startNew: $startNew)" }
-//        val request = ConfigureSessionRequest(
-//            token = token,
-//            deploymentId = configuration.deploymentId,
-//            startNew = startNew,
-//            journeyContext = JourneyContext(
-//                JourneyCustomer(token, "cookie"),
-//                JourneyCustomerSession("", "web")
-//            )
-//        )
-//        val encodedJson = WebMessagingJson.json.encodeToString(request)
-//        webSocket.sendMessage(encodedJson)
-        log.i { "configureSession(token = $token)" }
+    private fun configureSession(startNew: Boolean = false) {
+        log.i { "configureSession(token = $token, startNew: $startNew)" }
         val encodedJson = if (authJwt != null) {
-            encodeAuthenticatedConfigureSessionRequest()
+            encodeAuthenticatedConfigureSessionRequest(startNew)
         } else {
-            encodeAnonymousConfigureSessionRequest()
+            encodeAnonymousConfigureSessionRequest(startNew)
         }
         webSocket.sendMessage(encodedJson)
     }
@@ -385,10 +372,11 @@ internal class MessagingClientImpl(
         authJwt = null
     }
 
-    private fun encodeAnonymousConfigureSessionRequest() = WebMessagingJson.json.encodeToString(
+    private fun encodeAnonymousConfigureSessionRequest(startNew: Boolean) = WebMessagingJson.json.encodeToString(
         ConfigureSessionRequest(
             token = token,
             deploymentId = configuration.deploymentId,
+            startNew = startNew,
             journeyContext = JourneyContext(
                 JourneyCustomer(token, "cookie"),
                 JourneyCustomerSession("", "web")
@@ -396,10 +384,11 @@ internal class MessagingClientImpl(
         )
     )
 
-    private fun encodeAuthenticatedConfigureSessionRequest() = WebMessagingJson.json.encodeToString(
+    private fun encodeAuthenticatedConfigureSessionRequest(startNew: Boolean) = WebMessagingJson.json.encodeToString(
         ConfigureAuthenticatedSessionRequest(
             token = token,
             deploymentId = configuration.deploymentId,
+            startNew = startNew,
             journeyContext = JourneyContext(
                 JourneyCustomer(token, "cookie"),
                 JourneyCustomerSession("", "web")

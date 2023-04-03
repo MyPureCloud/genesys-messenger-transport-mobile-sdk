@@ -20,8 +20,8 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
-import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureAuthenticatedSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.CloseSessionRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureAuthenticatedSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.EchoRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
@@ -410,12 +410,13 @@ class SerializationTest {
             ConfigureAuthenticatedSessionRequest(
                 token = "<token>",
                 deploymentId = "<deploymentId>",
+                startNew = false,
                 journeyContext = journeyContext,
                 data = data,
             )
         )
 
         assertThat(encodedString, "encoded ConfigureAuthenticatedSessionRequest")
-            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"data":{"code":"<auth_token>"},"action":"configureAuthenticatedSession"}""")
+            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","startNew":false,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"data":{"code":"<auth_token>"},"action":"configureAuthenticatedSession"}""")
     }
 }

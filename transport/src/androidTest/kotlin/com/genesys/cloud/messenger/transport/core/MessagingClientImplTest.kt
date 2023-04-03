@@ -110,7 +110,7 @@ class MessagingClientImplTest {
             slot.captured.onMessage(Response.configureSuccess())
         }
         every { sendMessage(Request.configureAuthenticatedRequest()) } answers {
-            slot.captured.onMessage(Response.configureSuccess)
+            slot.captured.onMessage(Response.configureSuccess())
         }
     }
 
@@ -1173,6 +1173,7 @@ class MessagingClientImplTest {
             connectToReadOnlySequence()
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
             mockStateChangedListener(fromReadOnlyToError(errorState = expectedErrorState))
+            mockReconnectionHandler.clear()
         }
     }
 
@@ -1283,7 +1284,7 @@ class MessagingClientImplTest {
 
         subject.connectAuthenticatedSession(givenAuthJwt)
 
-        assertThat(subject).isConfigured(connected = true, newSession = true)
+        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
         verifySequence {
             connectSequence(shouldConfigureAuth = true)
         }
@@ -1297,14 +1298,14 @@ class MessagingClientImplTest {
         subject.disconnect()
         subject.connect()
 
-        assertThat(subject).isConfigured(connected = true, newSession = true)
+        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
         verifySequence {
             connectSequence(shouldConfigureAuth = true)
             disconnectSequence()
             mockStateChangedListener(fromClosedToConnecting)
             mockPlatformSocket.openSocket(any())
             mockStateChangedListener(fromConnectingToConnected)
-            mockPlatformSocket.sendMessage(Request.configureRequest)
+            mockPlatformSocket.sendMessage(Request.configureRequest())
             mockReconnectionHandler.clear()
             mockStateChangedListener(fromConnectedToConfigured)
         }
@@ -1315,21 +1316,21 @@ class MessagingClientImplTest {
         val givenAuthJwt = AuthJwt("auth_token", "refresh_token")
         val expectedErrorState =
             State.Error(ErrorCode.SessionHasExpired, "session expired error message")
-        every { mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest) } answers {
+        every { mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest()) } answers {
             slot.captured.onMessage(Response.sessionExpired)
         }
 
         subject.connectAuthenticatedSession(givenAuthJwt)
         subject.connect()
 
-        assertThat(subject).isConfigured(connected = true, newSession = true)
+        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
         verifySequence {
             connectWithFailedConfigureSequence(shouldConfigureAuth = true)
             errorSequence(fromConnectedToError(expectedErrorState))
             mockStateChangedListener(fromErrorToConnecting(expectedErrorState))
             mockPlatformSocket.openSocket(any())
             mockStateChangedListener(fromConnectingToConnected)
-            mockPlatformSocket.sendMessage(Request.configureRequest)
+            mockPlatformSocket.sendMessage(Request.configureRequest())
             mockReconnectionHandler.clear()
             mockStateChangedListener(fromConnectedToConfigured)
         }
@@ -1346,7 +1347,7 @@ class MessagingClientImplTest {
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
-        mockPlatformSocket.sendMessage(Request.configureRequest())
+        mockPlatformSocket.sendMessage(configureRequest)
         mockReconnectionHandler.clear()
         mockStateChangedListener(fromConnectedToConfigured)
     }
@@ -1376,18 +1377,15 @@ class MessagingClientImplTest {
         this.mockStateChangedListener(fromConfiguredToClosing)
         mockPlatformSocket.closeSocket(expectedCloseCode, expectedCloseReason)
         this.mockStateChangedListener(fromClosingToClosed)
-        mockMessageStore.invalidateConversationCache()
-        mockAttachmentHandler.clearAll()
         verifyCleanUp()
     }
 
     private fun MockKVerificationScope.connectWithFailedConfigureSequence(shouldConfigureAuth: Boolean = false) {
         val configureRequest =
-            if (shouldConfigureAuth) Request.configureAuthenticatedRequest else Request.configureRequest
+            if (shouldConfigureAuth) Request.configureAuthenticatedRequest() else Request.configureRequest()
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
-        mockPlatformSocket.sendMessage(Request.configureRequest())
         mockPlatformSocket.sendMessage(configureRequest)
     }
 
