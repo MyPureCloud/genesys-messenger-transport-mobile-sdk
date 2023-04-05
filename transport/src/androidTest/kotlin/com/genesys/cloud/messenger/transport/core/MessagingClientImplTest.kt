@@ -456,13 +456,13 @@ class MessagingClientImplTest {
     @Test
     fun whenSocketListenerInvokeOnMessageWithClientResponseErrorWhileReconnecting() {
         val expectedErrorCode = ErrorCode.ClientResponseError(400)
-        val expectedErrorMessage = "Deployment not found"
+        val expectedErrorMessage = "Request failed."
         val expectedErrorState = State.Error(expectedErrorCode, expectedErrorMessage)
-        every { mockPlatformSocket.sendMessage(Request.configureRequest) } answers {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             if (subject.currentState == State.Reconnecting) {
-                slot.captured.onMessage(Response.configureFail)
+                slot.captured.onMessage(Response.webSocketRequestFailed)
             } else {
-                slot.captured.onMessage(Response.configureSuccess)
+                slot.captured.onMessage(Response.configureSuccess())
             }
         }
         every { mockReconnectionHandler.shouldReconnect } returns true
@@ -472,14 +472,14 @@ class MessagingClientImplTest {
         // Initiate reconnection flow.
         slot.captured.onFailure(Exception(), ErrorCode.WebsocketError)
 
-        assertThat(subject).isError(expectedErrorCode, expectedErrorMessage)
+        assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
         verifySequence {
             connectSequence()
             mockReconnectionHandler.shouldReconnect
             mockStateChangedListener(fromConfiguredToReconnecting())
             mockReconnectionHandler.reconnect(any())
             mockPlatformSocket.openSocket(any())
-            mockPlatformSocket.sendMessage(eq(Request.configureRequest))
+            mockPlatformSocket.sendMessage(eq(Request.configureRequest()))
             errorSequence(fromReconnectingToError(expectedErrorState))
         }
     }

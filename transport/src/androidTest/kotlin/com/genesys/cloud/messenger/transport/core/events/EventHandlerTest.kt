@@ -5,8 +5,8 @@ import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosed
 import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.HealthCheckEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.Logout
+import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent.Typing

@@ -24,13 +24,13 @@ internal class StateMachineImpl(
     override var stateChangedListener: ((StateChange) -> Unit)? = null
 
     override fun onConnectionOpened() {
-        currentState = if (currentState.isReconnecting()) State.Reconnecting else State.Connected
+        currentState = if (isReconnecting()) State.Reconnecting else State.Connected
     }
 
     @Throws(IllegalStateException::class)
     override fun onConnect() {
         check(currentState.canConnect()) { "MessagingClient state must be Closed, Idle or Error, but was: $currentState" }
-        currentState = if (currentState.isReconnecting()) State.Reconnecting else State.Connecting
+        currentState = if (isReconnecting()) State.Reconnecting else State.Connecting
     }
 
     override fun onReconnect() {
