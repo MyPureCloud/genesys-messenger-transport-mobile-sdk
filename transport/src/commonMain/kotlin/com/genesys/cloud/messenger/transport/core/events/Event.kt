@@ -44,4 +44,9 @@ sealed class Event {
      * Detailed information about Genesys Cloud Web Messaging capabilities is available in the [Developer Center](https://developer.genesys.cloud).
      */
     object ConnectionClosed : Event()
+
+    /**
+     * Sent when user has been logged out from authenticated session.
+     */
+    object Logout : Event()
 }

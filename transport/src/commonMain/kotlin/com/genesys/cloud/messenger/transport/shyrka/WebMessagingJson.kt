@@ -4,6 +4,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.AttachmentDeletedRes
 import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosedEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.LogoutEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageClassName
 import com.genesys.cloud.messenger.transport.shyrka.receive.PreIdentifiedWebMessagingMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
@@ -59,6 +60,8 @@ internal object WebMessagingJson {
                 json.decodeFromString<WebMessagingMessage<TooManyRequestsErrorMessage>>(string)
             MessageClassName.CONNECTION_CLOSED_EVENT.value ->
                 json.decodeFromString<WebMessagingMessage<ConnectionClosedEvent>>(string)
+            MessageClassName.LOGOUT_EVENT.value ->
+                json.decodeFromString<WebMessagingMessage<LogoutEvent>>(string)
             else -> throw IllegalArgumentException()
         }
     }

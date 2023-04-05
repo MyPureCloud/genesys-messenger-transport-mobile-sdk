@@ -23,6 +23,8 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
 import com.genesys.cloud.messenger.transport.shyrka.receive.HealthCheckEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.Logout
+import com.genesys.cloud.messenger.transport.shyrka.receive.LogoutEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionExpiredEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
@@ -433,6 +435,7 @@ internal class MessagingClientImpl(
                         disconnect()
                         eventHandler.onEvent(ConnectionClosed())
                     }
+                    is LogoutEvent -> { eventHandler.onEvent(Logout()) }
                     else -> { log.i { "Unhandled message received from Shyrka: $decoded " } }
                 }
             } catch (exception: SerializationException) {

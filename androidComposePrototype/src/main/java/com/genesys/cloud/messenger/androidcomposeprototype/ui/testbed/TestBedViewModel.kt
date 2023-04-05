@@ -172,8 +172,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             if (authState is AuthState.JwtFetched) {
                 (authState as AuthState.JwtFetched).authJwt.let {
                     client.logoutFromAuthenticatedSession()
-                    onOktaLogout()
-                    authState = AuthState.LoggedOut
                 }
                 commandWaiting = false
             } else {
@@ -370,6 +368,10 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     }
 
     private fun onEvent(event: Event) {
+        if (event is Event.Logout) {
+            onOktaLogout()
+            authState = AuthState.LoggedOut
+        }
         launch { onSocketMessageReceived(event.toString()) }
     }
 
