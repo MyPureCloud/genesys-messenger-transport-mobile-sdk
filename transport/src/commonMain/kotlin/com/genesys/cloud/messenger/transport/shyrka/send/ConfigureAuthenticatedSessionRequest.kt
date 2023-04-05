@@ -7,6 +7,7 @@ import kotlinx.serialization.Serializable
 internal data class ConfigureAuthenticatedSessionRequest(
     override val token: String,
     val deploymentId: String,
+    val startNew: Boolean,
     val journeyContext: JourneyContext? = null,
     val data: Data,
 ) : WebMessagingRequest {

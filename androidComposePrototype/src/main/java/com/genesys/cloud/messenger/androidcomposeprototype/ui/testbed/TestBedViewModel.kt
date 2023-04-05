@@ -138,6 +138,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "clearConversation" -> doClearConversation()
             "addAttribute" -> doAddCustomAttributes(input)
             "typing" -> doIndicateTyping()
+            "newChat" -> doStartNewChat()
             "oktaSignIn" -> doOktaSignIn(false)
             "oktaSignInWithPKCE" -> doOktaSignIn(true)
             "oktaLogout" -> doOktaLogout()
@@ -199,6 +200,14 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             }
         } catch (t: Throwable) {
             handleException(t, "connectAuthenticated")
+        }
+    }
+
+    private suspend fun doStartNewChat() {
+        try {
+            client.startNewChat()
+        } catch (t: Throwable) {
+            handleException(t, "start new chat")
         }
     }
 
@@ -310,7 +319,10 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         Log.v(TAG, "onClientStateChanged(oldState = $oldState, newState = $newState)")
         clientState = newState
         val statePayloadMessage = when (newState) {
-            is State.Configured -> "connected: ${newState.connected}, newSession: ${newState.newSession}, wasReconnecting: ${oldState is State.Reconnecting}"
+            is State.Configured ->
+                "connected: ${newState.connected}," +
+                    " newSession: ${newState.newSession}," +
+                    " wasReconnecting: ${oldState is State.Reconnecting}"
             is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Closed -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Error -> "code: ${newState.code}, message: ${newState.message}"

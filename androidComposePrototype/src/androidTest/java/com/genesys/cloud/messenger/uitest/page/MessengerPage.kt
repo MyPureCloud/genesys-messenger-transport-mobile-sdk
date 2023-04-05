@@ -16,6 +16,10 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     private val messageResultText2 = "Message\$State\$Sent"
     private val commandClass = "android.widget.EditText"
     private val responseClass = "android.widget.ScrollView"
+    private val autostartEventText = "Event\$ConversationAutostart"
+    private val disconnectEventText = "Event\$ConversationDisconnect"
+    private val newChatText = "newChat"
+    private val readOnlyText = "ReadOnly"
 
     // Wait until android compose prototype begins
     fun verifyPageIsVisible(waitTime: Long = 20) {
@@ -63,7 +67,21 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     fun waitForConfigured() {
         Awaitility.await().atMost(waitTime, SECONDS)
             .until {
-                getClientResponse().contains("Configured", ignoreCase = true)
+                (getClientResponse().contains("Configured", ignoreCase = true) || (getClientResponse().contains("ReadOnly", ignoreCase = true)))
+            }
+        if (getClientResponse().contains("ReadOnly", ignoreCase = true)) {
+            enterCommand(newChatText)
+            Awaitility.await().atMost(waitTime, SECONDS)
+                .until {
+                    getClientResponse().contains("Configured", ignoreCase = true)
+                }
+        }
+    }
+
+    fun waitForReadOnly() {
+        Awaitility.await().atMost(waitTime, SECONDS)
+            .until {
+                getClientResponse().contains("ReadOnly", ignoreCase = true)
             }
     }
 
@@ -93,10 +111,19 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         if (!(response.contains(messageResultText2, ignoreCase = true))) AssertionError("Response does not contain MessageUpdated")
     }
 
-    // Verify response for the history command
-    fun checkHistoryFullResponse() {
+    // Verify response contains events for autostart and conversationDisconnect
+    fun checkHistoryForAutoStartAndDisconnectEventsResponse() {
         val response = getFullResponse()
-        if (!(response.contains("HistoryFetched", ignoreCase = true))) AssertionError("Response does not contain \"pageSize\": 1")
+        if (!(response.contains(autostartEventText, ignoreCase = true))) AssertionError("Response does not contain Autostart event")
+        if (!(response.contains(disconnectEventText, ignoreCase = true))) AssertionError("Response does not contain conversationDisconnect event")
+    }
+
+    // Verify response does not contain readOnly or an event for conversationDisconnect
+    fun checkHistoryDoesNotContainDisconnectEventOrReadOnlyResponse() {
+        val response = getFullResponse()
+        if (response.contains(disconnectEventText, ignoreCase = true)) AssertionError("Response does contain conversationDisconnect event but should not")
+        val clientResponse = getClientResponse()
+        if (clientResponse == readOnlyText) AssertionError("Client response is in ReadOnly but should not be.")
     }
 
     fun pullAttachmentId(response: String): String {

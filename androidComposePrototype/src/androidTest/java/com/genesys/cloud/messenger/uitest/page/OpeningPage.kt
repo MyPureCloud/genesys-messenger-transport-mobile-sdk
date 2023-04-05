@@ -32,15 +32,21 @@ class OpeningPage(activity: Activity) : BasePage(activity) {
         deploymentIdField.click()
         deploymentIdField.clearTextField()
         deploymentIdField.legacySetText(deploymentId)
-        val regionField = mDevice.findObject(UiSelector().text(regionDefault))
+        sleep(2000)
+        val regionField = mDevice.findObject(UiSelector().className("android.widget.Button").index(1))
         regionField.click()
         sleep(2000)
-        if (testConfig.domain != regionDefault) {
-            val prodRegionField = mDevice.findObject(UiSelector().text(testConfig.domain))
-            prodRegionField.click()
+        val listOfSrollView = mDevice.findObject(UiSelector().className("android.widget.ScrollView"))
+        if (testConfig.domain == regionDefault) {
+            val dcaView = listOfSrollView.getChild(UiSelector().className("android.view.View").index(0))
+            if (dcaView != null) {
+                dcaView.click()
+            }
         } else {
-            val dcaRegionField = mDevice.findObject(UiSelector().text(regionDefault))
-            dcaRegionField.click()
+            val prodView = listOfSrollView.getChild(UiSelector().className("android.view.View").index(1))
+            if (prodView != null) {
+                prodView.click()
+            }
         }
     }
 }

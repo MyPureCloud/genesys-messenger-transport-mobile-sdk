@@ -39,7 +39,12 @@ internal fun StructuredMessageEvent.toTransportEvent(): Event {
             )
         }
         is HealthCheckEvent -> Event.HealthChecked
-        is PresenceEvent -> Event.ConversationAutostart
+        is PresenceEvent -> {
+            when (this.presence.type) {
+                PresenceEvent.Presence.Type.Join -> Event.ConversationAutostart
+                PresenceEvent.Presence.Type.Disconnect -> Event.ConversationDisconnect
+            }
+        }
         is ConnectionClosed -> Event.ConnectionClosed
         is Logout -> Event.Logout
     }

@@ -1,9 +1,6 @@
 package com.genesys.cloud.messenger.transport.core
 
-import assertk.Assert
 import assertk.assertThat
-import assertk.assertions.isEqualTo
-import assertk.assertions.prop
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import io.mockk.spyk
 import io.mockk.verify
@@ -26,7 +23,7 @@ class StateMachineTest {
 
     @Test
     fun whenSubjectWasInitialized() {
-        assertThat(subject).isIdle()
+        assertThat(subject.currentState).isIdle()
         assertTrue { subject.isInactive() }
     }
 
@@ -36,7 +33,7 @@ class StateMachineTest {
 
         subject.onConnectionOpened()
 
-        assertThat(subject).isConnected()
+        assertThat(subject.currentState).isConnected()
         assertFalse { subject.isInactive() }
         verify { mockStateListener(State.Connected) }
         verify { mockStateChangedListener(expectedStateChange) }
@@ -49,7 +46,7 @@ class StateMachineTest {
         subject.onReconnect()
         subject.onConnectionOpened()
 
-        assertThat(subject).isReconnecting()
+        assertThat(subject.currentState).isReconnecting()
         assertFalse { subject.isInactive() }
         verify { mockStateListener(State.Reconnecting) }
         verify { mockStateChangedListener(expectedStateChange) }
@@ -61,7 +58,7 @@ class StateMachineTest {
 
         subject.onConnect()
 
-        assertThat(subject).isConnecting()
+        assertThat(subject.currentState).isConnecting()
         assertFalse { subject.isInactive() }
         verify { mockStateListener(State.Connecting) }
         verify { mockStateChangedListener(expectedStateChange) }
@@ -74,7 +71,7 @@ class StateMachineTest {
         subject.onReconnect()
         subject.onConnect()
 
-        assertThat(subject).isReconnecting()
+        assertThat(subject.currentState).isReconnecting()
         assertFalse { subject.isInactive() }
         verify { mockStateListener(State.Reconnecting) }
         verify { mockStateChangedListener(expectedStateChange) }
@@ -95,12 +92,19 @@ class StateMachineTest {
     }
 
     @Test
+    fun whenOnConnectAndCurrentStateIsReadOnly() {
+        subject.onReadOnly()
+
+        assertFailsWith<IllegalStateException> { subject.onConnect() }
+    }
+
+    @Test
     fun whenOnReconnect() {
         val expectedStateChange = StateChange(State.Idle, State.Reconnecting)
 
         subject.onReconnect()
 
-        assertThat(subject).isReconnecting()
+        assertThat(subject.currentState).isReconnecting()
         assertFalse { subject.isInactive() }
         verify { mockStateListener(State.Reconnecting) }
         verify { mockStateChangedListener(expectedStateChange) }
@@ -113,7 +117,7 @@ class StateMachineTest {
 
         subject.onSessionConfigured(connected = true, newSession = true)
 
-        assertThat(subject).isConfigured(
+        assertThat(subject.currentState).isConfigured(
             connected = true,
             newSession = true,
         )
@@ -132,7 +136,7 @@ class StateMachineTest {
         subject.onReconnect()
         subject.onSessionConfigured(connected = true, newSession = true)
 
-        assertThat(subject).isConfigured(
+        assertThat(subject.currentState).isConfigured(
             connected = true,
             newSession = true,
         )
@@ -156,7 +160,7 @@ class StateMachineTest {
         subject.onConnectionOpened()
         subject.onClosing(code = 1, reason = "A reason.")
 
-        assertThat(subject).isClosing(code = 1, reason = "A reason.")
+        assertThat(subject.currentState).isClosing(code = 1, reason = "A reason.")
         assertTrue { subject.isInactive() }
         verify { mockStateListener(State.Closing(code = 1, reason = "A reason.")) }
         verify { mockStateChangedListener(expectedStateChange) }
@@ -188,7 +192,7 @@ class StateMachineTest {
 
         subject.onClosed(code = 1, reason = "A reason.")
 
-        assertThat(subject).isClosed(code = 1, reason = "A reason.")
+        assertThat(subject.currentState).isClosed(code = 1, reason = "A reason.")
         assertTrue { subject.isInactive() }
         verify { mockStateListener(State.Closed(code = 1, reason = "A reason.")) }
         verify { mockStateChangedListener(expectedStateChange) }
@@ -201,7 +205,7 @@ class StateMachineTest {
 
         subject.onError(code = ErrorCode.WebsocketError, message = "A message.")
 
-        assertThat(subject).isError(
+        assertThat(subject.currentState).isError(
             code = ErrorCode.WebsocketError,
             message = "A message."
         )
@@ -218,62 +222,55 @@ class StateMachineTest {
     }
 
     @Test
-    fun verifyFullStateTransitionCycle() {
-        subject.onConnect()
-        assertThat(subject).isConnecting()
-        subject.onConnectionOpened()
-        assertThat(subject).isConnected()
-        subject.onSessionConfigured(connected = true, newSession = true)
-        assertThat(subject).isConfigured(connected = true, newSession = true)
-        subject.onReconnect()
-        assertThat(subject).isReconnecting()
-        subject.onConnect()
-        assertThat(subject).isReconnecting()
-        subject.onConnectionOpened()
-        assertThat(subject).isReconnecting()
-        subject.onSessionConfigured(connected = true, newSession = false)
-        assertThat(subject).isConfigured(connected = true, newSession = false)
-        subject.onClosing(100, "sss")
-        assertThat(subject).isClosing(100, "sss")
-        subject.onClosed(100, "sss")
-        assertThat(subject).isClosed(100, "sss")
+    fun whenOnReadOnly() {
+        val expectedStateChange = StateChange(State.Idle, State.ReadOnly)
+
+        subject.onReadOnly()
+
+        assertThat(subject.currentState).isReadOnly()
+        verify {
+            mockStateListener(State.ReadOnly)
+        }
+        verify { mockStateChangedListener(expectedStateChange) }
     }
 
-    private fun Assert<StateMachine>.currentState() = prop(StateMachine::currentState)
-    private fun Assert<StateMachine>.isIdle() = currentState().isEqualTo(State.Idle)
-    private fun Assert<StateMachine>.isClosed(code: Int, reason: String) =
-        currentState().isEqualTo(State.Closed(code, reason))
+    @Test
+    fun whenOnReadOnlyAfterOnReconnect() {
+        val expectedStateChange = StateChange(State.Reconnecting, State.ReadOnly)
 
-    private fun Assert<StateMachine>.isConnecting() =
-        currentState().isEqualTo(State.Connecting)
+        subject.onReconnect()
+        subject.onReadOnly()
 
-    private fun Assert<StateMachine>.isConnected() =
-        currentState().isEqualTo(State.Connected)
-
-    private fun Assert<StateMachine>.isReconnecting() =
-        currentState().isEqualTo(State.Reconnecting)
-
-    private fun Assert<StateMachine>.isClosing(code: Int, reason: String) =
-        currentState().isEqualTo(State.Closing(code, reason))
-
-    private fun Assert<StateMachine>.isConfigured(
-        connected: Boolean,
-        newSession: Boolean,
-    ) =
-        currentState().isEqualTo(
-            State.Configured(
-                connected,
-                newSession,
+        assertThat(subject.currentState).isReadOnly()
+        verify {
+            mockStateListener(
+                State.ReadOnly
             )
-        )
+        }
+        verify { mockStateChangedListener(expectedStateChange) }
+    }
 
-    private fun Assert<StateMachine>.isError(
-        code: ErrorCode,
-        message: String?,
-    ) =
-        currentState().isEqualTo(
-            State.Error(
-                code, message
-            )
-        )
+    @Test
+    fun verifyFullStateTransitionCycle() {
+        subject.onConnect()
+        assertThat(subject.currentState).isConnecting()
+        subject.onConnectionOpened()
+        assertThat(subject.currentState).isConnected()
+        subject.onSessionConfigured(connected = true, newSession = true)
+        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
+        subject.onReconnect()
+        assertThat(subject.currentState).isReconnecting()
+        subject.onConnect()
+        assertThat(subject.currentState).isReconnecting()
+        subject.onConnectionOpened()
+        assertThat(subject.currentState).isReconnecting()
+        subject.onSessionConfigured(connected = true, newSession = false)
+        assertThat(subject.currentState).isConfigured(connected = true, newSession = false)
+        subject.onReadOnly()
+        assertThat(subject.currentState).isReadOnly()
+        subject.onClosing(100, "sss")
+        assertThat(subject.currentState).isClosing(100, "sss")
+        subject.onClosed(100, "sss")
+        assertThat(subject.currentState).isClosed(100, "sss")
+    }
 }
