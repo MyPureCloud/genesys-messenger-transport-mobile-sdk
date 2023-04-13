@@ -10,6 +10,7 @@ import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosedEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.LogoutEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageType
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionExpiredEvent
@@ -418,5 +419,15 @@ class SerializationTest {
 
         assertThat(encodedString, "encoded ConfigureAuthenticatedSessionRequest")
             .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","startNew":false,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"data":{"code":"<auth_token>"},"action":"configureAuthenticatedSession"}""")
+    }
+
+    @Test
+    fun whenLogoutEventThenDecodes() {
+        val json = """{"type":"message","class":"LogoutEvent","code":200,"body":{}}"""
+
+        val message = decode(json)
+
+        assertThat(message.body, "WebMessagingMessage body").isNotNull()
+            .hasClass(LogoutEvent::class)
     }
 }

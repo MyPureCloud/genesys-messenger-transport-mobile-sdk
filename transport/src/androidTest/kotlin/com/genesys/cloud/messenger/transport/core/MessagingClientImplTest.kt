@@ -10,6 +10,7 @@ import com.genesys.cloud.messenger.transport.core.events.TYPING_INDICATOR_COOL_D
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
 import com.genesys.cloud.messenger.transport.model.AuthJwt
 import com.genesys.cloud.messenger.transport.network.FetchJwtUseCase
+import com.genesys.cloud.messenger.transport.network.LogoutUseCase
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
@@ -25,6 +26,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosed
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.Logout
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
@@ -49,6 +51,7 @@ import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
+import io.mockk.invoke
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.spyk
@@ -148,6 +151,8 @@ class MessagingClientImplTest {
         coEvery { fetch(any(), any(), any()) } returns AuthJwt(TestJwtToken, TestRefreshToken)
     }
 
+    private val mockLogoutUseCase: LogoutUseCase = mockk(relaxed = true)
+
     private val subject = MessagingClientImpl(
         log = log,
         configuration = configuration,
@@ -162,7 +167,8 @@ class MessagingClientImplTest {
         userTypingProvider = userTypingProvider,
         healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),
         deploymentConfig = mockDeploymentConfig,
-        fetchJwtUseCase = mockFetchJwtUseCase
+        fetchJwtUseCase = mockFetchJwtUseCase,
+        logoutUseCase = mockLogoutUseCase,
     ).also {
         it.stateChangedListener = mockStateChangedListener
     }
@@ -444,6 +450,37 @@ class MessagingClientImplTest {
         verifySequence {
             connectSequence()
             errorSequence(fromConfiguredToError(expectedErrorState))
+        }
+    }
+
+    @Test
+    fun whenSocketListenerInvokeOnMessageWithClientResponseErrorWhileReconnecting() {
+        val expectedErrorCode = ErrorCode.ClientResponseError(400)
+        val expectedErrorMessage = "Request failed."
+        val expectedErrorState = State.Error(expectedErrorCode, expectedErrorMessage)
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            if (subject.currentState == State.Reconnecting) {
+                slot.captured.onMessage(Response.webSocketRequestFailed)
+            } else {
+                slot.captured.onMessage(Response.configureSuccess())
+            }
+        }
+        every { mockReconnectionHandler.shouldReconnect } returns true
+        every { mockReconnectionHandler.reconnect(captureLambda()) } answers { lambda<() -> Unit>().invoke() }
+
+        subject.connect()
+        // Initiate reconnection flow.
+        slot.captured.onFailure(Exception(), ErrorCode.WebsocketError)
+
+        assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
+        verifySequence {
+            connectSequence()
+            mockReconnectionHandler.shouldReconnect
+            mockStateChangedListener(fromConfiguredToReconnecting())
+            mockReconnectionHandler.reconnect(any())
+            mockPlatformSocket.openSocket(any())
+            mockPlatformSocket.sendMessage(eq(Request.configureRequest()))
+            errorSequence(fromReconnectingToError(expectedErrorState))
         }
     }
 
@@ -1336,6 +1373,47 @@ class MessagingClientImplTest {
         }
     }
 
+    @Test
+    fun whenConfigureAuthenticatedAndThenLogoutFromAuthenticatedSession() {
+        val givenAuthJwt = AuthJwt("auth_token", "refresh_token")
+
+        subject.connectAuthenticatedSession(givenAuthJwt)
+        runBlocking { subject.logoutFromAuthenticatedSession() }
+
+        coVerify {
+            connectSequence(shouldConfigureAuth = true)
+            mockLogoutUseCase.logout("auth_token")
+        }
+    }
+
+    @Test
+    fun whenLogoutFromAuthenticatedSessionWithoutSettingAuthJwt() {
+        runBlocking { subject.logoutFromAuthenticatedSession() }
+
+        coVerify(exactly = 0) { mockLogoutUseCase.logout(any()) }
+    }
+
+    @Test
+    fun whenLogoutFromAnonymousSession() {
+        subject.connect()
+        runBlocking { subject.logoutFromAuthenticatedSession() }
+
+        coVerify(exactly = 0) { mockLogoutUseCase.logout(any()) }
+    }
+
+    @Test
+    fun whenEventLogoutReceived() {
+        val expectedEvent = Logout()
+
+        subject.connect()
+        slot.captured.onMessage(Response.logoutEvent)
+
+        verifySequence {
+            connectSequence()
+            mockEventHandler.onEvent(eq(expectedEvent))
+        }
+    }
+
     private fun configuration(): Configuration = Configuration(
         deploymentId = "deploymentId",
         domain = "inindca.com",
@@ -1442,6 +1520,15 @@ class MessagingClientImplTest {
             oldState = State.Connected,
             newState = State.ReadOnly,
         )
+
+    private fun fromReconnectingToError(errorState: State) =
+        StateChange(oldState = State.Reconnecting, newState = errorState)
+
+    private fun fromConfiguredToReconnecting(): StateChange =
+        StateChange(
+            oldState = State.Configured(connected = true, newSession = true),
+            newState = State.Reconnecting
+        )
 }
 
 private object Response {
@@ -1476,6 +1563,8 @@ private object Response {
         """{"type": "response","class": "string","code": 4013,"body": "Custom Attributes in channel metadata is larger than 2048 bytes"}"""
     const val connectionClosedEvent =
         """{"type":"message","class":"ConnectionClosedEvent","code":200,"body":{}}"""
+    const val logoutEvent =
+        """{"type":"message","class":"LogoutEvent","code":200,"body":{}}"""
 
     fun structuredMessageWithEvents(
         events: String = defaultStructuredEvents,

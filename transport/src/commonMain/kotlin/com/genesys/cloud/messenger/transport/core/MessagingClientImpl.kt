@@ -8,6 +8,7 @@ import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
 import com.genesys.cloud.messenger.transport.model.AuthJwt
 import com.genesys.cloud.messenger.transport.network.FetchJwtUseCase
+import com.genesys.cloud.messenger.transport.network.LogoutUseCase
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
@@ -23,6 +24,8 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
 import com.genesys.cloud.messenger.transport.shyrka.receive.HealthCheckEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.Logout
+import com.genesys.cloud.messenger.transport.shyrka.receive.LogoutEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionExpiredEvent
@@ -74,6 +77,7 @@ internal class MessagingClientImpl(
         configuration.deploymentId,
         configuration.jwtAuthUrl,
     ),
+    private val logoutUseCase: LogoutUseCase = LogoutUseCase(configuration.logoutUrl),
 ) : MessagingClient {
 
     private var authJwt: AuthJwt? = null
@@ -219,6 +223,15 @@ internal class MessagingClientImpl(
             }
     }
 
+    @Throws(Exception::class)
+    override suspend fun logoutFromAuthenticatedSession() {
+        val authJwt = authJwt ?: run {
+            log.w { "Logout from anonymous session is not supported." }
+            return
+        }
+        logoutUseCase.logout(authJwt.jwt)
+    }
+
     override fun invalidateConversationCache() {
         log.i { "Clear conversation history." }
         messageStore.invalidateConversationCache()
@@ -285,7 +298,7 @@ internal class MessagingClientImpl(
             is ErrorCode.ServerResponseError,
             is ErrorCode.RedirectResponseError,
             -> {
-                if (stateMachine.isConnected() || isStartingANewSession) {
+                if (stateMachine.isConnected() || stateMachine.isReconnecting() || isStartingANewSession) {
                     transitionToStateError(code, message)
                 } else {
                     eventHandler.onEvent(ErrorEvent(errorCode = code, message = message))
@@ -297,7 +310,7 @@ internal class MessagingClientImpl(
     }
 
     private fun handleWebSocketError(errorCode: ErrorCode) {
-        if (stateMachine.isClosed()) return
+        if (stateMachine.isInactive()) return
         invalidateConversationCache()
         when (errorCode) {
             is ErrorCode.WebsocketError -> {
@@ -489,6 +502,8 @@ internal class MessagingClientImpl(
                         disconnect()
                         eventHandler.onEvent(ConnectionClosed())
                     }
+                    is LogoutEvent -> { eventHandler.onEvent(Logout()) }
+                    else -> { log.i { "Unhandled message received from Shyrka: $decoded " } }
                 }
             } catch (exception: SerializationException) {
                 log.e(throwable = exception) { "Failed to deserialize message" }

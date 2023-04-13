@@ -59,9 +59,15 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     val regions = listOf("inindca.com", "inintca.com", "mypurecloud.com")
     private val customAttributes = mutableMapOf<String, String>()
     private lateinit var onOktaSingIn: (url: String) -> Unit
+    private lateinit var onOktaLogout: () -> Unit
 
-    suspend fun init(context: Context, onOktaSignIn: (url: String) -> Unit) {
-        onOktaSingIn = onOktaSignIn
+    suspend fun init(
+        context: Context,
+        onOktaSignIn: (url: String) -> Unit,
+        onOktaLogout: () -> Unit,
+    ) {
+        this.onOktaSingIn = onOktaSignIn
+        this.onOktaLogout = onOktaLogout
         val mmsdkConfiguration = Configuration(
             deploymentId = deploymentId.ifEmpty { BuildConfig.DEPLOYMENT_ID },
             domain = region.ifEmpty { BuildConfig.DEPLOYMENT_DOMAIN },
@@ -135,6 +141,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "newChat" -> doStartNewChat()
             "oktaSignIn" -> doOktaSignIn(false)
             "oktaSignInWithPKCE" -> doOktaSignIn(true)
+            "oktaLogout" -> doOktaLogout()
             "fetchAuthJwt" -> doFetchAuthJwt()
             else -> {
                 Log.e(TAG, "Invalid command")
@@ -158,6 +165,21 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             )
         } catch (t: Throwable) {
             handleException(t, "fetch deployment config")
+        }
+    }
+
+    private suspend fun doOktaLogout() {
+        try {
+            if (authState is AuthState.JwtFetched) {
+                (authState as AuthState.JwtFetched).authJwt.let {
+                    client.logoutFromAuthenticatedSession()
+                }
+                commandWaiting = false
+            } else {
+                throw IllegalStateException("Can not perform logout. Auth jwt was not fetched. Please, fetch and try again.")
+            }
+        } catch (t: Throwable) {
+            handleException(t, "okta logout")
         }
     }
 
@@ -358,6 +380,10 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     }
 
     private fun onEvent(event: Event) {
+        if (event is Event.Logout) {
+            onOktaLogout()
+            authState = AuthState.LoggedOut
+        }
         launch { onSocketMessageReceived(event.toString()) }
     }
 
@@ -391,4 +417,5 @@ sealed class AuthState {
     data class AuthCodeReceived(val authCode: String) : AuthState()
     data class Error(val cause: Throwable? = null, val message: String? = null) : AuthState()
     data class JwtFetched(val authJwt: AuthJwt) : AuthState()
+    object LoggedOut : AuthState()
 }
