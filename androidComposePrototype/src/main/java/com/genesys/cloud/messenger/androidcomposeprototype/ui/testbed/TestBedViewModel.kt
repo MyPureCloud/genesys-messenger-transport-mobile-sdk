@@ -25,7 +25,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 
 private const val ATTACHMENT_FILE_NAME = "test_asset.png"
 
@@ -61,7 +60,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     private lateinit var onOktaSingIn: (url: String) -> Unit
     private lateinit var onOktaLogout: () -> Unit
 
-    suspend fun init(
+    fun init(
         context: Context,
         onOktaSignIn: (url: String) -> Unit,
         onOktaLogout: () -> Unit,
@@ -89,7 +88,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             eventListener = { onEvent(it) }
             clientState = client.currentState
         }
-        withContext(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
             context.assets.open(ATTACHMENT_FILE_NAME).use { inputStream ->
                 inputStream.readBytes().also { attachment = it }
             }
@@ -118,10 +117,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         region = newRegion
     }
 
-    fun onCommandSend() = launch(Dispatchers.IO) {
-        withContext(Dispatchers.Main) {
-            commandWaiting = true
-        }
+    fun onCommandSend() {
+        commandWaiting = true
         val components = command.split(" ", limit = 2)
         val command = components.firstOrNull()
         val input = components.getOrNull(1) ?: ""
@@ -145,9 +142,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "fetchAuthJwt" -> doFetchAuthJwt()
             else -> {
                 Log.e(TAG, "Invalid command")
-                withContext(Dispatchers.Main) {
-                    commandWaiting = false
-                }
+                commandWaiting = false
             }
         }
     }
@@ -158,23 +153,27 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         commandWaiting = false
     }
 
-    private suspend fun doDeployment() {
+    private fun doDeployment() {
         try {
-            onSocketMessageReceived(
-                messengerTransport.fetchDeploymentConfig().toString()
-            )
+            viewModelScope.launch {
+                onSocketMessageReceived(
+                    messengerTransport.fetchDeploymentConfig().toString()
+                )
+            }
         } catch (t: Throwable) {
             handleException(t, "fetch deployment config")
         }
     }
 
-    private suspend fun doOktaLogout() {
+    private fun doOktaLogout() {
         try {
             if (authState is AuthState.JwtFetched) {
                 (authState as AuthState.JwtFetched).authJwt.let {
-                    client.logoutFromAuthenticatedSession()
+                    viewModelScope.launch {
+                        client.logoutFromAuthenticatedSession()
+                        commandWaiting = false
+                    }
                 }
-                commandWaiting = false
             } else {
                 throw IllegalStateException("Can not perform logout. Auth jwt was not fetched. Please, fetch and try again.")
             }
@@ -183,7 +182,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun doConnect() {
+    private fun doConnect() {
         try {
             client.connect()
         } catch (t: Throwable) {
@@ -191,7 +190,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun doConnectAuthenticated() {
+    private fun doConnectAuthenticated() {
+        commandWaiting = false
         try {
             if (authState is AuthState.JwtFetched) {
                 client.connectAuthenticatedSession((authState as AuthState.JwtFetched).authJwt)
@@ -203,7 +203,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun doStartNewChat() {
+    private fun doStartNewChat() {
         try {
             client.startNewChat()
         } catch (t: Throwable) {
@@ -211,7 +211,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun doDisconnect() {
+    private fun doDisconnect() {
         try {
             client.disconnect()
         } catch (t: Throwable) {
@@ -219,7 +219,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun doSendMessage(message: String) {
+    private fun doSendMessage(message: String) {
         try {
             client.sendMessage(message, customAttributes = customAttributes)
             customAttributes.clear()
@@ -228,16 +228,18 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun fetchNextPage() {
+    private fun fetchNextPage() {
         try {
-            client.fetchNextPage()
-            commandWaiting = false
+            viewModelScope.launch {
+                client.fetchNextPage()
+                commandWaiting = false
+            }
         } catch (t: Throwable) {
             handleException(t, "request history")
         }
     }
 
-    private suspend fun doSendHealthCheck() {
+    private fun doSendHealthCheck() {
         try {
             client.sendHealthCheck()
             commandWaiting = false
@@ -246,7 +248,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun doAttach() {
+    private fun doAttach() {
         try {
             client.attach(
                 attachment,
@@ -259,7 +261,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun doDetach(attachmentId: String) {
+    private fun doDetach(attachmentId: String) {
         try {
             client.detach(attachmentId)
         } catch (t: Throwable) {
@@ -267,12 +269,12 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun doClearConversation() {
+    private fun doClearConversation() {
         client.invalidateConversationCache()
         clearCommand()
     }
 
-    private suspend fun doAddCustomAttributes(customAttributes: String) {
+    private fun doAddCustomAttributes(customAttributes: String) {
         clearCommand()
         val keyValue = customAttributes.toKeyValuePair()
         val consoleMessage = if (keyValue.first.isNotEmpty()) {
@@ -284,7 +286,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         onSocketMessageReceived(consoleMessage)
     }
 
-    private suspend fun doIndicateTyping() {
+    private fun doIndicateTyping() {
         try {
             client.indicateTyping()
             commandWaiting = false
@@ -293,69 +295,63 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun doFetchAuthJwt() {
-        if (authState is AuthState.AuthCodeReceived) {
-            try {
-                client.fetchAuthJwt(
-                    authCode = (authState as AuthState.AuthCodeReceived).authCode,
-                    redirectUri = BuildConfig.SIGN_IN_REDIRECT_URI,
-                    codeVerifier = if (pkceEnabled) BuildConfig.CODE_VERIFIER else null,
-                ).let {
-                    authState = AuthState.JwtFetched(it)
-                    onSocketMessageReceived("AuthJwt: $it")
+    private fun doFetchAuthJwt() {
+        viewModelScope.launch {
+            if (authState is AuthState.AuthCodeReceived) {
+                try {
+                    client.fetchAuthJwt(
+                        authCode = (authState as AuthState.AuthCodeReceived).authCode,
+                        redirectUri = BuildConfig.SIGN_IN_REDIRECT_URI,
+                        codeVerifier = if (pkceEnabled) BuildConfig.CODE_VERIFIER else null,
+                    ).let {
+                        authState = AuthState.JwtFetched(it)
+                        onSocketMessageReceived("AuthJwt: $it")
+                    }
+                } catch (t: Throwable) {
+                    handleException(t, "failed to fetch auth jwt.")
+                    authState = AuthState.Error(t.cause, t.message)
                 }
-            } catch (t: Throwable) {
-                handleException(t, "failed to fetch auth jwt.")
-                authState = AuthState.Error(t.cause, t.message)
+            } else {
+                onSocketMessageReceived("Please, first obtain authCode from login.")
             }
-        } else {
-            onSocketMessageReceived("Please, first obtain authCode from login.")
-        }
 
-        commandWaiting = false
+            commandWaiting = false
+        }
     }
 
-    private suspend fun onClientStateChanged(oldState: State, newState: State) {
+    private fun onClientStateChanged(oldState: State, newState: State) {
         Log.v(TAG, "onClientStateChanged(oldState = $oldState, newState = $newState)")
         clientState = newState
         val statePayloadMessage = when (newState) {
             is State.Configured ->
                 "connected: ${newState.connected}," +
-                    " newSession: ${newState.newSession}," +
-                    " wasReconnecting: ${oldState is State.Reconnecting}"
+                        " newSession: ${newState.newSession}," +
+                        " wasReconnecting: ${oldState is State.Reconnecting}"
             is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Closed -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Error -> "code: ${newState.code}, message: ${newState.message}"
             else -> ""
         }
         onSocketMessageReceived(statePayloadMessage)
-        withContext(Dispatchers.Main) {
-            commandWaiting = false
-        }
+        commandWaiting = false
     }
 
-    private suspend fun onSocketMessageReceived(message: String) {
+    private fun onSocketMessageReceived(message: String) {
         Log.v(TAG, "onSocketMessageReceived(message = $message)")
         clearCommand()
-        withContext(Dispatchers.Main) {
-            socketMessage = message
-        }
+        socketMessage = message
     }
 
-    private suspend fun clearCommand() {
-        withContext(Dispatchers.Main) {
-            command = ""
-            commandWaiting = false
-        }
+    private fun clearCommand() {
+        command = ""
+        commandWaiting = false
     }
 
-    private suspend fun handleException(t: Throwable, action: String) {
+    private fun handleException(t: Throwable, action: String) {
         val failMessage = "Failed to $action"
         Log.e(TAG, failMessage, t)
         onSocketMessageReceived(t.message ?: failMessage)
-        withContext(Dispatchers.Main) {
-            commandWaiting = false
-        }
+        commandWaiting = false
     }
 
     private fun onMessage(event: MessageEvent) {
@@ -374,9 +370,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             }
             else -> event.toString()
         }
-        launch {
-            onSocketMessageReceived(eventMessage)
-        }
+        onSocketMessageReceived(eventMessage)
     }
 
     private fun onEvent(event: Event) {
@@ -384,7 +378,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             onOktaLogout()
             authState = AuthState.LoggedOut
         }
-        launch { onSocketMessageReceived(event.toString()) }
+        onSocketMessageReceived(event.toString())
     }
 
     private fun buildOktaAuthorizeUrl(): String {
