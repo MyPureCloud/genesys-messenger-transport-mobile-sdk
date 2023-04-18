@@ -9,19 +9,10 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import com.genesys.cloud.messenger.androidcomposeprototype.util.getSharedPreferences
-import kotlinx.coroutines.runBlocking
 
 class TestBedFragment : Fragment() {
 
     private val viewModel: TestBedViewModel by activityViewModels()
-    private val onOktaSignIn: (url: String) -> Unit = { url -> launchCustomTabs(url) }
-    private val onOktaLogout: () -> Unit = {
-        context?.getSharedPreferences()?.edit()?.run {
-            remove("authCode")
-            apply()
-        }
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -29,12 +20,8 @@ class TestBedFragment : Fragment() {
         savedInstanceState: Bundle?,
     ): View = ComposeView(requireContext()).apply {
         setViewContent(this)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        runBlocking {
-            viewModel.init(requireContext(), onOktaSignIn, onOktaLogout)
+        viewModel.init(requireContext()) { url ->
+            launchCustomTabs(url)
         }
     }
 
@@ -45,8 +32,8 @@ class TestBedFragment : Fragment() {
     }
 
     private fun launchCustomTabs(url: String) {
-        val customTabsIntent = CustomTabsIntent.Builder().build()
         println("Launching chrome custom tab with url: $url")
+        val customTabsIntent = CustomTabsIntent.Builder().build()
         customTabsIntent.launchUrl(requireContext(), Uri.parse(url))
     }
 }

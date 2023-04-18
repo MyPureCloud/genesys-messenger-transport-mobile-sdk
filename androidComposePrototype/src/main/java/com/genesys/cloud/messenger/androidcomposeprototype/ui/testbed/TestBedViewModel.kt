@@ -8,7 +8,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.genesys.cloud.messenger.androidcomposeprototype.BuildConfig
-import com.genesys.cloud.messenger.androidcomposeprototype.util.getSharedPreferences
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.MessageEvent
@@ -55,18 +54,28 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         private set
     var pkceEnabled by mutableStateOf(false)
 
+    var authCode: String = ""
+        set(value) {
+            field = value
+            val authState = if (value.isNotEmpty()) {
+                onSocketMessageReceived("AuthCode: $value")
+                AuthState.AuthCodeReceived(value)
+            } else {
+                AuthState.NoAuth
+            }
+            this.authState = authState
+        }
+
+
     val regions = listOf("inindca.com", "inintca.com", "mypurecloud.com")
     private val customAttributes = mutableMapOf<String, String>()
     private lateinit var onOktaSingIn: (url: String) -> Unit
-    private lateinit var onOktaLogout: () -> Unit
 
     fun init(
         context: Context,
         onOktaSignIn: (url: String) -> Unit,
-        onOktaLogout: () -> Unit,
     ) {
         this.onOktaSingIn = onOktaSignIn
-        this.onOktaLogout = onOktaLogout
         val mmsdkConfiguration = Configuration(
             deploymentId = deploymentId.ifEmpty { BuildConfig.DEPLOYMENT_ID },
             domain = region.ifEmpty { BuildConfig.DEPLOYMENT_DOMAIN },
@@ -91,16 +100,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         viewModelScope.launch(Dispatchers.IO) {
             context.assets.open(ATTACHMENT_FILE_NAME).use { inputStream ->
                 inputStream.readBytes().also { attachment = it }
-            }
-        }
-
-        val authCode = context.getSharedPreferences().getString("authCode", null)
-        viewModelScope.launch {
-            authState = if (authCode != null) {
-                onSocketMessageReceived("AuthCode: $authCode")
-                AuthState.AuthCodeReceived(authCode)
-            } else {
-                AuthState.NoAuth
             }
         }
     }
@@ -375,7 +374,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private fun onEvent(event: Event) {
         if (event is Event.Logout) {
-            onOktaLogout()
             authState = AuthState.LoggedOut
         }
         onSocketMessageReceived(event.toString())
