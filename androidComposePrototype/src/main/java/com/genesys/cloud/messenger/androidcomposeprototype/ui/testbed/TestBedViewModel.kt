@@ -10,6 +10,8 @@ import androidx.lifecycle.viewModelScope
 import com.genesys.cloud.messenger.androidcomposeprototype.BuildConfig
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
 import com.genesys.cloud.messenger.transport.core.Configuration
+import com.genesys.cloud.messenger.transport.core.CorrectiveAction
+import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessageEvent.AttachmentUpdated
 import com.genesys.cloud.messenger.transport.core.MessagingClient
@@ -190,8 +192,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private fun doConnectAuthenticated() {
         try {
-            if (authState is AuthState.JwtFetched) {
-                client.connectAuthenticatedSession((authState as AuthState.JwtFetched).authJwt)
+            if (authState is AuthState.Authenticated) {
+                client.connectAuthenticatedSession((authState as AuthState.Authenticated).authJwt)
             } else {
                 throw IllegalStateException("Auth jwt was not fetched. Please, fetch and try again.")
             }
@@ -313,8 +315,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         val statePayloadMessage = when (newState) {
             is State.Configured ->
                 "connected: ${newState.connected}," +
-                    " newSession: ${newState.newSession}," +
-                    " wasReconnecting: ${oldState is State.Reconnecting}"
+                        " newSession: ${newState.newSession}," +
+                        " wasReconnecting: ${oldState is State.Reconnecting}"
             is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Closed -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Error -> "code: ${newState.code}, message: ${newState.message}"
@@ -371,6 +373,13 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
                 authState = AuthState.Authenticated(event.authJwt)
                 onSocketMessageReceived(event.toString())
             }
+            is Event.Error -> {
+                if (event.errorCode is ErrorCode.AuthFailed) {
+                    authState =
+                        AuthState.Error(event.errorCode, event.message, event.correctiveAction)
+                }
+                onSocketMessageReceived(event.toString())
+            }
             else -> onSocketMessageReceived(event.toString())
         }
     }
@@ -403,7 +412,12 @@ private fun String.toKeyValuePair(): Pair<String, String> {
 sealed class AuthState {
     object NoAuth : AuthState()
     data class AuthCodeReceived(val authCode: String) : AuthState()
-    data class Error(val cause: Throwable? = null, val message: String? = null) : AuthState()
+    data class Error(
+        val errorCode: ErrorCode,
+        val message: String? = null,
+        val correctiveAction: CorrectiveAction,
+    ) : AuthState()
+
     data class JwtFetched(val authJwt: AuthJwt) : AuthState()
     data class Authenticated(val authJwt: AuthJwt) : AuthState()
     object LoggedOut : AuthState()
