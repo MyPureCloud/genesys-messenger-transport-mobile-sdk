@@ -25,7 +25,7 @@ class EventHandlerTest {
         val givenStructuredMessageEvent = TypingEvent(
             eventType = StructuredMessageEvent.Type.Typing,
             typing = Typing(type = "On", duration = 3000)
-        )
+        ).toTransportEvent()
         val expectedEvent = Event.AgentTyping(3000)
 
         subject.onEvent(givenStructuredMessageEvent)
@@ -38,7 +38,7 @@ class EventHandlerTest {
         val givenStructuredMessageEvent = TypingEvent(
             eventType = StructuredMessageEvent.Type.Typing,
             typing = Typing(type = "On", duration = 5000)
-        )
+        ).toTransportEvent()
         subject.eventListener = null
 
         subject.onEvent(givenStructuredMessageEvent)
@@ -51,7 +51,7 @@ class EventHandlerTest {
         val givenStructuredMessageEvent = TypingEvent(
             eventType = StructuredMessageEvent.Type.Typing,
             typing = Typing(type = "On", duration = null)
-        )
+        ).toTransportEvent()
         val expectedEvent = Event.AgentTyping(5000)
 
         subject.onEvent(givenStructuredMessageEvent)
@@ -64,7 +64,7 @@ class EventHandlerTest {
         val givenStructuredMessageEvent = ErrorEvent(
             errorCode = ErrorCode.ClientResponseError(403),
             message = "some message",
-        )
+        ).toTransportEvent()
 
         val expectedEvent = Event.Error(
             errorCode = ErrorCode.ClientResponseError(403),
@@ -79,7 +79,7 @@ class EventHandlerTest {
 
     @Test
     fun whenHealthCheckedOccurs() {
-        val givenStructuredMessageEvent = HealthCheckEvent()
+        val givenStructuredMessageEvent = HealthCheckEvent().toTransportEvent()
         val expectedEvent = Event.HealthChecked
 
         subject.onEvent(givenStructuredMessageEvent)
@@ -89,7 +89,7 @@ class EventHandlerTest {
 
     @Test
     fun whenConnectionClosedOccurs() {
-        val givenStructuredMessageEvent = ConnectionClosed()
+        val givenStructuredMessageEvent = ConnectionClosed().toTransportEvent()
         val expectedEvent = Event.ConnectionClosed
 
         subject.onEvent(givenStructuredMessageEvent)
@@ -104,7 +104,7 @@ class EventHandlerTest {
             PresenceEvent.Presence(
                 PresenceEvent.Presence.Type.Join
             )
-        )
+        ).toTransportEvent()
         val expectedEvent = Event.ConversationAutostart
 
         subject.onEvent(givenStructuredMessageEvent)
@@ -119,7 +119,7 @@ class EventHandlerTest {
             PresenceEvent.Presence(
                 PresenceEvent.Presence.Type.Disconnect
             )
-        )
+        ).toTransportEvent()
         val expectedEvent = Event.ConversationDisconnect
 
         subject.onEvent(givenStructuredMessageEvent)
@@ -129,7 +129,7 @@ class EventHandlerTest {
 
     @Test
     fun whenLogoutOccurs() {
-        val givenStructuredMessageEvent = Logout()
+        val givenStructuredMessageEvent = Logout().toTransportEvent()
         val expectedEvent = Event.Logout
 
         subject.onEvent(givenStructuredMessageEvent)

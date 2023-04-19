@@ -19,10 +19,9 @@ internal class EventHandlerImpl(
 
     override var eventListener: ((Event) -> Unit)? = null
 
-    override fun onEvent(event: StructuredMessageEvent) {
-        val transportEvent = event.toTransportEvent()
-        log.i { "on event: $transportEvent" }
-        eventListener?.invoke(transportEvent)
+    override fun onEvent(event: Event) {
+        log.i { "on event: $event" }
+        eventListener?.invoke(event)
     }
 }
 

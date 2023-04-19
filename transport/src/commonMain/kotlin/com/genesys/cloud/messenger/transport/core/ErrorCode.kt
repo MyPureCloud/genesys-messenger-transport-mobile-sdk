@@ -20,9 +20,11 @@ sealed class ErrorCode(val code: Int) {
     object MissingParameter : ErrorCode(4020)
     object RequestRateTooHigh : ErrorCode(4029)
     object UnexpectedError : ErrorCode(5000)
+    object CancellationError : ErrorCode(4999)
     object WebsocketError : ErrorCode(1001)
     object WebsocketAccessDenied : ErrorCode(1002)
     object NetworkDisabled : ErrorCode(-1009)
+    object AuthFailed : ErrorCode(4401)
     data class RedirectResponseError(val value: Int) : ErrorCode(value)
     data class ClientResponseError(val value: Int) : ErrorCode(value)
     data class ServerResponseError(val value: Int) : ErrorCode(value)
@@ -47,6 +49,8 @@ sealed class ErrorCode(val code: Int) {
                 4013 -> CustomAttributeSizeTooLarge
                 4020 -> MissingParameter
                 4029 -> RequestRateTooHigh
+                4401 -> AuthFailed
+                4999 -> CancellationError
                 in 300..399 -> RedirectResponseError(value)
                 in 400..499 -> ClientResponseError(value)
                 in 500..599 -> ServerResponseError(value)
@@ -76,6 +80,7 @@ sealed class CorrectiveAction(val message: String) {
 
     object TooManyRequests : CorrectiveAction("Retry later.")
     object Unknown : CorrectiveAction("Action unknown.")
+    object Reauthenticate : CorrectiveAction("User re-authentication is required.")
 
     override fun toString(): String {
         return message

@@ -2,14 +2,15 @@ package com.genesys.cloud.messenger.transport.core
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import com.genesys.cloud.messenger.transport.auth.AuthHandler
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.HEALTH_CHECK_COOL_DOWN_MILLISECONDS
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.TYPING_INDICATOR_COOL_DOWN_MILLISECONDS
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
+import com.genesys.cloud.messenger.transport.core.events.toTransportEvent
 import com.genesys.cloud.messenger.transport.model.AuthJwt
-import com.genesys.cloud.messenger.transport.network.FetchJwtUseCase
 import com.genesys.cloud.messenger.transport.network.LogoutUseCase
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
@@ -17,8 +18,6 @@ import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
 import com.genesys.cloud.messenger.transport.network.TestAuthCode
 import com.genesys.cloud.messenger.transport.network.TestCodeVerifier
 import com.genesys.cloud.messenger.transport.network.TestJwtAuthUrl
-import com.genesys.cloud.messenger.transport.network.TestJwtToken
-import com.genesys.cloud.messenger.transport.network.TestRefreshToken
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
@@ -147,9 +146,7 @@ class MessagingClientImplTest {
         getCurrentTimestamp = mockTimestampFunction,
     )
 
-    private val mockFetchJwtUseCase: FetchJwtUseCase = mockk {
-        coEvery { fetch(any(), any(), any()) } returns AuthJwt(TestJwtToken, TestRefreshToken)
-    }
+    private val mockAuthHandler: AuthHandler = mockk(relaxed = true)
 
     private val mockLogoutUseCase: LogoutUseCase = mockk(relaxed = true)
 
@@ -167,7 +164,7 @@ class MessagingClientImplTest {
         userTypingProvider = userTypingProvider,
         healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),
         deploymentConfig = mockDeploymentConfig,
-        fetchJwtUseCase = mockFetchJwtUseCase,
+        authHandler = mockAuthHandler,
         logoutUseCase = mockLogoutUseCase,
     ).also {
         it.stateChangedListener = mockStateChangedListener
@@ -687,11 +684,11 @@ class MessagingClientImplTest {
         val firstExpectedEvent = TypingEvent(
             eventType = StructuredMessageEvent.Type.Typing,
             typing = Typing(type = "Off", duration = 1000),
-        )
+        ).toTransportEvent()
         val secondsExpectedEvent = TypingEvent(
             eventType = StructuredMessageEvent.Type.Typing,
             typing = Typing(type = "On", duration = 5000),
-        )
+        ).toTransportEvent()
 
         subject.connect()
 
@@ -805,7 +802,7 @@ class MessagingClientImplTest {
         val expectedEvent = ErrorEvent(
             errorCode = ErrorCode.ClientResponseError(403),
             message = "Turn on the Feature Toggle or fix the configuration.",
-        )
+        ).toTransportEvent()
         subject.connect()
 
         slot.captured.onMessage(Response.typingIndicatorForbidden)
@@ -886,7 +883,7 @@ class MessagingClientImplTest {
         val expectedEvent = PresenceEvent(
             eventType = StructuredMessageEvent.Type.Presence,
             presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Join)
-        )
+        ).toTransportEvent()
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceJoinEvent))
@@ -898,7 +895,7 @@ class MessagingClientImplTest {
 
     @Test
     fun whenEventConnectionClosedReceived() {
-        val expectedEvent = ConnectionClosed()
+        val expectedEvent = ConnectionClosed().toTransportEvent()
 
         subject.connect()
         slot.captured.onMessage(Response.connectionClosedEvent)
@@ -929,7 +926,7 @@ class MessagingClientImplTest {
         val expectedEvent = PresenceEvent(
             eventType = StructuredMessageEvent.Type.Presence,
             presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
-        )
+        ).toTransportEvent()
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
@@ -949,7 +946,7 @@ class MessagingClientImplTest {
         val expectedEvent = PresenceEvent(
             eventType = StructuredMessageEvent.Type.Presence,
             presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
-        )
+        ).toTransportEvent()
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
@@ -981,7 +978,7 @@ class MessagingClientImplTest {
         val expectedEvent = PresenceEvent(
             eventType = StructuredMessageEvent.Type.Presence,
             presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
-        )
+        ).toTransportEvent()
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
@@ -1010,7 +1007,7 @@ class MessagingClientImplTest {
         val expectedEvent = PresenceEvent(
             eventType = StructuredMessageEvent.Type.Presence,
             presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
-        )
+        ).toTransportEvent()
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
@@ -1042,10 +1039,15 @@ class MessagingClientImplTest {
         val expectedEvent = PresenceEvent(
             eventType = StructuredMessageEvent.Type.Presence,
             presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect),
-        )
+        ).toTransportEvent()
 
         subject.connect()
-        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent, metadata = mapOf("readOnly" to "true")))
+        slot.captured.onMessage(
+            Response.structuredMessageWithEvents(
+                events = givenPresenceDisconnectEvent,
+                metadata = mapOf("readOnly" to "true")
+            )
+        )
 
         verify { mockEventHandler.onEvent(eq(expectedEvent)) }
         verify { mockStateChangedListener.invoke(fromConfiguredToReadOnly()) }
@@ -1071,10 +1073,15 @@ class MessagingClientImplTest {
         val expectedEvent = PresenceEvent(
             eventType = StructuredMessageEvent.Type.Presence,
             presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect),
-        )
+        ).toTransportEvent()
 
         subject.connect()
-        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent, metadata = mapOf("readOnly" to "false")))
+        slot.captured.onMessage(
+            Response.structuredMessageWithEvents(
+                events = givenPresenceDisconnectEvent,
+                metadata = mapOf("readOnly" to "false")
+            )
+        )
 
         verify { mockEventHandler.onEvent(eq(expectedEvent)) }
         verify(exactly = 0) { mockStateChangedListener.invoke(fromConfiguredToReadOnly()) }
@@ -1287,31 +1294,11 @@ class MessagingClientImplTest {
     }
 
     @Test
-    fun whenFetchAuthJwtIsCalled() {
-        val expectedResult = AuthJwt(TestJwtToken, TestRefreshToken)
+    fun whenAuthenticateIsCalled() {
+        subject.authenticate(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier)
 
-        val result = runBlocking {
-            subject.fetchAuthJwt(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier)
-        }
-
-        assertEquals(expectedResult, result)
-        coVerify {
-            mockFetchJwtUseCase.fetch(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier)
-        }
-    }
-
-    @Test
-    fun whenFetchAuthJwtResultInExceptionVerifyThatExceptionIsForwarded() {
-        coEvery {
-            mockFetchJwtUseCase.fetch(
-                any(),
-                any(),
-                any()
-            )
-        } throws Exception("Something went wrong.")
-
-        assertFailsWith<Exception> {
-            runBlocking { subject.fetchAuthJwt(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier) }
+        verify {
+            mockAuthHandler.authenticate(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier)
         }
     }
 
@@ -1403,7 +1390,7 @@ class MessagingClientImplTest {
 
     @Test
     fun whenEventLogoutReceived() {
-        val expectedEvent = Logout()
+        val expectedEvent = Logout().toTransportEvent()
 
         subject.connect()
         slot.captured.onMessage(Response.logoutEvent)
@@ -1569,8 +1556,10 @@ private object Response {
     fun structuredMessageWithEvents(
         events: String = defaultStructuredEvents,
         direction: Message.Direction = Message.Direction.Outbound,
-        metadata: Map<String, String> = mapOf("correlationId" to "0000000-0000-0000-0000-0000000000")
+        metadata: Map<String, String> = mapOf("correlationId" to "0000000-0000-0000-0000-0000000000"),
     ): String {
-        return """{"type": "message","class": "StructuredMessage","code": 200,"body": {"direction": "${direction.name}","id": "0000000-0000-0000-0000-0000000000","channel": {"time": "2022-03-09T13:35:31.104Z","messageId": "0000000-0000-0000-0000-0000000000"},"type": "Event","metadata": ${Json.encodeToString(metadata)},"events": [$events]}}"""
+        return """{"type": "message","class": "StructuredMessage","code": 200,"body": {"direction": "${direction.name}","id": "0000000-0000-0000-0000-0000000000","channel": {"time": "2022-03-09T13:35:31.104Z","messageId": "0000000-0000-0000-0000-0000000000"},"type": "Event","metadata": ${
+        Json.encodeToString(metadata)
+        },"events": [$events]}}"""
     }
 }

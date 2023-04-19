@@ -2,6 +2,7 @@ package com.genesys.cloud.messenger.transport.core.events
 
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
+import com.genesys.cloud.messenger.transport.model.AuthJwt
 
 /**
  * Base class for Transport events.
@@ -49,6 +50,13 @@ sealed class Event {
      * Detailed information about Genesys Cloud Web Messaging capabilities is available in the [Developer Center](https://developer.genesys.cloud).
      */
     object ConnectionClosed : Event()
+
+    /**
+     * Sent when auth code was successfully exchanged for access token.
+     *
+     * @param authJwt container that holds access token(JWT) and refreshToken to use for auth session configuration.
+     */
+    data class Authenticated(val authJwt: AuthJwt) : Event()
 
     /**
      * Sent when user has been logged out from authenticated session.
