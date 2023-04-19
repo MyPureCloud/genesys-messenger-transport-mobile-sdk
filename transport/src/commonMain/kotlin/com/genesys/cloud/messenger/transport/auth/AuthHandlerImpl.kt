@@ -19,12 +19,16 @@ internal class AuthHandlerImpl(
     private val dispatcher: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
 ) : AuthHandler {
 
+    private var authJwt: AuthJwt? = null
+
     override fun authenticate(authCode: String, redirectUri: String, codeVerifier: String?) {
         dispatcher.launch {
-            val response = api.fetchAuthJwt(authCode, redirectUri, codeVerifier)
-            when (response) {
+            when (val response = api.fetchAuthJwt(authCode, redirectUri, codeVerifier)) {
                 is Response.Success -> {
-                    eventHandler.onEvent(Event.Authenticated(response.value))
+                    response.value.let {
+                        authJwt = it
+                        eventHandler.onEvent(Event.Authenticated(it))
+                    }
                 }
                 is Response.Failure -> {
                     when (response.errorCode) {
@@ -33,6 +37,40 @@ internal class AuthHandlerImpl(
                         }
                         is ErrorCode.AuthFailed -> {
                             log.e { "AuthFailed " }
+                            eventHandler.onEvent(
+                                Event.Error(
+                                    response.errorCode,
+                                    response.message,
+                                    CorrectiveAction.Reauthenticate
+                                )
+                            )
+                        }
+                        else -> {
+                            log.e { "Unknown error" }
+                            eventHandler.onEvent(
+                                Event.Error(
+                                    response.errorCode,
+                                    response.message,
+                                    CorrectiveAction.Reauthenticate
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    override fun logout(authJwt: AuthJwt) {
+        dispatcher.launch {
+            when (val response = api.logoutFromAuthenticatedSession(authJwt.jwt)) {
+                is Response.Success -> eventHandler.onEvent(Event.Logout)
+                is Response.Failure -> {
+                    when (response.errorCode) {
+                        is ErrorCode.CancellationError -> {
+                            log.w { "Cancellation exception was thrown, while running logout() request." }
+                        }
+                        is ErrorCode.AuthLogoutFailed -> {
                             eventHandler.onEvent(
                                 Event.Error(
                                     response.errorCode,

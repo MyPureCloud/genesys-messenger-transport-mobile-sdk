@@ -1,4 +1,4 @@
-package com.genesys.cloud.messenger.transport.model
+package com.genesys.cloud.messenger.transport.auth
 
 import kotlinx.serialization.Serializable
 

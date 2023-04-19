@@ -25,6 +25,7 @@ sealed class ErrorCode(val code: Int) {
     object WebsocketAccessDenied : ErrorCode(1002)
     object NetworkDisabled : ErrorCode(-1009)
     object AuthFailed : ErrorCode(4401)
+    object AuthLogoutFailed : ErrorCode(4402)
     data class RedirectResponseError(val value: Int) : ErrorCode(value)
     data class ClientResponseError(val value: Int) : ErrorCode(value)
     data class ServerResponseError(val value: Int) : ErrorCode(value)
@@ -50,6 +51,7 @@ sealed class ErrorCode(val code: Int) {
                 4020 -> MissingParameter
                 4029 -> RequestRateTooHigh
                 4401 -> AuthFailed
+                4402 -> AuthLogoutFailed
                 4999 -> CancellationError
                 in 300..399 -> RedirectResponseError(value)
                 in 400..499 -> ClientResponseError(value)

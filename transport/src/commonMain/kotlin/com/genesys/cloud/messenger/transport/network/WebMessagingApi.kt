@@ -1,16 +1,19 @@
 package com.genesys.cloud.messenger.transport.network
 
+import com.genesys.cloud.messenger.transport.auth.AuthJwt
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.DEFAULT_PAGE_SIZE
 import com.genesys.cloud.messenger.transport.core.ErrorCode
-import com.genesys.cloud.messenger.transport.model.AuthJwt
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageEntityList
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
+import com.genesys.cloud.messenger.transport.shyrka.send.AuthJwtRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.OAuth
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ResponseException
 import io.ktor.client.plugins.onUpload
 import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
@@ -65,7 +68,7 @@ internal class WebMessagingApi(
         redirectUri: String,
         codeVerifier: String?,
     ): Response<AuthJwt> = try {
-        val requestBody = AuthJWTRequest(
+        val requestBody = AuthJwtRequest(
             deploymentId = configuration.deploymentId,
             oauth = OAuth(
                 code = authCode,
@@ -86,7 +89,25 @@ internal class WebMessagingApi(
     } catch (cancellationException: CancellationException) {
         Response.Failure(ErrorCode.CancellationError, cancellationException.message)
     } catch (exception: Exception) {
-        Response.Failure(ErrorCode.UnexpectedError, exception.message)
+        Response.Failure(ErrorCode.AuthFailed, exception.message)
+    }
+
+    @Throws(CancellationException::class)
+    suspend fun logoutFromAuthenticatedSession(jwt: String): Response<AuthJwt> = try {
+        val response = client.delete(configuration.logoutUrl.toString()) {
+            headerAuthorizationBearer(jwt)
+        }
+
+        println("response: $response")
+        if (response.status.isSuccess()) {
+            Response.Success(response.body())
+        } else {
+            Response.Failure(ErrorCode.AuthLogoutFailed, response.body<String>())
+        }
+    } catch (cancellationException: CancellationException) {
+        Response.Failure(ErrorCode.CancellationError, cancellationException.message)
+    } catch (exception: Exception) {
+        Response.Failure(ErrorCode.AuthLogoutFailed, exception.message)
     }
 }
 

@@ -2,6 +2,7 @@ package com.genesys.cloud.messenger.transport.core
 
 import com.genesys.cloud.messenger.transport.auth.AuthHandler
 import com.genesys.cloud.messenger.transport.auth.AuthHandlerImpl
+import com.genesys.cloud.messenger.transport.auth.AuthJwt
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
@@ -9,8 +10,6 @@ import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
 import com.genesys.cloud.messenger.transport.core.events.toTransportEvent
-import com.genesys.cloud.messenger.transport.model.AuthJwt
-import com.genesys.cloud.messenger.transport.network.LogoutUseCase
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
@@ -79,7 +78,6 @@ internal class MessagingClientImpl(
         api,
         log.withTag(LogTag.AUTH_HANDLER)
     ),
-    private val logoutUseCase: LogoutUseCase = LogoutUseCase(configuration.logoutUrl),
 ) : MessagingClient {
 
     private var authJwt: AuthJwt? = null
@@ -225,13 +223,12 @@ internal class MessagingClientImpl(
             }
     }
 
-    @Throws(Exception::class)
-    override suspend fun logoutFromAuthenticatedSession() {
-        val authJwt = authJwt ?: run {
+    override fun logoutFromAuthenticatedSession(authJwt: AuthJwt) {
+        val authJwt = this.authJwt ?: run {
             log.w { "Logout from anonymous session is not supported." }
             return
         }
-        logoutUseCase.logout(authJwt.jwt)
+        authHandler.logout(authJwt)
     }
 
     override fun invalidateConversationCache() {

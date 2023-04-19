@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.core
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.auth.AuthHandler
+import com.genesys.cloud.messenger.transport.auth.AuthJwt
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.HEALTH_CHECK_COOL_DOWN_MILLISECONDS
@@ -10,8 +11,6 @@ import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.TYPING_INDICATOR_COOL_DOWN_MILLISECONDS
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
 import com.genesys.cloud.messenger.transport.core.events.toTransportEvent
-import com.genesys.cloud.messenger.transport.model.AuthJwt
-import com.genesys.cloud.messenger.transport.network.LogoutUseCase
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
@@ -145,10 +144,7 @@ class MessagingClientImplTest {
         showUserTypingEnabled = mockShowUserTypingIndicatorFunction,
         getCurrentTimestamp = mockTimestampFunction,
     )
-
     private val mockAuthHandler: AuthHandler = mockk(relaxed = true)
-
-    private val mockLogoutUseCase: LogoutUseCase = mockk(relaxed = true)
 
     private val subject = MessagingClientImpl(
         log = log,
@@ -165,7 +161,6 @@ class MessagingClientImplTest {
         healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),
         deploymentConfig = mockDeploymentConfig,
         authHandler = mockAuthHandler,
-        logoutUseCase = mockLogoutUseCase,
     ).also {
         it.stateChangedListener = mockStateChangedListener
     }
@@ -1365,27 +1360,41 @@ class MessagingClientImplTest {
         val givenAuthJwt = AuthJwt("auth_token", "refresh_token")
 
         subject.connectAuthenticatedSession(givenAuthJwt)
-        runBlocking { subject.logoutFromAuthenticatedSession() }
+        runBlocking { subject.logoutFromAuthenticatedSession(givenAuthJwt) }
 
         coVerify {
             connectSequence(shouldConfigureAuth = true)
-            mockLogoutUseCase.logout("auth_token")
+            mockAuthHandler.logout(givenAuthJwt)
         }
     }
 
     @Test
     fun whenLogoutFromAuthenticatedSessionWithoutSettingAuthJwt() {
-        runBlocking { subject.logoutFromAuthenticatedSession() }
+        runBlocking {
+            subject.logoutFromAuthenticatedSession(
+                AuthJwt(
+                    "auth_token",
+                    "refresh_token"
+                )
+            )
+        }
 
-        coVerify(exactly = 0) { mockLogoutUseCase.logout(any()) }
+        coVerify(exactly = 0) { mockAuthHandler.logout(any()) }
     }
 
     @Test
     fun whenLogoutFromAnonymousSession() {
         subject.connect()
-        runBlocking { subject.logoutFromAuthenticatedSession() }
+        runBlocking {
+            subject.logoutFromAuthenticatedSession(
+                AuthJwt(
+                    "auth_token",
+                    "refresh_token"
+                )
+            )
+        }
 
-        coVerify(exactly = 0) { mockLogoutUseCase.logout(any()) }
+        coVerify(exactly = 0) { mockAuthHandler.logout(any()) }
     }
 
     @Test

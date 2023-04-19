@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.genesys.cloud.messenger.androidcomposeprototype.BuildConfig
+import com.genesys.cloud.messenger.transport.auth.AuthJwt
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
@@ -18,7 +19,6 @@ import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.MessengerTransport
 import com.genesys.cloud.messenger.transport.core.events.Event
-import com.genesys.cloud.messenger.transport.model.AuthJwt
 import com.genesys.cloud.messenger.transport.util.DefaultTokenStore
 import io.ktor.http.URLBuilder
 import kotlinx.coroutines.CoroutineScope
@@ -138,7 +138,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "newChat" -> doStartNewChat()
             "oktaSignIn" -> doOktaSignIn(false)
             "oktaSignInWithPKCE" -> doOktaSignIn(true)
-            "oktaLogout" -> doOktaLogout()
+            "oktaLogout" -> logoutFromOktaSession()
             "authenticate" -> doAuthenticate()
             else -> {
                 Log.e(TAG, "Invalid command")
@@ -165,20 +165,19 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private fun doOktaLogout() {
-        try {
-            if (authState is AuthState.JwtFetched) {
-                (authState as AuthState.JwtFetched).authJwt.let {
-                    viewModelScope.launch {
-                        client.logoutFromAuthenticatedSession()
-                        commandWaiting = false
-                    }
+    private fun logoutFromOktaSession() {
+        when (val currentState = authState) {
+            is AuthState.Authenticated -> {
+                currentState.authJwt.let {
+                    client.logoutFromAuthenticatedSession(it)
                 }
-            } else {
-                throw IllegalStateException("Can not perform logout. Auth jwt was not fetched. Please, fetch and try again.")
             }
-        } catch (t: Throwable) {
-            handleException(t, "okta logout")
+            else -> {
+                handleException(
+                    IllegalStateException("Can not perform logout. Auth jwt was not fetched. Please, fetch and try again."),
+                    "okta logout"
+                )
+            }
         }
     }
 
@@ -306,7 +305,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             redirectUri = BuildConfig.SIGN_IN_REDIRECT_URI,
             codeVerifier = if (pkceEnabled) BuildConfig.CODE_VERIFIER else null
         )
-        commandWaiting = false
     }
 
     private fun onClientStateChanged(oldState: State, newState: State) {
@@ -315,8 +313,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         val statePayloadMessage = when (newState) {
             is State.Configured ->
                 "connected: ${newState.connected}," +
-                        " newSession: ${newState.newSession}," +
-                        " wasReconnecting: ${oldState is State.Reconnecting}"
+                    " newSession: ${newState.newSession}," +
+                    " wasReconnecting: ${oldState is State.Reconnecting}"
             is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Closed -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Error -> "code: ${newState.code}, message: ${newState.message}"
@@ -418,7 +416,6 @@ sealed class AuthState {
         val correctiveAction: CorrectiveAction,
     ) : AuthState()
 
-    data class JwtFetched(val authJwt: AuthJwt) : AuthState()
     data class Authenticated(val authJwt: AuthJwt) : AuthState()
     object LoggedOut : AuthState()
 }

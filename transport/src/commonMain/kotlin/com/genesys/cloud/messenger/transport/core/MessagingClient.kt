@@ -1,7 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
+import com.genesys.cloud.messenger.transport.auth.AuthJwt
 import com.genesys.cloud.messenger.transport.core.events.Event
-import com.genesys.cloud.messenger.transport.model.AuthJwt
 
 /**
  * The main SDK interface providing bi-directional communication between a guest and Genesys Cloud
@@ -206,13 +206,6 @@ interface MessagingClient {
     fun invalidateConversationCache()
 
     /**
-     * Logs out user from authenticated session on all devices that shares the same auth session.
-     * Performing this function on `anonymous` session will not have any effect.
-     */
-    @Throws(Exception::class)
-    suspend fun logoutFromAuthenticatedSession()
-
-    /**
      * Notify the agent that the customer is typing a message.
      * This command sends a single typing indicator event and should be called a maximum of once every 5 seconds.
      * If called more frequently, this command will be rate limited in order to optimize network traffic.
@@ -224,10 +217,19 @@ interface MessagingClient {
 
     /**
      * Exchange authCode for accessToken(JWT) using the provided authCode, redirect URI, and code verifier.
+     * In case of failure Event.Error with [ErrorCode.AuthFailed] will be sent.
      *
      * @param authCode The authentication code to use for fetching the Auth JWT.
      * @param redirectUri The redirect URI to use for fetching the Auth JWT.
      * @param codeVerifier The code verifier to use for fetching the Auth JWT (optional).
      */
     fun authenticate(authCode: String, redirectUri: String, codeVerifier: String?)
+
+    /**
+     * Logs out user from authenticated session on all devices that shares the same auth session.
+     * In case of failure Event.Error with [ErrorCode.AuthLogoutFailed] will be sent.
+     *
+     * @param authJwt Is the accessToken and refreshToken of the session.
+     */
+    fun logoutFromAuthenticatedSession(authJwt: AuthJwt)
 }

@@ -1,6 +1,6 @@
 package com.genesys.cloud.messenger.transport.network
 
-import com.genesys.cloud.messenger.transport.model.AuthJwt
+import com.genesys.cloud.messenger.transport.auth.AuthJwt
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.header

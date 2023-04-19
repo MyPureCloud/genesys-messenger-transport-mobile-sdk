@@ -1,8 +1,8 @@
 package com.genesys.cloud.messenger.transport.core.events
 
+import com.genesys.cloud.messenger.transport.auth.AuthJwt
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
-import com.genesys.cloud.messenger.transport.model.AuthJwt
 
 /**
  * Base class for Transport events.
