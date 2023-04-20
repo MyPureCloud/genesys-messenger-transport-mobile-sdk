@@ -17,15 +17,11 @@ import com.genesys.cloud.messenger.transport.network.SocketCloseCode
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.AttachmentDeletedResponse
-import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosed
 import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosedEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
-import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
-import com.genesys.cloud.messenger.transport.shyrka.receive.HealthCheckEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
-import com.genesys.cloud.messenger.transport.shyrka.receive.Logout
 import com.genesys.cloud.messenger.transport.shyrka.receive.LogoutEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
@@ -295,7 +291,13 @@ internal class MessagingClientImpl(
                 if (stateMachine.isConnected() || stateMachine.isReconnecting() || isStartingANewSession) {
                     transitionToStateError(code, message)
                 } else {
-                    eventHandler.onEvent(ErrorEvent(errorCode = code, message = message).toTransportEvent())
+                    eventHandler.onEvent(
+                        Event.Error(
+                            errorCode = code,
+                            message = message,
+                            correctiveAction = code.toCorrectiveAction()
+                        )
+                    )
                 }
             }
             is ErrorCode.WebsocketError -> handleWebSocketError(ErrorCode.WebsocketError)
@@ -469,7 +471,7 @@ internal class MessagingClientImpl(
                         attachmentHandler.onUploadSuccess(decoded.body)
                     is StructuredMessage -> {
                         if (decoded.body.isHealthCheckResponse()) {
-                            eventHandler.onEvent(HealthCheckEvent().toTransportEvent())
+                            eventHandler.onEvent(Event.HealthChecked)
                         } else {
                             handleStructuredMessage(decoded.body)
                         }
@@ -496,10 +498,10 @@ internal class MessagingClientImpl(
                     }
                     is ConnectionClosedEvent -> {
                         disconnect()
-                        eventHandler.onEvent(ConnectionClosed().toTransportEvent())
+                        eventHandler.onEvent(Event.ConnectionClosed)
                     }
                     is LogoutEvent -> {
-                        eventHandler.onEvent(Logout().toTransportEvent())
+                        eventHandler.onEvent(Event.Logout)
                     }
                     else -> {
                         log.i { "Unhandled message received from Shyrka: $decoded " }

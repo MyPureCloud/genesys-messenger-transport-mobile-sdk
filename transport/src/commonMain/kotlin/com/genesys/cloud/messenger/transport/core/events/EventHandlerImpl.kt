@@ -1,10 +1,7 @@
 package com.genesys.cloud.messenger.transport.core.events
 
 import com.genesys.cloud.messenger.transport.core.toCorrectiveAction
-import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosed
 import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.HealthCheckEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.Logout
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
@@ -37,14 +34,11 @@ internal fun StructuredMessageEvent.toTransportEvent(): Event {
                 correctiveAction = errorCode.toCorrectiveAction()
             )
         }
-        is HealthCheckEvent -> Event.HealthChecked
         is PresenceEvent -> {
             when (this.presence.type) {
                 PresenceEvent.Presence.Type.Join -> Event.ConversationAutostart
                 PresenceEvent.Presence.Type.Disconnect -> Event.ConversationDisconnect
             }
         }
-        is ConnectionClosed -> Event.ConnectionClosed
-        is Logout -> Event.Logout
     }
 }

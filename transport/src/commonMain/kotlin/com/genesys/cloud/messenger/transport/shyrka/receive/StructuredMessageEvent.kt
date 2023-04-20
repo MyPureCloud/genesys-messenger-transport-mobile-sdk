@@ -19,10 +19,7 @@ internal sealed class StructuredMessageEvent {
         @SerialName("Typing")
         Typing,
         Error,
-        HealthChecked,
         Presence,
-        ConnectionClosed,
-        Logout,
     }
 }
 
@@ -44,10 +41,6 @@ internal data class ErrorEvent(
     val message: String?,
 ) : StructuredMessageEvent()
 
-internal data class HealthCheckEvent(
-    override val eventType: Type = Type.HealthChecked,
-) : StructuredMessageEvent()
-
 @Serializable
 internal data class PresenceEvent(
     override val eventType: Type,
@@ -62,16 +55,6 @@ internal data class PresenceEvent(
         }
     }
 }
-
-@Serializable
-internal data class ConnectionClosed(
-    override val eventType: Type = Type.ConnectionClosed,
-) : StructuredMessageEvent()
-
-@Serializable
-internal data class Logout(
-    override val eventType: Type = Type.Logout,
-) : StructuredMessageEvent()
 
 internal object StructuredMessageEventSerializer :
     JsonContentPolymorphicSerializer<StructuredMessageEvent>(StructuredMessageEvent::class) {

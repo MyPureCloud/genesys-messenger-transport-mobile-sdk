@@ -2,10 +2,7 @@ package com.genesys.cloud.messenger.transport.core.events
 
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
-import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosed
 import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.HealthCheckEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.Logout
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
@@ -79,7 +76,7 @@ class EventHandlerTest {
 
     @Test
     fun whenHealthCheckedOccurs() {
-        val givenStructuredMessageEvent = HealthCheckEvent().toTransportEvent()
+        val givenStructuredMessageEvent = Event.HealthChecked
         val expectedEvent = Event.HealthChecked
 
         subject.onEvent(givenStructuredMessageEvent)
@@ -89,7 +86,7 @@ class EventHandlerTest {
 
     @Test
     fun whenConnectionClosedOccurs() {
-        val givenStructuredMessageEvent = ConnectionClosed().toTransportEvent()
+        val givenStructuredMessageEvent = Event.ConnectionClosed
         val expectedEvent = Event.ConnectionClosed
 
         subject.onEvent(givenStructuredMessageEvent)
@@ -129,7 +126,7 @@ class EventHandlerTest {
 
     @Test
     fun whenLogoutOccurs() {
-        val givenStructuredMessageEvent = Logout().toTransportEvent()
+        val givenStructuredMessageEvent = Event.Logout
         val expectedEvent = Event.Logout
 
         subject.onEvent(givenStructuredMessageEvent)

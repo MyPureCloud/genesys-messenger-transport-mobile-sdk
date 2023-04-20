@@ -5,6 +5,7 @@ import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.auth.AuthHandler
 import com.genesys.cloud.messenger.transport.auth.AuthJwt
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
+import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.HEALTH_CHECK_COOL_DOWN_MILLISECONDS
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
@@ -20,11 +21,9 @@ import com.genesys.cloud.messenger.transport.network.TestJwtAuthUrl
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
-import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosed
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.Logout
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
@@ -890,7 +889,7 @@ class MessagingClientImplTest {
 
     @Test
     fun whenEventConnectionClosedReceived() {
-        val expectedEvent = ConnectionClosed().toTransportEvent()
+        val expectedEvent = Event.ConnectionClosed
 
         subject.connect()
         slot.captured.onMessage(Response.connectionClosedEvent)
@@ -1399,7 +1398,7 @@ class MessagingClientImplTest {
 
     @Test
     fun whenEventLogoutReceived() {
-        val expectedEvent = Logout().toTransportEvent()
+        val expectedEvent = Event.Logout
 
         subject.connect()
         slot.captured.onMessage(Response.logoutEvent)
