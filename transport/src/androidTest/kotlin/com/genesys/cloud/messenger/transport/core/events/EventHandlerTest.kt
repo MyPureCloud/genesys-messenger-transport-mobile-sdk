@@ -1,8 +1,18 @@
 package com.genesys.cloud.messenger.transport.core.events
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import com.genesys.cloud.messenger.transport.auth.AuthJwt
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
-import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
+import com.genesys.cloud.messenger.transport.core.events.Event.AgentTyping
+import com.genesys.cloud.messenger.transport.core.events.Event.Authenticated
+import com.genesys.cloud.messenger.transport.core.events.Event.ConnectionClosed
+import com.genesys.cloud.messenger.transport.core.events.Event.ConversationAutostart
+import com.genesys.cloud.messenger.transport.core.events.Event.ConversationDisconnect
+import com.genesys.cloud.messenger.transport.core.events.Event.Error
+import com.genesys.cloud.messenger.transport.core.events.Event.HealthChecked
+import com.genesys.cloud.messenger.transport.core.events.Event.Logout
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
@@ -18,119 +28,87 @@ class EventHandlerTest {
     }
 
     @Test
-    fun whenTypingEventOccurs() {
-        val givenStructuredMessageEvent = TypingEvent(
-            eventType = StructuredMessageEvent.Type.Typing,
-            typing = Typing(type = "On", duration = 3000)
-        ).toTransportEvent()
-        val expectedEvent = Event.AgentTyping(3000)
+    fun whenOnEvent() {
+        val events = listOf(
+            AgentTyping(3000),
+            HealthChecked,
+            Error(
+                errorCode = ErrorCode.ClientResponseError(403),
+                message = "some message",
+                correctiveAction = CorrectiveAction.Forbidden,
+            ),
+            ConversationAutostart,
+            ConversationDisconnect,
+            ConnectionClosed,
+            Authenticated(AuthJwt("jwt", "refreshToken")),
+            Logout,
+        )
 
-        subject.onEvent(givenStructuredMessageEvent)
+        events.forEach {
+            subject.onEvent(it)
 
-        verify { mockEventListener.invoke(eq(expectedEvent)) }
+            verify { mockEventListener.invoke(eq(it)) }
+        }
     }
 
     @Test
     fun whenNoEventListenerSetAndOnEventInvoked() {
-        val givenStructuredMessageEvent = TypingEvent(
-            eventType = StructuredMessageEvent.Type.Typing,
-            typing = Typing(type = "On", duration = 5000)
-        ).toTransportEvent()
         subject.eventListener = null
 
-        subject.onEvent(givenStructuredMessageEvent)
+        subject.onEvent(HealthChecked)
 
         verify(exactly = 0) { mockEventListener.invoke(any()) }
     }
 
     @Test
-    fun whenTypingEventWithNullDuration() {
-        val givenStructuredMessageEvent = TypingEvent(
+    fun whenTypingEventToTransportEvent() {
+        val expectedEvent = AgentTyping(3000)
+
+        val result = TypingEvent(
+            eventType = StructuredMessageEvent.Type.Typing,
+            typing = Typing(type = "On", duration = 3000)
+        ).toTransportEvent()
+
+        assertThat(result).isEqualTo(expectedEvent)
+    }
+
+    @Test
+    fun whenTypingEventWithNullDurationToTransportEvent() {
+        val expectedEvent = AgentTyping(5000)
+
+        val result = TypingEvent(
             eventType = StructuredMessageEvent.Type.Typing,
             typing = Typing(type = "On", duration = null)
         ).toTransportEvent()
-        val expectedEvent = Event.AgentTyping(5000)
 
-        subject.onEvent(givenStructuredMessageEvent)
-
-        verify { mockEventListener.invoke(eq(expectedEvent)) }
+        assertThat(result).isEqualTo(expectedEvent)
     }
 
     @Test
-    fun whenErrorEvent() {
-        val givenStructuredMessageEvent = ErrorEvent(
-            errorCode = ErrorCode.ClientResponseError(403),
-            message = "some message",
-        ).toTransportEvent()
+    fun whenPresenceEventJoinToTransportEvent() {
+        val expectedEvent = ConversationAutostart
 
-        val expectedEvent = Event.Error(
-            errorCode = ErrorCode.ClientResponseError(403),
-            message = "some message",
-            correctiveAction = CorrectiveAction.Forbidden,
-        )
-
-        subject.onEvent(givenStructuredMessageEvent)
-
-        verify { mockEventListener.invoke(eq(expectedEvent)) }
-    }
-
-    @Test
-    fun whenHealthCheckedOccurs() {
-        val givenStructuredMessageEvent = Event.HealthChecked
-        val expectedEvent = Event.HealthChecked
-
-        subject.onEvent(givenStructuredMessageEvent)
-
-        verify { mockEventListener.invoke(eq(expectedEvent)) }
-    }
-
-    @Test
-    fun whenConnectionClosedOccurs() {
-        val givenStructuredMessageEvent = Event.ConnectionClosed
-        val expectedEvent = Event.ConnectionClosed
-
-        subject.onEvent(givenStructuredMessageEvent)
-
-        verify { mockEventListener.invoke(eq(expectedEvent)) }
-    }
-
-    @Test
-    fun whenPresenceEventJoinOccurs() {
-        val givenStructuredMessageEvent = PresenceEvent(
+        val result = PresenceEvent(
             StructuredMessageEvent.Type.Presence,
             PresenceEvent.Presence(
                 PresenceEvent.Presence.Type.Join
             )
         ).toTransportEvent()
-        val expectedEvent = Event.ConversationAutostart
 
-        subject.onEvent(givenStructuredMessageEvent)
-
-        verify { mockEventListener.invoke(eq(expectedEvent)) }
+        assertThat(result).isEqualTo(expectedEvent)
     }
 
     @Test
-    fun whenPresenceEventDisconnectOccurs() {
-        val givenStructuredMessageEvent = PresenceEvent(
+    fun whenPresenceEventDisconnectToTransportEvent() {
+        val expectedEvent = ConversationDisconnect
+
+        val result = PresenceEvent(
             StructuredMessageEvent.Type.Presence,
             PresenceEvent.Presence(
                 PresenceEvent.Presence.Type.Disconnect
             )
         ).toTransportEvent()
-        val expectedEvent = Event.ConversationDisconnect
 
-        subject.onEvent(givenStructuredMessageEvent)
-
-        verify { mockEventListener.invoke(eq(expectedEvent)) }
-    }
-
-    @Test
-    fun whenLogoutOccurs() {
-        val givenStructuredMessageEvent = Event.Logout
-        val expectedEvent = Event.Logout
-
-        subject.onEvent(givenStructuredMessageEvent)
-
-        verify { mockEventListener.invoke(eq(expectedEvent)) }
+        assertThat(result).isEqualTo(expectedEvent)
     }
 }

@@ -23,7 +23,6 @@ import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
-import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
@@ -793,10 +792,12 @@ class MessagingClientImplTest {
 
     @Test
     fun whenWebSocketRespondWithUnstructuredTypingIndicatorForbiddenError() {
-        val expectedEvent = ErrorEvent(
-            errorCode = ErrorCode.ClientResponseError(403),
+        val expectedErrorCode = ErrorCode.ClientResponseError(403)
+        val expectedEvent = Event.Error(
+            errorCode = expectedErrorCode,
             message = "Turn on the Feature Toggle or fix the configuration.",
-        ).toTransportEvent()
+            correctiveAction = expectedErrorCode.toCorrectiveAction(),
+        )
         subject.connect()
 
         slot.captured.onMessage(Response.typingIndicatorForbidden)
