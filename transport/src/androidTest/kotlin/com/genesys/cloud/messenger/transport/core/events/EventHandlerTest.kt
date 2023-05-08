@@ -61,6 +61,13 @@ class EventHandlerTest {
     }
 
     @Test
+    fun whenOnEventNullInvoked() {
+        subject.onEvent(null)
+
+        verify(exactly = 0) { mockEventListener.invoke(any()) }
+    }
+
+    @Test
     fun whenTypingEventToTransportEvent() {
         val expectedEvent = AgentTyping(3000)
 

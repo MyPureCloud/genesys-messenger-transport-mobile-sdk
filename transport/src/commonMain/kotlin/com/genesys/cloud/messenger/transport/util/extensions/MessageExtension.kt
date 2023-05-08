@@ -24,7 +24,7 @@ internal fun StructuredMessage.toMessage(): Message {
         text = text,
         timeStamp = channel?.time.fromIsoToEpochMilliseconds(),
         attachments = content.toAttachments(),
-        events = events.map { it.toTransportEvent() },
+        events = events.mapNotNull { it.toTransportEvent() },
         from = Message.Participant(
             name = channel?.from?.nickname,
             imageUrl = channel?.from?.image,

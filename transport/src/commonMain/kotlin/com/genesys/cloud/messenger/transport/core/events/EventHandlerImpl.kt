@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.core.events
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.Unknown
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 
@@ -14,13 +15,17 @@ internal class EventHandlerImpl(
 
     override var eventListener: ((Event) -> Unit)? = null
 
-    override fun onEvent(event: Event) {
+    override fun onEvent(event: Event?) {
+        if (event == null) {
+            log.i { "Unknown event received." }
+            return
+        }
         log.i { "on event: $event" }
         eventListener?.invoke(event)
     }
 }
 
-internal fun StructuredMessageEvent.toTransportEvent(): Event {
+internal fun StructuredMessageEvent.toTransportEvent(): Event? {
     return when (this) {
         is TypingEvent -> {
             Event.AgentTyping(typing.duration ?: FALLBACK_TYPING_INDICATOR_DURATION)
@@ -31,5 +36,6 @@ internal fun StructuredMessageEvent.toTransportEvent(): Event {
                 PresenceEvent.Presence.Type.Disconnect -> Event.ConversationDisconnect
             }
         }
+        is Unknown -> null
     }
 }
