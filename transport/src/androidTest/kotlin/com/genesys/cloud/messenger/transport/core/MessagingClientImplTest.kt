@@ -11,7 +11,6 @@ import com.genesys.cloud.messenger.transport.core.events.HEALTH_CHECK_COOL_DOWN_
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.TYPING_INDICATOR_COOL_DOWN_MILLISECONDS
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
-import com.genesys.cloud.messenger.transport.core.events.toTransportEvent
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
@@ -23,10 +22,6 @@ import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
-import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent.Typing
 import com.genesys.cloud.messenger.transport.shyrka.receive.createConversationsVOForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createMessengerVOForTesting
@@ -674,14 +669,8 @@ class MessagingClientImplTest {
 
     @Test
     fun whenStructuredMessageWithMultipleEventsReceived() {
-        val firstExpectedEvent = TypingEvent(
-            eventType = StructuredMessageEvent.Type.Typing,
-            typing = Typing(type = "Off", duration = 1000),
-        ).toTransportEvent()
-        val secondsExpectedEvent = TypingEvent(
-            eventType = StructuredMessageEvent.Type.Typing,
-            typing = Typing(type = "On", duration = 5000),
-        ).toTransportEvent()
+        val firstExpectedEvent = Event.AgentTyping(1000)
+        val secondsExpectedEvent = Event.AgentTyping(5000)
 
         subject.connect()
 
@@ -702,7 +691,7 @@ class MessagingClientImplTest {
 
         slot.captured.onMessage(Response.structuredMessageWithEvents(givenUnknownEvent))
 
-        verify(exactly = 0) { mockEventHandler.onEvent(any()) }
+        verify { mockEventHandler.onEvent(null) }
         verify(exactly = 0) { mockMessageStore.update(any()) }
         verify(exactly = 0) { mockAttachmentHandler.onSent(any()) }
     }
@@ -875,10 +864,7 @@ class MessagingClientImplTest {
     @Test
     fun whenEventPresenceJoinReceived() {
         val givenPresenceJoinEvent = """{"eventType":"Presence","presence":{"type":"Join"}}"""
-        val expectedEvent = PresenceEvent(
-            eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Join)
-        ).toTransportEvent()
+        val expectedEvent = Event.ConversationAutostart
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceJoinEvent))
@@ -918,10 +904,7 @@ class MessagingClientImplTest {
         )
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
-        val expectedEvent = PresenceEvent(
-            eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
-        ).toTransportEvent()
+        val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
@@ -938,10 +921,7 @@ class MessagingClientImplTest {
     fun whenDisconnectEventReceivedAndThereAreNoReadOnlyInMetadataAndConversationDisconnectInDeploymentConfigIsSetToSendAndDisabled() {
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
-        val expectedEvent = PresenceEvent(
-            eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
-        ).toTransportEvent()
+        val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
@@ -970,10 +950,7 @@ class MessagingClientImplTest {
 
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
-        val expectedEvent = PresenceEvent(
-            eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
-        ).toTransportEvent()
+        val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
@@ -999,10 +976,7 @@ class MessagingClientImplTest {
 
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
-        val expectedEvent = PresenceEvent(
-            eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
-        ).toTransportEvent()
+        val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
@@ -1031,10 +1005,7 @@ class MessagingClientImplTest {
 
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
-        val expectedEvent = PresenceEvent(
-            eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect),
-        ).toTransportEvent()
+        val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
         slot.captured.onMessage(
@@ -1065,10 +1036,7 @@ class MessagingClientImplTest {
 
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
-        val expectedEvent = PresenceEvent(
-            eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect),
-        ).toTransportEvent()
+        val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
         slot.captured.onMessage(
@@ -1280,12 +1248,6 @@ class MessagingClientImplTest {
             mockAttachmentHandler.clearAll()
             mockPlatformSocket.sendMessage(Request.configureRequest(startNew = true))
         }
-    }
-
-    private fun verifyCleanUp() {
-        mockMessageStore.invalidateConversationCache()
-        mockAttachmentHandler.clearAll()
-        mockReconnectionHandler.clear()
     }
 
     @Test
@@ -1525,6 +1487,12 @@ class MessagingClientImplTest {
             oldState = State.Configured(connected = true, newSession = true),
             newState = State.Reconnecting
         )
+
+    private fun verifyCleanUp() {
+        mockMessageStore.invalidateConversationCache()
+        mockAttachmentHandler.clearAll()
+        mockReconnectionHandler.clear()
+    }
 }
 
 private object Response {

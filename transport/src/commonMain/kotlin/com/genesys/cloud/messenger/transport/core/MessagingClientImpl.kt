@@ -356,7 +356,7 @@ internal class MessagingClientImpl(
                     }
                 } else {
                     structuredMessage.events.forEach {
-                        if (it.eventType == StructuredMessageEvent.Type.Presence) {
+                        if (it is PresenceEvent) {
                             eventHandler.onEvent(it.toTransportEvent())
                         }
                     }
