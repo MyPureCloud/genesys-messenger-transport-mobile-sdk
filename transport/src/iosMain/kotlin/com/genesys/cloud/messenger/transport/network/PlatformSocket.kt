@@ -17,6 +17,8 @@ import platform.Foundation.NSURLErrorBadServerResponse
 import platform.Foundation.NSURLErrorNotConnectedToInternet
 import platform.Foundation.NSURLSession
 import platform.Foundation.NSURLSessionConfiguration
+import platform.Foundation.NSURLSessionTask
+import platform.Foundation.NSURLSessionTaskDelegateProtocol
 import platform.Foundation.NSURLSessionWebSocketCloseCode
 import platform.Foundation.NSURLSessionWebSocketDelegateProtocol
 import platform.Foundation.NSURLSessionWebSocketMessage
@@ -77,6 +79,18 @@ internal actual class PlatformSocket actual constructor(
             delegateQueue = NSOperationQueue.currentQueue()
         )
         webSocket = urlSession.webSocketTaskWithRequest(urlRequest)
+        webSocket?.delegate = object : NSObject(), NSURLSessionTaskDelegateProtocol {
+            override fun URLSession(
+                session: NSURLSession,
+                task: NSURLSessionTask,
+                didCompleteWithError: NSError?,
+            ) {
+                if (task == webSocket && didCompleteWithError != null) {
+                    log.e { "Socket did complete with error: ${didCompleteWithError.localizedDescription}" }
+                    handleError(didCompleteWithError, "WebSocketTask didCompleteWithError")
+                }
+            }
+        }
         webSocket?.resume()
         this.listener = listener
         listenMessages(listener)

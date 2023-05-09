@@ -9,6 +9,10 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEve
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 private const val FALLBACK_TYPING_INDICATOR_DURATION = 5000L
 
@@ -16,12 +20,16 @@ internal class EventHandlerImpl(
     val log: Log = Log(enableLogs = false, LogTag.EVENT_HANDLER),
 ) : EventHandler {
 
+    private val mainDispatcher = CoroutineScope(Dispatchers.Main + SupervisorJob())
+
     override var eventListener: ((Event) -> Unit)? = null
 
     override fun onEvent(event: StructuredMessageEvent) {
         val transportEvent = event.toTransportEvent()
         log.i { "on event: $transportEvent" }
-        eventListener?.invoke(transportEvent)
+        mainDispatcher.launch {
+            eventListener?.invoke(transportEvent)
+        }
     }
 }
 

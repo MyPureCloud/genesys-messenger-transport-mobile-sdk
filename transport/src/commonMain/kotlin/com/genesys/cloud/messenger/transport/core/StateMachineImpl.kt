@@ -3,10 +3,16 @@ package com.genesys.cloud.messenger.transport.core
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 internal class StateMachineImpl(
     val log: Log = Log(enableLogs = false, LogTag.STATE_MACHINE),
 ) : StateMachine {
+
+    private val mainDispatcher = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     override var currentState: State = State.Idle
         set(value) {
@@ -14,8 +20,10 @@ internal class StateMachineImpl(
                 log.i { "State changed from: ${field::class.simpleName}, to: ${value::class.simpleName}" }
                 val oldState = field
                 field = value
-                stateListener?.invoke(value)
-                stateChangedListener?.invoke(StateChange(oldState, value))
+                mainDispatcher.launch {
+                    stateListener?.invoke(value)
+                    stateChangedListener?.invoke(StateChange(oldState, value))
+                }
             }
         }
 
