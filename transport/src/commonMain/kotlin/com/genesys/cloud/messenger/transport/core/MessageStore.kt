@@ -6,10 +6,6 @@ import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.extensions.getUploadedAttachments
 import com.genesys.cloud.messenger.transport.util.logs.Log
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 
 internal const val DEFAULT_PAGE_SIZE = 25
 
@@ -27,12 +23,8 @@ internal class MessageStore(
     val updateAttachmentStateWith = { attachment: Attachment -> update(attachment) }
     var messageListener: ((MessageEvent) -> Unit)? = null
 
-    private val mainDispatcher = CoroutineScope(Dispatchers.Main + SupervisorJob())
-
     private fun publish(event: MessageEvent) {
-        mainDispatcher.launch {
-            messageListener?.invoke(event)
-        }
+        messageListener?.invoke(event)
     }
 
     fun prepareMessage(
