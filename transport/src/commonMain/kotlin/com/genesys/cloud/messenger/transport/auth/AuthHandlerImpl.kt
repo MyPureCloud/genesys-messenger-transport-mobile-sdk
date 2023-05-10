@@ -64,7 +64,7 @@ internal class AuthHandlerImpl(
     override fun logout(authJwt: AuthJwt) {
         dispatcher.launch {
             when (val response = api.logoutFromAuthenticatedSession(authJwt.jwt)) {
-                is Response.Success -> eventHandler.onEvent(Event.Logout)
+                is Response.Success -> log.i { "logout() request was successfully sent." }
                 is Response.Failure -> {
                     when (response.errorCode) {
                         is ErrorCode.CancellationError -> {

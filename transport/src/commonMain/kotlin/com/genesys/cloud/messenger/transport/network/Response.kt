@@ -6,3 +6,9 @@ internal sealed class Response<out T : Any> {
     data class Success<out T : Any>(val value: T) : Response<T>()
     data class Failure(val errorCode: ErrorCode, val message: String?) : Response<Nothing>()
 }
+
+/**
+ *  Use for Response.Success on requests with no body.
+ */
+internal class Empty
+

@@ -93,14 +93,12 @@ internal class WebMessagingApi(
     }
 
     @Throws(CancellationException::class)
-    suspend fun logoutFromAuthenticatedSession(jwt: String): Response<AuthJwt> = try {
+    suspend fun logoutFromAuthenticatedSession(jwt: String): Response<Empty> = try {
         val response = client.delete(configuration.logoutUrl.toString()) {
             headerAuthorizationBearer(jwt)
         }
-
-        println("response: $response")
         if (response.status.isSuccess()) {
-            Response.Success(response.body())
+            Response.Success(Empty())
         } else {
             Response.Failure(ErrorCode.AuthLogoutFailed, response.body<String>())
         }
