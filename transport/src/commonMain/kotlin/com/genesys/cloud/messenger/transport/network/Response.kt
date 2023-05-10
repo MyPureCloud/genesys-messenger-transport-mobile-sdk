@@ -11,4 +11,3 @@ internal sealed class Response<out T : Any> {
  *  Use for Response.Success on requests with no body.
  */
 internal class Empty
-
