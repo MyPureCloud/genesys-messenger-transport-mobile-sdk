@@ -430,4 +430,35 @@ class SerializationTest {
         assertThat(message.body, "WebMessagingMessage body").isNotNull()
             .hasClass(LogoutEvent::class)
     }
+
+    @Test
+    fun whenStructuredMessageWithAttachmentAndUnknownContent() {
+        val givenStructuredMessage = """{"type":"message","class":"StructuredMessage","code":200,"body":{"direction":"Outbound","id":"msg_id","type":"Text","text":"Hi","content":[{"fakeContent":{"foo":"bar"},"contentType":"FakeContent"},{"attachment":{"id":"attachment_id","filename":"image.png","mediaType":"Image","url":"https://downloadurl.com"},"contentType":"Attachment"}],"originatingEntity":"Human"}}"""
+        val expectedStructuredMessage = WebMessagingMessage(
+            type = "message",
+            code = 200,
+            body = StructuredMessage(
+                id = "msg_id",
+                type = StructuredMessage.Type.Text,
+                text = "Hi",
+                direction = "Outbound",
+                content = listOf(
+                    StructuredMessage.Content.UnknownContent,
+                    StructuredMessage.Content.AttachmentContent(
+                        contentType = "Attachment",
+                        attachment = StructuredMessage.Content.AttachmentContent.Attachment(
+                            id = "attachment_id",
+                            url = "https://downloadurl.com",
+                            filename = "image.png",
+                            mediaType = "Image",
+                        )
+                    )
+                ),
+                originatingEntity = "Human"
+            )
+        )
+        val result = WebMessagingJson.decodeFromString(givenStructuredMessage)
+
+        assertThat(result).isEqualTo(expectedStructuredMessage)
+    }
 }

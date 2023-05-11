@@ -23,7 +23,7 @@ internal fun StructuredMessage.toMessage(): Message {
         type = type.name,
         text = text,
         timeStamp = channel?.time.fromIsoToEpochMilliseconds(),
-        attachments = content.toAttachments(),
+        attachments = content.filterIsInstance<StructuredMessage.Content.AttachmentContent>().toAttachments(),
         events = events.mapNotNull { it.toTransportEvent() },
         from = Message.Participant(
             name = channel?.from?.nickname,
@@ -63,13 +63,13 @@ internal fun String?.mapOriginatingEntity(isInbound: () -> Boolean): Message.Par
     }
 }
 
-private fun List<StructuredMessage.Content>.toAttachments(): Map<String, Attachment> {
+private fun List<StructuredMessage.Content.AttachmentContent>.toAttachments(): Map<String, Attachment> {
     return this.associate {
-        it.attachment.run {
-            this.id to Attachment(
-                id = this.id,
-                fileName = this.filename,
-                state = Attachment.State.Sent(this.url),
+        it.run {
+            this.attachment.id to Attachment(
+                id = this.attachment.id,
+                fileName = this.attachment.filename,
+                state = Attachment.State.Sent(this.attachment.url),
             )
         }
     }
