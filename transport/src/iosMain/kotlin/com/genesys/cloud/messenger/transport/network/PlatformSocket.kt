@@ -17,12 +17,14 @@ import platform.Foundation.NSURLErrorBadServerResponse
 import platform.Foundation.NSURLErrorNotConnectedToInternet
 import platform.Foundation.NSURLSession
 import platform.Foundation.NSURLSessionConfiguration
+import platform.Foundation.NSURLSessionTaskStateRunning
 import platform.Foundation.NSURLSessionWebSocketCloseCode
 import platform.Foundation.NSURLSessionWebSocketDelegateProtocol
 import platform.Foundation.NSURLSessionWebSocketMessage
 import platform.Foundation.NSURLSessionWebSocketTask
 import platform.Foundation.setValue
 import platform.darwin.NSObject
+import platform.posix.ENOTCONN
 import platform.posix.ETIMEDOUT
 
 internal actual class PlatformSocket actual constructor(
@@ -133,26 +135,33 @@ internal actual class PlatformSocket actual constructor(
                     handleError(nsError, "Pong not received within interval [$pingInterval]")
                     return@scheduledTimerWithTimeInterval
                 }
-                sendPing()
+
+                waitingOnPong = true
+                log.i { "Sending ping" }
+                sendPing { nsError ->
+                    if (nsError != null) {
+                        handleError(nsError, "Pong handler failure")
+                        return@sendPing
+                    }
+                    waitingOnPong = false
+                    log.i { "Received pong" }
+                }
             }
         }
     }
 
-    private fun sendPing() {
-        log.i { "Sending ping" }
-        if (waitingOnPong) {
-            log.w { "Trying to send ping while still waiting for pong." }
+    private fun sendPing(pongHandler: (NSError?) -> Unit) {
+        if (webSocket?.state != NSURLSessionTaskStateRunning) {
+            pongHandler(
+                NSError(
+                    domain = NSPOSIXErrorDomain,
+                    code = ENOTCONN.convert(),
+                    userInfo = null
+                )
+            )
             return
         }
-        waitingOnPong = true
-        webSocket?.sendPingWithPongReceiveHandler { nsError ->
-            waitingOnPong = false
-            if (nsError != null) {
-                handleError(nsError, "Received pong error")
-            } else {
-                log.i { "Received pong" }
-            }
-        }
+        webSocket?.sendPingWithPongReceiveHandler(pongHandler)
     }
 
     private fun cancelPings() {
@@ -206,6 +215,6 @@ private fun NSError.toTransportErrorCode(): ErrorCode =
         else -> ErrorCode.WebsocketError
     }
 
-internal fun NSTimer?.isScheduled(): Boolean {
+private fun NSTimer?.isScheduled(): Boolean {
     return this?.valid ?: false
 }
