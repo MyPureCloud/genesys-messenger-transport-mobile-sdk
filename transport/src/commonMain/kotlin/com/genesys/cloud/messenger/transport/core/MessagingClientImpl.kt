@@ -2,7 +2,6 @@ package com.genesys.cloud.messenger.transport.core
 
 import com.genesys.cloud.messenger.transport.auth.AuthHandler
 import com.genesys.cloud.messenger.transport.auth.AuthHandlerImpl
-import com.genesys.cloud.messenger.transport.auth.AuthJwt
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
@@ -115,7 +114,7 @@ internal class MessagingClientImpl(
     }
 
     @Throws(IllegalStateException::class)
-    override fun connectAuthenticatedSession(jwt: AuthJwt) {
+    override fun connectAuthenticatedSession() {
         connectAuthenticated = true
         log.i { "connect()" }
         stateMachine.onConnect()

@@ -8,7 +8,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.genesys.cloud.messenger.androidcomposeprototype.BuildConfig
-import com.genesys.cloud.messenger.transport.auth.AuthJwt
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
@@ -192,7 +191,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     private fun doConnectAuthenticated() {
         try {
             if (authState is AuthState.Authenticated) {
-                client.connectAuthenticatedSession((authState as AuthState.Authenticated).authJwt)
+                client.connectAuthenticatedSession()
             } else {
                 throw IllegalStateException("Auth jwt was not fetched. Please, fetch and try again.")
             }
@@ -313,8 +312,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         val statePayloadMessage = when (newState) {
             is State.Configured ->
                 "connected: ${newState.connected}," +
-                        " newSession: ${newState.newSession}," +
-                        " wasReconnecting: ${oldState is State.Reconnecting}"
+                    " newSession: ${newState.newSession}," +
+                    " wasReconnecting: ${oldState is State.Reconnecting}"
             is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Closed -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Error -> "code: ${newState.code}, message: ${newState.message}"
@@ -368,7 +367,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
                 onSocketMessageReceived(event.toString())
             }
             is Event.Authenticated -> {
-                authState = AuthState.Authenticated(event.authJwt)
+                authState = AuthState.Authenticated
                 onSocketMessageReceived(event.toString())
             }
             is Event.Error -> {
@@ -416,6 +415,6 @@ sealed class AuthState {
         val correctiveAction: CorrectiveAction,
     ) : AuthState()
 
-    data class Authenticated(val authJwt: AuthJwt) : AuthState()
+    object Authenticated : AuthState()
     object LoggedOut : AuthState()
 }

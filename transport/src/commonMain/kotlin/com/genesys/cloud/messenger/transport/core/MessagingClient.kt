@@ -1,6 +1,5 @@
 package com.genesys.cloud.messenger.transport.core
 
-import com.genesys.cloud.messenger.transport.auth.AuthJwt
 import com.genesys.cloud.messenger.transport.core.events.Event
 
 /**
@@ -116,12 +115,10 @@ interface MessagingClient {
      * Open and configure a secure WebSocket connection to the Web Messaging service using the url and deploymentId
      * configured on this MessagingClient instance, authenticating the session with the provided JWT.
      *
-     * @param jwt the AuthJwt used to authenticate the session.
-     *
      * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
      */
     @Throws(IllegalStateException::class)
-    fun connectAuthenticatedSession(jwt: AuthJwt)
+    fun connectAuthenticatedSession()
 
     /**
      * Configure a new chat once the previous one is in State.ReadOnly.
