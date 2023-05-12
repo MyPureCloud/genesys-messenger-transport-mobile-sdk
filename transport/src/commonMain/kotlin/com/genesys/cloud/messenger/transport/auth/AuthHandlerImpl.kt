@@ -26,7 +26,7 @@ internal class AuthHandlerImpl(
                 is Response.Success -> {
                     response.value.let {
                         authJwt = it
-                        eventHandler.onEvent(Event.Authenticated(it))
+                        eventHandler.onEvent(Event.Authenticated)
                     }
                 }
                 is Response.Failure -> handleRequestError(response, "fetchAuthJwt()")
@@ -55,8 +55,9 @@ internal class AuthHandlerImpl(
         authJwt?.let {
             dispatcher.launch {
                 when (val response = api.refreshAuthJwt(it.refreshToken!!)) {
-                    is Response.Success -> authJwt =
-                        it.copy(jwt = response.value.jwt, refreshToken = it.refreshToken)
+                    is Response.Success ->
+                        authJwt =
+                            it.copy(jwt = response.value.jwt, refreshToken = it.refreshToken)
                     is Response.Failure -> handleRequestError(response, "refreshToken()")
                 }
             }

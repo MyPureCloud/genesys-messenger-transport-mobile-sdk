@@ -23,7 +23,6 @@ internal class MessageStore(
     val updateAttachmentStateWith = { attachment: Attachment -> update(attachment) }
     var messageListener: ((MessageEvent) -> Unit)? = null
 
-
     fun prepareMessage(
         text: String,
         customAttributes: Map<String, String> = emptyMap(),
