@@ -23,6 +23,10 @@ internal class MessageStore(
     val updateAttachmentStateWith = { attachment: Attachment -> update(attachment) }
     var messageListener: ((MessageEvent) -> Unit)? = null
 
+    private fun publish(event: MessageEvent) {
+        messageListener?.invoke(event)
+    }
+
     fun prepareMessage(
         text: String,
         customAttributes: Map<String, String> = emptyMap(),
@@ -30,7 +34,7 @@ internal class MessageStore(
         val messageToSend = pendingMessage.copy(text = text, state = Message.State.Sending).also {
             log.i { "Message prepared to send: $it" }
             activeConversation.add(it)
-            messageListener?.invoke(MessageEvent.MessageInserted(it))
+            publish(MessageEvent.MessageInserted(it))
             pendingMessage = Message()
         }
         val channel =
@@ -52,15 +56,15 @@ internal class MessageStore(
             Direction.Inbound -> {
                 activeConversation.find { it.id == message.id }?.let {
                     activeConversation[it.getIndex()] = message
-                    messageListener?.invoke(MessageEvent.MessageUpdated(message))
+                    publish(MessageEvent.MessageUpdated(message))
                 } ?: run {
                     activeConversation.add(message)
-                    messageListener?.invoke(MessageEvent.MessageInserted(message))
+                    publish(MessageEvent.MessageInserted(message))
                 }
             }
             Direction.Outbound -> {
                 activeConversation.add(message)
-                messageListener?.invoke(MessageEvent.MessageInserted(message))
+                publish(MessageEvent.MessageInserted(message))
             }
         }
         nextPage = activeConversation.getNextPage()
@@ -72,7 +76,7 @@ internal class MessageStore(
             it[attachment.id] = attachment
         }
         pendingMessage = pendingMessage.copy(attachments = attachments)
-        messageListener?.invoke(MessageEvent.AttachmentUpdated(attachment))
+        publish(MessageEvent.AttachmentUpdated(attachment))
     }
 
     fun updateMessageHistory(historyPage: List<Message>, total: Int) {
@@ -81,7 +85,7 @@ internal class MessageStore(
             log.i { "Message history updated with: $this." }
             activeConversation.addAll(0, this)
             nextPage = activeConversation.getNextPage()
-            messageListener?.invoke(MessageEvent.HistoryFetched(this, startOfConversation))
+            publish(MessageEvent.HistoryFetched(this, startOfConversation))
         }
     }
 
