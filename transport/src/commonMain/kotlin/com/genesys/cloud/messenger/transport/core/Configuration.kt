@@ -47,4 +47,10 @@ data class Configuration(
             path("api/v2/webdeployments/token/revoke")
         }.build()
     }
+
+    internal val refreshAuthTokenUrl: Url by lazy {
+        URLBuilder("https://api.$domain").apply {
+            path("api/v2/webdeployments/token/refresh")
+        }.build()
+    }
 }

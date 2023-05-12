@@ -16,10 +16,9 @@ internal class AuthHandlerImpl(
     private val eventHandler: EventHandler,
     private val api: WebMessagingApi,
     private val log: Log,
-    private val dispatcher: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
+    private val dispatcher: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
 ) : AuthHandler {
-
-    private var authJwt: AuthJwt? = null
+    override var authJwt: AuthJwt? = null
 
     override fun authenticate(authCode: String, redirectUri: String, codeVerifier: String?) {
         dispatcher.launch {
@@ -30,33 +29,7 @@ internal class AuthHandlerImpl(
                         eventHandler.onEvent(Event.Authenticated(it))
                     }
                 }
-                is Response.Failure -> {
-                    when (response.errorCode) {
-                        is ErrorCode.CancellationError -> {
-                            log.w { "Cancellation exception was thrown, while running fetchAuthJwt() request." }
-                        }
-                        is ErrorCode.AuthFailed -> {
-                            log.e { "AuthFailed " }
-                            eventHandler.onEvent(
-                                Event.Error(
-                                    response.errorCode,
-                                    response.message,
-                                    CorrectiveAction.Reauthenticate
-                                )
-                            )
-                        }
-                        else -> {
-                            log.e { "Unknown error" }
-                            eventHandler.onEvent(
-                                Event.Error(
-                                    response.errorCode,
-                                    response.message,
-                                    CorrectiveAction.Reauthenticate
-                                )
-                            )
-                        }
-                    }
-                }
+                is Response.Failure -> handleRequestError(response, "fetchAuthJwt()")
             }
         }
     }
@@ -65,32 +38,41 @@ internal class AuthHandlerImpl(
         dispatcher.launch {
             when (val response = api.logoutFromAuthenticatedSession(authJwt.jwt)) {
                 is Response.Success -> log.i { "logout() request was successfully sent." }
-                is Response.Failure -> {
-                    when (response.errorCode) {
-                        is ErrorCode.CancellationError -> {
-                            log.w { "Cancellation exception was thrown, while running logout() request." }
-                        }
-                        is ErrorCode.AuthLogoutFailed -> {
-                            eventHandler.onEvent(
-                                Event.Error(
-                                    response.errorCode,
-                                    response.message,
-                                    CorrectiveAction.Reauthenticate
-                                )
-                            )
-                        }
-                        else -> {
-                            log.e { "Unknown error" }
-                            eventHandler.onEvent(
-                                Event.Error(
-                                    response.errorCode,
-                                    response.message,
-                                    CorrectiveAction.Reauthenticate
-                                )
-                            )
-                        }
-                    }
+                is Response.Failure -> handleRequestError(response, "logout()")
+            }
+        }
+    }
+
+    override fun refreshToken() {
+        if (authJwt?.refreshToken == null) {
+            log.w { "can not refreshAuthToken without authJwt.refreshAuthToken." }
+            return
+        }
+        authJwt?.let {
+            dispatcher.launch {
+                when (val response = api.refreshAuthJwt(it.refreshToken!!)) {
+                    is Response.Success -> authJwt =
+                        it.copy(jwt = response.value.jwt, refreshToken = it.refreshToken)
+                    is Response.Failure -> handleRequestError(response, "refreshToken()")
                 }
+            }
+        }
+    }
+
+    private fun handleRequestError(response: Response.Failure, requestName: String) {
+        when (response.errorCode) {
+            is ErrorCode.CancellationError -> {
+                log.w { "Cancellation exception was thrown, while running $requestName request." }
+            }
+            else -> {
+                log.e { "$requestName respond with error: ${response.errorCode}, and message: ${response.message}" }
+                eventHandler.onEvent(
+                    Event.Error(
+                        response.errorCode,
+                        response.message,
+                        CorrectiveAction.Reauthenticate
+                    )
+                )
             }
         }
     }

@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class AuthJwt(
     val jwt: String,
-    val refreshToken: String,
+    val refreshToken: String? = null,
 )

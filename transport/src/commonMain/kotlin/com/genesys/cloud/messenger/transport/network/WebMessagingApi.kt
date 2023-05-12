@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.network
 
 import com.genesys.cloud.messenger.transport.auth.AuthJwt
+import com.genesys.cloud.messenger.transport.auth.RefreshToken
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.DEFAULT_PAGE_SIZE
 import com.genesys.cloud.messenger.transport.core.ErrorCode
@@ -62,7 +63,6 @@ internal class WebMessagingApi(
         }
     }
 
-    @Throws(CancellationException::class)
     suspend fun fetchAuthJwt(
         authCode: String,
         redirectUri: String,
@@ -92,7 +92,6 @@ internal class WebMessagingApi(
         Response.Failure(ErrorCode.AuthFailed, exception.message)
     }
 
-    @Throws(CancellationException::class)
     suspend fun logoutFromAuthenticatedSession(jwt: String): Response<Empty> = try {
         val response = client.delete(configuration.logoutUrl.toString()) {
             headerAuthorizationBearer(jwt)
@@ -106,6 +105,23 @@ internal class WebMessagingApi(
         Response.Failure(ErrorCode.CancellationError, cancellationException.message)
     } catch (exception: Exception) {
         Response.Failure(ErrorCode.AuthLogoutFailed, exception.message)
+    }
+
+    @Throws(CancellationException::class)
+    suspend fun refreshAuthJwt(refreshToken: String): Response<AuthJwt> = try {
+        val response = client.post(configuration.refreshAuthTokenUrl.toString()) {
+            header("content-type", ContentType.Application.Json)
+            setBody(RefreshToken(refreshToken))
+        }
+        if (response.status.isSuccess()) {
+            Response.Success(response.body())
+        } else {
+            Response.Failure(ErrorCode.RefreshAuthTokenFailure, response.body<String>())
+        }
+    } catch (cancellationException: CancellationException) {
+        Response.Failure(ErrorCode.CancellationError, cancellationException.message)
+    } catch (exception: Exception) {
+        Response.Failure(ErrorCode.RefreshAuthTokenFailure, exception.message)
     }
 }
 

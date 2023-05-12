@@ -124,7 +124,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         val input = components.getOrNull(1) ?: ""
         when (command) {
             "connect" -> doConnect()
-            "connectAuthenticated" -> doConnectAuthenticated()
+            "cauth" -> doConnectAuthenticated()
             "bye" -> doDisconnect()
             "send" -> doSendMessage(input)
             "history" -> fetchNextPage()
@@ -137,14 +137,20 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "typing" -> doIndicateTyping()
             "newChat" -> doStartNewChat()
             "oktaSignIn" -> doOktaSignIn(false)
-            "oktaSignInWithPKCE" -> doOktaSignIn(true)
-            "oktaLogout" -> logoutFromOktaSession()
-            "authenticate" -> doAuthenticate()
+            "pkce" -> doOktaSignIn(true)
+            "logout" -> logoutFromOktaSession()
+            "auth" -> doAuthenticate()
+            "refresh" -> doRefresh()
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
             }
         }
+    }
+
+    private fun doRefresh() {
+        client.refreshAuthToken()
+        commandWaiting = false
     }
 
     private fun doOktaSignIn(withPKCE: Boolean) {

@@ -75,8 +75,7 @@ internal class MessagingClientImpl(
         log.withTag(LogTag.AUTH_HANDLER)
     ),
 ) : MessagingClient {
-
-    private var authJwt: AuthJwt? = null
+    private var connectAuthenticated = false
     private var isStartingANewSession = false
 
     override val currentState: State
@@ -117,7 +116,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun connectAuthenticatedSession(jwt: AuthJwt) {
-        authJwt = jwt
+        connectAuthenticated = true
         log.i { "connect()" }
         stateMachine.onConnect()
         webSocket.openSocket(socketListener)
@@ -142,7 +141,7 @@ internal class MessagingClientImpl(
 
     private fun configureSession(startNew: Boolean = false) {
         log.i { "configureSession(token = $token, startNew: $startNew)" }
-        val encodedJson = if (authJwt != null) {
+        val encodedJson = if (connectAuthenticated && authHandler.authJwt != null) {
             encodeAuthenticatedConfigureSessionRequest(startNew)
         } else {
             encodeAnonymousConfigureSessionRequest(startNew)
@@ -220,7 +219,7 @@ internal class MessagingClientImpl(
     }
 
     override fun logoutFromAuthenticatedSession(authJwt: AuthJwt) {
-        val authJwt = this.authJwt ?: run {
+        val authJwt = this.authHandler.authJwt ?: run {
             log.w { "Logout from anonymous session is not supported." }
             return
         }
@@ -250,6 +249,11 @@ internal class MessagingClientImpl(
             log.i { "sendAutoStart()" }
             send(it)
         }
+    }
+
+    @Throws(IllegalStateException::class)
+    override fun refreshAuthToken() {
+        authHandler.refreshToken()
     }
 
     /**
@@ -371,14 +375,12 @@ internal class MessagingClientImpl(
         healthCheckProvider.clear()
         attachmentHandler.clearAll()
         reconnectionHandler.clear()
-        authJwt = null
     }
 
     private fun transitionToStateError(errorCode: ErrorCode, errorMessage: String?) {
         stateMachine.onError(errorCode, errorMessage)
         attachmentHandler.clearAll()
         reconnectionHandler.clear()
-        authJwt = null
     }
 
     private fun encodeAnonymousConfigureSessionRequest(startNew: Boolean) =
@@ -404,7 +406,7 @@ internal class MessagingClientImpl(
                     JourneyCustomer(token, "cookie"),
                     JourneyCustomerSession("", "web")
                 ),
-                data = ConfigureAuthenticatedSessionRequest.Data(authJwt?.jwt ?: "")
+                data = ConfigureAuthenticatedSessionRequest.Data(authHandler.authJwt?.jwt ?: "")
             )
         )
 

@@ -232,4 +232,7 @@ interface MessagingClient {
      * @param authJwt Is the accessToken and refreshToken of the session.
      */
     fun logoutFromAuthenticatedSession(authJwt: AuthJwt)
+
+    @Throws(IllegalStateException::class)
+    fun refreshAuthToken()
 }
