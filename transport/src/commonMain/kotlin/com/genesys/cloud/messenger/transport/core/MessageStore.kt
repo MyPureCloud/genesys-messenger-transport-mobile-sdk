@@ -23,9 +23,6 @@ internal class MessageStore(
     val updateAttachmentStateWith = { attachment: Attachment -> update(attachment) }
     var messageListener: ((MessageEvent) -> Unit)? = null
 
-    private fun publish(event: MessageEvent) {
-        messageListener?.invoke(event)
-    }
 
     fun prepareMessage(
         text: String,
@@ -97,6 +94,16 @@ internal class MessageStore(
         }
     }
 
+    fun invalidateConversationCache() {
+        nextPage = 1
+        activeConversation.clear()
+        startOfConversation = false
+    }
+
+    private fun publish(event: MessageEvent) {
+        messageListener?.invoke(event)
+    }
+
     private fun Message.getIndex(): Int = activeConversation.indexOf(this)
 
     private fun <E> MutableList<E>.getNextPage(): Int = (this.size / DEFAULT_PAGE_SIZE) + 1
@@ -110,12 +117,6 @@ internal class MessageStore(
                 message.timeStamp == activeMessage.timeStamp
             }
         }
-    }
-
-    fun invalidateConversationCache() {
-        nextPage = 1
-        activeConversation.clear()
-        startOfConversation = false
     }
 }
 
