@@ -218,13 +218,7 @@ internal class MessagingClientImpl(
             }
     }
 
-    override fun logoutFromAuthenticatedSession(authJwt: AuthJwt) {
-        val authJwt = this.authHandler.authJwt ?: run {
-            log.w { "Logout from anonymous session is not supported." }
-            return
-        }
-        authHandler.logout(authJwt)
-    }
+    override fun logoutFromAuthenticatedSession() = authHandler.logout()
 
     override fun invalidateConversationCache() {
         log.i { "Clear conversation history." }

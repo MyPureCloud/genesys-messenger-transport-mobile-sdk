@@ -171,19 +171,13 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private fun logoutFromOktaSession() {
-        when (val currentState = authState) {
-            is AuthState.Authenticated -> {
-                currentState.authJwt.let {
-                    client.logoutFromAuthenticatedSession(it)
-                }
-            }
-            else -> {
-                handleException(
-                    IllegalStateException("Can not perform logout. Auth jwt was not fetched. Please, fetch and try again."),
-                    "okta logout"
-                )
-            }
+    private fun logoutFromOktaSession() = when (authState) {
+        is AuthState.Authenticated -> client.logoutFromAuthenticatedSession()
+        else -> {
+            handleException(
+                IllegalStateException("Can not perform logout. Auth jwt was not fetched. Please, fetch and try again."),
+                "okta logout"
+            )
         }
     }
 
@@ -319,8 +313,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         val statePayloadMessage = when (newState) {
             is State.Configured ->
                 "connected: ${newState.connected}," +
-                    " newSession: ${newState.newSession}," +
-                    " wasReconnecting: ${oldState is State.Reconnecting}"
+                        " newSession: ${newState.newSession}," +
+                        " wasReconnecting: ${oldState is State.Reconnecting}"
             is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Closed -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Error -> "code: ${newState.code}, message: ${newState.message}"

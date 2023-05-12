@@ -34,7 +34,11 @@ internal class AuthHandlerImpl(
         }
     }
 
-    override fun logout(authJwt: AuthJwt) {
+    override fun logout() {
+        val authJwt = this.authJwt ?: run {
+            log.w { "Logout from anonymous session is not supported." }
+            return
+        }
         dispatcher.launch {
             when (val response = api.logoutFromAuthenticatedSession(authJwt.jwt)) {
                 is Response.Success -> log.i { "logout() request was successfully sent." }

@@ -5,7 +5,7 @@ internal interface AuthHandler {
 
     fun authenticate(authCode: String, redirectUri: String, codeVerifier: String?)
 
-    fun logout(authJwt: AuthJwt)
+    fun logout()
 
     fun refreshToken()
 }

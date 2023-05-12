@@ -228,10 +228,8 @@ interface MessagingClient {
     /**
      * Logs out user from authenticated session on all devices that shares the same auth session.
      * In case of failure Event.Error with [ErrorCode.AuthLogoutFailed] will be sent.
-     *
-     * @param authJwt Is the accessToken and refreshToken of the session.
      */
-    fun logoutFromAuthenticatedSession(authJwt: AuthJwt)
+    fun logoutFromAuthenticatedSession()
 
     @Throws(IllegalStateException::class)
     fun refreshAuthToken()
