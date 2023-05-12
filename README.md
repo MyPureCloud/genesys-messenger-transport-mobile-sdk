@@ -57,3 +57,9 @@ implementation 'cloud.genesys:messenger-transport-mobile-sdk:<version>'
 ## Documentation
 
 Detailed documentation for Messenger Transport, including how to use the SDK and how to contribute to the project, can be found on the [Wiki](https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/wiki).
+
+## Known Issues
+
+| Issue | Description | Details | Resolution | Affected Version |
+| --- | --- | --- | --- | --- |
+| completionHandler does not return response to `fetchDeploymentConfig()` and `nextPage()` | This issue is caused by a bug in an older version of `Ktor`, the Transport SDK's underlying network engine.| If the Logging plugin is installed, the Ktor client can deadlock or block after BODY START is printed to the console. Although the response is still returned to the calling function, any future requests will block. | On Ktor `2.x` this issue was resolved. It is recommended to use Transport `2.3.0` or higher, that implements `Ktor 2.x`. In case a lower version is required, make sure to disable Ktor Login Plugin by setting the `logging=false` in the Configuration object on iOS. | iOS Transport `2.2.0` and lower |
