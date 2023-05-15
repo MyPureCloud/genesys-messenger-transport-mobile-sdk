@@ -225,6 +225,9 @@ interface MessagingClient {
     /**
      * Logs out user from authenticated session on all devices that shares the same auth session.
      * In case of failure Event.Error with [ErrorCode.AuthLogoutFailed] will be sent.
+     *
+     * @throws IllegalStateException if called before session was connected.
      */
+    @Throws(IllegalStateException::class)
     fun logoutFromAuthenticatedSession()
 }

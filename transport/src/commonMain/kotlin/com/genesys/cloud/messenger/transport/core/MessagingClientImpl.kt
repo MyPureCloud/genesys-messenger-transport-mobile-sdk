@@ -222,7 +222,11 @@ internal class MessagingClientImpl(
             }
     }
 
-    override fun logoutFromAuthenticatedSession() = authHandler.logout()
+    @Throws(IllegalStateException::class)
+    override fun logoutFromAuthenticatedSession() {
+        stateMachine.checkIfConfigured()
+        authHandler.logout()
+    }
 
     override fun invalidateConversationCache() {
         log.i { "Clear conversation history." }
