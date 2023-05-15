@@ -1,10 +1,12 @@
 package com.genesys.cloud.messenger.transport.auth
 
+import com.genesys.cloud.messenger.transport.core.AuthConfiguration
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
-import com.genesys.cloud.messenger.transport.network.Response
+import com.genesys.cloud.messenger.transport.network.Empty
+import com.genesys.cloud.messenger.transport.network.Result
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import kotlinx.coroutines.CoroutineScope
@@ -13,6 +15,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 internal class AuthHandlerImpl(
+    private val configuration: AuthConfiguration,
     private val eventHandler: EventHandler,
     private val api: WebMessagingApi,
     private val log: Log,
@@ -22,14 +25,14 @@ internal class AuthHandlerImpl(
 
     override fun authenticate(authCode: String, redirectUri: String, codeVerifier: String?) {
         dispatcher.launch {
-            when (val response = api.fetchAuthJwt(authCode, redirectUri, codeVerifier)) {
-                is Response.Success -> {
-                    response.value.let {
+            when (val result = api.fetchAuthJwt(authCode, redirectUri, codeVerifier)) {
+                is Result.Success -> {
+                    result.value.let {
                         authJwt = it
                         eventHandler.onEvent(Event.Authenticated)
                     }
                 }
-                is Response.Failure -> handleRequestError(response, "fetchAuthJwt()")
+                is Result.Failure -> handleRequestError(result, "fetchAuthJwt()")
             }
         }
     }
@@ -40,41 +43,48 @@ internal class AuthHandlerImpl(
             return
         }
         dispatcher.launch {
-            when (val response = api.logoutFromAuthenticatedSession(authJwt.jwt)) {
-                is Response.Success -> log.i { "logout() request was successfully sent." }
-                is Response.Failure -> handleRequestError(response, "logout()")
+            when (val result = api.logoutFromAuthenticatedSession(authJwt.jwt)) {
+                is Result.Success -> log.i { "logout() request was successfully sent." }
+                is Result.Failure -> handleRequestError(result, "logout()")
             }
         }
     }
 
-    override fun refreshToken() {
+    override fun refreshToken(callback: (Result<Empty>) -> Unit) {
         if (authJwt?.refreshToken == null) {
             log.w { "can not refreshAuthToken without authJwt.refreshAuthToken." }
             return
         }
         authJwt?.let {
             dispatcher.launch {
-                when (val response = api.refreshAuthJwt(it.refreshToken!!)) {
-                    is Response.Success ->
+                when (val result = api.refreshAuthJwt(it.refreshToken!!)) {
+                    is Result.Success -> {
+                        log.i { "refreshAuthToken success." }
                         authJwt =
-                            it.copy(jwt = response.value.jwt, refreshToken = it.refreshToken)
-                    is Response.Failure -> handleRequestError(response, "refreshToken()")
+                            it.copy(jwt = result.value.jwt, refreshToken = it.refreshToken)
+                        callback(Result.Success(Empty()))
+                    }
+                    is Result.Failure -> {
+                        // TODO("Failure to refresh token should result in transition to State.Error. Also, maybe remove the handleRequestError?")
+                        handleRequestError(result, "refreshToken()")
+                        callback(result)
+                    }
                 }
             }
         }
     }
 
-    private fun handleRequestError(response: Response.Failure, requestName: String) {
-        when (response.errorCode) {
+    private fun handleRequestError(result: Result.Failure, requestName: String) {
+        when (result.errorCode) {
             is ErrorCode.CancellationError -> {
                 log.w { "Cancellation exception was thrown, while running $requestName request." }
             }
             else -> {
-                log.e { "$requestName respond with error: ${response.errorCode}, and message: ${response.message}" }
+                log.e { "$requestName respond with error: ${result.errorCode}, and message: ${result.message}" }
                 eventHandler.onEvent(
                     Event.Error(
-                        response.errorCode,
-                        response.message,
+                        result.errorCode,
+                        result.message,
                         CorrectiveAction.Reauthenticate
                     )
                 )

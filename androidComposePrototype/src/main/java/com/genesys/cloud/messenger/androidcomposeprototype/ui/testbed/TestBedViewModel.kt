@@ -139,17 +139,11 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "pkce" -> doOktaSignIn(true)
             "logout" -> logoutFromOktaSession()
             "auth" -> doAuthenticate()
-            "refresh" -> doRefresh()
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
             }
         }
-    }
-
-    private fun doRefresh() {
-        client.refreshAuthToken()
-        commandWaiting = false
     }
 
     private fun doOktaSignIn(withPKCE: Boolean) {
@@ -409,12 +403,11 @@ private fun String.toKeyValuePair(): Pair<String, String> {
 sealed class AuthState {
     object NoAuth : AuthState()
     data class AuthCodeReceived(val authCode: String) : AuthState()
+    object Authenticated : AuthState()
+    object LoggedOut : AuthState()
     data class Error(
         val errorCode: ErrorCode,
         val message: String? = null,
         val correctiveAction: CorrectiveAction,
     ) : AuthState()
-
-    object Authenticated : AuthState()
-    object LoggedOut : AuthState()
 }

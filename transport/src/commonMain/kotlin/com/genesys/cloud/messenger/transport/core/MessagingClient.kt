@@ -227,7 +227,4 @@ interface MessagingClient {
      * In case of failure Event.Error with [ErrorCode.AuthLogoutFailed] will be sent.
      */
     fun logoutFromAuthenticatedSession()
-
-    @Throws(IllegalStateException::class)
-    fun refreshAuthToken()
 }

@@ -67,7 +67,7 @@ internal class WebMessagingApi(
         authCode: String,
         redirectUri: String,
         codeVerifier: String?,
-    ): Response<AuthJwt> = try {
+    ): Result<AuthJwt> = try {
         val requestBody = AuthJwtRequest(
             deploymentId = configuration.deploymentId,
             oauth = OAuth(
@@ -76,52 +76,50 @@ internal class WebMessagingApi(
                 codeVerifier = codeVerifier,
             )
         )
-
         val response = client.post(configuration.jwtAuthUrl.toString()) {
             header("content-type", ContentType.Application.Json)
             setBody(requestBody)
         }
         if (response.status.isSuccess()) {
-            Response.Success(response.body())
+            Result.Success(response.body())
         } else {
-            Response.Failure(ErrorCode.AuthFailed, response.body<String>())
+            Result.Failure(ErrorCode.AuthFailed, response.body<String>())
         }
     } catch (cancellationException: CancellationException) {
-        Response.Failure(ErrorCode.CancellationError, cancellationException.message)
+        Result.Failure(ErrorCode.CancellationError, cancellationException.message)
     } catch (exception: Exception) {
-        Response.Failure(ErrorCode.AuthFailed, exception.message)
+        Result.Failure(ErrorCode.AuthFailed, exception.message)
     }
 
-    suspend fun logoutFromAuthenticatedSession(jwt: String): Response<Empty> = try {
+    suspend fun logoutFromAuthenticatedSession(jwt: String): Result<Empty> = try {
         val response = client.delete(configuration.logoutUrl.toString()) {
             headerAuthorizationBearer(jwt)
         }
         if (response.status.isSuccess()) {
-            Response.Success(Empty())
+            Result.Success(Empty())
         } else {
-            Response.Failure(ErrorCode.AuthLogoutFailed, response.body<String>())
+            Result.Failure(ErrorCode.AuthLogoutFailed, response.body<String>())
         }
     } catch (cancellationException: CancellationException) {
-        Response.Failure(ErrorCode.CancellationError, cancellationException.message)
+        Result.Failure(ErrorCode.CancellationError, cancellationException.message)
     } catch (exception: Exception) {
-        Response.Failure(ErrorCode.AuthLogoutFailed, exception.message)
+        Result.Failure(ErrorCode.AuthLogoutFailed, exception.message)
     }
 
-    @Throws(CancellationException::class)
-    suspend fun refreshAuthJwt(refreshToken: String): Response<AuthJwt> = try {
+    suspend fun refreshAuthJwt(refreshToken: String): Result<AuthJwt> = try {
         val response = client.post(configuration.refreshAuthTokenUrl.toString()) {
             header("content-type", ContentType.Application.Json)
             setBody(RefreshToken(refreshToken))
         }
         if (response.status.isSuccess()) {
-            Response.Success(response.body())
+            Result.Success(response.body())
         } else {
-            Response.Failure(ErrorCode.RefreshAuthTokenFailure, response.body<String>())
+            Result.Failure(ErrorCode.RefreshAuthTokenFailure, response.body<String>())
         }
     } catch (cancellationException: CancellationException) {
-        Response.Failure(ErrorCode.CancellationError, cancellationException.message)
+        Result.Failure(ErrorCode.CancellationError, cancellationException.message)
     } catch (exception: Exception) {
-        Response.Failure(ErrorCode.RefreshAuthTokenFailure, exception.message)
+        Result.Failure(ErrorCode.RefreshAuthTokenFailure, exception.message)
     }
 }
 

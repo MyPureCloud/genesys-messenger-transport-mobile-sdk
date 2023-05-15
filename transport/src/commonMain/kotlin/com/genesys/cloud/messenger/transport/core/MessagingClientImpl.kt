@@ -9,9 +9,11 @@ import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
 import com.genesys.cloud.messenger.transport.core.events.toTransportEvent
+import com.genesys.cloud.messenger.transport.network.Empty
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
+import com.genesys.cloud.messenger.transport.network.Result
 import com.genesys.cloud.messenger.transport.network.SocketCloseCode
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
@@ -45,6 +47,7 @@ import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
+import io.ktor.http.HttpStatusCode
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlin.reflect.KProperty0
@@ -69,6 +72,7 @@ internal class MessagingClientImpl(
             { deploymentConfig.isShowUserTypingEnabled() },
         ),
     private val authHandler: AuthHandler = AuthHandlerImpl(
+        configuration.authConfiguration,
         eventHandler,
         api,
         log.withTag(LogTag.AUTH_HANDLER)
@@ -109,6 +113,7 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun connect() {
         log.i { "connect()" }
+        // TODO("Decide if connectAuthenticated = false is good idea.")
         stateMachine.onConnect()
         webSocket.openSocket(socketListener)
     }
@@ -140,7 +145,7 @@ internal class MessagingClientImpl(
 
     private fun configureSession(startNew: Boolean = false) {
         log.i { "configureSession(token = $token, startNew: $startNew)" }
-        val encodedJson = if (connectAuthenticated && authHandler.authJwt != null) {
+        val encodedJson = if (connectAuthenticated) {
             encodeAuthenticatedConfigureSessionRequest(startNew)
         } else {
             encodeAnonymousConfigureSessionRequest(startNew)
@@ -244,11 +249,6 @@ internal class MessagingClientImpl(
         }
     }
 
-    @Throws(IllegalStateException::class)
-    override fun refreshAuthToken() {
-        authHandler.refreshToken()
-    }
-
     /**
      * This function executes [CloseSessionRequest]. This request will trigger closure of
      * all opened connections on all other devices that share the same session token,
@@ -286,7 +286,15 @@ internal class MessagingClientImpl(
             is ErrorCode.RedirectResponseError,
             -> {
                 if (stateMachine.isConnected() || stateMachine.isReconnecting() || isStartingANewSession) {
-                    transitionToStateError(code, message)
+                    // TODO handle 401 from authenticated session.
+                    if (code.authTokenExpiredError()) {
+                        log.e { "Eligible for auto refresh." }
+                        authHandler.refreshToken { result -> onRefreshTokenCallback(result) }
+                        // Attempt to refresh token and configure session. refresh token failed -> halt with an error.
+                    } else {
+                        log.e { "NOT Eligible for auto refresh." }
+                        transitionToStateError(code, message)
+                    }
                 } else {
                     eventHandler.onEvent(
                         Event.Error(
@@ -300,6 +308,11 @@ internal class MessagingClientImpl(
             is ErrorCode.WebsocketError -> handleWebSocketError(ErrorCode.WebsocketError)
             else -> log.w { "Unhandled ErrorCode: $code with optional message: $message" }
         }
+    }
+
+    private fun onRefreshTokenCallback(result: Result<Empty>) = when (result) {
+        is Result.Success -> connectAuthenticatedSession()
+        is Result.Failure -> handleError(result.errorCode, result.message)
     }
 
     private fun handleWebSocketError(errorCode: ErrorCode) {
@@ -323,6 +336,9 @@ internal class MessagingClientImpl(
             else -> log.w { "Unhandled WebSocket errorCode. ErrorCode: $errorCode" }
         }
     }
+
+    private fun ErrorCode.authTokenExpiredError(): Boolean =
+        connectAuthenticated && this.code == HttpStatusCode.Unauthorized.value
 
     private fun handleStructuredMessage(structuredMessage: StructuredMessage) {
         when (structuredMessage.type) {
