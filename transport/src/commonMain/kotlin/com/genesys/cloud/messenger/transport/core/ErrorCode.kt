@@ -68,6 +68,8 @@ object ErrorMessage {
     const val FailedToReconnect = "Failed to reconnect."
     const val InternetConnectionIsOffline =
         "Network is disabled. Please enable wifi or cellular and try again."
+    const val AutoRefreshTokenDisabled = "Auto refresh token is disabled in AuthConfiguration."
+    const val NoRefreshToken = "No refreshAuthToken. Authentication is required."
 }
 
 sealed class CorrectiveAction(val message: String) {
@@ -83,7 +85,7 @@ sealed class CorrectiveAction(val message: String) {
 
     object TooManyRequests : CorrectiveAction("Retry later.")
     object Unknown : CorrectiveAction("Action unknown.")
-    object Reauthenticate : CorrectiveAction("User re-authentication is required.")
+    object ReAuthenticate : CorrectiveAction("User re-authentication is required.")
 
     override fun toString(): String {
         return message
@@ -96,5 +98,8 @@ internal fun ErrorCode.toCorrectiveAction(): CorrectiveAction = when (this.code)
     404 -> CorrectiveAction.NotFound
     408 -> CorrectiveAction.RequestTimeOut
     429 -> CorrectiveAction.TooManyRequests
+    ErrorCode.AuthFailed.code,
+    ErrorCode.AuthLogoutFailed.code,
+    ErrorCode.RefreshAuthTokenFailure.code -> CorrectiveAction.ReAuthenticate
     else -> CorrectiveAction.Unknown
 }

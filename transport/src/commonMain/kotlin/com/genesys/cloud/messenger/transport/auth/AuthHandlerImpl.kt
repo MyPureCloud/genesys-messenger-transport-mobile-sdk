@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.auth
 import com.genesys.cloud.messenger.transport.core.AuthConfiguration
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
+import com.genesys.cloud.messenger.transport.core.ErrorMessage
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.network.Empty
@@ -51,15 +52,14 @@ internal class AuthHandlerImpl(
     }
 
     override fun refreshToken(callback: (Result<Empty>) -> Unit) {
-        if (authJwt?.refreshToken == null) {
-            log.w { "can not refreshAuthToken without authJwt.refreshAuthToken." }
-            return
-        }
-        if (!configuration.autoRefreshWhenTokenExpire) {
-            callback(Result.Failure(
-                errorCode = ErrorCode.RefreshAuthTokenFailure,
-                message = "Auto refresh token is disabled in AuthConfiguration.")
-            )
+        if (!configuration.autoRefreshWhenTokenExpire || authJwt?.refreshToken == null) {
+            val message = if (!configuration.autoRefreshWhenTokenExpire) {
+                ErrorMessage.AutoRefreshTokenDisabled
+            } else {
+                ErrorMessage.NoRefreshToken
+            }
+            log.e { "Can not refreshAuthToken: $message" }
+            callback(Result.Failure(ErrorCode.RefreshAuthTokenFailure, message))
             return
         }
         authJwt?.let {
@@ -70,11 +70,7 @@ internal class AuthHandlerImpl(
                         authJwt = it.copy(jwt = result.value.jwt, refreshToken = it.refreshToken)
                         callback(Result.Success(Empty()))
                     }
-                    is Result.Failure -> {
-                        // TODO("Failure to refresh token should result in transition to State.Error. Also, maybe remove the handleRequestError?")
-                        handleRequestError(result, "refreshToken()")
-                        callback(result)
-                    }
+                    is Result.Failure -> callback(result)
                 }
             }
         }
@@ -87,11 +83,7 @@ internal class AuthHandlerImpl(
         }
         log.e { "$requestName respond with error: ${result.errorCode}, and message: ${result.message}" }
         eventHandler.onEvent(
-            Event.Error(
-                result.errorCode,
-                result.message,
-                CorrectiveAction.Reauthenticate
-            )
+            Event.Error(result.errorCode, result.message, CorrectiveAction.ReAuthenticate)
         )
     }
 }
