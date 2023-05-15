@@ -55,13 +55,19 @@ internal class AuthHandlerImpl(
             log.w { "can not refreshAuthToken without authJwt.refreshAuthToken." }
             return
         }
+        if (!configuration.autoRefreshWhenTokenExpire) {
+            callback(Result.Failure(
+                errorCode = ErrorCode.RefreshAuthTokenFailure,
+                message = "Auto refresh token is disabled in AuthConfiguration.")
+            )
+            return
+        }
         authJwt?.let {
             dispatcher.launch {
                 when (val result = api.refreshAuthJwt(it.refreshToken!!)) {
                     is Result.Success -> {
                         log.i { "refreshAuthToken success." }
-                        authJwt =
-                            it.copy(jwt = result.value.jwt, refreshToken = it.refreshToken)
+                        authJwt = it.copy(jwt = result.value.jwt, refreshToken = it.refreshToken)
                         callback(Result.Success(Empty()))
                     }
                     is Result.Failure -> {
@@ -75,20 +81,17 @@ internal class AuthHandlerImpl(
     }
 
     private fun handleRequestError(result: Result.Failure, requestName: String) {
-        when (result.errorCode) {
-            is ErrorCode.CancellationError -> {
-                log.w { "Cancellation exception was thrown, while running $requestName request." }
-            }
-            else -> {
-                log.e { "$requestName respond with error: ${result.errorCode}, and message: ${result.message}" }
-                eventHandler.onEvent(
-                    Event.Error(
-                        result.errorCode,
-                        result.message,
-                        CorrectiveAction.Reauthenticate
-                    )
-                )
-            }
+        if (result.errorCode is ErrorCode.CancellationError) {
+            log.w { "Cancellation exception was thrown, while running $requestName request." }
+            return
         }
+        log.e { "$requestName respond with error: ${result.errorCode}, and message: ${result.message}" }
+        eventHandler.onEvent(
+            Event.Error(
+                result.errorCode,
+                result.message,
+                CorrectiveAction.Reauthenticate
+            )
+        )
     }
 }
