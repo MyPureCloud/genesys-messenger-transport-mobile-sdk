@@ -43,6 +43,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.TokenStore
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.util.logs.Log
@@ -53,12 +54,12 @@ import kotlinx.serialization.encodeToString
 import kotlin.reflect.KProperty0
 
 internal class MessagingClientImpl(
+    tokenStore: TokenStore,
     private val api: WebMessagingApi,
     private val webSocket: PlatformSocket,
     private val configuration: Configuration,
     private val log: Log,
     private val jwtHandler: JwtHandler,
-    private val token: String,
     private val deploymentConfig: KProperty0<DeploymentConfig?>,
     private val attachmentHandler: AttachmentHandler,
     private val messageStore: MessageStore,
@@ -66,20 +67,21 @@ internal class MessagingClientImpl(
     private val stateMachine: StateMachine = StateMachineImpl(log.withTag(LogTag.STATE_MACHINE)),
     private val eventHandler: EventHandler = EventHandlerImpl(log.withTag(LogTag.EVENT_HANDLER)),
     private val healthCheckProvider: HealthCheckProvider = HealthCheckProvider(log.withTag(LogTag.HEALTH_CHECK_PROVIDER)),
-    private val userTypingProvider: UserTypingProvider =
-        UserTypingProvider(
-            log.withTag(LogTag.TYPING_INDICATOR_PROVIDER),
-            { deploymentConfig.isShowUserTypingEnabled() },
-        ),
+    private val userTypingProvider: UserTypingProvider = UserTypingProvider(
+        log.withTag(LogTag.TYPING_INDICATOR_PROVIDER),
+        { deploymentConfig.isShowUserTypingEnabled() },
+    ),
     private val authHandler: AuthHandler = AuthHandlerImpl(
         configuration.authConfiguration,
         eventHandler,
         api,
+        tokenStore,
         log.withTag(LogTag.AUTH_HANDLER)
     ),
 ) : MessagingClient {
     private var connectAuthenticated = false
     private var isStartingANewSession = false
+    private val token: String = tokenStore.token
 
     override val currentState: State
         get() {
@@ -120,6 +122,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun connectAuthenticatedSession() {
+        log.i { "connectAuthenticatedSession()" }
         connectAuthenticated = true
         log.i { "connect()" }
         stateMachine.onConnect()

@@ -60,7 +60,7 @@ class MessengerTransport(
             api = api,
             log = log,
             webSocket = webSocket,
-            token = token,
+            tokenStore = tokenStore,
             configuration = configuration,
             jwtHandler = JwtHandler(webSocket, token),
             attachmentHandler = attachmentHandler,

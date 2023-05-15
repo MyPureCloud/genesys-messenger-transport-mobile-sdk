@@ -9,6 +9,7 @@ import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.network.Empty
 import com.genesys.cloud.messenger.transport.network.Result
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
+import com.genesys.cloud.messenger.transport.util.TokenStore
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,6 +20,7 @@ internal class AuthHandlerImpl(
     private val configuration: AuthConfiguration,
     private val eventHandler: EventHandler,
     private val api: WebMessagingApi,
+    private val tokenStore: TokenStore,
     private val log: Log,
     private val dispatcher: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
 ) : AuthHandler {
@@ -30,6 +32,9 @@ internal class AuthHandlerImpl(
                 is Result.Success -> {
                     result.value.let {
                         authJwt = it
+                        if (configuration.storeRefreshToken) {
+                            tokenStore.storeAuthRefreshToken(it.refreshToken ?: NO_REFRESH_TOKEN)
+                        }
                         eventHandler.onEvent(Event.Authenticated)
                     }
                 }
@@ -52,7 +57,7 @@ internal class AuthHandlerImpl(
     }
 
     override fun refreshToken(callback: (Result<Empty>) -> Unit) {
-        if (!configuration.autoRefreshWhenTokenExpire || authJwt?.refreshToken == null) {
+        if (!configuration.autoRefreshWhenTokenExpire || !authJwt.hasRefreshToken()) {
             val message = if (!configuration.autoRefreshWhenTokenExpire) {
                 ErrorMessage.AutoRefreshTokenDisabled
             } else {
@@ -87,3 +92,6 @@ internal class AuthHandlerImpl(
         )
     }
 }
+
+private fun AuthJwt?.hasRefreshToken() : Boolean = this?.refreshToken != null && refreshToken != NO_REFRESH_TOKEN
+
