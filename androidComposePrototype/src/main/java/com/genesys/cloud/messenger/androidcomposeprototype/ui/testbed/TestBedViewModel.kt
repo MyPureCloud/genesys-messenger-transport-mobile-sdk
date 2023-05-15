@@ -356,14 +356,23 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
                 authState = AuthState.Authenticated
                 onSocketMessageReceived(event.toString())
             }
-            is Event.Error -> {
-                if (event.errorCode is ErrorCode.AuthFailed) {
-                    authState =
-                        AuthState.Error(event.errorCode, event.message, event.correctiveAction)
-                }
+            is Event.Error -> handleEventError(event)
+            else -> onSocketMessageReceived(event.toString())
+        }
+    }
+
+    private fun handleEventError(event: Event.Error) {
+        when (event.errorCode) {
+            is ErrorCode.AuthFailed,
+            is ErrorCode.AuthLogoutFailed,
+            is ErrorCode.RefreshAuthTokenFailure,
+            -> {
+                authState = AuthState.Error(event.errorCode, event.message, event.correctiveAction)
                 onSocketMessageReceived(event.toString())
             }
-            else -> onSocketMessageReceived(event.toString())
+            else -> {
+                println("Handle Event.Error here.")
+            }
         }
     }
 
