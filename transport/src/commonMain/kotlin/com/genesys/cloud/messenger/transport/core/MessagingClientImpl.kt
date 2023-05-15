@@ -286,13 +286,9 @@ internal class MessagingClientImpl(
             is ErrorCode.RedirectResponseError,
             -> {
                 if (stateMachine.isConnected() || stateMachine.isReconnecting() || isStartingANewSession) {
-                    // TODO handle 401 from authenticated session.
                     if (code.authTokenExpiredError()) {
-                        log.e { "Eligible for auto refresh." }
                         authHandler.refreshToken { result -> onRefreshTokenCallback(result) }
-                        // Attempt to refresh token and configure session. refresh token failed -> halt with an error.
                     } else {
-                        log.e { "NOT Eligible for auto refresh." }
                         transitionToStateError(code, message)
                     }
                 } else {
@@ -312,7 +308,7 @@ internal class MessagingClientImpl(
 
     private fun onRefreshTokenCallback(result: Result<Empty>) = when (result) {
         is Result.Success -> connectAuthenticatedSession()
-        is Result.Failure -> handleError(result.errorCode, result.message)
+        is Result.Failure -> transitionToStateError(result.errorCode, result.message)
     }
 
     private fun handleWebSocketError(errorCode: ErrorCode) {
