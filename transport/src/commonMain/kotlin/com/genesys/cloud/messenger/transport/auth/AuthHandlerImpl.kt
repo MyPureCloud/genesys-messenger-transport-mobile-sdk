@@ -49,10 +49,7 @@ internal class AuthHandlerImpl(
             when (val result = api.logoutFromAuthenticatedSession(authJwt.jwt)) {
                 is Result.Success -> log.i { "logout() request was successfully sent." }
                 is Result.Failure -> {
-                    if (configuration.autoRefreshTokenWhenExpired &&
-                        result.errorCode.isUnauthorized() &&
-                        authJwt.hasRefreshToken()
-                    ) {
+                    if (eligibleToRefresh(result.errorCode)) {
                         refreshToken {
                             when (it) {
                                 is Result.Success -> logout()
@@ -106,6 +103,11 @@ internal class AuthHandlerImpl(
             Event.Error(result.errorCode, result.message, CorrectiveAction.ReAuthenticate)
         )
     }
+
+    private fun eligibleToRefresh(errorCode: ErrorCode): Boolean =
+        configuration.autoRefreshTokenWhenExpired &&
+                errorCode.isUnauthorized() &&
+                authJwt.hasRefreshToken()
 }
 
 private fun AuthJwt.hasRefreshToken(): Boolean =
