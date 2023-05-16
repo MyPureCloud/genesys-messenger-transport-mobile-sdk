@@ -6,6 +6,7 @@ import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
+import com.genesys.cloud.messenger.transport.core.isUnauthorized
 import com.genesys.cloud.messenger.transport.network.Empty
 import com.genesys.cloud.messenger.transport.network.Result
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
@@ -24,7 +25,7 @@ internal class AuthHandlerImpl(
     private val log: Log,
     private val dispatcher: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
 ) : AuthHandler {
-    override var authJwt: AuthJwt? = null
+    override var authJwt: AuthJwt = AuthJwt(NO_JWT, tokenStore.fetchAuthRefreshToken())
 
     override fun authenticate(authCode: String, redirectUri: String, codeVerifier: String?) {
         dispatcher.launch {
@@ -32,7 +33,7 @@ internal class AuthHandlerImpl(
                 is Result.Success -> {
                     result.value.let {
                         authJwt = it
-                        if (configuration.storeRefreshToken) {
+                        if (configuration.autoRefreshTokenWhenExpired) {
                             tokenStore.storeAuthRefreshToken(it.refreshToken ?: NO_REFRESH_TOKEN)
                         }
                         eventHandler.onEvent(Event.Authenticated)
@@ -44,30 +45,40 @@ internal class AuthHandlerImpl(
     }
 
     override fun logout() {
-        val authJwt = this.authJwt ?: run {
-            log.w { "Logout from anonymous session is not supported." }
-            return
-        }
         dispatcher.launch {
             when (val result = api.logoutFromAuthenticatedSession(authJwt.jwt)) {
                 is Result.Success -> log.i { "logout() request was successfully sent." }
-                is Result.Failure -> handleRequestError(result, "logout()")
+                is Result.Failure -> {
+                    if (configuration.autoRefreshTokenWhenExpired &&
+                        result.errorCode.isUnauthorized() &&
+                        authJwt.hasRefreshToken()
+                    ) {
+                        refreshToken {
+                            when (it) {
+                                is Result.Success -> logout()
+                                is Result.Failure -> handleRequestError(result, "logout()")
+                            }
+                        }
+                    } else {
+                        handleRequestError(result, "logout()")
+                    }
+                }
             }
         }
     }
 
     override fun refreshToken(callback: (Result<Empty>) -> Unit) {
-        if (!configuration.autoRefreshWhenTokenExpire || !authJwt.hasRefreshToken()) {
-            val message = if (!configuration.autoRefreshWhenTokenExpire) {
+        if (!configuration.autoRefreshTokenWhenExpired || !authJwt.hasRefreshToken()) {
+            val message = if (!configuration.autoRefreshTokenWhenExpired) {
                 ErrorMessage.AutoRefreshTokenDisabled
             } else {
                 ErrorMessage.NoRefreshToken
             }
-            log.e { "Can not refreshAuthToken: $message" }
+            log.e { "Could not refreshAuthToken: $message" }
             callback(Result.Failure(ErrorCode.RefreshAuthTokenFailure, message))
             return
         }
-        authJwt?.let {
+        authJwt.let {
             dispatcher.launch {
                 when (val result = api.refreshAuthJwt(it.refreshToken!!)) {
                     is Result.Success -> {
@@ -75,7 +86,11 @@ internal class AuthHandlerImpl(
                         authJwt = it.copy(jwt = result.value.jwt, refreshToken = it.refreshToken)
                         callback(Result.Success(Empty()))
                     }
-                    is Result.Failure -> callback(result)
+                    is Result.Failure -> {
+                        log.e { "Could not refreshAuthToken: ${result.message}" }
+                        // TODO find out error code that can identify that cached refresh token is no longer valid and store it as NO_REFRESH_TOKEN to early prevent future attempts to refresh.
+                        callback(result)
+                    }
                 }
             }
         }
@@ -93,5 +108,5 @@ internal class AuthHandlerImpl(
     }
 }
 
-private fun AuthJwt?.hasRefreshToken() : Boolean = this?.refreshToken != null && refreshToken != NO_REFRESH_TOKEN
-
+private fun AuthJwt.hasRefreshToken(): Boolean =
+    refreshToken != null && refreshToken != NO_REFRESH_TOKEN

@@ -23,6 +23,7 @@ import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.isSuccess
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -98,7 +99,8 @@ internal class WebMessagingApi(
         if (response.status.isSuccess()) {
             Result.Success(Empty())
         } else {
-            Result.Failure(ErrorCode.AuthLogoutFailed, response.body<String>())
+            val errorCode = if (response.status.isUnauthorized()) ErrorCode.ClientResponseError(401) else ErrorCode.AuthLogoutFailed
+            Result.Failure(errorCode, response.body<String>())
         }
     } catch (cancellationException: CancellationException) {
         Result.Failure(ErrorCode.CancellationError, cancellationException.message)
@@ -122,6 +124,8 @@ internal class WebMessagingApi(
         Result.Failure(ErrorCode.RefreshAuthTokenFailure, exception.message)
     }
 }
+
+private fun HttpStatusCode.isUnauthorized(): Boolean = this == HttpStatusCode.Unauthorized
 
 private fun HttpRequestBuilder.headerAuthorizationBearer(jwt: String) =
     header(HttpHeaders.Authorization, "bearer $jwt")

@@ -48,7 +48,6 @@ import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
-import io.ktor.http.HttpStatusCode
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlin.reflect.KProperty0
@@ -124,7 +123,6 @@ internal class MessagingClientImpl(
     override fun connectAuthenticatedSession() {
         log.i { "connectAuthenticatedSession()" }
         connectAuthenticated = true
-        log.i { "connect()" }
         stateMachine.onConnect()
         webSocket.openSocket(socketListener)
     }
@@ -293,7 +291,7 @@ internal class MessagingClientImpl(
             is ErrorCode.RedirectResponseError,
             -> {
                 if (stateMachine.isConnected() || stateMachine.isReconnecting() || isStartingANewSession) {
-                    if (code.authTokenExpiredError()) {
+                    if (connectAuthenticated && code.isUnauthorized()) {
                         authHandler.refreshToken { result -> onRefreshTokenCallback(result) }
                     } else {
                         transitionToStateError(code, message)
@@ -339,9 +337,6 @@ internal class MessagingClientImpl(
             else -> log.w { "Unhandled WebSocket errorCode. ErrorCode: $errorCode" }
         }
     }
-
-    private fun ErrorCode.authTokenExpiredError(): Boolean =
-        connectAuthenticated && this.code == HttpStatusCode.Unauthorized.value
 
     private fun handleStructuredMessage(structuredMessage: StructuredMessage) {
         when (structuredMessage.type) {
@@ -418,7 +413,7 @@ internal class MessagingClientImpl(
                     JourneyCustomer(token, "cookie"),
                     JourneyCustomerSession("", "web")
                 ),
-                data = ConfigureAuthenticatedSessionRequest.Data(authHandler.authJwt?.jwt ?: "")
+                data = ConfigureAuthenticatedSessionRequest.Data(authHandler.authJwt.jwt)
             )
         )
 

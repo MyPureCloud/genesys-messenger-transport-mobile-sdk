@@ -57,6 +57,5 @@ data class Configuration(
 }
 
 data class AuthConfiguration(
-    val autoRefreshWhenTokenExpire: Boolean = true,
-    val storeRefreshToken: Boolean = true,
+    val autoRefreshTokenWhenExpired: Boolean = true,
 )

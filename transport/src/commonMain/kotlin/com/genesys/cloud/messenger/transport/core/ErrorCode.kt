@@ -1,5 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
+import io.ktor.http.HttpStatusCode
+
 /**
  * List of all error codes used to report transport errors.
  */
@@ -51,8 +53,9 @@ sealed class ErrorCode(val code: Int) {
                 4013 -> CustomAttributeSizeTooLarge
                 4020 -> MissingParameter
                 4029 -> RequestRateTooHigh
-                4401 -> AuthFailed
-                4402 -> AuthLogoutFailed
+                6001 -> AuthFailed
+                6002 -> AuthLogoutFailed
+                6003 -> RefreshAuthTokenFailure
                 4999 -> CancellationError
                 in 300..399 -> RedirectResponseError(value)
                 in 400..499 -> ClientResponseError(value)
@@ -100,6 +103,10 @@ internal fun ErrorCode.toCorrectiveAction(): CorrectiveAction = when (this.code)
     429 -> CorrectiveAction.TooManyRequests
     ErrorCode.AuthFailed.code,
     ErrorCode.AuthLogoutFailed.code,
-    ErrorCode.RefreshAuthTokenFailure.code -> CorrectiveAction.ReAuthenticate
+    ErrorCode.RefreshAuthTokenFailure.code,
+    -> CorrectiveAction.ReAuthenticate
     else -> CorrectiveAction.Unknown
 }
+
+internal fun ErrorCode.isUnauthorized(): Boolean =
+    this.code == HttpStatusCode.Unauthorized.value
