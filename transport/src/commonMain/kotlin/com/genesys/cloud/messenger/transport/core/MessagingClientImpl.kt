@@ -2,6 +2,7 @@ package com.genesys.cloud.messenger.transport.core
 
 import com.genesys.cloud.messenger.transport.auth.AuthHandler
 import com.genesys.cloud.messenger.transport.auth.AuthHandlerImpl
+import com.genesys.cloud.messenger.transport.auth.NO_JWT
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
@@ -9,7 +10,6 @@ import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
 import com.genesys.cloud.messenger.transport.core.events.toTransportEvent
-import com.genesys.cloud.messenger.transport.network.Empty
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
@@ -114,7 +114,7 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun connect() {
         log.i { "connect()" }
-        // TODO("Decide if connectAuthenticated = false is good idea.")
+        connectAuthenticated = false
         stateMachine.onConnect()
         webSocket.openSocket(socketListener)
     }
@@ -147,6 +147,10 @@ internal class MessagingClientImpl(
     private fun configureSession(startNew: Boolean = false) {
         log.i { "configureSession(token = $token, startNew: $startNew)" }
         val encodedJson = if (connectAuthenticated) {
+            if (authHandler.jwt == NO_JWT) {
+                refreshTokenAndPerform { configureSession(startNew) }
+                return
+            }
             encodeAuthenticatedConfigureSessionRequest(startNew)
         } else {
             encodeAnonymousConfigureSessionRequest(startNew)
@@ -292,7 +296,7 @@ internal class MessagingClientImpl(
             -> {
                 if (stateMachine.isConnected() || stateMachine.isReconnecting() || isStartingANewSession) {
                     if (connectAuthenticated && code.isUnauthorized()) {
-                        authHandler.refreshToken { result -> onRefreshTokenCallback(result) }
+                        refreshTokenAndPerform { connectAuthenticatedSession() }
                     } else {
                         transitionToStateError(code, message)
                     }
@@ -311,9 +315,13 @@ internal class MessagingClientImpl(
         }
     }
 
-    private fun onRefreshTokenCallback(result: Result<Empty>) = when (result) {
-        is Result.Success -> connectAuthenticatedSession()
-        is Result.Failure -> transitionToStateError(result.errorCode, result.message)
+    private fun refreshTokenAndPerform(action: () -> Unit) {
+        authHandler.refreshToken { result ->
+            when (result) {
+                is Result.Success -> action()
+                is Result.Failure -> transitionToStateError(result.errorCode, result.message)
+            }
+        }
     }
 
     private fun handleWebSocketError(errorCode: ErrorCode) {
@@ -323,7 +331,7 @@ internal class MessagingClientImpl(
             is ErrorCode.WebsocketError -> {
                 if (reconnectionHandler.shouldReconnect) {
                     stateMachine.onReconnect()
-                    reconnectionHandler.reconnect { connect() }
+                    reconnectionHandler.reconnect { if (connectAuthenticated) connectAuthenticatedSession() else connect() }
                 } else {
                     transitionToStateError(errorCode, ErrorMessage.FailedToReconnect)
                 }
@@ -413,7 +421,7 @@ internal class MessagingClientImpl(
                     JourneyCustomer(token, "cookie"),
                     JourneyCustomerSession("", "web")
                 ),
-                data = ConfigureAuthenticatedSessionRequest.Data(authHandler.authJwt.jwt)
+                data = ConfigureAuthenticatedSessionRequest.Data(authHandler.jwt)
             )
         )
 

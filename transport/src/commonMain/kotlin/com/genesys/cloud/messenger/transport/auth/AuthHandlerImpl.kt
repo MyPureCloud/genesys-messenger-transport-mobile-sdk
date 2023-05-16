@@ -25,7 +25,11 @@ internal class AuthHandlerImpl(
     private val log: Log,
     private val dispatcher: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
 ) : AuthHandler {
-    override var authJwt: AuthJwt = AuthJwt(NO_JWT, tokenStore.fetchAuthRefreshToken())
+
+    private var authJwt: AuthJwt = AuthJwt(NO_JWT, tokenStore.fetchAuthRefreshToken())
+
+    override val jwt: String
+        get() = authJwt.jwt
 
     override fun authenticate(authCode: String, redirectUri: String, codeVerifier: String?) {
         dispatcher.launch {
@@ -85,7 +89,8 @@ internal class AuthHandlerImpl(
                     }
                     is Result.Failure -> {
                         log.e { "Could not refreshAuthToken: ${result.message}" }
-                        // TODO find out error code that can identify that cached refresh token is no longer valid and store it as NO_REFRESH_TOKEN to early prevent future attempts to refresh.
+                        authJwt = AuthJwt(NO_JWT, NO_REFRESH_TOKEN)
+                        tokenStore.storeAuthRefreshToken(NO_REFRESH_TOKEN)
                         callback(result)
                     }
                 }
@@ -106,8 +111,8 @@ internal class AuthHandlerImpl(
 
     private fun eligibleToRefresh(errorCode: ErrorCode): Boolean =
         configuration.autoRefreshTokenWhenExpired &&
-                errorCode.isUnauthorized() &&
-                authJwt.hasRefreshToken()
+            errorCode.isUnauthorized() &&
+            authJwt.hasRefreshToken()
 }
 
 private fun AuthJwt.hasRefreshToken(): Boolean =
