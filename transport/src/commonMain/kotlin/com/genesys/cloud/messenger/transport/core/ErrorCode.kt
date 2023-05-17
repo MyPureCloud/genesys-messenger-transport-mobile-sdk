@@ -71,7 +71,7 @@ object ErrorMessage {
     const val FailedToReconnect = "Failed to reconnect."
     const val InternetConnectionIsOffline =
         "Network is disabled. Please enable wifi or cellular and try again."
-    const val AutoRefreshTokenDisabled = "Auto refresh token is disabled in AuthConfiguration."
+    const val AutoRefreshTokenDisabled = "AutoRefreshTokenWhenExpired is disabled in Configuration."
     const val NoRefreshToken = "No refreshAuthToken. Authentication is required."
 }
 
