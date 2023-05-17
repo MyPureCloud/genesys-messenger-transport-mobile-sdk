@@ -15,7 +15,7 @@ data class Configuration(
     private val domain: String,
     val logging: Boolean = false,
     val reconnectionTimeoutInSeconds: Long = 60 * 5,
-    val authConfiguration: AuthConfiguration = AuthConfiguration()
+    val autoRefreshTokenWhenExpired: Boolean = true,
 ) {
 
     internal val webSocketUrl: Url by lazy {
@@ -56,6 +56,3 @@ data class Configuration(
     }
 }
 
-data class AuthConfiguration(
-    val autoRefreshTokenWhenExpired: Boolean = true,
-)

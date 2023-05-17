@@ -71,7 +71,7 @@ internal class MessagingClientImpl(
         { deploymentConfig.isShowUserTypingEnabled() },
     ),
     private val authHandler: AuthHandler = AuthHandlerImpl(
-        configuration.authConfiguration,
+        configuration.autoRefreshTokenWhenExpired,
         eventHandler,
         api,
         tokenStore,

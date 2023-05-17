@@ -1,6 +1,5 @@
 package com.genesys.cloud.messenger.transport.auth
 
-import com.genesys.cloud.messenger.transport.core.AuthConfiguration
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
@@ -18,7 +17,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 internal class AuthHandlerImpl(
-    private val configuration: AuthConfiguration,
+    private val autoRefreshTokenWhenExpired: Boolean,
     private val eventHandler: EventHandler,
     private val api: WebMessagingApi,
     private val tokenStore: TokenStore,
@@ -37,7 +36,7 @@ internal class AuthHandlerImpl(
                 is Result.Success -> {
                     result.value.let {
                         authJwt = it
-                        if (configuration.autoRefreshTokenWhenExpired) {
+                        if (autoRefreshTokenWhenExpired) {
                             tokenStore.storeAuthRefreshToken(it.refreshToken ?: NO_REFRESH_TOKEN)
                         }
                         eventHandler.onEvent(Event.Authenticated)
@@ -69,8 +68,8 @@ internal class AuthHandlerImpl(
     }
 
     override fun refreshToken(callback: (Result<Empty>) -> Unit) {
-        if (!configuration.autoRefreshTokenWhenExpired || !authJwt.hasRefreshToken()) {
-            val message = if (!configuration.autoRefreshTokenWhenExpired) {
+        if (!autoRefreshTokenWhenExpired || !authJwt.hasRefreshToken()) {
+            val message = if (!autoRefreshTokenWhenExpired) {
                 ErrorMessage.AutoRefreshTokenDisabled
             } else {
                 ErrorMessage.NoRefreshToken
@@ -110,9 +109,9 @@ internal class AuthHandlerImpl(
     }
 
     private fun eligibleToRefresh(errorCode: ErrorCode): Boolean =
-        configuration.autoRefreshTokenWhenExpired &&
-            errorCode.isUnauthorized() &&
-            authJwt.hasRefreshToken()
+        autoRefreshTokenWhenExpired &&
+                errorCode.isUnauthorized() &&
+                authJwt.hasRefreshToken()
 }
 
 private fun AuthJwt.hasRefreshToken(): Boolean =
