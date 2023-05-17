@@ -348,15 +348,9 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private fun onEvent(event: Event) {
         when (event) {
-            is Event.Logout -> {
-                authState = AuthState.LoggedOut
-            }
-            is Event.Authenticated -> {
-                authState = AuthState.Authenticated
-            }
-            is Event.Error -> {
-                handleEventError(event)
-            }
+            is Event.Logout -> authState = AuthState.LoggedOut
+            is Event.Authenticated -> authState = AuthState.Authenticated
+            is Event.Error -> handleEventError(event)
             else -> println("On event: $event")
         }
         onSocketMessageReceived(event.toString())
