@@ -3,7 +3,6 @@ package com.genesys.cloud.messenger.transport.core
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.auth.AuthHandler
-import com.genesys.cloud.messenger.transport.auth.AuthJwt
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
@@ -14,9 +13,6 @@ import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
-import com.genesys.cloud.messenger.transport.network.TestAuthCode
-import com.genesys.cloud.messenger.transport.network.TestCodeVerifier
-import com.genesys.cloud.messenger.transport.network.TestJwtAuthUrl
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
@@ -32,15 +28,18 @@ import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
+import com.genesys.cloud.messenger.transport.util.DefaultTokenStore
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Request
+import com.genesys.cloud.messenger.transport.util.TestAuthCode
+import com.genesys.cloud.messenger.transport.util.TestCodeVerifier
+import com.genesys.cloud.messenger.transport.util.TestJwtAuthUrl
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import io.mockk.Called
 import io.mockk.MockKVerificationScope
 import io.mockk.clearAllMocks
 import io.mockk.clearMocks
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.invoke
 import io.mockk.mockk
@@ -138,13 +137,17 @@ class MessagingClientImplTest {
         getCurrentTimestamp = mockTimestampFunction,
     )
     private val mockAuthHandler: AuthHandler = mockk(relaxed = true)
+    private val mockTokenStore: DefaultTokenStore = mockk {
+        every { fetch() } returns Request.token
+        every { token } returns Request.token
+    }
 
     private val subject = MessagingClientImpl(
         log = log,
         configuration = configuration,
         webSocket = mockPlatformSocket,
         api = mockWebMessagingApi,
-        token = Request.token,
+        tokenStore = mockTokenStore,
         jwtHandler = mockk(),
         attachmentHandler = mockAttachmentHandler,
         messageStore = mockMessageStore,
@@ -1257,106 +1260,6 @@ class MessagingClientImplTest {
         verify {
             mockAuthHandler.authenticate(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier)
         }
-    }
-
-    @Test
-    fun whenConnectAuthenticated() {
-        val givenAuthJwt = AuthJwt("auth_token", "refresh_token")
-
-        subject.connectAuthenticatedSession(givenAuthJwt)
-
-        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
-        verifySequence {
-            connectSequence(shouldConfigureAuth = true)
-        }
-    }
-
-    @Test
-    fun whenConnectAuthenticatedAndThenDisconnectAndThenConnect() {
-        val givenAuthJwt = AuthJwt("auth_token", "refresh_token")
-
-        subject.connectAuthenticatedSession(givenAuthJwt)
-        subject.disconnect()
-        subject.connect()
-
-        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
-        verifySequence {
-            connectSequence(shouldConfigureAuth = true)
-            disconnectSequence()
-            mockStateChangedListener(fromClosedToConnecting)
-            mockPlatformSocket.openSocket(any())
-            mockStateChangedListener(fromConnectingToConnected)
-            mockPlatformSocket.sendMessage(Request.configureRequest())
-            mockReconnectionHandler.clear()
-            mockStateChangedListener(fromConnectedToConfigured)
-        }
-    }
-
-    @Test
-    fun whenConnectAuthenticatedAndThenErrorStateAndThenConnect() {
-        val givenAuthJwt = AuthJwt("auth_token", "refresh_token")
-        val expectedErrorState =
-            State.Error(ErrorCode.SessionHasExpired, "session expired error message")
-        every { mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest()) } answers {
-            slot.captured.onMessage(Response.sessionExpired)
-        }
-
-        subject.connectAuthenticatedSession(givenAuthJwt)
-        subject.connect()
-
-        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
-        verifySequence {
-            connectWithFailedConfigureSequence(shouldConfigureAuth = true)
-            errorSequence(fromConnectedToError(expectedErrorState))
-            mockStateChangedListener(fromErrorToConnecting(expectedErrorState))
-            mockPlatformSocket.openSocket(any())
-            mockStateChangedListener(fromConnectingToConnected)
-            mockPlatformSocket.sendMessage(Request.configureRequest())
-            mockReconnectionHandler.clear()
-            mockStateChangedListener(fromConnectedToConfigured)
-        }
-    }
-
-    @Test
-    fun whenConfigureAuthenticatedAndThenLogoutFromAuthenticatedSession() {
-        val givenAuthJwt = AuthJwt("auth_token", "refresh_token")
-
-        subject.connectAuthenticatedSession(givenAuthJwt)
-        runBlocking { subject.logoutFromAuthenticatedSession(givenAuthJwt) }
-
-        coVerify {
-            connectSequence(shouldConfigureAuth = true)
-            mockAuthHandler.logout(givenAuthJwt)
-        }
-    }
-
-    @Test
-    fun whenLogoutFromAuthenticatedSessionWithoutSettingAuthJwt() {
-        runBlocking {
-            subject.logoutFromAuthenticatedSession(
-                AuthJwt(
-                    "auth_token",
-                    "refresh_token"
-                )
-            )
-        }
-
-        coVerify(exactly = 0) { mockAuthHandler.logout(any()) }
-    }
-
-    @Test
-    fun whenLogoutFromAnonymousSession() {
-        subject.connect()
-        runBlocking {
-            subject.logoutFromAuthenticatedSession(
-                AuthJwt(
-                    "auth_token",
-                    "refresh_token"
-                )
-            )
-        }
-
-        coVerify(exactly = 0) { mockAuthHandler.logout(any()) }
     }
 
     @Test

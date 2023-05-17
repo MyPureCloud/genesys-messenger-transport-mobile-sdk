@@ -2,7 +2,6 @@ package com.genesys.cloud.messenger.transport.core.events
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import com.genesys.cloud.messenger.transport.auth.AuthJwt
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.events.Event.AgentTyping
@@ -40,7 +39,7 @@ class EventHandlerTest {
             ConversationAutostart,
             ConversationDisconnect,
             ConnectionClosed,
-            Authenticated(AuthJwt("jwt", "refreshToken")),
+            Authenticated,
             Logout,
         )
 

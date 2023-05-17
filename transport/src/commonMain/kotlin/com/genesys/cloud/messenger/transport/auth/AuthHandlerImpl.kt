@@ -1,13 +1,13 @@
 package com.genesys.cloud.messenger.transport.auth
 
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
+import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
+import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.isUnauthorized
-import com.genesys.cloud.messenger.transport.core.Empty
-import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.util.TokenStore
 import com.genesys.cloud.messenger.transport.util.logs.Log
@@ -110,8 +110,8 @@ internal class AuthHandlerImpl(
 
     private fun eligibleToRefresh(errorCode: ErrorCode): Boolean =
         autoRefreshTokenWhenExpired &&
-                errorCode.isUnauthorized() &&
-                authJwt.hasRefreshToken()
+            errorCode.isUnauthorized() &&
+            authJwt.hasRefreshToken()
 }
 
 private fun AuthJwt.hasRefreshToken(): Boolean =
