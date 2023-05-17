@@ -22,7 +22,7 @@ sealed class ErrorCode(val code: Int) {
     object MissingParameter : ErrorCode(4020)
     object RequestRateTooHigh : ErrorCode(4029)
     object UnexpectedError : ErrorCode(5000)
-    object CancellationError : ErrorCode(4999)
+    object CancellationError : ErrorCode(6000)
     object WebsocketError : ErrorCode(1001)
     object WebsocketAccessDenied : ErrorCode(1002)
     object NetworkDisabled : ErrorCode(-1009)
@@ -53,10 +53,10 @@ sealed class ErrorCode(val code: Int) {
                 4013 -> CustomAttributeSizeTooLarge
                 4020 -> MissingParameter
                 4029 -> RequestRateTooHigh
+                6000 -> CancellationError
                 6001 -> AuthFailed
                 6002 -> AuthLogoutFailed
                 6003 -> RefreshAuthTokenFailure
-                4999 -> CancellationError
                 in 300..399 -> RedirectResponseError(value)
                 in 400..499 -> ClientResponseError(value)
                 in 500..599 -> ServerResponseError(value)
