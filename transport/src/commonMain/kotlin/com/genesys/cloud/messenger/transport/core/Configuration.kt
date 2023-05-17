@@ -9,6 +9,7 @@ import io.ktor.http.path
  * @param domain the regional base domain address for a Genesys Cloud Web Messaging service. For example, "mypurecloud.com".
  * @param logging indicates if logging should be enabled.
  * @param reconnectionTimeoutInSeconds period of time during which Transport will try to reconnect to the web socket in case of connectivity lost.
+ * @param autoRefreshTokenWhenExpired indicates if Transport should auto refresh auth token if it was expired.
  */
 data class Configuration(
     val deploymentId: String,
