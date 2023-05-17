@@ -1,6 +1,4 @@
-package com.genesys.cloud.messenger.transport.network
-
-import com.genesys.cloud.messenger.transport.core.ErrorCode
+package com.genesys.cloud.messenger.transport.core
 
 internal sealed class Result<out T : Any> {
     data class Success<out T : Any>(val value: T) : Result<T>()

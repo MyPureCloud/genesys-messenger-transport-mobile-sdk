@@ -1,7 +1,7 @@
 package com.genesys.cloud.messenger.transport.auth
 
-import com.genesys.cloud.messenger.transport.network.Empty
-import com.genesys.cloud.messenger.transport.network.Result
+import com.genesys.cloud.messenger.transport.core.Empty
+import com.genesys.cloud.messenger.transport.core.Result
 
 internal const val NO_JWT = "ZW1wdHlfand0"
 internal const val NO_REFRESH_TOKEN = "Tk9fUkVGUkVTSF9UT0tFTg=="
