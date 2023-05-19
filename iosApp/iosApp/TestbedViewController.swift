@@ -9,6 +9,7 @@
 import UIKit
 import MessengerTransport
 import Combine
+import WebAuthenticationUI
 
 class TestbedViewController: UIViewController {
 

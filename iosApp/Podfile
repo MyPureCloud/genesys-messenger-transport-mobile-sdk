@@ -1,8 +1,10 @@
+source 'https://cdn.cocoapods.org/'
 platform :ios, '13.0'
 
 target 'iosApp' do
   use_frameworks!
   pod 'transport', :path => '../transport'
+  pod 'OktaWebAuthenticationUI', '~> 1.3.0'
 
   target 'iosAppTests' do
     inherit! :search_paths
