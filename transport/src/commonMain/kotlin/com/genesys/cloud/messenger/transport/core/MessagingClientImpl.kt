@@ -144,14 +144,15 @@ internal class MessagingClientImpl(
     }
 
     private fun configureSession(startNew: Boolean = false) {
-        log.i { "configureSession(token = $token, startNew: $startNew)" }
         val encodedJson = if (connectAuthenticated) {
+            log.i { "configureAuthenticatedSession(token = $token, startNew: $startNew)" }
             if (authHandler.jwt == NO_JWT) {
                 refreshTokenAndPerform { configureSession(startNew) }
                 return
             }
             encodeAuthenticatedConfigureSessionRequest(startNew)
         } else {
+            log.i { "configureSession(token = $token, startNew: $startNew)" }
             encodeAnonymousConfigureSessionRequest(startNew)
         }
         webSocket.sendMessage(encodedJson)

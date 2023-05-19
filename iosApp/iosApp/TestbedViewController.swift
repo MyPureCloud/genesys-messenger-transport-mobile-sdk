@@ -211,6 +211,8 @@ class TestbedViewController: UIViewController {
             displayEvent = "Event received: \(connectionClosed.description)"
         case let authenticated as Event.Authenticated:
             displayEvent = "Event received: \(authenticated.description)"
+        case let logout as Event.Logout:
+            displayEvent = "Event received: \(logout.description)"
         default:
             break
         }
@@ -296,7 +298,7 @@ extension TestbedViewController : UITextFieldDelegate {
             case (.connect, _):
                 try messenger.connect()
             case (.connectAuthenticated, _):
-                self.info.text = "Should perform connect authenticated command."
+                try messenger.connectAuthenticated()
             case (.newChat, _):
                 try messenger.newChat()
             case (.bye, _):
@@ -358,9 +360,9 @@ extension TestbedViewController : UITextFieldDelegate {
             case (.oktaSignInWithPKCE, _):
                 self.info.text = "Should perform okta sign in with PKCE command."
             case (.oktaLogout, _):
-                self.info.text = "Should perform okta logout command."
+                try messenger.oktaLogout()
             case (.authenticate, _):
-                self.info.text = "Should perform authenticate command."
+                messenger.authenticate()
             default:
                 self.info.text = "Invalid command"
             }
