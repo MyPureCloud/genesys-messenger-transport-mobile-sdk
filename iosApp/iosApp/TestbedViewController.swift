@@ -33,6 +33,7 @@ class TestbedViewController: UIViewController {
      */
     enum UserCommand: String, CaseIterable {
         case connect
+        case connectAuthenticated
         case newChat
         case send
         case history
@@ -45,6 +46,10 @@ class TestbedViewController: UIViewController {
         case clearConversation
         case addAttribute
         case typing
+        case oktaSignIn
+        case oktaSignInWithPKCE
+        case oktaLogout
+        case authenticate
 
         var helpDescription: String {
             switch self {
@@ -204,6 +209,8 @@ class TestbedViewController: UIViewController {
             displayEvent = "Event received: \(conversationAutostart.description)"
         case let connectionClosed as Event.ConnectionClosed:
             displayEvent = "Event received: \(connectionClosed.description)"
+        case let authenticated as Event.Authenticated:
+            displayEvent = "Event received: \(authenticated.description)"
         default:
             break
         }
@@ -288,6 +295,8 @@ extension TestbedViewController : UITextFieldDelegate {
             switch command {
             case (.connect, _):
                 try messenger.connect()
+            case (.connectAuthenticated, _):
+                self.info.text = "Should perform connect authenticated command."
             case (.newChat, _):
                 try messenger.newChat()
             case (.bye, _):
@@ -344,6 +353,14 @@ extension TestbedViewController : UITextFieldDelegate {
                 }
             case (.typing, _):
                 try messenger.indicateTyping()
+            case (.oktaSignIn, _):
+                self.info.text = "Should perform okta sign in command."
+            case (.oktaSignInWithPKCE, _):
+                self.info.text = "Should perform okta sign in with PKCE command."
+            case (.oktaLogout, _):
+                self.info.text = "Should perform okta logout command."
+            case (.authenticate, _):
+                self.info.text = "Should perform authenticate command."
             default:
                 self.info.text = "Invalid command"
             }
