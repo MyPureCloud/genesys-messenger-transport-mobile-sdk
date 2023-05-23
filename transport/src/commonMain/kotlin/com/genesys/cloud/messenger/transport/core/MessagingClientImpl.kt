@@ -295,7 +295,11 @@ internal class MessagingClientImpl(
             -> {
                 if (stateMachine.isConnected() || stateMachine.isReconnecting() || isStartingANewSession) {
                     if (connectAuthenticated && code.isUnauthorized()) {
-                        refreshTokenAndPerform { connectAuthenticatedSession() }
+                        if (stateMachine.isConnected()) {
+                            refreshTokenAndPerform { configureSession(isStartingANewSession) }
+                        } else {
+                            refreshTokenAndPerform { connectAuthenticatedSession() }
+                        }
                     } else {
                         transitionToStateError(code, message)
                     }
