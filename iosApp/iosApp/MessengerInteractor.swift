@@ -43,8 +43,8 @@ final class MessengerInteractor {
         }
     }
     
-    func authenticate() {
-        messagingClient.authenticate(authCode: "String", redirectUri: "String", codeVerifier: "String?")
+    func authenticate(authCode: String, redirectUri: String, codeVerifier: String?) {
+        messagingClient.authenticate(authCode: authCode, redirectUri: redirectUri, codeVerifier: codeVerifier)
     }
 
     func connect() throws {

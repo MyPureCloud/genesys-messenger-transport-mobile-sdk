@@ -19,7 +19,9 @@ class TestbedViewController: UIViewController {
     private var byteArray: [UInt8]? = nil
     private var customAttributes: [String: String] = [:]
     private var cancellables = Set<AnyCancellable>()
-    
+    private var pkceEnabled = false
+    private var authCode: String? = nil
+
     init(messenger: MessengerInteractor) {
         self.messenger = messenger
         super.init(nibName: nil, bundle: nil)
@@ -33,6 +35,9 @@ class TestbedViewController: UIViewController {
      User commands for the test bed app.
      */
     enum UserCommand: String, CaseIterable {
+        case oktaSignIn
+        case oktaSignInWithPKCE
+        case oktaLogout
         case connect
         case connectAuthenticated
         case newChat
@@ -47,9 +52,6 @@ class TestbedViewController: UIViewController {
         case clearConversation
         case addAttribute
         case typing
-        case oktaSignIn
-        case oktaSignInWithPKCE
-        case oktaLogout
         case authenticate
 
         var helpDescription: String {
@@ -146,6 +148,15 @@ class TestbedViewController: UIViewController {
             .store(in: &cancellables)
     }
     
+    private func signIn() {
+        let authUrlString = buildOktaAuthorizeUrl()
+        if let url = URL(string: authUrlString) {
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url)
+            }
+        }
+    }
+
     private func configureAutoLayout() {
         content.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
         content.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
@@ -279,7 +290,46 @@ class TestbedViewController: UIViewController {
         }
         return (UserCommand(rawValue: command!), input)
     }
-
+    
+    private func buildOktaAuthorizeUrl() -> String {
+        guard let plistPath = Bundle.main.path(forResource: "Okta", ofType: "plist"),
+                let plistData = FileManager.default.contents(atPath: plistPath),
+                let plistDictionary = try? PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any],
+                let oktaDomain = plistDictionary["oktaDomain"] as? String,
+                let clientId = plistDictionary["clientId"] as? String,
+                let signInRedirectURI = plistDictionary["signInRedirectURI"] as? String,
+                let scope = plistDictionary["scopes"] as? String,
+                let oktaState = plistDictionary["oktaState"] as? String,
+                let codeChallengeMethod = plistDictionary["codeChallengeMethod"] as? String,
+                let codeChallenge = plistDictionary["codeChallenge"] as? String
+        else {
+            fatalError("Unable to read Okta.plist or missing required key")
+        }
+        
+        var urlComponents = URLComponents(string: "https://\(oktaDomain)/oauth2/default/v1/authorize")!
+        urlComponents.queryItems = [
+            URLQueryItem(name: "client_id", value: clientId),
+            URLQueryItem(name: "response_type", value: "code"),
+            URLQueryItem(name: "scope", value: scope),
+            URLQueryItem(name: "redirect_uri", value: signInRedirectURI),
+            URLQueryItem(name: "state", value: oktaState)
+        ]
+        
+        if pkceEnabled {
+            urlComponents.queryItems?.append(URLQueryItem(name: "code_challenge_method", value: codeChallengeMethod))
+            urlComponents.queryItems?.append(URLQueryItem(name: "code_challenge", value: codeChallenge))
+        }
+        
+        guard let url = urlComponents.url else {
+            fatalError("Failed to build Okta authorize URL")
+        }
+        
+        return url.absoluteString
+    }
+    
+    func setAuthCode(_ authCode: String) {
+        self.authCode = authCode
+    }
 }
 
 // MARK: UITextFieldDelegate
@@ -357,13 +407,24 @@ extension TestbedViewController : UITextFieldDelegate {
             case (.typing, _):
                 try messenger.indicateTyping()
             case (.oktaSignIn, _):
-                self.info.text = "Should perform okta sign in command."
+                pkceEnabled = false
+                signIn()
             case (.oktaSignInWithPKCE, _):
-                self.info.text = "Should perform okta sign in with PKCE command."
+                pkceEnabled = true
+                signIn()
             case (.oktaLogout, _):
                 try messenger.oktaLogout()
             case (.authenticate, _):
-                messenger.authenticate()
+                guard let plistPath = Bundle.main.path(forResource: "Okta", ofType: "plist"),
+                        let plistData = FileManager.default.contents(atPath: plistPath),
+                        let plistDictionary = try? PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any],
+                        let signInRedirectURI = plistDictionary["signInRedirectURI"] as? String,
+                        let codeVerifier: String? = pkceEnabled ? plistDictionary["codeVerifier"] as? String : nil
+                else {
+                    fatalError("Unable to read Okta.plist or missing required key")
+                }
+                
+                messenger.authenticate(authCode: self.authCode ?? "", redirectUri: signInRedirectURI, codeVerifier: codeVerifier)
             default:
                 self.info.text = "Invalid command"
             }
