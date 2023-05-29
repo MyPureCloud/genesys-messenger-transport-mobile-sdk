@@ -1271,7 +1271,9 @@ class MessagingClientImplTest {
 
         verifySequence {
             connectSequence()
+            mockAuthHandler.clear()
             mockEventHandler.onEvent(eq(expectedEvent))
+            disconnectSequence()
         }
     }
 
