@@ -14,4 +14,6 @@ internal interface AuthHandler {
     fun logout()
 
     fun refreshToken(callback: (Result<Empty>) -> Unit)
+
+    fun clear()
 }

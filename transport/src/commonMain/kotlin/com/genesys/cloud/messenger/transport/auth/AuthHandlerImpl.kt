@@ -88,13 +88,17 @@ internal class AuthHandlerImpl(
                     }
                     is Result.Failure -> {
                         log.e { "Could not refreshAuthToken: ${result.message}" }
-                        authJwt = AuthJwt(NO_JWT, NO_REFRESH_TOKEN)
-                        tokenStore.storeAuthRefreshToken(NO_REFRESH_TOKEN)
+                        clear()
                         callback(result)
                     }
                 }
             }
         }
+    }
+
+    override fun clear() {
+        authJwt = AuthJwt(NO_JWT, NO_REFRESH_TOKEN)
+        tokenStore.storeAuthRefreshToken(NO_REFRESH_TOKEN)
     }
 
     private fun handleRequestError(result: Result.Failure, requestName: String) {
