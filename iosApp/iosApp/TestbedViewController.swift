@@ -9,7 +9,6 @@
 import UIKit
 import MessengerTransport
 import Combine
-import WebAuthenticationUI
 
 class TestbedViewController: UIViewController {
 
@@ -21,6 +20,7 @@ class TestbedViewController: UIViewController {
     private var cancellables = Set<AnyCancellable>()
     private var pkceEnabled = false
     private var authCode: String? = nil
+    private var authState: AuthState = AuthState.noAuth
 
     init(messenger: MessengerInteractor) {
         self.messenger = messenger
@@ -110,6 +110,14 @@ class TestbedViewController: UIViewController {
         view.font = UIFont.preferredFont(forTextStyle: .callout)
         return view
     }()
+    
+    private let authStateView: UILabel = {
+        let view = UILabel()
+        view.numberOfLines = 0
+        view.text = "Auth State"
+        view.font = UIFont.preferredFont(forTextStyle: .callout)
+        return view
+    }()
 
     private let info: UILabel = {
         let view = UILabel()
@@ -128,6 +136,7 @@ class TestbedViewController: UIViewController {
         content.addArrangedSubview(input)
         content.addArrangedSubview(instructions)
         content.addArrangedSubview(status)
+        content.addArrangedSubview(authStateView)
         content.addArrangedSubview(info)
 
         view.addSubview(content)
@@ -146,6 +155,7 @@ class TestbedViewController: UIViewController {
         messenger.eventSubject
             .sink(receiveValue: updateWithEvent)
             .store(in: &cancellables)
+            authStateView.text = "Auth State: \(authState)"
     }
     
     private func signIn() {
@@ -214,6 +224,12 @@ class TestbedViewController: UIViewController {
         case let typing as Event.AgentTyping:
             displayEvent = "Event received: \(typing.description)"
         case let error as Event.Error:
+            if(error.errorCode is ErrorCode.AuthFailed
+               || error.errorCode is ErrorCode.AuthLogoutFailed
+               || error.errorCode is ErrorCode.RefreshAuthTokenFailure) {
+                authState = AuthState.error(errorCode: error.errorCode, message: error.message, correctiveAction: error.correctiveAction)
+                updateAuthStateView()
+            }
             displayEvent = "Event received: \(error.description)"
         case let healthChecked as Event.HealthChecked:
             displayEvent = "Event received: \(healthChecked.description)"
@@ -222,15 +238,19 @@ class TestbedViewController: UIViewController {
         case let connectionClosed as Event.ConnectionClosed:
             displayEvent = "Event received: \(connectionClosed.description)"
         case let authenticated as Event.Authenticated:
+            authState = AuthState.authenticated
+            updateAuthStateView()
             displayEvent = "Event received: \(authenticated.description)"
         case let logout as Event.Logout:
+            authState = AuthState.loggedOut
+            updateAuthStateView()
             displayEvent = "Event received: \(logout.description)"
         default:
             break
         }
         info.text = displayEvent
     }
-        
+
     private func observeKeyboard() {
         NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { [weak self] notification in
             guard let self = self,
@@ -329,6 +349,8 @@ class TestbedViewController: UIViewController {
     
     func setAuthCode(_ authCode: String) {
         self.authCode = authCode
+        authState = AuthState.authCodeReceived(authCode: authCode)
+        updateAuthStateView()
     }
 }
 
@@ -436,4 +458,16 @@ extension TestbedViewController : UITextFieldDelegate {
         textField.resignFirstResponder()
         return true
     }
+    
+    private func updateAuthStateView() {
+        authStateView.text = "Auth State: \(authState)"
+    }
+}
+
+enum AuthState {
+    case noAuth
+    case authCodeReceived(authCode: String)
+    case authenticated
+    case loggedOut
+    case error(errorCode: ErrorCode, message: String?, correctiveAction: CorrectiveAction)
 }

@@ -1,32 +1,16 @@
 PODS:
-  - OktaAuthFoundation (1.3.1)
-  - OktaOAuth2 (1.3.1):
-    - OktaAuthFoundation (= 1.3.1)
-  - OktaWebAuthenticationUI (1.3.1):
-    - OktaAuthFoundation (= 1.3.1)
-    - OktaOAuth2 (= 1.3.1)
   - transport (2.3.1)
 
 DEPENDENCIES:
-  - OktaWebAuthenticationUI (~> 1.3.0)
   - transport (from `../transport`)
-
-SPEC REPOS:
-  trunk:
-    - OktaAuthFoundation
-    - OktaOAuth2
-    - OktaWebAuthenticationUI
 
 EXTERNAL SOURCES:
   transport:
     :path: "../transport"
 
 SPEC CHECKSUMS:
-  OktaAuthFoundation: 192997923391d2418bed674c90f35d6afcc116ab
-  OktaOAuth2: 3208f274cdcdbca6473738fa9e7d5d8d6faa02e3
-  OktaWebAuthenticationUI: cc9661e0aee2755952acb5dc8a765f731e48c2ad
   transport: f86d3bfdd48460d950f81ecb4db2e375df9d1ba0
 
-PODFILE CHECKSUM: e40adc0f306783dae3c426eedf77ac414835e97e
+PODFILE CHECKSUM: 99119ab046e423badef1f828e2f3703e46ccca7e
 
 COCOAPODS: 1.12.1
