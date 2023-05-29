@@ -519,6 +519,7 @@ internal class MessagingClientImpl(
                     }
                     is LogoutEvent -> {
                         eventHandler.onEvent(Event.Logout)
+                        disconnect()
                     }
                     else -> {
                         log.i { "Unhandled message received from Shyrka: $decoded " }
