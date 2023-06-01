@@ -21,10 +21,12 @@ class MessengerInteractorTester {
     var errorExpectation: XCTestExpectation?
     var disconnectedSession: XCTestExpectation?
     var connectionClosed: XCTestExpectation?
+    var authExpectation: XCTestExpectation?
     var receivedMessageText: String? = nil
     var receivedDownloadUrl: String? = nil
     var humanizeEnabled: Bool = true
     var currentClientState: MessagingClientState?
+    var authState: AuthState = .noAuth
 
     private var historyExpectation: XCTestExpectation?
     private var historyMessages: [Message] = []
@@ -127,6 +129,17 @@ class MessengerInteractorTester {
                 case let disconnectedEvent as Event.ConversationDisconnect:
                     print("Conversation was disconnected by the agent. \(disconnectedEvent.description)")
                     self?.disconnectedSession?.fulfill()
+                case let authenticated as Event.Authenticated:
+                    print("Auth event: \(authenticated.description)")
+                    self?.authState = AuthState.authenticated
+                    self?.authExpectation?.fulfill()
+                case let loggedOut as Event.Logout:
+                    print("Auth event: \(loggedOut.description)")
+                    self?.authState = AuthState.loggedOut
+                    self?.authExpectation?.fulfill()
+                case let error as Event.Error:
+                    print("Error Event: \(error.description())")
+                    self?.errorExpectation?.fulfill()
                 default:
                     print("Other event. \(event)")
                 }
@@ -163,16 +176,20 @@ class MessengerInteractorTester {
 
     // Starts a new messaging session.
     // Should be used if ReadOnly is enabled and the user wants to start a new chat.
-    func startNewMessengerConnection(file: StaticString = #file, line: UInt = #line) {
+    func startNewMessengerConnection(authenticated: Bool = false, file: StaticString = #file, line: UInt = #line) {
         do {
             testExpectation = XCTestExpectation(description: "Wait for Configuration.")
             if currentClientState is MessagingClientState.ReadOnly {
                 try messenger.newChat()
             } else {
                 connectedExpectation = XCTestExpectation(description: "Check for the connected state.")
-                try messenger.connect()
-                let connectedCheck = XCTWaiter().wait(for: [connectedExpectation!], timeout: 5) == .completed // If we're connecting to a new conversation, we will be connected first. Waiting for the configured check will give the back end enough time to send the ReadOnly state to the user.
-                let configuredCheck = XCTWaiter().wait(for: [testExpectation!], timeout: 5) == .completed
+                if authenticated {
+                    try messenger.connectAuthenticated()
+                } else {
+                    try messenger.connect()
+                }
+                let connectedCheck = XCTWaiter().wait(for: [connectedExpectation!], timeout: 15) == .completed // If we're connecting to a new conversation, we will be connected first. Waiting for the configured check will give the back end enough time to send the ReadOnly state to the user.
+                let configuredCheck = XCTWaiter().wait(for: [testExpectation!], timeout: 15) == .completed
                 XCTAssertTrue(configuredCheck || connectedCheck, "Did not successfully connect to messenger.")
 
                 // If after we connect we end up in the ReadOnly state, we should run messenger.newChat() and wait again.
@@ -195,6 +212,30 @@ class MessengerInteractorTester {
         } catch {
             XCTFail("Connect threw other than the expected error: \(error.localizedDescription)", file: file, line: line)
         }
+    }
+
+    func authenticate(config: Config, authCode: String, shouldFail: Bool = false) {
+        authExpectation = XCTestExpectation(description: "Wait for authentication to finish.")
+        errorExpectation = XCTestExpectation(description: "Wait for authentication to fail.")
+        messenger.authenticate(authCode: authCode, redirectUri: config.redirectUri, codeVerifier: config.oktaCodeVerifier)
+        if shouldFail {
+            let result = XCTWaiter().wait(for: [errorExpectation!], timeout: 60)
+            XCTAssertEqual(result, .completed, "The test did not receive an error as expected.")
+        } else {
+            let result = XCTWaiter().wait(for: [authExpectation!], timeout: 60)
+            XCTAssertEqual(result, .completed, "The test may not have authenticated correctly.")
+        }
+    }
+
+    func authLogout() {
+        authExpectation = XCTestExpectation(description: "Wait for authentication to log out.")
+        do {
+            try messenger.oktaLogout()
+        } catch {
+            XCTFail("Failed to logout from okta.")
+        }
+        let result = XCTWaiter().wait(for: [authExpectation!], timeout: 60)
+        XCTAssertEqual(result, .completed, "The test may not have logged out correctly.")
     }
 
     func disconnectMessenger(file: StaticString = #file, line: UInt = #line) {
@@ -332,4 +373,12 @@ class MessengerInteractorTester {
         receivedMessageText = nil
     }
 
+}
+
+public enum AuthState {
+    case noAuth
+    case authCodeReceived(authCode: String)
+    case authenticated
+    case loggedOut
+    case error(errorCode: ErrorCode, message: String?, correctiveAction: CorrectiveAction)
 }

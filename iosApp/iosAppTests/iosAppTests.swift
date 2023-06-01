@@ -36,6 +36,54 @@ class iosAppTests: XCTestCase {
         super.tearDown()
     }
 
+    // Editing the name of this test to ensure that this test runs first (alphabetically).
+    // The auth token has a limited amount of time that it can be used.
+    // Additionally, until we can pull a new auth code from the test, we will only be using this test for checks involved with an active auth session.
+    func testAAA_Auth_Pass_With_MultiUser() {
+        guard let config = TestConfig.shared.config else {
+            XCTFail("Failed to pull the test config.")
+            return
+        }
+        let deployment = try! Deployment()
+        let testController = MessengerInteractorTester(deployment: Deployment(deploymentId: config.authDeploymentId, domain: deployment.domain))
+        testController.authenticate(config: config, authCode: config.authCode)
+        testController.startNewMessengerConnection(authenticated: true)
+        testController.sendText(text: "Testing from E2E test.")
+
+        // Use the public API to answer the new Messenger conversation.
+        // Verify that we can send and receive new messages.
+        guard let conversationInfo1 = ApiHelper.shared.answerNewConversation() else {
+            XCTFail("The message we sent may not have connected to an agent.")
+            return
+        }
+        let receivedMessageText = "Test message sent via API request!"
+        testController.testExpectation = XCTestExpectation(description: "Wait for message to be received from the UI agent.")
+        ApiHelper.shared.sendOutboundSmsMessage(conversationId: conversationInfo1.conversationId, communicationId: conversationInfo1.communicationId, message: receivedMessageText)
+        testController.waitForTestExpectation()
+        testController.verifyReceivedMessage(expectedMessage: receivedMessageText)
+
+        // Disconnect. Ensure that auth logs out correctly.
+        testController.authLogout()
+
+        // With the same test controller, authenticate with a different user's auth code.
+        // Ensure that we can answer a new conversation.
+        testController.authenticate(config: config, authCode: config.authCode2)
+        testController.startNewMessengerConnection(authenticated: true)
+        testController.sendText(text: "Testing from E2E test.")
+
+        // Use the public API to answer the new Messenger conversation.
+        // Disconnect afterwards. Ensure that auth logs out correctly.
+        guard let conversationInfo2 = ApiHelper.shared.answerNewConversation() else {
+            XCTFail("The message we sent may not have connected to an agent.")
+            return
+        }
+
+        XCTAssertNotEqual(conversationInfo1.conversationId, conversationInfo2.conversationId, "For some reason, the test controller started the same conversation again.")
+        testController.authLogout()
+        ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo1, connecting: false, wrapup: true)
+        ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo2, connecting: false, wrapup: true)
+    }
+
     func testAttachments() {
         // Setup the session. Send a message to start the conversation.
         // Setup the session. Send a message.
@@ -72,6 +120,16 @@ class iosAppTests: XCTestCase {
         // Disconnect the conversation for the agent and disconnect the session.
         ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
         messengerTester.disconnectMessenger()
+    }
+
+    func testAuthFail() {
+        guard let config = TestConfig.shared.config else {
+            XCTFail("Failed to pull the test config.")
+            return
+        }
+        let deployment = try! Deployment()
+        let testController = MessengerInteractorTester(deployment: Deployment(deploymentId: config.authDeploymentId, domain: deployment.domain))
+        testController.authenticate(config: config, authCode: "", shouldFail: true)
     }
 
     // Test will always fail if the deployment configuration doesn't have AutoStart enabled. See Deployment Configuration options in Admin.
@@ -119,7 +177,7 @@ class iosAppTests: XCTestCase {
         let testController = MessengerInteractorTester(deployment: Deployment(deploymentId: TestConfig.shared.config?.botDeploymentId ?? "", domain: deployment.domain))
 
         testController.startNewMessengerConnection()
-        delay(3, reason: "Allow time for the bot to start.")
+        delay(10, reason: "Allow time for the bot to start.")
         testController.receivedMessageExpectation = XCTestExpectation(description: "Wait for message to be received from the bot.")
         testController.sendText(text: "Yes") // Bot is configured to send a message if a "Yes" is sent.
         testController.waitForMessageReceiveExpectation()
@@ -239,13 +297,22 @@ class iosAppTests: XCTestCase {
         }
 
         messengerTester.startNewMessengerConnection()
-        messengerTester.sendText(text: "Starting message history test.")
 
         // Use the public API to answer the new Messenger conversation.
         // Send a message from that agent and make sure we receive it.
         guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
             XCTFail("The message we sent may not have connected to an agent.")
             return
+        }
+
+        // Testing for https://inindca.atlassian.net/browse/MTSDK-180
+        // Will disconnect and reconnect to the same conversation multiple times before checking for history.
+        // This helps simulate backgrounding and returning to the UI app.
+        for _ in 1...10 {
+            messengerTester.disconnectMessenger()
+            delay(1)
+            messengerTester.startNewMessengerConnection()
+            delay(1)
         }
 
         // Disconnect the conversation for the agent and make sure the client state changes.
