@@ -24,8 +24,7 @@ final class MessengerInteractor {
         self.configuration = Configuration(deploymentId: deployment.deploymentId,
                                            domain: deployment.domain,
                                            logging: true,
-                                           reconnectionTimeoutInSeconds: reconnectTimeout,
-                                           autoRefreshTokenWhenExpired: true)
+                                           reconnectionTimeoutInSeconds: reconnectTimeout)
         self.messengerTransport = MessengerTransport(configuration: self.configuration)
         self.messagingClient = self.messengerTransport.createMessagingClient()
         
