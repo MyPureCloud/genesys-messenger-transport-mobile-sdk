@@ -83,6 +83,11 @@
                BlueprintName = "iosAppTests"
                ReferencedContainer = "container:iosApp.xcodeproj">
             </BuildableReference>
+            <SkippedTests>
+               <Test
+                  Identifier = "iosAppTests/testUnknownAgent()">
+               </Test>
+            </SkippedTests>
          </TestableReference>
          <TestableReference
             skipped = "NO">
