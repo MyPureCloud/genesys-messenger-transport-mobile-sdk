@@ -11,7 +11,6 @@ import androidx.appcompat.app.AppCompatActivity
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.launcher.PrototypeLauncherView
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed.TestBedFragment
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed.TestBedViewModel
-import com.genesys.cloud.messenger.androidcomposeprototype.util.getSharedPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -70,10 +69,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     private fun handleOktaRedirect(data: Uri) {
         // If authcode is present.
         data.getQueryParameter("code")?.let { authCode ->
-            getSharedPreferences().edit().run {
-                putString("authCode", authCode)
-                apply()
-            }
+            viewModel.authCode = authCode
         }
         // Otherwise there will be an error.
         data.getQueryParameter("error_description")?.let { error ->

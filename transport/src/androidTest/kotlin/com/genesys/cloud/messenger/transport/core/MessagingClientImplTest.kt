@@ -2,35 +2,22 @@ package com.genesys.cloud.messenger.transport.core
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import com.genesys.cloud.messenger.transport.auth.AuthHandler
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
+import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.HEALTH_CHECK_COOL_DOWN_MILLISECONDS
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.TYPING_INDICATOR_COOL_DOWN_MILLISECONDS
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
-import com.genesys.cloud.messenger.transport.model.AuthJwt
-import com.genesys.cloud.messenger.transport.network.FetchJwtUseCase
-import com.genesys.cloud.messenger.transport.network.LogoutUseCase
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
-import com.genesys.cloud.messenger.transport.network.TestAuthCode
-import com.genesys.cloud.messenger.transport.network.TestCodeVerifier
-import com.genesys.cloud.messenger.transport.network.TestJwtAuthUrl
-import com.genesys.cloud.messenger.transport.network.TestJwtToken
-import com.genesys.cloud.messenger.transport.network.TestRefreshToken
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
-import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosed
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
-import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.Logout
-import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent.Typing
 import com.genesys.cloud.messenger.transport.shyrka.receive.createConversationsVOForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createMessengerVOForTesting
@@ -41,15 +28,18 @@ import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
+import com.genesys.cloud.messenger.transport.util.DefaultTokenStore
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Request
+import com.genesys.cloud.messenger.transport.util.TestAuthCode
+import com.genesys.cloud.messenger.transport.util.TestCodeVerifier
+import com.genesys.cloud.messenger.transport.util.TestJwtAuthUrl
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import io.mockk.Called
 import io.mockk.MockKVerificationScope
 import io.mockk.clearAllMocks
 import io.mockk.clearMocks
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.invoke
 import io.mockk.mockk
@@ -146,19 +136,18 @@ class MessagingClientImplTest {
         showUserTypingEnabled = mockShowUserTypingIndicatorFunction,
         getCurrentTimestamp = mockTimestampFunction,
     )
-
-    private val mockFetchJwtUseCase: FetchJwtUseCase = mockk {
-        coEvery { fetch(any(), any(), any()) } returns AuthJwt(TestJwtToken, TestRefreshToken)
+    private val mockAuthHandler: AuthHandler = mockk(relaxed = true)
+    private val mockTokenStore: DefaultTokenStore = mockk {
+        every { fetch() } returns Request.token
+        every { token } returns Request.token
     }
-
-    private val mockLogoutUseCase: LogoutUseCase = mockk(relaxed = true)
 
     private val subject = MessagingClientImpl(
         log = log,
         configuration = configuration,
         webSocket = mockPlatformSocket,
         api = mockWebMessagingApi,
-        token = Request.token,
+        tokenStore = mockTokenStore,
         jwtHandler = mockk(),
         attachmentHandler = mockAttachmentHandler,
         messageStore = mockMessageStore,
@@ -167,8 +156,7 @@ class MessagingClientImplTest {
         userTypingProvider = userTypingProvider,
         healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),
         deploymentConfig = mockDeploymentConfig,
-        fetchJwtUseCase = mockFetchJwtUseCase,
-        logoutUseCase = mockLogoutUseCase,
+        authHandler = mockAuthHandler,
     ).also {
         it.stateChangedListener = mockStateChangedListener
     }
@@ -684,14 +672,8 @@ class MessagingClientImplTest {
 
     @Test
     fun whenStructuredMessageWithMultipleEventsReceived() {
-        val firstExpectedEvent = TypingEvent(
-            eventType = StructuredMessageEvent.Type.Typing,
-            typing = Typing(type = "Off", duration = 1000),
-        )
-        val secondsExpectedEvent = TypingEvent(
-            eventType = StructuredMessageEvent.Type.Typing,
-            typing = Typing(type = "On", duration = 5000),
-        )
+        val firstExpectedEvent = Event.AgentTyping(1000)
+        val secondsExpectedEvent = Event.AgentTyping(5000)
 
         subject.connect()
 
@@ -712,7 +694,7 @@ class MessagingClientImplTest {
 
         slot.captured.onMessage(Response.structuredMessageWithEvents(givenUnknownEvent))
 
-        verify(exactly = 0) { mockEventHandler.onEvent(any()) }
+        verify { mockEventHandler.onEvent(null) }
         verify(exactly = 0) { mockMessageStore.update(any()) }
         verify(exactly = 0) { mockAttachmentHandler.onSent(any()) }
     }
@@ -802,9 +784,11 @@ class MessagingClientImplTest {
 
     @Test
     fun whenWebSocketRespondWithUnstructuredTypingIndicatorForbiddenError() {
-        val expectedEvent = ErrorEvent(
-            errorCode = ErrorCode.ClientResponseError(403),
+        val expectedErrorCode = ErrorCode.ClientResponseError(403)
+        val expectedEvent = Event.Error(
+            errorCode = expectedErrorCode,
             message = "Turn on the Feature Toggle or fix the configuration.",
+            correctiveAction = expectedErrorCode.toCorrectiveAction(),
         )
         subject.connect()
 
@@ -883,10 +867,7 @@ class MessagingClientImplTest {
     @Test
     fun whenEventPresenceJoinReceived() {
         val givenPresenceJoinEvent = """{"eventType":"Presence","presence":{"type":"Join"}}"""
-        val expectedEvent = PresenceEvent(
-            eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Join)
-        )
+        val expectedEvent = Event.ConversationAutostart
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceJoinEvent))
@@ -898,7 +879,7 @@ class MessagingClientImplTest {
 
     @Test
     fun whenEventConnectionClosedReceived() {
-        val expectedEvent = ConnectionClosed()
+        val expectedEvent = Event.ConnectionClosed
 
         subject.connect()
         slot.captured.onMessage(Response.connectionClosedEvent)
@@ -926,10 +907,7 @@ class MessagingClientImplTest {
         )
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
-        val expectedEvent = PresenceEvent(
-            eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
-        )
+        val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
@@ -946,10 +924,7 @@ class MessagingClientImplTest {
     fun whenDisconnectEventReceivedAndThereAreNoReadOnlyInMetadataAndConversationDisconnectInDeploymentConfigIsSetToSendAndDisabled() {
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
-        val expectedEvent = PresenceEvent(
-            eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
-        )
+        val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
@@ -978,10 +953,7 @@ class MessagingClientImplTest {
 
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
-        val expectedEvent = PresenceEvent(
-            eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
-        )
+        val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
@@ -1007,10 +979,7 @@ class MessagingClientImplTest {
 
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
-        val expectedEvent = PresenceEvent(
-            eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
-        )
+        val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
@@ -1039,13 +1008,15 @@ class MessagingClientImplTest {
 
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
-        val expectedEvent = PresenceEvent(
-            eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect),
-        )
+        val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
-        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent, metadata = mapOf("readOnly" to "true")))
+        slot.captured.onMessage(
+            Response.structuredMessageWithEvents(
+                events = givenPresenceDisconnectEvent,
+                metadata = mapOf("readOnly" to "true")
+            )
+        )
 
         verify { mockEventHandler.onEvent(eq(expectedEvent)) }
         verify { mockStateChangedListener.invoke(fromConfiguredToReadOnly()) }
@@ -1068,13 +1039,15 @@ class MessagingClientImplTest {
 
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
-        val expectedEvent = PresenceEvent(
-            eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect),
-        )
+        val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
-        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent, metadata = mapOf("readOnly" to "false")))
+        slot.captured.onMessage(
+            Response.structuredMessageWithEvents(
+                events = givenPresenceDisconnectEvent,
+                metadata = mapOf("readOnly" to "false")
+            )
+        )
 
         verify { mockEventHandler.onEvent(eq(expectedEvent)) }
         verify(exactly = 0) { mockStateChangedListener.invoke(fromConfiguredToReadOnly()) }
@@ -1280,137 +1253,27 @@ class MessagingClientImplTest {
         }
     }
 
-    private fun verifyCleanUp() {
-        mockMessageStore.invalidateConversationCache()
-        mockAttachmentHandler.clearAll()
-        mockReconnectionHandler.clear()
-    }
-
     @Test
-    fun whenFetchAuthJwtIsCalled() {
-        val expectedResult = AuthJwt(TestJwtToken, TestRefreshToken)
+    fun whenAuthenticateIsCalled() {
+        subject.authenticate(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier)
 
-        val result = runBlocking {
-            subject.fetchAuthJwt(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier)
+        verify {
+            mockAuthHandler.authenticate(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier)
         }
-
-        assertEquals(expectedResult, result)
-        coVerify {
-            mockFetchJwtUseCase.fetch(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier)
-        }
-    }
-
-    @Test
-    fun whenFetchAuthJwtResultInExceptionVerifyThatExceptionIsForwarded() {
-        coEvery {
-            mockFetchJwtUseCase.fetch(
-                any(),
-                any(),
-                any()
-            )
-        } throws Exception("Something went wrong.")
-
-        assertFailsWith<Exception> {
-            runBlocking { subject.fetchAuthJwt(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier) }
-        }
-    }
-
-    @Test
-    fun whenConnectAuthenticated() {
-        val givenAuthJwt = AuthJwt("auth_token", "refresh_token")
-
-        subject.connectAuthenticatedSession(givenAuthJwt)
-
-        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
-        verifySequence {
-            connectSequence(shouldConfigureAuth = true)
-        }
-    }
-
-    @Test
-    fun whenConnectAuthenticatedAndThenDisconnectAndThenConnect() {
-        val givenAuthJwt = AuthJwt("auth_token", "refresh_token")
-
-        subject.connectAuthenticatedSession(givenAuthJwt)
-        subject.disconnect()
-        subject.connect()
-
-        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
-        verifySequence {
-            connectSequence(shouldConfigureAuth = true)
-            disconnectSequence()
-            mockStateChangedListener(fromClosedToConnecting)
-            mockPlatformSocket.openSocket(any())
-            mockStateChangedListener(fromConnectingToConnected)
-            mockPlatformSocket.sendMessage(Request.configureRequest())
-            mockReconnectionHandler.clear()
-            mockStateChangedListener(fromConnectedToConfigured)
-        }
-    }
-
-    @Test
-    fun whenConnectAuthenticatedAndThenErrorStateAndThenConnect() {
-        val givenAuthJwt = AuthJwt("auth_token", "refresh_token")
-        val expectedErrorState =
-            State.Error(ErrorCode.SessionHasExpired, "session expired error message")
-        every { mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest()) } answers {
-            slot.captured.onMessage(Response.sessionExpired)
-        }
-
-        subject.connectAuthenticatedSession(givenAuthJwt)
-        subject.connect()
-
-        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
-        verifySequence {
-            connectWithFailedConfigureSequence(shouldConfigureAuth = true)
-            errorSequence(fromConnectedToError(expectedErrorState))
-            mockStateChangedListener(fromErrorToConnecting(expectedErrorState))
-            mockPlatformSocket.openSocket(any())
-            mockStateChangedListener(fromConnectingToConnected)
-            mockPlatformSocket.sendMessage(Request.configureRequest())
-            mockReconnectionHandler.clear()
-            mockStateChangedListener(fromConnectedToConfigured)
-        }
-    }
-
-    @Test
-    fun whenConfigureAuthenticatedAndThenLogoutFromAuthenticatedSession() {
-        val givenAuthJwt = AuthJwt("auth_token", "refresh_token")
-
-        subject.connectAuthenticatedSession(givenAuthJwt)
-        runBlocking { subject.logoutFromAuthenticatedSession() }
-
-        coVerify {
-            connectSequence(shouldConfigureAuth = true)
-            mockLogoutUseCase.logout("auth_token")
-        }
-    }
-
-    @Test
-    fun whenLogoutFromAuthenticatedSessionWithoutSettingAuthJwt() {
-        runBlocking { subject.logoutFromAuthenticatedSession() }
-
-        coVerify(exactly = 0) { mockLogoutUseCase.logout(any()) }
-    }
-
-    @Test
-    fun whenLogoutFromAnonymousSession() {
-        subject.connect()
-        runBlocking { subject.logoutFromAuthenticatedSession() }
-
-        coVerify(exactly = 0) { mockLogoutUseCase.logout(any()) }
     }
 
     @Test
     fun whenEventLogoutReceived() {
-        val expectedEvent = Logout()
+        val expectedEvent = Event.Logout
 
         subject.connect()
         slot.captured.onMessage(Response.logoutEvent)
 
         verifySequence {
             connectSequence()
+            mockAuthHandler.clear()
             mockEventHandler.onEvent(eq(expectedEvent))
+            disconnectSequence()
         }
     }
 
@@ -1529,6 +1392,12 @@ class MessagingClientImplTest {
             oldState = State.Configured(connected = true, newSession = true),
             newState = State.Reconnecting
         )
+
+    private fun verifyCleanUp() {
+        mockMessageStore.invalidateConversationCache()
+        mockAttachmentHandler.clearAll()
+        mockReconnectionHandler.clear()
+    }
 }
 
 private object Response {
@@ -1569,8 +1438,10 @@ private object Response {
     fun structuredMessageWithEvents(
         events: String = defaultStructuredEvents,
         direction: Message.Direction = Message.Direction.Outbound,
-        metadata: Map<String, String> = mapOf("correlationId" to "0000000-0000-0000-0000-0000000000")
+        metadata: Map<String, String> = mapOf("correlationId" to "0000000-0000-0000-0000-0000000000"),
     ): String {
-        return """{"type": "message","class": "StructuredMessage","code": 200,"body": {"direction": "${direction.name}","id": "0000000-0000-0000-0000-0000000000","channel": {"time": "2022-03-09T13:35:31.104Z","messageId": "0000000-0000-0000-0000-0000000000"},"type": "Event","metadata": ${Json.encodeToString(metadata)},"events": [$events]}}"""
+        return """{"type": "message","class": "StructuredMessage","code": 200,"body": {"direction": "${direction.name}","id": "0000000-0000-0000-0000-0000000000","channel": {"time": "2022-03-09T13:35:31.104Z","messageId": "0000000-0000-0000-0000-0000000000"},"type": "Event","metadata": ${
+        Json.encodeToString(metadata)
+        },"events": [$events]}}"""
     }
 }

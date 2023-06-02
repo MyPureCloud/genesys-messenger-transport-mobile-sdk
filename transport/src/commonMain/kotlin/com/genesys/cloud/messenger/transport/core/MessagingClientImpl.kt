@@ -1,14 +1,15 @@
 package com.genesys.cloud.messenger.transport.core
 
+import com.genesys.cloud.messenger.transport.auth.AuthHandler
+import com.genesys.cloud.messenger.transport.auth.AuthHandlerImpl
+import com.genesys.cloud.messenger.transport.auth.NO_JWT
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
-import com.genesys.cloud.messenger.transport.model.AuthJwt
-import com.genesys.cloud.messenger.transport.network.FetchJwtUseCase
-import com.genesys.cloud.messenger.transport.network.LogoutUseCase
+import com.genesys.cloud.messenger.transport.core.events.toTransportEvent
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
@@ -16,15 +17,11 @@ import com.genesys.cloud.messenger.transport.network.SocketCloseCode
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.AttachmentDeletedResponse
-import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosed
 import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosedEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
-import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
-import com.genesys.cloud.messenger.transport.shyrka.receive.HealthCheckEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
-import com.genesys.cloud.messenger.transport.shyrka.receive.Logout
 import com.genesys.cloud.messenger.transport.shyrka.receive.LogoutEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
@@ -45,6 +42,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.TokenStore
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.util.logs.Log
@@ -54,12 +52,12 @@ import kotlinx.serialization.encodeToString
 import kotlin.reflect.KProperty0
 
 internal class MessagingClientImpl(
+    tokenStore: TokenStore,
     private val api: WebMessagingApi,
     private val webSocket: PlatformSocket,
     private val configuration: Configuration,
     private val log: Log,
     private val jwtHandler: JwtHandler,
-    private val token: String,
     private val deploymentConfig: KProperty0<DeploymentConfig?>,
     private val attachmentHandler: AttachmentHandler,
     private val messageStore: MessageStore,
@@ -67,21 +65,21 @@ internal class MessagingClientImpl(
     private val stateMachine: StateMachine = StateMachineImpl(log.withTag(LogTag.STATE_MACHINE)),
     private val eventHandler: EventHandler = EventHandlerImpl(log.withTag(LogTag.EVENT_HANDLER)),
     private val healthCheckProvider: HealthCheckProvider = HealthCheckProvider(log.withTag(LogTag.HEALTH_CHECK_PROVIDER)),
-    private val userTypingProvider: UserTypingProvider =
-        UserTypingProvider(
-            log.withTag(LogTag.TYPING_INDICATOR_PROVIDER),
-            { deploymentConfig.isShowUserTypingEnabled() },
-        ),
-    private val fetchJwtUseCase: FetchJwtUseCase = FetchJwtUseCase(
-        configuration.logging,
-        configuration.deploymentId,
-        configuration.jwtAuthUrl,
+    private val userTypingProvider: UserTypingProvider = UserTypingProvider(
+        log.withTag(LogTag.TYPING_INDICATOR_PROVIDER),
+        { deploymentConfig.isShowUserTypingEnabled() },
     ),
-    private val logoutUseCase: LogoutUseCase = LogoutUseCase(configuration.logoutUrl),
+    private val authHandler: AuthHandler = AuthHandlerImpl(
+        configuration.autoRefreshTokenWhenExpired,
+        eventHandler,
+        api,
+        tokenStore,
+        log.withTag(LogTag.AUTH_HANDLER)
+    ),
 ) : MessagingClient {
-
-    private var authJwt: AuthJwt? = null
+    private var connectAuthenticated = false
     private var isStartingANewSession = false
+    private val token: String = tokenStore.token
 
     override val currentState: State
         get() {
@@ -115,14 +113,15 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun connect() {
         log.i { "connect()" }
+        connectAuthenticated = false
         stateMachine.onConnect()
         webSocket.openSocket(socketListener)
     }
 
     @Throws(IllegalStateException::class)
-    override fun connectAuthenticatedSession(jwt: AuthJwt) {
-        authJwt = jwt
-        log.i { "connect()" }
+    override fun connectAuthenticatedSession() {
+        log.i { "connectAuthenticatedSession()" }
+        connectAuthenticated = true
         stateMachine.onConnect()
         webSocket.openSocket(socketListener)
     }
@@ -145,10 +144,15 @@ internal class MessagingClientImpl(
     }
 
     private fun configureSession(startNew: Boolean = false) {
-        log.i { "configureSession(token = $token, startNew: $startNew)" }
-        val encodedJson = if (authJwt != null) {
+        val encodedJson = if (connectAuthenticated) {
+            log.i { "configureAuthenticatedSession(token = $token, startNew: $startNew)" }
+            if (authHandler.jwt == NO_JWT) {
+                refreshTokenAndPerform { configureSession(startNew) }
+                return
+            }
             encodeAuthenticatedConfigureSessionRequest(startNew)
         } else {
+            log.i { "configureSession(token = $token, startNew: $startNew)" }
             encodeAnonymousConfigureSessionRequest(startNew)
         }
         webSocket.sendMessage(encodedJson)
@@ -223,13 +227,10 @@ internal class MessagingClientImpl(
             }
     }
 
-    @Throws(Exception::class)
-    override suspend fun logoutFromAuthenticatedSession() {
-        val authJwt = authJwt ?: run {
-            log.w { "Logout from anonymous session is not supported." }
-            return
-        }
-        logoutUseCase.logout(authJwt.jwt)
+    @Throws(IllegalStateException::class)
+    override fun logoutFromAuthenticatedSession() {
+        stateMachine.checkIfConfigured()
+        authHandler.logout()
     }
 
     override fun invalidateConversationCache() {
@@ -245,13 +246,8 @@ internal class MessagingClientImpl(
         }
     }
 
-    @Throws(Exception::class)
-    override suspend fun fetchAuthJwt(
-        authCode: String,
-        redirectUri: String,
-        codeVerifier: String?,
-    ): AuthJwt {
-        return fetchJwtUseCase.fetch(authCode, redirectUri, codeVerifier)
+    override fun authenticate(authCode: String, redirectUri: String, codeVerifier: String?) {
+        authHandler.authenticate(authCode, redirectUri, codeVerifier)
     }
 
     @Throws(IllegalStateException::class)
@@ -299,13 +295,36 @@ internal class MessagingClientImpl(
             is ErrorCode.RedirectResponseError,
             -> {
                 if (stateMachine.isConnected() || stateMachine.isReconnecting() || isStartingANewSession) {
-                    transitionToStateError(code, message)
+                    if (connectAuthenticated && code.isUnauthorized()) {
+                        if (stateMachine.isConnected()) {
+                            refreshTokenAndPerform { configureSession(isStartingANewSession) }
+                        } else {
+                            refreshTokenAndPerform { connectAuthenticatedSession() }
+                        }
+                    } else {
+                        transitionToStateError(code, message)
+                    }
                 } else {
-                    eventHandler.onEvent(ErrorEvent(errorCode = code, message = message))
+                    eventHandler.onEvent(
+                        Event.Error(
+                            errorCode = code,
+                            message = message,
+                            correctiveAction = code.toCorrectiveAction()
+                        )
+                    )
                 }
             }
             is ErrorCode.WebsocketError -> handleWebSocketError(ErrorCode.WebsocketError)
             else -> log.w { "Unhandled ErrorCode: $code with optional message: $message" }
+        }
+    }
+
+    private fun refreshTokenAndPerform(action: () -> Unit) {
+        authHandler.refreshToken { result ->
+            when (result) {
+                is Result.Success -> action()
+                is Result.Failure -> transitionToStateError(result.errorCode, result.message)
+            }
         }
     }
 
@@ -316,7 +335,7 @@ internal class MessagingClientImpl(
             is ErrorCode.WebsocketError -> {
                 if (reconnectionHandler.shouldReconnect) {
                     stateMachine.onReconnect()
-                    reconnectionHandler.reconnect { connect() }
+                    reconnectionHandler.reconnect { if (connectAuthenticated) connectAuthenticatedSession() else connect() }
                 } else {
                     transitionToStateError(errorCode, ErrorMessage.FailedToReconnect)
                 }
@@ -346,7 +365,7 @@ internal class MessagingClientImpl(
                     structuredMessage.events.forEach {
                         if (it.isDisconnectionEvent()) {
                             if (deploymentConfig.isConversationDisconnectEnabled()) {
-                                eventHandler.onEvent(it)
+                                eventHandler.onEvent(it.toTransportEvent())
                                 // Prefer readOnly value provided by Shyrka and as fallback use DeploymentConfig.
                                 if (structuredMessage.metadata.containsKey("readOnly")) {
                                     if (structuredMessage.metadata["readOnly"].toBoolean()) stateMachine.onReadOnly()
@@ -355,13 +374,13 @@ internal class MessagingClientImpl(
                                 }
                             }
                         } else {
-                            eventHandler.onEvent(it)
+                            eventHandler.onEvent(it.toTransportEvent())
                         }
                     }
                 } else {
                     structuredMessage.events.forEach {
-                        if (it.eventType == StructuredMessageEvent.Type.Presence) {
-                            eventHandler.onEvent(it)
+                        if (it is PresenceEvent) {
+                            eventHandler.onEvent(it.toTransportEvent())
                         }
                     }
                 }
@@ -375,40 +394,40 @@ internal class MessagingClientImpl(
         healthCheckProvider.clear()
         attachmentHandler.clearAll()
         reconnectionHandler.clear()
-        authJwt = null
     }
 
     private fun transitionToStateError(errorCode: ErrorCode, errorMessage: String?) {
         stateMachine.onError(errorCode, errorMessage)
         attachmentHandler.clearAll()
         reconnectionHandler.clear()
-        authJwt = null
     }
 
-    private fun encodeAnonymousConfigureSessionRequest(startNew: Boolean) = WebMessagingJson.json.encodeToString(
-        ConfigureSessionRequest(
-            token = token,
-            deploymentId = configuration.deploymentId,
-            startNew = startNew,
-            journeyContext = JourneyContext(
-                JourneyCustomer(token, "cookie"),
-                JourneyCustomerSession("", "web")
+    private fun encodeAnonymousConfigureSessionRequest(startNew: Boolean) =
+        WebMessagingJson.json.encodeToString(
+            ConfigureSessionRequest(
+                token = token,
+                deploymentId = configuration.deploymentId,
+                startNew = startNew,
+                journeyContext = JourneyContext(
+                    JourneyCustomer(token, "cookie"),
+                    JourneyCustomerSession("", "web")
+                )
             )
         )
-    )
 
-    private fun encodeAuthenticatedConfigureSessionRequest(startNew: Boolean) = WebMessagingJson.json.encodeToString(
-        ConfigureAuthenticatedSessionRequest(
-            token = token,
-            deploymentId = configuration.deploymentId,
-            startNew = startNew,
-            journeyContext = JourneyContext(
-                JourneyCustomer(token, "cookie"),
-                JourneyCustomerSession("", "web")
-            ),
-            data = ConfigureAuthenticatedSessionRequest.Data(authJwt?.jwt ?: "")
+    private fun encodeAuthenticatedConfigureSessionRequest(startNew: Boolean) =
+        WebMessagingJson.json.encodeToString(
+            ConfigureAuthenticatedSessionRequest(
+                token = token,
+                deploymentId = configuration.deploymentId,
+                startNew = startNew,
+                journeyContext = JourneyContext(
+                    JourneyCustomer(token, "cookie"),
+                    JourneyCustomerSession("", "web")
+                ),
+                data = ConfigureAuthenticatedSessionRequest.Data(authHandler.jwt)
+            )
         )
-    )
 
     private val socketListener = SocketListener(
         log = log.withTag(LogTag.WEBSOCKET)
@@ -473,7 +492,7 @@ internal class MessagingClientImpl(
                         attachmentHandler.onUploadSuccess(decoded.body)
                     is StructuredMessage -> {
                         if (decoded.body.isHealthCheckResponse()) {
-                            eventHandler.onEvent(HealthCheckEvent())
+                            eventHandler.onEvent(Event.HealthChecked)
                         } else {
                             handleStructuredMessage(decoded.body)
                         }
@@ -500,10 +519,16 @@ internal class MessagingClientImpl(
                     }
                     is ConnectionClosedEvent -> {
                         disconnect()
-                        eventHandler.onEvent(ConnectionClosed())
+                        eventHandler.onEvent(Event.ConnectionClosed)
                     }
-                    is LogoutEvent -> { eventHandler.onEvent(Logout()) }
-                    else -> { log.i { "Unhandled message received from Shyrka: $decoded " } }
+                    is LogoutEvent -> {
+                        authHandler.clear()
+                        eventHandler.onEvent(Event.Logout)
+                        disconnect()
+                    }
+                    else -> {
+                        log.i { "Unhandled message received from Shyrka: $decoded " }
+                    }
                 }
             } catch (exception: SerializationException) {
                 log.e(throwable = exception) { "Failed to deserialize message" }

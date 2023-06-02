@@ -1,7 +1,6 @@
 package com.genesys.cloud.messenger.transport.core
 
 import com.genesys.cloud.messenger.transport.core.events.Event
-import com.genesys.cloud.messenger.transport.model.AuthJwt
 
 /**
  * The main SDK interface providing bi-directional communication between a guest and Genesys Cloud
@@ -107,21 +106,19 @@ interface MessagingClient {
      * Open and Configure a secure WebSocket connection to the Web Messaging service with the url and
      * deploymentId configured on this MessagingClient instance.
      *
-     * @throws IllegalStateException
+     * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
      */
     @Throws(IllegalStateException::class)
     fun connect()
 
     /**
-     * Open and configure a secure WebSocket connection to the Web Messaging service using the url and deploymentId
-     * configured on this MessagingClient instance, authenticating the session with the provided JWT.
-     *
-     * @param jwt the AuthJwt used to authenticate the session.
+     * Open and configure an authenticated and secure WebSocket connection to the Web Messaging service using the url and deploymentId
+     * configured on this MessagingClient instance. Note, once Authenticated session is configured it can not be downgraded to Anonymous session.
      *
      * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
      */
     @Throws(IllegalStateException::class)
-    fun connectAuthenticatedSession(jwt: AuthJwt)
+    fun connectAuthenticatedSession()
 
     /**
      * Configure a new chat once the previous one is in State.ReadOnly.
@@ -138,7 +135,7 @@ interface MessagingClient {
      *
      * @param text the plain text to send.
      * @param customAttributes optional dictionary of attributes to send with the message. Empty by default.
-     * @throws IllegalStateException
+     * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
      */
     @Throws(IllegalStateException::class)
     fun sendMessage(text: String, customAttributes: Map<String, String> = emptyMap())
@@ -148,7 +145,7 @@ interface MessagingClient {
      * This command sends a single echo request and should be called a maximum of once every 30 seconds.
      * If called more frequently, this command will be rate limited in order to optimize network traffic.
      *
-     * @throws IllegalStateException
+     * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
      */
     @Throws(IllegalStateException::class)
     fun sendHealthCheck()
@@ -163,6 +160,7 @@ interface MessagingClient {
      * for instance: example.png
      * @param uploadProgress optional callback to track attachment upload progress.
      *
+     * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
      * @return internally generated attachmentId. Can be used to track upload progress
      */
     @Throws(IllegalStateException::class)
@@ -176,8 +174,9 @@ interface MessagingClient {
      * Detach file from message. If file was already uploaded it will be deleted.
      * If file is uploading now, the process will be stopped.
      *
-     * @param attachmentId the ID of the attachment to remove
-     * @throws IllegalStateException if called before session was connected.
+     * @param attachmentId the ID of the attachment to remove.
+     *
+     * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
      */
     @Throws(IllegalStateException::class)
     fun detach(attachmentId: String)
@@ -193,7 +192,7 @@ interface MessagingClient {
     /**
      * Close the WebSocket connection to the Web Messaging service.
      *
-     * @throws IllegalStateException
+     * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
      */
     @Throws(IllegalStateException::class)
     fun disconnect()
@@ -206,37 +205,31 @@ interface MessagingClient {
     fun invalidateConversationCache()
 
     /**
-     * Logs out user from authenticated session on all devices that shares the same auth session.
-     * Performing this function on `anonymous` session will not have any effect.
-     */
-    @Throws(Exception::class)
-    suspend fun logoutFromAuthenticatedSession()
-
-    /**
      * Notify the agent that the customer is typing a message.
      * This command sends a single typing indicator event and should be called a maximum of once every 5 seconds.
      * If called more frequently, this command will be rate limited in order to optimize network traffic.
      *
-     * @throws IllegalStateException if called before session was connected.
+     * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
      */
     @Throws(IllegalStateException::class)
     fun indicateTyping()
 
     /**
-     * Fetches an Auth JWT using the provided authentication token, redirect URI, and code verifier.
+     * Exchange authCode for accessToken(JWT) using the provided authCode, redirect URI, and code verifier.
+     * In case of failure Event.Error with [ErrorCode.AuthFailed] will be sent.
      *
      * @param authCode The authentication code to use for fetching the Auth JWT.
      * @param redirectUri The redirect URI to use for fetching the Auth JWT.
      * @param codeVerifier The code verifier to use for fetching the Auth JWT (optional).
-     *
-     * @throws Exception If the Auth JWT fetch failed.
-     *
-     * @return The fetched Auth JWT with jwt and refreshToken.
      */
-    @Throws(Exception::class)
-    suspend fun fetchAuthJwt(
-        authCode: String,
-        redirectUri: String,
-        codeVerifier: String?,
-    ): AuthJwt
+    fun authenticate(authCode: String, redirectUri: String, codeVerifier: String?)
+
+    /**
+     * Logs out user from authenticated session on all devices that shares the same auth session.
+     * In case of failure Event.Error with [ErrorCode.AuthLogoutFailed] will be sent.
+     *
+     * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
+     */
+    @Throws(IllegalStateException::class)
+    fun logoutFromAuthenticatedSession()
 }

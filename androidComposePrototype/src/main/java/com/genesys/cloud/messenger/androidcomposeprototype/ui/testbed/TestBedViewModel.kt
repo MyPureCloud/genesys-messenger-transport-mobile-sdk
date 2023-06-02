@@ -8,16 +8,16 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.genesys.cloud.messenger.androidcomposeprototype.BuildConfig
-import com.genesys.cloud.messenger.androidcomposeprototype.util.getSharedPreferences
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
 import com.genesys.cloud.messenger.transport.core.Configuration
+import com.genesys.cloud.messenger.transport.core.CorrectiveAction
+import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessageEvent.AttachmentUpdated
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.MessengerTransport
 import com.genesys.cloud.messenger.transport.core.events.Event
-import com.genesys.cloud.messenger.transport.model.AuthJwt
 import com.genesys.cloud.messenger.transport.util.DefaultTokenStore
 import io.ktor.http.URLBuilder
 import kotlinx.coroutines.CoroutineScope
@@ -55,18 +55,27 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         private set
     var pkceEnabled by mutableStateOf(false)
 
+    var authCode: String = ""
+        set(value) {
+            field = value
+            val authState = if (value.isNotEmpty()) {
+                onSocketMessageReceived("AuthCode: $value")
+                AuthState.AuthCodeReceived(value)
+            } else {
+                AuthState.NoAuth
+            }
+            this.authState = authState
+        }
+
     val regions = listOf("inindca.com", "inintca.com", "mypurecloud.com")
     private val customAttributes = mutableMapOf<String, String>()
     private lateinit var onOktaSingIn: (url: String) -> Unit
-    private lateinit var onOktaLogout: () -> Unit
 
     fun init(
         context: Context,
         onOktaSignIn: (url: String) -> Unit,
-        onOktaLogout: () -> Unit,
     ) {
         this.onOktaSingIn = onOktaSignIn
-        this.onOktaLogout = onOktaLogout
         val mmsdkConfiguration = Configuration(
             deploymentId = deploymentId.ifEmpty { BuildConfig.DEPLOYMENT_ID },
             domain = region.ifEmpty { BuildConfig.DEPLOYMENT_DOMAIN },
@@ -91,16 +100,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         viewModelScope.launch(Dispatchers.IO) {
             context.assets.open(ATTACHMENT_FILE_NAME).use { inputStream ->
                 inputStream.readBytes().also { attachment = it }
-            }
-        }
-
-        val authCode = context.getSharedPreferences().getString("authCode", null)
-        viewModelScope.launch {
-            authState = if (authCode != null) {
-                onSocketMessageReceived("AuthCode: $authCode")
-                AuthState.AuthCodeReceived(authCode)
-            } else {
-                AuthState.NoAuth
             }
         }
     }
@@ -138,8 +137,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "newChat" -> doStartNewChat()
             "oktaSignIn" -> doOktaSignIn(false)
             "oktaSignInWithPKCE" -> doOktaSignIn(true)
-            "oktaLogout" -> doOktaLogout()
-            "fetchAuthJwt" -> doFetchAuthJwt()
+            "oktaLogout" -> logoutFromOktaSession()
+            "authenticate" -> doAuthenticate()
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
@@ -165,20 +164,11 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private fun doOktaLogout() {
+    private fun logoutFromOktaSession() {
         try {
-            if (authState is AuthState.JwtFetched) {
-                (authState as AuthState.JwtFetched).authJwt.let {
-                    viewModelScope.launch {
-                        client.logoutFromAuthenticatedSession()
-                        commandWaiting = false
-                    }
-                }
-            } else {
-                throw IllegalStateException("Can not perform logout. Auth jwt was not fetched. Please, fetch and try again.")
-            }
+            client.logoutFromAuthenticatedSession()
         } catch (t: Throwable) {
-            handleException(t, "okta logout")
+            handleException(t, "logout from Okta session")
         }
     }
 
@@ -191,13 +181,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     }
 
     private fun doConnectAuthenticated() {
-        commandWaiting = false
         try {
-            if (authState is AuthState.JwtFetched) {
-                client.connectAuthenticatedSession((authState as AuthState.JwtFetched).authJwt)
-            } else {
-                throw IllegalStateException("Auth jwt was not fetched. Please, fetch and try again.")
-            }
+            client.connectAuthenticatedSession()
         } catch (t: Throwable) {
             handleException(t, "connectAuthenticated")
         }
@@ -295,28 +280,16 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private fun doFetchAuthJwt() {
-        viewModelScope.launch {
-            if (authState is AuthState.AuthCodeReceived) {
-                try {
-                    client.fetchAuthJwt(
-                        authCode = (authState as AuthState.AuthCodeReceived).authCode,
-                        redirectUri = BuildConfig.SIGN_IN_REDIRECT_URI,
-                        codeVerifier = if (pkceEnabled) BuildConfig.CODE_VERIFIER else null,
-                    ).let {
-                        authState = AuthState.JwtFetched(it)
-                        onSocketMessageReceived("AuthJwt: $it")
-                    }
-                } catch (t: Throwable) {
-                    handleException(t, "failed to fetch auth jwt.")
-                    authState = AuthState.Error(t.cause, t.message)
-                }
-            } else {
-                onSocketMessageReceived("Please, first obtain authCode from login.")
-            }
-
-            commandWaiting = false
+    private fun doAuthenticate() {
+        if (authCode.isEmpty()) {
+            onSocketMessageReceived("Please, first obtain authCode from login.")
+            return
         }
+        client.authenticate(
+            authCode = authCode,
+            redirectUri = BuildConfig.SIGN_IN_REDIRECT_URI,
+            codeVerifier = if (pkceEnabled) BuildConfig.CODE_VERIFIER else null
+        )
     }
 
     private fun onClientStateChanged(oldState: State, newState: State) {
@@ -325,8 +298,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         val statePayloadMessage = when (newState) {
             is State.Configured ->
                 "connected: ${newState.connected}," +
-                        " newSession: ${newState.newSession}," +
-                        " wasReconnecting: ${oldState is State.Reconnecting}"
+                    " newSession: ${newState.newSession}," +
+                    " wasReconnecting: ${oldState is State.Reconnecting}"
             is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Closed -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Error -> "code: ${newState.code}, message: ${newState.message}"
@@ -374,11 +347,27 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     }
 
     private fun onEvent(event: Event) {
-        if (event is Event.Logout) {
-            onOktaLogout()
-            authState = AuthState.LoggedOut
+        when (event) {
+            is Event.Logout -> authState = AuthState.LoggedOut
+            is Event.Authenticated -> authState = AuthState.Authenticated
+            is Event.Error -> handleEventError(event)
+            else -> println("On event: $event")
         }
         onSocketMessageReceived(event.toString())
+    }
+
+    private fun handleEventError(event: Event.Error) {
+        when (event.errorCode) {
+            is ErrorCode.AuthFailed,
+            is ErrorCode.AuthLogoutFailed,
+            is ErrorCode.RefreshAuthTokenFailure,
+            -> {
+                authState = AuthState.Error(event.errorCode, event.message, event.correctiveAction)
+            }
+            else -> {
+                println("Handle Event.Error here.")
+            }
+        }
     }
 
     private fun buildOktaAuthorizeUrl(): String {
@@ -409,7 +398,11 @@ private fun String.toKeyValuePair(): Pair<String, String> {
 sealed class AuthState {
     object NoAuth : AuthState()
     data class AuthCodeReceived(val authCode: String) : AuthState()
-    data class Error(val cause: Throwable? = null, val message: String? = null) : AuthState()
-    data class JwtFetched(val authJwt: AuthJwt) : AuthState()
+    object Authenticated : AuthState()
     object LoggedOut : AuthState()
+    data class Error(
+        val errorCode: ErrorCode,
+        val message: String? = null,
+        val correctiveAction: CorrectiveAction,
+    ) : AuthState()
 }

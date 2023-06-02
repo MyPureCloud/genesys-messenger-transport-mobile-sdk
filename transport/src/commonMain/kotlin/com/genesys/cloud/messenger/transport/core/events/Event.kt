@@ -51,6 +51,11 @@ sealed class Event {
     object ConnectionClosed : Event()
 
     /**
+     * Sent when auth code was successfully exchanged for access token.
+     */
+    object Authenticated : Event()
+
+    /**
      * Sent when user has been logged out from authenticated session.
      */
     object Logout : Event()

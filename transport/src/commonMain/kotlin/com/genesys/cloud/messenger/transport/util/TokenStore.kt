@@ -24,4 +24,18 @@ abstract class TokenStore {
      * @return the previous stored token or null if no token in storage
      */
     abstract fun fetch(): String?
+
+    /**
+     * Stores the auth refresh token into the storage for later fetching.
+     *
+     * @param refreshToken the auth refresh token to store in storage.
+     */
+    abstract fun storeAuthRefreshToken(refreshToken: String)
+
+    /**
+     * Fetches the existing auth refresh token from the token store and returns it, or null if it doesn't exist.
+     *
+     * @return the previous stored auth refresh token or null if no token in storage
+     */
+    abstract fun fetchAuthRefreshToken(): String?
 }

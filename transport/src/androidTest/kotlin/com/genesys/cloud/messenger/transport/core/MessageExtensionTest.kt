@@ -65,9 +65,9 @@ internal class MessageExtensionTest {
             type = StructuredMessage.Type.Text,
             text = "test text",
             content = listOf(
-                StructuredMessage.Content(
+                StructuredMessage.Content.AttachmentContent(
                     contentType = "Attachment",
-                    attachment = StructuredMessage.Attachment(
+                    attachment = StructuredMessage.Content.AttachmentContent.Attachment(
                         id = "test attachment id",
                         url = "http://test.com",
                         filename = "test.png",

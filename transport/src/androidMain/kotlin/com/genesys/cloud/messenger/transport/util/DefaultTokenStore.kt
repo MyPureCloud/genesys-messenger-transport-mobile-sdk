@@ -2,9 +2,11 @@ package com.genesys.cloud.messenger.transport.util
 
 import android.content.Context
 import android.content.SharedPreferences
+import java.lang.ref.WeakReference
 
 actual class DefaultTokenStore actual constructor(storeKey: String) : TokenStore() {
     private val sharedPreferences: SharedPreferences
+
     init {
         if (context == null) {
             throw IllegalStateException("Must set DefaultTokenStore.context before instantiating")
@@ -23,10 +25,24 @@ actual class DefaultTokenStore actual constructor(storeKey: String) : TokenStore
         return sharedPreferences.getString(TOKEN_KEY, null)
     }
 
+    override fun storeAuthRefreshToken(refreshToken: String) {
+        with(sharedPreferences.edit()) {
+            putString(AUTH_REFRESH_TOKEN_KEY, refreshToken)
+            apply()
+        }
+    }
+
+    override fun fetchAuthRefreshToken(): String? {
+        return sharedPreferences.getString(AUTH_REFRESH_TOKEN_KEY, null)
+    }
+
     companion object {
-        var context: Context? = null
+        private var contextRef: WeakReference<Context>? = null
+
+        var context: Context?
+            get() = contextRef?.get()
             set(value) {
-                field = value?.applicationContext
+                contextRef = value?.let { WeakReference(it.applicationContext) }
             }
     }
 }

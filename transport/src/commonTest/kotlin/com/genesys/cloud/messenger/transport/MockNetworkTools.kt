@@ -1,5 +1,6 @@
 package com.genesys.cloud.messenger.transport
 
+import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.mock.MockEngine
@@ -13,7 +14,7 @@ import io.ktor.serialization.kotlinx.json.json
 
 fun mockHttpClientWith(engineBlock: HttpClientConfig<MockEngineConfig>.() -> Unit): HttpClient = HttpClient(MockEngine) {
     install(ContentNegotiation) {
-        json()
+        json(WebMessagingJson.json)
     }
     engineBlock()
 }
