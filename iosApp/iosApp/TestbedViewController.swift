@@ -159,16 +159,14 @@ class TestbedViewController: UIViewController {
     }
 
     private func signIn() {
-        let authUrlString = buildOktaAuthorizeUrl()
-        if authUrlString == nil {
+        guard let authUrl = buildOktaAuthorizeUrl() else {
             authState = AuthState.error(errorCode: ErrorCode.AuthFailed.shared, message: "Failed to build Okta authorize URL.", correctiveAction: CorrectiveAction.ReAuthenticate.shared)
             updateAuthStateView()
             return
         }
-        if let url = URL(string: authUrlString!) {
-            if UIApplication.shared.canOpenURL(url) {
-                UIApplication.shared.open(url)
-            }
+        
+        if UIApplication.shared.canOpenURL(authUrl) {
+            UIApplication.shared.open(authUrl)
         }
     }
 
@@ -316,7 +314,7 @@ class TestbedViewController: UIViewController {
         return (UserCommand(rawValue: command!), input)
     }
     
-    private func buildOktaAuthorizeUrl() -> String? {
+    private func buildOktaAuthorizeUrl() -> URL? {
         guard let plistPath = Bundle.main.path(forResource: "Okta", ofType: "plist"),
                 let plistData = FileManager.default.contents(atPath: plistPath),
                 let plistDictionary = try? PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any],
@@ -349,7 +347,7 @@ class TestbedViewController: UIViewController {
             return nil
         }
         
-        return url.absoluteString
+        return URL(string: url.absoluteString)
     }
     
     func setAuthCode(_ authCode: String) {
@@ -446,7 +444,6 @@ extension TestbedViewController : UITextFieldDelegate {
                         let plistData = FileManager.default.contents(atPath: plistPath),
                         let plistDictionary = try? PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any],
                         let signInRedirectURI = plistDictionary["signInRedirectURI"] as? String,
-                        let test = plistDictionary["tests"] as? String,
                         let codeVerifier: String? = pkceEnabled ? plistDictionary["codeVerifier"] as? String : nil
                 else {
                     authState = AuthState.error(errorCode: ErrorCode.AuthFailed.shared, message: "Unable to read Okta.plist or missing required key", correctiveAction: CorrectiveAction.ReAuthenticate.shared)
