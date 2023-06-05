@@ -157,10 +157,15 @@ class TestbedViewController: UIViewController {
             .store(in: &cancellables)
             authStateView.text = "Auth State: \(authState)"
     }
-    
+
     private func signIn() {
         let authUrlString = buildOktaAuthorizeUrl()
-        if let url = URL(string: authUrlString) {
+        if authUrlString == nil {
+            authState = AuthState.error(errorCode: ErrorCode.AuthFailed.shared, message: "Failed to build Okta authorize URL.", correctiveAction: CorrectiveAction.ReAuthenticate.shared)
+            updateAuthStateView()
+            return
+        }
+        if let url = URL(string: authUrlString!) {
             if UIApplication.shared.canOpenURL(url) {
                 UIApplication.shared.open(url)
             }
@@ -224,9 +229,9 @@ class TestbedViewController: UIViewController {
         case let typing as Event.AgentTyping:
             displayEvent = "Event received: \(typing.description)"
         case let error as Event.Error:
-            if(error.errorCode is ErrorCode.AuthFailed
+            if error.errorCode is ErrorCode.AuthFailed
                || error.errorCode is ErrorCode.AuthLogoutFailed
-               || error.errorCode is ErrorCode.RefreshAuthTokenFailure) {
+               || error.errorCode is ErrorCode.RefreshAuthTokenFailure {
                 authState = AuthState.error(errorCode: error.errorCode, message: error.message, correctiveAction: error.correctiveAction)
                 updateAuthStateView()
             }
@@ -311,7 +316,7 @@ class TestbedViewController: UIViewController {
         return (UserCommand(rawValue: command!), input)
     }
     
-    private func buildOktaAuthorizeUrl() -> String {
+    private func buildOktaAuthorizeUrl() -> String? {
         guard let plistPath = Bundle.main.path(forResource: "Okta", ofType: "plist"),
                 let plistData = FileManager.default.contents(atPath: plistPath),
                 let plistDictionary = try? PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any],
@@ -323,7 +328,7 @@ class TestbedViewController: UIViewController {
                 let codeChallengeMethod = plistDictionary["codeChallengeMethod"] as? String,
                 let codeChallenge = plistDictionary["codeChallenge"] as? String
         else {
-            fatalError("Unable to read Okta.plist or missing required key")
+            return nil
         }
         
         var urlComponents = URLComponents(string: "https://\(oktaDomain)/oauth2/default/v1/authorize")!
@@ -341,7 +346,7 @@ class TestbedViewController: UIViewController {
         }
         
         guard let url = urlComponents.url else {
-            fatalError("Failed to build Okta authorize URL")
+            return nil
         }
         
         return url.absoluteString
@@ -441,9 +446,12 @@ extension TestbedViewController : UITextFieldDelegate {
                         let plistData = FileManager.default.contents(atPath: plistPath),
                         let plistDictionary = try? PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any],
                         let signInRedirectURI = plistDictionary["signInRedirectURI"] as? String,
+                        let test = plistDictionary["tests"] as? String,
                         let codeVerifier: String? = pkceEnabled ? plistDictionary["codeVerifier"] as? String : nil
                 else {
-                    fatalError("Unable to read Okta.plist or missing required key")
+                    authState = AuthState.error(errorCode: ErrorCode.AuthFailed.shared, message: "Unable to read Okta.plist or missing required key", correctiveAction: CorrectiveAction.ReAuthenticate.shared)
+                    updateAuthStateView()
+                return true
                 }
                 
                 messenger.authenticate(authCode: self.authCode ?? "", redirectUri: signInRedirectURI, codeVerifier: codeVerifier)

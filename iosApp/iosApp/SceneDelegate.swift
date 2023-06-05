@@ -47,20 +47,20 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
     
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
-        if let urlContext = URLContexts.first {
-            if let components = URLComponents(url: urlContext.url, resolvingAgainstBaseURL: false),
-               let queryItems = components.queryItems {
-                for item in queryItems {
-                    if item.name == "code" {
-                        if let code = item.value {
-                            if let windowScene = scene as? UIWindowScene,
-                               let rootViewController = windowScene.windows.first?.rootViewController as? TestbedViewController {
-                                rootViewController.setAuthCode(code)
-                            }
-                        }
-                        break
+        guard let urlContext = URLContexts.first else {
+            return
+        }
+
+        if let components = URLComponents(url: urlContext.url, resolvingAgainstBaseURL: false),
+           let queryItems = components.queryItems {
+            for item in queryItems {
+                if item.name == "code", let code = item.value {
+                    if let windowScene = scene as? UIWindowScene,
+                       let rootViewController = windowScene.windows.first?.rootViewController as? TestbedViewController {
+                        rootViewController.setAuthCode(code)
                     }
                 }
+                break
             }
         }
     }
