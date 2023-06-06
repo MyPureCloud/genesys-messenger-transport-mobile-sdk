@@ -159,14 +159,11 @@ class TestbedViewController: UIViewController {
     }
 
     private func signIn() {
-        guard let authUrl = buildOktaAuthorizeUrl() else {
-            authState = AuthState.error(errorCode: ErrorCode.AuthFailed.shared, message: "Failed to build Okta authorize URL.", correctiveAction: CorrectiveAction.ReAuthenticate.shared)
-            updateAuthStateView()
-            return
-        }
-        
-        if UIApplication.shared.canOpenURL(authUrl) {
-            UIApplication.shared.open(authUrl)
+        let authUrlString = buildOktaAuthorizeUrl()
+        if let url = URL(string: authUrlString) {
+            if UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url)
+            }
         }
     }
 
@@ -227,9 +224,9 @@ class TestbedViewController: UIViewController {
         case let typing as Event.AgentTyping:
             displayEvent = "Event received: \(typing.description)"
         case let error as Event.Error:
-            if error.errorCode is ErrorCode.AuthFailed
+            if(error.errorCode is ErrorCode.AuthFailed
                || error.errorCode is ErrorCode.AuthLogoutFailed
-               || error.errorCode is ErrorCode.RefreshAuthTokenFailure {
+               || error.errorCode is ErrorCode.RefreshAuthTokenFailure) {
                 authState = AuthState.error(errorCode: error.errorCode, message: error.message, correctiveAction: error.correctiveAction)
                 updateAuthStateView()
             }
