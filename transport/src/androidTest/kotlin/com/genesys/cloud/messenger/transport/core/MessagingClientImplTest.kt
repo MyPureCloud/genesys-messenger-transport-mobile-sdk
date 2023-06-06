@@ -28,7 +28,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
-import com.genesys.cloud.messenger.transport.util.DefaultTokenStore
+import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.TestAuthCode
@@ -137,8 +137,8 @@ class MessagingClientImplTest {
         getCurrentTimestamp = mockTimestampFunction,
     )
     private val mockAuthHandler: AuthHandler = mockk(relaxed = true)
-    private val mockTokenStore: DefaultTokenStore = mockk {
-        every { fetch() } returns Request.token
+    private val mockVault: DefaultVault = mockk {
+        every { fetch("token") } returns Request.token
         every { token } returns Request.token
     }
 
@@ -147,8 +147,9 @@ class MessagingClientImplTest {
         configuration = configuration,
         webSocket = mockPlatformSocket,
         api = mockWebMessagingApi,
-        tokenStore = mockTokenStore,
+        token = Request.token,
         jwtHandler = mockk(),
+        vault = mockVault,
         attachmentHandler = mockAttachmentHandler,
         messageStore = mockMessageStore,
         reconnectionHandler = mockReconnectionHandler,
