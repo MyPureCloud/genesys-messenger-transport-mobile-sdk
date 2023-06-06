@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0003295A2A1E59B9007B54ED /* Okta.plist in Resources */ = {isa = PBXBuildFile; fileRef = 000329592A1E59B9007B54ED /* Okta.plist */; };
 		6ADDAC5326A09D23004D2C9B /* NSData+ByteArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ADDAC5226A09D23004D2C9B /* NSData+ByteArray.swift */; };
 		7555FF7F242A565900829871 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7555FF7E242A565900829871 /* AppDelegate.swift */; };
 		7555FF85242A565B00829871 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7555FF84242A565B00829871 /* Assets.xcassets */; };
@@ -51,6 +52,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		000329592A1E59B9007B54ED /* Okta.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Okta.plist; sourceTree = "<group>"; };
 		0CE396936A925965C33D5426 /* Pods-iosApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iosApp.debug.xcconfig"; path = "Target Support Files/Pods-iosApp/Pods-iosApp.debug.xcconfig"; sourceTree = "<group>"; };
 		487075D3A4C65F7789BC8BA5 /* Pods-iosAppTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iosAppTests.release.xcconfig"; path = "Target Support Files/Pods-iosAppTests/Pods-iosAppTests.release.xcconfig"; sourceTree = "<group>"; };
 		6ADDAC5226A09D23004D2C9B /* NSData+ByteArray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSData+ByteArray.swift"; sourceTree = "<group>"; };
@@ -128,6 +130,7 @@
 		7555FF72242A565900829871 = {
 			isa = PBXGroup;
 			children = (
+				000329592A1E59B9007B54ED /* Okta.plist */,
 				7555FF7D242A565900829871 /* iosApp */,
 				7555FF94242A565B00829871 /* iosAppTests */,
 				7555FF9F242A565B00829871 /* iosAppUITests */,
@@ -332,6 +335,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0003295A2A1E59B9007B54ED /* Okta.plist in Resources */,
 				7555FF8B242A565B00829871 /* LaunchScreen.storyboard in Resources */,
 				8C4A6A1A273C3CD8008B8150 /* deployment.properties in Resources */,
 				7555FF88242A565B00829871 /* Preview Assets.xcassets in Resources */,

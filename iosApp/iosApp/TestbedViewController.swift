@@ -18,7 +18,10 @@ class TestbedViewController: UIViewController {
     private var byteArray: [UInt8]? = nil
     private var customAttributes: [String: String] = [:]
     private var cancellables = Set<AnyCancellable>()
-    
+    private var pkceEnabled = false
+    private var authCode: String? = nil
+    private var authState: AuthState = AuthState.noAuth
+
     init(messenger: MessengerInteractor) {
         self.messenger = messenger
         super.init(nibName: nil, bundle: nil)
@@ -32,7 +35,11 @@ class TestbedViewController: UIViewController {
      User commands for the test bed app.
      */
     enum UserCommand: String, CaseIterable {
+        case oktaSignIn
+        case oktaSignInWithPKCE
+        case oktaLogout
         case connect
+        case connectAuthenticated
         case newChat
         case send
         case history
@@ -45,6 +52,7 @@ class TestbedViewController: UIViewController {
         case clearConversation
         case addAttribute
         case typing
+        case authenticate
 
         var helpDescription: String {
             switch self {
@@ -102,6 +110,14 @@ class TestbedViewController: UIViewController {
         view.font = UIFont.preferredFont(forTextStyle: .callout)
         return view
     }()
+    
+    private let authStateView: UILabel = {
+        let view = UILabel()
+        view.numberOfLines = 0
+        view.text = "Auth State"
+        view.font = UIFont.preferredFont(forTextStyle: .callout)
+        return view
+    }()
 
     private let info: UILabel = {
         let view = UILabel()
@@ -120,6 +136,7 @@ class TestbedViewController: UIViewController {
         content.addArrangedSubview(input)
         content.addArrangedSubview(instructions)
         content.addArrangedSubview(status)
+        content.addArrangedSubview(authStateView)
         content.addArrangedSubview(info)
 
         view.addSubview(content)
@@ -138,8 +155,21 @@ class TestbedViewController: UIViewController {
         messenger.eventSubject
             .sink(receiveValue: updateWithEvent)
             .store(in: &cancellables)
+            authStateView.text = "Auth State: \(authState)"
     }
-    
+
+    private func signIn() {
+        guard let authUrl = buildOktaAuthorizeUrl() else {
+            authState = AuthState.error(errorCode: ErrorCode.AuthFailed.shared, message: "Failed to build Okta authorize URL.", correctiveAction: CorrectiveAction.ReAuthenticate.shared)
+            updateAuthStateView()
+            return
+        }
+        
+        if UIApplication.shared.canOpenURL(authUrl) {
+            UIApplication.shared.open(authUrl)
+        }
+    }
+
     private func configureAutoLayout() {
         content.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
         content.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
@@ -197,6 +227,12 @@ class TestbedViewController: UIViewController {
         case let typing as Event.AgentTyping:
             displayEvent = "Event received: \(typing.description)"
         case let error as Event.Error:
+            if error.errorCode is ErrorCode.AuthFailed
+               || error.errorCode is ErrorCode.AuthLogoutFailed
+               || error.errorCode is ErrorCode.RefreshAuthTokenFailure {
+                authState = AuthState.error(errorCode: error.errorCode, message: error.message, correctiveAction: error.correctiveAction)
+                updateAuthStateView()
+            }
             displayEvent = "Event received: \(error.description)"
         case let healthChecked as Event.HealthChecked:
             displayEvent = "Event received: \(healthChecked.description)"
@@ -204,12 +240,20 @@ class TestbedViewController: UIViewController {
             displayEvent = "Event received: \(conversationAutostart.description)"
         case let connectionClosed as Event.ConnectionClosed:
             displayEvent = "Event received: \(connectionClosed.description)"
+        case let authenticated as Event.Authenticated:
+            authState = AuthState.authenticated
+            updateAuthStateView()
+            displayEvent = "Event received: \(authenticated.description)"
+        case let logout as Event.Logout:
+            authState = AuthState.loggedOut
+            updateAuthStateView()
+            displayEvent = "Event received: \(logout.description)"
         default:
             break
         }
         info.text = displayEvent
     }
-        
+
     private func observeKeyboard() {
         NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { [weak self] notification in
             guard let self = self,
@@ -269,7 +313,48 @@ class TestbedViewController: UIViewController {
         }
         return (UserCommand(rawValue: command!), input)
     }
-
+    
+    private func buildOktaAuthorizeUrl() -> URL? {
+        guard let plistPath = Bundle.main.path(forResource: "Okta", ofType: "plist"),
+                let plistData = FileManager.default.contents(atPath: plistPath),
+                let plistDictionary = try? PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any],
+                let oktaDomain = plistDictionary["oktaDomain"] as? String,
+                let clientId = plistDictionary["clientId"] as? String,
+                let signInRedirectURI = plistDictionary["signInRedirectURI"] as? String,
+                let scope = plistDictionary["scopes"] as? String,
+                let oktaState = plistDictionary["oktaState"] as? String,
+                let codeChallengeMethod = plistDictionary["codeChallengeMethod"] as? String,
+                let codeChallenge = plistDictionary["codeChallenge"] as? String
+        else {
+            return nil
+        }
+        
+        var urlComponents = URLComponents(string: "https://\(oktaDomain)/oauth2/default/v1/authorize")!
+        urlComponents.queryItems = [
+            URLQueryItem(name: "client_id", value: clientId),
+            URLQueryItem(name: "response_type", value: "code"),
+            URLQueryItem(name: "scope", value: scope),
+            URLQueryItem(name: "redirect_uri", value: signInRedirectURI),
+            URLQueryItem(name: "state", value: oktaState)
+        ]
+        
+        if pkceEnabled {
+            urlComponents.queryItems?.append(URLQueryItem(name: "code_challenge_method", value: codeChallengeMethod))
+            urlComponents.queryItems?.append(URLQueryItem(name: "code_challenge", value: codeChallenge))
+        }
+        
+        guard let url = urlComponents.url else {
+            return nil
+        }
+        
+        return URL(string: url.absoluteString)
+    }
+    
+    func setAuthCode(_ authCode: String) {
+        self.authCode = authCode
+        authState = AuthState.authCodeReceived(authCode: authCode)
+        updateAuthStateView()
+    }
 }
 
 // MARK: UITextFieldDelegate
@@ -288,6 +373,8 @@ extension TestbedViewController : UITextFieldDelegate {
             switch command {
             case (.connect, _):
                 try messenger.connect()
+            case (.connectAuthenticated, _):
+                try messenger.connectAuthenticated()
             case (.newChat, _):
                 try messenger.newChat()
             case (.bye, _):
@@ -344,6 +431,27 @@ extension TestbedViewController : UITextFieldDelegate {
                 }
             case (.typing, _):
                 try messenger.indicateTyping()
+            case (.oktaSignIn, _):
+                pkceEnabled = false
+                signIn()
+            case (.oktaSignInWithPKCE, _):
+                pkceEnabled = true
+                signIn()
+            case (.oktaLogout, _):
+                try messenger.oktaLogout()
+            case (.authenticate, _):
+                guard let plistPath = Bundle.main.path(forResource: "Okta", ofType: "plist"),
+                        let plistData = FileManager.default.contents(atPath: plistPath),
+                        let plistDictionary = try? PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any],
+                        let signInRedirectURI = plistDictionary["signInRedirectURI"] as? String,
+                        let codeVerifier: String? = pkceEnabled ? plistDictionary["codeVerifier"] as? String : nil
+                else {
+                    authState = AuthState.error(errorCode: ErrorCode.AuthFailed.shared, message: "Unable to read Okta.plist or missing required key", correctiveAction: CorrectiveAction.ReAuthenticate.shared)
+                    updateAuthStateView()
+                return true
+                }
+                
+                messenger.authenticate(authCode: self.authCode ?? "", redirectUri: signInRedirectURI, codeVerifier: codeVerifier)
             default:
                 self.info.text = "Invalid command"
             }
@@ -355,4 +463,16 @@ extension TestbedViewController : UITextFieldDelegate {
         textField.resignFirstResponder()
         return true
     }
+    
+    private func updateAuthStateView() {
+        authStateView.text = "Auth State: \(authState)"
+    }
+}
+
+enum AuthState {
+    case noAuth
+    case authCodeReceived(authCode: String)
+    case authenticated
+    case loggedOut
+    case error(errorCode: ErrorCode, message: String?, correctiveAction: CorrectiveAction)
 }

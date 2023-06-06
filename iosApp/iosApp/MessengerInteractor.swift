@@ -24,7 +24,8 @@ final class MessengerInteractor {
         self.configuration = Configuration(deploymentId: deployment.deploymentId,
                                            domain: deployment.domain,
                                            logging: true,
-                                           reconnectionTimeoutInSeconds: reconnectTimeout)
+                                           reconnectionTimeoutInSeconds: reconnectTimeout,
+                                           autoRefreshTokenWhenExpired: true)
         self.messengerTransport = MessengerTransport(configuration: self.configuration)
         self.messagingClient = self.messengerTransport.createMessagingClient()
         
@@ -41,12 +42,25 @@ final class MessengerInteractor {
             self?.eventSubject.send(event)
         }
     }
+    
+    func authenticate(authCode: String, redirectUri: String, codeVerifier: String?) {
+        messagingClient.authenticate(authCode: authCode, redirectUri: redirectUri, codeVerifier: codeVerifier)
+    }
 
     func connect() throws {
         do {
             try messagingClient.connect()
         } catch {
             print("connect() failed. \(error.localizedDescription)")
+            throw error
+        }
+    }
+    
+    func connectAuthenticated() throws {
+        do {
+            try messagingClient.connectAuthenticatedSession()
+        } catch {
+            print("connectAuthenticated() failed. \(error.localizedDescription)")
             throw error
         }
     }
@@ -65,6 +79,15 @@ final class MessengerInteractor {
             try messagingClient.disconnect()
         } catch {
             print("disconnect() failed. \(error.localizedDescription)")
+            throw error
+        }
+    }
+    
+    func oktaLogout() throws {
+        do {
+            try messagingClient.logoutFromAuthenticatedSession()
+        } catch {
+            print("logoutFromAuthenticatedSession() failed. \(error.localizedDescription)")
             throw error
         }
     }
