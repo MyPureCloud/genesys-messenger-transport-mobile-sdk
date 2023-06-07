@@ -15,8 +15,6 @@ data class Config(
     val botDeploymentId: String,
     val agentDisconnectDeploymentId: String,
     val authDeploymentId: String,
-    val authCode2Email: String,
-    val authCode2Pass: String,
     val botName: String,
     val password: String,
     val domain: String,
