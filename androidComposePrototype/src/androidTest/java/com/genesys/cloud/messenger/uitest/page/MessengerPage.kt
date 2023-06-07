@@ -139,8 +139,12 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         val responseBox = mDevice.findObject(
             UiSelector()
-                .className(responseClass)
-                .index(5)
+                .fromParent(
+                    UiSelector()
+                        .className(responseClass)
+                        .index(5)
+                )
+                .className("android.widget.TextView")
         )
         return responseBox.getText()
     }
