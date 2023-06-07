@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import java.lang.ref.WeakReference
 
-
 actual class DefaultVault actual constructor(keys: Keys) : Vault(keys) {
     private val sharedPreferences: SharedPreferences
 
