@@ -159,11 +159,14 @@ class TestbedViewController: UIViewController {
     }
 
     private func signIn() {
-        let authUrlString = buildOktaAuthorizeUrl()
-        if let url = URL(string: authUrlString) {
-            if UIApplication.shared.canOpenURL(url) {
-                UIApplication.shared.open(url)
-            }
+        guard let authUrl = buildOktaAuthorizeUrl() else {
+            authState = AuthState.error(errorCode: ErrorCode.AuthFailed.shared, message: "Failed to build Okta authorize URL.", correctiveAction: CorrectiveAction.ReAuthenticate.shared)
+            updateAuthStateView()
+            return
+        }
+
+        if UIApplication.shared.canOpenURL(authUrl) {
+            UIApplication.shared.open(authUrl)
         }
     }
 
