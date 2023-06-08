@@ -15,6 +15,7 @@ final class MessengerInteractor {
     let configuration: Configuration
     let messengerTransport: MessengerTransport
     let messagingClient: MessagingClient
+    let tokenVault: DefaultVault
     
     let stateChangeSubject = PassthroughSubject<StateChange, Never>()
     let messageEventSubject = PassthroughSubject<MessageEvent, Never>()
@@ -26,7 +27,8 @@ final class MessengerInteractor {
                                            logging: true,
                                            reconnectionTimeoutInSeconds: reconnectTimeout,
                                            autoRefreshTokenWhenExpired: true)
-        self.messengerTransport = MessengerTransport(configuration: self.configuration)
+        self.tokenVault = DefaultVault(keys: Keys(vaultKey: "com.genesys.cloud.messenger", tokenKey: "token", authRefreshTokenKey: "auth_refresh_token"))
+        self.messengerTransport = MessengerTransport(configuration: self.configuration, vault: self.tokenVault)
         self.messagingClient = self.messengerTransport.createMessagingClient()
         
         messagingClient.stateChangedListener = { [weak self] stateChange in
