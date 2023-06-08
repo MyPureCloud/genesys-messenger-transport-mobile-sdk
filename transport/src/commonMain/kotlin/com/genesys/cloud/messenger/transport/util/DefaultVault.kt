@@ -1,6 +1,6 @@
 package com.genesys.cloud.messenger.transport.util
 
-private const val VAULT_KEY = "com.genesys.cloud.messenger"
+internal const val VAULT_KEY = "com.genesys.cloud.messenger"
 internal const val TOKEN_KEY = "token"
 internal const val AUTH_REFRESH_TOKEN_KEY = "auth_refresh_token"
 
