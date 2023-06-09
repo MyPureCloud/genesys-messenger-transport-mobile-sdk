@@ -42,7 +42,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.util.Platform
-import com.genesys.cloud.messenger.transport.util.TokenStore
+import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.util.logs.Log
@@ -52,12 +52,13 @@ import kotlinx.serialization.encodeToString
 import kotlin.reflect.KProperty0
 
 internal class MessagingClientImpl(
-    tokenStore: TokenStore,
+    vault: Vault,
     private val api: WebMessagingApi,
     private val webSocket: PlatformSocket,
     private val configuration: Configuration,
     private val log: Log,
     private val jwtHandler: JwtHandler,
+    private val token: String,
     private val deploymentConfig: KProperty0<DeploymentConfig?>,
     private val attachmentHandler: AttachmentHandler,
     private val messageStore: MessageStore,
@@ -73,13 +74,12 @@ internal class MessagingClientImpl(
         configuration.autoRefreshTokenWhenExpired,
         eventHandler,
         api,
-        tokenStore,
+        vault,
         log.withTag(LogTag.AUTH_HANDLER)
     ),
 ) : MessagingClient {
     private var connectAuthenticated = false
     private var isStartingANewSession = false
-    private val token: String = tokenStore.token
 
     override val currentState: State
         get() {

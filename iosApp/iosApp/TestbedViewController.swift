@@ -110,7 +110,7 @@ class TestbedViewController: UIViewController {
         view.font = UIFont.preferredFont(forTextStyle: .callout)
         return view
     }()
-    
+
     private let authStateView: UILabel = {
         let view = UILabel()
         view.numberOfLines = 0
@@ -313,7 +313,7 @@ class TestbedViewController: UIViewController {
         }
         return (UserCommand(rawValue: command!), input)
     }
-    
+
     private func buildOktaAuthorizeUrl() -> URL? {
         guard let plistPath = Bundle.main.path(forResource: "Okta", ofType: "plist"),
                 let plistData = FileManager.default.contents(atPath: plistPath),
@@ -328,7 +328,7 @@ class TestbedViewController: UIViewController {
         else {
             return nil
         }
-        
+
         var urlComponents = URLComponents(string: "https://\(oktaDomain)/oauth2/default/v1/authorize")!
         urlComponents.queryItems = [
             URLQueryItem(name: "client_id", value: clientId),
@@ -337,19 +337,19 @@ class TestbedViewController: UIViewController {
             URLQueryItem(name: "redirect_uri", value: signInRedirectURI),
             URLQueryItem(name: "state", value: oktaState)
         ]
-        
+
         if pkceEnabled {
             urlComponents.queryItems?.append(URLQueryItem(name: "code_challenge_method", value: codeChallengeMethod))
             urlComponents.queryItems?.append(URLQueryItem(name: "code_challenge", value: codeChallenge))
         }
-        
+
         guard let url = urlComponents.url else {
             return nil
         }
-        
+
         return URL(string: url.absoluteString)
     }
-    
+
     func setAuthCode(_ authCode: String) {
         self.authCode = authCode
         authState = AuthState.authCodeReceived(authCode: authCode)
@@ -450,7 +450,7 @@ extension TestbedViewController : UITextFieldDelegate {
                     updateAuthStateView()
                 return true
                 }
-                
+
                 messenger.authenticate(authCode: self.authCode ?? "", redirectUri: signInRedirectURI, codeVerifier: codeVerifier)
             default:
                 self.info.text = "Invalid command"
@@ -463,7 +463,7 @@ extension TestbedViewController : UITextFieldDelegate {
         textField.resignFirstResponder()
         return true
     }
-    
+
     private func updateAuthStateView() {
         authStateView.text = "Auth State: \(authState)"
     }

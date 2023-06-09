@@ -4,26 +4,25 @@ import android.content.Context
 import android.content.SharedPreferences
 import java.lang.ref.WeakReference
 
-@Deprecated("Use [Vault] instead.")
-actual class DefaultTokenStore actual constructor(storeKey: String) : TokenStore() {
+actual class DefaultVault actual constructor(keys: Keys) : Vault(keys) {
     private val sharedPreferences: SharedPreferences
 
     init {
         if (context == null) {
-            throw IllegalStateException("Must set DefaultTokenStore.context before instantiating")
+            throw IllegalStateException("Must set DefaultVault.context before instantiating.")
         }
-        sharedPreferences = context!!.getSharedPreferences(storeKey, Context.MODE_PRIVATE)
+        sharedPreferences = context!!.getSharedPreferences(keys.vaultKey, Context.MODE_PRIVATE)
     }
 
-    override fun store(token: String) {
+    override fun store(key: String, value: String) {
         with(sharedPreferences.edit()) {
-            putString(TOKEN_KEY, token)
+            putString(key, value)
             apply()
         }
     }
 
-    override fun fetch(): String? {
-        return sharedPreferences.getString(TOKEN_KEY, null)
+    override fun fetch(key: String): String? {
+        return sharedPreferences.getString(key, null)
     }
 
     companion object {
