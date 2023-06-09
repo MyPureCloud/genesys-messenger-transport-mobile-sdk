@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import java.lang.ref.WeakReference
 
+@Deprecated("Use [Vault] instead.")
 actual class DefaultTokenStore actual constructor(storeKey: String) : TokenStore() {
     private val sharedPreferences: SharedPreferences
 

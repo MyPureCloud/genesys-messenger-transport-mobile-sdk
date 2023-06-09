@@ -6,8 +6,9 @@ import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
-import com.genesys.cloud.messenger.transport.util.DefaultTokenStore
+import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.TokenStore
+import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import kotlinx.coroutines.CoroutineScope
@@ -15,18 +16,34 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-private const val TOKEN_STORE_KEY = "com.genesys.cloud.messenger"
-
 /**
  * The entry point to the services provided by the transport SDK.
  */
 class MessengerTransport(
     private val configuration: Configuration,
-    private val tokenStore: TokenStore,
+    @Deprecated("Use Vault instead.") private val tokenStore: TokenStore?,
+    private val vault: Vault,
 ) {
     private var deploymentConfig: DeploymentConfig? = null
 
-    constructor(configuration: Configuration) : this(configuration, DefaultTokenStore(TOKEN_STORE_KEY))
+    constructor(configuration: Configuration) : this(
+        configuration,
+        null,
+        DefaultVault(),
+    )
+
+    @Deprecated("Use Vault instead.")
+    constructor(configuration: Configuration, tokenStore: TokenStore) : this(
+        configuration = configuration,
+        tokenStore = tokenStore,
+        vault = DefaultVault(),
+    )
+
+    constructor(configuration: Configuration, vault: Vault) : this(
+        configuration = configuration,
+        vault = vault,
+        tokenStore = null,
+    )
 
     /**
      * Creates an instance of [MessagingClient] based on the provided configuration.
@@ -48,7 +65,8 @@ class MessengerTransport(
             configuration.webSocketUrl,
             DEFAULT_PING_INTERVAL_IN_SECONDS,
         )
-        val token = tokenStore.token
+        // Support old TokenStore. If TokenStore not present fallback to the Vault.
+        val token = tokenStore?.token ?: vault.token
         val messageStore = MessageStore(token, log.withTag(LogTag.MESSAGE_STORE))
         val attachmentHandler = AttachmentHandlerImpl(
             api,
@@ -60,7 +78,8 @@ class MessengerTransport(
             api = api,
             log = log,
             webSocket = webSocket,
-            tokenStore = tokenStore,
+            token = token,
+            vault = vault,
             configuration = configuration,
             jwtHandler = JwtHandler(webSocket, token),
             attachmentHandler = attachmentHandler,

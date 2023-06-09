@@ -11,6 +11,7 @@ fun createDeploymentConfigForTesting(
     messenger = messenger,
     journeyEvents = JourneyEvents(enabled = false),
     status = DeploymentConfig.Status.Active,
+    auth = Auth(enabled = true)
 )
 
 fun createMessengerVOForTesting(

@@ -38,7 +38,7 @@ import platform.Security.kSecValueData
 import platform.darwin.OSStatus
 import platform.darwin.noErr
 
-internal class Vault(private val serviceName: String) {
+internal class InternalVault(private val serviceName: String) {
     /**
      * Saves a string value in the Keychain.
      * @param key The key to store

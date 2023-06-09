@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.network
 
 import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
+import com.genesys.cloud.messenger.transport.shyrka.receive.Auth
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.FileUpload
@@ -24,7 +25,7 @@ object TestWebMessagingApiResponses {
         """{"entities":[],"pageSize":0,"pageNumber":1, "total": 0, "pageCount": 0}"""
 
     internal const val deploymentConfigResponse =
-        """{"id":"test_config_id","version":"3","languages":["en-us"],"defaultLanguage":"en-us","apiEndpoint":"https://api.inindca.com","messenger":{"enabled":true,"apps":{"conversations":{"messagingEndpoint":"wss://webmessaging.inindca.com","conversationDisconnect":{"enabled":true,"type":"ReadOnly"}}},"styles":{"primaryColor":"#ff0000"},"launcherButton":{"visibility":"On"},"fileUpload":{"modes":[{"fileTypes":["image/png","image/jpeg","image/gif"],"maxFileSizeKB":10000}]}},"journeyEvents":{"enabled":true},"status":"Active"}"""
+        """{"id":"test_config_id","version":"3","languages":["en-us"],"defaultLanguage":"en-us","apiEndpoint":"https://api.inindca.com","messenger":{"enabled":true,"apps":{"conversations":{"messagingEndpoint":"wss://webmessaging.inindca.com","conversationDisconnect":{"enabled":true,"type":"ReadOnly"}}},"styles":{"primaryColor":"#ff0000"},"launcherButton":{"visibility":"On"},"fileUpload":{"modes":[{"fileTypes":["image/png","image/jpeg","image/gif"],"maxFileSizeKB":10000}]}},"journeyEvents":{"enabled":true},"status":"Active","auth":{"enabled":true}}"""
 
     internal val testMessageEntityList =
         MessageEntityList(
@@ -72,6 +73,7 @@ object TestWebMessagingApiResponses {
         ),
         journeyEvents = JourneyEvents(enabled = true),
         status = DeploymentConfig.Status.Active,
+        auth = Auth(enabled = true)
     )
 
     private fun buildEntities(): List<StructuredMessage> =

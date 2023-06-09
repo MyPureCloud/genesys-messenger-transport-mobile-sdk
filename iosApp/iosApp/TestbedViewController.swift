@@ -110,7 +110,7 @@ class TestbedViewController: UIViewController {
         view.font = UIFont.preferredFont(forTextStyle: .callout)
         return view
     }()
-    
+
     private let authStateView: UILabel = {
         let view = UILabel()
         view.numberOfLines = 0
@@ -157,13 +157,16 @@ class TestbedViewController: UIViewController {
             .store(in: &cancellables)
             authStateView.text = "Auth State: \(authState)"
     }
-    
+
     private func signIn() {
-        let authUrlString = buildOktaAuthorizeUrl()
-        if let url = URL(string: authUrlString) {
-            if UIApplication.shared.canOpenURL(url) {
-                UIApplication.shared.open(url)
-            }
+        guard let authUrl = buildOktaAuthorizeUrl() else {
+            authState = AuthState.error(errorCode: ErrorCode.AuthFailed.shared, message: "Failed to build Okta authorize URL.", correctiveAction: CorrectiveAction.ReAuthenticate.shared)
+            updateAuthStateView()
+            return
+        }
+
+        if UIApplication.shared.canOpenURL(authUrl) {
+            UIApplication.shared.open(authUrl)
         }
     }
 
@@ -310,8 +313,8 @@ class TestbedViewController: UIViewController {
         }
         return (UserCommand(rawValue: command!), input)
     }
-    
-    private func buildOktaAuthorizeUrl() -> String {
+
+    private func buildOktaAuthorizeUrl() -> URL? {
         guard let plistPath = Bundle.main.path(forResource: "Okta", ofType: "plist"),
                 let plistData = FileManager.default.contents(atPath: plistPath),
                 let plistDictionary = try? PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any],
@@ -323,9 +326,9 @@ class TestbedViewController: UIViewController {
                 let codeChallengeMethod = plistDictionary["codeChallengeMethod"] as? String,
                 let codeChallenge = plistDictionary["codeChallenge"] as? String
         else {
-            fatalError("Unable to read Okta.plist or missing required key")
+            return nil
         }
-        
+
         var urlComponents = URLComponents(string: "https://\(oktaDomain)/oauth2/default/v1/authorize")!
         urlComponents.queryItems = [
             URLQueryItem(name: "client_id", value: clientId),
@@ -334,19 +337,19 @@ class TestbedViewController: UIViewController {
             URLQueryItem(name: "redirect_uri", value: signInRedirectURI),
             URLQueryItem(name: "state", value: oktaState)
         ]
-        
+
         if pkceEnabled {
             urlComponents.queryItems?.append(URLQueryItem(name: "code_challenge_method", value: codeChallengeMethod))
             urlComponents.queryItems?.append(URLQueryItem(name: "code_challenge", value: codeChallenge))
         }
-        
+
         guard let url = urlComponents.url else {
-            fatalError("Failed to build Okta authorize URL")
+            return nil
         }
-        
-        return url.absoluteString
+
+        return URL(string: url.absoluteString)
     }
-    
+
     func setAuthCode(_ authCode: String) {
         self.authCode = authCode
         authState = AuthState.authCodeReceived(authCode: authCode)
@@ -443,9 +446,11 @@ extension TestbedViewController : UITextFieldDelegate {
                         let signInRedirectURI = plistDictionary["signInRedirectURI"] as? String,
                         let codeVerifier: String? = pkceEnabled ? plistDictionary["codeVerifier"] as? String : nil
                 else {
-                    fatalError("Unable to read Okta.plist or missing required key")
+                    authState = AuthState.error(errorCode: ErrorCode.AuthFailed.shared, message: "Unable to read Okta.plist or missing required key", correctiveAction: CorrectiveAction.ReAuthenticate.shared)
+                    updateAuthStateView()
+                return true
                 }
-                
+
                 messenger.authenticate(authCode: self.authCode ?? "", redirectUri: signInRedirectURI, codeVerifier: codeVerifier)
             default:
                 self.info.text = "Invalid command"
@@ -458,7 +463,7 @@ extension TestbedViewController : UITextFieldDelegate {
         textField.resignFirstResponder()
         return true
     }
-    
+
     private func updateAuthStateView() {
         authStateView.text = "Auth State: \(authState)"
     }

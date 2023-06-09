@@ -18,7 +18,7 @@ import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.MessengerTransport
 import com.genesys.cloud.messenger.transport.core.events.Event
-import com.genesys.cloud.messenger.transport.util.DefaultTokenStore
+import com.genesys.cloud.messenger.transport.util.DefaultVault
 import io.ktor.http.URLBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -81,9 +81,9 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             domain = region.ifEmpty { BuildConfig.DEPLOYMENT_DOMAIN },
             logging = true
         )
-        DefaultTokenStore.context = context
-        messengerTransport = MessengerTransport(mmsdkConfiguration)
-        client = messengerTransport.createMessagingClient()
+
+        DefaultVault.context = context
+        client = MessengerTransport(mmsdkConfiguration).createMessagingClient()
         with(client) {
             stateChangedListener = {
                 runBlocking {

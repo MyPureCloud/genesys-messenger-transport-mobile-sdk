@@ -1,9 +1,10 @@
 package com.genesys.cloud.messenger.transport.util
 
-import com.genesys.cloud.messenger.transport.core.Vault
+import com.genesys.cloud.messenger.transport.core.InternalVault
 
+@Deprecated("Use [Vault] instead.")
 actual class DefaultTokenStore actual constructor(storeKey: String) : TokenStore() {
-    private val store = Vault(storeKey)
+    private val store = InternalVault(storeKey)
 
     override fun store(token: String) {
         store.set(TOKEN_KEY, token)

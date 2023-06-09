@@ -142,7 +142,7 @@ class iosAppTests: XCTestCase {
 
         // Save a new token.
         let newToken = UUID().uuidString
-        DefaultTokenStore(storeKey: "com.genesys.cloud.messenger").store(token: newToken)
+        messengerTester?.messenger.tokenVault.store(key: "token", value: newToken)
         print("New token: \(newToken)")
 
         // Initializing a new MessengerInteractorTester object.

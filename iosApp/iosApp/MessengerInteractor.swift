@@ -15,7 +15,8 @@ final class MessengerInteractor {
     let configuration: Configuration
     let messengerTransport: MessengerTransport
     let messagingClient: MessagingClient
-    
+    let tokenVault: DefaultVault
+
     let stateChangeSubject = PassthroughSubject<StateChange, Never>()
     let messageEventSubject = PassthroughSubject<MessageEvent, Never>()
     let eventSubject = PassthroughSubject<Event, Never>()
@@ -26,7 +27,8 @@ final class MessengerInteractor {
                                            logging: true,
                                            reconnectionTimeoutInSeconds: reconnectTimeout,
                                            autoRefreshTokenWhenExpired: true)
-        self.messengerTransport = MessengerTransport(configuration: self.configuration)
+        self.tokenVault = DefaultVault(keys: Vault.Keys(vaultKey: "com.genesys.cloud.messenger", tokenKey: "token", authRefreshTokenKey: "auth_refresh_token"))
+        self.messengerTransport = MessengerTransport(configuration: self.configuration, vault: self.tokenVault)
         self.messagingClient = self.messengerTransport.createMessagingClient()
         
         messagingClient.stateChangedListener = { [weak self] stateChange in
@@ -42,7 +44,7 @@ final class MessengerInteractor {
             self?.eventSubject.send(event)
         }
     }
-    
+
     func authenticate(authCode: String, redirectUri: String, codeVerifier: String?) {
         messagingClient.authenticate(authCode: authCode, redirectUri: redirectUri, codeVerifier: codeVerifier)
     }
@@ -55,7 +57,7 @@ final class MessengerInteractor {
             throw error
         }
     }
-    
+
     func connectAuthenticated() throws {
         do {
             try messagingClient.connectAuthenticatedSession()
@@ -64,7 +66,7 @@ final class MessengerInteractor {
             throw error
         }
     }
-    
+
     func newChat() throws {
         do {
             try messagingClient.startNewChat()
@@ -82,7 +84,7 @@ final class MessengerInteractor {
             throw error
         }
     }
-    
+
     func oktaLogout() throws {
         do {
             try messagingClient.logoutFromAuthenticatedSession()
