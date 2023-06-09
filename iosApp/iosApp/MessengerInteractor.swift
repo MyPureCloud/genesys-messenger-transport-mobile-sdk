@@ -16,7 +16,7 @@ final class MessengerInteractor {
     let messengerTransport: MessengerTransport
     let messagingClient: MessagingClient
     let tokenVault: DefaultVault
-    
+
     let stateChangeSubject = PassthroughSubject<StateChange, Never>()
     let messageEventSubject = PassthroughSubject<MessageEvent, Never>()
     let eventSubject = PassthroughSubject<Event, Never>()
@@ -44,7 +44,7 @@ final class MessengerInteractor {
             self?.eventSubject.send(event)
         }
     }
-    
+
     func authenticate(authCode: String, redirectUri: String, codeVerifier: String?) {
         messagingClient.authenticate(authCode: authCode, redirectUri: redirectUri, codeVerifier: codeVerifier)
     }
@@ -57,7 +57,7 @@ final class MessengerInteractor {
             throw error
         }
     }
-    
+
     func connectAuthenticated() throws {
         do {
             try messagingClient.connectAuthenticatedSession()
@@ -66,7 +66,7 @@ final class MessengerInteractor {
             throw error
         }
     }
-    
+
     func newChat() throws {
         do {
             try messagingClient.startNewChat()
@@ -84,7 +84,7 @@ final class MessengerInteractor {
             throw error
         }
     }
-    
+
     func oktaLogout() throws {
         do {
             try messagingClient.logoutFromAuthenticatedSession()

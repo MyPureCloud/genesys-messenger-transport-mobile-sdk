@@ -22,6 +22,11 @@ struct Config: Codable {
     public let agentDisconnectDeploymentId: String
     public let botName: String
     public let domain: String
+    public let authCode: String
+    public let authCode2: String
+    public let authDeploymentId: String
+    public let redirectUri: String
+    public let oktaCodeVerifier: String
 }
 
 struct TestConfig {
