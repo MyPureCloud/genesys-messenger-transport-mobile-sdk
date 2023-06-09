@@ -44,17 +44,17 @@ abstract class Vault(private val keys: Keys) {
      * @return the previous stored value for specified key or null if not in storage.
      */
     abstract fun fetch(key: String): String?
-}
 
-/**
- * Set of keys Vault will use to access stored data.
- *
- * @param vaultKey the key used to access the Vault itself.
- * @param tokenKey the key used to fetch the token value from the Vault.
- * @param authRefreshTokenKey the key used to fetch the auth refresh token value from the Vault.
- */
-data class Keys(
-    val vaultKey: String,
-    val tokenKey: String,
-    val authRefreshTokenKey: String,
-)
+    /**
+     * Set of keys Vault will use to access stored data.
+     *
+     * @param vaultKey the key used to access the Vault itself.
+     * @param tokenKey the key used to fetch the token value from the Vault.
+     * @param authRefreshTokenKey the key used to fetch the auth refresh token value from the Vault.
+     */
+    data class Keys(
+        val vaultKey: String,
+        val tokenKey: String,
+        val authRefreshTokenKey: String,
+    )
+}
