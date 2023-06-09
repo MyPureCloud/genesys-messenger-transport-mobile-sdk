@@ -83,7 +83,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         )
 
         DefaultVault.context = context
-        client = MessengerTransport(mmsdkConfiguration).createMessagingClient()
+        messengerTransport = MessengerTransport(mmsdkConfiguration)
+        client = messengerTransport.createMessagingClient()
         with(client) {
             stateChangedListener = {
                 runBlocking {
