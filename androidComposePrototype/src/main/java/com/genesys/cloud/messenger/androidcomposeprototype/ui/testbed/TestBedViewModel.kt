@@ -376,7 +376,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             URLBuilder("https://${BuildConfig.OKTA_DOMAIN}/oauth2/default/v1/authorize").apply {
                 parameters.append("client_id", BuildConfig.CLIENT_ID)
                 parameters.append("response_type", "code")
-                parameters.append("scope", "openid profile")
+                parameters.append("scope", "openid profile offline_access")
                 parameters.append("redirect_uri", BuildConfig.SIGN_IN_REDIRECT_URI)
                 parameters.append("state", BuildConfig.OKTA_STATE)
                 if (pkceEnabled) {
