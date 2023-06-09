@@ -13,12 +13,4 @@ actual class DefaultTokenStore actual constructor(storeKey: String) : TokenStore
     override fun fetch(): String? {
         return store.string(TOKEN_KEY)
     }
-
-    override fun storeAuthRefreshToken(refreshToken: String) {
-        store.set(AUTH_REFRESH_TOKEN_KEY, refreshToken)
-    }
-
-    override fun fetchAuthRefreshToken(): String? {
-        return store.string(AUTH_REFRESH_TOKEN_KEY)
-    }
 }

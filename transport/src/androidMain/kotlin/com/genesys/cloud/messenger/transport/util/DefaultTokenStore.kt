@@ -26,17 +26,6 @@ actual class DefaultTokenStore actual constructor(storeKey: String) : TokenStore
         return sharedPreferences.getString(TOKEN_KEY, null)
     }
 
-    override fun storeAuthRefreshToken(refreshToken: String) {
-        with(sharedPreferences.edit()) {
-            putString(AUTH_REFRESH_TOKEN_KEY, refreshToken)
-            apply()
-        }
-    }
-
-    override fun fetchAuthRefreshToken(): String? {
-        return sharedPreferences.getString(AUTH_REFRESH_TOKEN_KEY, null)
-    }
-
     companion object {
         private var contextRef: WeakReference<Context>? = null
 
