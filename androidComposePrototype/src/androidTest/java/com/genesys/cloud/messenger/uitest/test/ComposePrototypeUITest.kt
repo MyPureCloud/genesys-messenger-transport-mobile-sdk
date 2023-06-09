@@ -447,7 +447,7 @@ class ComposePrototypeUITest : BaseTests() {
     @Test
     fun testHistoryPull() {
         apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.agentDisconnectDeploymentId)
+        enterDeploymentInfo(testConfig.deploymentId)
         connect()
         sendMsg(helloText)
         val conversationInfo = apiHelper.answerNewConversation()
