@@ -63,6 +63,7 @@ internal class AuthHandlerImpl(
                             }
                         }
                     } else {
+                        logoutAttempts = 0
                         handleRequestError(result, "logout()")
                     }
                 }
