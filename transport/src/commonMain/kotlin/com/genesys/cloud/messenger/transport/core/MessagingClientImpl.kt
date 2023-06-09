@@ -51,6 +51,8 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlin.reflect.KProperty0
 
+private const val MAX_RECONFIGURE_ATTEMPTS = 3
+
 internal class MessagingClientImpl(
     vault: Vault,
     private val api: WebMessagingApi,
@@ -80,6 +82,7 @@ internal class MessagingClientImpl(
 ) : MessagingClient {
     private var connectAuthenticated = false
     private var isStartingANewSession = false
+    private var reconfigureAttempts = 0
 
     override val currentState: State
         get() {
@@ -147,6 +150,11 @@ internal class MessagingClientImpl(
         val encodedJson = if (connectAuthenticated) {
             log.i { "configureAuthenticatedSession(token = $token, startNew: $startNew)" }
             if (authHandler.jwt == NO_JWT) {
+                reconfigureAttempts++
+                if (reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
+                    transitionToStateError(ErrorCode.AuthFailed, "Failed to configure session.")
+                    return
+                }
                 refreshTokenAndPerform { configureSession(startNew) }
                 return
             }
@@ -295,7 +303,8 @@ internal class MessagingClientImpl(
             is ErrorCode.RedirectResponseError,
             -> {
                 if (stateMachine.isConnected() || stateMachine.isReconnecting() || isStartingANewSession) {
-                    if (connectAuthenticated && code.isUnauthorized()) {
+                    if (connectAuthenticated && code.isUnauthorized() && reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
+                        reconfigureAttempts++
                         if (stateMachine.isConnected()) {
                             refreshTokenAndPerform { configureSession(isStartingANewSession) }
                         } else {
@@ -394,12 +403,14 @@ internal class MessagingClientImpl(
         healthCheckProvider.clear()
         attachmentHandler.clearAll()
         reconnectionHandler.clear()
+        reconfigureAttempts = 0
     }
 
     private fun transitionToStateError(errorCode: ErrorCode, errorMessage: String?) {
         stateMachine.onError(errorCode, errorMessage)
         attachmentHandler.clearAll()
         reconnectionHandler.clear()
+        reconfigureAttempts = 0
     }
 
     private fun encodeAnonymousConfigureSessionRequest(startNew: Boolean) =

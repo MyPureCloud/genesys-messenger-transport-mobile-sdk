@@ -16,6 +16,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
+private const val MAX_LOGOUT_ATTEMPTS = 3
+
 internal class AuthHandlerImpl(
     private val autoRefreshTokenWhenExpired: Boolean,
     private val eventHandler: EventHandler,
@@ -24,7 +26,7 @@ internal class AuthHandlerImpl(
     private val log: Log,
     private val dispatcher: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
 ) : AuthHandler {
-
+    private var logoutAttempts = 0
     private var authJwt: AuthJwt = AuthJwt(NO_JWT, vault.authRefreshToken)
 
     override val jwt: String
@@ -50,9 +52,10 @@ internal class AuthHandlerImpl(
     override fun logout() {
         dispatcher.launch {
             when (val result = api.logoutFromAuthenticatedSession(authJwt.jwt)) {
-                is Result.Success -> log.i { "logout() request was successfully sent." }
+                is Result.Success -> logoutAttempts = 0
                 is Result.Failure -> {
-                    if (eligibleToRefresh(result.errorCode)) {
+                    if (eligibleToRefresh(result.errorCode) && logoutAttempts < MAX_LOGOUT_ATTEMPTS) {
+                        logoutAttempts++
                         refreshToken {
                             when (it) {
                                 is Result.Success -> logout()
