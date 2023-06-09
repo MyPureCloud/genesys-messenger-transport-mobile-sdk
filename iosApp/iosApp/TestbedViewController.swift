@@ -52,7 +52,7 @@ class TestbedViewController: UIViewController {
         case clearConversation
         case addAttribute
         case typing
-        case authenticate
+        case authorize
 
         var helpDescription: String {
             switch self {
@@ -240,10 +240,10 @@ class TestbedViewController: UIViewController {
             displayEvent = "Event received: \(conversationAutostart.description)"
         case let connectionClosed as Event.ConnectionClosed:
             displayEvent = "Event received: \(connectionClosed.description)"
-        case let authenticated as Event.Authenticated:
-            authState = AuthState.authenticated
+        case let authorized as Event.Authorized:
+            authState = AuthState.authorized
             updateAuthStateView()
-            displayEvent = "Event received: \(authenticated.description)"
+            displayEvent = "Event received: \(authorized.description)"
         case let logout as Event.Logout:
             authState = AuthState.loggedOut
             updateAuthStateView()
@@ -439,7 +439,7 @@ extension TestbedViewController : UITextFieldDelegate {
                 signIn()
             case (.oktaLogout, _):
                 try messenger.oktaLogout()
-            case (.authenticate, _):
+            case (.authorize, _):
                 guard let plistPath = Bundle.main.path(forResource: "Okta", ofType: "plist"),
                         let plistData = FileManager.default.contents(atPath: plistPath),
                         let plistDictionary = try? PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any],
@@ -450,8 +450,8 @@ extension TestbedViewController : UITextFieldDelegate {
                     updateAuthStateView()
                 return true
                 }
-
-                messenger.authenticate(authCode: self.authCode ?? "", redirectUri: signInRedirectURI, codeVerifier: codeVerifier)
+                
+                messenger.authorize(authCode: self.authCode ?? "", redirectUri: signInRedirectURI, codeVerifier: codeVerifier)
             default:
                 self.info.text = "Invalid command"
             }
@@ -472,7 +472,7 @@ extension TestbedViewController : UITextFieldDelegate {
 enum AuthState {
     case noAuth
     case authCodeReceived(authCode: String)
-    case authenticated
+    case authorized
     case loggedOut
     case error(errorCode: ErrorCode, message: String?, correctiveAction: CorrectiveAction)
 }

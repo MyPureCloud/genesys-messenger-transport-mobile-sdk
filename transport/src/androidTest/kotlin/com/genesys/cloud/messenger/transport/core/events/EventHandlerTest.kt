@@ -5,7 +5,7 @@ import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.events.Event.AgentTyping
-import com.genesys.cloud.messenger.transport.core.events.Event.Authenticated
+import com.genesys.cloud.messenger.transport.core.events.Event.Authorized
 import com.genesys.cloud.messenger.transport.core.events.Event.ConnectionClosed
 import com.genesys.cloud.messenger.transport.core.events.Event.ConversationAutostart
 import com.genesys.cloud.messenger.transport.core.events.Event.ConversationDisconnect
@@ -39,7 +39,7 @@ class EventHandlerTest {
             ConversationAutostart,
             ConversationDisconnect,
             ConnectionClosed,
-            Authenticated,
+            Authorized,
             Logout,
         )
 

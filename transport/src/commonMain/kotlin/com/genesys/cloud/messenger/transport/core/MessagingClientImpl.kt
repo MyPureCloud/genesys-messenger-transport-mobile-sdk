@@ -246,8 +246,8 @@ internal class MessagingClientImpl(
         }
     }
 
-    override fun authenticate(authCode: String, redirectUri: String, codeVerifier: String?) {
-        authHandler.authenticate(authCode, redirectUri, codeVerifier)
+    override fun authorize(authCode: String, redirectUri: String, codeVerifier: String?) {
+        authHandler.authorize(authCode, redirectUri, codeVerifier)
     }
 
     @Throws(IllegalStateException::class)

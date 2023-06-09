@@ -53,7 +53,7 @@ sealed class Event {
     /**
      * Sent when auth code was successfully exchanged for access token.
      */
-    object Authenticated : Event()
+    object Authorized : Event()
 
     /**
      * Sent when user has been logged out from authenticated session.

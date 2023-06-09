@@ -30,7 +30,7 @@ internal class AuthHandlerImpl(
     override val jwt: String
         get() = authJwt.jwt
 
-    override fun authenticate(authCode: String, redirectUri: String, codeVerifier: String?) {
+    override fun authorize(authCode: String, redirectUri: String, codeVerifier: String?) {
         dispatcher.launch {
             when (val result = api.fetchAuthJwt(authCode, redirectUri, codeVerifier)) {
                 is Result.Success -> {
@@ -39,7 +39,7 @@ internal class AuthHandlerImpl(
                         if (autoRefreshTokenWhenExpired) {
                             vault.authRefreshToken = it.refreshToken ?: NO_REFRESH_TOKEN
                         }
-                        eventHandler.onEvent(Event.Authenticated)
+                        eventHandler.onEvent(Event.Authorized)
                     }
                 }
                 is Result.Failure -> handleRequestError(result, "fetchAuthJwt()")

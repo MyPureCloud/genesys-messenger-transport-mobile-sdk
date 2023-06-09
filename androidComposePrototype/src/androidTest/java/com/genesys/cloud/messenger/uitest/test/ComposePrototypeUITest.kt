@@ -68,8 +68,8 @@ class ComposePrototypeUITest : BaseTests() {
     private val oktaLogoutText = "oktaLogout"
     private val authCodeReceivedText = "AuthCodeReceived"
     private val loggedOutText = "LoggedOut"
-    private val authenticateText = "authenticate"
-    private val authenticatedText = "authenticated"
+    private val authorizeText = "authorize"
+    private val authorizedText = "authorized"
     private val authenticateConnectText = "connectAuthenticated"
     private val notAuthenticateText = "Unable to sign in"
     private val fakeAuthUserName = "daffy.duck@looneytunes.com"
@@ -115,11 +115,11 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
-    fun authenticate() {
+    fun authorize() {
         messenger {
             verifyPageIsVisible()
-            enterCommand(authenticateText)
-            waitForAuthMsgReceived(authenticatedText)
+            enterCommand(authorizeText)
+            waitForAuthMsgReceived(authorizedText)
         }
     }
 
@@ -479,7 +479,7 @@ class ComposePrototypeUITest : BaseTests() {
         apiHelper.disconnectAllConversations()
         enterDeploymentInfo(testConfig.authDeploymentId)
         oktaSignInWithPKCE(testConfig.oktaUsername, testConfig.oktaPassword)
-        authenticate()
+        authorize()
         connect(authenticateConnectText)
         val conversationInfo = apiHelper.answerNewConversation()
         if (conversationInfo == null) AssertionError("Unable to answer conversation.")
@@ -493,7 +493,7 @@ class ComposePrototypeUITest : BaseTests() {
             oktaLogout()
             clearBrowser()
             oktaSignInWithPKCE(testConfig.oktaUser2name, testConfig.oktaPassword2)
-            authenticate()
+            authorize()
             connect(authenticateConnectText)
             val conversation2Info = apiHelper.answerNewConversation()
             if (conversation2Info == null) AssertionError("Unable to answer conversation.")

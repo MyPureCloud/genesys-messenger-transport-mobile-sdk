@@ -222,7 +222,7 @@ interface MessagingClient {
      * @param redirectUri The redirect URI to use for fetching the Auth JWT.
      * @param codeVerifier The code verifier to use for fetching the Auth JWT (optional).
      */
-    fun authenticate(authCode: String, redirectUri: String, codeVerifier: String?)
+    fun authorize(authCode: String, redirectUri: String, codeVerifier: String?)
 
     /**
      * Logs out user from authenticated session on all devices that shares the same auth session.

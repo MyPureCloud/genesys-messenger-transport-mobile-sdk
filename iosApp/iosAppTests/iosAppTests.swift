@@ -46,8 +46,8 @@ class iosAppTests: XCTestCase {
         }
         let deployment = try! Deployment()
         let testController = MessengerInteractorTester(deployment: Deployment(deploymentId: config.authDeploymentId, domain: deployment.domain))
-        testController.authenticate(config: config, authCode: config.authCode)
-        testController.startNewMessengerConnection(authenticated: true)
+        testController.authorize(config: config, authCode: config.authCode)
+        testController.startNewMessengerConnection(authorized: true)
         testController.sendText(text: "Testing from E2E test.")
 
         // Use the public API to answer the new Messenger conversation.
@@ -67,8 +67,8 @@ class iosAppTests: XCTestCase {
 
         // With the same test controller, authenticate with a different user's auth code.
         // Ensure that we can answer a new conversation.
-        testController.authenticate(config: config, authCode: config.authCode2)
-        testController.startNewMessengerConnection(authenticated: true)
+        testController.authorize(config: config, authCode: config.authCode2)
+        testController.startNewMessengerConnection(authorized: true)
         testController.sendText(text: "Testing from E2E test.")
 
         // Use the public API to answer the new Messenger conversation.
@@ -129,7 +129,7 @@ class iosAppTests: XCTestCase {
         }
         let deployment = try! Deployment()
         let testController = MessengerInteractorTester(deployment: Deployment(deploymentId: config.authDeploymentId, domain: deployment.domain))
-        testController.authenticate(config: config, authCode: "", shouldFail: true)
+        testController.authorize(config: config, authCode: "", shouldFail: true)
     }
 
     // Test will always fail if the deployment configuration doesn't have AutoStart enabled. See Deployment Configuration options in Admin.

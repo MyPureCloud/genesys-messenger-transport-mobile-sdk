@@ -1255,11 +1255,11 @@ class MessagingClientImplTest {
     }
 
     @Test
-    fun whenAuthenticateIsCalled() {
-        subject.authenticate(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier)
+    fun whenAuthorizeIsCalled() {
+        subject.authorize(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier)
 
         verify {
-            mockAuthHandler.authenticate(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier)
+            mockAuthHandler.authorize(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier)
         }
     }
 

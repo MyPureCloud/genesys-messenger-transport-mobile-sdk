@@ -138,7 +138,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "oktaSignIn" -> doOktaSignIn(false)
             "oktaSignInWithPKCE" -> doOktaSignIn(true)
             "oktaLogout" -> logoutFromOktaSession()
-            "authenticate" -> doAuthenticate()
+            "authorize" -> doAuthorize()
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
@@ -280,12 +280,12 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private fun doAuthenticate() {
+    private fun doAuthorize() {
         if (authCode.isEmpty()) {
             onSocketMessageReceived("Please, first obtain authCode from login.")
             return
         }
-        client.authenticate(
+        client.authorize(
             authCode = authCode,
             redirectUri = BuildConfig.SIGN_IN_REDIRECT_URI,
             codeVerifier = if (pkceEnabled) BuildConfig.CODE_VERIFIER else null
@@ -349,7 +349,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     private fun onEvent(event: Event) {
         when (event) {
             is Event.Logout -> authState = AuthState.LoggedOut
-            is Event.Authenticated -> authState = AuthState.Authenticated
+            is Event.Authorized -> authState = AuthState.Authorized
             is Event.Error -> handleEventError(event)
             else -> println("On event: $event")
         }
@@ -398,7 +398,7 @@ private fun String.toKeyValuePair(): Pair<String, String> {
 sealed class AuthState {
     object NoAuth : AuthState()
     data class AuthCodeReceived(val authCode: String) : AuthState()
-    object Authenticated : AuthState()
+    object Authorized : AuthState()
     object LoggedOut : AuthState()
     data class Error(
         val errorCode: ErrorCode,
