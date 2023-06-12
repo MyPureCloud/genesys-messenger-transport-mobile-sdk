@@ -1,0 +1,44 @@
+@startuml
+skinparam {
+        ArrowColor darkBlue
+        backgroundColor #EEEBDC
+        NoteBackgroundColor #lightyellow
+        NoteBorderColor gray
+        sequenceGroupHeaderFontColor midnightblue
+        padding 6
+}
+
+participant App #lightGreen
+participant MessagingClient #lightGreen
+participant AuthHandler #lightGreen
+participant WebMessagingAPi #lightGreen
+participant Shyrka #lightGreen
+participant "Genesys Cloud Platform API" #lightGreen
+
+
+    App -> MessagingClient : 1. logoutFromAuthenticatedSession()
+    MessagingClient -> AuthHandler : 2. logoutFromAuthenticatedSession()
+    AuthHandler -> WebMessagingAPi : 3. logoutFromAuthenticatedSession()
+    WebMessagingAPi -> "Genesys Cloud Platform API" : 4. logoutFromAuthenticatedSession()
+    alt #lightgreen logout success
+    Shyrka --> MessagingClient : 5. Event.Logout
+    MessagingClient --> App : 6. eventListener(Event.Logout)
+    MessagingClient -> MessagingClient: 7. disconnect()
+    MessagingClient --> App : 8. onStateChanged(State.Closed)
+    else logout failure errorCode == 401
+                AuthHandler -> WebMessagingAPi : 9. refreshToken(authHandler.refreshToken)
+                alt #lightgreen refreshToken() success
+                WebMessagingAPi --> AuthHandler : 10. success(jwt)
+                AuthHandler -> AuthHandler : 11. update jwt.
+                AuthHandler -> WebMessagingAPi : 12. logoutFromAuthenticatedSession()
+                else #FF7276 refreshToken() failure
+                WebMessagingAPi --> AuthHandler : 10a. failure
+                AuthHandler -> AuthHandler : 11a. clear() jwt and refreshToken from storage.
+                AuthHandler --> MessagingClient : 12a. failure
+                MessagingClient --> App : 13a. onEvent(Error(AuthLogoutFailed, message, ReAuthenticate))
+                end
+            else #FF7276 errorCode != 401
+                MessagingClient --> App : 9a. onEvent(Error(AuthLogoutFailed, message, ReAuthenticate))
+    end
+
+@enduml
