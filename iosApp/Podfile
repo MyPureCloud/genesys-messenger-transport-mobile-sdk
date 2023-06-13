@@ -1,7 +1,7 @@
 platform :ios, '13.0'
+use_frameworks!
 
 target 'iosApp' do
-  use_frameworks!
   pod 'transport', :path => '../transport'
 
   target 'iosAppTests' do
