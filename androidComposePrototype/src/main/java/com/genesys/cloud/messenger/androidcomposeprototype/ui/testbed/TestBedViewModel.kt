@@ -59,6 +59,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         )
         DefaultTokenStore.context = context
         messengerTransport = MessengerTransport(mmsdkConfiguration)
+        println("transport: ${messengerTransport.name} ${messengerTransport.version}")
         client = messengerTransport.createMessagingClient()
         with(client) {
             stateChangedListener = {

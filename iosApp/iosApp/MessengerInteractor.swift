@@ -40,6 +40,8 @@ final class MessengerInteractor {
             print("Event: \(event)")
             self?.eventSubject.send(event)
         }
+
+        print("MessengerInteractor transport: \(messengerTransport.name) \(messengerTransport.version)")
     }
 
     func connect() throws {
