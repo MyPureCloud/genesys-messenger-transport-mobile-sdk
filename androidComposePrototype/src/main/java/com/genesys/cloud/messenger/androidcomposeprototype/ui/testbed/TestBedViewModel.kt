@@ -52,6 +52,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     private val customAttributes = mutableMapOf<String, String>()
 
     suspend fun init(context: Context) {
+        println("Messenger Transport sdkVersion: ${MessengerTransport.sdkVersion}")
         val mmsdkConfiguration = Configuration(
             deploymentId = deploymentId,
             domain = region,
@@ -59,7 +60,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         )
         DefaultTokenStore.context = context
         messengerTransport = MessengerTransport(mmsdkConfiguration)
-        println("transport: ${messengerTransport.name} ${messengerTransport.version}")
         client = messengerTransport.createMessagingClient()
         with(client) {
             stateChangedListener = {

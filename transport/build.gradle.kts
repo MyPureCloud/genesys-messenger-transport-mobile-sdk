@@ -28,8 +28,7 @@ buildkonfig {
     packageName = "com.genesys.cloud.messenger.transport.config"
     // Set values which you want to have in common. Required.
     defaultConfigs {
-        buildConfigField(STRING, "name", productName)
-        buildConfigField(STRING, "version", version.toString())
+        buildConfigField(STRING, "sdkVersion", version.toString())
     }
 }
 

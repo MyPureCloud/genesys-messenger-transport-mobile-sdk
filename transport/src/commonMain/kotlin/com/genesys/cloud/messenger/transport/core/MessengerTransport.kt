@@ -29,15 +29,12 @@ class MessengerTransport(
 
     constructor(configuration: Configuration) : this(configuration, DefaultTokenStore(TOKEN_STORE_KEY))
 
-    /**
-     * The product name.
-     */
-    val name = BuildKonfig.name
-
-    /**
-     * The SDK version.
-     */
-    val version = BuildKonfig.version
+    companion object {
+        /**
+         * The SDK version.
+         */
+        val sdkVersion = BuildKonfig.sdkVersion
+    }
 
     /**
      * Creates an instance of [MessagingClient] based on the provided configuration.

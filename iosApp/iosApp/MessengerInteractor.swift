@@ -21,6 +21,8 @@ final class MessengerInteractor {
     let eventSubject = PassthroughSubject<Event, Never>()
         
     init(deployment: Deployment, reconnectTimeout: Int64 = 60 * 5) {
+        print("Messenger Transport sdkVersion: \(MessengerTransport.companion.sdkVersion)")
+        
         self.configuration = Configuration(deploymentId: deployment.deploymentId,
                                            domain: deployment.domain,
                                            logging: true,
@@ -40,8 +42,6 @@ final class MessengerInteractor {
             print("Event: \(event)")
             self?.eventSubject.send(event)
         }
-
-        print("MessengerInteractor transport: \(messengerTransport.name) \(messengerTransport.version)")
     }
 
     func connect() throws {
