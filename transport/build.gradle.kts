@@ -18,7 +18,6 @@ plugins {
 version = project.rootProject.version
 group = project.rootProject.group
 
-val productName = "Genesys Cloud Messenger Transport"
 val iosFrameworkName = "MessengerTransport"
 val iosMinimumOSVersion = "13.0"
 val iosCocoaPodName = "GenesysCloudMessengerTransport"
