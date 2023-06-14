@@ -14,7 +14,6 @@ import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendOutboundMessageF
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendTypingIndicatorFromAgentToUser
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.waitForParticipantToConnectOrDisconnect
 import com.genesys.cloud.messenger.uitest.support.testConfig
-import org.junit.AfterClass
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runner.RunWith
