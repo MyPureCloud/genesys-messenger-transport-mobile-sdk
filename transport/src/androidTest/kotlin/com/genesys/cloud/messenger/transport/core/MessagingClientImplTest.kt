@@ -28,12 +28,10 @@ import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
+import com.genesys.cloud.messenger.transport.util.AuthTest
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Request
-import com.genesys.cloud.messenger.transport.util.TestAuthCode
-import com.genesys.cloud.messenger.transport.util.TestCodeVerifier
-import com.genesys.cloud.messenger.transport.util.TestJwtAuthUrl
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import io.mockk.Called
 import io.mockk.MockKVerificationScope
@@ -1256,10 +1254,10 @@ class MessagingClientImplTest {
 
     @Test
     fun whenAuthorizeIsCalled() {
-        subject.authorize(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier)
+        subject.authorize(AuthTest.Code, AuthTest.JwtAuthUrl, AuthTest.CodeVerifier)
 
         verify {
-            mockAuthHandler.authorize(TestAuthCode, TestJwtAuthUrl, TestCodeVerifier)
+            mockAuthHandler.authorize(AuthTest.Code, AuthTest.JwtAuthUrl, AuthTest.CodeVerifier)
         }
     }
 

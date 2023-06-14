@@ -16,7 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-private const val MAX_LOGOUT_ATTEMPTS = 3
+internal const val MAX_LOGOUT_ATTEMPTS = 3
 
 internal class AuthHandlerImpl(
     private val autoRefreshTokenWhenExpired: Boolean,
@@ -59,7 +59,7 @@ internal class AuthHandlerImpl(
                         refreshToken {
                             when (it) {
                                 is Result.Success -> logout()
-                                is Result.Failure -> handleRequestError(result, "logout()")
+                                is Result.Failure -> handleRequestError(it, "logout()")
                             }
                         }
                     } else {
