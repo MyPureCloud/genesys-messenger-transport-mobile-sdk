@@ -28,6 +28,10 @@ internal class ErrorCodeTest {
         assertTrue(ErrorCode.mapFrom(1001) is ErrorCode.WebsocketError)
         assertTrue(ErrorCode.mapFrom(1002) is ErrorCode.WebsocketAccessDenied)
         assertTrue(ErrorCode.mapFrom(-1009) is ErrorCode.NetworkDisabled)
+        assertTrue(ErrorCode.mapFrom(6000) is ErrorCode.CancellationError)
+        assertTrue(ErrorCode.mapFrom(6001) is ErrorCode.AuthFailed)
+        assertTrue(ErrorCode.mapFrom(6002) is ErrorCode.AuthLogoutFailed)
+        assertTrue(ErrorCode.mapFrom(6003) is ErrorCode.RefreshAuthTokenFailure)
         val randomIn300Range = Random.nextInt(300, 400)
         assertEquals(
             ErrorCode.mapFrom(randomIn300Range),
@@ -53,6 +57,9 @@ internal class ErrorCodeTest {
         assertEquals(ErrorCode.ClientResponseError(408).toCorrectiveAction(), CorrectiveAction.RequestTimeOut)
         assertEquals(ErrorCode.ClientResponseError(429).toCorrectiveAction(), CorrectiveAction.TooManyRequests)
         assertEquals(ErrorCode.ClientResponseError(randomCodeExcludingKnown()).toCorrectiveAction(), CorrectiveAction.Unknown)
+        assertEquals(ErrorCode.AuthFailed.toCorrectiveAction(), CorrectiveAction.ReAuthenticate)
+        assertEquals(ErrorCode.RefreshAuthTokenFailure.toCorrectiveAction(), CorrectiveAction.ReAuthenticate)
+        assertEquals(ErrorCode.AuthLogoutFailed.toCorrectiveAction(), CorrectiveAction.ReAuthenticate)
     }
 
     private fun randomCodeExcludingKnown(): Int {

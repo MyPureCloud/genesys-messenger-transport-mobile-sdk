@@ -150,12 +150,12 @@ internal class MessagingClientImpl(
         val encodedJson = if (connectAuthenticated) {
             log.i { "configureAuthenticatedSession(token = $token, startNew: $startNew)" }
             if (authHandler.jwt == NO_JWT) {
-                reconfigureAttempts++
                 if (reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
-                    transitionToStateError(ErrorCode.AuthFailed, "Failed to configure session.")
+                    reconfigureAttempts++
+                    refreshTokenAndPerform { configureSession(startNew) }
                     return
                 }
-                refreshTokenAndPerform { configureSession(startNew) }
+                transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
                 return
             }
             encodeAuthenticatedConfigureSessionRequest(startNew)

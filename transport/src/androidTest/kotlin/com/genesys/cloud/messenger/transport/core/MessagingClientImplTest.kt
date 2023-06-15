@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.core
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.auth.AuthHandler
+import com.genesys.cloud.messenger.transport.auth.NO_JWT
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
@@ -30,6 +31,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.AuthTest
 import com.genesys.cloud.messenger.transport.util.DefaultVault
+import com.genesys.cloud.messenger.transport.util.ErrorTest
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.logs.Log
@@ -134,7 +136,13 @@ class MessagingClientImplTest {
         showUserTypingEnabled = mockShowUserTypingIndicatorFunction,
         getCurrentTimestamp = mockTimestampFunction,
     )
-    private val mockAuthHandler: AuthHandler = mockk(relaxed = true)
+    private val mockAuthHandler: AuthHandler = mockk(relaxed = true) {
+        every { jwt } returns AuthTest.JwtToken
+        every { refreshToken(captureLambda<(Result<Any>) -> Unit>()) } answers {
+            lambda<(Result<Any>) -> Unit>().invoke(Result.Success(Empty()))
+        }
+    }
+
     private val mockVault: DefaultVault = mockk {
         every { fetch("token") } returns Request.token
         every { token } returns Request.token
@@ -1262,6 +1270,85 @@ class MessagingClientImplTest {
     }
 
     @Test
+    fun whenConnectAuthenticated() {
+        subject.connectAuthenticatedSession()
+
+        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
+        verifySequence {
+            connectSequence(shouldConfigureAuth = true)
+        }
+    }
+
+    @Test
+    fun whenConnectAuthenticatedAndAuthHandlerHasNoJwtAndRefreshTokenSuccess() {
+        every { mockAuthHandler.jwt } returns NO_JWT
+        every { mockAuthHandler.refreshToken(captureLambda()) } answers {
+            every { mockAuthHandler.jwt } returns AuthTest.JwtToken
+            lambda<(Result<Empty>) -> Unit>().invoke(Result.Success(Empty()))
+        }
+
+        subject.connectAuthenticatedSession()
+
+        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
+        verifySequence {
+            mockStateChangedListener(fromIdleToConnecting)
+            mockPlatformSocket.openSocket(any())
+            mockStateChangedListener(fromConnectingToConnected)
+            mockAuthHandler.jwt
+            mockAuthHandler.refreshToken(any())
+            mockAuthHandler.jwt
+            mockAuthHandler.jwt
+            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
+            mockReconnectionHandler.clear()
+            mockStateChangedListener(fromConnectedToConfigured)
+        }
+    }
+
+    @Test
+    fun whenConnectAuthenticatedAndAuthHandlerHasNoJwtAndRefreshTokenFails() {
+        val givenResult = Result.Failure(ErrorCode.AuthFailed, ErrorTest.Message)
+        every { mockAuthHandler.refreshToken(captureLambda()) } answers {
+            lambda<(Result<Empty>) -> Unit>().invoke(givenResult)
+        }
+        every { mockAuthHandler.jwt } returns NO_JWT
+
+        val expectedErrorState =
+            State.Error(ErrorCode.AuthFailed, ErrorTest.Message)
+
+        subject.connectAuthenticatedSession()
+
+        assertThat(subject.currentState).isError(
+            expectedErrorState.code,
+            expectedErrorState.message
+        )
+        verifySequence {
+            mockStateChangedListener(fromIdleToConnecting)
+            mockPlatformSocket.openSocket(any())
+            mockStateChangedListener(fromConnectingToConnected)
+            mockAuthHandler.jwt
+            mockAuthHandler.refreshToken(any())
+            errorSequence(fromConnectedToError(expectedErrorState))
+        }
+    }
+
+    @Test
+    fun whenLogoutFromAuthenticatedSessionAndSocketNotConfigured() {
+        assertFailsWith<IllegalStateException> { subject.logoutFromAuthenticatedSession() }
+    }
+
+    @Test
+    fun whenLogoutFromAuthenticatedSession() {
+        subject.connectAuthenticatedSession()
+
+        subject.logoutFromAuthenticatedSession()
+
+        verifySequence {
+            connectSequence(shouldConfigureAuth = true)
+            mockAuthHandler.logout()
+        }
+    }
+
+    @Test
     fun whenEventLogoutReceived() {
         val expectedEvent = Event.Logout
 
@@ -1276,6 +1363,100 @@ class MessagingClientImplTest {
         }
     }
 
+    @Test
+    fun whenConnectAuthenticatedResponseWithUnauthorizedAllTheTime() {
+        every {
+            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
+        } answers {
+            slot.captured.onMessage(Response.unauthorized)
+        }
+        val expectedErrorState =
+            State.Error(ErrorCode.ClientResponseError(401), "User is unauthorized")
+
+        subject.connectAuthenticatedSession()
+
+        assertThat(subject.currentState).isError(
+            expectedErrorState.code,
+            expectedErrorState.message
+        )
+        verifySequence {
+            mockStateChangedListener(fromIdleToConnecting)
+            mockPlatformSocket.openSocket(any())
+            mockStateChangedListener(fromConnectingToConnected)
+            mockAuthHandler.jwt
+            mockAuthHandler.jwt
+            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
+            mockAuthHandler.refreshToken(any())
+            mockAuthHandler.jwt
+            mockAuthHandler.jwt
+            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
+            mockAuthHandler.refreshToken(any())
+            mockAuthHandler.jwt
+            mockAuthHandler.jwt
+            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
+            mockAuthHandler.refreshToken(any())
+            mockAuthHandler.jwt
+            mockAuthHandler.jwt
+            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
+            errorSequence(fromConnectedToError(expectedErrorState))
+        }
+    }
+
+    @Test
+    fun whenConnectAuthenticatedSessionFailsAndSocketListenerRespondWithWebsocketErrorAndThereAreNoReconnectionAttemptsLeft() {
+        val expectedException = Exception(ErrorMessage.FailedToReconnect)
+        val expectedErrorState =
+            State.Error(ErrorCode.WebsocketError, ErrorMessage.FailedToReconnect)
+
+        subject.connectAuthenticatedSession()
+
+        slot.captured.onFailure(expectedException, ErrorCode.WebsocketError)
+
+        assertThat(subject.currentState).isError(
+            expectedErrorState.code,
+            expectedErrorState.message
+        )
+        verifySequence {
+            connectSequence(shouldConfigureAuth = true)
+            mockMessageStore.invalidateConversationCache()
+            mockReconnectionHandler.shouldReconnect
+            errorSequence(fromConfiguredToError(expectedErrorState))
+        }
+    }
+
+    @Test
+    fun whenSocketListenerInvokeOnMessageWithClientResponseErrorWhileReconnectingAuthenticatedSession() {
+        val expectedErrorCode = ErrorCode.ClientResponseError(400)
+        val expectedErrorMessage = "Request failed."
+        val expectedErrorState = State.Error(expectedErrorCode, expectedErrorMessage)
+        every { mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest()) } answers {
+            if (subject.currentState == State.Reconnecting) {
+                slot.captured.onMessage(Response.webSocketRequestFailed)
+            } else {
+                slot.captured.onMessage(Response.configureSuccess())
+            }
+        }
+        every { mockReconnectionHandler.shouldReconnect } returns true
+        every { mockReconnectionHandler.reconnect(captureLambda()) } answers { lambda<() -> Unit>().invoke() }
+
+        subject.connectAuthenticatedSession()
+        // Initiate reconnection flow.
+        slot.captured.onFailure(Exception(), ErrorCode.WebsocketError)
+
+        assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
+        verifySequence {
+            connectSequence(shouldConfigureAuth = true)
+            mockReconnectionHandler.shouldReconnect
+            mockStateChangedListener(fromConfiguredToReconnecting())
+            mockReconnectionHandler.reconnect(any())
+            mockPlatformSocket.openSocket(any())
+            mockAuthHandler.jwt
+            mockAuthHandler.jwt
+            mockPlatformSocket.sendMessage(eq(Request.configureAuthenticatedRequest()))
+            errorSequence(fromReconnectingToError(expectedErrorState))
+        }
+    }
+
     private fun configuration(): Configuration = Configuration(
         deploymentId = "deploymentId",
         domain = "inindca.com",
@@ -1287,6 +1468,10 @@ class MessagingClientImplTest {
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
+        if (shouldConfigureAuth) {
+            mockAuthHandler.jwt // check if jwt is valid
+            mockAuthHandler.jwt // use jwt for request
+        }
         mockPlatformSocket.sendMessage(configureRequest)
         mockReconnectionHandler.clear()
         mockStateChangedListener(fromConnectedToConfigured)
@@ -1433,6 +1618,8 @@ private object Response {
         """{"type":"message","class":"ConnectionClosedEvent","code":200,"body":{}}"""
     const val logoutEvent =
         """{"type":"message","class":"LogoutEvent","code":200,"body":{}}"""
+    const val unauthorized =
+        """{"type": "response","class": "string","code": 401,"body": "User is unauthorized"}"""
 
     fun structuredMessageWithEvents(
         events: String = defaultStructuredEvents,

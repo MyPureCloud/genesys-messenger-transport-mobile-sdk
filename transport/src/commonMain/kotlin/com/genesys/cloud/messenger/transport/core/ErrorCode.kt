@@ -69,6 +69,7 @@ sealed class ErrorCode(val code: Int) {
 
 object ErrorMessage {
     const val FailedToReconnect = "Failed to reconnect."
+    const val FailedToConfigureSession = "Failed to configure session."
     const val InternetConnectionIsOffline =
         "Network is disabled. Please enable wifi or cellular and try again."
     const val AutoRefreshTokenDisabled = "AutoRefreshTokenWhenExpired is disabled in Configuration."
