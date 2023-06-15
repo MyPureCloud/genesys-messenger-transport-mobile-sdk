@@ -1,5 +1,7 @@
 package com.genesys.cloud.messenger.transport.util
 
+import com.genesys.cloud.messenger.transport.utility.AuthTest
+
 internal object Request {
     const val token = "00000000-0000-0000-0000-000000000000"
     fun configureRequest(startNew: Boolean = false) =

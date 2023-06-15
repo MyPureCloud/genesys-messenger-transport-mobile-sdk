@@ -29,12 +29,12 @@ import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
-import com.genesys.cloud.messenger.transport.util.AuthTest
 import com.genesys.cloud.messenger.transport.util.DefaultVault
-import com.genesys.cloud.messenger.transport.util.ErrorTest
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.utility.AuthTest
+import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import io.mockk.Called
 import io.mockk.MockKVerificationScope
 import io.mockk.clearAllMocks
@@ -1262,10 +1262,10 @@ class MessagingClientImplTest {
 
     @Test
     fun whenAuthorizeIsCalled() {
-        subject.authorize(AuthTest.Code, AuthTest.JwtAuthUrl, AuthTest.CodeVerifier)
+        subject.authorize(AuthTest.AuthCode, AuthTest.JwtAuthUrl, AuthTest.CodeVerifier)
 
         verify {
-            mockAuthHandler.authorize(AuthTest.Code, AuthTest.JwtAuthUrl, AuthTest.CodeVerifier)
+            mockAuthHandler.authorize(AuthTest.AuthCode, AuthTest.JwtAuthUrl, AuthTest.CodeVerifier)
         }
     }
 
@@ -1587,7 +1587,6 @@ class MessagingClientImplTest {
 private object Response {
     fun configureSuccess(connected: Boolean = true, readOnly: Boolean = false): String =
         """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":$connected,"newSession":true,"readOnly":$readOnly}}"""
-
     const val configureSuccessWithNewSessionFalse =
         """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":false}}"""
     const val webSocketRequestFailed =

@@ -13,11 +13,11 @@ import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.util.AUTH_REFRESH_TOKEN_KEY
-import com.genesys.cloud.messenger.transport.util.AuthTest
-import com.genesys.cloud.messenger.transport.util.ErrorTest
 import com.genesys.cloud.messenger.transport.util.TOKEN_KEY
 import com.genesys.cloud.messenger.transport.util.VAULT_KEY
 import com.genesys.cloud.messenger.transport.util.Vault
+import com.genesys.cloud.messenger.transport.utility.AuthTest
+import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -43,7 +43,7 @@ class AuthHandlerTest {
     private val mockWebMessagingApi: WebMessagingApi = mockk {
         coEvery {
             fetchAuthJwt(
-                AuthTest.Code,
+                AuthTest.AuthCode,
                 AuthTest.RedirectUri,
                 AuthTest.CodeVerifier,
             )
@@ -98,11 +98,11 @@ class AuthHandlerTest {
     fun `when authorize() success and autoRefreshTokenWhenExpired is enabled`() {
         val expectedAuthJwt = AuthJwt(AuthTest.JwtToken, AuthTest.RefreshToken)
 
-        subject.authorize(AuthTest.Code, AuthTest.RedirectUri, AuthTest.CodeVerifier)
+        subject.authorize(AuthTest.AuthCode, AuthTest.RedirectUri, AuthTest.CodeVerifier)
 
         coVerify {
             mockWebMessagingApi.fetchAuthJwt(
-                AuthTest.Code,
+                AuthTest.AuthCode,
                 AuthTest.RedirectUri,
                 AuthTest.CodeVerifier
             )
@@ -118,11 +118,11 @@ class AuthHandlerTest {
 
         val expectedAuthJwt = AuthJwt(AuthTest.JwtToken, NO_REFRESH_TOKEN)
 
-        subject.authorize(AuthTest.Code, AuthTest.RedirectUri, AuthTest.CodeVerifier)
+        subject.authorize(AuthTest.AuthCode, AuthTest.RedirectUri, AuthTest.CodeVerifier)
 
         coVerify {
             mockWebMessagingApi.fetchAuthJwt(
-                AuthTest.Code,
+                AuthTest.AuthCode,
                 AuthTest.RedirectUri,
                 AuthTest.CodeVerifier
             )
@@ -145,11 +145,11 @@ class AuthHandlerTest {
 
         val expectedAuthJwt = AuthJwt(NO_JWT, NO_REFRESH_TOKEN)
 
-        subject.authorize(AuthTest.Code, AuthTest.RedirectUri, AuthTest.CodeVerifier)
+        subject.authorize(AuthTest.AuthCode, AuthTest.RedirectUri, AuthTest.CodeVerifier)
 
         coVerify {
             mockWebMessagingApi.fetchAuthJwt(
-                AuthTest.Code,
+                AuthTest.AuthCode,
                 AuthTest.RedirectUri,
                 AuthTest.CodeVerifier
             )
@@ -174,7 +174,7 @@ class AuthHandlerTest {
             ErrorTest.Message
         )
 
-        subject.authorize(AuthTest.Code, AuthTest.RedirectUri, AuthTest.CodeVerifier)
+        subject.authorize(AuthTest.AuthCode, AuthTest.RedirectUri, AuthTest.CodeVerifier)
 
         verify(exactly = 0) {
             mockEventHandler.onEvent(
@@ -399,6 +399,6 @@ class AuthHandlerTest {
     }
 
     private fun authorize() {
-        subject.authorize(AuthTest.Code, AuthTest.RedirectUri, AuthTest.CodeVerifier)
+        subject.authorize(AuthTest.AuthCode, AuthTest.RedirectUri, AuthTest.CodeVerifier)
     }
 }
