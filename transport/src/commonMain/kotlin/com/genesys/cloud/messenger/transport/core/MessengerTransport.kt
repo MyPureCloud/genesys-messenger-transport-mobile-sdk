@@ -1,5 +1,6 @@
 package com.genesys.cloud.messenger.transport.core
 
+import com.genesys.cloud.messenger.transport.config.BuildKonfig
 import com.genesys.cloud.messenger.transport.network.DEFAULT_PING_INTERVAL_IN_SECONDS
 import com.genesys.cloud.messenger.transport.network.DeploymentConfigUseCase
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
@@ -27,6 +28,13 @@ class MessengerTransport(
     private var deploymentConfig: DeploymentConfig? = null
 
     constructor(configuration: Configuration) : this(configuration, DefaultTokenStore(TOKEN_STORE_KEY))
+
+    companion object {
+        /**
+         * The SDK version.
+         */
+        val sdkVersion = BuildKonfig.sdkVersion
+    }
 
     /**
      * Creates an instance of [MessagingClient] based on the provided configuration.
