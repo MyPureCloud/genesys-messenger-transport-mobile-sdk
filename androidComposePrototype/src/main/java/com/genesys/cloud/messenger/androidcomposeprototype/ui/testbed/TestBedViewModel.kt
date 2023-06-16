@@ -71,6 +71,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     private val customAttributes = mutableMapOf<String, String>()
     private lateinit var onOktaSingIn: (url: String) -> Unit
 
+    suspend fun init(context: Context) {
+        println("Messenger Transport sdkVersion: ${MessengerTransport.sdkVersion}")
     fun init(
         context: Context,
         onOktaSignIn: (url: String) -> Unit,

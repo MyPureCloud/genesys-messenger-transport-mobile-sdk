@@ -1,3 +1,4 @@
+import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 import org.jetbrains.kotlin.gradle.plugin.mpp.BitcodeEmbeddingMode
 
@@ -11,6 +12,23 @@ plugins {
     id("maven-publish")
     id("signing")
     id("transportValidationPlugin")
+    id("com.codingfeline.buildkonfig")
+}
+
+version = project.rootProject.version
+group = project.rootProject.group
+
+val iosFrameworkName = "MessengerTransport"
+val iosMinimumOSVersion = "13.0"
+val iosCocoaPodName = "GenesysCloudMessengerTransport"
+
+buildkonfig {
+    // Set the package name where BuildKonfig is being placed. Required.
+    packageName = "com.genesys.cloud.messenger.transport.config"
+    // Set values which you want to have in common. Required.
+    defaultConfigs {
+        buildConfigField(STRING, "sdkVersion", version.toString())
+    }
 }
 
 android {
@@ -43,12 +61,6 @@ android {
     }
     namespace = "com.genesys.cloud.messenger"
 }
-
-val iosFrameworkName = "MessengerTransport"
-val iosMinimumOSVersion = "13.0"
-val iosCocoaPodName = "GenesysCloudMessengerTransport"
-version = project.rootProject.version
-group = project.rootProject.group
 
 kotlin {
     android {
