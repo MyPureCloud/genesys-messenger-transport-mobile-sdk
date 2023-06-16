@@ -53,7 +53,7 @@ class ComposePrototypeUITest : BaseTests() {
     private val outboundMessage = "Right back at you"
     private val autoStartEnabledText = "ConversationAutostart"
     private var humanNameText = "name=Nellie Hay"
-    private val prodHumanNameText = "name=Beagle Puppy"
+    private val prodHumanNameText = "TransportSDK-android"
     private var avatarText = "imageUrl=https://dev-inin-directory-service-profile.s3.amazonaws.com"
     private val prodAvatorText = "imageUrl=https://prod-inin-directory-service-profile.s3.amazonaws.com"
     private val humanText = "originatingEntity=Human"
@@ -69,7 +69,7 @@ class ComposePrototypeUITest : BaseTests() {
     private val authCodeReceivedText = "AuthCodeReceived"
     private val loggedOutText = "LoggedOut"
     private val authorizeText = "authorize"
-    private val authorizedText = "authorized"
+    private val authorizedText = "Authorized"
     private val authenticateConnectText = "connectAuthenticated"
     private val notAuthenticateText = "Unable to sign in"
     private val fakeAuthUserName = "daffy.duck@looneytunes.com"
@@ -481,12 +481,11 @@ class ComposePrototypeUITest : BaseTests() {
         oktaSignInWithPKCE(testConfig.oktaUsername, testConfig.oktaPassword)
         authorize()
         connect(authenticateConnectText)
+        sendMsg(helloText)
         val conversationInfo = apiHelper.answerNewConversation()
         if (conversationInfo == null) AssertionError("Unable to answer conversation.")
         else {
             Log.i(TAG, "Conversation started successfully.")
-            sendMsg(helloText)
-            sleep(3000)
             apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
             verifyResponse(outboundMessage)
             apiHelper.sendConnectOrDisconnect(conversationInfo)
@@ -495,19 +494,17 @@ class ComposePrototypeUITest : BaseTests() {
             oktaSignInWithPKCE(testConfig.oktaUser2name, testConfig.oktaPassword2)
             authorize()
             connect(authenticateConnectText)
+            sendMsg(helloText)
             val conversation2Info = apiHelper.answerNewConversation()
             if (conversation2Info == null) AssertionError("Unable to answer conversation.")
             else {
                 Log.i(TAG, "Conversation started successfully.")
-                sendMsg(helloText)
-                sleep(3000)
                 apiHelper.sendOutboundMessageFromAgentToUser(conversation2Info, outboundMessage)
                 verifyResponse(outboundMessage)
                 apiHelper.sendConnectOrDisconnect(conversation2Info)
             }
         }
         oktaLogout()
-        clearBrowser()
     }
 
     @Test

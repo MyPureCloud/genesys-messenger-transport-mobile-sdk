@@ -93,7 +93,7 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     }
 
     fun waitForAuthMsgReceived(messageToBeReceived: String) {
-        Awaitility.await().atMost(waitTime, SECONDS)
+        await().atMost(waitTime, SECONDS)
             .until {
                 (
                     getAuthStateResponse().contains(
@@ -106,21 +106,24 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
 
     // Wait for configure response
     fun waitForConfigured() {
-        Awaitility.await().atMost(waitTime, SECONDS)
+        var clientResponse: String = ""
+        await().atMost(waitTime, SECONDS)
             .until {
-                (getClientResponse().contains("Configured", ignoreCase = true) || (getClientResponse().contains("ReadOnly", ignoreCase = true)))
+                clientResponse = getClientResponse()
+                (clientResponse.contains("Configured", ignoreCase = true) || (clientResponse.contains("ReadOnly", ignoreCase = true)))
             }
-        if (getClientResponse().contains("ReadOnly", ignoreCase = true)) {
+        if (clientResponse.contains("ReadOnly", ignoreCase = true)) {
             enterCommand(newChatText)
-            Awaitility.await().atMost(waitTime, SECONDS)
+            await().atMost(waitTime, SECONDS)
                 .until {
-                    getClientResponse().contains("Configured", ignoreCase = true)
+                    clientResponse = getClientResponse()
+                    clientResponse.contains("Configured", ignoreCase = true)
                 }
         }
     }
 
     fun waitForReadOnly() {
-        Awaitility.await().atMost(waitTime, SECONDS)
+        await().atMost(waitTime, SECONDS)
             .until {
                 getClientResponse().contains("ReadOnly", ignoreCase = true)
             }
@@ -128,7 +131,7 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
 
     // Wait for client to be closed
     fun waitForClosed() {
-        Awaitility.await().atMost(waitTime, SECONDS)
+        await().atMost(waitTime, SECONDS)
             .until {
                 getClientResponse().contains("Closed", ignoreCase = true)
             }
@@ -195,8 +198,10 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     }
 
     fun loginWithOkta(email: String, password: String) {
-        if (hasTextView(welcomeText)) {
+        waitForElementWithUIAutomator(acceptText, shortWaitTime)
+        if (hasTextView(acceptText)) {
             tapTextWithUIAutomator(acceptText)
+            waitForElementWithUIAutomator(noThanksText, shortWaitTime)
             tapTextWithUIAutomator(noThanksText)
         }
         waitForElementWithUIAutomator(signInText)
