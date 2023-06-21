@@ -7,6 +7,8 @@ import io.mockk.verify
 import org.junit.Before
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class StateMachineTest {
     private val subject = StateMachineImpl()
@@ -22,6 +24,7 @@ class StateMachineTest {
     @Test
     fun whenSubjectWasInitialized() {
         assertThat(subject.currentState).isIdle()
+        assertTrue { subject.isInactive() }
     }
 
     @Test
@@ -31,6 +34,7 @@ class StateMachineTest {
         subject.onConnectionOpened()
 
         assertThat(subject.currentState).isConnected()
+        assertFalse { subject.isInactive() }
         verify { mockStateListener(State.Connected) }
         verify { mockStateChangedListener(expectedStateChange) }
     }
@@ -43,6 +47,7 @@ class StateMachineTest {
         subject.onConnectionOpened()
 
         assertThat(subject.currentState).isReconnecting()
+        assertFalse { subject.isInactive() }
         verify { mockStateListener(State.Reconnecting) }
         verify { mockStateChangedListener(expectedStateChange) }
     }
@@ -54,6 +59,7 @@ class StateMachineTest {
         subject.onConnect()
 
         assertThat(subject.currentState).isConnecting()
+        assertFalse { subject.isInactive() }
         verify { mockStateListener(State.Connecting) }
         verify { mockStateChangedListener(expectedStateChange) }
     }
@@ -66,6 +72,7 @@ class StateMachineTest {
         subject.onConnect()
 
         assertThat(subject.currentState).isReconnecting()
+        assertFalse { subject.isInactive() }
         verify { mockStateListener(State.Reconnecting) }
         verify { mockStateChangedListener(expectedStateChange) }
     }
@@ -98,6 +105,7 @@ class StateMachineTest {
         subject.onReconnect()
 
         assertThat(subject.currentState).isReconnecting()
+        assertFalse { subject.isInactive() }
         verify { mockStateListener(State.Reconnecting) }
         verify { mockStateChangedListener(expectedStateChange) }
     }
@@ -113,6 +121,7 @@ class StateMachineTest {
             connected = true,
             newSession = true,
         )
+        assertFalse { subject.isInactive() }
         verify {
             mockStateListener(State.Configured(connected = true, newSession = true))
         }
@@ -131,6 +140,7 @@ class StateMachineTest {
             connected = true,
             newSession = true,
         )
+        assertFalse { subject.isInactive() }
         verify {
             mockStateListener(
                 State.Configured(
@@ -151,6 +161,7 @@ class StateMachineTest {
         subject.onClosing(code = 1, reason = "A reason.")
 
         assertThat(subject.currentState).isClosing(code = 1, reason = "A reason.")
+        assertTrue { subject.isInactive() }
         verify { mockStateListener(State.Closing(code = 1, reason = "A reason.")) }
         verify { mockStateChangedListener(expectedStateChange) }
     }
@@ -182,6 +193,7 @@ class StateMachineTest {
         subject.onClosed(code = 1, reason = "A reason.")
 
         assertThat(subject.currentState).isClosed(code = 1, reason = "A reason.")
+        assertTrue { subject.isInactive() }
         verify { mockStateListener(State.Closed(code = 1, reason = "A reason.")) }
         verify { mockStateChangedListener(expectedStateChange) }
     }
@@ -197,6 +209,7 @@ class StateMachineTest {
             code = ErrorCode.WebsocketError,
             message = "A message."
         )
+        assertTrue { subject.isInactive() }
         verify {
             mockStateListener(
                 State.Error(

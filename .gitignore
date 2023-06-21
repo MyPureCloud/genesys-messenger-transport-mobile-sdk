@@ -106,3 +106,4 @@ fastlane/test_output
 iOSInjectionProject/
 secure.properties
 deployment.properties
+okta.properties

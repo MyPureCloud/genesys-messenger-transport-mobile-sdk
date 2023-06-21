@@ -1,10 +1,13 @@
 package com.genesys.cloud.messenger.uitest.page
 
 import android.app.Activity
+import android.view.KeyEvent
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiSelector
 import org.awaitility.Awaitility
+import org.awaitility.Awaitility.await
 import java.lang.Thread.sleep
 import java.util.concurrent.TimeUnit.SECONDS
 
@@ -20,6 +23,14 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     private val disconnectEventText = "Event\$ConversationDisconnect"
     private val newChatText = "newChat"
     private val readOnlyText = "ReadOnly"
+    private val noUAuthText = "NoAuth"
+    private val closeButton = "Close tab"
+    private val welcomeText = "Welcome to Chrome"
+    private val acceptText = "Accept & continue"
+    private val noThanksText = "No thanks"
+    private val signInText = "Sign In"
+    private val signInUserNameId = "okta-signin-username"
+    private val signInPasswordId = "okta-signin-password"
 
     // Wait until android compose prototype begins
     fun verifyPageIsVisible(waitTime: Long = 20) {
@@ -55,6 +66,18 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         return commandBox.getText()
     }
 
+    fun getAuthStateResponse(): String {
+        val mDevice = UiDevice.getInstance(
+            InstrumentationRegistry.getInstrumentation()
+        )
+        val commandBox = mDevice.findObject(
+            UiSelector()
+                .className(commandClass)
+                .index(4)
+        )
+        return commandBox.getText()
+    }
+
     // Wait for client to return proper response
     fun waitForProperResponse(response: String) {
         Awaitility.await().atMost(waitTime, SECONDS)
@@ -63,23 +86,44 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
             }
     }
 
+    fun checkForUnAuthenticatedResponse(rejectionText: String) {
+        waitForElementWithUIAutomator(rejectionText)
+        tapWithUIAutomator(closeButton)
+        waitForAuthMsgReceived(noUAuthText)
+    }
+
+    fun waitForAuthMsgReceived(messageToBeReceived: String) {
+        await().atMost(waitTime, SECONDS)
+            .until {
+                (
+                    getAuthStateResponse().contains(
+                        messageToBeReceived,
+                        ignoreCase = true
+                    )
+                    )
+            }
+    }
+
     // Wait for configure response
     fun waitForConfigured() {
-        Awaitility.await().atMost(waitTime, SECONDS)
+        var clientResponse: String = ""
+        await().atMost(waitTime, SECONDS)
             .until {
-                (getClientResponse().contains("Configured", ignoreCase = true) || (getClientResponse().contains("ReadOnly", ignoreCase = true)))
+                clientResponse = getClientResponse()
+                (clientResponse.contains("Configured", ignoreCase = true) || (clientResponse.contains("ReadOnly", ignoreCase = true)))
             }
-        if (getClientResponse().contains("ReadOnly", ignoreCase = true)) {
+        if (clientResponse.contains("ReadOnly", ignoreCase = true)) {
             enterCommand(newChatText)
-            Awaitility.await().atMost(waitTime, SECONDS)
+            await().atMost(waitTime, SECONDS)
                 .until {
-                    getClientResponse().contains("Configured", ignoreCase = true)
+                    clientResponse = getClientResponse()
+                    clientResponse.contains("Configured", ignoreCase = true)
                 }
         }
     }
 
     fun waitForReadOnly() {
-        Awaitility.await().atMost(waitTime, SECONDS)
+        await().atMost(waitTime, SECONDS)
             .until {
                 getClientResponse().contains("ReadOnly", ignoreCase = true)
             }
@@ -87,7 +131,7 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
 
     // Wait for client to be closed
     fun waitForClosed() {
-        Awaitility.await().atMost(waitTime, SECONDS)
+        await().atMost(waitTime, SECONDS)
             .until {
                 getClientResponse().contains("Closed", ignoreCase = true)
             }
@@ -98,8 +142,12 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         val responseBox = mDevice.findObject(
             UiSelector()
-                .className(responseClass)
-                .index(4)
+                .fromParent(
+                    UiSelector()
+                        .className(responseClass)
+                        .index(5)
+                )
+                .className("android.widget.TextView")
         )
         return responseBox.getText()
     }
@@ -147,5 +195,67 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         if (!(response.contains("Attachment", ignoreCase = true))) AssertionError("Response does not contain: Attachment")
         if (!(response.contains("fileName=", ignoreCase = true))) AssertionError("Response does not contain: filename=")
         if (!(response.contains("Deleted", ignoreCase = true))) AssertionError("Response does not contain: Deleted")
+    }
+
+    fun loginWithOkta(email: String, password: String) {
+        waitForElementWithUIAutomator(acceptText, shortWaitTime)
+        if (hasTextView(acceptText)) {
+            tapTextWithUIAutomator(acceptText)
+            waitForElementWithUIAutomator(noThanksText, shortWaitTime)
+            tapTextWithUIAutomator(noThanksText)
+        }
+        waitForElementWithUIAutomator(signInText)
+        typeWithUIAutomator(signInUserNameId, email)
+        pressTab()
+        typeWithUIAutomator(signInPasswordId, password)
+        pressEnterKey()
+    }
+
+    protected fun typeWithUIAutomator(id: String, text: String) {
+        val uiAutomatorInstance = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        val target = uiAutomatorInstance.findObject(UiSelector().resourceId(id))
+        target.clearTextField()
+        target.click()
+        target.setText(text)
+    }
+
+    protected fun pressTab() {
+        await().atMost(3, SECONDS).ignoreExceptions()
+            .untilAsserted {
+                UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()) != null
+            }
+        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).pressKeyCode(KeyEvent.KEYCODE_TAB)
+    }
+
+    protected fun pressEnterKey() {
+        await().atMost(3, SECONDS).ignoreExceptions()
+            .untilAsserted {
+                UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()) != null
+            }
+        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).pressEnter()
+    }
+
+    fun pressBackKey() {
+        await().atMost(3, SECONDS).ignoreExceptions()
+            .untilAsserted {
+                UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()) != null
+            }
+        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).pressBack()
+    }
+
+    protected fun tapWithUIAutomator(contentDescription: String) {
+        val uiAutomatorInstance = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        val itemToTap = uiAutomatorInstance.findObject(UiSelector().descriptionContains(contentDescription))
+        itemToTap.click()
+    }
+    protected fun hasTextView(text: String): Boolean {
+        val uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        return uiDevice.hasObject(By.textContains(text))
+    }
+    protected fun tapTextWithUIAutomator(text: String) {
+        val uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        val itemToTap = uiDevice.findObject(UiSelector().text(text))
+        itemToTap.waitForExists(waitTime)
+        itemToTap.click()
     }
 }

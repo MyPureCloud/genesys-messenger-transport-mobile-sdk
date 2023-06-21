@@ -2,7 +2,10 @@ package com.genesys.cloud.messenger.transport.core
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import com.genesys.cloud.messenger.transport.auth.AuthHandler
+import com.genesys.cloud.messenger.transport.auth.NO_JWT
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
+import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.HEALTH_CHECK_COOL_DOWN_MILLISECONDS
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
@@ -14,14 +17,8 @@ import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
-import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosed
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
-import com.genesys.cloud.messenger.transport.shyrka.receive.ErrorEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent.Typing
 import com.genesys.cloud.messenger.transport.shyrka.receive.createConversationsVOForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createMessengerVOForTesting
@@ -32,15 +29,19 @@ import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
+import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.utility.AuthTest
+import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import io.mockk.Called
 import io.mockk.MockKVerificationScope
 import io.mockk.clearAllMocks
 import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.every
+import io.mockk.invoke
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.spyk
@@ -101,6 +102,9 @@ class MessagingClientImplTest {
         every { sendMessage(Request.configureRequest()) } answers {
             slot.captured.onMessage(Response.configureSuccess())
         }
+        every { sendMessage(Request.configureAuthenticatedRequest()) } answers {
+            slot.captured.onMessage(Response.configureSuccess())
+        }
     }
 
     private val mockWebMessagingApi: WebMessagingApi = mockk {
@@ -132,6 +136,17 @@ class MessagingClientImplTest {
         showUserTypingEnabled = mockShowUserTypingIndicatorFunction,
         getCurrentTimestamp = mockTimestampFunction,
     )
+    private val mockAuthHandler: AuthHandler = mockk(relaxed = true) {
+        every { jwt } returns AuthTest.JwtToken
+        every { refreshToken(captureLambda<(Result<Any>) -> Unit>()) } answers {
+            lambda<(Result<Any>) -> Unit>().invoke(Result.Success(Empty()))
+        }
+    }
+
+    private val mockVault: DefaultVault = mockk {
+        every { fetch("token") } returns Request.token
+        every { token } returns Request.token
+    }
 
     private val subject = MessagingClientImpl(
         log = log,
@@ -140,6 +155,7 @@ class MessagingClientImplTest {
         api = mockWebMessagingApi,
         token = Request.token,
         jwtHandler = mockk(),
+        vault = mockVault,
         attachmentHandler = mockAttachmentHandler,
         messageStore = mockMessageStore,
         reconnectionHandler = mockReconnectionHandler,
@@ -147,6 +163,7 @@ class MessagingClientImplTest {
         userTypingProvider = userTypingProvider,
         healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),
         deploymentConfig = mockDeploymentConfig,
+        authHandler = mockAuthHandler,
     ).also {
         it.stateChangedListener = mockStateChangedListener
     }
@@ -361,9 +378,7 @@ class MessagingClientImplTest {
             connectSequence()
             mockMessageStore.invalidateConversationCache()
             mockReconnectionHandler.shouldReconnect
-            mockStateChangedListener(fromConfiguredToError(expectedErrorState))
-            mockAttachmentHandler.clearAll()
-            mockReconnectionHandler.clear()
+            errorSequence(fromConfiguredToError(expectedErrorState))
         }
     }
 
@@ -390,7 +405,7 @@ class MessagingClientImplTest {
             mockStateChangedListener(
                 StateChange(
                     oldState = State.Connecting,
-                    newState = expectedErrorState,
+                    newState = expectedErrorState
                 )
             )
             mockAttachmentHandler.clearAll()
@@ -415,9 +430,7 @@ class MessagingClientImplTest {
         )
         verifySequence {
             connectWithFailedConfigureSequence()
-            mockStateChangedListener(fromConnectedToError(expectedErrorState))
-            mockAttachmentHandler.clearAll()
-            mockReconnectionHandler.clear()
+            errorSequence(fromConnectedToError(expectedErrorState))
         }
     }
 
@@ -431,7 +444,38 @@ class MessagingClientImplTest {
 
         verifySequence {
             connectSequence()
-            mockStateChangedListener(fromConfiguredToError(expectedErrorState))
+            errorSequence(fromConfiguredToError(expectedErrorState))
+        }
+    }
+
+    @Test
+    fun whenSocketListenerInvokeOnMessageWithClientResponseErrorWhileReconnecting() {
+        val expectedErrorCode = ErrorCode.ClientResponseError(400)
+        val expectedErrorMessage = "Request failed."
+        val expectedErrorState = State.Error(expectedErrorCode, expectedErrorMessage)
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            if (subject.currentState == State.Reconnecting) {
+                slot.captured.onMessage(Response.webSocketRequestFailed)
+            } else {
+                slot.captured.onMessage(Response.configureSuccess())
+            }
+        }
+        every { mockReconnectionHandler.shouldReconnect } returns true
+        every { mockReconnectionHandler.reconnect(captureLambda()) } answers { lambda<() -> Unit>().invoke() }
+
+        subject.connect()
+        // Initiate reconnection flow.
+        slot.captured.onFailure(Exception(), ErrorCode.WebsocketError)
+
+        assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
+        verifySequence {
+            connectSequence()
+            mockReconnectionHandler.shouldReconnect
+            mockStateChangedListener(fromConfiguredToReconnecting())
+            mockReconnectionHandler.reconnect(any())
+            mockPlatformSocket.openSocket(any())
+            mockPlatformSocket.sendMessage(eq(Request.configureRequest()))
+            errorSequence(fromReconnectingToError(expectedErrorState))
         }
     }
 
@@ -447,7 +491,7 @@ class MessagingClientImplTest {
 
         verifySequence {
             connectWithFailedConfigureSequence()
-            mockStateChangedListener(fromConnectedToError(expectedErrorState))
+            errorSequence(fromConnectedToError(expectedErrorState))
         }
     }
 
@@ -492,7 +536,7 @@ class MessagingClientImplTest {
 
         verifySequence {
             connectSequence()
-            mockStateChangedListener(fromConfiguredToError(expectedErrorState))
+            errorSequence(fromConfiguredToError(expectedErrorState))
         }
     }
 
@@ -629,20 +673,14 @@ class MessagingClientImplTest {
         assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
         verifySequence {
             connectWithFailedConfigureSequence()
-            mockStateChangedListener(fromConnectedToError(expectedErrorState))
+            errorSequence(fromConnectedToError(expectedErrorState))
         }
     }
 
     @Test
     fun whenStructuredMessageWithMultipleEventsReceived() {
-        val firstExpectedEvent = TypingEvent(
-            eventType = StructuredMessageEvent.Type.Typing,
-            typing = Typing(type = "Off", duration = 1000),
-        )
-        val secondsExpectedEvent = TypingEvent(
-            eventType = StructuredMessageEvent.Type.Typing,
-            typing = Typing(type = "On", duration = 5000),
-        )
+        val firstExpectedEvent = Event.AgentTyping(1000)
+        val secondsExpectedEvent = Event.AgentTyping(5000)
 
         subject.connect()
 
@@ -663,7 +701,7 @@ class MessagingClientImplTest {
 
         slot.captured.onMessage(Response.structuredMessageWithEvents(givenUnknownEvent))
 
-        verify(exactly = 0) { mockEventHandler.onEvent(any()) }
+        verify { mockEventHandler.onEvent(null) }
         verify(exactly = 0) { mockMessageStore.update(any()) }
         verify(exactly = 0) { mockAttachmentHandler.onSent(any()) }
     }
@@ -753,9 +791,11 @@ class MessagingClientImplTest {
 
     @Test
     fun whenWebSocketRespondWithUnstructuredTypingIndicatorForbiddenError() {
-        val expectedEvent = ErrorEvent(
-            errorCode = ErrorCode.ClientResponseError(403),
+        val expectedErrorCode = ErrorCode.ClientResponseError(403)
+        val expectedEvent = Event.Error(
+            errorCode = expectedErrorCode,
             message = "Turn on the Feature Toggle or fix the configuration.",
+            correctiveAction = expectedErrorCode.toCorrectiveAction(),
         )
         subject.connect()
 
@@ -834,10 +874,7 @@ class MessagingClientImplTest {
     @Test
     fun whenEventPresenceJoinReceived() {
         val givenPresenceJoinEvent = """{"eventType":"Presence","presence":{"type":"Join"}}"""
-        val expectedEvent = PresenceEvent(
-            eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Join)
-        )
+        val expectedEvent = Event.ConversationAutostart
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceJoinEvent))
@@ -849,7 +886,7 @@ class MessagingClientImplTest {
 
     @Test
     fun whenEventConnectionClosedReceived() {
-        val expectedEvent = ConnectionClosed()
+        val expectedEvent = Event.ConnectionClosed
 
         subject.connect()
         slot.captured.onMessage(Response.connectionClosedEvent)
@@ -877,10 +914,7 @@ class MessagingClientImplTest {
         )
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
-        val expectedEvent = PresenceEvent(
-            eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
-        )
+        val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
@@ -897,10 +931,7 @@ class MessagingClientImplTest {
     fun whenDisconnectEventReceivedAndThereAreNoReadOnlyInMetadataAndConversationDisconnectInDeploymentConfigIsSetToSendAndDisabled() {
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
-        val expectedEvent = PresenceEvent(
-            eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
-        )
+        val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
@@ -929,10 +960,7 @@ class MessagingClientImplTest {
 
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
-        val expectedEvent = PresenceEvent(
-            eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
-        )
+        val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
@@ -958,10 +986,7 @@ class MessagingClientImplTest {
 
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
-        val expectedEvent = PresenceEvent(
-            eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect)
-        )
+        val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
@@ -990,13 +1015,15 @@ class MessagingClientImplTest {
 
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
-        val expectedEvent = PresenceEvent(
-            eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect),
-        )
+        val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
-        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent, metadata = mapOf("readOnly" to "true")))
+        slot.captured.onMessage(
+            Response.structuredMessageWithEvents(
+                events = givenPresenceDisconnectEvent,
+                metadata = mapOf("readOnly" to "true")
+            )
+        )
 
         verify { mockEventHandler.onEvent(eq(expectedEvent)) }
         verify { mockStateChangedListener.invoke(fromConfiguredToReadOnly()) }
@@ -1019,13 +1046,15 @@ class MessagingClientImplTest {
 
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
-        val expectedEvent = PresenceEvent(
-            eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Disconnect),
-        )
+        val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
-        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent, metadata = mapOf("readOnly" to "false")))
+        slot.captured.onMessage(
+            Response.structuredMessageWithEvents(
+                events = givenPresenceDisconnectEvent,
+                metadata = mapOf("readOnly" to "false")
+            )
+        )
 
         verify { mockEventHandler.onEvent(eq(expectedEvent)) }
         verify(exactly = 0) { mockStateChangedListener.invoke(fromConfiguredToReadOnly()) }
@@ -1161,6 +1190,7 @@ class MessagingClientImplTest {
             connectToReadOnlySequence()
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
             mockStateChangedListener(fromReadOnlyToError(errorState = expectedErrorState))
+            mockReconnectionHandler.clear()
         }
     }
 
@@ -1230,10 +1260,201 @@ class MessagingClientImplTest {
         }
     }
 
-    private fun verifyCleanUp() {
-        mockMessageStore.invalidateConversationCache()
-        mockAttachmentHandler.clearAll()
-        mockReconnectionHandler.clear()
+    @Test
+    fun whenAuthorizeIsCalled() {
+        subject.authorize(AuthTest.AuthCode, AuthTest.JwtAuthUrl, AuthTest.CodeVerifier)
+
+        verify {
+            mockAuthHandler.authorize(AuthTest.AuthCode, AuthTest.JwtAuthUrl, AuthTest.CodeVerifier)
+        }
+    }
+
+    @Test
+    fun whenConnectAuthenticated() {
+        subject.connectAuthenticatedSession()
+
+        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
+        verifySequence {
+            connectSequence(shouldConfigureAuth = true)
+        }
+    }
+
+    @Test
+    fun whenConnectAuthenticatedAndAuthHandlerHasNoJwtAndRefreshTokenSuccess() {
+        every { mockAuthHandler.jwt } returns NO_JWT
+        every { mockAuthHandler.refreshToken(captureLambda()) } answers {
+            every { mockAuthHandler.jwt } returns AuthTest.JwtToken
+            lambda<(Result<Empty>) -> Unit>().invoke(Result.Success(Empty()))
+        }
+
+        subject.connectAuthenticatedSession()
+
+        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
+        verifySequence {
+            mockStateChangedListener(fromIdleToConnecting)
+            mockPlatformSocket.openSocket(any())
+            mockStateChangedListener(fromConnectingToConnected)
+            mockAuthHandler.jwt
+            mockAuthHandler.refreshToken(any())
+            mockAuthHandler.jwt
+            mockAuthHandler.jwt
+            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
+            mockReconnectionHandler.clear()
+            mockStateChangedListener(fromConnectedToConfigured)
+        }
+    }
+
+    @Test
+    fun whenConnectAuthenticatedAndAuthHandlerHasNoJwtAndRefreshTokenFails() {
+        val givenResult = Result.Failure(ErrorCode.AuthFailed, ErrorTest.Message)
+        every { mockAuthHandler.refreshToken(captureLambda()) } answers {
+            lambda<(Result<Empty>) -> Unit>().invoke(givenResult)
+        }
+        every { mockAuthHandler.jwt } returns NO_JWT
+
+        val expectedErrorState =
+            State.Error(ErrorCode.AuthFailed, ErrorTest.Message)
+
+        subject.connectAuthenticatedSession()
+
+        assertThat(subject.currentState).isError(
+            expectedErrorState.code,
+            expectedErrorState.message
+        )
+        verifySequence {
+            mockStateChangedListener(fromIdleToConnecting)
+            mockPlatformSocket.openSocket(any())
+            mockStateChangedListener(fromConnectingToConnected)
+            mockAuthHandler.jwt
+            mockAuthHandler.refreshToken(any())
+            errorSequence(fromConnectedToError(expectedErrorState))
+        }
+    }
+
+    @Test
+    fun whenLogoutFromAuthenticatedSessionAndSocketNotConfigured() {
+        assertFailsWith<IllegalStateException> { subject.logoutFromAuthenticatedSession() }
+    }
+
+    @Test
+    fun whenLogoutFromAuthenticatedSession() {
+        subject.connectAuthenticatedSession()
+
+        subject.logoutFromAuthenticatedSession()
+
+        verifySequence {
+            connectSequence(shouldConfigureAuth = true)
+            mockAuthHandler.logout()
+        }
+    }
+
+    @Test
+    fun whenEventLogoutReceived() {
+        val expectedEvent = Event.Logout
+
+        subject.connect()
+        slot.captured.onMessage(Response.logoutEvent)
+
+        verifySequence {
+            connectSequence()
+            mockAuthHandler.clear()
+            mockEventHandler.onEvent(eq(expectedEvent))
+            disconnectSequence()
+        }
+    }
+
+    @Test
+    fun whenConnectAuthenticatedResponseWithUnauthorizedAllTheTime() {
+        every {
+            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
+        } answers {
+            slot.captured.onMessage(Response.unauthorized)
+        }
+        val expectedErrorState =
+            State.Error(ErrorCode.ClientResponseError(401), "User is unauthorized")
+
+        subject.connectAuthenticatedSession()
+
+        assertThat(subject.currentState).isError(
+            expectedErrorState.code,
+            expectedErrorState.message
+        )
+        verifySequence {
+            mockStateChangedListener(fromIdleToConnecting)
+            mockPlatformSocket.openSocket(any())
+            mockStateChangedListener(fromConnectingToConnected)
+            mockAuthHandler.jwt
+            mockAuthHandler.jwt
+            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
+            mockAuthHandler.refreshToken(any())
+            mockAuthHandler.jwt
+            mockAuthHandler.jwt
+            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
+            mockAuthHandler.refreshToken(any())
+            mockAuthHandler.jwt
+            mockAuthHandler.jwt
+            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
+            mockAuthHandler.refreshToken(any())
+            mockAuthHandler.jwt
+            mockAuthHandler.jwt
+            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
+            errorSequence(fromConnectedToError(expectedErrorState))
+        }
+    }
+
+    @Test
+    fun whenConnectAuthenticatedSessionFailsAndSocketListenerRespondWithWebsocketErrorAndThereAreNoReconnectionAttemptsLeft() {
+        val expectedException = Exception(ErrorMessage.FailedToReconnect)
+        val expectedErrorState =
+            State.Error(ErrorCode.WebsocketError, ErrorMessage.FailedToReconnect)
+
+        subject.connectAuthenticatedSession()
+
+        slot.captured.onFailure(expectedException, ErrorCode.WebsocketError)
+
+        assertThat(subject.currentState).isError(
+            expectedErrorState.code,
+            expectedErrorState.message
+        )
+        verifySequence {
+            connectSequence(shouldConfigureAuth = true)
+            mockMessageStore.invalidateConversationCache()
+            mockReconnectionHandler.shouldReconnect
+            errorSequence(fromConfiguredToError(expectedErrorState))
+        }
+    }
+
+    @Test
+    fun whenSocketListenerInvokeOnMessageWithClientResponseErrorWhileReconnectingAuthenticatedSession() {
+        val expectedErrorCode = ErrorCode.ClientResponseError(400)
+        val expectedErrorMessage = "Request failed."
+        val expectedErrorState = State.Error(expectedErrorCode, expectedErrorMessage)
+        every { mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest()) } answers {
+            if (subject.currentState == State.Reconnecting) {
+                slot.captured.onMessage(Response.webSocketRequestFailed)
+            } else {
+                slot.captured.onMessage(Response.configureSuccess())
+            }
+        }
+        every { mockReconnectionHandler.shouldReconnect } returns true
+        every { mockReconnectionHandler.reconnect(captureLambda()) } answers { lambda<() -> Unit>().invoke() }
+
+        subject.connectAuthenticatedSession()
+        // Initiate reconnection flow.
+        slot.captured.onFailure(Exception(), ErrorCode.WebsocketError)
+
+        assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
+        verifySequence {
+            connectSequence(shouldConfigureAuth = true)
+            mockReconnectionHandler.shouldReconnect
+            mockStateChangedListener(fromConfiguredToReconnecting())
+            mockReconnectionHandler.reconnect(any())
+            mockPlatformSocket.openSocket(any())
+            mockAuthHandler.jwt
+            mockAuthHandler.jwt
+            mockPlatformSocket.sendMessage(eq(Request.configureAuthenticatedRequest()))
+            errorSequence(fromReconnectingToError(expectedErrorState))
+        }
     }
 
     private fun configuration(): Configuration = Configuration(
@@ -1241,11 +1462,17 @@ class MessagingClientImplTest {
         domain = "inindca.com",
     )
 
-    private fun MockKVerificationScope.connectSequence() {
+    private fun MockKVerificationScope.connectSequence(shouldConfigureAuth: Boolean = false) {
+        val configureRequest =
+            if (shouldConfigureAuth) Request.configureAuthenticatedRequest() else Request.configureRequest()
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
-        mockPlatformSocket.sendMessage(Request.configureRequest())
+        if (shouldConfigureAuth) {
+            mockAuthHandler.jwt // check if jwt is valid
+            mockAuthHandler.jwt // use jwt for request
+        }
+        mockPlatformSocket.sendMessage(configureRequest)
         mockReconnectionHandler.clear()
         mockStateChangedListener(fromConnectedToConfigured)
     }
@@ -1259,7 +1486,7 @@ class MessagingClientImplTest {
         mockStateChangedListener(fromConnectedToReadOnly)
     }
 
-    private fun MockKVerificationScope.disconnectSequence(
+    private fun disconnectSequence(
         expectedCloseCode: Int = 1000,
         expectedCloseReason: String = "The user has closed the connection.",
     ) {
@@ -1272,17 +1499,25 @@ class MessagingClientImplTest {
             newState = State.Closed(expectedCloseCode, expectedCloseReason)
         )
         mockReconnectionHandler.clear()
-        mockStateChangedListener(fromConfiguredToClosing)
+        this.mockStateChangedListener(fromConfiguredToClosing)
         mockPlatformSocket.closeSocket(expectedCloseCode, expectedCloseReason)
-        mockStateChangedListener(fromClosingToClosed)
+        this.mockStateChangedListener(fromClosingToClosed)
         verifyCleanUp()
     }
 
-    private fun MockKVerificationScope.connectWithFailedConfigureSequence() {
+    private fun MockKVerificationScope.connectWithFailedConfigureSequence(shouldConfigureAuth: Boolean = false) {
+        val configureRequest =
+            if (shouldConfigureAuth) Request.configureAuthenticatedRequest() else Request.configureRequest()
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
-        mockPlatformSocket.sendMessage(Request.configureRequest())
+        mockPlatformSocket.sendMessage(configureRequest)
+    }
+
+    private fun errorSequence(stateChange: StateChange) {
+        this.mockStateChangedListener(stateChange)
+        mockAttachmentHandler.clearAll()
+        mockReconnectionHandler.clear()
     }
 
     private val fromIdleToConnecting =
@@ -1312,6 +1547,9 @@ class MessagingClientImplTest {
             newState = errorState,
         )
 
+    private fun fromErrorToConnecting(errorState: State) =
+        StateChange(oldState = errorState, newState = State.Connecting)
+
     private fun fromReadOnlyToError(errorState: State) =
         StateChange(
             oldState = State.ReadOnly,
@@ -1329,12 +1567,26 @@ class MessagingClientImplTest {
             oldState = State.Connected,
             newState = State.ReadOnly,
         )
+
+    private fun fromReconnectingToError(errorState: State) =
+        StateChange(oldState = State.Reconnecting, newState = errorState)
+
+    private fun fromConfiguredToReconnecting(): StateChange =
+        StateChange(
+            oldState = State.Configured(connected = true, newSession = true),
+            newState = State.Reconnecting
+        )
+
+    private fun verifyCleanUp() {
+        mockMessageStore.invalidateConversationCache()
+        mockAttachmentHandler.clearAll()
+        mockReconnectionHandler.clear()
+    }
 }
 
 private object Response {
     fun configureSuccess(connected: Boolean = true, readOnly: Boolean = false): String =
         """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":$connected,"newSession":true,"readOnly":$readOnly}}"""
-
     const val configureSuccessWithNewSessionFalse =
         """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":false}}"""
     const val webSocketRequestFailed =
@@ -1363,12 +1615,18 @@ private object Response {
         """{"type": "response","class": "string","code": 4013,"body": "Custom Attributes in channel metadata is larger than 2048 bytes"}"""
     const val connectionClosedEvent =
         """{"type":"message","class":"ConnectionClosedEvent","code":200,"body":{}}"""
+    const val logoutEvent =
+        """{"type":"message","class":"LogoutEvent","code":200,"body":{}}"""
+    const val unauthorized =
+        """{"type": "response","class": "string","code": 401,"body": "User is unauthorized"}"""
 
     fun structuredMessageWithEvents(
         events: String = defaultStructuredEvents,
         direction: Message.Direction = Message.Direction.Outbound,
-        metadata: Map<String, String> = mapOf("correlationId" to "0000000-0000-0000-0000-0000000000")
+        metadata: Map<String, String> = mapOf("correlationId" to "0000000-0000-0000-0000-0000000000"),
     ): String {
-        return """{"type": "message","class": "StructuredMessage","code": 200,"body": {"direction": "${direction.name}","id": "0000000-0000-0000-0000-0000000000","channel": {"time": "2022-03-09T13:35:31.104Z","messageId": "0000000-0000-0000-0000-0000000000"},"type": "Event","metadata": ${Json.encodeToString(metadata)},"events": [$events]}}"""
+        return """{"type": "message","class": "StructuredMessage","code": 200,"body": {"direction": "${direction.name}","id": "0000000-0000-0000-0000-0000000000","channel": {"time": "2022-03-09T13:35:31.104Z","messageId": "0000000-0000-0000-0000-0000000000"},"type": "Event","metadata": ${
+        Json.encodeToString(metadata)
+        },"events": [$events]}}"""
     }
 }

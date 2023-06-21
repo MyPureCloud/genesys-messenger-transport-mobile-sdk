@@ -11,6 +11,7 @@ class OpeningPage(activity: Activity) : BasePage(activity) {
 
     val title = "Deployment ID"
     val regionDefault = "inindca.com"
+    val tcaEnvironment = "inintca.com"
     val prodRegion = ""
 
     // Wait until android compose prototype begins
@@ -42,8 +43,13 @@ class OpeningPage(activity: Activity) : BasePage(activity) {
             if (dcaView != null) {
                 dcaView.click()
             }
+        } else if (testConfig.domain == tcaEnvironment) {
+            val tcaView = listOfSrollView.getChild(UiSelector().className("android.view.View").index(1))
+            if (tcaView != null) {
+                tcaView.click()
+            }
         } else {
-            val prodView = listOfSrollView.getChild(UiSelector().className("android.view.View").index(1))
+            val prodView = listOfSrollView.getChild(UiSelector().className("android.view.View").index(2))
             if (prodView != null) {
                 prodView.click()
             }

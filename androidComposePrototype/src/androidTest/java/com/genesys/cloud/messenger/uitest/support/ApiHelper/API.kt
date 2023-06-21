@@ -20,7 +20,7 @@ class API : IdlingResource {
         val url = URL("${testConfig.apiBaseAddress}$httpURL")
         var output: JsonNode? = null
         setIdle(false)
-        println("Sending $httpMethod to $httpURL.")
+        println("Sending $httpMethod to $url.")
 
         with(url.openConnection() as HttpURLConnection) {
             requestMethod = httpMethod

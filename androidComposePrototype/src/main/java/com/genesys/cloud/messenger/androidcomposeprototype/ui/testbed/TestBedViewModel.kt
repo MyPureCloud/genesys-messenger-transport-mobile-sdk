@@ -6,21 +6,25 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.genesys.cloud.messenger.androidcomposeprototype.BuildConfig
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
 import com.genesys.cloud.messenger.transport.core.Configuration
+import com.genesys.cloud.messenger.transport.core.CorrectiveAction
+import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessageEvent.AttachmentUpdated
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.MessengerTransport
 import com.genesys.cloud.messenger.transport.core.events.Event
-import com.genesys.cloud.messenger.transport.util.DefaultTokenStore
+import com.genesys.cloud.messenger.transport.util.DefaultVault
+import io.ktor.http.URLBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 
 private const val ATTACHMENT_FILE_NAME = "test_asset.png"
 
@@ -45,19 +49,41 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         private set
     var deploymentId: String by mutableStateOf("")
         private set
-    var region: String by mutableStateOf("inindca.com")
+    var region: String by mutableStateOf("inintca.com")
         private set
+    var authState: AuthState by mutableStateOf(AuthState.NoAuth)
+        private set
+    var pkceEnabled by mutableStateOf(false)
 
-    val regions = listOf("inindca.com", "mypurecloud.com")
+    var authCode: String = ""
+        set(value) {
+            field = value
+            val authState = if (value.isNotEmpty()) {
+                onSocketMessageReceived("AuthCode: $value")
+                AuthState.AuthCodeReceived(value)
+            } else {
+                AuthState.NoAuth
+            }
+            this.authState = authState
+        }
+
+    val regions = listOf("inindca.com", "inintca.com", "mypurecloud.com")
     private val customAttributes = mutableMapOf<String, String>()
+    private lateinit var onOktaSingIn: (url: String) -> Unit
 
-    suspend fun init(context: Context) {
+    fun init(
+        context: Context,
+        onOktaSignIn: (url: String) -> Unit,
+    ) {
+        println("Messenger Transport sdkVersion: ${MessengerTransport.sdkVersion}")
+        this.onOktaSingIn = onOktaSignIn
         val mmsdkConfiguration = Configuration(
-            deploymentId = deploymentId,
-            domain = region,
+            deploymentId = deploymentId.ifEmpty { BuildConfig.DEPLOYMENT_ID },
+            domain = region.ifEmpty { BuildConfig.DEPLOYMENT_DOMAIN },
             logging = true
         )
-        DefaultTokenStore.context = context
+
+        DefaultVault.context = context
         messengerTransport = MessengerTransport(mmsdkConfiguration)
         client = messengerTransport.createMessagingClient()
         with(client) {
@@ -73,7 +99,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             eventListener = { onEvent(it) }
             clientState = client.currentState
         }
-        withContext(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
             context.assets.open(ATTACHMENT_FILE_NAME).use { inputStream ->
                 inputStream.readBytes().also { attachment = it }
             }
@@ -92,15 +118,14 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         region = newRegion
     }
 
-    fun onCommandSend() = launch(Dispatchers.IO) {
-        withContext(Dispatchers.Main) {
-            commandWaiting = true
-        }
+    fun onCommandSend() {
+        commandWaiting = true
         val components = command.split(" ", limit = 2)
         val command = components.firstOrNull()
         val input = components.getOrNull(1) ?: ""
         when (command) {
             "connect" -> doConnect()
+            "connectAuthenticated" -> doConnectAuthenticated()
             "bye" -> doDisconnect()
             "send" -> doSendMessage(input)
             "history" -> fetchNextPage()
@@ -112,26 +137,44 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "addAttribute" -> doAddCustomAttributes(input)
             "typing" -> doIndicateTyping()
             "newChat" -> doStartNewChat()
+            "oktaSignIn" -> doOktaSignIn(false)
+            "oktaSignInWithPKCE" -> doOktaSignIn(true)
+            "oktaLogout" -> logoutFromOktaSession()
+            "authorize" -> doAuthorize()
             else -> {
                 Log.e(TAG, "Invalid command")
-                withContext(Dispatchers.Main) {
-                    commandWaiting = false
-                }
+                commandWaiting = false
             }
         }
     }
 
-    private suspend fun doDeployment() {
+    private fun doOktaSignIn(withPKCE: Boolean) {
+        pkceEnabled = withPKCE
+        onOktaSingIn(buildOktaAuthorizeUrl())
+        commandWaiting = false
+    }
+
+    private fun doDeployment() {
         try {
-            onSocketMessageReceived(
-                messengerTransport.fetchDeploymentConfig().toString()
-            )
+            viewModelScope.launch {
+                onSocketMessageReceived(
+                    messengerTransport.fetchDeploymentConfig().toString()
+                )
+            }
         } catch (t: Throwable) {
             handleException(t, "fetch deployment config")
         }
     }
 
-    private suspend fun doConnect() {
+    private fun logoutFromOktaSession() {
+        try {
+            client.logoutFromAuthenticatedSession()
+        } catch (t: Throwable) {
+            handleException(t, "logout from Okta session")
+        }
+    }
+
+    private fun doConnect() {
         try {
             client.connect()
         } catch (t: Throwable) {
@@ -139,7 +182,15 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun doStartNewChat() {
+    private fun doConnectAuthenticated() {
+        try {
+            client.connectAuthenticatedSession()
+        } catch (t: Throwable) {
+            handleException(t, "connectAuthenticated")
+        }
+    }
+
+    private fun doStartNewChat() {
         try {
             client.startNewChat()
         } catch (t: Throwable) {
@@ -147,7 +198,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun doDisconnect() {
+    private fun doDisconnect() {
         try {
             client.disconnect()
         } catch (t: Throwable) {
@@ -155,7 +206,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun doSendMessage(message: String) {
+    private fun doSendMessage(message: String) {
         try {
             client.sendMessage(message, customAttributes = customAttributes)
             customAttributes.clear()
@@ -164,16 +215,18 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun fetchNextPage() {
+    private fun fetchNextPage() {
         try {
-            client.fetchNextPage()
-            commandWaiting = false
+            viewModelScope.launch {
+                client.fetchNextPage()
+                commandWaiting = false
+            }
         } catch (t: Throwable) {
             handleException(t, "request history")
         }
     }
 
-    private suspend fun doSendHealthCheck() {
+    private fun doSendHealthCheck() {
         try {
             client.sendHealthCheck()
             commandWaiting = false
@@ -182,7 +235,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun doAttach() {
+    private fun doAttach() {
         try {
             client.attach(
                 attachment,
@@ -195,7 +248,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun doDetach(attachmentId: String) {
+    private fun doDetach(attachmentId: String) {
         try {
             client.detach(attachmentId)
         } catch (t: Throwable) {
@@ -203,12 +256,12 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun doClearConversation() {
+    private fun doClearConversation() {
         client.invalidateConversationCache()
         clearCommand()
     }
 
-    private suspend fun doAddCustomAttributes(customAttributes: String) {
+    private fun doAddCustomAttributes(customAttributes: String) {
         clearCommand()
         val keyValue = customAttributes.toKeyValuePair()
         val consoleMessage = if (keyValue.first.isNotEmpty()) {
@@ -220,7 +273,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         onSocketMessageReceived(consoleMessage)
     }
 
-    private suspend fun doIndicateTyping() {
+    private fun doIndicateTyping() {
         try {
             client.indicateTyping()
             commandWaiting = false
@@ -229,7 +282,19 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private suspend fun onClientStateChanged(oldState: State, newState: State) {
+    private fun doAuthorize() {
+        if (authCode.isEmpty()) {
+            onSocketMessageReceived("Please, first obtain authCode from login.")
+            return
+        }
+        client.authorize(
+            authCode = authCode,
+            redirectUri = BuildConfig.SIGN_IN_REDIRECT_URI,
+            codeVerifier = if (pkceEnabled) BuildConfig.CODE_VERIFIER else null
+        )
+    }
+
+    private fun onClientStateChanged(oldState: State, newState: State) {
         Log.v(TAG, "onClientStateChanged(oldState = $oldState, newState = $newState)")
         clientState = newState
         val statePayloadMessage = when (newState) {
@@ -243,33 +308,25 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             else -> ""
         }
         onSocketMessageReceived(statePayloadMessage)
-        withContext(Dispatchers.Main) {
-            commandWaiting = false
-        }
+        commandWaiting = false
     }
 
-    private suspend fun onSocketMessageReceived(message: String) {
+    private fun onSocketMessageReceived(message: String) {
         Log.v(TAG, "onSocketMessageReceived(message = $message)")
         clearCommand()
-        withContext(Dispatchers.Main) {
-            socketMessage = message
-        }
+        socketMessage = message
     }
 
-    private suspend fun clearCommand() {
-        withContext(Dispatchers.Main) {
-            command = ""
-            commandWaiting = false
-        }
+    private fun clearCommand() {
+        command = ""
+        commandWaiting = false
     }
 
-    private suspend fun handleException(t: Throwable, action: String) {
+    private fun handleException(t: Throwable, action: String) {
         val failMessage = "Failed to $action"
         Log.e(TAG, failMessage, t)
         onSocketMessageReceived(t.message ?: failMessage)
-        withContext(Dispatchers.Main) {
-            commandWaiting = false
-        }
+        commandWaiting = false
     }
 
     private fun onMessage(event: MessageEvent) {
@@ -288,13 +345,47 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             }
             else -> event.toString()
         }
-        launch {
-            onSocketMessageReceived(eventMessage)
-        }
+        onSocketMessageReceived(eventMessage)
     }
 
     private fun onEvent(event: Event) {
-        launch { onSocketMessageReceived(event.toString()) }
+        when (event) {
+            is Event.Logout -> authState = AuthState.LoggedOut
+            is Event.Authorized -> authState = AuthState.Authorized
+            is Event.Error -> handleEventError(event)
+            else -> println("On event: $event")
+        }
+        onSocketMessageReceived(event.toString())
+    }
+
+    private fun handleEventError(event: Event.Error) {
+        when (event.errorCode) {
+            is ErrorCode.AuthFailed,
+            is ErrorCode.AuthLogoutFailed,
+            is ErrorCode.RefreshAuthTokenFailure,
+            -> {
+                authState = AuthState.Error(event.errorCode, event.message, event.correctiveAction)
+            }
+            else -> {
+                println("Handle Event.Error here.")
+            }
+        }
+    }
+
+    private fun buildOktaAuthorizeUrl(): String {
+        val builder =
+            URLBuilder("https://${BuildConfig.OKTA_DOMAIN}/oauth2/default/v1/authorize").apply {
+                parameters.append("client_id", BuildConfig.CLIENT_ID)
+                parameters.append("response_type", "code")
+                parameters.append("scope", "openid profile offline_access")
+                parameters.append("redirect_uri", BuildConfig.SIGN_IN_REDIRECT_URI)
+                parameters.append("state", BuildConfig.OKTA_STATE)
+                if (pkceEnabled) {
+                    parameters.append("code_challenge_method", BuildConfig.CODE_CHALLENGE_METHOD)
+                    parameters.append("code_challenge", BuildConfig.CODE_CHALLENGE)
+                }
+            }
+        return builder.build().toString()
     }
 }
 
@@ -304,4 +395,16 @@ private fun String.toKeyValuePair(): Pair<String, String> {
         val value = getOrNull(1) ?: ""
         Pair(key, value)
     }
+}
+
+sealed class AuthState {
+    object NoAuth : AuthState()
+    data class AuthCodeReceived(val authCode: String) : AuthState()
+    object Authorized : AuthState()
+    object LoggedOut : AuthState()
+    data class Error(
+        val errorCode: ErrorCode,
+        val message: String? = null,
+        val correctiveAction: CorrectiveAction,
+    ) : AuthState()
 }

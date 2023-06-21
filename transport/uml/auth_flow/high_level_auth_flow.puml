@@ -1,0 +1,49 @@
+@startuml
+skinparam {
+        ArrowColor darkBlue
+        backgroundColor #EEEBDC
+        NoteBackgroundColor #lightyellow
+        NoteBorderColor gray
+        sequenceGroupHeaderFontColor midnightblue
+        padding 6
+}
+
+participant App #lightGreen
+participant "Auth Server" #lightGreen
+participant "Transport SDK" #lightGreen
+participant "Genesys Cloud Platform API" #lightGreen
+participant "Shyrka API" #lightGreen
+participant Agent #lightGreen
+
+group Authorization code flow
+    App -> "Auth Server" : 1. Authentication request with clientId, scopes, redirectUri etc.
+    "Auth Server" --> App : 2. 302 Redirect to authentication prompt / login page.
+    App -> "Auth Server" : 3. Login and consent.
+    "Auth Server" --> App : 4. Redirect back to App with authCode response.
+    App -> "Transport SDK" : 5. authorize(authCode, redirectUri, codeVerifier)
+    "Transport SDK" -> "Genesys Cloud Platform API" : 6. authCode to jwt exchange.
+    "Genesys Cloud Platform API" -> "Auth Server" : 7. Exchange authorization code for tokens using pre-stored clientSecret.
+    "Auth Server" --> "Genesys Cloud Platform API" : 8. Return tokens.
+    "Genesys Cloud Platform API" --> "Transport SDK" : 9. Returns Genesys Cloud authentication JWT and RefreshToken
+end
+
+group Transport SDK Auth Flow
+    "Transport SDK" -> "Transport SDK" : 10. Store JWT/RefreshToken
+    "Transport SDK" -> App : 11. Event.Authorized
+    App -> "Transport SDK" : 12. connectAuthenticatedSession()
+    "Transport SDK" -> "Shyrka API" : 13. Open websocket.
+    "Shyrka API" --> "Transport SDK" : 14. Socket opened.
+    "Transport SDK" -> "Shyrka API" : 15. Send ConfigureAuthenticatedSession request.
+    "Shyrka API" -> "Shyrka API" : 16. Check JWT validity.
+    "Shyrka API" -> "Auth Server" : 17. Check session is still valid at the authentication server.
+    "Auth Server" --> "Shyrka API" : 18. Valid session passed.
+    "Shyrka API" --> "Transport SDK" : 19. Send successful SessionResponse.
+    "Transport SDK" -> App : 20. Notify with MessagingClient.State = State.Configured
+    App -> "Transport SDK" : 21. Send message.
+    "Transport SDK" -> "Shyrka API" : 22. Send message.
+    "Shyrka API" -> "Shyrka API" : 23. Enrich with identity information.
+    "Shyrka API" -> Agent : 24. Send message with ID.
+end
+
+
+@enduml

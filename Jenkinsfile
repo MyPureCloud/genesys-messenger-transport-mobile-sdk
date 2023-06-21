@@ -23,6 +23,14 @@ pipeline{
     environment {
         DEPLOYMENT_ID = credentials("messenger-mobile-sdk-deployment-id")
         DEPLOYMENT_DOMAIN = 'inindca.com'
+        OKTA_DOMAIN = 'dev-2518047.okta.com'
+        CLIENT_ID = credentials("messenger-mobile-sdk-okta-client-id")
+        SIGN_IN_REDIRECT_URI = 'com.okta.dev-2518047://oauth2/code'
+        SIGN_OUT_REDIRECT_URI = 'com.okta.dev-2518047:/'
+        OKTA_STATE = credentials("messenger-mobile-sdk-okta-state")
+        CODE_CHALLENGE = 'Cc6VZuBMOjDa9wKlFZLK-9lLPr_Q5e7mJsnVooFnBWA'
+        CODE_CHALLENGE_METHOD = 'S256'
+        CODE_VERIFIER = 'BtNSLgCNFlZPEOodtxgIp7c-SlnC0RaLilxRaYuZ7DI'
         HOME = """${sh(
             returnStdout: true,
             script: 'if [ -z "$HOME" ]; then echo "/Users/$(whoami)"; else echo "$HOME"; fi'
@@ -84,6 +92,19 @@ pipeline{
                       echo "creating deployment.properties file based on environment variables"
                       echo "deploymentId=${DEPLOYMENT_ID}" >> deployment.properties
                       echo "deploymentDomain=${DEPLOYMENT_DOMAIN}" >> deployment.properties
+                    fi
+                    if [ -e okta.properties ]; then
+                      echo "okta.properties file already exists"
+                    else
+                      echo "creating okta.properties file based on environment variables"
+                      echo "oktaDomain=${OKTA_DOMAIN}" >> okta.properties
+                      echo "clientId=${CLIENT_ID}" >> okta.properties
+                      echo "signInRedirectUri=${SIGN_IN_REDIRECT_URI}" >> okta.properties
+                      echo "signOutRedirectUri=${SIGN_OUT_REDIRECT_URI}" >> okta.properties
+                      echo "oktaState=${OKTA_STATE}" >> okta.properties
+                      echo "codeChallenge=${CODE_CHALLENGE}" >> okta.properties
+                      echo "codeChallengeMethod=${CODE_CHALLENGE_METHOD}" >> okta.properties
+                      echo "codeVerifier=${CODE_VERIFIER}" >> okta.properties
                     fi
                     ./gradlew -p "transport" :transport:syncFramework \
                       -Pkotlin.native.cocoapods.platform=iphoneos\

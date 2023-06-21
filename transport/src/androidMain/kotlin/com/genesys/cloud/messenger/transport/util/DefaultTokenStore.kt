@@ -2,9 +2,12 @@ package com.genesys.cloud.messenger.transport.util
 
 import android.content.Context
 import android.content.SharedPreferences
+import java.lang.ref.WeakReference
 
+@Deprecated("Use [Vault] instead.")
 actual class DefaultTokenStore actual constructor(storeKey: String) : TokenStore() {
     private val sharedPreferences: SharedPreferences
+
     init {
         if (context == null) {
             throw IllegalStateException("Must set DefaultTokenStore.context before instantiating")
@@ -24,9 +27,12 @@ actual class DefaultTokenStore actual constructor(storeKey: String) : TokenStore
     }
 
     companion object {
-        var context: Context? = null
+        private var contextRef: WeakReference<Context>? = null
+
+        var context: Context?
+            get() = contextRef?.get()
             set(value) {
-                field = value?.applicationContext
+                contextRef = value?.let { WeakReference(it.applicationContext) }
             }
     }
 }

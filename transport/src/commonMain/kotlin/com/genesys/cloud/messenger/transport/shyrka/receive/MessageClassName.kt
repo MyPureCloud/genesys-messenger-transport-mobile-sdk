@@ -13,4 +13,5 @@ internal enum class MessageClassName(val value: String) {
     SESSION_EXPIRED_EVENT("SessionExpiredEvent"),
     TOO_MANY_REQUESTS_ERROR_MESSAGE("TooManyRequestsErrorMessage"),
     CONNECTION_CLOSED_EVENT("ConnectionClosedEvent"),
+    LOGOUT_EVENT("LogoutEvent"),
 }
