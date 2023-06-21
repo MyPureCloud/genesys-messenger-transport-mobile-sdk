@@ -13,6 +13,7 @@ data class DeploymentConfig(
     val messenger: Messenger,
     val journeyEvents: JourneyEvents,
     val status: Status,
+    val auth: Auth,
 ) {
     @Serializable
     enum class Status {
@@ -74,3 +75,6 @@ data class Mode(
 
 @Serializable
 data class JourneyEvents(val enabled: Boolean)
+
+@Serializable
+data class Auth(val enabled: Boolean)

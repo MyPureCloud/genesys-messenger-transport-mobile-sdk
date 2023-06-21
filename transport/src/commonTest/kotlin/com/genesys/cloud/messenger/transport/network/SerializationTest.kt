@@ -10,6 +10,7 @@ import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosedEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.LogoutEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageType
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionExpiredEvent
@@ -21,6 +22,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.CloseSessionRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureAuthenticatedSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.EchoRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
@@ -396,5 +398,67 @@ class SerializationTest {
 
         assertThat(encodedString, "encoded CloseSessionRequest")
             .isEqualTo("""{"token":"<token>","closeAllConnections":true,"action":"closeSession"}""")
+    }
+
+    @Test
+    fun whenConfigureAuthenticatedSessionRequestThenEncodes() {
+        val journeyContext = JourneyContext(
+            JourneyCustomer("00000000-0000-0000-0000-000000000000", "cookie"),
+            JourneyCustomerSession("", "web"),
+        )
+        val data = ConfigureAuthenticatedSessionRequest.Data("<auth_token>")
+        val encodedString = WebMessagingJson.json.encodeToString(
+            ConfigureAuthenticatedSessionRequest(
+                token = "<token>",
+                deploymentId = "<deploymentId>",
+                startNew = false,
+                journeyContext = journeyContext,
+                data = data,
+            )
+        )
+
+        assertThat(encodedString, "encoded ConfigureAuthenticatedSessionRequest")
+            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","startNew":false,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"data":{"code":"<auth_token>"},"action":"configureAuthenticatedSession"}""")
+    }
+
+    @Test
+    fun whenLogoutEventThenDecodes() {
+        val json = """{"type":"message","class":"LogoutEvent","code":200,"body":{}}"""
+
+        val message = decode(json)
+
+        assertThat(message.body, "WebMessagingMessage body").isNotNull()
+            .hasClass(LogoutEvent::class)
+    }
+
+    @Test
+    fun whenStructuredMessageWithAttachmentAndUnknownContent() {
+        val givenStructuredMessage = """{"type":"message","class":"StructuredMessage","code":200,"body":{"direction":"Outbound","id":"msg_id","type":"Text","text":"Hi","content":[{"fakeContent":{"foo":"bar"},"contentType":"FakeContent"},{"attachment":{"id":"attachment_id","filename":"image.png","mediaType":"Image","url":"https://downloadurl.com"},"contentType":"Attachment"}],"originatingEntity":"Human"}}"""
+        val expectedStructuredMessage = WebMessagingMessage(
+            type = "message",
+            code = 200,
+            body = StructuredMessage(
+                id = "msg_id",
+                type = StructuredMessage.Type.Text,
+                text = "Hi",
+                direction = "Outbound",
+                content = listOf(
+                    StructuredMessage.Content.UnknownContent,
+                    StructuredMessage.Content.AttachmentContent(
+                        contentType = "Attachment",
+                        attachment = StructuredMessage.Content.AttachmentContent.Attachment(
+                            id = "attachment_id",
+                            url = "https://downloadurl.com",
+                            filename = "image.png",
+                            mediaType = "Image",
+                        )
+                    )
+                ),
+                originatingEntity = "Human"
+            )
+        )
+        val result = WebMessagingJson.decodeFromString(givenStructuredMessage)
+
+        assertThat(result).isEqualTo(expectedStructuredMessage)
     }
 }

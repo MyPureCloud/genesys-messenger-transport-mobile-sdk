@@ -15,6 +15,7 @@ final class MessengerInteractor {
     let configuration: Configuration
     let messengerTransport: MessengerTransport
     let messagingClient: MessagingClient
+    let tokenVault: DefaultVault
     
     let stateChangeSubject = PassthroughSubject<StateChange, Never>()
     let messageEventSubject = PassthroughSubject<MessageEvent, Never>()
@@ -26,8 +27,10 @@ final class MessengerInteractor {
         self.configuration = Configuration(deploymentId: deployment.deploymentId,
                                            domain: deployment.domain,
                                            logging: true,
-                                           reconnectionTimeoutInSeconds: reconnectTimeout)
-        self.messengerTransport = MessengerTransport(configuration: self.configuration)
+                                           reconnectionTimeoutInSeconds: reconnectTimeout,
+                                           autoRefreshTokenWhenExpired: true)
+        self.tokenVault = DefaultVault(keys: Vault.Keys(vaultKey: "com.genesys.cloud.messenger", tokenKey: "token", authRefreshTokenKey: "auth_refresh_token"))
+        self.messengerTransport = MessengerTransport(configuration: self.configuration, vault: self.tokenVault)
         self.messagingClient = self.messengerTransport.createMessagingClient()
         
         messagingClient.stateChangedListener = { [weak self] stateChange in
@@ -43,12 +46,25 @@ final class MessengerInteractor {
             self?.eventSubject.send(event)
         }
     }
+    
+    func authorize(authCode: String, redirectUri: String, codeVerifier: String?) {
+        messagingClient.authorize(authCode: authCode, redirectUri: redirectUri, codeVerifier: codeVerifier)
+    }
 
     func connect() throws {
         do {
             try messagingClient.connect()
         } catch {
             print("connect() failed. \(error.localizedDescription)")
+            throw error
+        }
+    }
+    
+    func connectAuthenticated() throws {
+        do {
+            try messagingClient.connectAuthenticatedSession()
+        } catch {
+            print("connectAuthenticated() failed. \(error.localizedDescription)")
             throw error
         }
     }
@@ -67,6 +83,15 @@ final class MessengerInteractor {
             try messagingClient.disconnect()
         } catch {
             print("disconnect() failed. \(error.localizedDescription)")
+            throw error
+        }
+    }
+    
+    func oktaLogout() throws {
+        do {
+            try messagingClient.logoutFromAuthenticatedSession()
+        } catch {
+            print("logoutFromAuthenticatedSession() failed. \(error.localizedDescription)")
             throw error
         }
     }

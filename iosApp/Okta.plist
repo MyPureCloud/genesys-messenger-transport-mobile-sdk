@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>oktaDomain</key>
+	<string>dev-2518047.okta.com</string>
+	<key>clientId</key>
+	<string>0oa7nb5ac1PfdBqZa5d7</string>
+	<key>scopes</key>
+	<string>openid profile offline_access</string>
+	<key>signInRedirectURI</key>
+	<string>com.okta.dev-2518047://oauth2/code</string>
+	<key>logoutRedirectUri</key>
+	<string>com.okta.dev-2518047:/</string>
+	<key>oktaState</key>
+	<string>state-296bc9a0-a2a2-4a57-be1a-d0e2fd9bb601</string>
+	<key>codeChallenge</key>
+	<string>Cc6VZuBMOjDa9wKlFZLK-9lLPr_Q5e7mJsnVooFnBWA</string>
+	<key>codeVerifier</key>
+	<string>BtNSLgCNFlZPEOodtxgIp7c-SlnC0RaLilxRaYuZ7DI</string>
+	<key>codeChallengeMethod</key>
+	<string>S256</string>
+</dict>
+</plist>

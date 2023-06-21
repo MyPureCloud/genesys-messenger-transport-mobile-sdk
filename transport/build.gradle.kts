@@ -210,6 +210,10 @@ tasks {
             println("CocoaPods podspec for Pod $iosCocoaPodName written to: ${this.project.projectDir}/$podspecFileName")
         }
     }
+
+    "lintKotlinCommonMain"(org.jmailen.gradle.kotlinter.tasks.LintTask::class) {
+        exclude("**/BuildKonfig.kt")
+    }
 }
 
 publishing {

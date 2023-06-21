@@ -1,5 +1,6 @@
 package com.genesys.cloud.messenger.transport.network
 
+import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import io.ktor.client.HttpClient
@@ -9,7 +10,6 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.serialization.json.Json
 
 private const val TIMEOUT_IN_MS = 30000L
 
@@ -21,12 +21,7 @@ internal fun defaultHttpClient(logging: Boolean = false): HttpClient = HttpClien
         }
     }
     install(ContentNegotiation) {
-        json(
-            Json {
-                ignoreUnknownKeys = true
-                useAlternativeNames = false
-            }
-        )
+        json(WebMessagingJson.json)
     }
     install(HttpCallValidator)
     install(HttpTimeout) {

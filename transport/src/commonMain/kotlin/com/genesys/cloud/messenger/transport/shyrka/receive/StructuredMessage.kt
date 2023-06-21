@@ -2,8 +2,13 @@ package com.genesys.cloud.messenger.transport.shyrka.receive
 
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
+import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonContentPolymorphicSerializer
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 @Serializable
 internal data class MessageEntityList(
@@ -44,29 +49,50 @@ internal data class StructuredMessage(
     )
 
     @Serializable
-    data class Attachment(
-        val id: String,
-        val url: String,
-        val filename: String,
-        val fileSize: Int? = null,
-        val mediaType: String,
-        val mime: String? = null,
-        val sha256: String? = null,
-        val text: String? = null,
-    )
-
-    @Serializable
-    data class Content(
-        val contentType: String,
-        val attachment: Attachment,
-    )
-
-    @Serializable
     enum class Type {
         @SerialName("Text")
         Text,
         @SerialName("Event")
         Event,
+    }
+
+    @Serializable(with = ContentSerializer::class)
+    internal sealed class Content {
+        @Serializable
+        enum class Type {
+            Attachment,
+        }
+
+        @Serializable
+        data class AttachmentContent(
+            val contentType: String,
+            val attachment: Attachment,
+        ) : Content() {
+            @Serializable
+            data class Attachment(
+                val id: String,
+                val url: String,
+                val filename: String,
+                val fileSize: Int? = null,
+                val mediaType: String,
+                val mime: String? = null,
+                val sha256: String? = null,
+                val text: String? = null,
+            )
+        }
+
+        @Serializable
+        internal object UnknownContent : Content()
+    }
+
+    internal object ContentSerializer :
+        JsonContentPolymorphicSerializer<Content>(Content::class) {
+        override fun selectDeserializer(element: JsonElement): DeserializationStrategy<out Content> {
+            return when (element.jsonObject["contentType"]?.jsonPrimitive?.content) {
+                Content.Type.Attachment.name -> Content.AttachmentContent.serializer()
+                else -> Content.UnknownContent.serializer()
+            }
+        }
     }
 }
 

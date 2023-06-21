@@ -1,7 +1,10 @@
 package com.genesys.cloud.messenger.androidcomposeprototype
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -46,6 +49,32 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         if (supportFragmentManager.fragments.isNotEmpty()) {
             setPrototypeLauncherView()
             supportFragmentManager.popBackStackImmediate()
+        }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        intent?.data.doIfRedirectedFromOkta { uri ->
+            handleOktaRedirect(uri)
+        }
+    }
+
+    private inline fun Uri?.doIfRedirectedFromOkta(block: (uri: Uri) -> Unit) {
+        // Check with scheme from AndroidManifest.MainActivity
+        if (this?.scheme == "com.okta.dev-2518047") {
+            block(this)
+        }
+    }
+
+    private fun handleOktaRedirect(data: Uri) {
+        // If authcode is present.
+        data.getQueryParameter("code")?.let { authCode ->
+            viewModel.authCode = authCode
+        }
+        // Otherwise there will be an error.
+        data.getQueryParameter("error_description")?.let { error ->
+            Log.e(TAG, error)
+            Toast.makeText(applicationContext, error, Toast.LENGTH_LONG).show()
         }
     }
 }

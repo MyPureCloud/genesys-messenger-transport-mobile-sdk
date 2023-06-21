@@ -1,5 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
+import io.ktor.http.HttpStatusCode
+
 /**
  * List of all error codes used to report transport errors.
  */
@@ -23,6 +25,10 @@ sealed class ErrorCode(val code: Int) {
     object WebsocketError : ErrorCode(1001)
     object WebsocketAccessDenied : ErrorCode(1002)
     object NetworkDisabled : ErrorCode(-1009)
+    object CancellationError : ErrorCode(6000)
+    object AuthFailed : ErrorCode(6001)
+    object AuthLogoutFailed : ErrorCode(6002)
+    object RefreshAuthTokenFailure : ErrorCode(6003)
     data class RedirectResponseError(val value: Int) : ErrorCode(value)
     data class ClientResponseError(val value: Int) : ErrorCode(value)
     data class ServerResponseError(val value: Int) : ErrorCode(value)
@@ -47,6 +53,10 @@ sealed class ErrorCode(val code: Int) {
                 4013 -> CustomAttributeSizeTooLarge
                 4020 -> MissingParameter
                 4029 -> RequestRateTooHigh
+                6000 -> CancellationError
+                6001 -> AuthFailed
+                6002 -> AuthLogoutFailed
+                6003 -> RefreshAuthTokenFailure
                 in 300..399 -> RedirectResponseError(value)
                 in 400..499 -> ClientResponseError(value)
                 in 500..599 -> ServerResponseError(value)
@@ -59,8 +69,11 @@ sealed class ErrorCode(val code: Int) {
 
 object ErrorMessage {
     const val FailedToReconnect = "Failed to reconnect."
+    const val FailedToConfigureSession = "Failed to configure session."
     const val InternetConnectionIsOffline =
         "Network is disabled. Please enable wifi or cellular and try again."
+    const val AutoRefreshTokenDisabled = "AutoRefreshTokenWhenExpired is disabled in Configuration."
+    const val NoRefreshToken = "No refreshAuthToken. Authentication is required."
 }
 
 sealed class CorrectiveAction(val message: String) {
@@ -76,6 +89,7 @@ sealed class CorrectiveAction(val message: String) {
 
     object TooManyRequests : CorrectiveAction("Retry later.")
     object Unknown : CorrectiveAction("Action unknown.")
+    object ReAuthenticate : CorrectiveAction("User re-authentication is required.")
 
     override fun toString(): String {
         return message
@@ -88,5 +102,12 @@ internal fun ErrorCode.toCorrectiveAction(): CorrectiveAction = when (this.code)
     404 -> CorrectiveAction.NotFound
     408 -> CorrectiveAction.RequestTimeOut
     429 -> CorrectiveAction.TooManyRequests
+    ErrorCode.AuthFailed.code,
+    ErrorCode.AuthLogoutFailed.code,
+    ErrorCode.RefreshAuthTokenFailure.code,
+    -> CorrectiveAction.ReAuthenticate
     else -> CorrectiveAction.Unknown
 }
+
+internal fun ErrorCode.isUnauthorized(): Boolean =
+    this.code == HttpStatusCode.Unauthorized.value

@@ -14,10 +14,15 @@ data class Config(
     val humanizeDisableDeploymentId: String,
     val botDeploymentId: String,
     val agentDisconnectDeploymentId: String,
+    val authDeploymentId: String,
     val botName: String,
     val password: String,
     val domain: String,
-    val apiBaseAddress: String
+    val apiBaseAddress: String,
+    val oktaUsername: String,
+    val oktaPassword: String,
+    val oktaUser2name: String,
+    val oktaPassword2: String
 )
 
 private fun pullConfig(): Config {

@@ -5,6 +5,7 @@ package com.genesys.cloud.messenger.transport.util
  * implementation for simplicity or create a custom token store by making a concrete implementation
  * of this class and passing it in to the [MessengerTransport] constructor.
  */
+@Deprecated("Use [Vault] instead.")
 abstract class TokenStore {
     internal val token: String
         get() = fetch() ?: TokenGenerator.generate().also {
