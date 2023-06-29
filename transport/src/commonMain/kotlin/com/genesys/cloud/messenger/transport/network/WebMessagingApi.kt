@@ -35,18 +35,28 @@ internal class WebMessagingApi(
 ) {
 
     /**
-     * @throws ResponseException if unsuccessful response from the service
+     * Returns Result.Success<MessageEntityList> upon successful response and parsing.
+     * Otherwise, return Result.Failure with description the failure.
      */
     suspend fun getMessages(
         jwt: String,
         pageNumber: Int,
         pageSize: Int = DEFAULT_PAGE_SIZE,
-    ): MessageEntityList {
-        return client.get("${configuration.apiBaseUrl}/api/v2/webmessaging/messages") {
+    ): Result<MessageEntityList> = try {
+        val response = client.get("${configuration.apiBaseUrl}/api/v2/webmessaging/messages") {
             headerAuthorizationBearer(jwt)
             parameter("pageNumber", pageNumber)
             parameter("pageSize", pageSize)
-        }.body()
+        }
+        if (response.status.isSuccess()) {
+            Result.Success(response.body())
+        } else {
+            Result.Failure(ErrorCode.mapFrom(response.status.value), response.body())
+        }
+    } catch (cancellationException: CancellationException) {
+        Result.Failure(ErrorCode.CancellationError, cancellationException.message)
+    } catch (e: Exception) {
+        Result.Failure(ErrorCode.UnexpectedError, e.message)
     }
 
     @Throws(ResponseException::class, CancellationException::class)

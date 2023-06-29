@@ -114,7 +114,7 @@ class MessagingClientImplTest {
                 any(),
                 any()
             )
-        } returns TestWebMessagingApiResponses.testMessageEntityList
+        } returns Result.Success(TestWebMessagingApiResponses.testMessageEntityList)
     }
 
     private val mockReconnectionHandler: ReconnectionHandlerImpl = mockk(relaxed = true) {

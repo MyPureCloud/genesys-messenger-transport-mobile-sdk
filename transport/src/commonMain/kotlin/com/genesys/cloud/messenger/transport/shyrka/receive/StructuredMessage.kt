@@ -54,6 +54,8 @@ internal data class StructuredMessage(
         Text,
         @SerialName("Event")
         Event,
+        @SerialName("Structured")
+        Structured,
     }
 
     @Serializable(with = ContentSerializer::class)

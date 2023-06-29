@@ -46,7 +46,7 @@ internal class MessageExtensionTest {
             from = Message.Participant(originatingEntity = Message.Participant.OriginatingEntity.Human),
         )
 
-        val result = TestWebMessagingApiResponses.testMessageEntityList.toMessageList()
+        val result = TestWebMessagingApiResponses.testMessageEntityList.entities.toMessageList()
 
         assertThat(result).containsExactly(expectedMessage1, expectedMessage2)
     }

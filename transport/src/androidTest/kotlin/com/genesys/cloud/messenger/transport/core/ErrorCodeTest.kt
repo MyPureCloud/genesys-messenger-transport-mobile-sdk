@@ -32,6 +32,7 @@ internal class ErrorCodeTest {
         assertTrue(ErrorCode.mapFrom(6001) is ErrorCode.AuthFailed)
         assertTrue(ErrorCode.mapFrom(6002) is ErrorCode.AuthLogoutFailed)
         assertTrue(ErrorCode.mapFrom(6003) is ErrorCode.RefreshAuthTokenFailure)
+        assertTrue(ErrorCode.mapFrom(6004) is ErrorCode.HistoryFetchFailure)
         val randomIn300Range = Random.nextInt(300, 400)
         assertEquals(
             ErrorCode.mapFrom(randomIn300Range),

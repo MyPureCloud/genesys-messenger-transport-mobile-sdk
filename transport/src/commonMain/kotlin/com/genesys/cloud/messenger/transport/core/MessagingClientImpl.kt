@@ -226,13 +226,26 @@ internal class MessagingClientImpl(
             return
         }
         log.i { "fetching history for page index = ${messageStore.nextPage}" }
-        jwtHandler.withJwt { jwt -> api.getMessages(jwt, messageStore.nextPage) }
-            .also {
-                messageStore.updateMessageHistory(
-                    it.toMessageList(),
-                    it.total,
-                )
+        jwtHandler.withJwt { jwt ->
+            api.getMessages(jwt, messageStore.nextPage).also {
+                when (it) {
+                    is Result.Success -> {
+                        messageStore.updateMessageHistory(
+                            it.value.entities.toMessageList(),
+                            it.value.total,
+                        )
+                    }
+                    is Result.Failure -> {
+                        if (it.errorCode is ErrorCode.CancellationError) {
+                            log.w { "Cancellation exception was thrown, while running getMessages() request." }
+                            return
+                        }
+                        log.w { "History fetch failed with: $it" }
+                        eventHandler.onEvent(Event.Error(ErrorCode.HistoryFetchFailure, it.message, it.errorCode.toCorrectiveAction()))
+                    }
+                }
             }
+        }
     }
 
     @Throws(IllegalStateException::class)
@@ -393,6 +406,9 @@ internal class MessagingClientImpl(
                         }
                     }
                 }
+            }
+            else -> {
+                log.w { "Messages of type: ${structuredMessage.type} are not supported." }
             }
         }
     }

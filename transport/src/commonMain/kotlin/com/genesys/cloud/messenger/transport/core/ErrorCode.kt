@@ -29,6 +29,7 @@ sealed class ErrorCode(val code: Int) {
     object AuthFailed : ErrorCode(6001)
     object AuthLogoutFailed : ErrorCode(6002)
     object RefreshAuthTokenFailure : ErrorCode(6003)
+    object HistoryFetchFailure : ErrorCode(6004)
     data class RedirectResponseError(val value: Int) : ErrorCode(value)
     data class ClientResponseError(val value: Int) : ErrorCode(value)
     data class ServerResponseError(val value: Int) : ErrorCode(value)
@@ -57,6 +58,7 @@ sealed class ErrorCode(val code: Int) {
                 6001 -> AuthFailed
                 6002 -> AuthLogoutFailed
                 6003 -> RefreshAuthTokenFailure
+                6004 -> HistoryFetchFailure
                 in 300..399 -> RedirectResponseError(value)
                 in 400..499 -> ClientResponseError(value)
                 in 500..599 -> ServerResponseError(value)

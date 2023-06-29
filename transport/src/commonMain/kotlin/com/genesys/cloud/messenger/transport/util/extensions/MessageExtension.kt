@@ -4,13 +4,12 @@ import com.genesys.cloud.messenger.transport.core.Attachment
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.core.events.toTransportEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.MessageEntityList
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.isInbound
 import com.soywiz.klock.DateTime
 
-internal fun MessageEntityList.toMessageList(): List<Message> {
-    return this.entities.map {
+internal fun List<StructuredMessage>.toMessageList(): List<Message> {
+    return this.filter { it.type != StructuredMessage.Type.Structured }.map {
         it.toMessage()
     }
 }
@@ -23,7 +22,8 @@ internal fun StructuredMessage.toMessage(): Message {
         type = type.name,
         text = text,
         timeStamp = channel?.time.fromIsoToEpochMilliseconds(),
-        attachments = content.filterIsInstance<StructuredMessage.Content.AttachmentContent>().toAttachments(),
+        attachments = content.filterIsInstance<StructuredMessage.Content.AttachmentContent>()
+            .toAttachments(),
         events = events.mapNotNull { it.toTransportEvent() },
         from = Message.Participant(
             name = channel?.from?.nickname,

@@ -27,7 +27,7 @@ class WebMessagingApiTest {
     @Test
     fun whenFetchHistory() {
         subject = buildWebMessagingApiWith { historyEngine() }
-        val expectedEntityList = TestWebMessagingApiResponses.testMessageEntityList
+        val expectedEntityList = Result.Success(TestWebMessagingApiResponses.testMessageEntityList)
 
         val result = runBlocking {
             withTimeout(DEFAULT_TIMEOUT) {
@@ -42,7 +42,7 @@ class WebMessagingApiTest {
     fun whenFetchHistoryAndThereAreNoHistory() {
         subject = buildWebMessagingApiWith { historyEngine() }
 
-        val expectedEntityList = TestWebMessagingApiResponses.emptyMessageEntityList
+        val expectedEntityList = Result.Success(TestWebMessagingApiResponses.emptyMessageEntityList)
 
         val result = runBlocking {
             withTimeout(DEFAULT_TIMEOUT) {
