@@ -899,19 +899,7 @@ class MessagingClientImplTest {
     }
 
     @Test
-    fun whenDisconnectEventReceivedAndThereAreNoReadOnlyInMetadataAndConversationDisconnectInDeploymentConfigIsSetToSendAndEnabled() {
-        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
-            messenger = createMessengerVOForTesting(
-                apps = Apps(
-                    conversations = createConversationsVOForTesting(
-                        conversationDisconnect = Conversations.ConversationDisconnect(
-                            enabled = true,
-                            type = Conversations.ConversationDisconnect.Type.Send
-                        ),
-                    )
-                )
-            )
-        )
+    fun whenDisconnectEventReceivedAndThereAreNoReadOnlyInMetadata() {
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
         val expectedEvent = Event.ConversationDisconnect
@@ -928,91 +916,7 @@ class MessagingClientImplTest {
     }
 
     @Test
-    fun whenDisconnectEventReceivedAndThereAreNoReadOnlyInMetadataAndConversationDisconnectInDeploymentConfigIsSetToSendAndDisabled() {
-        val givenPresenceDisconnectEvent =
-            """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
-        val expectedEvent = Event.ConversationDisconnect
-
-        subject.connect()
-        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
-
-        verify(exactly = 0) {
-            mockEventHandler.onEvent(eq(expectedEvent))
-            mockStateChangedListener.invoke(fromConfiguredToReadOnly())
-            mockStateChangedListener.invoke(fromConnectedToReadOnly)
-        }
-    }
-
-    @Test
-    fun whenDisconnectEventReceivedAndThereAreNoReadOnlyInMetadataAndConversationDisconnectInDeploymentConfigIsSetToReadOnlyAndEnabled() {
-        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
-            messenger = createMessengerVOForTesting(
-                apps = Apps(
-                    conversations = createConversationsVOForTesting(
-                        conversationDisconnect = Conversations.ConversationDisconnect(
-                            enabled = true,
-                            type = Conversations.ConversationDisconnect.Type.ReadOnly
-                        ),
-                    )
-                )
-            )
-        )
-
-        val givenPresenceDisconnectEvent =
-            """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
-        val expectedEvent = Event.ConversationDisconnect
-
-        subject.connect()
-        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
-
-        verify { mockEventHandler.onEvent(eq(expectedEvent)) }
-        verify { mockStateChangedListener.invoke(fromConfiguredToReadOnly()) }
-    }
-
-    @Test
-    fun whenDisconnectEventReceivedAndThereAreNoReadOnlyInMetadataAndConversationDisconnectInDeploymentConfigIsSetToReadOnlyAndDisabled() {
-        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
-            messenger = createMessengerVOForTesting(
-                apps = Apps(
-                    conversations = createConversationsVOForTesting(
-                        conversationDisconnect = Conversations.ConversationDisconnect(
-                            enabled = false,
-                            type = Conversations.ConversationDisconnect.Type.ReadOnly
-                        ),
-                    )
-                )
-            )
-        )
-
-        val givenPresenceDisconnectEvent =
-            """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
-        val expectedEvent = Event.ConversationDisconnect
-
-        subject.connect()
-        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
-
-        verify(exactly = 0) {
-            mockEventHandler.onEvent(eq(expectedEvent))
-            mockStateChangedListener.invoke(fromConfiguredToReadOnly())
-            mockStateChangedListener.invoke(fromConnectedToReadOnly)
-        }
-    }
-
-    @Test
     fun whenDisconnectEventReceivedAndReadOnlyFieldInMetadataIsTrue() {
-        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
-            messenger = createMessengerVOForTesting(
-                apps = Apps(
-                    conversations = createConversationsVOForTesting(
-                        conversationDisconnect = Conversations.ConversationDisconnect(
-                            enabled = true,
-                            type = Conversations.ConversationDisconnect.Type.ReadOnly
-                        ),
-                    )
-                )
-            )
-        )
-
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
         val expectedEvent = Event.ConversationDisconnect
@@ -1031,19 +935,6 @@ class MessagingClientImplTest {
 
     @Test
     fun whenDisconnectEventReceivedAndReadOnlyFieldInMetadataIsFalse() {
-        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
-            messenger = createMessengerVOForTesting(
-                apps = Apps(
-                    conversations = createConversationsVOForTesting(
-                        conversationDisconnect = Conversations.ConversationDisconnect(
-                            enabled = true,
-                            type = Conversations.ConversationDisconnect.Type.ReadOnly
-                        ),
-                    )
-                )
-            )
-        )
-
         val givenPresenceDisconnectEvent =
             """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
         val expectedEvent = Event.ConversationDisconnect

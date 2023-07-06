@@ -18,7 +18,6 @@ import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.AttachmentDeletedResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosedEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
@@ -386,15 +385,8 @@ internal class MessagingClientImpl(
                 if (structuredMessage.isOutbound()) {
                     structuredMessage.events.forEach {
                         if (it.isDisconnectionEvent()) {
-                            if (deploymentConfig.isConversationDisconnectEnabled()) {
-                                eventHandler.onEvent(it.toTransportEvent())
-                                // Prefer readOnly value provided by Shyrka and as fallback use DeploymentConfig.
-                                if (structuredMessage.metadata.containsKey("readOnly")) {
-                                    if (structuredMessage.metadata["readOnly"].toBoolean()) stateMachine.onReadOnly()
-                                } else {
-                                    if (deploymentConfig.isReadOnly()) stateMachine.onReadOnly()
-                                }
-                            }
+                            eventHandler.onEvent(it.toTransportEvent())
+                            if (structuredMessage.metadata["readOnly"].toBoolean()) stateMachine.onReadOnly()
                         } else {
                             eventHandler.onEvent(it.toTransportEvent())
                         }
@@ -579,12 +571,6 @@ internal class MessagingClientImpl(
 
 private fun StructuredMessageEvent.isDisconnectionEvent(): Boolean =
     this is PresenceEvent && presence.type == PresenceEvent.Presence.Type.Disconnect
-
-private fun KProperty0<DeploymentConfig?>.isConversationDisconnectEnabled(): Boolean =
-    this.get()?.messenger?.apps?.conversations?.conversationDisconnect?.enabled == true
-
-private fun KProperty0<DeploymentConfig?>.isReadOnly(): Boolean =
-    this.get()?.messenger?.apps?.conversations?.conversationDisconnect?.type == Conversations.ConversationDisconnect.Type.ReadOnly
 
 private fun KProperty0<DeploymentConfig?>.isAutostartEnabled(): Boolean =
     this.get()?.messenger?.apps?.conversations?.autoStart?.enabled == true
