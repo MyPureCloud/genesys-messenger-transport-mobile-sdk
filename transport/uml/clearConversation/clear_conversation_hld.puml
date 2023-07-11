@@ -1,0 +1,54 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+!theme bluegray
+!pragma teoz true
+
+skinparam backgroundColor #whitesmoke
+title End user clear
+
+participant App
+box TransportSDK #lightcyan
+participant MessagingClient
+end box
+box BackEnd
+participant Shyrka
+participant Squonk
+participant GenesysCloud
+end box
+participant Agent
+
+rnote over MessagingClient
+  Given:
+  * Session is connected and there are existing messages in conversation history.
+  * User wants to delete conversation.
+end rnote
+
+App -> MessagingClient: clearConversation()
+MessagingClient -> Shyrka: send PresenceClearEvent
+Shyrka -> Squonk: Check Config and conversationClear option
+Squonk --> Shyrka: retrieve config
+alt #aaff8833 deployment has configurationClear enabled
+   Shyrka --> MessagingClient: 200 response on PresenceClearEvent
+   MessagingClient -> MessagingClient: ignore response
+   Shyrka -> MessagingClient: SessionClearedEvent
+   MessagingClient -> MessagingClient: invalidateConversationCache()
+   MessagingClient -> App: eventListener.onEvent(Event.Clear)
+rnote over App
+    Application is expected to remove messages from UI.
+end rnote
+   Shyrka -> Shyrka: Clear all session information
+   Shyrka -> MessagingClient: ConnectionClosedEvent
+   MessagingClient -> MessagingClient: disconnect()
+   MessagingClient -> App: onStateChanged(Closed)
+   MessagingClient -> App: eventListener.onEvent(Event.ConnectionClosed)
+   Shyrka -> GenesysCloud: Send message (presence clear)
+   GenesysCloud -> GenesysCloud: Produce end user clear event
+   GenesysCloud -> Agent: Notify agent of clear
+   Agent --> GenesysCloud: Supply Wrapup
+else #ffaaff33 deployment does NOT have configurationClear enabled or any other failure
+   Shyrka --> MessagingClient: error handling presence clear
+   MessagingClient -> App: eventListener.onEvent(Error(errorCode,errorMessage,correctiveAction))
+end
+
+@enduml
