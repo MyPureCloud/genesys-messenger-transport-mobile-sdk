@@ -254,6 +254,11 @@ internal class MessagingClientImpl(
         authHandler.logout()
     }
 
+    @Throws(IllegalStateException::class)
+    override fun clearConversation() {
+        log.w { "clearConversation() Api is not implemented yet." }
+    }
+
     override fun invalidateConversationCache() {
         log.i { "Clear conversation history." }
         messageStore.invalidateConversationCache()
