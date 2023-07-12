@@ -20,7 +20,7 @@ participant Agent
 
 rnote over MessagingClient
   Given:
-  * Session is connected and there are existing messages in conversation history.
+  * Session is connected.
   * User wants to delete conversation.
 end rnote
 
