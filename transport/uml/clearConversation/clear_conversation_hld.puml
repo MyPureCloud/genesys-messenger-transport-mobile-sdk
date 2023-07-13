@@ -25,30 +25,34 @@ rnote over MessagingClient
 end rnote
 
 App -> MessagingClient: clearConversation()
-MessagingClient -> Shyrka: send PresenceClearEvent
-Shyrka -> Squonk: Check Config and conversationClear option
-Squonk --> Shyrka: retrieve config
-alt #aaff8833 deployment has configurationClear enabled
-   Shyrka --> MessagingClient: 200 response on PresenceClearEvent
-   MessagingClient -> MessagingClient: ignore response
-   Shyrka -> MessagingClient: SessionClearedEvent
-   MessagingClient -> MessagingClient: invalidateConversationCache()
-   MessagingClient -> App: eventListener.onEvent(Event.Clear)
-rnote over App
-    Application is expected to remove messages from UI.
-end rnote
-   Shyrka -> Shyrka: Clear all session information
-   Shyrka -> MessagingClient: ConnectionClosedEvent
-   MessagingClient -> MessagingClient: disconnect()
-   MessagingClient -> App: onStateChanged(Closed)
-   MessagingClient -> App: eventListener.onEvent(Event.ConnectionClosed)
-   Shyrka -> GenesysCloud: Send message (presence clear)
-   GenesysCloud -> GenesysCloud: Produce end user clear event
-   GenesysCloud -> Agent: Notify agent of clear
-   Agent --> GenesysCloud: Supply Wrapup
-else #ffaaff33 deployment does NOT have configurationClear enabled or any other failure
-   Shyrka --> MessagingClient: error handling presence clear
-   MessagingClient -> App: eventListener.onEvent(Error(errorCode,errorMessage,correctiveAction))
-end
+MessagingClient -> MessagingClient: check local deploymentConfig.conversationClear.enabled
+alt #aaff8833 deploymentConfig.conversationClear.enabled == true
+    MessagingClient -> Shyrka: send PresenceClearEvent
+    Shyrka -> Squonk: Check Config and conversationClear option
+    Squonk --> Shyrka: retrieve config
+    alt #aaff8833 deployment has conversationClear enabled
+        Shyrka --> MessagingClient: 200 response on PresenceClearEvent
+        MessagingClient -> MessagingClient: ignore response
+        Shyrka -> MessagingClient: SessionClearedEvent
+        MessagingClient -> MessagingClient: invalidateConversationCache()
+        MessagingClient -> App: eventListener.onEvent(Event.ConversationCleared)
+    rnote over App
+        Application is expected to remove messages from UI.
+    end rnote
+        Shyrka -> Shyrka: Clear all session information
+        Shyrka -> MessagingClient: ConnectionClosedEvent
+        MessagingClient -> MessagingClient: disconnect()
+        MessagingClient -> App: onStateChanged(Closed)
+        MessagingClient -> App: eventListener.onEvent(Event.ConnectionClosed)
+        Shyrka -> GenesysCloud: Send message (presence clear)
+        GenesysCloud -> GenesysCloud: Produce end user clear event
+        GenesysCloud -> Agent: Notify agent of clear
+        Agent --> GenesysCloud: Supply Wrapup
+    else #ffaaff33 deployment does NOT have conversationClear enabled or any other failure
+        Shyrka --> MessagingClient: error handling presence clear
+        MessagingClient -> App: eventListener.onEvent(Error(errorCode,errorMessage,correctiveAction))
+    end
+else #ffaaff33 deploymentConfig.conversationClear.enabled == false
+MessagingClient -> App: eventListener.onEvent(Error(errorCode,errorMessage,correctiveAction))
 
 @enduml
