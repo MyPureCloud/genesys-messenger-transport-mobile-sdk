@@ -445,7 +445,6 @@ extension TestbedViewController : UITextFieldDelegate {
                         let plistData = FileManager.default.contents(atPath: plistPath),
                         let plistDictionary = try? PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any],
                         let signInRedirectURI = plistDictionary["signInRedirectURI"] as? String,
-                      
                         let codeVerifier: String? = pkceEnabled ? plistDictionary["codeVerifier"] as? String : nil
                 else {
                     authState = AuthState.error(errorCode: ErrorCode.AuthFailed.shared, message: "Unable to read Okta.plist or missing required key", correctiveAction: CorrectiveAction.ReAuthenticate.shared)
