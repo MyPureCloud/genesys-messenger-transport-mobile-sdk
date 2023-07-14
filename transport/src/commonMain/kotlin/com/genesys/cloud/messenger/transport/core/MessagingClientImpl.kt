@@ -384,12 +384,10 @@ internal class MessagingClientImpl(
             StructuredMessage.Type.Event -> {
                 if (structuredMessage.isOutbound()) {
                     structuredMessage.events.forEach {
-                        if (it.isDisconnectionEvent()) {
-                            eventHandler.onEvent(it.toTransportEvent())
-                            if (structuredMessage.metadata["readOnly"].toBoolean()) stateMachine.onReadOnly()
-                        } else {
-                            eventHandler.onEvent(it.toTransportEvent())
+                        if (it.isDisconnectionEvent() && structuredMessage.metadata["readOnly"].toBoolean()) {
+                            stateMachine.onReadOnly()
                         }
+                        eventHandler.onEvent(it.toTransportEvent())
                     }
                 } else {
                     structuredMessage.events.forEach {

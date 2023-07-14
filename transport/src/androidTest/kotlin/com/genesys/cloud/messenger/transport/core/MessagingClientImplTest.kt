@@ -56,6 +56,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class MessagingClientImplTest {
     private val configuration = configuration()
@@ -929,8 +930,12 @@ class MessagingClientImplTest {
             )
         )
 
-        verify { mockEventHandler.onEvent(eq(expectedEvent)) }
-        verify { mockStateChangedListener.invoke(fromConfiguredToReadOnly()) }
+        assertTrue(subject.currentState is State.ReadOnly)
+        verifySequence {
+            connectSequence()
+            mockStateChangedListener.invoke(fromConfiguredToReadOnly())
+            mockEventHandler.onEvent(eq(expectedEvent))
+        }
     }
 
     @Test
