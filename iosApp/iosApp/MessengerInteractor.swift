@@ -143,8 +143,8 @@ final class MessengerInteractor {
     func fetchDeployment(completion: @escaping (DeploymentConfig?, Error?) -> Void) {
         messengerTransport.fetchDeploymentConfig(completionHandler: completion)
     }
-
-    func clearConversation() {
+    
+    func invalidateConversationCache() {
         messagingClient.invalidateConversationCache()
     }
 
@@ -153,6 +153,15 @@ final class MessengerInteractor {
             try messagingClient.indicateTyping()
         } catch {
             print("indicateTyping() failed. \(error.localizedDescription)")
+            throw error
+        }
+    }
+    
+    func clearConversation() throws {
+        do {
+            try messagingClient.clearConversation()
+        } catch {
+            print("clearConversation() failed. \(error.localizedDescription)")
             throw error
         }
     }

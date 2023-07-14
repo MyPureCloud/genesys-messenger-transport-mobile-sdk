@@ -49,10 +49,11 @@ class TestbedViewController: UIViewController {
         case deployment
         case bye
         case healthCheck
-        case clearConversation
+        case invalidateConversationCache
         case addAttribute
         case typing
         case authorize
+        case clearConversation
 
         var helpDescription: String {
             switch self {
@@ -418,8 +419,8 @@ extension TestbedViewController : UITextFieldDelegate {
                     }
                     self.info.text = "<\(deploymentConfig?.description() ?? "Unknown deployment config")>"
                 }
-            case (.clearConversation, _):
-                messenger.clearConversation()
+            case (.invalidateConversationCache, _):
+                messenger.invalidateConversationCache()
             case(.addAttribute, let msg?):
                 let segments = segmentUserInput(msg)
                 if let key = segments.0, !key.isEmpty {
@@ -444,6 +445,7 @@ extension TestbedViewController : UITextFieldDelegate {
                         let plistData = FileManager.default.contents(atPath: plistPath),
                         let plistDictionary = try? PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any],
                         let signInRedirectURI = plistDictionary["signInRedirectURI"] as? String,
+                      
                         let codeVerifier: String? = pkceEnabled ? plistDictionary["codeVerifier"] as? String : nil
                 else {
                     authState = AuthState.error(errorCode: ErrorCode.AuthFailed.shared, message: "Unable to read Okta.plist or missing required key", correctiveAction: CorrectiveAction.ReAuthenticate.shared)
@@ -452,6 +454,8 @@ extension TestbedViewController : UITextFieldDelegate {
                 }
                 
                 messenger.authorize(authCode: self.authCode ?? "", redirectUri: signInRedirectURI, codeVerifier: codeVerifier)
+            case (.clearConversation, _):
+                try messenger.clearConversation()
             default:
                 self.info.text = "Invalid command"
             }
