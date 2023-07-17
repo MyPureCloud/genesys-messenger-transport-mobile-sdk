@@ -1457,6 +1457,93 @@ class MessagingClientImplTest {
         }
     }
 
+    @Test
+    fun whenClearConversationFromAnyNonReadOnlyOrConfiguredState() {
+        // currentState = Idle
+        assertThat(subject.currentState).isIdle()
+        assertFailsWith<IllegalStateException>("MessagingClient is not in Configured or ReadOnly state.") { subject.clearConversation() }
+
+        subject.connect()
+        // currentState = Reconnecting
+        every { mockReconnectionHandler.shouldReconnect } returns true
+        val givenException = Exception(ErrorMessage.InternetConnectionIsOffline)
+        slot.captured.onFailure(givenException, ErrorCode.WebsocketError)
+
+        assertThat(subject.currentState).isReconnecting()
+        assertFailsWith<IllegalStateException>("MessagingClient is not in Configured or ReadOnly state.") { subject.clearConversation() }
+
+        // currentState = Closed
+        subject.disconnect()
+        assertThat(subject.currentState).isClosed(1000, "The user has closed the connection.")
+        assertFailsWith<IllegalStateException>("MessagingClient is not in Configured or ReadOnly state.") { subject.clearConversation() }
+
+        // currentState = Error
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.sessionNotFound)
+        }
+        subject.connect()
+        assertThat(subject.currentState).isError(ErrorCode.SessionNotFound, "session not found error message")
+        assertFailsWith<IllegalStateException>("MessagingClient is not in Configured or ReadOnly state.") { subject.clearConversation() }
+    }
+
+    @Test
+    fun whenClearConversationIsDisabledInDeploymentConfigAndClearConversationIsCalled() {
+        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
+            messenger = createMessengerVOForTesting(
+                apps = Apps(
+                    conversations = createConversationsVOForTesting(
+                        conversationClear = Conversations.ConversationClear(enabled = false)
+                    )
+                )
+            )
+        )
+        val expectedEvent = Event.Error(
+            errorCode = ErrorCode.ClearConversationFailure,
+            message = ErrorMessage.FailedToClearConversation,
+            correctiveAction = CorrectiveAction.Forbidden,
+        )
+        subject.connect()
+
+        subject.clearConversation()
+
+        verifySequence {
+            connectSequence()
+            mockEventHandler.onEvent(eq(expectedEvent))
+        }
+        verify(exactly = 0) {
+            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+        }
+    }
+
+    @Test
+    fun whenSessionIsConfiguredAndClearConversationCalled() {
+        subject.connect()
+
+        subject.clearConversation()
+
+        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
+        verifySequence {
+            connectSequence()
+            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+        }
+    }
+
+    @Test
+    fun whenSessionIsReadOnlyAndClearConversationCalled() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.configureSuccess(readOnly = true))
+        }
+        subject.connect()
+
+        subject.clearConversation()
+
+        assertThat(subject.currentState).isReadOnly()
+        verifySequence {
+            connectToReadOnlySequence()
+            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+        }
+    }
+
     private fun configuration(): Configuration = Configuration(
         deploymentId = "deploymentId",
         domain = "inindca.com",

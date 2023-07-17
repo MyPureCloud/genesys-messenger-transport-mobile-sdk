@@ -35,6 +35,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.isHealthCheckResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.isOutbound
 import com.genesys.cloud.messenger.transport.shyrka.send.AutoStartRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.ClearConversationRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.CloseSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureAuthenticatedSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
@@ -252,6 +253,25 @@ internal class MessagingClientImpl(
     override fun logoutFromAuthenticatedSession() {
         stateMachine.checkIfConfigured()
         authHandler.logout()
+    }
+
+    @Throws(IllegalStateException::class)
+    override fun clearConversation() {
+        stateMachine.checkIfConfiguredOrReadOnly()
+        if (!deploymentConfig.isClearConversationEnabled()) {
+            eventHandler.onEvent(
+                Event.Error(
+                    ErrorCode.ClearConversationFailure,
+                    ErrorMessage.FailedToClearConversation,
+                    CorrectiveAction.Forbidden
+                )
+            )
+            return
+        }
+        WebMessagingJson.json.encodeToString(ClearConversationRequest(token)).let {
+            log.i { "sendClearConversation()" }
+            webSocket.sendMessage(it)
+        }
     }
 
     override fun invalidateConversationCache() {
@@ -591,3 +611,6 @@ private fun KProperty0<DeploymentConfig?>.isAutostartEnabled(): Boolean =
 
 private fun KProperty0<DeploymentConfig?>.isShowUserTypingEnabled(): Boolean =
     this.get()?.messenger?.apps?.conversations?.showUserTypingIndicator == true
+
+private fun KProperty0<DeploymentConfig?>.isClearConversationEnabled(): Boolean =
+    this.get()?.messenger?.apps?.conversations?.conversationClear?.enabled == true

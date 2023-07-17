@@ -232,4 +232,20 @@ interface MessagingClient {
      */
     @Throws(IllegalStateException::class)
     fun logoutFromAuthenticatedSession()
+
+    /**
+     * Permanently clears the existing conversation history with an agent from all devices that share the same session.
+     * This action is allowed in both [State.Configured] and [State.ReadOnly].
+     *
+     * After successful clearance, [Event.ConversationCleared] will be dispatched to allow
+     * the application to update the UI and clear necessary cache.
+     *
+     * In case of failure, [Event.Error] will be dispatched with a description of the failure cause.
+     *
+     * Note: Calling this API will result in the WebSocket connection being closed and new session will be created upon [connect].
+     *
+     * @throws IllegalStateException if the current state of the MessagingClient is not compatible with the requested action.
+     */
+    @Throws(IllegalStateException::class)
+    fun clearConversation()
 }
