@@ -1544,6 +1544,28 @@ class MessagingClientImplTest {
         }
     }
 
+    @Test
+    fun whenClearConversationRequestFailsByBackEndAndErrorMessageContainsConversation_ClearString() {
+        every { mockPlatformSocket.sendMessage(Request.clearConversation) } answers {
+            slot.captured.onMessage(Response.clearConversationForbidden)
+        }
+        val expectedEvent = Event.Error(
+            errorCode = ErrorCode.ClearConversationFailure,
+            message = "Presence events Conversation Clear are not supported",
+            correctiveAction = CorrectiveAction.Forbidden,
+        )
+        subject.connect()
+
+        subject.clearConversation()
+
+        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
+        verifySequence {
+            connectSequence()
+            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+            mockEventHandler.onEvent(expectedEvent)
+        }
+    }
+
     private fun configuration(): Configuration = Configuration(
         deploymentId = "deploymentId",
         domain = "inindca.com",
@@ -1706,6 +1728,8 @@ private object Response {
         """{"type":"message","class":"LogoutEvent","code":200,"body":{}}"""
     const val unauthorized =
         """{"type": "response","class": "string","code": 401,"body": "User is unauthorized"}"""
+    const val clearConversationForbidden =
+        """{"type":"response","class":"string","code":403,"body":"Presence events Conversation Clear are not supported"}"""
 
     fun structuredMessageWithEvents(
         events: String = defaultStructuredEvents,

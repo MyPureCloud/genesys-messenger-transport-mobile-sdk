@@ -349,7 +349,7 @@ internal class MessagingClientImpl(
                 } else {
                     eventHandler.onEvent(
                         Event.Error(
-                            errorCode = code,
+                            errorCode = if (message.isClearConversationError()) ErrorCode.ClearConversationFailure else code,
                             message = message,
                             correctiveAction = code.toCorrectiveAction()
                         )
@@ -595,6 +595,16 @@ internal class MessagingClientImpl(
             cleanUp()
         }
     }
+}
+
+/**
+ * Checks if the string contains both the words "conversation" and "clear" (case-insensitive).
+ *
+ * @return `true` if the string contains both "conversation" and "clear", `false` otherwise.
+ */
+private fun String?.isClearConversationError(): Boolean {
+    val regex = Regex("(?=.*\\bconversation\\b)(?=.*\\bclear\\b)", RegexOption.IGNORE_CASE)
+    return this?.let { regex.containsMatchIn(it) } ?: false
 }
 
 private fun StructuredMessageEvent.isDisconnectionEvent(): Boolean =
