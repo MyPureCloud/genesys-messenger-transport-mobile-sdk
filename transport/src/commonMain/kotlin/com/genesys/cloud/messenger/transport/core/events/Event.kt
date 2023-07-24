@@ -59,4 +59,9 @@ sealed class Event {
      * Sent when user has been logged out from authenticated session.
      */
     object Logout : Event()
+
+    /**
+     * Sent when conversation was successfully cleared.
+     */
+    object ConversationCleared : Event()
 }

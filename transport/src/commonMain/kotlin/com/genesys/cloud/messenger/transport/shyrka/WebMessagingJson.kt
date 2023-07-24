@@ -8,6 +8,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.LogoutEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageClassName
 import com.genesys.cloud.messenger.transport.shyrka.receive.PreIdentifiedWebMessagingMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.SessionClearedEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionExpiredEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
@@ -62,6 +63,8 @@ internal object WebMessagingJson {
                 json.decodeFromString<WebMessagingMessage<ConnectionClosedEvent>>(string)
             MessageClassName.LOGOUT_EVENT.value ->
                 json.decodeFromString<WebMessagingMessage<LogoutEvent>>(string)
+            MessageClassName.SESSION_CLEARED_EVENT.value ->
+                json.decodeFromString<WebMessagingMessage<SessionClearedEvent>>(string)
             else -> throw IllegalArgumentException()
         }
     }
