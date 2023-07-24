@@ -8,6 +8,7 @@ import com.genesys.cloud.messenger.transport.core.events.Event.AgentTyping
 import com.genesys.cloud.messenger.transport.core.events.Event.Authorized
 import com.genesys.cloud.messenger.transport.core.events.Event.ConnectionClosed
 import com.genesys.cloud.messenger.transport.core.events.Event.ConversationAutostart
+import com.genesys.cloud.messenger.transport.core.events.Event.ConversationCleared
 import com.genesys.cloud.messenger.transport.core.events.Event.ConversationDisconnect
 import com.genesys.cloud.messenger.transport.core.events.Event.Error
 import com.genesys.cloud.messenger.transport.core.events.Event.HealthChecked
@@ -41,6 +42,7 @@ class EventHandlerTest {
             ConnectionClosed,
             Authorized,
             Logout,
+            ConversationCleared,
         )
 
         events.forEach {

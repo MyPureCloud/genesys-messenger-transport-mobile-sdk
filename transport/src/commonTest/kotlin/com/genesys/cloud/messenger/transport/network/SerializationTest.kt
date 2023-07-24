@@ -13,6 +13,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.LogoutEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageType
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.SessionClearedEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionExpiredEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
@@ -460,5 +461,15 @@ class SerializationTest {
         val result = WebMessagingJson.decodeFromString(givenStructuredMessage)
 
         assertThat(result).isEqualTo(expectedStructuredMessage)
+    }
+
+    @Test
+    fun whenSessionClearedEventThenDecodes() {
+        val json = """{"type":"message","class":"SessionClearedEvent","code":200,"body":{}}"""
+
+        val message = decode(json)
+
+        assertThat(message.body, "WebMessagingMessage body").isNotNull()
+            .hasClass(SessionClearedEvent::class)
     }
 }
