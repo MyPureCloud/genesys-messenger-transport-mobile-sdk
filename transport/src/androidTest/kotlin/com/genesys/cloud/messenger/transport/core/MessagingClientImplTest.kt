@@ -1544,6 +1544,20 @@ class MessagingClientImplTest {
         }
     }
 
+    @Test
+    fun whenSessionClearedEventReceived() {
+        val expectedEvent = Event.ConversationCleared
+
+        subject.connect()
+        slot.captured.onMessage(Response.sessionClearedEvent)
+
+        verifySequence {
+            connectSequence()
+            mockEventHandler.onEvent(eq(expectedEvent))
+        }
+    }
+
+
     private fun configuration(): Configuration = Configuration(
         deploymentId = "deploymentId",
         domain = "inindca.com",
@@ -1706,6 +1720,8 @@ private object Response {
         """{"type":"message","class":"LogoutEvent","code":200,"body":{}}"""
     const val unauthorized =
         """{"type": "response","class": "string","code": 401,"body": "User is unauthorized"}"""
+    const val sessionClearedEvent =
+        """{"type":"message","class":"SessionClearedEvent","code":200,"body":{}}"""
 
     fun structuredMessageWithEvents(
         events: String = defaultStructuredEvents,

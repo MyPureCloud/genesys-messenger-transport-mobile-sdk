@@ -59,7 +59,7 @@ data class Conversations(
     }
 
     @Serializable
-   data class ConversationClear(val enabled: Boolean = false)
+    data class ConversationClear(val enabled: Boolean = false)
 }
 
 @Serializable

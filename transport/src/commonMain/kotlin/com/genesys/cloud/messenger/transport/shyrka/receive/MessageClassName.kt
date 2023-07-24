@@ -14,4 +14,5 @@ internal enum class MessageClassName(val value: String) {
     TOO_MANY_REQUESTS_ERROR_MESSAGE("TooManyRequestsErrorMessage"),
     CONNECTION_CLOSED_EVENT("ConnectionClosedEvent"),
     LOGOUT_EVENT("LogoutEvent"),
+    SESSION_CLEARED_EVENT("SessionClearedEvent"),
 }
