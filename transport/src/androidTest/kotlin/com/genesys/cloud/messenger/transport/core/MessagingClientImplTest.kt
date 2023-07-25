@@ -1557,7 +1557,6 @@ class MessagingClientImplTest {
         }
     }
 
-
     private fun configuration(): Configuration = Configuration(
         deploymentId = "deploymentId",
         domain = "inindca.com",
