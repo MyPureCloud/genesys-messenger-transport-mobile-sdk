@@ -45,7 +45,7 @@ class iosAppTests: XCTestCase {
             return
         }
         let deployment = try! Deployment()
-        let testController = MessengerInteractorTester(deployment: Deployment(deploymentId: config.authDeploymentId, domain: deployment.domain))
+        var testController = MessengerInteractorTester(deployment: Deployment(deploymentId: config.authDeploymentId, domain: deployment.domain))
         testController.authorize(config: config, authCode: config.authCode)
         testController.startNewMessengerConnection(authorized: true)
         testController.sendText(text: "Testing from E2E test.")
@@ -64,6 +64,12 @@ class iosAppTests: XCTestCase {
 
         // Disconnect. Ensure that auth logs out correctly.
         testController.authLogout()
+
+        // Temporary fix for MTSDK-222.
+        let newToken = UUID().uuidString
+        testController.messenger.tokenVault.store(key: "token", value: newToken)
+        print("New token: \(newToken)")
+        testController = MessengerInteractorTester(deployment: Deployment(deploymentId: config.authDeploymentId, domain: deployment.domain))
 
         // With the same test controller, authenticate with a different user's auth code.
         // Ensure that we can answer a new conversation.
@@ -220,6 +226,46 @@ class iosAppTests: XCTestCase {
         for tester in testers[1..<testers.count] {
             tester.disconnectMessenger()
         }
+    }
+
+    func testConversationClear() {
+        // Setup the session. Send a message.
+        guard let messengerTester = messengerTester else {
+            XCTFail("Failed to setup the Messenger tester.")
+            return
+        }
+
+        messengerTester.startNewMessengerConnection()
+        messengerTester.sendText(text: "Testing from E2E test.")
+
+        // Use the public API to answer the new Messenger conversation.
+        guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
+            XCTFail("The message we sent may not have connected to an agent.")
+            return
+        }
+
+        // Test case 1: After sending Conversation Clear from client. Ensure we receive Event.ConversationCleared and Event.ConnectionClosed from Transport.
+        // Client state should also be set to Closed.
+        messengerTester.clearConversation()
+        XCTAssertEqual(messengerTester.currentClientState, .Closed(code: 1000, reason: "The user has closed the connection."), "The client state did not close for the expected reason.")
+
+        // Test case 2: While disconnected after a cleared conversation. Start a new conversation. Ensure that this conversation is considered a new session.
+        messengerTester.startNewMessengerConnection()
+        if let configuredState = messengerTester.currentClientState as? MessagingClientState.Configured {
+            XCTAssertTrue(configuredState.newSession, "The configured session is not considered a new session.")
+        } else {
+            XCTFail("Unable to confirm details about the configured state \(messengerTester.currentClientState?.description ?? "N/A").")
+        }
+        guard let conversationInfo2 = ApiHelper.shared.answerNewConversation() else {
+            XCTFail("The message we sent may not have connected to an agent.")
+            return
+        }
+        XCTAssertNotEqual(conversationInfo.conversationId, conversationInfo2.conversationId, "The new conversationID is the same as the previous conversation's. This conversation should be new after the previous one was cleared.")
+
+        // Disconnect agent from all conversations.
+        ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
+        ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo2, connecting: false, wrapup: true)
+        messengerTester.disconnectMessenger()
     }
 
     func testDisconnectAgent_ReadOnly() {
