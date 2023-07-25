@@ -22,6 +22,7 @@ class MessengerInteractorTester {
     var disconnectedSession: XCTestExpectation?
     var connectionClosed: XCTestExpectation?
     var closedStateChange: XCTestExpectation?
+    var conversationCleared: XCTestExpectation?
     var authExpectation: XCTestExpectation?
     var receivedMessageText: String? = nil
     var receivedDownloadUrl: String? = nil
@@ -139,6 +140,9 @@ class MessengerInteractorTester {
                     print("Auth event: \(loggedOut.description)")
                     self?.authState = AuthState.loggedOut
                     self?.authExpectation?.fulfill()
+                case let cleared as Event.ConversationCleared:
+                    print("Conversation cleared event: \(cleared.description)")
+                    self?.conversationCleared?.fulfill()
                 case let error as Event.Error:
                     print("Error Event: \(error.description())")
                     self?.errorExpectation?.fulfill()
@@ -378,12 +382,13 @@ class MessengerInteractorTester {
     func clearConversation() {
         connectionClosed = XCTestExpectation(description: "Wait for connection to be closed.")
         closedStateChange = XCTestExpectation(description: "Wait for the connection state to be closed.")
+        conversationCleared = XCTestExpectation(description: "Wait for the conversation cleared event to be received.")
         do {
             try messenger.clearConversation()
         } catch {
             XCTFail(error.localizedDescription)
         }
-        let result = XCTWaiter().wait(for: [connectionClosed!, closedStateChange!], timeout: 30)
+        let result = XCTWaiter().wait(for: [connectionClosed!, closedStateChange!, conversationCleared!], timeout: 30)
         XCTAssertTrue(result == .completed, "The Clear Conversation command may have had an error, or the expected state changes didn't happen.")
     }
 
