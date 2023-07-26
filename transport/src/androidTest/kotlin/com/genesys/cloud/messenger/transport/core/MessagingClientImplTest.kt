@@ -1557,6 +1557,81 @@ class MessagingClientImplTest {
         }
     }
 
+    @Test
+    fun whenClearConversationRequestFailsByBackEndAndErrorMessageContainsConversation_ClearString() {
+        every { mockPlatformSocket.sendMessage(Request.clearConversation) } answers {
+            slot.captured.onMessage(Response.clearConversationForbidden())
+        }
+        val expectedEvent = Event.Error(
+            errorCode = ErrorCode.ClearConversationFailure,
+            message = "Presence events Conversation Clear are not supported",
+            correctiveAction = CorrectiveAction.Forbidden,
+        )
+        subject.connect()
+
+        subject.clearConversation()
+
+        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
+        verifySequence {
+            connectSequence()
+            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+            mockEventHandler.onEvent(expectedEvent)
+        }
+    }
+
+    @Test
+    fun whenClearConversationRequestFailsByBackEndAndErrorMessageContainsConversation_ClearStringInRandomOrder() {
+        // Test incorrect order of "Conversation" and "Clear".
+        every { mockPlatformSocket.sendMessage(Request.clearConversation) } answers {
+            slot.captured.onMessage(Response.clearConversationForbidden("Presence events Clear Conversation are not supported"))
+        }
+        val expectedEventCase1 = Event.Error(
+            errorCode = ErrorCode.ClientResponseError(403),
+            message = "Presence events Clear Conversation are not supported",
+            correctiveAction = CorrectiveAction.Forbidden,
+        )
+        subject.connect()
+
+        subject.clearConversation()
+
+        verify {
+            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+            mockEventHandler.onEvent(expectedEventCase1)
+        }
+
+        // Test "Conversation" and "Clear" Strings have word between them.
+        every { mockPlatformSocket.sendMessage(Request.clearConversation) } answers {
+            slot.captured.onMessage(Response.clearConversationForbidden("Presence events Clear THE Conversation are not supported"))
+        }
+        val expectedEventCase2 = Event.Error(
+            errorCode = ErrorCode.ClientResponseError(403),
+            message = "Presence events Clear THE Conversation are not supported",
+            correctiveAction = CorrectiveAction.Forbidden,
+        )
+        subject.clearConversation()
+
+        verify {
+            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+            mockEventHandler.onEvent(expectedEventCase2)
+        }
+
+        // Test "Conversation" and "Clear" has no space between them.
+        every { mockPlatformSocket.sendMessage(Request.clearConversation) } answers {
+            slot.captured.onMessage(Response.clearConversationForbidden("Presence events ClearConversation are not supported"))
+        }
+        val expectedEventCase3 = Event.Error(
+            errorCode = ErrorCode.ClientResponseError(403),
+            message = "Presence events ClearConversation are not supported",
+            correctiveAction = CorrectiveAction.Forbidden,
+        )
+        subject.clearConversation()
+
+        verify {
+            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+            mockEventHandler.onEvent(expectedEventCase3)
+        }
+    }
+
     private fun configuration(): Configuration = Configuration(
         deploymentId = "deploymentId",
         domain = "inindca.com",
@@ -1721,6 +1796,8 @@ private object Response {
         """{"type": "response","class": "string","code": 401,"body": "User is unauthorized"}"""
     const val sessionClearedEvent =
         """{"type":"message","class":"SessionClearedEvent","code":200,"body":{}}"""
+    fun clearConversationForbidden(errorMessage: String = "Presence events Conversation Clear are not supported") =
+        """{"type":"response","class":"string","code":403,"body":"$errorMessage"}"""
 
     fun structuredMessageWithEvents(
         events: String = defaultStructuredEvents,
