@@ -337,24 +337,9 @@ internal class MessagingClientImpl(
             is ErrorCode.RedirectResponseError,
             -> {
                 if (stateMachine.isConnected() || stateMachine.isReconnecting() || isStartingANewSession) {
-                    if (connectAuthenticated && code.isUnauthorized() && reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
-                        reconfigureAttempts++
-                        if (stateMachine.isConnected()) {
-                            refreshTokenAndPerform { configureSession(isStartingANewSession) }
-                        } else {
-                            refreshTokenAndPerform { connectAuthenticatedSession() }
-                        }
-                    } else {
-                        transitionToStateError(code, message)
-                    }
+                    handleConfigureSessionErrorResponse(code, message)
                 } else {
-                    eventHandler.onEvent(
-                        Event.Error(
-                            errorCode = if (message.isClearConversationError()) ErrorCode.ClearConversationFailure else code,
-                            message = message,
-                            correctiveAction = code.toCorrectiveAction()
-                        )
-                    )
+                    handleConventionalHttpErrorResponse(code, message)
                 }
             }
             is ErrorCode.WebsocketError -> handleWebSocketError(ErrorCode.WebsocketError)
@@ -391,6 +376,30 @@ internal class MessagingClientImpl(
             }
             else -> log.w { "Unhandled WebSocket errorCode. ErrorCode: $errorCode" }
         }
+    }
+
+    private fun handleConfigureSessionErrorResponse(code: ErrorCode, message: String?) {
+        if (connectAuthenticated && code.isUnauthorized() && reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
+            reconfigureAttempts++
+            if (stateMachine.isConnected()) {
+                refreshTokenAndPerform { configureSession(isStartingANewSession) }
+            } else {
+                refreshTokenAndPerform { connectAuthenticatedSession() }
+            }
+        } else {
+            transitionToStateError(code, message)
+        }
+    }
+
+    private fun handleConventionalHttpErrorResponse(code: ErrorCode, message: String?) {
+        val errorCode = if (message.isClearConversationError()) ErrorCode.ClearConversationFailure else code
+        eventHandler.onEvent(
+            Event.Error(
+                errorCode = errorCode,
+                message = message,
+                correctiveAction = code.toCorrectiveAction()
+            )
+        )
     }
 
     private fun handleStructuredMessage(structuredMessage: StructuredMessage) {
@@ -600,12 +609,12 @@ internal class MessagingClientImpl(
 }
 
 /**
- * Checks if the string contains both the words "conversation" and "clear" (case-insensitive).
+ * Checks if the string contains both the words "conversation clear" in exact order (case-insensitive).
  *
- * @return `true` if the string contains both "conversation" and "clear", `false` otherwise.
+ * @return `true` if the string contains "conversation clear", `false` otherwise.
  */
 private fun String?.isClearConversationError(): Boolean {
-    val regex = Regex("(?=.*\\bconversation\\b)(?=.*\\bclear\\b)", RegexOption.IGNORE_CASE)
+    val regex = Regex("Conversation Clear", RegexOption.IGNORE_CASE)
     return this?.let { regex.containsMatchIn(it) } ?: false
 }
 
