@@ -173,3 +173,8 @@ fun API.disconnectAllConversations() {
         sendConnectOrDisconnect(conversation)
     }
 }
+
+fun API.checkForConversationMessages(conversationId: String) {
+    val listOfMessages = getConversationInfo(conversationId).getParticipantFromPurpose("agent")?.messages?.toList()
+    if (listOfMessages != null) AssertionError("Conversation still has messages associated with it but should not")
+}

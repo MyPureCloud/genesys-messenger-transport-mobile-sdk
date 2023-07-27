@@ -8,6 +8,7 @@ import com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed.TestBedVie
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.API
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.answerNewConversation
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.checkForConversationMessages
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.disconnectAllConversations
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendConnectOrDisconnect
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendOutboundMessageFromAgentToUser
@@ -76,8 +77,8 @@ class ComposePrototypeUITest : BaseTests() {
     private val fakeAuthPassword = "xxxxxxxxxx"
     private val TAG = TestBedViewModel::class.simpleName
     private val clearConversation = "clearConversation"
-    private val clearConversationMessage = "Connection Closed Normally"
-    private val clearConversationCode = "1000"
+    private val connectionClosedMessage = "Connection Closed Normally"
+    private val connectionClosedCode = "1000"
 
     fun enterDeploymentInfo(deploymentId: String) {
         opening {
@@ -259,8 +260,8 @@ class ComposePrototypeUITest : BaseTests() {
         messenger {
             verifyPageIsVisible()
             enterCommand(clearConversation)
-            waitForProperResponse(clearConversationMessage)
-            waitForProperResponse(clearConversationCode)
+            waitForProperResponse(connectionClosedMessage)
+            waitForProperResponse(connectionClosedCode)
         }
     }
 
@@ -541,6 +542,8 @@ class ComposePrototypeUITest : BaseTests() {
             clearConversation()
             // Test case 2: After clearing conversation and disconnecting, connect again and check if conversation is a new session and conversation ids are the same
             connect()
+            // Since the ConversationCleared event does not appear long enough in the Compose Prototype, we will check to verify there are no messages for the cleared conversation
+            apiHelper.checkForConversationMessages(conversationInfo.id)
             verifyResponse(autoStartEnabledText)
             sendMsg(helloText)
             val conversationInfo2 = apiHelper.answerNewConversation()
