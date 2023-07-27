@@ -75,6 +75,9 @@ class ComposePrototypeUITest : BaseTests() {
     private val fakeAuthUserName = "daffy.duck@looneytunes.com"
     private val fakeAuthPassword = "xxxxxxxxxx"
     private val TAG = TestBedViewModel::class.simpleName
+    private val clearConversation = "clearConversation"
+    private val clearConversationMessage = "Connection Closed Normally"
+    private val clearConversationCode = "1000"
 
     fun enterDeploymentInfo(deploymentId: String) {
         opening {
@@ -249,6 +252,15 @@ class ComposePrototypeUITest : BaseTests() {
     fun verifyNotAuthenticated(rejectText: String) {
         messenger {
             checkForUnAuthenticatedResponse(rejectText)
+        }
+    }
+
+    fun clearConversation() {
+        messenger {
+            verifyPageIsVisible()
+            enterCommand(clearConversation)
+            waitForProperResponse(clearConversationMessage)
+            waitForProperResponse(clearConversationCode)
         }
     }
 
@@ -513,5 +525,37 @@ class ComposePrototypeUITest : BaseTests() {
         // Enter an invalid password to see if noAuth will persist
         oktaSignInWithPKCE(fakeAuthUserName, fakeAuthPassword, false)
         verifyNotAuthenticated(notAuthenticateText)
+    }
+
+    @Test
+    fun testConversationClear() {
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.deploymentId)
+        connect()
+        sendMsg(helloText)
+        val conversationInfo = apiHelper.answerNewConversation()
+        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
+        else {
+            Log.i(TAG, "Conversation started successfully.")
+            // Test case 1: Send clear conversation command and check for connection closed and conversation cleared
+            clearConversation()
+            // Test case 2: After clearing conversation and disconnecting, connect again and check if conversation is a new session and conversation ids are the same
+            connect()
+            verifyResponse(autoStartEnabledText)
+            sendMsg(helloText)
+            val conversationInfo2 = apiHelper.answerNewConversation()
+            if (conversationInfo2 == null) AssertionError("Unable to answer second conversation.")
+            else {
+                Log.i(TAG, "Second Conversation started successfully.")
+                if (conversationInfo.id == conversationInfo2.id) AssertionError("The conversation ids are the same after a conversation clear but should not be.")
+                apiHelper.sendConnectOrDisconnect(conversationInfo2)
+                // wait for agent to disconnect
+                apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo2.id)
+            }
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
+            // wait for agent to disconnect
+            apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id)
+        }
+        bye()
     }
 }

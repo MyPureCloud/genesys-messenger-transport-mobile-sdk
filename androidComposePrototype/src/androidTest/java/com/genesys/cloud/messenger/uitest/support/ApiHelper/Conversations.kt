@@ -62,8 +62,19 @@ data class CallDetails(
 fun API.waitForConversation(): Conversation? {
     for (x in 0..60) {
         val conversations = getAllConversations()
-        if (conversations.firstOrNull() != null) {
-            return conversations[0]
+        if (conversations != null) {
+            conversations.forEach { conversation ->
+                Log.i(TAG, "conversationId: $conversation.id")
+                val callDetails = conversation.getParticipantFromPurpose("agent")?.messages
+                if (callDetails != null) {
+                    callDetails.forEach { callDetail ->
+                        Log.i(TAG, "call detail state: $callDetail.state")
+                        if (callDetail.isAlerting()) {
+                            return conversation
+                        }
+                    }
+                }
+            }
         }
         sleep(1000)
     }
