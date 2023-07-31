@@ -12,6 +12,11 @@ internal actual class Platform {
     actual val platform: String = "Android ${android.os.Build.VERSION.SDK_INT}"
 
     /**
+     * The name of operating system running on this device.
+     */
+    actual val osName: String = "Android"
+
+    /**
      * Generate a random UUID.
      *
      * @return a random UUID string.
