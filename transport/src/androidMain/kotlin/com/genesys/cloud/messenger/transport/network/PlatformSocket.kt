@@ -2,6 +2,7 @@ package com.genesys.cloud.messenger.transport.network
 
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
+import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.okHttpLogger
 import io.ktor.http.Url
@@ -23,7 +24,11 @@ internal actual class PlatformSocket actual constructor(
     actual fun openSocket(listener: PlatformSocketListener) {
         this.listener = listener
         val socketRequest =
-            Request.Builder().url(url.toString()).header(name = "Origin", value = url.host).build()
+            Request.Builder()
+                .url(url.toString())
+                .header(name = "Origin", value = url.host)
+                .header(name = "User-Agent", Platform().platform)
+                .build()
         val webClient = OkHttpClient()
             .newBuilder()
             .pingInterval(pingInterval.toLong(), TimeUnit.SECONDS)
