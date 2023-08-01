@@ -45,6 +45,7 @@ data class Configuration(
             .apply {
                 path("v1")
                 parameters.append("deploymentId", deploymentId)
+                parameters.append("application", "TransportSDK-${MessengerTransport.sdkVersion}")
             }
             .build()
     }
