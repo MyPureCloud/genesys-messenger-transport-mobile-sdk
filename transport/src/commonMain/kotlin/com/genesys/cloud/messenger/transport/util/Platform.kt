@@ -10,11 +10,6 @@ internal expect class Platform() {
     val platform: String
 
     /**
-     * The name of operating system running on this device.
-     */
-    val osName: String
-
-    /**
      * Generate a random UUID.
      *
      * @return a random UUID string.

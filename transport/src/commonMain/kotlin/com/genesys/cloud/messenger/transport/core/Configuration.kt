@@ -1,6 +1,5 @@
 package com.genesys.cloud.messenger.transport.core
 
-import com.genesys.cloud.messenger.transport.util.Platform
 import io.ktor.http.URLBuilder
 import io.ktor.http.Url
 import io.ktor.http.path
@@ -46,7 +45,7 @@ data class Configuration(
             .apply {
                 path("v1")
                 parameters.append("deploymentId", deploymentId)
-                parameters.append("application", "${Platform().osName} TransportSDK-${MessengerTransport.sdkVersion}")
+                parameters.append("application", "TransportSDK-${MessengerTransport.sdkVersion}")
             }
             .build()
     }

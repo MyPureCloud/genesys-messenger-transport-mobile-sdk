@@ -19,11 +19,6 @@ internal actual class Platform {
         UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
 
     /**
-     * The name of operating system running on this device.
-     */
-    actual val osName: String = "iOS"
-
-    /**
      * Generate a random UUID.
      *
      * @return a random UUID string.
