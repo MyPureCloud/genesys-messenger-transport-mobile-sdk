@@ -24,6 +24,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.LogoutEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.SessionClearedEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionExpiredEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
@@ -34,6 +35,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.isHealthCheckResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.isOutbound
 import com.genesys.cloud.messenger.transport.shyrka.send.AutoStartRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.ClearConversationRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.CloseSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureAuthenticatedSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
@@ -253,6 +255,25 @@ internal class MessagingClientImpl(
         authHandler.logout()
     }
 
+    @Throws(IllegalStateException::class)
+    override fun clearConversation() {
+        stateMachine.checkIfConfiguredOrReadOnly()
+        if (!deploymentConfig.isClearConversationEnabled()) {
+            eventHandler.onEvent(
+                Event.Error(
+                    ErrorCode.ClearConversationFailure,
+                    ErrorMessage.FailedToClearConversation,
+                    CorrectiveAction.Forbidden
+                )
+            )
+            return
+        }
+        WebMessagingJson.json.encodeToString(ClearConversationRequest(token)).let {
+            log.i { "sendClearConversation()" }
+            webSocket.sendMessage(it)
+        }
+    }
+
     override fun invalidateConversationCache() {
         log.i { "Clear conversation history." }
         messageStore.invalidateConversationCache()
@@ -315,24 +336,9 @@ internal class MessagingClientImpl(
             is ErrorCode.RedirectResponseError,
             -> {
                 if (stateMachine.isConnected() || stateMachine.isReconnecting() || isStartingANewSession) {
-                    if (connectAuthenticated && code.isUnauthorized() && reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
-                        reconfigureAttempts++
-                        if (stateMachine.isConnected()) {
-                            refreshTokenAndPerform { configureSession(isStartingANewSession) }
-                        } else {
-                            refreshTokenAndPerform { connectAuthenticatedSession() }
-                        }
-                    } else {
-                        transitionToStateError(code, message)
-                    }
+                    handleConfigureSessionErrorResponse(code, message)
                 } else {
-                    eventHandler.onEvent(
-                        Event.Error(
-                            errorCode = code,
-                            message = message,
-                            correctiveAction = code.toCorrectiveAction()
-                        )
-                    )
+                    handleConventionalHttpErrorResponse(code, message)
                 }
             }
             is ErrorCode.WebsocketError -> handleWebSocketError(ErrorCode.WebsocketError)
@@ -369,6 +375,30 @@ internal class MessagingClientImpl(
             }
             else -> log.w { "Unhandled WebSocket errorCode. ErrorCode: $errorCode" }
         }
+    }
+
+    private fun handleConfigureSessionErrorResponse(code: ErrorCode, message: String?) {
+        if (connectAuthenticated && code.isUnauthorized() && reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
+            reconfigureAttempts++
+            if (stateMachine.isConnected()) {
+                refreshTokenAndPerform { configureSession(isStartingANewSession) }
+            } else {
+                refreshTokenAndPerform { connectAuthenticatedSession() }
+            }
+        } else {
+            transitionToStateError(code, message)
+        }
+    }
+
+    private fun handleConventionalHttpErrorResponse(code: ErrorCode, message: String?) {
+        val errorCode = if (message.isClearConversationError()) ErrorCode.ClearConversationFailure else code
+        eventHandler.onEvent(
+            Event.Error(
+                errorCode = errorCode,
+                message = message,
+                correctiveAction = code.toCorrectiveAction()
+            )
+        )
     }
 
     private fun handleStructuredMessage(structuredMessage: StructuredMessage) {
@@ -543,6 +573,7 @@ internal class MessagingClientImpl(
                         eventHandler.onEvent(Event.Logout)
                         disconnect()
                     }
+                    is SessionClearedEvent -> eventHandler.onEvent(Event.ConversationCleared)
                     else -> {
                         log.i { "Unhandled message received from Shyrka: $decoded " }
                     }
@@ -567,6 +598,16 @@ internal class MessagingClientImpl(
     }
 }
 
+/**
+ * Checks if the string contains both the words "conversation clear" in exact order (case-insensitive).
+ *
+ * @return `true` if the string contains "conversation clear", `false` otherwise.
+ */
+private fun String?.isClearConversationError(): Boolean {
+    val regex = Regex("Conversation Clear", RegexOption.IGNORE_CASE)
+    return this?.let { regex.containsMatchIn(it) } ?: false
+}
+
 private fun StructuredMessageEvent.isDisconnectionEvent(): Boolean =
     this is PresenceEvent && presence.type == PresenceEvent.Presence.Type.Disconnect
 
@@ -575,3 +616,6 @@ private fun KProperty0<DeploymentConfig?>.isAutostartEnabled(): Boolean =
 
 private fun KProperty0<DeploymentConfig?>.isShowUserTypingEnabled(): Boolean =
     this.get()?.messenger?.apps?.conversations?.showUserTypingIndicator == true
+
+private fun KProperty0<DeploymentConfig?>.isClearConversationEnabled(): Boolean =
+    this.get()?.messenger?.apps?.conversations?.conversationClear?.enabled == true

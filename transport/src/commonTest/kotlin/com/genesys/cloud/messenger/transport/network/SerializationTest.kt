@@ -13,6 +13,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.LogoutEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageType
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.SessionClearedEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionExpiredEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
@@ -21,6 +22,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
+import com.genesys.cloud.messenger.transport.shyrka.send.ClearConversationRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.CloseSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureAuthenticatedSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
@@ -460,5 +462,27 @@ class SerializationTest {
         val result = WebMessagingJson.decodeFromString(givenStructuredMessage)
 
         assertThat(result).isEqualTo(expectedStructuredMessage)
+    }
+
+    @Test
+    fun whenClearConversationRequestThenEncodes() {
+        val encodedString = WebMessagingJson.json.encodeToString(
+            ClearConversationRequest(
+                token = "<token>",
+            )
+        )
+
+        assertThat(encodedString, "encoded ClearConversationRequest")
+            .isEqualTo("""{"token":"<token>","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Clear"}}],"type":"Event"}}""")
+    }
+
+    @Test
+    fun whenSessionClearedEventThenDecodes() {
+        val json = """{"type":"message","class":"SessionClearedEvent","code":200,"body":{}}"""
+
+        val message = decode(json)
+
+        assertThat(message.body, "WebMessagingMessage body").isNotNull()
+            .hasClass(SessionClearedEvent::class)
     }
 }

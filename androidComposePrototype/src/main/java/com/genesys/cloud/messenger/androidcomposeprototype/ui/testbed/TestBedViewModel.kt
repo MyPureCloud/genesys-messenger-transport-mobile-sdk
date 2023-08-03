@@ -133,7 +133,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "attach" -> doAttach()
             "detach" -> doDetach(input)
             "deployment" -> doDeployment()
-            "clearConversation" -> doClearConversation()
+            "invalidateConversationCache" -> doInvalidateConversationCache()
             "addAttribute" -> doAddCustomAttributes(input)
             "typing" -> doIndicateTyping()
             "newChat" -> doStartNewChat()
@@ -141,6 +141,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "oktaSignInWithPKCE" -> doOktaSignIn(true)
             "oktaLogout" -> logoutFromOktaSession()
             "authorize" -> doAuthorize()
+            "clearConversation" -> doClearConversation()
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
@@ -257,6 +258,14 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     }
 
     private fun doClearConversation() {
+        try {
+            client.clearConversation()
+        } catch (t: Throwable) {
+            handleException(t, "clearConversation")
+        }
+    }
+
+    private fun doInvalidateConversationCache() {
         client.invalidateConversationCache()
         clearCommand()
     }
