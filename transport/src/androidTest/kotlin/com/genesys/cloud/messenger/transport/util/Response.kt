@@ -39,6 +39,10 @@ internal object Response {
         """{"type":"message","class":"LogoutEvent","code":200,"body":{}}"""
     const val unauthorized =
         """{"type": "response","class": "string","code": 401,"body": "User is unauthorized"}"""
+    const val sessionClearedEvent =
+        """{"type":"message","class":"SessionClearedEvent","code":200,"body":{}}"""
+    fun clearConversationForbidden(errorMessage: String = "Presence events Conversation Clear are not supported") =
+        """{"type":"response","class":"string","code":403,"body":"$errorMessage"}"""
 
     fun structuredMessageWithEvents(
         events: String = defaultStructuredEvents,
