@@ -1353,6 +1353,181 @@ class MessagingClientImplTest {
         }
     }
 
+    @Test
+    fun whenClearConversationFromAnyNonReadOnlyOrConfiguredState() {
+        // currentState = Idle
+        assertThat(subject.currentState).isIdle()
+        assertFailsWith<IllegalStateException>("MessagingClient is not in Configured or ReadOnly state.") { subject.clearConversation() }
+
+        subject.connect()
+        // currentState = Reconnecting
+        every { mockReconnectionHandler.shouldReconnect } returns true
+        val givenException = Exception(ErrorMessage.InternetConnectionIsOffline)
+        slot.captured.onFailure(givenException, ErrorCode.WebsocketError)
+
+        assertThat(subject.currentState).isReconnecting()
+        assertFailsWith<IllegalStateException>("MessagingClient is not in Configured or ReadOnly state.") { subject.clearConversation() }
+
+        // currentState = Closed
+        subject.disconnect()
+        assertThat(subject.currentState).isClosed(1000, "The user has closed the connection.")
+        assertFailsWith<IllegalStateException>("MessagingClient is not in Configured or ReadOnly state.") { subject.clearConversation() }
+
+        // currentState = Error
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.sessionNotFound)
+        }
+        subject.connect()
+        assertThat(subject.currentState).isError(ErrorCode.SessionNotFound, "session not found error message")
+        assertFailsWith<IllegalStateException>("MessagingClient is not in Configured or ReadOnly state.") { subject.clearConversation() }
+    }
+
+    @Test
+    fun whenClearConversationIsDisabledInDeploymentConfigAndClearConversationIsCalled() {
+        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
+            messenger = createMessengerVOForTesting(
+                apps = Apps(
+                    conversations = createConversationsVOForTesting(
+                        conversationClear = Conversations.ConversationClear(enabled = false)
+                    )
+                )
+            )
+        )
+        val expectedEvent = Event.Error(
+            errorCode = ErrorCode.ClearConversationFailure,
+            message = ErrorMessage.FailedToClearConversation,
+            correctiveAction = CorrectiveAction.Forbidden,
+        )
+        subject.connect()
+
+        subject.clearConversation()
+
+        verifySequence {
+            connectSequence()
+            mockEventHandler.onEvent(eq(expectedEvent))
+        }
+        verify(exactly = 0) {
+            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+        }
+    }
+
+    @Test
+    fun whenSessionIsConfiguredAndClearConversationCalled() {
+        subject.connect()
+
+        subject.clearConversation()
+
+        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
+        verifySequence {
+            connectSequence()
+            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+        }
+    }
+
+    @Test
+    fun whenSessionIsReadOnlyAndClearConversationCalled() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.configureSuccess(readOnly = true))
+        }
+        subject.connect()
+
+        subject.clearConversation()
+
+        assertThat(subject.currentState).isReadOnly()
+        verifySequence {
+            connectToReadOnlySequence()
+            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+        }
+    }
+
+    @Test
+    fun whenSessionClearedEventReceived() {
+        val expectedEvent = Event.ConversationCleared
+
+        subject.connect()
+        slot.captured.onMessage(Response.sessionClearedEvent)
+
+        verifySequence {
+            connectSequence()
+            mockEventHandler.onEvent(eq(expectedEvent))
+        }
+    }
+
+    @Test
+    fun whenClearConversationRequestFailsByBackEndAndErrorMessageContainsConversation_ClearString() {
+        every { mockPlatformSocket.sendMessage(Request.clearConversation) } answers {
+            slot.captured.onMessage(Response.clearConversationForbidden())
+        }
+        val expectedEvent = Event.Error(
+            errorCode = ErrorCode.ClearConversationFailure,
+            message = "Presence events Conversation Clear are not supported",
+            correctiveAction = CorrectiveAction.Forbidden,
+        )
+        subject.connect()
+
+        subject.clearConversation()
+
+        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
+        verifySequence {
+            connectSequence()
+            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+            mockEventHandler.onEvent(expectedEvent)
+        }
+    }
+
+    @Test
+    fun whenClearConversationRequestFailsByBackEndAndErrorMessageContainsConversation_ClearStringInRandomOrder() {
+        // Test incorrect order of "Conversation" and "Clear".
+        every { mockPlatformSocket.sendMessage(Request.clearConversation) } answers {
+            slot.captured.onMessage(Response.clearConversationForbidden("Presence events Clear Conversation are not supported"))
+        }
+        val expectedEventCase1 = Event.Error(
+            errorCode = ErrorCode.ClientResponseError(403),
+            message = "Presence events Clear Conversation are not supported",
+            correctiveAction = CorrectiveAction.Forbidden,
+        )
+        subject.connect()
+
+        subject.clearConversation()
+
+        verify {
+            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+            mockEventHandler.onEvent(expectedEventCase1)
+        }
+
+        // Test "Conversation" and "Clear" Strings have word between them.
+        every { mockPlatformSocket.sendMessage(Request.clearConversation) } answers {
+            slot.captured.onMessage(Response.clearConversationForbidden("Presence events Clear THE Conversation are not supported"))
+        }
+        val expectedEventCase2 = Event.Error(
+            errorCode = ErrorCode.ClientResponseError(403),
+            message = "Presence events Clear THE Conversation are not supported",
+            correctiveAction = CorrectiveAction.Forbidden,
+        )
+        subject.clearConversation()
+
+        verify {
+            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+            mockEventHandler.onEvent(expectedEventCase2)
+        }
+
+        // Test "Conversation" and "Clear" has no space between them.
+        every { mockPlatformSocket.sendMessage(Request.clearConversation) } answers {
+            slot.captured.onMessage(Response.clearConversationForbidden("Presence events ClearConversation are not supported"))
+        }
+        val expectedEventCase3 = Event.Error(
+            errorCode = ErrorCode.ClientResponseError(403),
+            message = "Presence events ClearConversation are not supported",
+            correctiveAction = CorrectiveAction.Forbidden,
+        )
+        subject.clearConversation()
+
+        verify {
+            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+            mockEventHandler.onEvent(expectedEventCase3)
+        }
+    }
+
     private fun configuration(): Configuration = Configuration(
         deploymentId = "deploymentId",
         domain = "inindca.com",
@@ -1515,6 +1690,10 @@ private object Response {
         """{"type":"message","class":"LogoutEvent","code":200,"body":{}}"""
     const val unauthorized =
         """{"type": "response","class": "string","code": 401,"body": "User is unauthorized"}"""
+    const val sessionClearedEvent =
+        """{"type":"message","class":"SessionClearedEvent","code":200,"body":{}}"""
+    fun clearConversationForbidden(errorMessage: String = "Presence events Conversation Clear are not supported") =
+        """{"type":"response","class":"string","code":403,"body":"$errorMessage"}"""
 
     fun structuredMessageWithEvents(
         events: String = defaultStructuredEvents,

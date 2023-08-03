@@ -34,8 +34,10 @@ fun createMessengerVOForTesting(
 fun createConversationsVOForTesting(
     autoStart: Conversations.AutoStart = Conversations.AutoStart(),
     conversationDisconnect: Conversations.ConversationDisconnect = Conversations.ConversationDisconnect(),
+    conversationClear: Conversations.ConversationClear = Conversations.ConversationClear(enabled = true),
 ): Conversations = Conversations(
     messagingEndpoint = "messaging_endpoint",
     autoStart = autoStart,
     conversationDisconnect = conversationDisconnect,
+    conversationClear = conversationClear,
 )

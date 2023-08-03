@@ -16,4 +16,6 @@ internal object Request {
         """{"token":"$token","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Join"}}],"type":"Event"}}"""
     const val closeAllConnections =
         """{"token":"$token","closeAllConnections":true,"action":"closeSession"}"""
+    const val clearConversation =
+        """{"token":"$token","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Clear"}}],"type":"Event"}}"""
 }

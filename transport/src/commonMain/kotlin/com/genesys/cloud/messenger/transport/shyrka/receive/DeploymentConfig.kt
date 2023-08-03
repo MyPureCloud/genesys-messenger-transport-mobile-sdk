@@ -42,7 +42,8 @@ data class Conversations(
     val showAgentTypingIndicator: Boolean = false,
     val showUserTypingIndicator: Boolean = false,
     val autoStart: AutoStart = AutoStart(),
-    val conversationDisconnect: ConversationDisconnect = ConversationDisconnect()
+    val conversationDisconnect: ConversationDisconnect = ConversationDisconnect(),
+    val conversationClear: ConversationClear = ConversationClear(),
 ) {
     @Serializable
     data class AutoStart(val enabled: Boolean = false)
@@ -56,6 +57,9 @@ data class Conversations(
             Send,
         }
     }
+
+    @Serializable
+    data class ConversationClear(val enabled: Boolean = false)
 }
 
 @Serializable

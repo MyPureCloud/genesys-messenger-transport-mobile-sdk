@@ -43,6 +43,7 @@ internal data class PresenceEvent(
         internal enum class Type {
             Disconnect,
             Join,
+            Clear,
         }
     }
 }
