@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.network
 
 import com.genesys.cloud.messenger.transport.core.ErrorCode
+import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.extensions.string
 import com.genesys.cloud.messenger.transport.util.extensions.toNSData
 import com.genesys.cloud.messenger.transport.util.logs.Log
@@ -47,6 +48,7 @@ internal actual class PlatformSocket actual constructor(
     actual fun openSocket(listener: PlatformSocketListener) {
         val urlRequest = NSMutableURLRequest(socketEndpoint)
         urlRequest.setValue(url.host, forHTTPHeaderField = "Origin")
+        urlRequest.setValue(Platform().platform, forHTTPHeaderField = "User-Agent")
         urlRequest.setTimeoutInterval(TIMEOUT_INTERVAL)
         val urlSession = NSURLSession.sessionWithConfiguration(
             configuration = NSURLSessionConfiguration.defaultSessionConfiguration(),

@@ -8,6 +8,7 @@ import com.genesys.cloud.messenger.transport.core.events.Event.AgentTyping
 import com.genesys.cloud.messenger.transport.core.events.Event.Authorized
 import com.genesys.cloud.messenger.transport.core.events.Event.ConnectionClosed
 import com.genesys.cloud.messenger.transport.core.events.Event.ConversationAutostart
+import com.genesys.cloud.messenger.transport.core.events.Event.ConversationCleared
 import com.genesys.cloud.messenger.transport.core.events.Event.ConversationDisconnect
 import com.genesys.cloud.messenger.transport.core.events.Event.Error
 import com.genesys.cloud.messenger.transport.core.events.Event.HealthChecked
@@ -19,6 +20,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent.Typing
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Test
+import kotlin.test.assertNull
 
 class EventHandlerTest {
     private val mockEventListener: ((Event) -> Unit) = mockk(relaxed = true)
@@ -41,6 +43,7 @@ class EventHandlerTest {
             ConnectionClosed,
             Authorized,
             Logout,
+            ConversationCleared,
         )
 
         events.forEach {
@@ -116,5 +119,17 @@ class EventHandlerTest {
         ).toTransportEvent()
 
         assertThat(result).isEqualTo(expectedEvent)
+    }
+
+    @Test
+    fun whenPresenceEventClearToTransportEvent() {
+        val result = PresenceEvent(
+            StructuredMessageEvent.Type.Presence,
+            PresenceEvent.Presence(
+                PresenceEvent.Presence.Type.Clear
+            )
+        ).toTransportEvent()
+
+        assertNull(result)
     }
 }
