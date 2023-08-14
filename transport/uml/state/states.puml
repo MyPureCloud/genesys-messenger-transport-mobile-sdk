@@ -1,22 +1,21 @@
 @startuml
-skinparam {
-        ArrowColor darkBlue
-        backgroundColor #EEEBDC
-        NoteBackgroundColor #lightyellow
-        NoteBorderColor gray
-        sequenceGroupHeaderFontColor midnightblue
-        padding 6
-}
+'https://plantuml.com/sequence-diagram
 
-participant Idle #yellow
-participant Connecting #lightGreen
-participant Connected #lightGreen
-participant Configured #green
-participant ReadOnly #green
-participant Reconnecting #orange
-participant Closing #yellow
-participant Closed #yellow
-participant Error #red
+!theme bluegray
+!pragma teoz true
+
+skinparam backgroundColor #whitesmoke
+title States
+
+participant Idle
+participant Connecting
+participant Connected
+participant Configured
+participant ReadOnly
+participant Reconnecting
+participant Closing
+participant Closed
+participant Error
 
 Idle --> Connecting : connect
 Connecting --> Connected : WS opened

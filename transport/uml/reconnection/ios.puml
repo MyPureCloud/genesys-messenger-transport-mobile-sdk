@@ -1,22 +1,20 @@
 @startuml
+'https://plantuml.com/sequence-diagram
 
-skinparam {
-        ArrowColor darkBlue
-        backgroundColor #EEEBDC
-        NoteBackgroundColor #lightyellow
-        NoteBorderColor gray
-        sequenceGroupHeaderFontColor midnightblue
-        padding 6
-}
+!theme bluegray
+!pragma teoz true
 
-participant UI #red
-participant MobileMessenger #skyBlue
-participant MessagingClient #skyBlue
-participant StateMachine #skyBlue
-participant PlatformSocket #skyBlue
-participant NSURLSessionWebSocket #skyBlue
-participant ReconnectionHandler #skyBlue
-participant MessageStore #skyBlue
+skinparam backgroundColor #whitesmoke
+title Reconnection iOS
+
+participant UI
+participant MobileMessenger
+participant MessagingClient
+participant StateMachine
+participant PlatformSocket
+participant NSURLSessionWebSocket
+participant ReconnectionHandler
+participant MessageStore
 
 UI -> MobileMessenger: createMessagingClient(Configuration)
 MobileMessenger -> ReconnectionHandler: init(reconnectionTimeoutInSeconds)
@@ -28,15 +26,15 @@ StateMachine --> UI: stateChangedListener(old = Idle, new = Connecting)
 MessagingClient -> PlatformSocket: connect
 PlatformSocket -> NSURLSessionWebSocket: init
 
-alt #lightgreen SUCCESS
+alt #aaff8833 SUCCESS
     NSURLSessionWebSocket --> PlatformSocket: onOpen
     PlatformSocket --> MessagingClient: onOpen
     MessagingClient -> StateMachine: onConnectionOpened
     StateMachine --> UI: stateChangedListener(old = Connecting, new = Connected)
-    loop #EEEBDC forever
+    loop #fcfcfcaa forever
     PlatformSocket -> NSURLSessionWebSocket: ping (every 15 seconds)
     PlatformSocket -> PlatformSocket: waitForPong
-        alt #FF7276 pong not received
+        alt #ffaaff33 pong not received
             PlatformSocket -> NSURLSessionWebSocket: cancelPings
             PlatformSocket -> NSURLSessionWebSocket: closeSocket
             PlatformSocket -> MessagingClient: onFailure
@@ -49,7 +47,7 @@ alt #lightgreen SUCCESS
             MessagingClient -> ReconnectionHandler: shouldReconnect
             ReconnectionHandler --> MessagingClient: attempt > maxAttempts
             ReconnectionHandler -> ReconnectionHandler: attempt++
-            alt #lightgreen shouldReconnect == true
+            alt #aaff8833 shouldReconnect == true
                 MessagingClient -> StateMachine: onReconnecting
                 StateMachine --> UI: stateChangedListener(old = Configured, new = Reconnecting)
                 MessagingClient -> PlatformSocket: connect
@@ -70,7 +68,7 @@ alt #lightgreen SUCCESS
                 ReconnectionHandler -> ReconnectionHandler: attempt = 0
                 MessagingClient -> StateMachine: onSessionConfigured
                 StateMachine --> UI: stateChangedListener(old = Reconnecting, new = Configured)
-            else #FF7276 shouldReconnect == false
+            else #ffaaff33 shouldReconnect == false
                 MessagingClient -> StateMachine: onError
                 StateMachine --> UI: stateChangedListener(old = Reconnecting, new = Error)
             end
@@ -84,14 +82,14 @@ alt SUCCESS
     PlatformSocket --> MessagingClient: onConfigured
     MessagingClient -> StateMachine: onSessionConfigured
     StateMachine --> UI: stateChangedListener(old = Connected, new = Configured)
-else #FF7276 FAILURE
+else #ffaaff33 FAILURE
     PlatformSocket --> MessagingClient: onFailure
         note right MessagingClient
                    In case configure failed iterate over shouldReconnect
         end note
     MessagingClient --> UI: onStateChanged(Error)
 end
-else #FF7276 FAILURE
+else #ffaaff33 FAILURE
     PlatformSocket --> MessagingClient: onFailure
      note right MessagingClient
                        In case connect failed iterate over shouldReconnect

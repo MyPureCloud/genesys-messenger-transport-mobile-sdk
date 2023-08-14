@@ -1,19 +1,18 @@
 @startuml
-skinparam {
-        ArrowColor darkBlue
-        backgroundColor #EEEBDC
-        NoteBackgroundColor #lightyellow
-        NoteBorderColor gray
-        sequenceGroupHeaderFontColor midnightblue
-        padding 6
-}
+'https://plantuml.com/sequence-diagram
 
-participant App #lightGreen
-participant "Auth Server" #lightGreen
-participant "Transport SDK" #lightGreen
-participant "Genesys Cloud Platform API" #lightGreen
-participant "Shyrka API" #lightGreen
-participant Agent #lightGreen
+!theme bluegray
+!pragma teoz true
+
+skinparam backgroundColor #whitesmoke
+title Authenticated Session
+
+participant App
+participant "Auth Server"
+participant "Transport SDK"
+participant "Genesys Cloud Platform API"
+participant "Shyrka API"
+participant Agent
 
 group Authorization code flow
     App -> "Auth Server" : 1. Authentication request with clientId, scopes, redirectUri etc.
