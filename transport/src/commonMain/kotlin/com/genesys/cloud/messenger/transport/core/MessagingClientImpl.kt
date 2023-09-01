@@ -84,6 +84,7 @@ internal class MessagingClientImpl(
     private var connectAuthenticated = false
     private var isStartingANewSession = false
     private var reconfigureAttempts = 0
+    private var sendingAutostart = false
 
     override val currentState: State
         get() {
@@ -293,10 +294,17 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     private fun sendAutoStart() {
-        WebMessagingJson.json.encodeToString(AutoStartRequest(token)).let {
-            log.i { "sendAutoStart()" }
-            send(it)
-        }
+        sendingAutostart = true
+        WebMessagingJson.json.encodeToString(
+            AutoStartRequest(
+                token,
+                messageStore.initialCustomAttributes
+            )
+        )
+            .let {
+                log.i { "sendAutoStart()" }
+                send(it)
+            }
     }
 
     /**
@@ -328,6 +336,19 @@ internal class MessagingClientImpl(
             is ErrorCode.RequestRateTooHigh,
             is ErrorCode.CustomAttributeSizeTooLarge,
             -> {
+                if (code is ErrorCode.CustomAttributeSizeTooLarge) {
+                    messageStore.clearInitialCustomAttributes()
+                    if (sendingAutostart) {
+                        sendingAutostart = false
+                        eventHandler.onEvent(
+                            Event.Error(
+                                code,
+                                message,
+                                code.toCorrectiveAction()
+                            )
+                        )
+                    }
+                }
                 messageStore.onMessageError(code, message)
                 attachmentHandler.onMessageError(code, message)
             }
@@ -422,7 +443,9 @@ internal class MessagingClientImpl(
                 } else {
                     structuredMessage.events.forEach {
                         if (it is PresenceEvent) {
-                            eventHandler.onEvent(it.toTransportEvent())
+                            val event = it.toTransportEvent()
+                            if (event is Event.ConversationAutostart) sendingAutostart = false
+                            eventHandler.onEvent(event)
                         }
                     }
                 }
@@ -440,6 +463,7 @@ internal class MessagingClientImpl(
         attachmentHandler.clearAll()
         reconnectionHandler.clear()
         reconfigureAttempts = 0
+        sendingAutostart = false
     }
 
     private fun transitionToStateError(errorCode: ErrorCode, errorMessage: String?) {
@@ -447,6 +471,7 @@ internal class MessagingClientImpl(
         attachmentHandler.clearAll()
         reconnectionHandler.clear()
         reconfigureAttempts = 0
+        sendingAutostart = false
     }
 
     private fun encodeAnonymousConfigureSessionRequest(startNew: Boolean) =

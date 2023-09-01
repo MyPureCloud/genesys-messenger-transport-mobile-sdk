@@ -12,6 +12,7 @@ internal const val DEFAULT_PAGE_SIZE = 25
 internal class MessageStore(
     private val token: String,
     private val log: Log,
+    val initialCustomAttributes: MutableMap<String, String> = mutableMapOf(),
 ) {
     var nextPage: Int = 1
         private set
@@ -27,6 +28,7 @@ internal class MessageStore(
         text: String,
         customAttributes: Map<String, String> = emptyMap(),
     ): OnMessageRequest {
+        mergeInitialCustomAttributesWith(customAttributes)
         val messageToSend = pendingMessage.copy(text = text, state = Message.State.Sending).also {
             log.i { "Message prepared to send: $it" }
             activeConversation.add(it)
@@ -99,6 +101,8 @@ internal class MessageStore(
         startOfConversation = false
     }
 
+    fun clearInitialCustomAttributes() = initialCustomAttributes.clear()
+
     private fun publish(event: MessageEvent) {
         messageListener?.invoke(event)
     }
@@ -115,6 +119,12 @@ internal class MessageStore(
             activeConversation.none { activeMessage ->
                 message.timeStamp == activeMessage.timeStamp
             }
+        }
+    }
+
+    private fun mergeInitialCustomAttributesWith(customAttributes: Map<String, String>) {
+        for ((key, value) in customAttributes) {
+            initialCustomAttributes[key] = value
         }
     }
 }

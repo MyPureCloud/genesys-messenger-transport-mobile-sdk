@@ -31,7 +31,8 @@ class MCAutostartTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockPlatformSocket.sendMessage(Request.autostart)
+            mockMessageStore.initialCustomAttributes
+            mockPlatformSocket.sendMessage(Request.autostart())
         }
     }
 
@@ -52,7 +53,7 @@ class MCAutostartTests : BaseMessagingClientTest() {
 
         subject.connect()
 
-        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart) }
+        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart()) }
     }
 
     @Test
@@ -63,14 +64,14 @@ class MCAutostartTests : BaseMessagingClientTest() {
 
         subject.connect()
 
-        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart) }
+        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart()) }
     }
 
     @Test
     fun `when new session and autostart disabled`() {
         subject.connect()
 
-        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart) }
+        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart()) }
     }
 
     @Test
@@ -79,7 +80,7 @@ class MCAutostartTests : BaseMessagingClientTest() {
 
         subject.connect()
 
-        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart) }
+        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart()) }
     }
 
     @Test

@@ -55,8 +55,10 @@ class MessengerTransport(
 
     /**
      * Creates an instance of [MessagingClient] based on the provided configuration.
+     *
+     * @param initialCustomAttributes optional dictionary of custom attributes to send with autostart request.
      */
-    fun createMessagingClient(): MessagingClient {
+    fun createMessagingClient(initialCustomAttributes: Map<String, String> = emptyMap()): MessagingClient {
         val log = Log(configuration.logging, LogTag.MESSAGING_CLIENT)
         if (deploymentConfig == null) {
             CoroutineScope(Dispatchers.Main + SupervisorJob()).launch {
@@ -75,7 +77,7 @@ class MessengerTransport(
         )
         // Support old TokenStore. If TokenStore not present fallback to the Vault.
         val token = tokenStore?.token ?: vault.token
-        val messageStore = MessageStore(token, log.withTag(LogTag.MESSAGE_STORE))
+        val messageStore = MessageStore(token, log.withTag(LogTag.MESSAGE_STORE), initialCustomAttributes.toMutableMap())
         val attachmentHandler = AttachmentHandlerImpl(
             api,
             token,

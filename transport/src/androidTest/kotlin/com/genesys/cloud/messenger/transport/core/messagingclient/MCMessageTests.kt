@@ -65,6 +65,9 @@ class MCMessageTests : BaseMessagingClientTest() {
             connectSequence()
             mockMessageStore.onMessageError(ErrorCode.MessageTooLong, "message too long")
         }
+        verify(exactly = 0) {
+            mockMessageStore.clearInitialCustomAttributes()
+        }
     }
 
     @Test
@@ -83,6 +86,33 @@ class MCMessageTests : BaseMessagingClientTest() {
                 ErrorCode.RequestRateTooHigh,
                 "Message rate too high for this session. Retry after 3 seconds."
             )
+        }
+        verify(exactly = 0) {
+            mockMessageStore.clearInitialCustomAttributes()
+        }
+    }
+
+    @Test
+    fun `when SocketListener invoke onMessage with CustomAttributesTooLarge error message`() {
+        val expectedErrorMessage = "Custom Attributes in channel metadata is larger than 2048 bytes"
+        subject.connect()
+
+        slot.captured.onMessage(Response.customAttributeSizeTooLarge)
+
+        verifySequence {
+            connectSequence()
+            mockMessageStore.clearInitialCustomAttributes()
+            mockMessageStore.onMessageError(
+                ErrorCode.CustomAttributeSizeTooLarge,
+                expectedErrorMessage
+            )
+            mockAttachmentHandler.onMessageError(
+                ErrorCode.CustomAttributeSizeTooLarge,
+                expectedErrorMessage
+            )
+        }
+        verify(exactly = 0) {
+            mockEventHandler.onEvent(any())
         }
     }
 }

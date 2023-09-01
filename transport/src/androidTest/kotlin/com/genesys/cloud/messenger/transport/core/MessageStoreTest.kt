@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.core
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.containsOnly
+import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
@@ -24,10 +25,15 @@ import kotlin.test.assertTrue
 
 internal class MessageStoreTest {
     private val givenToken = Request.token
+    private val givenInitialCustomAttributes = mutableMapOf("initialCustomAttributes" to "foo")
     private val messageSlot = slot<MessageEvent>()
     private val mockMessageListener: ((MessageEvent) -> Unit) = mockk(relaxed = true)
 
-    private val subject = MessageStore(givenToken, mockk(relaxed = true)).also {
+    private val subject = MessageStore(
+        token = givenToken,
+        log = mockk(relaxed = true),
+        initialCustomAttributes = givenInitialCustomAttributes
+    ).also {
         it.messageListener = mockMessageListener
     }
 
@@ -325,6 +331,7 @@ internal class MessageStoreTest {
 
     @Test
     fun whenPrepareMessageWithCustomAttributes() {
+        val expectedInitialCustomAttributes = mapOf("initialCustomAttributes" to "foo", "A" to "B")
         val expectedMessage =
             subject.pendingMessage.copy(state = Message.State.Sending, text = "test message")
         val expectedOnMessageRequest = OnMessageRequest(
@@ -345,11 +352,28 @@ internal class MessageStoreTest {
 
         assertEquals(expectedMessage, subject.getConversation()[0])
         assertNotEquals(expectedMessage.id, subject.pendingMessage.id)
+        assertThat(subject.initialCustomAttributes).isEqualTo(expectedInitialCustomAttributes)
         verify { mockMessageListener(capture(messageSlot)) }
         assertEquals(
             expectedMessage,
             (messageSlot.captured as MessageEvent.MessageInserted).message
         )
+    }
+
+    @Test
+    fun `when prepareMessage has custom attribute with same key but different value as in initialCustomAttributes`() {
+        val givenNewCustomAttributes = mapOf("initialCustomAttributes" to "some new value here.")
+
+        subject.prepareMessage("test message", givenNewCustomAttributes)
+
+        assertThat(subject.initialCustomAttributes).isEqualTo(givenNewCustomAttributes)
+    }
+
+    @Test
+    fun `when clearInitialCustomAttributes is called`() {
+        subject.clearInitialCustomAttributes()
+
+        assertThat(subject.initialCustomAttributes).isEmpty()
     }
 
     private fun outboundMessage(messageId: Int = 0): Message = Message(
@@ -362,7 +386,7 @@ internal class MessageStoreTest {
 
     private fun attachment(
         id: String = "given id",
-        state: Attachment.State = Attachment.State.Presigning
+        state: Attachment.State = Attachment.State.Presigning,
     ) = Attachment(id, "file.png", state)
 
     private fun messageList(size: Int = 5): List<Message> {
