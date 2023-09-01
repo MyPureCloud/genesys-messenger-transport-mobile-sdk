@@ -243,7 +243,9 @@ internal class MessagingClientImpl(
                             return
                         }
                         log.w { "History fetch failed with: $it" }
-                        eventHandler.onEvent(Event.Error(ErrorCode.HistoryFetchFailure, it.message, it.errorCode.toCorrectiveAction()))
+                        eventHandler.onEvent(Event.Error(ErrorCode.HistoryFetchFailure,
+                            it.message,
+                            it.errorCode.toCorrectiveAction()))
                     }
                 }
             }
@@ -300,11 +302,10 @@ internal class MessagingClientImpl(
                 token,
                 messageStore.initialCustomAttributes
             )
-        )
-            .let {
-                log.i { "sendAutoStart()" }
-                send(it)
-            }
+        ).let {
+            log.i { "sendAutoStart()" }
+            send(it)
+        }
     }
 
     /**
@@ -412,7 +413,8 @@ internal class MessagingClientImpl(
     }
 
     private fun handleConventionalHttpErrorResponse(code: ErrorCode, message: String?) {
-        val errorCode = if (message.isClearConversationError()) ErrorCode.ClearConversationFailure else code
+        val errorCode =
+            if (message.isClearConversationError()) ErrorCode.ClearConversationFailure else code
         eventHandler.onEvent(
             Event.Error(
                 errorCode = errorCode,
