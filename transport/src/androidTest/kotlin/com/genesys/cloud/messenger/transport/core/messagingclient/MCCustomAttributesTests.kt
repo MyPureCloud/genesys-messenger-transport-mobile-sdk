@@ -25,11 +25,12 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
             """{"token":"${Request.token}","message":{"text":"Hello world","channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"action":"onMessage"}"""
         val expectedText = "Hello world"
         val expectedCustomAttributes = mapOf("A" to "B")
+        val expectedChannel = Channel(Channel.Metadata(expectedCustomAttributes))
         every { mockMessageStore.prepareMessage(any(), any()) } returns OnMessageRequest(
             token = Request.token,
             message = TextMessage(
                 text = "Hello world",
-                channel = Channel(Channel.Metadata(expectedCustomAttributes)),
+                channel = expectedChannel,
             ),
         )
         subject.connect()
@@ -38,7 +39,10 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockMessageStore.prepareMessage(expectedText, expectedCustomAttributes)
+            mockCustomAttributesStore.add(expectedCustomAttributes)
+            mockCustomAttributesStore.getCustomAttributesToSend()
+            mockCustomAttributesStore.onSending()
+            mockMessageStore.prepareMessage(expectedText, expectedChannel)
             mockAttachmentHandler.onSending()
             mockPlatformSocket.sendMessage(expectedMessage)
         }
@@ -54,7 +58,7 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockMessageStore.clearInitialCustomAttributes()
+            mockCustomAttributesStore.onError()
             mockMessageStore.onMessageError(expectedErrorCode, expectedErrorMessage)
             mockAttachmentHandler.onMessageError(expectedErrorCode, expectedErrorMessage)
         }
@@ -62,7 +66,6 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
 
     @Test
     fun `when autostart request is sent with customAttributes`() {
-        every { mockMessageStore.initialCustomAttributes } returns mutableMapOf("A" to "B")
         every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
             messenger = createMessengerVOForTesting(
                 apps = Apps(
@@ -77,8 +80,9 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockMessageStore.initialCustomAttributes
-            mockPlatformSocket.sendMessage(Request.autostart("""{"customAttributes":{"A":"B"}}"""))
+            mockCustomAttributesStore.getCustomAttributesToSend()
+            mockCustomAttributesStore.onSending()
+            mockPlatformSocket.sendMessage(Request.autostart())
         }
     }
 
@@ -95,8 +99,8 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
                 )
             )
         )
-        every { mockMessageStore.initialCustomAttributes } returns mutableMapOf("A" to fakeLargeCustomAttribute)
-        every { mockPlatformSocket.sendMessage(Request.autostart("""{"customAttributes":{"A":"$fakeLargeCustomAttribute"}}""")) } answers {
+        every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mutableMapOf("A" to fakeLargeCustomAttribute)
+        every { mockPlatformSocket.sendMessage(Request.autostart(""""channel":{"metadata":{"customAttributes":{"A":"$fakeLargeCustomAttribute"}}},""")) } answers {
             slot.captured.onMessage(Response.customAttributeSizeTooLarge)
         }
 
@@ -104,9 +108,10 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockMessageStore.initialCustomAttributes
-            mockPlatformSocket.sendMessage(Request.autostart("""{"customAttributes":{"A":"$fakeLargeCustomAttribute"}}"""))
-            mockMessageStore.clearInitialCustomAttributes()
+            mockCustomAttributesStore.getCustomAttributesToSend()
+            mockCustomAttributesStore.onSending()
+            mockPlatformSocket.sendMessage(Request.autostart(""""channel":{"metadata":{"customAttributes":{"A":"$fakeLargeCustomAttribute"}}},"""))
+            mockCustomAttributesStore.onError()
             mockEventHandler.onEvent(
                 Event.Error(
                     ErrorCode.CustomAttributeSizeTooLarge,

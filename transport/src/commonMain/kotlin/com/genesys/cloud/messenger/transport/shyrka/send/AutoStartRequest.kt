@@ -10,7 +10,7 @@ import kotlinx.serialization.Transient
 internal data class AutoStartRequest(
     override val token: String,
     @Transient
-    val customAttributes: Map<String, String> = emptyMap(),
+    private val channel: Channel? = null,
 ) : WebMessagingRequest {
     @Required
     override val action: String = RequestAction.ON_MESSAGE.value
@@ -22,6 +22,6 @@ internal data class AutoStartRequest(
                 presence = PresenceEvent.Presence(type = PresenceEvent.Presence.Type.Join),
             )
         ),
-        channel = Channel(Channel.Metadata(customAttributes)),
+        channel = channel,
     )
 }

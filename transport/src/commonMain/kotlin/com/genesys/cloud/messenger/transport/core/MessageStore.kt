@@ -12,7 +12,6 @@ internal const val DEFAULT_PAGE_SIZE = 25
 internal class MessageStore(
     private val token: String,
     private val log: Log,
-    val initialCustomAttributes: MutableMap<String, String> = mutableMapOf(),
 ) {
     var nextPage: Int = 1
         private set
@@ -24,19 +23,13 @@ internal class MessageStore(
     val updateAttachmentStateWith = { attachment: Attachment -> update(attachment) }
     var messageListener: ((MessageEvent) -> Unit)? = null
 
-    fun prepareMessage(
-        text: String,
-        customAttributes: Map<String, String> = emptyMap(),
-    ): OnMessageRequest {
-        mergeInitialCustomAttributesWith(customAttributes)
+    fun prepareMessage(text: String, channel: Channel? = null): OnMessageRequest {
         val messageToSend = pendingMessage.copy(text = text, state = Message.State.Sending).also {
             log.i { "Message prepared to send: $it" }
             activeConversation.add(it)
             publish(MessageEvent.MessageInserted(it))
             pendingMessage = Message()
         }
-        val channel =
-            if (customAttributes.isNotEmpty()) Channel(Channel.Metadata(customAttributes)) else null
         return OnMessageRequest(
             token = token,
             message = TextMessage(
@@ -101,8 +94,6 @@ internal class MessageStore(
         startOfConversation = false
     }
 
-    fun clearInitialCustomAttributes() = initialCustomAttributes.clear()
-
     private fun publish(event: MessageEvent) {
         messageListener?.invoke(event)
     }
@@ -119,12 +110,6 @@ internal class MessageStore(
             activeConversation.none { activeMessage ->
                 message.timeStamp == activeMessage.timeStamp
             }
-        }
-    }
-
-    private fun mergeInitialCustomAttributesWith(customAttributes: Map<String, String>) {
-        for ((key, value) in customAttributes) {
-            initialCustomAttributes[key] = value
         }
     }
 }

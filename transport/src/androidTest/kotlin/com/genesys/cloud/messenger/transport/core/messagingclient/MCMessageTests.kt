@@ -33,9 +33,15 @@ class MCMessageTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
+            mockCustomAttributesStore.add(emptyMap())
+            mockCustomAttributesStore.getCustomAttributesToSend()
             mockMessageStore.prepareMessage(expectedText)
             mockAttachmentHandler.onSending()
             mockPlatformSocket.sendMessage(expectedMessage)
+        }
+
+        verify(exactly = 0) {
+            mockCustomAttributesStore.onSending()
         }
     }
 
@@ -66,7 +72,7 @@ class MCMessageTests : BaseMessagingClientTest() {
             mockMessageStore.onMessageError(ErrorCode.MessageTooLong, "message too long")
         }
         verify(exactly = 0) {
-            mockMessageStore.clearInitialCustomAttributes()
+            mockCustomAttributesStore.onError()
         }
     }
 
@@ -88,7 +94,7 @@ class MCMessageTests : BaseMessagingClientTest() {
             )
         }
         verify(exactly = 0) {
-            mockMessageStore.clearInitialCustomAttributes()
+            mockCustomAttributesStore.onError()
         }
     }
 
@@ -101,7 +107,7 @@ class MCMessageTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockMessageStore.clearInitialCustomAttributes()
+            mockCustomAttributesStore.onError()
             mockMessageStore.onMessageError(
                 ErrorCode.CustomAttributeSizeTooLarge,
                 expectedErrorMessage

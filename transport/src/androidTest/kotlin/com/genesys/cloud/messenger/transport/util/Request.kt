@@ -12,8 +12,8 @@ internal object Request {
         """{"token":"$token","action":"onMessage","message":{"events":[{"eventType":"Typing","typing":{"type":"On"}}],"type":"Event"}}"""
     const val echoRequest =
         """{"token":"$token","action":"echo","message":{"text":"ping","metadata":{"customMessageId":"SGVhbHRoQ2hlY2tNZXNzYWdlSWQ="},"type":"Text"}}"""
-    fun autostart(customAttributes: String = """{"customAttributes":{}}""") =
-        """{"token":"$token","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Join"}}],"channel":{"metadata":$customAttributes},"type":"Event"}}"""
+    fun autostart(channelWithCustomAttributes: String = """"channel":{"metadata":{"customAttributes":{"A":"B"}}},""") =
+        """{"token":"$token","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Join"}}],$channelWithCustomAttributes"type":"Event"}}"""
     const val closeAllConnections =
         """{"token":"$token","closeAllConnections":true,"action":"closeSession"}"""
     const val clearConversation =

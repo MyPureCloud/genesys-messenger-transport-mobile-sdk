@@ -1,5 +1,6 @@
 package com.genesys.cloud.messenger.transport.core.messagingclient
 
+import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
@@ -17,11 +18,14 @@ class MCAutostartTests : BaseMessagingClientTest() {
 
     @Test
     fun `when new session and autostart enabled`() {
+        every { mockCustomAttributesStore.getCustomAttributesToSend() } returns emptyMap()
         every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
             messenger = createMessengerVOForTesting(
                 apps = Apps(
                     conversations = createConversationsVOForTesting(
-                        autoStart = Conversations.AutoStart(enabled = true)
+                        autoStart = Conversations.AutoStart(
+                            enabled = true
+                        )
                     )
                 )
             )
@@ -31,8 +35,8 @@ class MCAutostartTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockMessageStore.initialCustomAttributes
-            mockPlatformSocket.sendMessage(Request.autostart())
+            mockCustomAttributesStore.getCustomAttributesToSend()
+            mockPlatformSocket.sendMessage(Request.autostart(""))
         }
     }
 
@@ -45,7 +49,9 @@ class MCAutostartTests : BaseMessagingClientTest() {
             messenger = createMessengerVOForTesting(
                 apps = Apps(
                     conversations = createConversationsVOForTesting(
-                        autoStart = Conversations.AutoStart(enabled = true)
+                        autoStart = Conversations.AutoStart(
+                            enabled = true
+                        )
                     )
                 )
             )
@@ -53,7 +59,11 @@ class MCAutostartTests : BaseMessagingClientTest() {
 
         subject.connect()
 
-        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart()) }
+        verify(exactly = 0) {
+            mockCustomAttributesStore.getCustomAttributesToSend()
+            mockCustomAttributesStore.onSending()
+            mockPlatformSocket.sendMessage(Request.autostart())
+        }
     }
 
     @Test
@@ -71,7 +81,11 @@ class MCAutostartTests : BaseMessagingClientTest() {
     fun `when new session and autostart disabled`() {
         subject.connect()
 
-        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart()) }
+        verify(exactly = 0) {
+            mockCustomAttributesStore.getCustomAttributesToSend()
+            mockCustomAttributesStore.onSending()
+            mockPlatformSocket.sendMessage(Request.autostart())
+        }
     }
 
     @Test
@@ -80,7 +94,11 @@ class MCAutostartTests : BaseMessagingClientTest() {
 
         subject.connect()
 
-        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart()) }
+        verify(exactly = 0) {
+            mockCustomAttributesStore.getCustomAttributesToSend()
+            mockCustomAttributesStore.onSending()
+            mockPlatformSocket.sendMessage(Request.autostart())
+        }
     }
 
     @Test
@@ -89,9 +107,15 @@ class MCAutostartTests : BaseMessagingClientTest() {
         val expectedEvent = Event.ConversationAutostart
 
         subject.connect()
-        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceJoinEvent))
+        slot.captured.onMessage(
+            Response.structuredMessageWithEvents(
+                direction = Message.Direction.Inbound,
+                events = givenPresenceJoinEvent
+            )
+        )
 
         verify {
+            mockCustomAttributesStore.onSent()
             mockEventHandler.onEvent(eq(expectedEvent))
         }
     }

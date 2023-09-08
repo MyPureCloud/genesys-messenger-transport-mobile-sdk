@@ -16,7 +16,6 @@ class TestbedViewController: UIViewController {
     private var attachImageName = ""
     private let attachmentName = "image"
     private var byteArray: [UInt8]? = nil
-    private var customAttributes: [String: String] = [:]
     private var cancellables = Set<AnyCancellable>()
     private var pkceEnabled = false
     private var authCode: String? = nil
@@ -381,8 +380,7 @@ extension TestbedViewController : UITextFieldDelegate {
             case (.bye, _):
                 try messenger.disconnect()
             case (.send, let msg?):
-                try messenger.sendMessage(text: msg.trimmingCharacters(in: .whitespaces), customAttributes: customAttributes)
-                customAttributes = [:]
+                try messenger.sendMessage(text: msg.trimmingCharacters(in: .whitespaces))
             case (.history, _):
                 messenger.fetchNextPage()
             case (.healthCheck, _):
@@ -422,10 +420,11 @@ extension TestbedViewController : UITextFieldDelegate {
             case (.invalidateConversationCache, _):
                 messenger.invalidateConversationCache()
             case(.addAttribute, let msg?):
+                
                 let segments = segmentUserInput(msg)
                 if let key = segments.0, !key.isEmpty {
                     let value = segments.1 ?? ""
-                    customAttributes[key] = value
+                    messenger.addCustomAttributes(customAttributes: [key: value])
                     self.info.text = "Custom attribute added: key: \(key) value: \(value)"
                 }  else {
                     self.info.text = "Custom attribute key cannot be nil or empty!"
