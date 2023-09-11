@@ -165,4 +165,8 @@ final class MessengerInteractor {
             throw error
         }
     }
+    
+    func addCustomAttributes(customAttributes: [String: String] = [:]) {
+         messagingClient.customAttributesStore.add(customAttributes: customAttributes)
+    }
 }

@@ -68,7 +68,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
 
     val regions = listOf("inindca.com", "inintca.com", "mypurecloud.com")
-    private val customAttributes = mutableMapOf<String, String>()
     private lateinit var onOktaSingIn: (url: String) -> Unit
 
     fun init(
@@ -86,6 +85,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         DefaultVault.context = context
         messengerTransport = MessengerTransport(mmsdkConfiguration)
         client = messengerTransport.createMessagingClient()
+        client.customAttributesStore.add(mapOf("sdkVersion" to "Transport SDK: ${MessengerTransport.sdkVersion}"))
         with(client) {
             stateChangedListener = {
                 runBlocking {
@@ -209,8 +209,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private fun doSendMessage(message: String) {
         try {
-            client.sendMessage(message, customAttributes = customAttributes)
-            customAttributes.clear()
+            client.sendMessage(message)
         } catch (t: Throwable) {
             handleException(t, "send message")
         }
@@ -274,7 +273,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         clearCommand()
         val keyValue = customAttributes.toKeyValuePair()
         val consoleMessage = if (keyValue.first.isNotEmpty()) {
-            this.customAttributes[keyValue.first] = keyValue.second
+            client.customAttributesStore.add(mapOf(keyValue))
             "Custom attribute added: $keyValue"
         } else {
             "Custom attribute key can not be null or empty!"

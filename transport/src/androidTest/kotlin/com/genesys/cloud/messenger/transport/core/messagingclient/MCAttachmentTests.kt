@@ -118,6 +118,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         verifySequence {
             connectSequence()
             mockMessageStore.update(expectedMessage)
+            mockCustomAttributesStore.onSent()
             mockAttachmentHandler.onSent(mapOf("attachment_id" to expectedAttachment))
         }
     }

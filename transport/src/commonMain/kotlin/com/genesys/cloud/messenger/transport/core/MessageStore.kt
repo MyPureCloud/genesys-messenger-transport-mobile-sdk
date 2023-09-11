@@ -23,18 +23,13 @@ internal class MessageStore(
     val updateAttachmentStateWith = { attachment: Attachment -> update(attachment) }
     var messageListener: ((MessageEvent) -> Unit)? = null
 
-    fun prepareMessage(
-        text: String,
-        customAttributes: Map<String, String> = emptyMap(),
-    ): OnMessageRequest {
+    fun prepareMessage(text: String, channel: Channel? = null): OnMessageRequest {
         val messageToSend = pendingMessage.copy(text = text, state = Message.State.Sending).also {
             log.i { "Message prepared to send: $it" }
             activeConversation.add(it)
             publish(MessageEvent.MessageInserted(it))
             pendingMessage = Message()
         }
-        val channel =
-            if (customAttributes.isNotEmpty()) Channel(Channel.Metadata(customAttributes)) else null
         return OnMessageRequest(
             token = token,
             message = TextMessage(
