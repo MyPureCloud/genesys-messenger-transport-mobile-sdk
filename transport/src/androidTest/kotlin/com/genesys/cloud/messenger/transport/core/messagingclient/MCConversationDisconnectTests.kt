@@ -122,7 +122,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
         verifySequence {
             connectToReadOnlySequence()
         }
-        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart) }
+        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart()) }
     }
 
     @Test

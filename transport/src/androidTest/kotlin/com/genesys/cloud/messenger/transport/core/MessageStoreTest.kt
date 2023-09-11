@@ -27,7 +27,10 @@ internal class MessageStoreTest {
     private val messageSlot = slot<MessageEvent>()
     private val mockMessageListener: ((MessageEvent) -> Unit) = mockk(relaxed = true)
 
-    private val subject = MessageStore(givenToken, mockk(relaxed = true)).also {
+    private val subject = MessageStore(
+        token = givenToken,
+        log = mockk(relaxed = true),
+    ).also {
         it.messageListener = mockMessageListener
     }
 
@@ -324,7 +327,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenPrepareMessageWithCustomAttributes() {
+    fun whenPrepareMessageWithChannelThatHasCustomAttributes() {
         val expectedMessage =
             subject.pendingMessage.copy(state = Message.State.Sending, text = "test message")
         val expectedOnMessageRequest = OnMessageRequest(
@@ -336,7 +339,7 @@ internal class MessageStoreTest {
             ),
         )
 
-        subject.prepareMessage("test message", mapOf("A" to "B")).run {
+        subject.prepareMessage("test message", Channel(Channel.Metadata(mapOf("A" to "B")))).run {
             assertEquals(expectedOnMessageRequest.token, token)
             assertEquals(expectedOnMessageRequest.message, message)
             assertEquals(expectedOnMessageRequest.message.channel, message.channel)
@@ -362,7 +365,7 @@ internal class MessageStoreTest {
 
     private fun attachment(
         id: String = "given id",
-        state: Attachment.State = Attachment.State.Presigning
+        state: Attachment.State = Attachment.State.Presigning,
     ) = Attachment(id, "file.png", state)
 
     private fun messageList(size: Int = 5): List<Message> {

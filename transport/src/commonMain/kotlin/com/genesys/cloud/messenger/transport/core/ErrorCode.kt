@@ -95,6 +95,7 @@ sealed class CorrectiveAction(val message: String) {
     object TooManyRequests : CorrectiveAction("Retry later.")
     object Unknown : CorrectiveAction("Action unknown.")
     object ReAuthenticate : CorrectiveAction("User re-authentication is required.")
+    object CustomAttributeSizeTooLarge : CorrectiveAction("Shorten the custom attributes to 2048 bytes or fewer")
 
     override fun toString(): String {
         return message
@@ -107,6 +108,7 @@ internal fun ErrorCode.toCorrectiveAction(): CorrectiveAction = when (this.code)
     404 -> CorrectiveAction.NotFound
     408 -> CorrectiveAction.RequestTimeOut
     429 -> CorrectiveAction.TooManyRequests
+    4013 -> CorrectiveAction.CustomAttributeSizeTooLarge
     ErrorCode.AuthFailed.code,
     ErrorCode.AuthLogoutFailed.code,
     ErrorCode.RefreshAuthTokenFailure.code,
