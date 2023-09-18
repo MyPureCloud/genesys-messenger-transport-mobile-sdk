@@ -1,33 +1,32 @@
 @startuml
-skinparam {
-        ArrowColor darkBlue
-        backgroundColor #EEEBDC
-        NoteBackgroundColor #lightyellow
-        NoteBorderColor gray
-        sequenceGroupHeaderFontColor midnightblue
-        padding 6
-}
+'https://plantuml.com/sequence-diagram
 
-participant App #lightGreen
-participant MessagingClient #lightGreen
-participant AuthHandler #lightGreen
-participant WebMessagingAPi #lightGreen
-participant Shyrka #lightGreen
-participant "Genesys Cloud Platform API" #lightGreen
-participant Agent #lightGreen
+!theme bluegray
+!pragma teoz true
+
+skinparam backgroundColor #whitesmoke
+title Transport Auth Flow
+
+participant App
+participant MessagingClient
+participant AuthHandler
+participant WebMessagingAPI
+participant Shyrka
+participant "Genesys Cloud Platform API"
+participant Agent
 
 App -> MessagingClient : 1. authorize(authCode, redirectUri, codeVerifier)
 MessagingClient -> AuthHandler : 2. authorize(authCode, redirectUri, codeVerifier)
-AuthHandler -> WebMessagingAPi : 3. fetchAuthJwt(authCode, redirectUri, codeVerifier)
-WebMessagingAPi -> "Genesys Cloud Platform API" : 4. authCode to jwt exchange.
-alt #lightgreen success fetchAuthJwt
-    "Genesys Cloud Platform API" --> WebMessagingAPi : 5. return Jwt and RefreshToken
-    WebMessagingAPi --> AuthHandler : 6. return Jwt and RefreshToken
+AuthHandler -> WebMessagingAPI : 3. fetchAuthJwt(authCode, redirectUri, codeVerifier)
+WebMessagingAPI -> "Genesys Cloud Platform API" : 4. authCode to jwt exchange.
+alt #aaff8833 success fetchAuthJwt
+    "Genesys Cloud Platform API" --> WebMessagingAPI : 5. return Jwt and RefreshToken
+    WebMessagingAPI --> AuthHandler : 6. return Jwt and RefreshToken
     AuthHandler -> AuthHandler : 7. store refreshToken
     AuthHandler --> App : 8. onEvent(Event.Authorized)
-else #FF7276 failure
-    "Genesys Cloud Platform API" --> WebMessagingAPi : 5a. Failure
-    WebMessagingAPi --> AuthHandler : 6a. Failure
+else #ffaaff33 failure
+    "Genesys Cloud Platform API" --> WebMessagingAPI : 5a. Failure
+    WebMessagingAPI --> AuthHandler : 6a. Failure
     AuthHandler --> App : 7a. onEvent(Error(AuthFailed, message, ReAuthenticate))
 end
 
@@ -38,21 +37,21 @@ Shyrka --> MessagingClient : 12. onWebSocketOpened()
 MessagingClient --> App : 13. onStateChanged(State.Connected)
 MessagingClient -> Shyrka : 14. ConfigureAuthenticatedSession(authHandler.jwt)
 Shyrka --> MessagingClient : 15. SessionResponse
-     alt Session response failure. errorCode == 401
+     alt #aaff8833 Session response failure. errorCode == 401
             MessagingClient -> AuthHandler : 15a. refreshToken()
-            AuthHandler -> WebMessagingAPi : 15b. refreshToken(authHandler.refreshToken)
-            alt #lightgreen refreshToken() success
-            WebMessagingAPi --> AuthHandler : 15d. success(jwt)
+            AuthHandler -> WebMessagingAPI : 15b. refreshToken(authHandler.refreshToken)
+            alt #aaff8833 refreshToken() success
+            WebMessagingAPI --> AuthHandler : 15d. success(jwt)
             AuthHandler -> AuthHandler : 15e. update jwt with refreshed jwt.
             MessagingClient -> Shyrka : 15f. ConfigureAuthenticatedSession(authHandler.jwt)
             Shyrka --> MessagingClient : 15g. SessionResponse
-            else #FF7276 refreshToken() failure
-            WebMessagingAPi --> AuthHandler : 15h. failure
+            else #ffaaff33 refreshToken() failure
+            WebMessagingAPI --> AuthHandler : 15h. failure
             AuthHandler -> AuthHandler : 15i. clear() jwt and refreshToken from storage.
             AuthHandler --> MessagingClient : 15j. failure
             MessagingClient --> App : 15k. onStateChanged(State.Error(errorCode, message))
             end
-        else #FF7276 errorCode != 401
+        else #ffaaff33 errorCode != 401
             MessagingClient --> App : 15c. onStateChanged(State.Error(errorCode, message))
         end
 
