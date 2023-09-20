@@ -4,7 +4,7 @@
 !theme bluegray
 !pragma teoz true
 
-!BackEnd  = "f4a46088"
+!Backend  = "f4a46088"
 !$OKAlt  = "c9ffc933"
 !$Error = "ffaaff33"
 
@@ -19,9 +19,8 @@ participant AttachmentHandler
 participant MessageStore
 participant WebMessagingApi
 end box
-box BackEnd #BackEnd
+box BackEnd #Backend
 participant Shyrka
-participant Squonk
 participant GenesysCloud
 participant S3
 end box
