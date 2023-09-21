@@ -1,0 +1,142 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+!theme bluegray
+!pragma teoz true
+
+!Backend  = "f4a46088"
+!$OKAlt  = "c9ffc933"
+!$Error = "ffaaff33"
+
+skinparam backgroundColor #whitesmoke
+title High Level Supported Content Profile
+
+actor User
+participant App
+box TransportSDK #lightcyan
+participant MessagingClient
+participant AttachmentHandler
+participant MessageStore
+participant WebMessagingApi
+end box
+box BackEnd #Backend
+participant Shyrka
+participant GenesysCloud
+participant S3
+end box
+actor Agent
+
+App -> MessagingClient : connect()
+rnote over MessagingClient
+  Given:
+  * Session is configured.
+end rnote
+Shyrka --> MessagingClient : SessionResponse
+MessagingClient -> MessagingClient : extract SCP from SessionResponse \n(allowed fileTypes, blockedExtensions, maxFileSize)
+MessagingClient -> MessagingClient : store supportedContentProfile as field and expose it via API
+MessagingClient --> App : State.Configured
+User -> App : select file to upload
+App -> MessagingClient : attach(byteArray, filename, uploadListener)
+MessagingClient -> MessagingClient : generateAttachmentId
+MessagingClient -> AttachmentHandler : prepare(attachmentId, byteArray, filename, uploadListener)
+AttachmentHandler -> AttachmentHandler : validateAttachment
+alt #$Error fileType != allowed || fileType == blockedExtensions || fileSize > maxFileSize
+AttachmentHandler -> MessagingClient : onError
+MessagingClient -> App : attach() throws InvalidArgumentException()
+rnote over MessagingClient
+Stop attachment process
+end rnote
+end
+AttachmentHandler -> MessageStore : updateAttachmentStateWith(attachmentId, State.Presigning)
+MessageStore -> MessageStore : add attachment to pendingMessage
+MessageStore -> App : messageListener(MessageEvent(AttachmentUpdated(attachmentId, State.Presigning))
+AttachmentHandler --> MessagingClient : return OnAttachmentRequest
+MessagingClient -> Shyrka : send OnAttachmentRequest
+MessagingClient --> App : attach() returns attachmentId
+Shyrka -> GenesysCloud : getPresignedUrl
+GenesysCloud -> S3 : getPresignedUrl
+S3 --> GenesysCloud : return PresignedUrl
+GenesysCloud --> Shyrka : return PresignedUrl
+alt #$Error GenerateUrlError. BE failed to validate file or generate upload url
+S3 --> GenesysCloud : GeneratePresignedUrlError
+GenesysCloud --> Shyrka : GeneratePresignedUrlError
+Shyrka --> MessagingClient : onMessage(GenerateUrlError(attachmentId, errorCode, errorMessage))
+MessagingClient -> AttachmentHandler : onError(UploadFailureEvent(attachmentId, errorCode, errorMessage))
+AttachmentHandler -> AttachmentHandler : processedAttachments.remove(attachmentId)
+AttachmentHandler -> MessageStore : updateAttachmentStateWith(attachmentId, State.Error(errorCode, errorMessage)
+MessageStore -> MessageStore : remove attachment from pendingMessage
+MessageStore -> App : messageListener(MessageEvent(AttachmentUpdated(attachmentId, State.Error(errorCode, errorMessage)))
+rnote over MessagingClient
+Stop attachment process
+end rnote
+end
+Shyrka --> MessagingClient : onMessage(PresignedUrlResponse(id,headers,uploadUrl))
+MessagingClient -> AttachmentHandler : upload(PresignedUrlResponse)
+AttachmentHandler -> AttachmentHandler : findProcessedAttachmentById(PresignedUrlResponse.attachmentId)
+AttachmentHandler -> MessageStore : updateAttachmentStateWith(attachmentId, State.Uploading)
+MessageStore -> MessageStore : update attachment state in pendingMessage
+MessageStore -> App : messageListener(MessageEvent(AttachmentUpdated(attachmentId, State.Uploading))
+alt #$OKAlt Upload attachment presigned url
+AttachmentHandler -> WebMessagingApi : uploadFile(PresignedUrlResponse, byteArray, uploadListener)
+WebMessagingApi -> GenesysCloud : send upload request(byteArray)
+WebMessagingApi -> App : update upload progress on uploadListener
+else #$Error response error
+AttachmentHandler -> AttachmentHandler : processedAttachments.remove(attachmentId)
+AttachmentHandler -> MessageStore : updateAttachmentStateWith(attachmentId, State.Error(errorCode, errorMessage)
+MessageStore -> MessageStore : remove attachment from pendingMessage
+MessageStore -> App : messageListener(MessageEvent(AttachmentUpdated(attachmentId, State.Error(errorCode, errorMessage)))
+rnote over MessagingClient
+Stop attachment process
+end rnote
+end
+alt #$OKAlt UploadSuccess
+S3 --> GenesysCloud : uploadSuccess
+GenesysCloud --> Shyrka : uploadSuccess
+Shyrka --> MessagingClient : onMessage(UploadSuccessEvent(attachmentId, downloadUrl))
+MessagingClient -> AttachmentHandler : onUploadSuccess(UploadSuccessEvent(attachmentId, downloadUrl))
+AttachmentHandler -> AttachmentHandler : findProcessedAttachmentById(UploadSuccessEvent.attachmentId)
+AttachmentHandler -> MessageStore : updateAttachmentStateWith(attachmentId, State.Uploaded(downloadUrl))
+MessageStore -> MessageStore : update attachment in pendingMessage
+MessageStore -> App : messageListener(MessageEvent(AttachmentUpdated(attachmentId, State.Uploaded(downloadUrl)))
+rnote over MessagingClient
+Attachment will be sent along with next sendMessage() call.
+end rnote
+else #$Error UploadFailure
+S3 --> GenesysCloud : uploadFailure
+GenesysCloud --> Shyrka : uploadFailure
+Shyrka --> MessagingClient : onMessage(UploadFailureEvent(attachmentId, errorCode, errorMessage))
+MessagingClient -> AttachmentHandler : onError(UploadFailureEvent(attachmentId, errorCode, errorMessage))
+AttachmentHandler -> AttachmentHandler : processedAttachments.remove(attachmentId)
+AttachmentHandler -> MessageStore : updateAttachmentStateWith(attachmentId, State.Error(errorCode, errorMessage)
+MessageStore -> MessageStore : remove attachment from pendingMessage
+MessageStore -> App : messageListener(MessageEvent(AttachmentUpdated(attachmentId, State.Error(errorCode, errorMessage)))
+rnote over MessagingClient
+Stop attachment process
+end rnote
+end
+User -> App : click send message button
+App -> MessagingClient : sendMessage
+MessagingClient -> MessageStore : prepareMessage
+MessageStore -> MessageStore : pendingMessage.getUploadedAttachments
+MessageStore -> MessagingClient : return OnMessageRequest
+MessagingClient -> AttachmentHandler : onSending()
+AttachmentHandler -> AttachmentHandler : takeAllUploaded
+AttachmentHandler -> MessageStore : updateAttachmentStateWith(attachmentId, State.Sending())
+MessageStore -> App : messageListener(MessageEvent(AttachmentUpdated(attachmentId, State.Sending()))
+MessagingClient -> Shyrka : send OnMessageRequest
+Shyrka -> Agent : onMessage with attachment id's
+alt #$OKAlt OnMessageRequest
+Shyrka --> MessagingClient : onMessageRequest sent
+MessagingClient -> AttachmentHandler : onSent(listOf(attachmentId's)
+AttachmentHandler -> AttachmentHandler : processedAttachments.removeAll with attachmentId's
+AttachmentHandler -> MessageStore : updateAttachmentStateWith(attachmentId, State.Sent())
+MessageStore -> App : messageListener(MessageEvent(AttachmentUpdated(attachmentId, State.Sent(downloadUrl))))
+else #$Error onMessageError
+Shyrka --> MessagingClient : onMessageError
+MessagingClient -> AttachmentHandler : onMessageError
+AttachmentHandler -> AttachmentHandler : processedAttachments.takeAllWithStateSending
+AttachmentHandler -> MessageStore : updateAttachmentStateWith(attachmentId, State.Error(errorCode, errorMessage)
+MessageStore -> MessageStore : remove attachment from pendingMessage
+MessageStore -> App : messageListener(MessageEvent(AttachmentUpdated(attachmentId, State.Error(errorCode, errorMessage)))
+end
+@enduml
