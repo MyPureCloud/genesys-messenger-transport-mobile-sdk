@@ -103,6 +103,17 @@ interface MessagingClient {
     val conversation: List<Message>
 
     /**
+     * Represents the configuration for supported content profiles in the Admin Console.
+     *
+     * This property contains information about the allowed and blocked file extensions, maximum file size,
+     * and whether a wildcard is present in the allowed file types list.
+     *
+     * If an attempt is made to upload a file with an extension that is not included in the `allowedFileTypes` list,
+     * it will result in an `IllegalArgumentException` when using the [attach] function.
+     */
+    val fileAttachmentProfile: FileAttachmentProfile?
+
+    /**
      * Open and Configure a secure WebSocket connection to the Web Messaging service with the url and
      * deploymentId configured on this MessagingClient instance.
      *
