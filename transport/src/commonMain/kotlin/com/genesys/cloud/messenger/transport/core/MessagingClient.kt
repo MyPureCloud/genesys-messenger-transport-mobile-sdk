@@ -110,6 +110,8 @@ interface MessagingClient {
      *
      * If an attempt is made to upload a file with an extension that is not included in the `allowedFileTypes` list,
      * it will result in an `IllegalArgumentException` when using the [attach] function.
+     *
+     * NOTE: `fileAttachmentProfile` should be accessible (not null) once `MessagingClient` has transitioned to `State.Configured`.
      */
     val fileAttachmentProfile: FileAttachmentProfile?
 
