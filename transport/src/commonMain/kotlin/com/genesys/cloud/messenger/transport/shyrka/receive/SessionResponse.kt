@@ -13,13 +13,13 @@ internal data class SessionResponse(
 
 @Serializable
 internal data class AllowedMedia(
-    val inbound: Inbound,
+    val inbound: Inbound? = null,
 )
 
 @Serializable
 internal data class Inbound(
-    val fileTypes: List<FileType>,
-    val maxFileSizeKB: Long,
+    val fileTypes: List<FileType> = emptyList(),
+    val maxFileSizeKB: Long? = null,
 )
 
 @Serializable

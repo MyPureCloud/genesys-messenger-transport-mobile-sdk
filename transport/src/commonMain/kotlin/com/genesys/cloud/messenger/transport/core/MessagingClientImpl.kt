@@ -44,6 +44,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Vault
+import com.genesys.cloud.messenger.transport.util.extensions.toFileAttachmentProfile
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.util.logs.Log
@@ -84,6 +85,7 @@ internal class MessagingClientImpl(
     private var connectAuthenticated = false
     private var isStartingANewSession = false
     private var reconfigureAttempts = 0
+    private var _fileAttachmentProfile: FileAttachmentProfile? = null
 
     override val currentState: State
         get() {
@@ -113,6 +115,9 @@ internal class MessagingClientImpl(
 
     override val conversation: List<Message>
         get() = messageStore.getConversation()
+
+    override val fileAttachmentProfile: FileAttachmentProfile?
+        get() = _fileAttachmentProfile
 
     @Throws(IllegalStateException::class)
     override fun connect() {
@@ -510,6 +515,7 @@ internal class MessagingClientImpl(
                     }
                     is SessionResponse -> {
                         decoded.body.run {
+                            _fileAttachmentProfile = this.toFileAttachmentProfile()
                             reconnectionHandler.clear()
                             if (readOnly) {
                                 stateMachine.onReadOnly()

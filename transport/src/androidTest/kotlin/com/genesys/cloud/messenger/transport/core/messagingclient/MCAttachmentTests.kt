@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.core.messagingclient
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.Attachment
+import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.Response
@@ -120,5 +121,90 @@ class MCAttachmentTests : BaseMessagingClientTest() {
             mockMessageStore.update(expectedMessage)
             mockAttachmentHandler.onSent(mapOf("attachment_id" to expectedAttachment))
         }
+    }
+
+    @Test
+    fun `when SessionResponse has no AllowedMedia and blockedExtensions entries`() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.configureSuccess())
+        }
+        val expectedFileAttachmentProfile = FileAttachmentProfile()
+        subject.connect()
+
+        slot.captured.onMessage(Response.onMessageWithAttachment)
+
+        assertThat(subject.fileAttachmentProfile).isEqualTo(expectedFileAttachmentProfile)
+    }
+
+    @Test
+    fun `when AllowedMedia in SessionResponse has no inbound and blockedExtensions entries`() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.configureSuccess(allowedMedia = Response.AllowedMedia.noInbound))
+        }
+        val expectedFileAttachmentProfile = FileAttachmentProfile()
+        subject.connect()
+
+        slot.captured.onMessage(Response.onMessageWithAttachment)
+
+        assertThat(subject.fileAttachmentProfile).isEqualTo(expectedFileAttachmentProfile)
+    }
+
+    @Test
+    fun `when AllowedMedia in SessionResponse has no filetypes,maxFileSizeKB and blockedExtensions entries`() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.configureSuccess(allowedMedia = Response.AllowedMedia.emptyInbound))
+        }
+        val expectedFileAttachmentProfile = FileAttachmentProfile()
+        subject.connect()
+
+        slot.captured.onMessage(Response.onMessageWithAttachment)
+
+        assertThat(subject.fileAttachmentProfile).isEqualTo(expectedFileAttachmentProfile)
+    }
+
+    @Test
+    fun `when AllowedMedia in SessionResponse has filetypes without wildcard but with maxFileSizeKB and blockedExtensions entries`() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(
+                Response.configureSuccess(
+                    allowedMedia = Response.AllowedMedia.listOfFileTypesWithMaxSize,
+                    blockedExtensions = Response.AllowedMedia.listOfBlockedExtensions,
+                )
+            )
+        }
+        val expectedFileAttachmentProfile = FileAttachmentProfile(
+            allowedFileTypes = listOf("video/mpg", "video/3gpp"),
+            blockedFileTypes = listOf(".ade", ".adp"),
+            maxFileSizeKB = 10240,
+            hasWildCard = false,
+        )
+        subject.connect()
+
+        slot.captured.onMessage(Response.onMessageWithAttachment)
+
+        assertThat(subject.fileAttachmentProfile).isEqualTo(expectedFileAttachmentProfile)
+    }
+
+    @Test
+    fun `when AllowedMedia in SessionResponse has filetypes with wildcard,maxFileSizeKB and blockedExtensions entries`() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(
+                Response.configureSuccess(
+                    allowedMedia = Response.AllowedMedia.listOfFileTypesWithWildcardAndMaxSize,
+                    blockedExtensions = Response.AllowedMedia.listOfBlockedExtensions,
+                )
+            )
+        }
+        val expectedFileAttachmentProfile = FileAttachmentProfile(
+            allowedFileTypes = listOf("video/3gpp"),
+            blockedFileTypes = listOf(".ade", ".adp"),
+            maxFileSizeKB = 10240,
+            hasWildCard = true,
+        )
+        subject.connect()
+
+        slot.captured.onMessage(Response.onMessageWithAttachment)
+
+        assertThat(subject.fileAttachmentProfile).isEqualTo(expectedFileAttachmentProfile)
     }
 }
