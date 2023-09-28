@@ -32,6 +32,8 @@ internal class AttachmentHandlerImpl(
 ) : AttachmentHandler {
     private val uploadDispatcher = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
+    override var fileAttachmentProfile: FileAttachmentProfile? = null
+
     override fun prepare(
         attachmentId: String,
         byteArray: ByteArray,
@@ -104,6 +106,12 @@ internal class AttachmentHandlerImpl(
             }
         }
         return null
+    }
+
+    override fun validate(byteArray: ByteArray): Boolean {
+        return fileAttachmentProfile?.maxFileSizeKB?.let { maxFileSize ->
+            byteArray.toKB() <= maxFileSize
+        } ?: false
     }
 
     override fun onDetached(attachmentId: String) {
@@ -181,3 +189,5 @@ private fun ProcessedAttachment.takeSendingId(): String? =
 
 private fun ProcessedAttachment.takeUploaded(): ProcessedAttachment? =
     this.takeIf { it.attachment.state is Uploaded }
+
+private fun ByteArray.toKB(): Long = size / 1000L

@@ -174,9 +174,10 @@ interface MessagingClient {
      * @param uploadProgress optional callback to track attachment upload progress.
      *
      * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
+     * @throws IllegalArgumentException If provided file size exceeds [FileAttachmentProfile.maxFileSizeKB].
      * @return internally generated attachmentId. Can be used to track upload progress
      */
-    @Throws(IllegalStateException::class)
+    @Throws(IllegalStateException::class, IllegalArgumentException::class)
     fun attach(
         byteArray: ByteArray,
         fileName: String,

@@ -35,6 +35,8 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 internal class AttachmentHandlerImplTest {
     private val mockApi: WebMessagingApi = mockk {
@@ -76,7 +78,7 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenPrepareCalled() {
+    fun `when prepare()`() {
         val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Presigning)
         val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(1))
         val expectedOnAttachmentRequest = OnAttachmentRequest(
@@ -98,7 +100,7 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenUploadProcessedAttachment() {
+    fun `when upload() processed attachment`() {
         val expectedProgress = 25f
         val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Uploading)
         val mockUploadProgress: ((Float) -> Unit) = spyk()
@@ -117,7 +119,7 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenUploadNotProcessedAttachment() {
+    fun `when upload() not processed attachment`() {
         val mockUploadProgress: ((Float) -> Unit) = spyk()
         givenPrepareCalled(uploadProgress = mockUploadProgress)
 
@@ -129,7 +131,7 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenExceptionThrownDuringUpload() {
+    fun `when exception is thrown during upload`() {
         val attachmentSlotList = mutableListOf<Attachment>()
         val mockHttpResponse: HttpResponse = mockk(relaxed = true) {
             every { status } returns HttpStatusCode(404, "page not found")
@@ -162,7 +164,7 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenUploadSuccessForProcessedAttachment() {
+    fun `when onUploadSuccess() on processed attachment`() {
         val expectedDownloadUrl = "http://somedownloadurl.com"
         val expectedAttachment =
             Attachment(givenAttachmentId, "image.png", State.Uploaded(expectedDownloadUrl))
@@ -177,7 +179,7 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenUploadSuccessForNotProcessedAttachment() {
+    fun `when onUploadSuccess() on not processed attachment`() {
         givenPrepareCalled()
 
         subject.onUploadSuccess(uploadSuccessEvent(id = "not processed attachment id"))
@@ -188,7 +190,7 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenDetachUploaded() {
+    fun `when detach() on uploaded attachment`() {
         val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Detaching)
         val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(1))
         val expectedDeleteAttachmentRequest = DeleteAttachmentRequest(givenToken, givenAttachmentId)
@@ -206,7 +208,7 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenDetachNotUploaded() {
+    fun `when detach() on not uploaded attachment`() {
         val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Detached)
         givenPrepareCalled()
 
@@ -221,7 +223,7 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenDetachNotProcessedAttachment() {
+    fun `when detach() on not processed attachment`() {
         val result = subject.detach("not processed attachment id")
 
         verify {
@@ -231,7 +233,7 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenOnDetached() {
+    fun `when OnDetached()`() {
         val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Detached)
         givenPrepareCalled()
         givenUploadSuccessCalled()
@@ -244,7 +246,7 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenOnError() {
+    fun `when OnError()`() {
         val expectedAttachment = Attachment(
             id = givenAttachmentId,
             state = State.Error(ErrorCode.FileTypeInvalid, "something went wrong")
@@ -259,7 +261,7 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenOnMessageErrorWhileHasSendingAttachment() {
+    fun `when OnMessageError() while has sending attachment`() {
         val expectedAttachment = Attachment(
             id = givenAttachmentId,
             state = State.Error(ErrorCode.MessageTooLong, "Message too long")
@@ -276,14 +278,14 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenOnMessageErrorHasNoSendingAttachment() {
+    fun `when onMessageError() has no sending attachment`() {
         subject.onMessageError(ErrorCode.MessageTooLong, "Message too long")
 
         verify { listOf(mockAttachmentListener) wasNot Called }
     }
 
     @Test
-    fun whenOnSendingHasUploadedAttachment() {
+    fun `when onSending() has uploaded attachment`() {
         val expectedAttachment = Attachment(
             id = givenAttachmentId,
             fileName = "image.png",
@@ -311,7 +313,7 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenOnSentProcessedAttachments() {
+    fun `when onSent() on processed attachment`() {
         val expectedAttachment = Attachment(
             id = givenAttachmentId,
             fileName = "image.png",
@@ -338,7 +340,7 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenOnSentNotProcessedAttachments() {
+    fun `when onSent() on not processed Attachment`() {
         subject.onSent(
             mapOf(
                 givenAttachmentId to Attachment(
@@ -353,13 +355,66 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenClearAll() {
+    fun `when clearAll()`() {
         givenPrepareCalled("attachment id 1")
         givenPrepareCalled("attachment id 2")
 
         subject.clearAll()
 
         assertThat(processedAttachments).isEmpty()
+    }
+
+    @Test
+    fun `when validate() but fileAttachmentProfile is not set`() {
+        val givenByteArray = ByteArray(2000)
+
+        val result = subject.validate(givenByteArray)
+
+        assertFalse(result)
+    }
+
+    @Test
+    fun `when validate() but maxFileSizeKB in fileAttachmentProfile is null`() {
+        val givenByteArray = ByteArray(2000)
+        val givenFileAttachmentProfile = FileAttachmentProfile()
+        subject.fileAttachmentProfile = givenFileAttachmentProfile
+
+        val result = subject.validate(givenByteArray)
+
+        assertFalse(result)
+    }
+
+    @Test
+    fun `when validate() but maxFileSizeKB in fileAttachmentProfile is less the provided ByteArray size`() {
+        val givenByteArray = ByteArray(2000)
+        val givenFileAttachmentProfile = FileAttachmentProfile(maxFileSizeKB = 1)
+        subject.fileAttachmentProfile = givenFileAttachmentProfile
+
+        val result = subject.validate(givenByteArray)
+
+        assertFalse(result)
+    }
+
+    @Test
+    fun `when validate() and maxFileSizeKB in fileAttachmentProfile is equal to the provided ByteArray size`() {
+        val givenByteArray = ByteArray(2000)
+        val givenFileAttachmentProfile = FileAttachmentProfile(maxFileSizeKB = 2)
+        subject.fileAttachmentProfile = givenFileAttachmentProfile
+
+        val result = subject.validate(givenByteArray)
+
+        assertTrue(result)
+    }
+
+    @Test
+    fun `when validate() and maxFileSizeKB in fileAttachmentProfile is greater then provided ByteArray size`() {
+        val givenByteArray = ByteArray(2000)
+        val givenFileAttachmentProfile = FileAttachmentProfile(maxFileSizeKB = 100)
+        subject.fileAttachmentProfile = givenFileAttachmentProfile
+
+        val result = subject.validate(givenByteArray)
+
+        assertTrue(result)
     }
 
     private fun presignedUrlResponse(id: String = givenAttachmentId): PresignedUrlResponse =

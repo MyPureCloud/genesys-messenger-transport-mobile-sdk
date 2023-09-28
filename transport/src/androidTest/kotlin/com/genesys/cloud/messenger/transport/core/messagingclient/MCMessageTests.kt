@@ -64,6 +64,7 @@ class MCMessageTests : BaseMessagingClientTest() {
         verifySequence {
             connectSequence()
             mockMessageStore.onMessageError(ErrorCode.MessageTooLong, "message too long")
+            mockAttachmentHandler.onMessageError(ErrorCode.MessageTooLong, "message too long")
         }
     }
 

@@ -48,6 +48,7 @@ class MCustomAttributesTests : BaseMessagingClientTest() {
         verifySequence {
             connectSequence()
             mockMessageStore.onMessageError(expectedErrorCode, expectedErrorMessage)
+            mockAttachmentHandler.onMessageError(expectedErrorCode, expectedErrorMessage)
         }
     }
 }

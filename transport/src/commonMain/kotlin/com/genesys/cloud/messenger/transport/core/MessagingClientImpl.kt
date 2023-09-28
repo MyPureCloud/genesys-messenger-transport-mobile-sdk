@@ -85,7 +85,6 @@ internal class MessagingClientImpl(
     private var connectAuthenticated = false
     private var isStartingANewSession = false
     private var reconfigureAttempts = 0
-    private var _fileAttachmentProfile: FileAttachmentProfile? = null
 
     override val currentState: State
         get() {
@@ -117,7 +116,7 @@ internal class MessagingClientImpl(
         get() = messageStore.getConversation()
 
     override val fileAttachmentProfile: FileAttachmentProfile?
-        get() = _fileAttachmentProfile
+        get() = attachmentHandler.fileAttachmentProfile
 
     @Throws(IllegalStateException::class)
     override fun connect() {
@@ -190,12 +189,16 @@ internal class MessagingClientImpl(
         }
     }
 
+    @Throws(IllegalStateException::class, IllegalArgumentException::class)
     override fun attach(
         byteArray: ByteArray,
         fileName: String,
         uploadProgress: ((Float) -> Unit)?,
     ): String {
         log.i { "attach(fileName = $fileName)" }
+        if (!attachmentHandler.validate(byteArray)) {
+            throw IllegalArgumentException(ErrorMessage.fileSizeIsTooBig(fileAttachmentProfile?.maxFileSizeKB))
+        }
         val request = attachmentHandler.prepare(
             Platform().randomUUID(),
             byteArray,
@@ -247,7 +250,13 @@ internal class MessagingClientImpl(
                             return
                         }
                         log.w { "History fetch failed with: $it" }
-                        eventHandler.onEvent(Event.Error(ErrorCode.HistoryFetchFailure, it.message, it.errorCode.toCorrectiveAction()))
+                        eventHandler.onEvent(
+                            Event.Error(
+                                ErrorCode.HistoryFetchFailure,
+                                it.message,
+                                it.errorCode.toCorrectiveAction()
+                            )
+                        )
                     }
                 }
             }
@@ -396,7 +405,8 @@ internal class MessagingClientImpl(
     }
 
     private fun handleConventionalHttpErrorResponse(code: ErrorCode, message: String?) {
-        val errorCode = if (message.isClearConversationError()) ErrorCode.ClearConversationFailure else code
+        val errorCode =
+            if (message.isClearConversationError()) ErrorCode.ClearConversationFailure else code
         eventHandler.onEvent(
             Event.Error(
                 errorCode = errorCode,
@@ -515,7 +525,7 @@ internal class MessagingClientImpl(
                     }
                     is SessionResponse -> {
                         decoded.body.run {
-                            _fileAttachmentProfile = this.toFileAttachmentProfile()
+                            attachmentHandler.fileAttachmentProfile = this.toFileAttachmentProfile()
                             reconnectionHandler.clear()
                             if (readOnly) {
                                 stateMachine.onReadOnly()
