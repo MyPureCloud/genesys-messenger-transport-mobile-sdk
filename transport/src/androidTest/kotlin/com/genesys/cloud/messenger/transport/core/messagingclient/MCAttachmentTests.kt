@@ -6,6 +6,7 @@ import com.genesys.cloud.messenger.transport.core.Attachment
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
 import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
 import com.genesys.cloud.messenger.transport.core.Message
+import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.Response
 import io.mockk.Called
@@ -243,6 +244,40 @@ class MCAttachmentTests : BaseMessagingClientTest() {
 
         assertFailsWith<IllegalArgumentException>(ErrorMessage.fileSizeIsTooBig(null)) {
             subject.attach(givenByteArray, "test.png")
+        }
+    }
+
+    @Test
+    fun `when refreshAttachmentUrl()`() {
+        every { mockPlatformSocket.sendMessage(Request.refreshAttachmentUrl) } answers {
+            slot.captured.onMessage(Response.presignedUrlResponse(headers = "", fileSize = 1))
+        }
+        val expectedPresignedUrlResponse = PresignedUrlResponse(
+            attachmentId = "88888888-8888-8888-8888-888888888888",
+            headers = emptyMap(),
+            url = "https://downloadUrl.com",
+            fileSize = 1,
+            fileName = "test_asset.png",
+            fileType = "image/jpeg"
+        )
+        subject.connect()
+
+        subject.refreshAttachmentUrl("88888888-8888-8888-8888-888888888888")
+
+        verify {
+            connectSequence()
+            mockPlatformSocket.sendMessage(Request.refreshAttachmentUrl)
+            mockAttachmentHandler.onAttachmentRefreshed(expectedPresignedUrlResponse)
+        }
+        verify(exactly = 0) {
+            mockAttachmentHandler.upload(any())
+        }
+    }
+
+    @Test
+    fun `when refreshAttachmentUrl() attachment without connection`() {
+        assertFailsWith<IllegalStateException> {
+            subject.refreshAttachmentUrl("attachmentId")
         }
     }
 

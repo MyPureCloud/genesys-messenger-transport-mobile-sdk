@@ -5,6 +5,7 @@ import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.core.events.toTransportEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.isInbound
@@ -69,10 +70,10 @@ internal fun String?.mapOriginatingEntity(isInbound: () -> Boolean): Message.Par
 private fun List<StructuredMessage.Content.AttachmentContent>.toAttachments(): Map<String, Attachment> {
     return this.associate {
         it.run {
-            this.attachment.id to Attachment(
-                id = this.attachment.id,
-                fileName = this.attachment.filename,
-                state = Attachment.State.Sent(this.attachment.url),
+            attachment.id to Attachment(
+                id = attachment.id,
+                fileName = attachment.filename,
+                state = Attachment.State.Sent(attachment.url),
             )
         }
     }
@@ -87,4 +88,8 @@ internal fun SessionResponse.toFileAttachmentProfile(): FileAttachmentProfile {
         maxFileSizeKB = allowedMedia?.inbound?.maxFileSizeKB,
         hasWildCard = hasWildcard
     )
+}
+
+internal fun PresignedUrlResponse.isRefreshUrl(): Boolean {
+    return headers.isEmpty() && fileSize != null
 }

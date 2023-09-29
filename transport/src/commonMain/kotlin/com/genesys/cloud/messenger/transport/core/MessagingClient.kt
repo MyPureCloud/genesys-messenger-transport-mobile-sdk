@@ -196,6 +196,16 @@ interface MessagingClient {
     fun detach(attachmentId: String)
 
     /**
+     * Refresh the downloadUrl.
+     *
+     * @param attachmentId the ID of the attachment to refresh.
+     *
+     * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
+     */
+    @Throws(IllegalStateException::class)
+    fun refreshAttachmentUrl(attachmentId: String)
+
+    /**
      * Get message history for a conversation.
      *
      * @throws Exception
