@@ -33,5 +33,7 @@ internal interface AttachmentHandler {
 
     fun onMessageError(code: ErrorCode, message: String?)
 
+    fun onAttachmentRefreshed(presignedUrlResponse: PresignedUrlResponse)
+
     fun clearAll()
 }

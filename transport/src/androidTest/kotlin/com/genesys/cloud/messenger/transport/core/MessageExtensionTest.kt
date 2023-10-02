@@ -14,6 +14,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.AllowedMedia
 import com.genesys.cloud.messenger.transport.shyrka.receive.FileType
 import com.genesys.cloud.messenger.transport.shyrka.receive.Inbound
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
@@ -21,6 +22,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.isInbound
 import com.genesys.cloud.messenger.transport.shyrka.receive.isOutbound
 import com.genesys.cloud.messenger.transport.util.extensions.fromIsoToEpochMilliseconds
 import com.genesys.cloud.messenger.transport.util.extensions.getUploadedAttachments
+import com.genesys.cloud.messenger.transport.util.extensions.isRefreshUrl
 import com.genesys.cloud.messenger.transport.util.extensions.mapOriginatingEntity
 import com.genesys.cloud.messenger.transport.util.extensions.toFileAttachmentProfile
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
@@ -380,5 +382,61 @@ internal class MessageExtensionTest {
         val result = givenSessionResponse.toFileAttachmentProfile()
 
         assertThat(result).isEqualTo(expectedFileAttachmentProfile)
+    }
+
+    @Test
+    fun `when PresignedUrlResponse isRefreshUrl() and headers are empty and fileSize is null`() {
+        val givenPresignedUrlResponse = PresignedUrlResponse(
+            attachmentId = "99999999-9999-9999-9999-999999999999",
+            headers = emptyMap(),
+            url = "https://downloadUrl.com",
+            fileSize = null,
+        )
+
+        val result = givenPresignedUrlResponse.isRefreshUrl()
+
+        assertThat(result).isFalse()
+    }
+
+    @Test
+    fun `when PresignedUrlResponse isRefreshUrl() and headers are NOT empty and fileSize is null`() {
+        val givenPresignedUrlResponse = PresignedUrlResponse(
+            attachmentId = "99999999-9999-9999-9999-999999999999",
+            headers = mapOf("A" to "B"),
+            url = "https://downloadUrl.com",
+            fileSize = null,
+        )
+
+        val result = givenPresignedUrlResponse.isRefreshUrl()
+
+        assertThat(result).isFalse()
+    }
+
+    @Test
+    fun `when PresignedUrlResponse isRefreshUrl() and headers are NOT empty and fileSize has value`() {
+        val givenPresignedUrlResponse = PresignedUrlResponse(
+            attachmentId = "99999999-9999-9999-9999-999999999999",
+            headers = mapOf("A" to "B"),
+            url = "https://downloadUrl.com",
+            fileSize = 1,
+        )
+
+        val result = givenPresignedUrlResponse.isRefreshUrl()
+
+        assertThat(result).isFalse()
+    }
+
+    @Test
+    fun `when PresignedUrlResponse isRefreshUrl() and headers are empty and fileSize has value`() {
+        val givenPresignedUrlResponse = PresignedUrlResponse(
+            attachmentId = "99999999-9999-9999-9999-999999999999",
+            headers = emptyMap(),
+            url = "https://downloadUrl.com",
+            fileSize = 1,
+        )
+
+        val result = givenPresignedUrlResponse.isRefreshUrl()
+
+        assertThat(result).isTrue()
     }
 }

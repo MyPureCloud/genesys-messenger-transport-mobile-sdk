@@ -6,6 +6,7 @@ import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.Attachment.State
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
@@ -13,16 +14,10 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.util.Request
-import io.ktor.client.plugins.ClientRequestException
-import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.request
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.Url
 import io.mockk.Called
 import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.spyk
@@ -42,6 +37,7 @@ internal class AttachmentHandlerImplTest {
     private val mockApi: WebMessagingApi = mockk {
         coEvery { uploadFile(any(), any(), captureLambda()) } coAnswers {
             thirdArg<(Float) -> Unit>().invoke(25f)
+            Result.Success(Empty())
         }
     }
     private val attachmentSlot = slot<Attachment>()
@@ -131,23 +127,17 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun `when exception is thrown during upload`() {
+    fun `when uploadFile() fails with ResponseError`() {
         val attachmentSlotList = mutableListOf<Attachment>()
-        val mockHttpResponse: HttpResponse = mockk(relaxed = true) {
-            every { status } returns HttpStatusCode(404, "page not found")
-            every { request } returns mockk(relaxed = true) {
-                every { url } returns Url("http://someurl.com")
-            }
-        }
-        coEvery { mockApi.uploadFile(any(), any(), any()) } throws ClientRequestException(
-            mockHttpResponse,
+        coEvery { mockApi.uploadFile(any(), any(), any()) } returns Result.Failure(
+            ErrorCode.mapFrom(404),
             "something went wrong"
         )
         val expectedAttachment = Attachment(
             id = givenAttachmentId,
             state = State.Error(
                 ErrorCode.ClientResponseError(404),
-                "Client request( http://someurl.com) invalid: 404 page not found. Text: \"something went wrong\""
+                "something went wrong"
             )
         )
         givenPrepareCalled()
@@ -161,6 +151,31 @@ internal class AttachmentHandlerImplTest {
         }
         assertThat(attachmentSlotList[1]).isEqualTo(expectedAttachment)
         assertThat(processedAttachments.containsKey(givenAttachmentId)).isFalse()
+    }
+
+    @Test
+    fun `when uploadFile() fails with CancellationError`() {
+        val attachmentSlotList = mutableListOf<Attachment>()
+        coEvery { mockApi.uploadFile(any(), any(), any()) } returns Result.Failure(
+            ErrorCode.CancellationError,
+            "upload was cancelled."
+        )
+        val expectedAttachment = Attachment(
+            id = givenAttachmentId,
+            fileName = "image.png",
+            state = State.Uploading,
+        )
+        givenPrepareCalled()
+
+        subject.upload(givenPresignedUrlResponse)
+
+        coVerify {
+            mockAttachmentListener.invoke(capture(attachmentSlotList))
+            mockApi.uploadFile(any(), any(), any())
+            mockAttachmentListener.invoke(capture(attachmentSlotList))
+        }
+        assertThat(attachmentSlotList[1]).isEqualTo(expectedAttachment)
+        assertThat(processedAttachments.containsKey(givenAttachmentId)).isTrue()
     }
 
     @Test
@@ -415,6 +430,26 @@ internal class AttachmentHandlerImplTest {
         val result = subject.validate(givenByteArray)
 
         assertTrue(result)
+    }
+
+    @Test
+    fun `when onAttachmentRefreshed()`() {
+        val givenPresignedUrlResponse = PresignedUrlResponse(
+            attachmentId = givenAttachmentId,
+            fileName = "image.png",
+            url = "https://refreshedUrl.com",
+            headers = emptyMap(),
+        )
+        val expectedAttachment = Attachment(
+            id = givenAttachmentId,
+            fileName = "image.png",
+            state = State.Refreshed("https://refreshedUrl.com")
+        )
+
+        subject.onAttachmentRefreshed(givenPresignedUrlResponse)
+
+        verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
+        assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
     }
 
     private fun presignedUrlResponse(id: String = givenAttachmentId): PresignedUrlResponse =
