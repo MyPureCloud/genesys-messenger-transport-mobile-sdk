@@ -32,12 +32,16 @@ internal class AttachmentHandlerImpl(
 
     override var fileAttachmentProfile: FileAttachmentProfile? = null
 
+    @Throws(IllegalArgumentException::class)
     override fun prepare(
         attachmentId: String,
         byteArray: ByteArray,
         fileName: String,
         uploadProgress: ((Float) -> Unit)?,
     ): OnAttachmentRequest {
+        if (!validate(byteArray)) {
+            throw IllegalArgumentException(ErrorMessage.fileSizeIsTooBig(fileAttachmentProfile?.maxFileSizeKB))
+        }
         Attachment(id = attachmentId, fileName = fileName, state = Presigning).also {
             log.i { "Presigning attachment: $it" }
             updateAttachmentStateWith(it)
@@ -99,12 +103,6 @@ internal class AttachmentHandlerImpl(
         return null
     }
 
-    override fun validate(byteArray: ByteArray): Boolean {
-        return fileAttachmentProfile?.maxFileSizeKB?.let { maxFileSize ->
-            byteArray.toKB() <= maxFileSize
-        } ?: false
-    }
-
     override fun onDetached(attachmentId: String) {
         log.i { "Attachment detached: $attachmentId" }
         processedAttachments.remove(attachmentId)?.let {
@@ -153,6 +151,16 @@ internal class AttachmentHandlerImpl(
                 state = Attachment.State.Refreshed(presignedUrlResponse.url)
             )
         )
+    }
+
+    /**
+     * Validate if attachment match requirements for upload.
+     * In case fileAttachmentProfile or maxFileSizeKB are not set, consider attachment eligible for upload.
+     */
+    private fun validate(byteArray: ByteArray): Boolean {
+        return fileAttachmentProfile?.maxFileSizeKB?.let { maxFileSize ->
+            byteArray.toKB() <= maxFileSize
+        } ?: true
     }
 
     private fun handleUploadFailure(attachmentId: String, result: Result.Failure) {

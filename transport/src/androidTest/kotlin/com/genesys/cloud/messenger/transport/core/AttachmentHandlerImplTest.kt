@@ -30,8 +30,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlin.test.assertFailsWith
 
 internal class AttachmentHandlerImplTest {
     private val mockApi: WebMessagingApi = mockk {
@@ -380,56 +379,96 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun `when validate() but fileAttachmentProfile is not set`() {
+    fun `when prepare() but fileAttachmentProfile is not set`() {
+        val expectedOnAttachmentRequest = OnAttachmentRequest(
+            token = givenToken,
+            attachmentId = "99999999-9999-9999-9999-999999999999",
+            fileName = "image.png",
+            fileType = "image/png",
+            2000,
+            null,
+            true,
+        )
+
         val givenByteArray = ByteArray(2000)
 
-        val result = subject.validate(givenByteArray)
+        val onAttachmentRequest = subject.prepare(givenAttachmentId, givenByteArray, "image.png")
 
-        assertFalse(result)
+        assertThat(subject.fileAttachmentProfile).isNull()
+        assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
     }
 
     @Test
-    fun `when validate() but maxFileSizeKB in fileAttachmentProfile is null`() {
+    fun `when prepare() but maxFileSizeKB in fileAttachmentProfile is null`() {
         val givenByteArray = ByteArray(2000)
-        val givenFileAttachmentProfile = FileAttachmentProfile()
-        subject.fileAttachmentProfile = givenFileAttachmentProfile
+        subject.fileAttachmentProfile = FileAttachmentProfile()
+        val expectedOnAttachmentRequest = OnAttachmentRequest(
+            token = givenToken,
+            attachmentId = "99999999-9999-9999-9999-999999999999",
+            fileName = "image.png",
+            fileType = "image/png",
+            2000,
+            null,
+            true,
+        )
 
-        val result = subject.validate(givenByteArray)
+        val onAttachmentRequest = subject.prepare(givenAttachmentId, givenByteArray, "image.png")
 
-        assertFalse(result)
+        assertThat(subject.fileAttachmentProfile?.maxFileSizeKB).isNull()
+        assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
     }
 
     @Test
-    fun `when validate() but maxFileSizeKB in fileAttachmentProfile is less the provided ByteArray size`() {
+    fun `when prepare() but maxFileSizeKB in fileAttachmentProfile is less the provided ByteArray size`() {
         val givenByteArray = ByteArray(2000)
-        val givenFileAttachmentProfile = FileAttachmentProfile(maxFileSizeKB = 1)
-        subject.fileAttachmentProfile = givenFileAttachmentProfile
+        val expectedExceptionMessage = ErrorMessage.fileSizeIsTooBig(maxFileSize = 1)
+        subject.fileAttachmentProfile = FileAttachmentProfile(maxFileSizeKB = 1)
 
-        val result = subject.validate(givenByteArray)
-
-        assertFalse(result)
+        assertFailsWith<IllegalArgumentException>(expectedExceptionMessage) {
+            subject.prepare(givenAttachmentId, givenByteArray, "image.png")
+        }
     }
 
     @Test
-    fun `when validate() and maxFileSizeKB in fileAttachmentProfile is equal to the provided ByteArray size`() {
+    fun `when prepare() and maxFileSizeKB in fileAttachmentProfile is equal to the provided ByteArray size`() {
         val givenByteArray = ByteArray(2000)
-        val givenFileAttachmentProfile = FileAttachmentProfile(maxFileSizeKB = 2)
-        subject.fileAttachmentProfile = givenFileAttachmentProfile
+        subject.fileAttachmentProfile = FileAttachmentProfile(maxFileSizeKB = 2)
+        val expectedFileSizeInKB = 2L
+        val expectedOnAttachmentRequest = OnAttachmentRequest(
+            token = givenToken,
+            attachmentId = "99999999-9999-9999-9999-999999999999",
+            fileName = "image.png",
+            fileType = "image/png",
+            2000,
+            null,
+            true,
+        )
 
-        val result = subject.validate(givenByteArray)
+        val onAttachmentRequest = subject.prepare(givenAttachmentId, givenByteArray, "image.png")
 
-        assertTrue(result)
+        assertThat(subject.fileAttachmentProfile?.maxFileSizeKB).isEqualTo(expectedFileSizeInKB)
+        assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
     }
 
     @Test
-    fun `when validate() and maxFileSizeKB in fileAttachmentProfile is greater then provided ByteArray size`() {
+    fun `when prepare() and maxFileSizeKB in fileAttachmentProfile is greater then provided ByteArray size`() {
         val givenByteArray = ByteArray(2000)
-        val givenFileAttachmentProfile = FileAttachmentProfile(maxFileSizeKB = 100)
-        subject.fileAttachmentProfile = givenFileAttachmentProfile
+        subject.fileAttachmentProfile = FileAttachmentProfile(maxFileSizeKB = 100)
+        val expectedFileSizeInKB = 100L
+        val expectedOnAttachmentRequest = OnAttachmentRequest(
+            token = givenToken,
+            attachmentId = "99999999-9999-9999-9999-999999999999",
+            fileName = "image.png",
+            fileType = "image/png",
+            2000,
+            null,
+            true,
+        )
 
-        val result = subject.validate(givenByteArray)
+        val onAttachmentRequest = subject.prepare(givenAttachmentId, givenByteArray, "image.png")
 
-        assertTrue(result)
+        assertThat(subject.fileAttachmentProfile?.maxFileSizeKB).isEqualTo(expectedFileSizeInKB)
+        assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
     }
 
     @Test

@@ -8,6 +8,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 internal interface AttachmentHandler {
     var fileAttachmentProfile: FileAttachmentProfile?
 
+    @Throws(IllegalArgumentException::class)
     fun prepare(
         attachmentId: String,
         byteArray: ByteArray,
@@ -18,8 +19,6 @@ internal interface AttachmentHandler {
     fun upload(presignedUrlResponse: PresignedUrlResponse)
 
     fun detach(attachmentId: String): DeleteAttachmentRequest?
-
-    fun validate(byteArray: ByteArray): Boolean
 
     fun onUploadSuccess(uploadSuccessEvent: UploadSuccessEvent)
 

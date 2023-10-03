@@ -37,7 +37,6 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         assertEquals(expectedAttachmentId, result)
         verifySequence {
             connectSequence()
-            mockAttachmentHandler.validate(any())
             mockAttachmentHandler.prepare(any(), any(), any())
             mockPlatformSocket.sendMessage(expectedMessage)
         }
@@ -237,9 +236,15 @@ class MCAttachmentTests : BaseMessagingClientTest() {
     }
 
     @Test
-    fun `when attach() but validate attachment returns false`() {
+    fun `when attach() but attachmentHandler_prepare() throws exception`() {
         val givenByteArray = ByteArray(1)
-        every { mockAttachmentHandler.validate(givenByteArray) } returns false
+        every {
+            mockAttachmentHandler.prepare(
+                any(),
+                any(),
+                any()
+            )
+        } throws IllegalArgumentException(ErrorMessage.fileSizeIsTooBig(null))
         subject.connect()
 
         assertFailsWith<IllegalArgumentException>(ErrorMessage.fileSizeIsTooBig(null)) {

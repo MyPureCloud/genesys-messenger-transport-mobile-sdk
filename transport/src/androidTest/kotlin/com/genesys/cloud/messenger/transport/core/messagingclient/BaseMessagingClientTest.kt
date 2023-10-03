@@ -74,7 +74,6 @@ open class BaseMessagingClientTest {
             attachmentId = "88888888-8888-8888-8888-888888888888"
         )
         every { fileAttachmentProfile } returns null
-        every { validate(any()) } returns true
     }
     internal val mockPlatformSocket: PlatformSocket = mockk {
         every { openSocket(capture(slot)) } answers {

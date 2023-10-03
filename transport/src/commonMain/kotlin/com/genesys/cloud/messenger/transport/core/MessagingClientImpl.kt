@@ -198,9 +198,7 @@ internal class MessagingClientImpl(
         uploadProgress: ((Float) -> Unit)?,
     ): String {
         log.i { "attach(fileName = $fileName)" }
-        if (!attachmentHandler.validate(byteArray)) {
-            throw IllegalArgumentException(ErrorMessage.fileSizeIsTooBig(fileAttachmentProfile?.maxFileSizeKB))
-        }
+
         val request = attachmentHandler.prepare(
             Platform().randomUUID(),
             byteArray,
