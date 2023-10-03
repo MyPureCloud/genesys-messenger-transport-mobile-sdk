@@ -59,6 +59,17 @@ internal object Response {
         },"events": [$events]}}"""
     }
 
+    fun presignedUrlResponse(
+        attachmentId: String = "88888888-8888-8888-8888-888888888888",
+        headers: String = "",
+        url: String = "https://downloadUrl.com",
+        fileSize: Int = 1,
+        fileName: String = "test_asset.png",
+        fileType: String = "image/jpeg",
+    ): String {
+        return """{"type":"response","class":"PresignedUrlResponse","code":200,"body":{"attachmentId":"$attachmentId","headers":{$headers},"url":"$url","fileName":"$fileName","fileSize":$fileSize,"fileType":"$fileType"}}"""
+    }
+
     internal object AllowedMedia {
         const val empty = ""
         const val emptyBlockedExtensions = ""

@@ -46,6 +46,13 @@ data class Attachment(
         data class Uploaded(val downloadUrl: String) : State()
 
         /**
+         * Attachment url was successfully refreshed.
+         *
+         * @param downloadUrl is a refreshed url pointing to uploaded attachment.
+         */
+        data class Refreshed(val downloadUrl: String) : State()
+
+        /**
          * Message that holds this attachment was sent, but there were no confirmation of delivery or failure yet.
          */
         object Sending : State()

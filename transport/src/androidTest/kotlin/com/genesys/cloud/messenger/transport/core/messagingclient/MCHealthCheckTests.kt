@@ -74,6 +74,7 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
             mockPlatformSocket.openSocket(any())
             mockStateChangedListener(fromConnectingToConnected)
             mockPlatformSocket.sendMessage(Request.configureRequest())
+            mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockStateChangedListener(fromConnectedToConfigured)
             mockPlatformSocket.sendMessage(expectedMessage)

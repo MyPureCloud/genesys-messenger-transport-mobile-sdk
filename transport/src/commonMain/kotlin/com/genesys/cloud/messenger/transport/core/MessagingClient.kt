@@ -174,9 +174,10 @@ interface MessagingClient {
      * @param uploadProgress optional callback to track attachment upload progress.
      *
      * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
+     * @throws IllegalArgumentException If provided file size exceeds [FileAttachmentProfile.maxFileSizeKB].
      * @return internally generated attachmentId. Can be used to track upload progress
      */
-    @Throws(IllegalStateException::class)
+    @Throws(IllegalStateException::class, IllegalArgumentException::class)
     fun attach(
         byteArray: ByteArray,
         fileName: String,
@@ -193,6 +194,19 @@ interface MessagingClient {
      */
     @Throws(IllegalStateException::class)
     fun detach(attachmentId: String)
+
+    /**
+     * Refreshes the downloadUrl for a given attachment.
+     * The `downloadUrl` of an attachment typically expires after 10 minutes.
+     * If this URL is consumed after the expiration period, it will result in an error.
+     * To mitigate this, the `refreshAttachmentUrl` function can be used to obtain a new valid `downloadUrl` for the specified attachment.
+     *
+     * @param attachmentId the ID of the attachment to refresh.
+     *
+     * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
+     */
+    @Throws(IllegalStateException::class)
+    fun refreshAttachmentUrl(attachmentId: String)
 
     /**
      * Get message history for a conversation.

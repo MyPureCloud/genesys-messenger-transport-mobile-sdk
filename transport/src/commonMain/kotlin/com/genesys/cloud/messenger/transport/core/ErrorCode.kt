@@ -79,6 +79,7 @@ object ErrorMessage {
     const val AutoRefreshTokenDisabled = "AutoRefreshTokenWhenExpired is disabled in Configuration."
     const val NoRefreshToken = "No refreshAuthToken. Authentication is required."
     const val FailedToClearConversation = "Failed to clear conversation."
+    fun fileSizeIsTooBig(maxFileSize: Long?) = "Reduce the attachment size to $maxFileSize KB or less."
 }
 
 sealed class CorrectiveAction(val message: String) {

@@ -13,7 +13,6 @@ import com.genesys.cloud.messenger.transport.shyrka.send.AuthJwtRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OAuth
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.plugins.ResponseException
 import io.ktor.client.plugins.onUpload
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
@@ -59,13 +58,12 @@ internal class WebMessagingApi(
         Result.Failure(ErrorCode.UnexpectedError, e.message)
     }
 
-    @Throws(ResponseException::class, CancellationException::class)
     suspend fun uploadFile(
         presignedUrlResponse: PresignedUrlResponse,
         byteArray: ByteArray,
         progressCallback: ((Float) -> Unit)?,
-    ) {
-        client.put(presignedUrlResponse.url) {
+    ): Result<Empty> = try {
+        val response = client.put(presignedUrlResponse.url) {
             presignedUrlResponse.headers.forEach {
                 header(it.key, it.value)
             }
@@ -74,6 +72,15 @@ internal class WebMessagingApi(
             }
             setBody(byteArray)
         }
+        if (response.status.isSuccess()) {
+            Result.Success(Empty())
+        } else {
+            Result.Failure(ErrorCode.mapFrom(response.status.value), response.body<String>())
+        }
+    } catch (cancellationException: CancellationException) {
+        Result.Failure(ErrorCode.CancellationError, cancellationException.message)
+    } catch (e: Exception) {
+        Result.Failure(ErrorCode.UnexpectedError, e.message)
     }
 
     suspend fun fetchAuthJwt(

@@ -13,10 +13,8 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.util.logs.Log
-import io.ktor.client.plugins.ResponseException
 import io.ktor.http.ContentType
 import io.ktor.http.defaultForFilePath
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -28,16 +26,22 @@ internal class AttachmentHandlerImpl(
     private val token: String,
     private val log: Log,
     private val updateAttachmentStateWith: (Attachment) -> Unit,
-    private val processedAttachments: MutableMap<String, ProcessedAttachment> = mutableMapOf()
+    private val processedAttachments: MutableMap<String, ProcessedAttachment> = mutableMapOf(),
 ) : AttachmentHandler {
     private val uploadDispatcher = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
+    override var fileAttachmentProfile: FileAttachmentProfile? = null
+
+    @Throws(IllegalArgumentException::class)
     override fun prepare(
         attachmentId: String,
         byteArray: ByteArray,
         fileName: String,
         uploadProgress: ((Float) -> Unit)?,
     ): OnAttachmentRequest {
+        if (!validate(byteArray)) {
+            throw IllegalArgumentException(ErrorMessage.fileSizeIsTooBig(fileAttachmentProfile?.maxFileSizeKB))
+        }
         Attachment(id = attachmentId, fileName = fileName, state = Presigning).also {
             log.i { "Presigning attachment: $it" }
             updateAttachmentStateWith(it)
@@ -63,16 +67,9 @@ internal class AttachmentHandlerImpl(
             it.attachment = it.attachment.copy(state = Uploading)
                 .also(updateAttachmentStateWith)
             it.job = uploadDispatcher.launch {
-                try {
-                    api.uploadFile(presignedUrlResponse, it.byteArray, it.uploadProgress)
-                } catch (responseException: ResponseException) {
-                    onError(
-                        it.attachment.id,
-                        ErrorCode.mapFrom(responseException.response.status.value),
-                        responseException.message ?: "ResponseException during attachment upload"
-                    )
-                } catch (cancellationException: CancellationException) {
-                    log.w { "cancellationException during attachment upload: ${it.attachment}" }
+                when (val result = api.uploadFile(presignedUrlResponse, it.byteArray, it.uploadProgress)) {
+                    is Result.Success -> {} // Nothing to do here. We are waiting for UploadSuccess/Failure Event from Shyrka.
+                    is Result.Failure -> handleUploadFailure(presignedUrlResponse.attachmentId, result)
                 }
             }
         }
@@ -145,6 +142,39 @@ internal class AttachmentHandlerImpl(
     }
 
     override fun clearAll() = processedAttachments.clear()
+
+    override fun onAttachmentRefreshed(presignedUrlResponse: PresignedUrlResponse) {
+        updateAttachmentStateWith(
+            Attachment(
+                id = presignedUrlResponse.attachmentId,
+                fileName = presignedUrlResponse.fileName,
+                state = Attachment.State.Refreshed(presignedUrlResponse.url)
+            )
+        )
+    }
+
+    /**
+     * Validate if attachment match requirements for upload.
+     * In case fileAttachmentProfile or maxFileSizeKB are not set, consider attachment eligible for upload.
+     */
+    private fun validate(byteArray: ByteArray): Boolean {
+        return fileAttachmentProfile?.maxFileSizeKB?.let { maxFileSize ->
+            byteArray.toKB() <= maxFileSize
+        } ?: true
+    }
+
+    private fun handleUploadFailure(attachmentId: String, result: Result.Failure) {
+        if (result.errorCode is ErrorCode.CancellationError) {
+            log.w { "Cancellation exception was thrown, while uploading attachment." }
+            return
+        }
+        log.e { "uploadFile($attachmentId) respond with error: ${result.errorCode}, and message: ${result.message}" }
+        onError(
+            attachmentId = attachmentId,
+            errorCode = result.errorCode,
+            errorMessage = result.message ?: "ResponseException during attachment upload",
+        )
+    }
 }
 
 internal class ProcessedAttachment(
@@ -181,3 +211,5 @@ private fun ProcessedAttachment.takeSendingId(): String? =
 
 private fun ProcessedAttachment.takeUploaded(): ProcessedAttachment? =
     this.takeIf { it.attachment.state is Uploaded }
+
+private fun ByteArray.toKB(): Long = size / 1000L
