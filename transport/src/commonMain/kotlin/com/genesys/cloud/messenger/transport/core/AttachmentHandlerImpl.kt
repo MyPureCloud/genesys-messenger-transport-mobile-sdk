@@ -39,9 +39,7 @@ internal class AttachmentHandlerImpl(
         fileName: String,
         uploadProgress: ((Float) -> Unit)?,
     ): OnAttachmentRequest {
-        if (!validate(byteArray)) {
-            throw IllegalArgumentException(ErrorMessage.fileSizeIsTooBig(fileAttachmentProfile?.maxFileSizeKB))
-        }
+        validate(byteArray, fileName)
         Attachment(id = attachmentId, fileName = fileName, state = Presigning).also {
             log.i { "Presigning attachment: $it" }
             updateAttachmentStateWith(it)
@@ -155,12 +153,23 @@ internal class AttachmentHandlerImpl(
 
     /**
      * Validate if attachment match requirements for upload.
-     * In case fileAttachmentProfile or maxFileSizeKB are not set, consider attachment eligible for upload.
+     * In case fileAttachmentProfile is not set, consider attachment eligible for upload.
+     *
+     * @throws IllegalArgumentException if attachment does not match [fileAttachmentProfile] requirements.
      */
-    private fun validate(byteArray: ByteArray): Boolean {
-        return fileAttachmentProfile?.maxFileSizeKB?.let { maxFileSize ->
-            byteArray.toKB() <= maxFileSize
-        } ?: true
+    @Throws(IllegalArgumentException::class)
+    private fun validate(byteArray: ByteArray, fileName: String) {
+        fileAttachmentProfile?.let {
+            if (byteArray.isEmpty()) {
+                throw IllegalArgumentException(ErrorMessage.FileSizeIsToSmall)
+            }
+            if (byteArray.isInvalid(it.maxFileSizeKB)) {
+                throw IllegalArgumentException(ErrorMessage.fileSizeIsTooBig(it.maxFileSizeKB))
+            }
+            if (fileName.isProhibited(it.blockedFileTypes)) {
+                throw IllegalArgumentException(ErrorMessage.fileTypeIsProhibited(fileName))
+            }
+        }
     }
 
     private fun handleUploadFailure(attachmentId: String, result: Result.Failure) {
@@ -176,6 +185,12 @@ internal class AttachmentHandlerImpl(
         )
     }
 }
+
+private fun ByteArray.isInvalid(maxFileSizeKB: Long?): Boolean =
+    maxFileSizeKB?.let { this.toKB() > maxFileSizeKB } ?: false
+
+private fun String.isProhibited(blockedFileTypes: List<String>): Boolean =
+    blockedFileTypes.contains(".${substringAfterLast('.')}")
 
 internal class ProcessedAttachment(
     var attachment: Attachment,
