@@ -23,6 +23,10 @@ import kotlinx.coroutines.launch
 class TestBedFragment : Fragment() {
 
     private val viewModel: TestBedViewModel by activityViewModels()
+    private val selectFileResult = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+        ::handleFileSelectionResult
+    )
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -62,10 +66,7 @@ class TestBedFragment : Fragment() {
             type = filesWithType[0]
             putExtra(Intent.EXTRA_MIME_TYPES, filesWithType)
         }
-        registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult(),
-            ::handleFileSelectionResult
-        ).launch(intent)
+        selectFileResult.launch(intent)
     }
 
     private fun handleFileSelectionResult(result: ActivityResult) {
