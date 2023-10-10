@@ -69,7 +69,10 @@ data class Styles(val primaryColor: String)
 data class LauncherButton(val visibility: String)
 
 @Serializable
-data class FileUpload(val modes: List<Mode>)
+data class FileUpload(
+    val enableAttachments: Boolean = false,
+    val modes: List<Mode>
+)
 
 @Serializable
 data class Mode(
