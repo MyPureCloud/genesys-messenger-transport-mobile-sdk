@@ -51,6 +51,10 @@ class TestBedFragment : Fragment() {
     }
 
     private fun selectFile(fileAttachmentProfile: FileAttachmentProfile) {
+        if (!fileAttachmentProfile.hasWildCard && fileAttachmentProfile.allowedFileTypes.isEmpty()) {
+            viewModel.onCancelFileSelection()
+            return
+        }
         val filesWithType =
             if (fileAttachmentProfile.hasWildCard) arrayOf("*/*") else fileAttachmentProfile.allowedFileTypes.toTypedArray()
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
