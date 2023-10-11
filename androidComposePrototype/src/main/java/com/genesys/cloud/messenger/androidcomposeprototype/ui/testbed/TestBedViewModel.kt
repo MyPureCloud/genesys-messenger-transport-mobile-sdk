@@ -146,7 +146,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-
     private fun doOktaSignIn(withPKCE: Boolean) {
         pkceEnabled = withPKCE
         onOktaSingIn(buildOktaAuthorizeUrl())
