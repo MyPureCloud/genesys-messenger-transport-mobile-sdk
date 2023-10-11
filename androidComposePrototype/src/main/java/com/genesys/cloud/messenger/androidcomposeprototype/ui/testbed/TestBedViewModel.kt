@@ -259,7 +259,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-
     private fun doClearConversation() {
         try {
             client.clearConversation()
