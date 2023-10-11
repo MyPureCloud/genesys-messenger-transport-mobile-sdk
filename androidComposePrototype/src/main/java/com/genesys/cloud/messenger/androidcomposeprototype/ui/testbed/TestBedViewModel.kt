@@ -12,6 +12,7 @@ import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
+import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
 import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessageEvent.AttachmentUpdated
 import com.genesys.cloud.messenger.transport.core.MessagingClient
@@ -26,8 +27,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-private const val ATTACHMENT_FILE_NAME = "test_asset.png"
-
 class TestBedViewModel : ViewModel(), CoroutineScope {
 
     override val coroutineContext = Dispatchers.IO + Job()
@@ -36,7 +35,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private lateinit var messengerTransport: MessengerTransport
     private lateinit var client: MessagingClient
-    private lateinit var attachment: ByteArray
     private val attachedIds = mutableListOf<String>()
 
     var command: String by mutableStateOf("")
@@ -53,7 +51,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         private set
     var authState: AuthState by mutableStateOf(AuthState.NoAuth)
         private set
-    var pkceEnabled by mutableStateOf(false)
+    private var pkceEnabled by mutableStateOf(false)
 
     var authCode: String = ""
         set(value) {
@@ -70,13 +68,16 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     val regions = listOf("inindca.com", "inintca.com", "mypurecloud.com")
     private val customAttributes = mutableMapOf<String, String>()
     private lateinit var onOktaSingIn: (url: String) -> Unit
+    private lateinit var selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit
 
     fun init(
         context: Context,
+        selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit,
         onOktaSignIn: (url: String) -> Unit,
     ) {
         println("Messenger Transport sdkVersion: ${MessengerTransport.sdkVersion}")
         this.onOktaSingIn = onOktaSignIn
+        this.selectFile = selectFile
         val mmsdkConfiguration = Configuration(
             deploymentId = deploymentId.ifEmpty { BuildConfig.DEPLOYMENT_ID },
             domain = region.ifEmpty { BuildConfig.DEPLOYMENT_DOMAIN },
@@ -98,11 +99,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             messageListener = { onMessage(it) }
             eventListener = { onEvent(it) }
             clientState = client.currentState
-        }
-        viewModelScope.launch(Dispatchers.IO) {
-            context.assets.open(ATTACHMENT_FILE_NAME).use { inputStream ->
-                inputStream.readBytes().also { attachment = it }
-            }
         }
     }
 
@@ -237,16 +233,13 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     }
 
     private fun doAttach() {
-        try {
-            client.attach(
-                attachment,
-                ATTACHMENT_FILE_NAME
-            ) { progress -> println("Attachment upload progress: $progress") }.also {
-                attachedIds.add(it)
+        client.fileAttachmentProfile?.let {
+            if (it.allowedFileTypes.isNotEmpty() || it.hasWildCard) {
+                selectFile(it)
+            } else {
+                onSocketMessageReceived("Allowed file types is empty. Can not launch file picker.")
             }
-        } catch (t: Throwable) {
-            handleException(t, "attach")
-        }
+        } ?: onSocketMessageReceived("FileAttachmentProfile is not set. Can not launch file picker.")
     }
 
     private fun doDetach(attachmentId: String) {
@@ -379,6 +372,26 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
                 println("Handle Event.Error here.")
             }
         }
+    }
+
+    fun onFileSelected(byteArray: ByteArray, fileName: String) {
+        commandWaiting = false
+        client.attach(
+            byteArray,
+            fileName
+        ) { progress -> println("Attachment upload progress: $progress") }.also {
+            attachedIds.add(it)
+        }
+    }
+
+    fun onCancelFileSelection() {
+        commandWaiting = false
+        onSocketMessageReceived("File selection canceled. No attachment selected.")
+    }
+
+    fun onErrorFilePick(exception: Exception) {
+        commandWaiting = false
+        onSocketMessageReceived("Exception happened during attachment file selection: ${exception.message}")
     }
 
     private fun buildOktaAuthorizeUrl(): String {
