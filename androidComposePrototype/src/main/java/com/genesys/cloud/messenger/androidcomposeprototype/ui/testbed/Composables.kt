@@ -61,7 +61,7 @@ fun TestBedContent(
             style = typography.h5
         )
         Text(
-            "Commands: oktaSignIn, oktaSignInWithPKCE, oktaLogout, connect, connectAuthenticated, newChat, send <msg>, history, invalidateConversationCache, attach, detach, delete <attachmentId> , deployment, bye, healthCheck, addAttribute <key> <value>, typing, authorize, clearConversation",
+            "Commands: oktaSignIn, oktaSignInWithPKCE, oktaLogout, connect, connectAuthenticated, newChat, send <msg>, history, invalidateConversationCache, attach, detach, refreshAttachment<attachmentId>, delete <attachmentId> , deployment, bye, healthCheck, addAttribute <key> <value>, typing, authorize, clearConversation",
             style = typography.caption,
             softWrap = true
         )

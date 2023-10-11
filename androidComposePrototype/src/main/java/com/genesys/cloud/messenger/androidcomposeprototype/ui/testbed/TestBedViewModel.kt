@@ -138,12 +138,14 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "oktaLogout" -> logoutFromOktaSession()
             "authorize" -> doAuthorize()
             "clearConversation" -> doClearConversation()
+            "refreshAttachment" -> doRefreshAttachmentUrl(input)
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
             }
         }
     }
+
 
     private fun doOktaSignIn(withPKCE: Boolean) {
         pkceEnabled = withPKCE
@@ -249,6 +251,15 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             handleException(t, "detach")
         }
     }
+
+    private fun doRefreshAttachmentUrl(attachmentId: String) {
+        try {
+            client.refreshAttachmentUrl(attachmentId)
+        } catch (t: Throwable) {
+            handleException(t, "refreshAttachmentUrl")
+        }
+    }
+
 
     private fun doClearConversation() {
         try {
