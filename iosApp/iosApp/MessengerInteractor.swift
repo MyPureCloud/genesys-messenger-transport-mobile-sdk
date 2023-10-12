@@ -130,6 +130,16 @@ final class MessengerInteractor {
             throw error
         }
     }
+    
+    
+    func refreshAttachmentUrl(attachId: String) throws {
+        do {
+            try messagingClient.refreshAttachmentUrl(attachmentId: attachId)
+        } catch {
+            print("refreshAttachmentUrl(attachId:) failed. \(error.localizedDescription)")
+            throw error
+        }
+    }
 
     func detachImage(attachId: String) throws {
         do {

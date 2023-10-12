@@ -45,6 +45,7 @@ class TestbedViewController: UIViewController {
         case history
         case selectAttachment
         case attach
+        case refreshAttachment
         case detach
         case deployment
         case bye
@@ -60,6 +61,7 @@ class TestbedViewController: UIViewController {
             case .send: return "send <msg>"
             case .detach: return "detach <attachmentId>"
             case .addAttribute: return "addAttribute <key> <value>"
+            case .refreshAttachment: return "refreshAttachment <attachmentId>"
             default: return rawValue
             }
         }
@@ -396,7 +398,7 @@ extension TestbedViewController : UITextFieldDelegate {
                     DispatchQueue.main.async {
                         self.info.text = "<loaded \(String(describing: self.byteArray?.count)) bytes>"
                     }
-                }
+                }M
             case (.attach, _):
                 if(byteArray != nil) {
                     let swiftByteArray : [UInt8] = byteArray!
@@ -409,6 +411,8 @@ extension TestbedViewController : UITextFieldDelegate {
                     
                     try messenger.attachImage(kotlinByteArray: kotlinByteArray)
                 }
+            case (.refreshAttachment, let attachId?):
+                try messenger.refreshAttachmentUrl(attachId: attachId)
             case (.detach, let attachId?):
                 try messenger.detachImage(attachId: attachId)
             case (.deployment, _):
