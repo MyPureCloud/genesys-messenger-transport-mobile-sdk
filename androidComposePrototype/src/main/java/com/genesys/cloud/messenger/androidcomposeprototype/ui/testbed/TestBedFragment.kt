@@ -36,8 +36,8 @@ class TestBedFragment : Fragment() {
         setViewContent(this)
         viewModel.init(
             requireContext(),
-            { fileAttachmentProfile -> selectFile(fileAttachmentProfile) })
-        { url ->
+            { fileAttachmentProfile -> selectFile(fileAttachmentProfile) }
+        ) { url ->
             launchCustomTabs(url)
         }
     }
