@@ -22,7 +22,7 @@ fun createMessengerVOForTesting(
     styles = Styles(primaryColor = "red"),
     launcherButton = LauncherButton(visibility = "On"),
     fileUpload = FileUpload(
-        listOf(
+        modes = listOf(
             Mode(
                 fileTypes = listOf("png"),
                 maxFileSizeKB = 100,
