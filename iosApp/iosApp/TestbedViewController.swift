@@ -398,7 +398,7 @@ extension TestbedViewController : UITextFieldDelegate {
                     DispatchQueue.main.async {
                         self.info.text = "<loaded \(String(describing: self.byteArray?.count)) bytes>"
                     }
-                }M
+                }
             case (.attach, _):
                 if(byteArray != nil) {
                     let swiftByteArray : [UInt8] = byteArray!
