@@ -133,8 +133,7 @@ final class MessengerInteractor {
             print("attachImage(kotlinByteArray:) failed. \(error.localizedDescription)")
             throw error
         }
-    }
-    
+    }    
     
     func refreshAttachmentUrl(attachId: String) throws {
         do {
