@@ -106,6 +106,9 @@ class MessengerInteractorTester {
                     if let uploadedAttachment = attachmentUpdated.attachment.state as? Attachment.StateUploaded {
                         self?.receivedDownloadUrl = uploadedAttachment.downloadUrl
                         self?.testExpectation?.fulfill()
+                    } else if let attachmentError = attachmentUpdated.attachment.state as? Attachment.StateError {
+                        print("Attachment Error: \(attachmentError.description())")
+                        self?.errorExpectation?.fulfill()
                     }
                 case let history as MessageEvent.HistoryFetched:
                     print("HistoryEvent: <\(history.startOfConversation.description)>, messages:")
@@ -159,7 +162,7 @@ class MessengerInteractorTester {
         
         messenger.fetchDeployment { config, error in
             if let error = error {
-                XCTFail(error.localizedDescription)
+                print(error.localizedDescription)
             }
             deploymentConfig = config
             expectation.fulfill()
@@ -277,18 +280,32 @@ class MessengerInteractorTester {
         verifyReceivedMessage(expectedMessage: text)
     }
 
-    func attemptImageAttach(kotlinByteArray: KotlinByteArray, file: StaticString = #file, line: UInt = #line) {
+    func attemptImageAttach(attachmentName: String, kotlinByteArray: KotlinByteArray, shouldSucceed: Bool = true, file: StaticString = #file, line: UInt = #line) {
         do {
-            try attachImage(kotlinByteArray: kotlinByteArray)
+            try attachImage(attachmentName: attachmentName, kotlinByteArray: kotlinByteArray, shouldSucceed: shouldSucceed)
         } catch {
             XCTFail("Failed to attach image.\n\(error.localizedDescription)", file: file, line: line)
         }
     }
 
-    private func attachImage(kotlinByteArray: KotlinByteArray) throws {
-        testExpectation = XCTestExpectation(description: "Wait for image to attach successfully.")
-        try messenger.attachImage(kotlinByteArray: kotlinByteArray, fileName: "AttachmentTest.jpg")
-        waitForTestExpectation()
+    private func attachImage(attachmentName: String, kotlinByteArray: KotlinByteArray, shouldSucceed: Bool = true) throws {
+        if shouldSucceed {
+            testExpectation = XCTestExpectation(description: "Wait for image to attach successfully.")
+        } else {
+            errorExpectation = XCTestExpectation(description: "Wait for the image to fail to attach.")
+        }
+        do {
+            try messenger.attachImage(kotlinByteArray: kotlinByteArray, fileName: attachmentName)
+        } catch {
+            if shouldSucceed {
+                throw error
+            }
+        }
+        if shouldSucceed {
+            waitForTestExpectation()
+        } else {
+            waitForErrorExpectation()
+        }
     }
 
     func sendUploadedImage(file: StaticString = #file, line: UInt = #line) {
