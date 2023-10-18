@@ -29,6 +29,7 @@ class MessengerInteractorTester {
     var humanizeEnabled: Bool = true
     var currentClientState: MessagingClientState?
     var authState: AuthState = .noAuth
+    var attachmentId: String?
 
     private var historyExpectation: XCTestExpectation?
     private var historyMessages: [Message] = []
@@ -102,6 +103,7 @@ class MessengerInteractorTester {
                     self?.testExpectation?.fulfill()
                 case let attachmentUpdated as MessageEvent.AttachmentUpdated:
                     print("Attachment Updated: <\(attachmentUpdated.attachment.description)>")
+                    self?.attachmentId = attachmentUpdated.attachment.id
                     // Only finish the wait when the attachment has finished uploading.
                     if let uploadedAttachment = attachmentUpdated.attachment.state as? Attachment.StateUploaded {
                         self?.receivedDownloadUrl = uploadedAttachment.downloadUrl
@@ -305,6 +307,18 @@ class MessengerInteractorTester {
             waitForTestExpectation()
         } else {
             waitForErrorExpectation()
+        }
+    }
+
+    func refreshAttachment(attachmentId: String?, file: StaticString = #file, line: UInt = #line) {
+        guard let attachmentId else {
+            XCTFail("No attachment ID available to refresh.")
+            return
+        }
+        do {
+            try messenger.refreshAttachment(attachmentId: attachmentId)
+        } catch {
+            XCTFail("Failed to refresh attachment.  \n\(error.localizedDescription)", file: file, line: line)
         }
     }
 

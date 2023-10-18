@@ -97,6 +97,7 @@ class iosAppTests: XCTestCase {
             XCTFail("Failed to setup the Messenger tester.")
             return
         }
+        messengerTester.attachmentId = nil // Ensure that we have no attachment ID already set.
 
         messengerTester.startNewMessengerConnection()
         messengerTester.sendText(text: "Starting Attachment test.")
@@ -121,6 +122,8 @@ class iosAppTests: XCTestCase {
             kotlinByteArray.set(index: Int32(index), value: element)
         }
         messengerTester.attemptImageAttach(attachmentName: "AttachmentTest.png", kotlinByteArray: kotlinByteArray)
+        XCTAssertTrue(messengerTester.attachmentId != nil, "We did not have an attachment ID available.")
+        messengerTester.refreshAttachment(attachmentId: messengerTester.attachmentId)
         messengerTester.sendUploadedImage()
 
         // Disconnect the conversation for the agent and disconnect the session.
@@ -156,6 +159,7 @@ class iosAppTests: XCTestCase {
         XCTAssertTrue(!deploymentConfig.messenger.fileUpload.modes.isEmpty, "The number of allowed media is missing or we were not able to pull the list.")
 
         // Attempt to attach a file that is not allowed by the Content Profile.
+        // application/json should not be allowed right now.
         guard let byteArray = TestConfig.shared.pullConfigDataAsKotlinByteArray() else {
             XCTFail("Failed to convert the test config into a byte array.")
             return
