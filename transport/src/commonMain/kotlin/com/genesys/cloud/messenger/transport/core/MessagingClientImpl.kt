@@ -362,6 +362,8 @@ internal class MessagingClientImpl(
                             )
                         )
                     }
+                } else {
+                    internalCustomAttributesStore.onMessageError()
                 }
                 messageStore.onMessageError(code, message)
                 attachmentHandler.onMessageError(code, message)

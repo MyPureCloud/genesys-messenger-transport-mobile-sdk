@@ -69,7 +69,9 @@ class MCMessageTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
+            mockCustomAttributesStore.onMessageError()
             mockMessageStore.onMessageError(ErrorCode.MessageTooLong, "message too long")
+            mockAttachmentHandler.onMessageError(ErrorCode.MessageTooLong, "message too long")
         }
         verify(exactly = 0) {
             mockCustomAttributesStore.onError()
@@ -84,6 +86,7 @@ class MCMessageTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
+            mockCustomAttributesStore.onMessageError()
             mockMessageStore.onMessageError(
                 ErrorCode.RequestRateTooHigh,
                 "Message rate too high for this session. Retry after 3 seconds."
@@ -119,6 +122,7 @@ class MCMessageTests : BaseMessagingClientTest() {
         }
         verify(exactly = 0) {
             mockEventHandler.onEvent(any())
+            mockCustomAttributesStore.onMessageError()
         }
     }
 }
