@@ -97,6 +97,7 @@ class iosAppTests: XCTestCase {
             XCTFail("Failed to setup the Messenger tester.")
             return
         }
+        messengerTester.attachmentId = nil // Ensure that we have no attachment ID already set.
 
         messengerTester.startNewMessengerConnection()
         messengerTester.sendText(text: "Starting Attachment test.")
@@ -120,8 +121,50 @@ class iosAppTests: XCTestCase {
         for (index, element) in intArray.enumerated() {
             kotlinByteArray.set(index: Int32(index), value: element)
         }
-        messengerTester.attemptImageAttach(kotlinByteArray: kotlinByteArray)
+        messengerTester.attemptImageAttach(attachmentName: "AttachmentTest.png", kotlinByteArray: kotlinByteArray)
+        XCTAssertTrue(messengerTester.attachmentId != nil, "We did not have an attachment ID available.")
+        messengerTester.refreshAttachment(attachmentId: messengerTester.attachmentId)
         messengerTester.sendUploadedImage()
+
+        // Disconnect the conversation for the agent and disconnect the session.
+        ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
+        messengerTester.disconnectMessenger()
+    }
+
+    func testAttachments_ContentProfile() {
+        // Setup the session. Send a message to start the conversation.
+        // Setup the session. Send a message.
+        guard let messengerTester = messengerTester else {
+            XCTFail("Failed to setup the Messenger tester.")
+            return
+        }
+
+        messengerTester.startNewMessengerConnection()
+        messengerTester.sendText(text: "Starting Attachment test.")
+
+        // Use the public API to answer the new Messenger conversation.
+        // Send a message from that agent and make sure we receive it.
+        guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
+            XCTFail("The message we sent may not have connected to an agent.")
+            return
+        }
+
+        // Pull the deployment config and ensure that we have an allowedMedia list.
+        guard let deploymentConfig = messengerTester.pullDeploymentConfig() else {
+            ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
+            messengerTester.disconnectMessenger()
+            XCTFail("Failed to pull the deployment config.")
+            return
+        }
+        XCTAssertTrue(!deploymentConfig.messenger.fileUpload.modes.isEmpty, "The number of allowed media is missing or we were not able to pull the list.")
+
+        // Attempt to attach a file that is not allowed by the Content Profile.
+        // application/json should not be allowed right now.
+        guard let byteArray = TestConfig.shared.pullConfigDataAsKotlinByteArray() else {
+            XCTFail("Failed to convert the test config into a byte array.")
+            return
+        }
+        messengerTester.attemptImageAttach(attachmentName: "shouldFail.json", kotlinByteArray: byteArray, shouldSucceed: false)
 
         // Disconnect the conversation for the agent and disconnect the session.
         ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
