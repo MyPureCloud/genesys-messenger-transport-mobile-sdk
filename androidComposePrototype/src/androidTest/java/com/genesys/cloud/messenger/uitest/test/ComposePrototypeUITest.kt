@@ -1,5 +1,7 @@
 package com.genesys.cloud.messenger.uitest.test
 
+import android.content.Context
+import android.os.Environment
 import android.util.Log
 import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
@@ -8,6 +10,7 @@ import com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed.TestBedVie
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.API
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.answerNewConversation
+import com.genesys.cloud.messenger.uitest.support.ApiHelper.attachImage
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.checkForConversationMessages
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.disconnectAllConversations
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendConnectOrDisconnect
@@ -19,7 +22,11 @@ import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
+import java.io.File
+import java.io.IOException
 import java.lang.Thread.sleep
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.UUID
 
 @Suppress("FunctionName")
@@ -79,6 +86,8 @@ class ComposePrototypeUITest : BaseTests() {
     private val clearConversation = "clearConversation"
     private val connectionClosedMessage = "Connection Closed Normally"
     private val connectionClosedCode = "1000"
+    private val deploymentConfigText = "DeploymentConfig"
+    private val imageFormatsText = "modes=[Mode(fileTypes=[image/png, image/jpeg, image/gif]"
 
     fun enterDeploymentInfo(deploymentId: String) {
         opening {
@@ -195,6 +204,8 @@ class ComposePrototypeUITest : BaseTests() {
         messenger {
             verifyPageIsVisible()
             enterCommand(attachImageText)
+            // Select picture from device
+
             waitForProperResponse(uploadingText)
             waitForProperResponse(uploadedText)
             attachmentId = checkAttachFullResponse()
@@ -348,10 +359,15 @@ class ComposePrototypeUITest : BaseTests() {
         if (conversationInfo == null) AssertionError("Unable to answer conversation.")
         else {
             Log.i(TAG, "Conversation started successfully.")
-            attachImage()
-            // wait for image to load
-            sleep(3000)
-            apiHelper.sendConnectOrDisconnect(conversationInfo)
+            // Get the deployment config to check for allowed media
+            enterDeploymentCommand(deploymentConfigText)
+            verifyResponse(imageFormatsText)
+            apiHelper.attachImage(conversationInfo)
+
+//            attachImage()
+//            // wait for image to load
+//            sleep(3000)
+//            apiHelper.sendConnectOrDisconnect(conversationInfo)
         }
         bye()
     }
