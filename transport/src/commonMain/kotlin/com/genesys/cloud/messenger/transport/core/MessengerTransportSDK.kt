@@ -83,7 +83,6 @@ class MessengerTransportSDK(
             messageStore.updateAttachmentStateWith,
         )
 
-
         return MessagingClientImpl(
             api = api,
             log = log,
