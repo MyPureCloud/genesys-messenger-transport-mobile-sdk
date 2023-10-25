@@ -3,7 +3,7 @@ package com.genesys.cloud.messenger.transport
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.Configuration
-import com.genesys.cloud.messenger.transport.core.MessengerTransport
+import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
 import io.ktor.http.Url
 import kotlin.test.Test
 
@@ -17,7 +17,7 @@ class RegionConfigurationTest {
         )
 
         val actual = configuration.webSocketUrl
-        val expected = Url("wss://webmessaging.mypurecloud.com/v1?deploymentId=foo&application=TransportSDK-${MessengerTransport.sdkVersion}")
+        val expected = Url("wss://webmessaging.mypurecloud.com/v1?deploymentId=foo&application=TransportSDK-${MessengerTransportSDK.sdkVersion}")
 
         assertThat(actual, "WebSocket URL").isEqualTo(expected)
     }

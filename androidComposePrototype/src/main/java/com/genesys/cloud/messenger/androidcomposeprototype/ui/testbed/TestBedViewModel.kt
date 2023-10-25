@@ -16,7 +16,7 @@ import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessageEvent.AttachmentUpdated
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
-import com.genesys.cloud.messenger.transport.core.MessengerTransport
+import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import io.ktor.http.URLBuilder
@@ -34,7 +34,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private val TAG = TestBedViewModel::class.simpleName
 
-    private lateinit var messengerTransport: MessengerTransport
+    private lateinit var messengerTransport: MessengerTransportSDK
     private lateinit var client: MessagingClient
     private lateinit var attachment: ByteArray
     private val attachedIds = mutableListOf<String>()
@@ -74,7 +74,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         context: Context,
         onOktaSignIn: (url: String) -> Unit,
     ) {
-        println("Messenger Transport sdkVersion: ${MessengerTransport.sdkVersion}")
+        println("Messenger Transport sdkVersion: ${MessengerTransportSDK.sdkVersion}")
         this.onOktaSingIn = onOktaSignIn
         val mmsdkConfiguration = Configuration(
             deploymentId = deploymentId.ifEmpty { BuildConfig.DEPLOYMENT_ID },
@@ -83,9 +83,9 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         )
 
         DefaultVault.context = context
-        messengerTransport = MessengerTransport(mmsdkConfiguration)
+        messengerTransport = MessengerTransportSDK(mmsdkConfiguration)
         client = messengerTransport.createMessagingClient()
-        client.customAttributesStore.add(mapOf("sdkVersion" to "Transport SDK: ${MessengerTransport.sdkVersion}"))
+        client.customAttributesStore.add(mapOf("sdkVersion" to "Transport SDK: ${MessengerTransportSDK.sdkVersion}"))
         with(client) {
             stateChangedListener = {
                 runBlocking {
