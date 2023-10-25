@@ -393,6 +393,7 @@ internal class MessagingClientImpl(
     }
 
     private fun handleWebSocketError(errorCode: ErrorCode) {
+        considerForceClose()
         if (stateMachine.isInactive()) return
         invalidateConversationCache()
         when (errorCode) {
@@ -494,6 +495,14 @@ internal class MessagingClientImpl(
         reconnectionHandler.clear()
         reconfigureAttempts = 0
         sendingAutostart = false
+    }
+
+    private fun considerForceClose() {
+        if (stateMachine.isClosing()) {
+            log.i { "Force close web socket." }
+            val closingState = stateMachine.currentState as State.Closing
+            socketListener.onClosed(closingState.code, closingState.reason)
+        }
     }
 
     private fun encodeAnonymousConfigureSessionRequest(startNew: Boolean) =
