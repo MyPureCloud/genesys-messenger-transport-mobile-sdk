@@ -27,6 +27,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
+private const val SAVED_ATTACHMENT_FILE_NAME = "test_asset.png"
+
 class TestBedViewModel : ViewModel(), CoroutineScope {
 
     override val coroutineContext = Dispatchers.IO + Job()
@@ -100,6 +102,11 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             eventListener = { onEvent(it) }
             clientState = client.currentState
         }
+
+        // Loading saved attachment example.
+        context.assets.open(SAVED_ATTACHMENT_FILE_NAME).use { inputStream ->
+            inputStream.readBytes().also { attachment = it }
+        }
     }
 
     fun onCommandChanged(newCommand: String) {
@@ -127,6 +134,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "history" -> fetchNextPage()
             "healthCheck" -> doSendHealthCheck()
             "attach" -> doAttach()
+            "attachSavedImage" -> doAttachSavedImage()
             "detach" -> doDetach(input)
             "deployment" -> doDeployment()
             "invalidateConversationCache" -> doInvalidateConversationCache()
@@ -139,6 +147,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "authorize" -> doAuthorize()
             "clearConversation" -> doClearConversation()
             "refreshAttachment" -> doRefreshAttachmentUrl(input)
+            "savedFileName" -> doChangeFileName(input)
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
@@ -243,6 +252,21 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         } ?: onSocketMessageReceived("FileAttachmentProfile is not set. Can not launch file picker.")
     }
 
+    private var sendFileName = SAVED_ATTACHMENT_FILE_NAME
+    private lateinit var attachment: ByteArray
+    private fun doAttachSavedImage() {
+        try {
+            client.attach(
+                attachment,
+                sendFileName
+            ) { progress -> println("Attachment upload progress: $progress") }.also {
+                attachedIds.add(it)
+            }
+        } catch (t: Throwable) {
+            handleException(t, "attach")
+        }
+    }
+
     private fun doDetach(attachmentId: String) {
         try {
             client.detach(attachmentId)
@@ -257,6 +281,12 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         } catch (t: Throwable) {
             handleException(t, "refreshAttachmentUrl")
         }
+    }
+
+    private fun doChangeFileName(newFileName: String) {
+        sendFileName = newFileName
+        Log.i(TAG, "Attachment name changed to $newFileName")
+        clearCommand()
     }
 
     private fun doClearConversation() {
