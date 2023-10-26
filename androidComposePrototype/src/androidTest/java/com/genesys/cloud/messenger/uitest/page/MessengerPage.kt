@@ -1,6 +1,8 @@
 package com.genesys.cloud.messenger.uitest.page
 
 import android.app.Activity
+import android.content.ContentValues.TAG
+import android.util.Log
 import android.view.KeyEvent
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
@@ -84,6 +86,15 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
             .until {
                 getFullResponse().contains(response, ignoreCase = true)
             }
+    }
+
+    fun grabAttachmentId(): String {
+        val fullResponse = getFullResponse()
+        val attachIdIndex = fullResponse.indexOf("Attachment(id=", 0)
+        val attachmentIdLength = "Attachment(id=".length
+        val startIndex = attachIdIndex + attachmentIdLength
+        Log.i(TAG, "attachment id: ${fullResponse.substring(startIndex, (startIndex + 36))}")
+        return fullResponse.substring(startIndex, (startIndex + 36))
     }
 
     fun checkForUnAuthenticatedResponse(rejectionText: String) {

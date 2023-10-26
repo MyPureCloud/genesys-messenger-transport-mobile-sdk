@@ -1,7 +1,5 @@
 package com.genesys.cloud.messenger.uitest.test
 
-import android.content.Context
-import android.os.Environment
 import android.util.Log
 import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
@@ -10,7 +8,6 @@ import com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed.TestBedVie
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.API
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.answerNewConversation
-import com.genesys.cloud.messenger.uitest.support.ApiHelper.attachImage
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.checkForConversationMessages
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.disconnectAllConversations
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.sendConnectOrDisconnect
@@ -22,11 +19,7 @@ import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
-import java.io.File
-import java.io.IOException
 import java.lang.Thread.sleep
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.UUID
 
 @Suppress("FunctionName")
@@ -48,6 +41,7 @@ class ComposePrototypeUITest : BaseTests() {
     private val uploadedText = "Uploaded"
     private val deletedText = "Deleted"
     private val attachmentSentText = "state=Sent"
+    private val fileUploadedText = "fileName=testImage.png"
     private val addAtrributeText = "addAttribute"
     private val nameText = "name"
     private val newNameText = "Nellie Hay"
@@ -86,8 +80,15 @@ class ComposePrototypeUITest : BaseTests() {
     private val clearConversation = "clearConversation"
     private val connectionClosedMessage = "Connection Closed Normally"
     private val connectionClosedCode = "1000"
-    private val deploymentConfigText = "DeploymentConfig"
+    private val deploymentConfigText = "deployment"
     private val imageFormatsText = "modes=[Mode(fileTypes=[image/png, image/jpeg, image/gif]"
+    private val savedFileNameText = "savedFileName"
+    private val attachSavedImageText = "attachSavedImage"
+    private val fileTypeInvalidText = "FileTypeInvalid"
+    private val notSupportedText = "not supported"
+    private val refreshedText = "Refreshed"
+    private val refreshCommandText = "refreshAttachment"
+    private val attachmentIdText = "Attachment(id="
 
     fun enterDeploymentInfo(deploymentId: String) {
         opening {
@@ -167,6 +168,31 @@ class ComposePrototypeUITest : BaseTests() {
             enterCommand("$sendMsgText $messageText")
             waitForProperResponse(messageText)
             checkSendMsgFullResponse()
+        }
+    }
+
+    fun attachDesignatedImage(fileName: String, valid: Boolean) {
+        val attachmentId = ""
+        messenger {
+            enterCommand("$savedFileNameText $fileName")
+            enterCommand(attachSavedImageText)
+            if (valid) {
+                // Wait for state=Uploaded
+                waitForProperResponse(uploadedText)
+                val attachmentId = grabAttachmentId()
+                if (attachmentId != null) {
+                    enterCommand("$sendMsgText $helloText")
+                    // Wait for state=Sent and fileName=testImage.png
+                    waitForProperResponse(attachmentSentText)
+                    waitForProperResponse(fileUploadedText)
+                    waitForProperResponse("$attachmentIdText}$attachmentId}")
+                    enterCommand("$refreshCommandText $attachmentId")
+                    waitForProperResponse(refreshedText)
+                } else AssertionError("Attachment Id was not found")
+            } else {
+                waitForProperResponse(fileTypeInvalidText)
+                waitForProperResponse(notSupportedText)
+            }
         }
     }
 
@@ -359,15 +385,28 @@ class ComposePrototypeUITest : BaseTests() {
         if (conversationInfo == null) AssertionError("Unable to answer conversation.")
         else {
             Log.i(TAG, "Conversation started successfully.")
+            attachDesignatedImage("testImage.png", true)
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
+        }
+        bye()
+    }
+
+    @Test
+    fun testContentProfile() {
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.deploymentId)
+        connect()
+        sendMsg(helloText)
+        val conversationInfo = apiHelper.answerNewConversation()
+        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
+        else {
+            Log.i(TAG, "Conversation started successfully.")
             // Get the deployment config to check for allowed media
             enterDeploymentCommand(deploymentConfigText)
             verifyResponse(imageFormatsText)
-            apiHelper.attachImage(conversationInfo)
-
-//            attachImage()
-//            // wait for image to load
-//            sleep(3000)
-//            apiHelper.sendConnectOrDisconnect(conversationInfo)
+            // Try attachment with invalid type. Expect to receive error
+            attachDesignatedImage("testImage.abc", false)
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
         }
         bye()
     }

@@ -48,7 +48,6 @@ data class Media(
     val Status: String
 )
 
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class CallDetails(
     val state: String,
@@ -192,7 +191,7 @@ fun API.attachImage(conversationInfo: Conversation) {
     val communicationId = conversationInfo.getCommunicationId(agentParticipant!!)
     val mediaResult = publicApiCall(
         "POST",
-        "/api/v2/conversations/messages/${conversationInfo.id}/communications/${communicationId}/messages/media")
+        "/api/v2/conversations/messages/${conversationInfo.id}/communications/$communicationId/messages/media"
+    )
     val result: Media = parseJsonToClass(mediaResult)
-
 }
