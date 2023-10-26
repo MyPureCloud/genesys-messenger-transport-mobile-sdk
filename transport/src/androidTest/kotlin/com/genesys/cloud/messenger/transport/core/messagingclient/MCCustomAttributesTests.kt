@@ -14,6 +14,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.Response
 import io.mockk.every
+import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
 
@@ -61,6 +62,10 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
             mockCustomAttributesStore.onError()
             mockMessageStore.onMessageError(expectedErrorCode, expectedErrorMessage)
             mockAttachmentHandler.onMessageError(expectedErrorCode, expectedErrorMessage)
+        }
+
+        verify(exactly = 0) {
+            mockCustomAttributesStore.onMessageError()
         }
     }
 
@@ -121,6 +126,9 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
             )
             mockMessageStore.onMessageError(ErrorCode.CustomAttributeSizeTooLarge, expectedCustomAttributesErrorMessage)
             mockAttachmentHandler.onMessageError(ErrorCode.CustomAttributeSizeTooLarge, expectedCustomAttributesErrorMessage)
+        }
+        verify(exactly = 0) {
+            mockCustomAttributesStore.onMessageError()
         }
     }
 }

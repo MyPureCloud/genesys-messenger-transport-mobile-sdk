@@ -362,6 +362,8 @@ internal class MessagingClientImpl(
                             )
                         )
                     }
+                } else {
+                    internalCustomAttributesStore.onMessageError()
                 }
                 messageStore.onMessageError(code, message)
                 attachmentHandler.onMessageError(code, message)
@@ -391,6 +393,7 @@ internal class MessagingClientImpl(
     }
 
     private fun handleWebSocketError(errorCode: ErrorCode) {
+        considerForceClose()
         if (stateMachine.isInactive()) return
         invalidateConversationCache()
         when (errorCode) {
@@ -494,6 +497,14 @@ internal class MessagingClientImpl(
         sendingAutostart = false
     }
 
+    private fun considerForceClose() {
+        if (stateMachine.isClosing()) {
+            log.i { "Force close web socket." }
+            val closingState = stateMachine.currentState as State.Closing
+            socketListener.onClosed(closingState.code, closingState.reason)
+        }
+    }
+
     private fun encodeAnonymousConfigureSessionRequest(startNew: Boolean) =
         WebMessagingJson.json.encodeToString(
             ConfigureSessionRequest(
@@ -561,11 +572,6 @@ internal class MessagingClientImpl(
                                 if (!connected && isStartingANewSession) {
                                     cleanUp()
                                     configureSession(startNew = true)
-                                } else {
-                                    // Normally should not happen.
-                                    log.w {
-                                        "Unexpected SessionResponse configuration: connected: $connected, readOnly: $readOnly, isStartingANewSession: $isStartingANewSession"
-                                    }
                                 }
                             } else {
                                 isStartingANewSession = false

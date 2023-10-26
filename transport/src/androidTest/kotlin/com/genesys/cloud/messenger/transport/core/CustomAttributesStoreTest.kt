@@ -138,6 +138,13 @@ class CustomAttributesStoreTest {
     }
 
     @Test
+    fun `when onMessageError`() {
+        subject.onMessageError()
+
+        assertThat(subject.state).isPending()
+    }
+
+    @Test
     fun `when add customAttributes and then onSessionClosed`() {
         val givenCustomAttributes = mapOf("A" to "B")
         val expectedCustomAttributes = mapOf("A" to "B")

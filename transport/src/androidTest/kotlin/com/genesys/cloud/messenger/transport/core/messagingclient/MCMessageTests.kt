@@ -1,9 +1,13 @@
 package com.genesys.cloud.messenger.transport.core.messagingclient
 
+import assertk.assertThat
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.MessageEvent
+import com.genesys.cloud.messenger.transport.core.MessagingClient
+import com.genesys.cloud.messenger.transport.core.isClosed
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.Response
+import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
@@ -69,7 +73,9 @@ class MCMessageTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
+            mockCustomAttributesStore.onMessageError()
             mockMessageStore.onMessageError(ErrorCode.MessageTooLong, "message too long")
+            mockAttachmentHandler.onMessageError(ErrorCode.MessageTooLong, "message too long")
         }
         verify(exactly = 0) {
             mockCustomAttributesStore.onError()
@@ -84,6 +90,7 @@ class MCMessageTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
+            mockCustomAttributesStore.onMessageError()
             mockMessageStore.onMessageError(
                 ErrorCode.RequestRateTooHigh,
                 "Message rate too high for this session. Retry after 3 seconds."
@@ -119,6 +126,27 @@ class MCMessageTests : BaseMessagingClientTest() {
         }
         verify(exactly = 0) {
             mockEventHandler.onEvent(any())
+            mockCustomAttributesStore.onMessageError()
+        }
+    }
+
+    @Test
+    fun `when socket throws an error while current state is Closing`() {
+        val expectedCode = 1000
+        val expectedReason = "The user has closed the connection."
+        every { mockPlatformSocket.closeSocket(any(), any()) } answers {
+            if (subject.currentState is MessagingClient.State.Closing) {
+                slot.captured.onFailure(Exception(), ErrorCode.WebsocketError)
+            }
+        }
+
+        subject.connect()
+        subject.disconnect()
+
+        assertThat(subject.currentState).isClosed(expectedCode, expectedReason)
+        verify {
+            connectSequence()
+            disconnectSequence()
         }
     }
 }

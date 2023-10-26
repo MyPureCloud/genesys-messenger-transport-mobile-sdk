@@ -37,6 +37,11 @@ internal class CustomAttributesStoreImpl(private val log: Log) : CustomAttribute
         state = State.ERROR
     }
 
+    internal fun onMessageError() {
+        log.i { "onMessageError()" }
+        state = State.PENDING
+    }
+
     internal fun onSessionClosed() {
         log.i { "onSessionClosed()" }
         state = State.PENDING

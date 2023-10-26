@@ -3,7 +3,7 @@ package com.genesys.cloud.messenger.transport.util
 /**
  * A store for the session token. Users of the library can use the [DefaultTokenStore]
  * implementation for simplicity or create a custom token store by making a concrete implementation
- * of this class and passing it in to the [MessengerTransport] constructor.
+ * of this class and passing it in to the [MessengerTransportSDK] constructor.
  */
 @Deprecated("Use [Vault] instead.")
 abstract class TokenStore {
