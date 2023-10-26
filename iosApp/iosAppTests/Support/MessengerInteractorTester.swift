@@ -311,7 +311,7 @@ class MessengerInteractorTester {
     }
 
     func refreshAttachment(attachmentId: String?, file: StaticString = #file, line: UInt = #line) {
-        guard let attachmentId else {
+        guard let attachmentId = attachmentId else {
             XCTFail("No attachment ID available to refresh.")
             return
         }
