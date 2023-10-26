@@ -6,7 +6,7 @@ import com.genesys.cloud.messenger.transport.auth.NO_REFRESH_TOKEN
  * Abstract class representing a vault that stores and retrieves sensitive data using a provided set of keys.
  * Users of the library can use the [DefaultVault]
  * implementation for simplicity or create a custom vault by making a concrete implementation
- * of this class and passing it in to the [MessengerTransport] constructor.
+ * of this class and passing it in to the [MessengerTransportSDK] constructor.
  *
  * @param keys The set of keys used to access stored data in the vault.
  */
