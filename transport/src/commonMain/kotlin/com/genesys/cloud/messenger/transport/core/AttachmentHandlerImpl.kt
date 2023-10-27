@@ -160,6 +160,9 @@ internal class AttachmentHandlerImpl(
     @Throws(IllegalArgumentException::class)
     private fun validate(byteArray: ByteArray, fileName: String) {
         fileAttachmentProfile?.let {
+            if (it.isDisabledFromDeploymentConfig()) {
+                throw IllegalArgumentException(ErrorMessage.FileAttachmentIsDisabled)
+            }
             if (byteArray.isEmpty()) {
                 throw IllegalArgumentException(ErrorMessage.FileSizeIsToSmall)
             }
@@ -185,6 +188,9 @@ internal class AttachmentHandlerImpl(
         )
     }
 }
+
+private fun FileAttachmentProfile.isDisabledFromDeploymentConfig(): Boolean =
+    !hasWildCard && allowedFileTypes.isEmpty() && maxFileSizeKB == 0L
 
 private fun ByteArray.isInvalid(maxFileSizeKB: Long?): Boolean =
     maxFileSizeKB?.let { this.toKB() > maxFileSizeKB } ?: false

@@ -11,6 +11,6 @@ package com.genesys.cloud.messenger.transport.core
 data class FileAttachmentProfile(
     val allowedFileTypes: List<String> = emptyList(),
     val blockedFileTypes: List<String> = emptyList(),
-    val maxFileSizeKB: Long? = null,
+    val maxFileSizeKB: Long = 0,
     val hasWildCard: Boolean = false,
 )

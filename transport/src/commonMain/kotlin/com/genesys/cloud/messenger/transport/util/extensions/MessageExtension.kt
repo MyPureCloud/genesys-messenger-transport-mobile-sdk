@@ -85,7 +85,7 @@ internal fun SessionResponse.toFileAttachmentProfile(): FileAttachmentProfile {
     return FileAttachmentProfile(
         allowedFileTypes = allowedFileTypes,
         blockedFileTypes = blockedExtensions,
-        maxFileSizeKB = allowedMedia?.inbound?.maxFileSizeKB,
+        maxFileSizeKB = allowedMedia?.inbound?.maxFileSizeKB ?: 0,
         hasWildCard = hasWildcard
     )
 }

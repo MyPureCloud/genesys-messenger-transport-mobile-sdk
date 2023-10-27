@@ -399,26 +399,6 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun `when prepare() but maxFileSizeKB in fileAttachmentProfile is null`() {
-        val givenByteArray = ByteArray(2000)
-        subject.fileAttachmentProfile = FileAttachmentProfile()
-        val expectedOnAttachmentRequest = OnAttachmentRequest(
-            token = givenToken,
-            attachmentId = "99999999-9999-9999-9999-999999999999",
-            fileName = "image.png",
-            fileType = "image/png",
-            2000,
-            null,
-            true,
-        )
-
-        val onAttachmentRequest = subject.prepare(givenAttachmentId, givenByteArray, "image.png")
-
-        assertThat(subject.fileAttachmentProfile?.maxFileSizeKB).isNull()
-        assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
-    }
-
-    @Test
     fun `when prepare() but maxFileSizeKB in fileAttachmentProfile is less then provided ByteArray size`() {
         val givenByteArray = ByteArray(2000)
         val expectedExceptionMessage = ErrorMessage.fileSizeIsTooBig(maxFileSize = 1)
@@ -512,6 +492,17 @@ internal class AttachmentHandlerImplTest {
         val onAttachmentRequest = subject.prepare(givenAttachmentId, givenByteArray, "image.png")
 
         assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
+    }
+
+    @Test
+    fun `when prepare() and file attachment is disabled in deployment config`() {
+        val givenByteArray = ByteArray(1)
+        subject.fileAttachmentProfile = FileAttachmentProfile()
+        val expectedExceptionMessage = ErrorMessage.FileAttachmentIsDisabled
+
+        assertFailsWith<IllegalArgumentException>(expectedExceptionMessage) {
+            subject.prepare(givenAttachmentId, givenByteArray, "image.png")
+        }
     }
 
     @Test
