@@ -507,12 +507,7 @@ extension TestbedViewController: UIDocumentPickerDelegate {
         DispatchQueue.global().async {
             do {
                 let fileData = try Data(contentsOf: pickedURL, options: .mappedIfSafe)
-
-                let kotlinByteArray = KotlinByteArray(size: Int32(fileData.count))
-                for (index, byte) in fileData.enumerated() {
-                    kotlinByteArray.set(index: Int32(index), value: Int8(bitPattern: byte))
-                }
-
+                let kotlinByteArray = TransportUtil().nsDataToKotlinByteArray(data: fileData)
                 DispatchQueue.main.async {
                     do {
                         try self.messenger.attachImage(kotlinByteArray: kotlinByteArray, fileName: fileName)
