@@ -70,7 +70,7 @@ data class LauncherButton(val visibility: String)
 
 @Serializable
 data class FileUpload(
-    val enableAttachments: Boolean = false,
+    val enableAttachments: Boolean? = null,
     val modes: List<Mode> = emptyList(),
 )
 
