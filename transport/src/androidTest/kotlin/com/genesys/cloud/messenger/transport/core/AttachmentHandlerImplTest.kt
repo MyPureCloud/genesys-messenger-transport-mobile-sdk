@@ -402,7 +402,7 @@ internal class AttachmentHandlerImplTest {
     fun `when prepare() but maxFileSizeKB in fileAttachmentProfile is less then provided ByteArray size`() {
         val givenByteArray = ByteArray(2000)
         val expectedExceptionMessage = ErrorMessage.fileSizeIsTooBig(maxFileSize = 1)
-        subject.fileAttachmentProfile = FileAttachmentProfile(maxFileSizeKB = 1)
+        subject.fileAttachmentProfile = FileAttachmentProfile(enabled = true, maxFileSizeKB = 1)
 
         assertFailsWith<IllegalArgumentException>(expectedExceptionMessage) {
             subject.prepare(givenAttachmentId, givenByteArray, "image.png")
@@ -411,8 +411,8 @@ internal class AttachmentHandlerImplTest {
 
     @Test
     fun `when prepare() and maxFileSizeKB in fileAttachmentProfile is equal to then provided ByteArray size`() {
-        val givenByteArray = ByteArray(2000)
-        subject.fileAttachmentProfile = FileAttachmentProfile(maxFileSizeKB = 2)
+        val givenByteArray = ByteArray(2000,)
+        subject.fileAttachmentProfile = FileAttachmentProfile(enabled = true, maxFileSizeKB = 2)
         val expectedFileSizeInKB = 2L
         val expectedOnAttachmentRequest = OnAttachmentRequest(
             token = givenToken,
@@ -434,7 +434,7 @@ internal class AttachmentHandlerImplTest {
     fun `when prepare() and ByteArray size is 0`() {
         val givenByteArray = ByteArray(0)
         val expectedExceptionMessage = ErrorMessage.FileSizeIsToSmall
-        subject.fileAttachmentProfile = FileAttachmentProfile(maxFileSizeKB = 2)
+        subject.fileAttachmentProfile = FileAttachmentProfile(enabled = true, maxFileSizeKB = 2)
 
         assertFailsWith<IllegalArgumentException>(expectedExceptionMessage) {
             subject.prepare(givenAttachmentId, givenByteArray, "image.png")
@@ -444,7 +444,7 @@ internal class AttachmentHandlerImplTest {
     @Test
     fun `when prepare() and maxFileSizeKB in fileAttachmentProfile is greater then provided ByteArray size`() {
         val givenByteArray = ByteArray(2000)
-        subject.fileAttachmentProfile = FileAttachmentProfile(maxFileSizeKB = 100)
+        subject.fileAttachmentProfile = FileAttachmentProfile(enabled = true, maxFileSizeKB = 100)
         val expectedFileSizeInKB = 100L
         val expectedOnAttachmentRequest = OnAttachmentRequest(
             token = givenToken,
@@ -467,7 +467,7 @@ internal class AttachmentHandlerImplTest {
         val givenByteArray = ByteArray(1)
         val expectedExceptionMessage = ErrorMessage.fileTypeIsProhibited(fileName = "foo.exe")
         subject.fileAttachmentProfile =
-            FileAttachmentProfile(maxFileSizeKB = 100, blockedFileTypes = listOf(".exe"))
+            FileAttachmentProfile(enabled = true, maxFileSizeKB = 100, blockedFileTypes = listOf(".exe"))
 
         assertFailsWith<IllegalArgumentException>(expectedExceptionMessage) {
             subject.prepare(givenAttachmentId, givenByteArray, "foo.exe")
@@ -478,7 +478,7 @@ internal class AttachmentHandlerImplTest {
     fun `when prepare() and file extension is NOT included in blockedFileTypes list`() {
         val givenByteArray = ByteArray(1)
         subject.fileAttachmentProfile =
-            FileAttachmentProfile(maxFileSizeKB = 100, blockedFileTypes = listOf(".exe"))
+            FileAttachmentProfile(enabled = true, maxFileSizeKB = 100, blockedFileTypes = listOf(".exe"))
         val expectedOnAttachmentRequest = OnAttachmentRequest(
             token = givenToken,
             attachmentId = "99999999-9999-9999-9999-999999999999",

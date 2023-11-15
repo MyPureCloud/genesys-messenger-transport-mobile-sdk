@@ -538,7 +538,7 @@ internal class MessagingClientImpl(
                     }
                     is SessionResponse -> {
                         decoded.body.run {
-                            attachmentHandler.fileAttachmentProfile = this.toFileAttachmentProfile()
+                            attachmentHandler.fileAttachmentProfile = createFileAttachmentProfile(this)
                             reconnectionHandler.clear()
                             if (readOnly) {
                                 stateMachine.onReadOnly()
@@ -629,6 +629,12 @@ internal class MessagingClientImpl(
             stateMachine.onClosed(code, reason)
             cleanUp()
         }
+    }
+
+    private fun createFileAttachmentProfile(sessionResponse: SessionResponse): FileAttachmentProfile {
+        val fileUpload = deploymentConfig.get()?.messenger?.fileUpload
+        return fileUpload?.enableAttachments?.let { sessionResponse.toFileAttachmentProfile() }
+            ?: fileUpload.toFileAttachmentProfile()
     }
 }
 

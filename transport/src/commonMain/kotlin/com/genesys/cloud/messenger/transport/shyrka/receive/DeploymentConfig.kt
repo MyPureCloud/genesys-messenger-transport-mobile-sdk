@@ -69,6 +69,7 @@ data class Styles(val primaryColor: String)
 data class LauncherButton(val visibility: String)
 
 @Serializable
+@Deprecated("Use [FileAttachmentProfile] instead.")
 data class FileUpload(
     val enableAttachments: Boolean? = null,
     val modes: List<Mode> = emptyList(),

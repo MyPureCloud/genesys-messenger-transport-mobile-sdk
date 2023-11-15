@@ -148,6 +148,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "clearConversation" -> doClearConversation()
             "refreshAttachment" -> doRefreshAttachmentUrl(input)
             "savedFileName" -> doChangeFileName(input)
+            "fileAttachmentProfile" -> doFileAttachmentProfile()
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
@@ -282,6 +283,9 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             handleException(t, "refreshAttachmentUrl")
         }
     }
+
+    private fun doFileAttachmentProfile() =
+        onSocketMessageReceived("FileAttachmentProfile: ${client.fileAttachmentProfile}")
 
     private fun doChangeFileName(newFileName: String) {
         sendFileName = newFileName
