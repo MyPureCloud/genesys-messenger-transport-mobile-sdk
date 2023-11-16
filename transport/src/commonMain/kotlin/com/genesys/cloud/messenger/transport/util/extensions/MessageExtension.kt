@@ -5,6 +5,7 @@ import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.core.events.toTransportEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.FileUpload
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
@@ -81,11 +82,28 @@ private fun List<StructuredMessage.Content.AttachmentContent>.toAttachments(): M
 
 internal fun SessionResponse.toFileAttachmentProfile(): FileAttachmentProfile {
     val allowedFileTypes = allowedMedia?.inbound?.fileTypes?.map { it.type }?.toMutableList() ?: mutableListOf()
+    val maxFileSize = allowedMedia?.inbound?.maxFileSizeKB ?: 0
+    val enabled = allowedFileTypes.isNotEmpty() && maxFileSize > 0
     val hasWildcard = allowedFileTypes.remove(WILD_CARD)
     return FileAttachmentProfile(
+        enabled = enabled,
         allowedFileTypes = allowedFileTypes,
         blockedFileTypes = blockedExtensions,
-        maxFileSizeKB = allowedMedia?.inbound?.maxFileSizeKB ?: 0,
+        maxFileSizeKB = maxFileSize,
+        hasWildCard = hasWildcard
+    )
+}
+
+internal fun FileUpload?.toFileAttachmentProfile(): FileAttachmentProfile {
+    if (this == null) return FileAttachmentProfile()
+    val allowedFileTypes = modes.flatMap { it.fileTypes }.toMutableList()
+    val enabled = allowedFileTypes.isNotEmpty()
+    val hasWildcard = allowedFileTypes.remove(WILD_CARD)
+    return FileAttachmentProfile(
+        enabled = enabled,
+        allowedFileTypes = allowedFileTypes,
+        blockedFileTypes = emptyList(),
+        maxFileSizeKB = modes.firstOrNull()?.maxFileSizeKB ?: 0,
         hasWildCard = hasWildcard
     )
 }

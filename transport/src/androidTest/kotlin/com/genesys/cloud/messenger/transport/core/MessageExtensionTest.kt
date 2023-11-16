@@ -349,6 +349,7 @@ internal class MessageExtensionTest {
             blockedExtensions = listOf(".ade", ".adp")
         )
         val expectedFileAttachmentProfile = FileAttachmentProfile(
+            enabled = true,
             allowedFileTypes = listOf("video/mpg", "video/3gpp"),
             blockedFileTypes = listOf(".ade", ".adp"),
             maxFileSizeKB = 10240,
@@ -373,6 +374,7 @@ internal class MessageExtensionTest {
             blockedExtensions = listOf(".ade", ".adp")
         )
         val expectedFileAttachmentProfile = FileAttachmentProfile(
+            enabled = true,
             allowedFileTypes = listOf("video/3gpp"),
             blockedFileTypes = listOf(".ade", ".adp"),
             maxFileSizeKB = 10240,

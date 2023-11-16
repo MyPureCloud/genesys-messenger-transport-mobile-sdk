@@ -43,6 +43,7 @@ class TestbedViewController: UIViewController {
         case attach
         case refreshAttachment
         case detach
+        case fileAttachmentProfile
         case deployment
         case bye
         case healthCheck
@@ -408,6 +409,8 @@ extension TestbedViewController : UITextFieldDelegate {
                 try messenger.refreshAttachmentUrl(attachId: attachId)
             case (.detach, let attachId?):
                 try messenger.detachImage(attachId: attachId)
+            case (.fileAttachmentProfile, _):
+                self.info.text = "FileAttachmentProfile: <\(messenger.getFileAttachmentProfile())>"
             case (.deployment, _):
                 messenger.fetchDeployment { deploymentConfig, error in
                     if let error = error {

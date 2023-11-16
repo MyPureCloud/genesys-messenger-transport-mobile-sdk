@@ -16,20 +16,26 @@ fun createDeploymentConfigForTesting(
 
 fun createMessengerVOForTesting(
     apps: Apps = Apps(createConversationsVOForTesting()),
+    fileUpload: FileUpload = createFileUploadVOForTesting(),
 ) = Messenger(
     enabled = true,
     apps = apps,
     styles = Styles(primaryColor = "red"),
     launcherButton = LauncherButton(visibility = "On"),
-    fileUpload = FileUpload(
-        modes = listOf(
-            Mode(
-                fileTypes = listOf("png"),
-                maxFileSizeKB = 100,
-            ),
-        )
-    )
+    fileUpload = fileUpload
 )
+
+fun createFileUploadVOForTesting(
+    enableAttachments: Boolean? = false,
+    modes: List<Mode> = listOf(
+        Mode(
+            fileTypes = listOf("png"),
+            maxFileSizeKB = 100,
+        )
+    ),
+): FileUpload {
+    return FileUpload(enableAttachments, modes)
+}
 
 fun createConversationsVOForTesting(
     autoStart: Conversations.AutoStart = Conversations.AutoStart(),
