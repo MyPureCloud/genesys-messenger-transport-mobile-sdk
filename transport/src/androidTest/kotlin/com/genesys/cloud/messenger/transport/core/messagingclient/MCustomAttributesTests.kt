@@ -18,6 +18,7 @@ class MCustomAttributesTests : BaseMessagingClientTest() {
             """{"token":"${Request.token}","message":{"text":"Hello world","channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"action":"onMessage"}"""
         val expectedText = "Hello world"
         val expectedCustomAttributes = mapOf("A" to "B")
+        val expectedChannel = Channel(Channel.Metadata(expectedCustomAttributes))
         every { mockMessageStore.prepareMessage(any(), any()) } returns OnMessageRequest(
             token = Request.token,
             message = TextMessage(
@@ -31,7 +32,7 @@ class MCustomAttributesTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockMessageStore.prepareMessage(expectedText, expectedCustomAttributes)
+            mockMessageStore.prepareMessage(expectedText, expectedChannel)
             mockAttachmentHandler.onSending()
             mockPlatformSocket.sendMessage(expectedMessage)
         }
