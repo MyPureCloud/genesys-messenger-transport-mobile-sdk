@@ -103,6 +103,15 @@ interface MessagingClient {
     val conversation: List<Message>
 
     /**
+     * This object provides convenience methods for adding, getting,
+     * and managing custom attributes. It tracks the state of custom attributes and can be used to
+     * send them when necessary.
+     *
+     * Note: once added or updated - custom attributes will be dispatched along with the next message or autostart event.
+     */
+    val customAttributesStore: CustomAttributesStore
+
+    /**
      * Represents the configuration for supported content profiles in the Admin Console.
      *
      * This property contains information about the allowed and blocked file extensions, maximum file size,

@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 /**
  * The entry point to the services provided by the transport SDK.
  */
-class MessengerTransport(
+class MessengerTransportSDK(
     private val configuration: Configuration,
     @Deprecated("Use Vault instead.") private val tokenStore: TokenStore?,
     private val vault: Vault,
@@ -82,6 +82,7 @@ class MessengerTransport(
             log.withTag(LogTag.ATTACHMENT_HANDLER),
             messageStore.updateAttachmentStateWith,
         )
+
         return MessagingClientImpl(
             api = api,
             log = log,

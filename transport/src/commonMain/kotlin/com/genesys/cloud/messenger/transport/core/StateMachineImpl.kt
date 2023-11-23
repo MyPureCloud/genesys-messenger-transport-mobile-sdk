@@ -80,7 +80,7 @@ internal fun StateMachine.checkIfConfiguredOrReadOnly() =
 internal fun StateMachine.isInactive(): Boolean =
     currentState is State.Idle || currentState is State.Closing || currentState is State.Closed || currentState is State.Error
 
-internal fun StateMachine.isClosed(): Boolean = currentState is State.Closed
+internal fun StateMachine.isClosing(): Boolean = currentState is State.Closing
 
 @Throws(IllegalStateException::class)
 internal fun StateMachine.checkIfCanStartANewChat() =

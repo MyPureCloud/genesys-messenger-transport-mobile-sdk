@@ -313,7 +313,7 @@ class TestbedViewController: UIViewController {
         }
         return (UserCommand(rawValue: command!), input)
     }
-    
+
     func utiForMimeType(mimeType: String) -> String? {
         if let uti = UTTypeCreatePreferredIdentifierForTag(kUTTagClassMIMEType, mimeType as CFString, nil)?.takeRetainedValue() {
             return uti as String
@@ -387,8 +387,7 @@ extension TestbedViewController : UITextFieldDelegate {
             case (.bye, _):
                 try messenger.disconnect()
             case (.send, let msg?):
-                try messenger.sendMessage(text: msg.trimmingCharacters(in: .whitespaces), customAttributes: customAttributes)
-                customAttributes = [:]
+                try messenger.sendMessage(text: msg.trimmingCharacters(in: .whitespaces))
             case (.history, _):
                 messenger.fetchNextPage()
             case (.healthCheck, _):
@@ -398,12 +397,12 @@ extension TestbedViewController : UITextFieldDelegate {
                     self.info.text = "FileAttachmentProfile is not set. Can not launch file picker."
                     break
                 }
-                
+
                 if (!fileAttachmentProfile.hasWildCard && fileAttachmentProfile.allowedFileTypes.isEmpty) {
                     self.info.text = "Allowed file types is empty. Can not launch file picker."
                     break
                 }
-                
+
                 showDocumentPicker(fileAttachmentProfile: fileAttachmentProfile)
             case (.refreshAttachment, let attachId?):
                 try messenger.refreshAttachmentUrl(attachId: attachId)
@@ -422,10 +421,11 @@ extension TestbedViewController : UITextFieldDelegate {
             case (.invalidateConversationCache, _):
                 messenger.invalidateConversationCache()
             case(.addAttribute, let msg?):
+
                 let segments = segmentUserInput(msg)
                 if let key = segments.0, !key.isEmpty {
                     let value = segments.1 ?? ""
-                    customAttributes[key] = value
+                    messenger.addCustomAttributes(customAttributes: [key: value])
                     self.info.text = "Custom attribute added: key: \(key) value: \(value)"
                 }  else {
                     self.info.text = "Custom attribute key cannot be nil or empty!"
@@ -481,7 +481,7 @@ enum AuthState {
 }
 
 extension TestbedViewController: UIDocumentPickerDelegate {
-    
+
     func showDocumentPicker(fileAttachmentProfile: FileAttachmentProfile) {
         let documentPicker: UIDocumentPickerViewController
 

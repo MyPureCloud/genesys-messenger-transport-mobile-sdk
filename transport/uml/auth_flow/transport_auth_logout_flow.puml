@@ -1,43 +1,42 @@
 @startuml
-skinparam {
-        ArrowColor darkBlue
-        backgroundColor #EEEBDC
-        NoteBackgroundColor #lightyellow
-        NoteBorderColor gray
-        sequenceGroupHeaderFontColor midnightblue
-        padding 6
-}
+'https://plantuml.com/sequence-diagram
 
-participant App #lightGreen
-participant MessagingClient #lightGreen
-participant AuthHandler #lightGreen
-participant WebMessagingAPi #lightGreen
-participant Shyrka #lightGreen
-participant "Genesys Cloud Platform API" #lightGreen
+!theme bluegray
+!pragma teoz true
+
+skinparam backgroundColor #whitesmoke
+title Transport Auth Logout Flow
+
+participant App
+participant MessagingClient
+participant AuthHandler
+participant WebMessagingAPI
+participant Shyrka
+participant "Genesys Cloud Platform API"
 
 
     App -> MessagingClient : 1. logoutFromAuthenticatedSession()
     MessagingClient -> AuthHandler : 2. logoutFromAuthenticatedSession()
-    AuthHandler -> WebMessagingAPi : 3. logoutFromAuthenticatedSession()
-    WebMessagingAPi -> "Genesys Cloud Platform API" : 4. logoutFromAuthenticatedSession()
-    alt #lightgreen logout success
+    AuthHandler -> WebMessagingAPI : 3. logoutFromAuthenticatedSession()
+    WebMessagingAPI -> "Genesys Cloud Platform API" : 4. logoutFromAuthenticatedSession()
+    alt #aaff8833 logout success
     Shyrka --> MessagingClient : 5. Event.Logout
     MessagingClient --> App : 6. eventListener(Event.Logout)
     MessagingClient -> MessagingClient: 7. disconnect()
     MessagingClient --> App : 8. onStateChanged(State.Closed)
-    else logout failure errorCode == 401
-                AuthHandler -> WebMessagingAPi : 9. refreshToken(authHandler.refreshToken)
-                alt #lightgreen refreshToken() success
-                WebMessagingAPi --> AuthHandler : 10. success(jwt)
+    else #fcfcfcaa logout failure errorCode == 401
+                AuthHandler -> WebMessagingAPI : 9. refreshToken(authHandler.refreshToken)
+                alt #aaff8833 refreshToken() success
+                WebMessagingAPI --> AuthHandler : 10. success(jwt)
                 AuthHandler -> AuthHandler : 11. update jwt.
-                AuthHandler -> WebMessagingAPi : 12. logoutFromAuthenticatedSession()
-                else #FF7276 refreshToken() failure
-                WebMessagingAPi --> AuthHandler : 10a. failure
+                AuthHandler -> WebMessagingAPI : 12. logoutFromAuthenticatedSession()
+                else #ffaaff33 refreshToken() failure
+                WebMessagingAPI --> AuthHandler : 10a. failure
                 AuthHandler -> AuthHandler : 11a. clear() jwt and refreshToken from storage.
                 AuthHandler --> MessagingClient : 12a. failure
                 MessagingClient --> App : 13a. onEvent(Error(AuthLogoutFailed, message, ReAuthenticate))
                 end
-            else #FF7276 errorCode != 401
+            else #ffaaff33 errorCode != 401
                 MessagingClient --> App : 9a. onEvent(Error(AuthLogoutFailed, message, ReAuthenticate))
     end
 

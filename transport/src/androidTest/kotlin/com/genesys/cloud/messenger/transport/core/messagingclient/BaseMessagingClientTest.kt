@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.core.messagingclient
 import com.genesys.cloud.messenger.transport.auth.AuthHandler
 import com.genesys.cloud.messenger.transport.core.AttachmentHandler
 import com.genesys.cloud.messenger.transport.core.Configuration
+import com.genesys.cloud.messenger.transport.core.CustomAttributesStoreImpl
 import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.MessageStore
 import com.genesys.cloud.messenger.transport.core.MessagingClient
@@ -129,6 +130,13 @@ open class BaseMessagingClientTest {
         }
     }
 
+    internal val mockCustomAttributesStore: CustomAttributesStoreImpl = mockk(relaxed = true) {
+        val dummyCustomAttributes = mutableMapOf("A" to "B")
+        every { get() } returns dummyCustomAttributes
+        every { getCustomAttributesToSend() } returns dummyCustomAttributes
+        every { add(emptyMap()) } answers { dummyCustomAttributes.clear() }
+    }
+
     private val mockVault: DefaultVault = mockk {
         every { fetch("token") } returns Request.token
         every { token } returns Request.token
@@ -150,6 +158,7 @@ open class BaseMessagingClientTest {
         healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),
         deploymentConfig = mockDeploymentConfig,
         authHandler = mockAuthHandler,
+        internalCustomAttributesStore = mockCustomAttributesStore,
     ).also {
         it.stateChangedListener = mockStateChangedListener
     }
@@ -221,5 +230,6 @@ open class BaseMessagingClientTest {
         mockMessageStore.invalidateConversationCache()
         mockAttachmentHandler.clearAll()
         mockReconnectionHandler.clear()
+        mockCustomAttributesStore.onSessionClosed()
     }
 }

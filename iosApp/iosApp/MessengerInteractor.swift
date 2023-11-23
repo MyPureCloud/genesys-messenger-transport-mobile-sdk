@@ -13,7 +13,7 @@ import Combine
 final class MessengerInteractor {
 
     let configuration: Configuration
-    let messengerTransport: MessengerTransport
+    let messengerTransport: MessengerTransportSDK
     let messagingClient: MessagingClient
     let tokenVault: DefaultVault
     
@@ -22,7 +22,7 @@ final class MessengerInteractor {
     let eventSubject = PassthroughSubject<Event, Never>()
         
     init(deployment: Deployment, reconnectTimeout: Int64 = 60 * 5) {
-        print("Messenger Transport sdkVersion: \(MessengerTransport.companion.sdkVersion)")
+        print("Messenger Transport sdkVersion: \(MessengerTransportSDK.companion.sdkVersion)")
         
         self.configuration = Configuration(deploymentId: deployment.deploymentId,
                                            domain: deployment.domain,
@@ -30,7 +30,7 @@ final class MessengerInteractor {
                                            reconnectionTimeoutInSeconds: reconnectTimeout,
                                            autoRefreshTokenWhenExpired: true)
         self.tokenVault = DefaultVault(keys: Vault.Keys(vaultKey: "com.genesys.cloud.messenger", tokenKey: "token", authRefreshTokenKey: "auth_refresh_token"))
-        self.messengerTransport = MessengerTransport(configuration: self.configuration, vault: self.tokenVault)
+        self.messengerTransport = MessengerTransportSDK(configuration: self.configuration, vault: self.tokenVault)
         self.messagingClient = self.messengerTransport.createMessagingClient()
         
         messagingClient.stateChangedListener = { [weak self] stateChange in
@@ -186,5 +186,9 @@ final class MessengerInteractor {
             print("clearConversation() failed. \(error.localizedDescription)")
             throw error
         }
+    }
+    
+    func addCustomAttributes(customAttributes: [String: String] = [:]) {
+         messagingClient.customAttributesStore.add(customAttributes: customAttributes)
     }
 }

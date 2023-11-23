@@ -62,6 +62,7 @@ internal class ErrorCodeTest {
         assertEquals(ErrorCode.AuthFailed.toCorrectiveAction(), CorrectiveAction.ReAuthenticate)
         assertEquals(ErrorCode.RefreshAuthTokenFailure.toCorrectiveAction(), CorrectiveAction.ReAuthenticate)
         assertEquals(ErrorCode.AuthLogoutFailed.toCorrectiveAction(), CorrectiveAction.ReAuthenticate)
+        assertEquals(ErrorCode.CustomAttributeSizeTooLarge.toCorrectiveAction(), CorrectiveAction.CustomAttributeSizeTooLarge)
     }
 
     private fun randomCodeExcludingKnown(): Int {

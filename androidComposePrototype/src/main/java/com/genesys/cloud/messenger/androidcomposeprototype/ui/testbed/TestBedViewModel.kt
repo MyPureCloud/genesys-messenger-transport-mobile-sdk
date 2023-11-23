@@ -17,7 +17,7 @@ import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessageEvent.AttachmentUpdated
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
-import com.genesys.cloud.messenger.transport.core.MessengerTransport
+import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import io.ktor.http.URLBuilder
@@ -35,7 +35,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private val TAG = TestBedViewModel::class.simpleName
 
-    private lateinit var messengerTransport: MessengerTransport
+    private lateinit var messengerTransport: MessengerTransportSDK
     private lateinit var client: MessagingClient
     private val attachedIds = mutableListOf<String>()
 
@@ -68,7 +68,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
 
     val regions = listOf("inindca.com", "inintca.com", "mypurecloud.com")
-    private val customAttributes = mutableMapOf<String, String>()
     private lateinit var onOktaSingIn: (url: String) -> Unit
     private lateinit var selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit
 
@@ -77,7 +76,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit,
         onOktaSignIn: (url: String) -> Unit,
     ) {
-        println("Messenger Transport sdkVersion: ${MessengerTransport.sdkVersion}")
+        println("Messenger Transport sdkVersion: ${MessengerTransportSDK.sdkVersion}")
         this.onOktaSingIn = onOktaSignIn
         this.selectFile = selectFile
         val mmsdkConfiguration = Configuration(
@@ -87,8 +86,9 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         )
 
         DefaultVault.context = context
-        messengerTransport = MessengerTransport(mmsdkConfiguration)
+        messengerTransport = MessengerTransportSDK(mmsdkConfiguration)
         client = messengerTransport.createMessagingClient()
+        client.customAttributesStore.add(mapOf("sdkVersion" to "Transport SDK: ${MessengerTransportSDK.sdkVersion}"))
         with(client) {
             stateChangedListener = {
                 runBlocking {
@@ -216,8 +216,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private fun doSendMessage(message: String) {
         try {
-            client.sendMessage(message, customAttributes = customAttributes)
-            customAttributes.clear()
+            client.sendMessage(message)
         } catch (t: Throwable) {
             handleException(t, "send message")
         }
@@ -310,7 +309,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         clearCommand()
         val keyValue = customAttributes.toKeyValuePair()
         val consoleMessage = if (keyValue.first.isNotEmpty()) {
-            this.customAttributes[keyValue.first] = keyValue.second
+            client.customAttributesStore.add(mapOf(keyValue))
             "Custom attribute added: $keyValue"
         } else {
             "Custom attribute key can not be null or empty!"

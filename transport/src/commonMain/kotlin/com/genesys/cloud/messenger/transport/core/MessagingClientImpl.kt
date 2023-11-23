@@ -35,6 +35,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.isHealthCheckResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.isOutbound
 import com.genesys.cloud.messenger.transport.shyrka.send.AutoStartRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.ClearConversationRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.CloseSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureAuthenticatedSessionRequest
@@ -83,10 +84,14 @@ internal class MessagingClientImpl(
         vault,
         log.withTag(LogTag.AUTH_HANDLER)
     ),
+    private val internalCustomAttributesStore: CustomAttributesStoreImpl = CustomAttributesStoreImpl(
+        log.withTag(LogTag.CUSTOM_ATTRIBUTES_STORE)
+    ),
 ) : MessagingClient {
     private var connectAuthenticated = false
     private var isStartingANewSession = false
     private var reconfigureAttempts = 0
+    private var sendingAutostart = false
 
     override val currentState: State
         get() {
@@ -116,6 +121,9 @@ internal class MessagingClientImpl(
 
     override val conversation: List<Message>
         get() = messageStore.getConversation()
+
+    override val customAttributesStore: CustomAttributesStore
+        get() = internalCustomAttributesStore
 
     override val fileAttachmentProfile: FileAttachmentProfile?
         get() = attachmentHandler.fileAttachmentProfile
@@ -177,7 +185,10 @@ internal class MessagingClientImpl(
     override fun sendMessage(text: String, customAttributes: Map<String, String>) {
         stateMachine.checkIfConfigured()
         log.i { "sendMessage(text = $text, customAttributes = $customAttributes)" }
-        val request = messageStore.prepareMessage(text, customAttributes)
+        internalCustomAttributesStore.add(customAttributes)
+        val channel = internalCustomAttributesStore.getCustomAttributesToSend().toChannel()
+        channel?.let { internalCustomAttributesStore.onSending() }
+        val request = messageStore.prepareMessage(text, channel)
         attachmentHandler.onSending()
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         send(encodedJson)
@@ -198,7 +209,6 @@ internal class MessagingClientImpl(
         uploadProgress: ((Float) -> Unit)?,
     ): String {
         log.i { "attach(fileName = $fileName)" }
-
         val request = attachmentHandler.prepare(
             Platform().randomUUID(),
             byteArray,
@@ -320,8 +330,13 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     private fun sendAutoStart() {
-        WebMessagingJson.json.encodeToString(AutoStartRequest(token)).let {
+        sendingAutostart = true
+        val channel = internalCustomAttributesStore.getCustomAttributesToSend().toChannel()
+        WebMessagingJson.json.encodeToString(
+            AutoStartRequest(token, channel)
+        ).let {
             log.i { "sendAutoStart()" }
+            channel?.let { internalCustomAttributesStore.onSending() }
             send(it)
         }
     }
@@ -355,6 +370,21 @@ internal class MessagingClientImpl(
             is ErrorCode.RequestRateTooHigh,
             is ErrorCode.CustomAttributeSizeTooLarge,
             -> {
+                if (code is ErrorCode.CustomAttributeSizeTooLarge) {
+                    internalCustomAttributesStore.onError()
+                    if (sendingAutostart) {
+                        sendingAutostart = false
+                        eventHandler.onEvent(
+                            Event.Error(
+                                code,
+                                message,
+                                code.toCorrectiveAction()
+                            )
+                        )
+                    }
+                } else {
+                    internalCustomAttributesStore.onMessageError()
+                }
                 messageStore.onMessageError(code, message)
                 attachmentHandler.onMessageError(code, message)
             }
@@ -383,6 +413,7 @@ internal class MessagingClientImpl(
     }
 
     private fun handleWebSocketError(errorCode: ErrorCode) {
+        considerForceClose()
         if (stateMachine.isInactive()) return
         invalidateConversationCache()
         when (errorCode) {
@@ -434,6 +465,7 @@ internal class MessagingClientImpl(
             StructuredMessage.Type.Text -> {
                 with(structuredMessage.toMessage()) {
                     messageStore.update(this)
+                    internalCustomAttributesStore.onSent()
                     attachmentHandler.onSent(this.attachments)
                     userTypingProvider.clear()
                 }
@@ -450,7 +482,12 @@ internal class MessagingClientImpl(
                 } else {
                     structuredMessage.events.forEach {
                         if (it is PresenceEvent) {
-                            eventHandler.onEvent(it.toTransportEvent())
+                            val event = it.toTransportEvent()
+                            if (event is Event.ConversationAutostart) {
+                                sendingAutostart = false
+                                internalCustomAttributesStore.onSent()
+                            }
+                            eventHandler.onEvent(event)
                         }
                     }
                 }
@@ -468,6 +505,8 @@ internal class MessagingClientImpl(
         attachmentHandler.clearAll()
         reconnectionHandler.clear()
         reconfigureAttempts = 0
+        sendingAutostart = false
+        internalCustomAttributesStore.onSessionClosed()
     }
 
     private fun transitionToStateError(errorCode: ErrorCode, errorMessage: String?) {
@@ -475,6 +514,15 @@ internal class MessagingClientImpl(
         attachmentHandler.clearAll()
         reconnectionHandler.clear()
         reconfigureAttempts = 0
+        sendingAutostart = false
+    }
+
+    private fun considerForceClose() {
+        if (stateMachine.isClosing()) {
+            log.i { "Force close web socket." }
+            val closingState = stateMachine.currentState as State.Closing
+            socketListener.onClosed(closingState.code, closingState.reason)
+        }
     }
 
     private fun encodeAnonymousConfigureSessionRequest(startNew: Boolean) =
@@ -545,11 +593,6 @@ internal class MessagingClientImpl(
                                 if (!connected && isStartingANewSession) {
                                     cleanUp()
                                     configureSession(startNew = true)
-                                } else {
-                                    // Normally should not happen.
-                                    log.w {
-                                        "Unexpected SessionResponse configuration: connected: $connected, readOnly: $readOnly, isStartingANewSession: $isStartingANewSession"
-                                    }
                                 }
                             } else {
                                 isStartingANewSession = false
@@ -659,3 +702,9 @@ private fun KProperty0<DeploymentConfig?>.isShowUserTypingEnabled(): Boolean =
 
 private fun KProperty0<DeploymentConfig?>.isClearConversationEnabled(): Boolean =
     this.get()?.messenger?.apps?.conversations?.conversationClear?.enabled == true
+
+private fun Map<String, String>.toChannel(): Channel? {
+    return if (this.isNotEmpty()) {
+        Channel(Channel.Metadata(this))
+    } else null
+}
