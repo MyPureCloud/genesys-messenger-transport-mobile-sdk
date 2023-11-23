@@ -13,7 +13,6 @@ import Combine
 class TestbedViewController: UIViewController {
 
     private let messenger: MessengerInteractor
-    private var customAttributes: [String: String] = [:]
     private var cancellables = Set<AnyCancellable>()
     private var pkceEnabled = false
     private var authCode: String? = nil
@@ -421,7 +420,6 @@ extension TestbedViewController : UITextFieldDelegate {
             case (.invalidateConversationCache, _):
                 messenger.invalidateConversationCache()
             case(.addAttribute, let msg?):
-
                 let segments = segmentUserInput(msg)
                 if let key = segments.0, !key.isEmpty {
                     let value = segments.1 ?? ""
