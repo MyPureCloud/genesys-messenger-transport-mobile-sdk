@@ -316,7 +316,7 @@ class MessengerInteractorTester {
             return
         }
         do {
-            try messenger.refreshAttachmentUrl(attachmentId: attachmentId)
+            try messenger.refreshAttachmentUrl(attachId: attachmentId)
         } catch {
             XCTFail("Failed to refresh attachment.  \n\(error.localizedDescription)", file: file, line: line)
         }
