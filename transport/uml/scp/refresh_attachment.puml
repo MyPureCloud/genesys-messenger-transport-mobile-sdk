@@ -1,0 +1,45 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+!theme bluegray
+!pragma teoz true
+
+!Backend  = "f4a46088"
+!$OKAlt  = "c9ffc933"
+
+skinparam backgroundColor #whitesmoke
+title Refresh attachment url
+
+participant App
+box TransportSDK #lightcyan
+participant MessagingClient
+participant AttachmentHandler
+participant MessageStore
+end box
+participant Shyrka
+
+
+rnote over MessagingClient
+  Given:
+  * Session is configured.
+  * Attachment has been sent.
+  * User decides to download attachment using the `downloadUrl`.
+  * It has been 10+ minutes since `downloadUrl` was received.
+  * `downloadUrl` request returns 404 resource.not.found
+end rnote
+
+App -> MessagingClient : refreshAttachmentUrl(attachmentId)
+MessagingClient -> Shyrka : GetAttachmentRequest(attachmentId)
+Shyrka --> MessagingClient : PresignedUrlResponse
+rnote over MessagingClient
+PresignedUrlResponse is sent by Shyrka for both refreshAttachmentUrl and when upload url is generated for the first time.
+Depending on the values in the PresignedUrlResponse it is possible to identify if it w
+end rnote
+MessagingClient -> MessagingClient : validate PresignedUrlResponse.
+alt headers == empty
+MessagingClient -> AttachmentHandler : onAttachmentRefreshed(presignedUrlResponse)
+AttachmentHandler -> MessageStore : updateAttachmentStateWith(attachmentId, State.Refreshed(downloadUrl))
+MessageStore -> App : messageListener(MessageEvent(AttachmentUpdated(attachmentId, State.Refreshed(downloadUrl)))
+else proceed with file upload flow.
+
+@enduml

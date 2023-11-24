@@ -1,0 +1,52 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+!theme bluegray
+!pragma teoz true
+
+!Backend  = "f4a46088"
+!$OKAlt  = "c9ffc933"
+
+skinparam backgroundColor #whitesmoke
+title Remove attachment
+
+participant App
+box TransportSDK #lightcyan
+participant MessagingClient
+participant AttachmentHandler
+participant MessageStore
+end box
+participant Shyrka
+
+
+rnote over MessagingClient
+  Given:
+  * Session is configured.
+  * Attachment has been added to the message, but not sent yet.
+  * User decides to remove attachment.
+end rnote
+rnote over AttachmentHandler
+  Note: Files are automatically deleted after 15 days.
+  If needed, a file that was not yet sent as an attachment can be deleted immediately.
+end rnote
+App -> MessagingClient : detach(attachmentId)
+MessagingClient -> AttachmentHandler : detach(attachmentId)
+alt #$OKAlt attachment.state is State.Uploaded
+AttachmentHandler -> MessageStore : updateAttachmentStateWith(attachmentId, State.Detaching)
+MessageStore -> MessageStore : update attachment state in pendingMessage
+MessageStore -> App : messageListener(MessageEvent(AttachmentUpdated(attachmentId, State.Detaching))
+AttachmentHandler --> MessagingClient : return DeleteAttachmentRequest
+MessagingClient -> Shyrka : send DeleteAttachmentRequest
+Shyrka --> MessagingClient : AttachmentDeletedResponse
+MessagingClient -> AttachmentHandler : onDetached(attachmentId)
+AttachmentHandler -> AttachmentHandler : processedAttachments.remove(attachmentId)
+AttachmentHandler -> MessageStore : updateAttachmentStateWith(attachmentId, State.Detached)
+MessageStore -> MessageStore : remove attachment from pendingMessage
+MessageStore -> App : messageListener(MessageEvent(AttachmentUpdated(attachmentId, State.Detached))
+else attachment.state IS NOT State.Uploaded or State.Sending or State.Sent
+AttachmentHandler -> AttachmentHandler : onDetached(attachmentId)
+AttachmentHandler -> AttachmentHandler : processedAttachments.remove(attachmentId)
+AttachmentHandler -> MessageStore : updateAttachmentStateWith(attachmentId, State.Detached)
+MessageStore -> MessageStore : remove attachment from pendingMessage
+MessageStore -> App : messageListener(MessageEvent(AttachmentUpdated(attachmentId, State.Detached))
+@enduml

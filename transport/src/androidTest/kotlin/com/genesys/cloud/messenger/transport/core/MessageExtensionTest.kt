@@ -10,14 +10,21 @@ import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses.isoTestTimestamp
+import com.genesys.cloud.messenger.transport.shyrka.receive.AllowedMedia
+import com.genesys.cloud.messenger.transport.shyrka.receive.FileType
+import com.genesys.cloud.messenger.transport.shyrka.receive.Inbound
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.isInbound
 import com.genesys.cloud.messenger.transport.shyrka.receive.isOutbound
 import com.genesys.cloud.messenger.transport.util.extensions.fromIsoToEpochMilliseconds
 import com.genesys.cloud.messenger.transport.util.extensions.getUploadedAttachments
+import com.genesys.cloud.messenger.transport.util.extensions.isRefreshUrl
 import com.genesys.cloud.messenger.transport.util.extensions.mapOriginatingEntity
+import com.genesys.cloud.messenger.transport.util.extensions.toFileAttachmentProfile
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import org.junit.Test
@@ -25,7 +32,7 @@ import org.junit.Test
 internal class MessageExtensionTest {
 
     @Test
-    fun whenMessageEntityListToMessageList() {
+    fun `when MessageEntityList toMessageList()`() {
         val expectedMessage1 = Message(
             id = "5befde6373a23f32f20b59b4e1cba0e6",
             direction = Message.Direction.Outbound,
@@ -52,7 +59,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun whenInboundStructuredMessageToMessage() {
+    fun `when inbound StructuredMessage toMessage()`() {
         val givenStructuredMessage = StructuredMessage(
             id = "id",
             channel = StructuredMessage.Channel(
@@ -111,7 +118,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun whenGetUploadedAttachmentsWithOneUploadedAndOneDeletedAttachments() {
+    fun `when getUploadedAttachments() with 1 uploaded and 1 deleted attachments`() {
         val givenMessage =
             Message(
                 id = "test custom id",
@@ -143,7 +150,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun whenGetUploadedAttachmentsWithoutAttachments() {
+    fun `when getUploadedAttachments() but there are no attachments`() {
         val givenMessage =
             Message(
                 id = "test custom id",
@@ -156,7 +163,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun whenOutboundStructuredMessageToMessageFromParticipantWithUnknownInfo() {
+    fun `when outbound StructuredMessage toMessage() from participant with unknown info`() {
         val givenStructuredMessage = StructuredMessage(
             id = "id",
             type = StructuredMessage.Type.Text,
@@ -177,7 +184,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun whenFromIsoToEpochMillisecondsOnValidISOString() {
+    fun `when fromIsoToEpochMilliseconds() on valid ISO timestamp String`() {
         val expectedTimestamp = 1398892191411L
 
         val result = isoTestTimestamp.fromIsoToEpochMilliseconds()
@@ -186,21 +193,21 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun whenFromIsoToEpochMillisecondsOnInvalidString() {
+    fun `when fromIsoToEpochMilliseconds() on invalid timestamp String`() {
         val result = "invalid timestamp format".fromIsoToEpochMilliseconds()
 
         assertThat(result).isNull()
     }
 
     @Test
-    fun whenFromIsoToEpochMillisecondsOnNullString() {
+    fun `when fromIsoToEpochMilliseconds() on a null String`() {
         val result = null.fromIsoToEpochMilliseconds()
 
         assertThat(result).isNull()
     }
 
     @Test
-    fun whenOutboundStructuredMessageCheckedForIsOutbound() {
+    fun `when outbound StructuredMessage checked for isOutbound()`() {
         val givenStructuredMessage = StructuredMessage(
             id = "some_id",
             type = StructuredMessage.Type.Text,
@@ -211,7 +218,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun whenInboundStructuredMessageCheckedForIsOutbound() {
+    fun `when inbound StructuredMessage checked for isOutbound()`() {
         val givenStructuredMessage = StructuredMessage(
             id = "some_id",
             type = StructuredMessage.Type.Text,
@@ -222,7 +229,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun whenInboundStructuredMessageCheckedForIsInbound() {
+    fun `when inbound StructuredMessage checked for isInbound()`() {
         val givenStructuredMessage = StructuredMessage(
             id = "some_id",
             type = StructuredMessage.Type.Text,
@@ -233,7 +240,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun whenOutboundStructuredMessageCheckedForIsInbound() {
+    fun `when outbound StructuredMessage checked for isInbound()`() {
         val givenStructuredMessage = StructuredMessage(
             id = "some_id",
             type = StructuredMessage.Type.Text,
@@ -244,7 +251,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun whenMapOriginatingEntityHumanWithInboundFalse() {
+    fun `when mapOriginatingEntity() is Human with inbound=false`() {
         val givenIsInbound = false
         val originatingEntity = "Human"
         val expectedOriginatingEntity = Message.Participant.OriginatingEntity.Human
@@ -255,7 +262,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun whenMapOriginatingEntityBotWithInboundFalse() {
+    fun `when mapOriginatingEntity() is Bot with inbound=false`() {
         val givenIsInbound = false
         val originatingEntity = "Bot"
         val expectedOriginatingEntity = Message.Participant.OriginatingEntity.Bot
@@ -266,7 +273,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun whenMapOriginatingEntityUnknownWithInboundFalse() {
+    fun `when mapOriginatingEntity() is unknown with inbound=false`() {
         val givenIsInbound = false
         val originatingEntity = "any value"
         val expectedOriginatingEntity = Message.Participant.OriginatingEntity.Unknown
@@ -277,7 +284,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun whenMapOriginatingEntityNullWithInboundFalse() {
+    fun `when mapOriginatingEntity() is null with inbound=false`() {
         val givenIsInbound = false
         val originatingEntity = null
         val expectedOriginatingEntity = Message.Participant.OriginatingEntity.Unknown
@@ -288,7 +295,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun whenMapOriginatingEntityBotWithInboundTrue() {
+    fun `when mapOriginatingEntity() is Bot with inbound=true`() {
         val givenIsInbound = true
         val originatingEntity = "Bot"
         val expectedOriginatingEntity = Message.Participant.OriginatingEntity.Human
@@ -296,5 +303,142 @@ internal class MessageExtensionTest {
         val result = originatingEntity.mapOriginatingEntity { givenIsInbound }
 
         assertThat(result).isEqualTo(expectedOriginatingEntity)
+    }
+
+    @Test
+    fun `when SessionResponse toFileAttachmentProfile() but it has no AllowedMedia and blockedExtensions entries`() {
+        val givenSessionResponse = SessionResponse(connected = true)
+        val expectedFileAttachmentProfile = FileAttachmentProfile()
+
+        val result = givenSessionResponse.toFileAttachmentProfile()
+
+        assertThat(result).isEqualTo(expectedFileAttachmentProfile)
+    }
+
+    @Test
+    fun `when SessionResponse toFileAttachmentProfile() but AllowedMedia has no inbound and blockedExtensions entries`() {
+        val givenSessionResponse = SessionResponse(connected = true, allowedMedia = AllowedMedia())
+        val expectedFileAttachmentProfile = FileAttachmentProfile()
+
+        val result = givenSessionResponse.toFileAttachmentProfile()
+
+        assertThat(result).isEqualTo(expectedFileAttachmentProfile)
+    }
+
+    @Test
+    fun `when SessionResponse toFileAttachmentProfile() but AllowedMedia has no filetypes,maxFileSizeKB and blockedExtensions entries`() {
+        val givenSessionResponse =
+            SessionResponse(connected = true, allowedMedia = AllowedMedia(Inbound()))
+        val expectedFileAttachmentProfile = FileAttachmentProfile()
+
+        val result = givenSessionResponse.toFileAttachmentProfile()
+
+        assertThat(result).isEqualTo(expectedFileAttachmentProfile)
+    }
+
+    @Test
+    fun `when SessionResponse toFileAttachmentProfile() and AllowedMedia has filetypes without wildcard but with maxFileSizeKB and blockedExtensions entries`() {
+        val givenSessionResponse = SessionResponse(
+            connected = true,
+            allowedMedia = AllowedMedia(
+                inbound = Inbound(
+                    fileTypes = listOf(FileType("video/mpg"), FileType("video/3gpp")),
+                    maxFileSizeKB = 10240,
+                )
+            ),
+            blockedExtensions = listOf(".ade", ".adp")
+        )
+        val expectedFileAttachmentProfile = FileAttachmentProfile(
+            enabled = true,
+            allowedFileTypes = listOf("video/mpg", "video/3gpp"),
+            blockedFileTypes = listOf(".ade", ".adp"),
+            maxFileSizeKB = 10240,
+            hasWildCard = false,
+        )
+
+        val result = givenSessionResponse.toFileAttachmentProfile()
+
+        assertThat(result).isEqualTo(expectedFileAttachmentProfile)
+    }
+
+    @Test
+    fun `when SessionResponse toFileAttachmentProfile() and AllowedMedia has filetypes with wildcard,maxFileSizeKB and blockedExtensions entries`() {
+        val givenSessionResponse = SessionResponse(
+            connected = true,
+            allowedMedia = AllowedMedia(
+                inbound = Inbound(
+                    fileTypes = listOf(FileType("*/*"), FileType("video/3gpp")),
+                    maxFileSizeKB = 10240,
+                ),
+            ),
+            blockedExtensions = listOf(".ade", ".adp")
+        )
+        val expectedFileAttachmentProfile = FileAttachmentProfile(
+            enabled = true,
+            allowedFileTypes = listOf("video/3gpp"),
+            blockedFileTypes = listOf(".ade", ".adp"),
+            maxFileSizeKB = 10240,
+            hasWildCard = true,
+        )
+
+        val result = givenSessionResponse.toFileAttachmentProfile()
+
+        assertThat(result).isEqualTo(expectedFileAttachmentProfile)
+    }
+
+    @Test
+    fun `when PresignedUrlResponse isRefreshUrl() and headers are empty and fileSize is null`() {
+        val givenPresignedUrlResponse = PresignedUrlResponse(
+            attachmentId = "99999999-9999-9999-9999-999999999999",
+            headers = emptyMap(),
+            url = "https://downloadUrl.com",
+            fileSize = null,
+        )
+
+        val result = givenPresignedUrlResponse.isRefreshUrl()
+
+        assertThat(result).isFalse()
+    }
+
+    @Test
+    fun `when PresignedUrlResponse isRefreshUrl() and headers are NOT empty and fileSize is null`() {
+        val givenPresignedUrlResponse = PresignedUrlResponse(
+            attachmentId = "99999999-9999-9999-9999-999999999999",
+            headers = mapOf("A" to "B"),
+            url = "https://downloadUrl.com",
+            fileSize = null,
+        )
+
+        val result = givenPresignedUrlResponse.isRefreshUrl()
+
+        assertThat(result).isFalse()
+    }
+
+    @Test
+    fun `when PresignedUrlResponse isRefreshUrl() and headers are NOT empty and fileSize has value`() {
+        val givenPresignedUrlResponse = PresignedUrlResponse(
+            attachmentId = "99999999-9999-9999-9999-999999999999",
+            headers = mapOf("A" to "B"),
+            url = "https://downloadUrl.com",
+            fileSize = 1,
+        )
+
+        val result = givenPresignedUrlResponse.isRefreshUrl()
+
+        assertThat(result).isFalse()
+    }
+
+    @Test
+    fun `when PresignedUrlResponse isRefreshUrl() and headers are empty and fileSize has value`() {
+        val givenPresignedUrlResponse = PresignedUrlResponse(
+            attachmentId = "99999999-9999-9999-9999-999999999999",
+            headers = emptyMap(),
+            url = "https://downloadUrl.com",
+            fileSize = 1,
+        )
+
+        val result = givenPresignedUrlResponse.isRefreshUrl()
+
+        assertThat(result).isTrue()
     }
 }

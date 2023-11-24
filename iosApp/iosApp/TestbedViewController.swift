@@ -5,7 +5,7 @@
 //  Created by Chris Rumpf on 10/1/21.
 //  Copyright © 2021 Genesys. All rights reserved.
 //
-
+import MobileCoreServices
 import UIKit
 import MessengerTransport
 import Combine
@@ -13,9 +13,6 @@ import Combine
 class TestbedViewController: UIViewController {
 
     private let messenger: MessengerInteractor
-    private var attachImageName = ""
-    private let attachmentName = "image"
-    private var byteArray: [UInt8]? = nil
     private var cancellables = Set<AnyCancellable>()
     private var pkceEnabled = false
     private var authCode: String? = nil
@@ -42,9 +39,10 @@ class TestbedViewController: UIViewController {
         case newChat
         case send
         case history
-        case selectAttachment
         case attach
+        case refreshAttachment
         case detach
+        case fileAttachmentProfile
         case deployment
         case bye
         case healthCheck
@@ -59,6 +57,7 @@ class TestbedViewController: UIViewController {
             case .send: return "send <msg>"
             case .detach: return "detach <attachmentId>"
             case .addAttribute: return "addAttribute <key> <value>"
+            case .refreshAttachment: return "refreshAttachment <attachmentId>"
             default: return rawValue
             }
         }
@@ -314,6 +313,14 @@ class TestbedViewController: UIViewController {
         return (UserCommand(rawValue: command!), input)
     }
 
+    func utiForMimeType(mimeType: String) -> String? {
+        if let uti = UTTypeCreatePreferredIdentifierForTag(kUTTagClassMIMEType, mimeType as CFString, nil)?.takeRetainedValue() {
+            return uti as String
+        }
+        print("Could not convert mime type to uti: \(mimeType)")
+        return nil
+    }
+
     private func buildOktaAuthorizeUrl() -> URL? {
         guard let plistPath = Bundle.main.path(forResource: "Okta", ofType: "plist"),
                 let plistData = FileManager.default.contents(atPath: plistPath),
@@ -365,7 +372,6 @@ extension TestbedViewController : UITextFieldDelegate {
             return true
         }
 
-        attachImageName = ""
         let userInput = segmentUserInput(message)
         let command = convertToCommand(command: userInput.0,input: userInput.1)
 
@@ -385,30 +391,24 @@ extension TestbedViewController : UITextFieldDelegate {
                 messenger.fetchNextPage()
             case (.healthCheck, _):
                 try messenger.sendHealthCheck()
-            case (.selectAttachment, _):
-                attachImageName = attachmentName
-                DispatchQueue.global().async {
-                    let image = UIImage(named: self.attachmentName)
-                    guard let data = image?.pngData() as NSData? else { return }
-                    self.byteArray = data.toByteArray()
-                    DispatchQueue.main.async {
-                        self.info.text = "<loaded \(String(describing: self.byteArray?.count)) bytes>"
-                    }
-                }
             case (.attach, _):
-                if(byteArray != nil) {
-                    let swiftByteArray : [UInt8] = byteArray!
-                    let intArray : [Int8] = swiftByteArray
-                        .map { Int8(bitPattern: $0) }
-                    let kotlinByteArray: KotlinByteArray = KotlinByteArray.init(size: Int32(swiftByteArray.count))
-                    for (index, element) in intArray.enumerated() {
-                        kotlinByteArray.set(index: Int32(index), value: element)
-                    }
-                    
-                    try messenger.attachImage(kotlinByteArray: kotlinByteArray)
+                guard let fileAttachmentProfile = messenger.getFileAttachmentProfile() else {
+                    self.info.text = "FileAttachmentProfile is not set. Can not launch file picker."
+                    break
                 }
+
+                if (!fileAttachmentProfile.hasWildCard && fileAttachmentProfile.allowedFileTypes.isEmpty) {
+                    self.info.text = "Allowed file types is empty. Can not launch file picker."
+                    break
+                }
+
+                showDocumentPicker(fileAttachmentProfile: fileAttachmentProfile)
+            case (.refreshAttachment, let attachId?):
+                try messenger.refreshAttachmentUrl(attachId: attachId)
             case (.detach, let attachId?):
                 try messenger.detachImage(attachId: attachId)
+            case (.fileAttachmentProfile, _):
+                self.info.text = "FileAttachmentProfile: <\(messenger.getFileAttachmentProfile())>"
             case (.deployment, _):
                 messenger.fetchDeployment { deploymentConfig, error in
                     if let error = error {
@@ -420,7 +420,6 @@ extension TestbedViewController : UITextFieldDelegate {
             case (.invalidateConversationCache, _):
                 messenger.invalidateConversationCache()
             case(.addAttribute, let msg?):
-                
                 let segments = segmentUserInput(msg)
                 if let key = segments.0, !key.isEmpty {
                     let value = segments.1 ?? ""
@@ -477,4 +476,55 @@ enum AuthState {
     case authorized
     case loggedOut
     case error(errorCode: ErrorCode, message: String?, correctiveAction: CorrectiveAction)
+}
+
+extension TestbedViewController: UIDocumentPickerDelegate {
+
+    func showDocumentPicker(fileAttachmentProfile: FileAttachmentProfile) {
+        let documentPicker: UIDocumentPickerViewController
+
+        if fileAttachmentProfile.hasWildCard {
+            documentPicker = UIDocumentPickerViewController(documentTypes: ["public.content"], in: .import)
+        } else {
+            var utiArray: [String] = []
+            for fileType in fileAttachmentProfile.allowedFileTypes {
+                if let result = utiForMimeType(mimeType: fileType) {
+                    utiArray.append(result)
+                }
+            }
+
+            documentPicker = UIDocumentPickerViewController(documentTypes: utiArray, in: .import)
+        }
+
+        documentPicker.delegate = self
+        present(documentPicker, animated: true, completion: nil)
+    }
+
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        guard let pickedURL = urls.first else { return }
+
+        let fileName = pickedURL.lastPathComponent
+
+        DispatchQueue.global().async {
+            do {
+                let fileData = try Data(contentsOf: pickedURL, options: .mappedIfSafe)
+                let kotlinByteArray = TransportUtil().nsDataToKotlinByteArray(data: fileData)
+                DispatchQueue.main.async {
+                    do {
+                        try self.messenger.attachImage(kotlinByteArray: kotlinByteArray, fileName: fileName)
+                    } catch {
+                        self.info.text = "\(error.localizedDescription)"
+                    }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.info.text = "Error converting file URL to ByteArray: \(error.localizedDescription)"
+                }
+            }
+        }
+    }
+
+    func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+        self.info.text = "File selection canceled. No attachment selected."
+    }
 }

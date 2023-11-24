@@ -5,8 +5,13 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 internal object Response {
-    fun configureSuccess(connected: Boolean = true, readOnly: Boolean = false): String =
-        """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":$connected,"newSession":true,"readOnly":$readOnly}}"""
+    fun configureSuccess(
+        connected: Boolean = true,
+        readOnly: Boolean = false,
+        allowedMedia: String = AllowedMedia.empty,
+        blockedExtensions: String = AllowedMedia.emptyBlockedExtensions,
+    ): String =
+        """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":$connected,"newSession":true,"readOnly":$readOnly$allowedMedia$blockedExtensions}}"""
     const val configureSuccessWithNewSessionFalse =
         """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":false}}"""
     const val webSocketRequestFailed =
@@ -52,5 +57,26 @@ internal object Response {
         return """{"type": "message","class": "StructuredMessage","code": 200,"body": {"direction": "${direction.name}","id": "0000000-0000-0000-0000-0000000000","channel": {"time": "2022-03-09T13:35:31.104Z","messageId": "0000000-0000-0000-0000-0000000000"},"type": "Event","metadata": ${
         Json.encodeToString(metadata)
         },"events": [$events]}}"""
+    }
+
+    fun presignedUrlResponse(
+        attachmentId: String = "88888888-8888-8888-8888-888888888888",
+        headers: String = "",
+        url: String = "https://downloadUrl.com",
+        fileSize: Int = 1,
+        fileName: String = "test_asset.png",
+        fileType: String = "image/jpeg",
+    ): String {
+        return """{"type":"response","class":"PresignedUrlResponse","code":200,"body":{"attachmentId":"$attachmentId","headers":{$headers},"url":"$url","fileName":"$fileName","fileSize":$fileSize,"fileType":"$fileType"}}"""
+    }
+
+    internal object AllowedMedia {
+        const val empty = ""
+        const val emptyBlockedExtensions = ""
+        const val listOfBlockedExtensions = ""","blockedExtensions":[".ade",".adp"]"""
+        const val noInbound = ""","allowedMedia":{}"""
+        const val emptyInbound = ""","allowedMedia":{"inbound":{}}"""
+        const val listOfFileTypesWithMaxSize = ""","allowedMedia":{"inbound":{"fileTypes":[{"type":"video/mpg"},{"type":"video/3gpp"}],"maxFileSizeKB":10240}}"""
+        const val listOfFileTypesWithWildcardAndMaxSize = ""","allowedMedia":{"inbound":{"fileTypes":[{"type":"*/*"},{"type":"video/3gpp"}],"maxFileSizeKB":10240}}"""
     }
 }

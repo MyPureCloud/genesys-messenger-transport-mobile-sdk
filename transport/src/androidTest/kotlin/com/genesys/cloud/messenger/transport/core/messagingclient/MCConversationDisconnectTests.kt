@@ -217,6 +217,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
             connectToReadOnlySequence()
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
             mockStateChangedListener(fromReadOnlyToError(errorState = expectedErrorState))
+            mockAttachmentHandler.clearAll()
             mockReconnectionHandler.clear()
         }
     }
@@ -237,6 +238,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
         verifySequence {
             connectToReadOnlySequence()
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
+            mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             verifyCleanUp()
             mockPlatformSocket.sendMessage(Request.configureRequest(startNew = true))
@@ -259,6 +261,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
         verifySequence {
             connectToReadOnlySequence()
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
+            mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
         }
         verify(exactly = 0) {
@@ -277,6 +280,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
         assertThat(subject.currentState).isReadOnly()
         verifySequence {
             connectSequence()
+            mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockStateChangedListener(fromConfiguredToReadOnly())
         }

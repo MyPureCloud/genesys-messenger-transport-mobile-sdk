@@ -41,6 +41,7 @@ class ComposePrototypeUITest : BaseTests() {
     private val uploadedText = "Uploaded"
     private val deletedText = "Deleted"
     private val attachmentSentText = "state=Sent"
+    private val fileUploadedText = "fileName=testImage.png"
     private val addAtrributeText = "addAttribute"
     private val nameText = "name"
     private val newNameText = "Nellie Hay"
@@ -79,6 +80,15 @@ class ComposePrototypeUITest : BaseTests() {
     private val clearConversation = "clearConversation"
     private val connectionClosedMessage = "Connection Closed Normally"
     private val connectionClosedCode = "1000"
+    private val deploymentConfigText = "deployment"
+    private val imageFormatsText = "modes=[Mode(fileTypes=[image/png, image/jpeg, image/gif]"
+    private val savedFileNameText = "savedFileName"
+    private val attachSavedImageText = "attachSavedImage"
+    private val fileTypeInvalidText = "FileTypeInvalid"
+    private val notSupportedText = "not supported"
+    private val refreshedText = "Refreshed"
+    private val refreshCommandText = "refreshAttachment"
+    private val attachmentIdText = "Attachment(id="
 
     fun enterDeploymentInfo(deploymentId: String) {
         opening {
@@ -161,6 +171,31 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
+    fun attachDesignatedImage(fileName: String, valid: Boolean) {
+        val attachmentId = ""
+        messenger {
+            enterCommand("$savedFileNameText $fileName")
+            enterCommand(attachSavedImageText)
+            if (valid) {
+                // Wait for state=Uploaded
+                waitForProperResponse(uploadedText)
+                val attachmentId = grabAttachmentId()
+                if (attachmentId != null) {
+                    enterCommand("$sendMsgText $helloText")
+                    // Wait for state=Sent and fileName=testImage.png
+                    waitForProperResponse(attachmentSentText)
+                    waitForProperResponse(fileUploadedText)
+                    waitForProperResponse("$attachmentIdText}$attachmentId}")
+                    enterCommand("$refreshCommandText $attachmentId")
+                    waitForProperResponse(refreshedText)
+                } else AssertionError("Attachment Id was not found")
+            } else {
+                waitForProperResponse(fileTypeInvalidText)
+                waitForProperResponse(notSupportedText)
+            }
+        }
+    }
+
     fun sendBotResponseAndCheckReply(messageText: String) {
         messenger {
             verifyPageIsVisible()
@@ -195,6 +230,8 @@ class ComposePrototypeUITest : BaseTests() {
         messenger {
             verifyPageIsVisible()
             enterCommand(attachImageText)
+            // Select picture from device
+
             waitForProperResponse(uploadingText)
             waitForProperResponse(uploadedText)
             attachmentId = checkAttachFullResponse()
@@ -348,9 +385,27 @@ class ComposePrototypeUITest : BaseTests() {
         if (conversationInfo == null) AssertionError("Unable to answer conversation.")
         else {
             Log.i(TAG, "Conversation started successfully.")
-            attachImage()
-            // wait for image to load
-            sleep(3000)
+            attachDesignatedImage("testImage.png", true)
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
+        }
+        bye()
+    }
+
+    @Test
+    fun testContentProfile() {
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.deploymentId)
+        connect()
+        sendMsg(helloText)
+        val conversationInfo = apiHelper.answerNewConversation()
+        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
+        else {
+            Log.i(TAG, "Conversation started successfully.")
+            // Get the deployment config to check for allowed media
+            enterDeploymentCommand(deploymentConfigText)
+            verifyResponse(imageFormatsText)
+            // Try attachment with invalid type. Expect to receive error
+            attachDesignatedImage("testImage.abc", false)
             apiHelper.sendConnectOrDisconnect(conversationInfo)
         }
         bye()
