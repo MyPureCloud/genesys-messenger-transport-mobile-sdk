@@ -25,6 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 private const val ATTACHMENT_FILE_NAME = "test_asset.png"
 
@@ -216,13 +217,16 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     }
 
     private fun fetchNextPage() {
-        try {
-            viewModelScope.launch {
+        viewModelScope.launch {
+            try {
                 client.fetchNextPage()
                 commandWaiting = false
+            } catch (t: Throwable) {
+                Log.d(TAG, "fetchNextPage: error")
+                withContext(Dispatchers.Main) {
+                    handleException(t, "request history")
+                }
             }
-        } catch (t: Throwable) {
-            handleException(t, "request history")
         }
     }
 
