@@ -1,0 +1,117 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+!theme bluegray
+!pragma teoz true
+
+skinparam backgroundColor #whitesmoke
+title Quick Replies
+
+participant App
+box TransportSDK #lightcyan
+participant MessagingClient
+participant MessageStore
+end box
+box BackEnd
+participant Shyrka
+end box
+
+rnote over MessagingClient
+  Given:
+  * QuickReply Bot flow is configured in Architect.
+  * newSession=true
+end rnote
+
+App -> MessagingClient: connect
+MessagingClient -> Shyrka: configureSession
+Shyrka --> MessagingClient: SessionConfigured(newSession=true)
+alt #aaff8833 "Welcome message" is configured in Architect (Optional).
+Shyrka -> MessagingClient: onMessage(Message("Welcome message from bot"))
+MessagingClient -> MessageStore: update(Message)
+MessageStore -> MessageStore: add message to Conversation
+MessageStore -> App: messageListener(MessageUpdated("Welcome message from bot"))
+App -> App: display text message in UI
+end
+Shyrka -> MessagingClient: onMessage(type = Type.Structured, text = String, content = listOf(ButtonResponse(text,payload,action)))
+MessagingClient -> MessageStore: updateQuickReply(Message)
+MessageStore -> MessageStore: add message to Conversation
+MessageStore -> App: messageListener(QuickReplyReceived(Message(text:String, quickReplies: List)))
+App -> App: Display text message and quick reply options in UI
+
+alt #aaff8833 user does not react after certain amount of time (Optional flow).
+rnote over MessagingClient
+After several attempts if user does not react to quick reply options - Bot flow will be automatically exited and conversation will be redirected to an Agent.
+end rnote
+Shyrka -> MessagingClient: onMessage(type = Type.Structured, text = String, content = listOf(ButtonResponse(text,payload,action)))
+MessagingClient -> MessageStore: updateQuickReply(Message)
+MessageStore -> MessageStore: add message to Conversation
+MessageStore -> App: messageListener(QuickReplyReceived(Message(text:String, quickReplies: List)))
+App -> App: Clear old quick reply options from UI
+App -> App: Display new text message and quick reply options in UI
+end
+
+alt #aaff8833 quickReply selected from QuickReply options
+App -> MessagingClient: sendQuickReply(quickReply : String)
+MessagingClient -> MessageStore: prepareQuickReply(quickReply: String)
+MessageStore --> MessagingClient: OnMessageRequest(text="",content="ButtonResponse(text=text,payload=payload,type="QuickReply")))
+MessageStore -> App: messageListener(QuickReplyUpdated(Message("SelectedQuickReply"), State.Sending))
+App -> App: Display selected quick reply options as text message with State.Sending
+MessagingClient -> Shyrka: send(OnMessageRequest)
+alt #aaff8833 Success (200)
+Shyrka -> MessagingClient: response 200 to OnMessageRequest
+MessagingClient -> MessageStore: updateQuickReply(Message)
+MessageStore -> App: messageListener(QuickReplyUpdated(Message("SelectedQuickReply"), State.Sent))
+App -> App: Display selected quick reply options as text message with State.Sent
+App -> App: Clear old quick reply options from UI
+else #ffaaff33 Failure (MessageTooLong,RequestRateTooHigh,CustomAttributeSizeTooLarge)
+MessagingClient -> MessageStore: updateQuickReply(Message)
+MessageStore -> App: messageListener(QuickReplyUpdated(Message("SelectedQuickReply"), State.Error))
+App -> App: Display selected quick reply options as text message with State.Error
+end
+
+else #aaff8833 quickReply manually typed by user and sent
+App -> MessagingClient: sendMessage("quick reply")
+MessagingClient -> MessageStore: prepareMessage("quick reply")
+MessageStore --> MessagingClient: OnMessageRequest(text="quick reply")
+MessageStore -> App: messageListener(MessageUpdated(Message("quick reply"), State.Sending))
+MessagingClient -> Shyrka: send(OnMessageRequest)
+alt #aaff8833 Success (200)
+Shyrka -> MessagingClient: response 200 to OnMessageRequest
+MessagingClient -> MessageStore: update(Message)
+MessageStore -> App: messageListener(MessageUpdated(Message("quick reply"), State.Sent))
+App -> App: Display selected quick reply options as text message with State.Sent
+App -> App: Clear old quick reply options from UI
+else #ffaaff33 manually typed quickReply DOES NOT match any of QuickReply options
+Shyrka -> MessagingClient: onMessage(type = Type.Structured, text = String, content = listOf(ButtonResponse(text,payload,action)))
+MessagingClient -> MessageStore: updateQuickReply(Message)
+MessageStore -> MessageStore: add message to Conversation
+MessageStore -> App: messageListener(QuickReplyReceived(Message(text:String, quickReplies: List)))
+App -> App: Clear old quick reply options from UI
+App -> App: Display new text message and quick reply options in UI
+end
+end
+
+rnote over MessagingClient
+  Given:
+  * newSession=false
+end rnote
+alt #aaff8833 Connection lost/ Session reconfigured
+App -> MessagingClient: connect
+MessagingClient -> Shyrka: configureSession
+Shyrka --> MessagingClient: SessionConfigured(newSession=false)
+App -> MessagingClient: fetchNextPage()
+MessagingClient -> Shyrka: getJwtToken
+Shyrka --> MessagingClient:  jwt
+MessagingClient -> GenesysCloud: fetch history
+GenesysCloud --> MessagingClient: history response
+MessagingClient -> MessagingClient: parse history response.
+ rnote over App
+   All non consumed QuickReply will be part of history response. Including the options.
+ end rnote
+MessagingClient -> MessageStore: updateMessageHistory
+MessageStore -> App: messageListener(MessageEvent.HistoryFetched)
+
+end
+
+
+@enduml
