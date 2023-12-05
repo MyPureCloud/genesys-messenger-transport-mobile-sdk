@@ -29,13 +29,13 @@ alt #aaff8833 "Welcome message" is configured in Architect (Optional).
 Shyrka -> MessagingClient: onMessage(Message("Welcome message from bot"))
 MessagingClient -> MessageStore: update(Message)
 MessageStore -> MessageStore: add message to Conversation
-MessageStore -> App: messageListener(MessageUpdated("Welcome message from bot"))
+MessageStore -> App: messageListener(MessageUpdated(Type.Text,"Welcome message from bot"))
 App -> App: display text message in UI
 end
 Shyrka -> MessagingClient: onMessage(type = Type.Structured, text = String, content = listOf(ButtonResponse(text,payload,action)))
 MessagingClient -> MessageStore: updateQuickReply(Message)
 MessageStore -> MessageStore: add message to Conversation
-MessageStore -> App: messageListener(QuickReplyReceived(Message(text:String, quickReplies: List)))
+MessageStore -> App: messageListener(QuickReplyReceived(Message(type:Type,text:String, quickReplies: List<ButtonResponse>)))
 App -> App: Display text message and quick reply options in UI
 
 alt #aaff8833 user does not react after certain amount of time (Optional flow).
@@ -45,49 +45,59 @@ end rnote
 Shyrka -> MessagingClient: onMessage(type = Type.Structured, text = String, content = listOf(ButtonResponse(text,payload,action)))
 MessagingClient -> MessageStore: updateQuickReply(Message)
 MessageStore -> MessageStore: add message to Conversation
-MessageStore -> App: messageListener(QuickReplyReceived(Message(text:String, quickReplies: List)))
+MessageStore -> App: messageListener(QuickReplyReceived(Message(type:Type,text:String, quickReplies: List<ButtonResponse>)))
 App -> App: Clear old quick reply options from UI
 App -> App: Display new text message and quick reply options in UI
 end
 
 alt #aaff8833 quickReply selected from QuickReply options
-App -> MessagingClient: sendQuickReply(quickReply : String)
-MessagingClient -> MessageStore: prepareQuickReply(quickReply: String)
+App -> MessagingClient: sendQuickReply(quickReply : ButtonResponse)
+MessagingClient -> MessageStore: prepareQuickReply(quickReply: ButtonResponse)
+MessageStore -> MessageStore: add message to Conversation
 MessageStore --> MessagingClient: OnMessageRequest(text="",content="ButtonResponse(text=text,payload=payload,type="QuickReply")))
-MessageStore -> App: messageListener(QuickReplyUpdated(Message("SelectedQuickReply"), State.Sending))
+MessageStore -> App: messageListener(MessageInserted(Message(Type.QuickReply,ButtonResponse("SelectedQuickReply"), State.Sending))
 App -> App: Display selected quick reply options as text message with State.Sending
 MessagingClient -> Shyrka: send(OnMessageRequest)
 alt #aaff8833 Success (200)
 Shyrka -> MessagingClient: response 200 to OnMessageRequest
 MessagingClient -> MessageStore: updateQuickReply(Message)
-MessageStore -> App: messageListener(QuickReplyUpdated(Message("SelectedQuickReply"), State.Sent))
+MessageStore -> MessageStore: update message state in Conversation(Message)
+MessageStore -> App: messageListener(MessageUpdated(Message(Type.QuickReply,ButtonResponse("SelectedQuickReply"), State.Sent))
 App -> App: Display selected quick reply options as text message with State.Sent
 App -> App: Clear old quick reply options from UI
 else #ffaaff33 Failure (MessageTooLong,RequestRateTooHigh,CustomAttributeSizeTooLarge)
 MessagingClient -> MessageStore: updateQuickReply(Message)
-MessageStore -> App: messageListener(QuickReplyUpdated(Message("SelectedQuickReply"), State.Error))
+MessageStore -> MessageStore: update message state in Conversation(Message)
+MessageStore -> App: messageListener(MessageUpdated(Message(Type.QuickReply,ButtonResponse("SelectedQuickReply"), State.Error))
 App -> App: Display selected quick reply options as text message with State.Error
 end
 
 else #aaff8833 quickReply manually typed by user and sent
 App -> MessagingClient: sendMessage("quick reply")
 MessagingClient -> MessageStore: prepareMessage("quick reply")
+MessageStore -> MessageStore: add message to Conversation
 MessageStore --> MessagingClient: OnMessageRequest(text="quick reply")
-MessageStore -> App: messageListener(MessageUpdated(Message("quick reply"), State.Sending))
+MessageStore -> App: messageListener(MessageInserted(Message(Type.Text,"quick reply", State.Sending))
 MessagingClient -> Shyrka: send(OnMessageRequest)
 alt #aaff8833 Success (200)
 Shyrka -> MessagingClient: response 200 to OnMessageRequest
 MessagingClient -> MessageStore: update(Message)
-MessageStore -> App: messageListener(MessageUpdated(Message("quick reply"), State.Sent))
+MessageStore -> MessageStore: update message state in Conversation(Message)
+MessageStore -> App: messageListener(MessageUpdated(Message(Type.Text, "quick reply", State.Sent))
 App -> App: Display selected quick reply options as text message with State.Sent
 App -> App: Clear old quick reply options from UI
 else #ffaaff33 manually typed quickReply DOES NOT match any of QuickReply options
 Shyrka -> MessagingClient: onMessage(type = Type.Structured, text = String, content = listOf(ButtonResponse(text,payload,action)))
 MessagingClient -> MessageStore: updateQuickReply(Message)
 MessageStore -> MessageStore: add message to Conversation
-MessageStore -> App: messageListener(QuickReplyReceived(Message(text:String, quickReplies: List)))
+MessageStore -> App: messageListener(QuickReplyReceived(Message(type:Type, text:String, quickReplies: List<ButtonResponse>)))
 App -> App: Clear old quick reply options from UI
 App -> App: Display new text message and quick reply options in UI
+else #ffaaff33 Failure (MessageTooLong,RequestRateTooHigh,CustomAttributeSizeTooLarge)
+MessagingClient -> MessageStore: update(Message)
+MessageStore -> MessageStore: update message state in Conversation(Message)
+MessageStore -> App: messageListener(MessageUpdated(Message(Type.Text,"quick reply", State.Error))
+App -> App: Display text message as with State.Error
 end
 end
 
@@ -109,6 +119,7 @@ MessagingClient -> MessagingClient: parse history response.
    All non consumed QuickReply will be part of history response. Including the options.
  end rnote
 MessagingClient -> MessageStore: updateMessageHistory
+MessageStore -> MessageStore: add messages to Conversation
 MessageStore -> App: messageListener(MessageEvent.HistoryFetched)
 
 end
