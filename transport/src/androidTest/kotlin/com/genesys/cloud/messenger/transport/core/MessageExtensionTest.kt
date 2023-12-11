@@ -319,7 +319,6 @@ internal class MessageExtensionTest {
         assertThat(result).isEqualTo(expectedOriginatingEntity)
     }
 
-
     @Test
     fun `when isHealthCheckResponseId match HealthCheckId`() {
         assertThat(HealthCheckID.isHealthCheckResponseId()).isTrue()

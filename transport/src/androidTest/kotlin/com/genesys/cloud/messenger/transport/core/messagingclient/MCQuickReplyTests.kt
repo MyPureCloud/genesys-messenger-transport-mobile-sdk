@@ -7,7 +7,7 @@ import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
 
-class MCQuickReplyTests: BaseMessagingClientTest() {
+class MCQuickReplyTests : BaseMessagingClientTest() {
 
     @Test
     fun `when SocketListener invoke onMessage with Structured message that contains QuickReplies`() {

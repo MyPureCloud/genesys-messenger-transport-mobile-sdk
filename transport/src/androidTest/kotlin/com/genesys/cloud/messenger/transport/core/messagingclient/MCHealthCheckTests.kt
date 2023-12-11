@@ -18,10 +18,10 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
 
     @Test
     fun `when send HealthCheck`() {
-        every { mockPlatformSocket.sendMessage(Request.echoRequest) } answers {
+        every { mockPlatformSocket.sendMessage(Request.echo) } answers {
             slot.captured.onMessage(Response.echo)
         }
-        val expectedMessage = Request.echoRequest
+        val expectedMessage = Request.echo
         subject.connect()
 
         subject.sendHealthCheck()
@@ -41,7 +41,7 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
 
     @Test
     fun `when send HealthCheck twice without cool down`() {
-        val expectedMessage = Request.echoRequest
+        val expectedMessage = Request.echo
 
         subject.connect()
 
@@ -54,7 +54,7 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
     @Test
     fun `when send HealthCheck twice with cool down`() {
         val healthCheckCoolDownInMilliseconds = HEALTH_CHECK_COOL_DOWN_MILLISECONDS + 250
-        val expectedMessage = Request.echoRequest
+        val expectedMessage = Request.echo
 
         subject.connect()
 
@@ -68,7 +68,7 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
 
     @Test
     fun `when connect send HealthCheck reconnect and send HealthCheck again without delay`() {
-        val expectedMessage = Request.echoRequest
+        val expectedMessage = Request.echo
 
         subject.connect()
         subject.sendHealthCheck()

@@ -19,7 +19,7 @@ class HealthCheckProviderTest {
 
     @Test
     fun whenEncode() {
-        val expected = Request.echoRequest
+        val expected = Request.echo
         val result = subject.encodeRequest(token = Request.token)
 
         assertThat(result).isEqualTo(expected)
@@ -28,7 +28,7 @@ class HealthCheckProviderTest {
     @Test
     fun whenEncodeWithCoolDown() {
         val healthCheckCoolDownInMilliseconds = HEALTH_CHECK_COOL_DOWN_MILLISECONDS + 250
-        val expected = Request.echoRequest
+        val expected = Request.echo
         val firstResult = subject.encodeRequest(token = Request.token)
         every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + healthCheckCoolDownInMilliseconds }
         val secondResult = subject.encodeRequest(token = Request.token)
@@ -39,7 +39,7 @@ class HealthCheckProviderTest {
 
     @Test
     fun whenEncodeWithoutCoolDown() {
-        val expected = Request.echoRequest
+        val expected = Request.echo
         val firstResult = subject.encodeRequest(token = Request.token)
         val secondResult = subject.encodeRequest(token = Request.token)
 
@@ -49,7 +49,7 @@ class HealthCheckProviderTest {
 
     @Test
     fun whenEncodeWithoutCoolDownButWithClear() {
-        val expected = Request.echoRequest
+        val expected = Request.echo
         val firstResult = subject.encodeRequest(token = Request.token)
         subject.clear()
         val secondResult = subject.encodeRequest(token = Request.token)

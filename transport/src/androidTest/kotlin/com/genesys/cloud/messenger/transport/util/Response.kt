@@ -13,7 +13,7 @@ internal object Response {
         """{"type":"response","class":"string","code":400,"body":"Request failed."}"""
     const val defaultStructuredEvents =
         """{"eventType": "Typing","typing": {"type": "Off","duration": 1000}},{"eventType": "Typing","typing": {"type": "On","duration": 5000}}"""
-    fun onMessage(direction : Message.Direction = Message.Direction.Inbound) =
+    fun onMessage(direction: Message.Direction = Message.Direction.Inbound) =
         """{"type":"message","class":"StructuredMessage","code":200,"body":{"text":"Hello world!","direction":"${direction.name}","id":"test_id","channel":{"time":"2022-08-22T19:24:26.704Z","messageId":"message_id"},"type":"Text","metadata":{"customMessageId":"some_custom_message_id"}}}"""
     fun onMessageWithAttachment(direction: Message.Direction = Message.Direction.Outbound) =
         """{"type":"message","class":"StructuredMessage","code":200,"body":{"direction":"${direction.name}","id":"msg_id","channel":{"time":"some_time","type":"Private"},"type":"Text","text":"Hi","content":[{"attachment":{"id":"attachment_id","filename":"image.png","mediaType":"Image","mime":"image/png","url":"https://downloadurl.com"},"contentType":"Attachment"}],"originatingEntity":"Human"}}"""
