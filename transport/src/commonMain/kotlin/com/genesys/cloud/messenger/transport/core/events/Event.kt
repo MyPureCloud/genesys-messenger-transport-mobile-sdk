@@ -64,4 +64,14 @@ sealed class Event {
      * Sent when conversation was successfully cleared.
      */
     object ConversationCleared : Event()
+
+    /**
+     * Sent when custom attributes exceed the size limit.
+     */
+    object SizeLimitExceeded : Event()
+
+    /**
+     * Sent when custom attributes are successfully added.
+     */
+    data class AttributesAdded(val customAttributes: Map<String, String>) : Event()
 }

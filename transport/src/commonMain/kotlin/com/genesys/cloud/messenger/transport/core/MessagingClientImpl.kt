@@ -82,7 +82,8 @@ internal class MessagingClientImpl(
         log.withTag(LogTag.AUTH_HANDLER)
     ),
     private val internalCustomAttributesStore: CustomAttributesStoreImpl = CustomAttributesStoreImpl(
-        log.withTag(LogTag.CUSTOM_ATTRIBUTES_STORE)
+        log.withTag(LogTag.CUSTOM_ATTRIBUTES_STORE),
+        eventHandler
     ),
 ) : MessagingClient {
     private var connectAuthenticated = false
@@ -341,6 +342,24 @@ internal class MessagingClientImpl(
         }
     }
 
+    private fun handelSessionResponse(sessionResponse: SessionResponse) = sessionResponse.run {
+        reconnectionHandler.clear()
+        internalCustomAttributesStore.updateMaxCustomDataBytes(sessionResponse.maxCustomDataBytes)
+        if (readOnly) {
+            stateMachine.onReadOnly()
+            if (!connected && isStartingANewSession) {
+                cleanUp()
+                configureSession(startNew = true)
+            }
+        } else {
+            isStartingANewSession = false
+            stateMachine.onSessionConfigured(connected, newSession)
+            if (newSession && deploymentConfig.isAutostartEnabled()) {
+                sendAutoStart()
+            }
+        }
+    }
+
     private fun handleError(code: ErrorCode, message: String? = null) {
         when (code) {
             is ErrorCode.SessionHasExpired,
@@ -566,20 +585,7 @@ internal class MessagingClientImpl(
                     }
                     is SessionResponse -> {
                         decoded.body.run {
-                            reconnectionHandler.clear()
-                            if (readOnly) {
-                                stateMachine.onReadOnly()
-                                if (!connected && isStartingANewSession) {
-                                    cleanUp()
-                                    configureSession(startNew = true)
-                                }
-                            } else {
-                                isStartingANewSession = false
-                                stateMachine.onSessionConfigured(connected, newSession)
-                                if (newSession && deploymentConfig.isAutostartEnabled()) {
-                                    sendAutoStart()
-                                }
-                            }
+                            handelSessionResponse(this)
                         }
                     }
                     is JwtResponse ->

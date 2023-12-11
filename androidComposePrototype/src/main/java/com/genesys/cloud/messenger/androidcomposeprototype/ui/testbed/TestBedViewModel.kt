@@ -12,6 +12,7 @@ import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
+import com.genesys.cloud.messenger.transport.core.ErrorMessage
 import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessageEvent.AttachmentUpdated
 import com.genesys.cloud.messenger.transport.core.MessagingClient
@@ -75,6 +76,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         context: Context,
         onOktaSignIn: (url: String) -> Unit,
     ) {
+
         println("Messenger Transport sdkVersion: ${MessengerTransportSDK.sdkVersion}")
         this.onOktaSingIn = onOktaSignIn
         val mmsdkConfiguration = Configuration(
@@ -276,13 +278,11 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     private fun doAddCustomAttributes(customAttributes: String) {
         clearCommand()
         val keyValue = customAttributes.toKeyValuePair()
-        val consoleMessage = if (keyValue.first.isNotEmpty()) {
+        if (keyValue.first.isNotEmpty()) {
             client.customAttributesStore.add(mapOf(keyValue))
-            "Custom attribute added: $keyValue"
         } else {
-            "Custom attribute key can not be null or empty!"
+            onSocketMessageReceived("Custom attribute key can not be null or empty!")
         }
-        onSocketMessageReceived(consoleMessage)
     }
 
     private fun doIndicateTyping() {
@@ -311,9 +311,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         clientState = newState
         val statePayloadMessage = when (newState) {
             is State.Configured ->
-                "connected: ${newState.connected}," +
-                    " newSession: ${newState.newSession}," +
-                    " wasReconnecting: ${oldState is State.Reconnecting}"
+                "connected: ${newState.connected}," + " newSession: ${newState.newSession}," + " wasReconnecting: ${oldState is State.Reconnecting}"
             is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Closed -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Error -> "code: ${newState.code}, message: ${newState.message}"
@@ -364,10 +362,18 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         when (event) {
             is Event.Logout -> authState = AuthState.LoggedOut
             is Event.Authorized -> authState = AuthState.Authorized
+            is Event.AttributesAdded -> {
+                val attributesString = event.customAttributes.entries.joinToString { (key, value) ->
+                    "$key: $value"
+                }
+                onSocketMessageReceived("Custom attribute added: $attributesString")
+            }
+            is Event.SizeLimitExceeded ->
+                onSocketMessageReceived(ErrorMessage.CustomAttributesSizeError)
             is Event.Error -> handleEventError(event)
             else -> println("On event: $event")
         }
-        onSocketMessageReceived(event.toString())
+        // onSocketMessageReceived(event)
     }
 
     private fun handleEventError(event: Event.Error) {
@@ -377,6 +383,10 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             is ErrorCode.RefreshAuthTokenFailure,
             -> {
                 authState = AuthState.Error(event.errorCode, event.message, event.correctiveAction)
+            }
+            is ErrorCode.CustomAttributeSizeTooLarge
+            -> {
+                onSocketMessageReceived(ErrorMessage.CustomAttributesSizeError)
             }
             else -> {
                 println("Handle Event.Error here.")

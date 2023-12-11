@@ -7,4 +7,5 @@ internal data class SessionResponse(
     val connected: Boolean,
     val newSession: Boolean = false,
     val readOnly: Boolean = false,
+    val maxCustomDataBytes: Int,
 )
