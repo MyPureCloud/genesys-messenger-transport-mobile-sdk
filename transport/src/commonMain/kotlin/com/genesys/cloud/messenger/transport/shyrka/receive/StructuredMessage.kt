@@ -1,7 +1,6 @@
 package com.genesys.cloud.messenger.transport.shyrka.receive
 
-import com.genesys.cloud.messenger.transport.core.Message
-import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
+import com.genesys.cloud.messenger.transport.core.Message.Direction
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -63,6 +62,7 @@ internal data class StructuredMessage(
         @Serializable
         enum class Type {
             Attachment,
+            QuickReply,
         }
 
         @Serializable
@@ -84,6 +84,19 @@ internal data class StructuredMessage(
         }
 
         @Serializable
+        data class QuickReplyContent(
+            val contentType: String,
+            val quickReply: QuickReply,
+        ) : Content() {
+            @Serializable
+            data class QuickReply(
+                val text: String,
+                val payload: String,
+                val action: String,
+            )
+        }
+
+        @Serializable
         internal object UnknownContent : Content()
     }
 
@@ -92,17 +105,13 @@ internal data class StructuredMessage(
         override fun selectDeserializer(element: JsonElement): DeserializationStrategy<out Content> {
             return when (element.jsonObject["contentType"]?.jsonPrimitive?.content) {
                 Content.Type.Attachment.name -> Content.AttachmentContent.serializer()
+                Content.Type.QuickReply.name -> Content.QuickReplyContent.serializer()
                 else -> Content.UnknownContent.serializer()
             }
         }
     }
 }
 
-internal fun StructuredMessage.isOutbound(): Boolean =
-    this.direction == Message.Direction.Outbound.name
+internal fun StructuredMessage.isOutbound(): Boolean = direction == Direction.Outbound.name
 
-internal fun StructuredMessage.isInbound(): Boolean =
-    this.direction == Message.Direction.Inbound.name
-
-internal fun StructuredMessage.isHealthCheckResponse(): Boolean =
-    this.metadata["customMessageId"] == HealthCheckID
+internal fun StructuredMessage.isInbound(): Boolean = direction == Direction.Inbound.name

@@ -9,7 +9,6 @@ import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
-import com.genesys.cloud.messenger.transport.core.events.toTransportEvent
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
@@ -22,18 +21,14 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.LogoutEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionClearedEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionExpiredEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
-import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TooManyRequestsErrorMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.isHealthCheckResponse
-import com.genesys.cloud.messenger.transport.shyrka.receive.isOutbound
 import com.genesys.cloud.messenger.transport.shyrka.send.AutoStartRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.ClearConversationRequest
@@ -45,6 +40,8 @@ import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Vault
+import com.genesys.cloud.messenger.transport.util.extensions.isHealthCheckResponseId
+import com.genesys.cloud.messenger.transport.util.extensions.isOutbound
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.util.logs.Log
@@ -247,6 +244,7 @@ internal class MessagingClientImpl(
                             it.value.total,
                         )
                     }
+
                     is Result.Failure -> {
                         if (it.errorCode is ErrorCode.CancellationError) {
                             log.w { "Cancellation exception was thrown, while running getMessages() request." }
@@ -327,7 +325,6 @@ internal class MessagingClientImpl(
      * by sending them a [ConnectionClosedEvent].
      * After successful closure an event [SessionResponse] with `connected=false` will be received,
      * indicating that new chat should be configured.
-     *
      */
     private fun closeAllConnectionsForTheSession() {
         WebMessagingJson.json.encodeToString(
@@ -346,6 +343,7 @@ internal class MessagingClientImpl(
             is ErrorCode.SessionHasExpired,
             is ErrorCode.SessionNotFound,
             -> transitionToStateError(code, message)
+
             is ErrorCode.MessageTooLong,
             is ErrorCode.RequestRateTooHigh,
             is ErrorCode.CustomAttributeSizeTooLarge,
@@ -368,6 +366,7 @@ internal class MessagingClientImpl(
                 messageStore.onMessageError(code, message)
                 attachmentHandler.onMessageError(code, message)
             }
+
             is ErrorCode.ClientResponseError,
             is ErrorCode.ServerResponseError,
             is ErrorCode.RedirectResponseError,
@@ -378,6 +377,7 @@ internal class MessagingClientImpl(
                     handleConventionalHttpErrorResponse(code, message)
                 }
             }
+
             is ErrorCode.WebsocketError -> handleWebSocketError(ErrorCode.WebsocketError)
             else -> log.w { "Unhandled ErrorCode: $code with optional message: $message" }
         }
@@ -405,12 +405,15 @@ internal class MessagingClientImpl(
                     transitionToStateError(errorCode, ErrorMessage.FailedToReconnect)
                 }
             }
+
             is ErrorCode.WebsocketAccessDenied -> {
                 transitionToStateError(errorCode, CorrectiveAction.Forbidden.message)
             }
+
             is ErrorCode.NetworkDisabled -> {
                 transitionToStateError(errorCode, ErrorMessage.InternetConnectionIsOffline)
             }
+
             else -> log.w { "Unhandled WebSocket errorCode. ErrorCode: $errorCode" }
         }
     }
@@ -440,41 +443,41 @@ internal class MessagingClientImpl(
         )
     }
 
-    private fun handleStructuredMessage(structuredMessage: StructuredMessage) {
-        when (structuredMessage.type) {
-            StructuredMessage.Type.Text -> {
-                with(structuredMessage.toMessage()) {
-                    messageStore.update(this)
-                    internalCustomAttributesStore.onSent()
-                    attachmentHandler.onSent(this.attachments)
-                    userTypingProvider.clear()
-                }
-            }
+    private fun Message.handleAsTextMessage() {
+        if (id.isHealthCheckResponseId()) {
+            eventHandler.onEvent(Event.HealthChecked)
+            return
+        }
+        messageStore.update(this)
+        if (direction == Message.Direction.Inbound) {
+            internalCustomAttributesStore.onSent()
+            attachmentHandler.onSent(attachments)
+            userTypingProvider.clear()
+        }
+    }
 
-            StructuredMessage.Type.Event -> {
-                if (structuredMessage.isOutbound()) {
-                    structuredMessage.events.forEach {
-                        if (it.isDisconnectionEvent() && structuredMessage.metadata["readOnly"].toBoolean()) {
-                            stateMachine.onReadOnly()
-                        }
-                        eventHandler.onEvent(it.toTransportEvent())
-                    }
-                } else {
-                    structuredMessage.events.forEach {
-                        if (it is PresenceEvent) {
-                            val event = it.toTransportEvent()
-                            if (event is Event.ConversationAutostart) {
-                                sendingAutostart = false
-                                internalCustomAttributesStore.onSent()
-                            }
-                            eventHandler.onEvent(event)
-                        }
-                    }
-                }
+    private fun Message.handleAsEvent(isReadOnly: Boolean) = this.run {
+        if (isOutbound()) {
+            // Every Outbound event should be reported to UI.
+            events.forEach {
+                if (it is Event.ConversationDisconnect && isReadOnly) stateMachine.onReadOnly()
+                eventHandler.onEvent(it)
             }
-            else -> {
-                log.w { "Messages of type: ${structuredMessage.type} are not supported." }
+        } else {
+            // Autostart is the only Inbound event that should be reported to UI.
+            events.find { it is Event.ConversationAutostart }?.let { autostart ->
+                sendingAutostart = false
+                internalCustomAttributesStore.onSent()
+                eventHandler.onEvent(autostart)
             }
+        }
+    }
+
+    private fun Message.handleAsStructuredMessage() {
+        if (messageType == Message.Type.QuickReply && quickReplies.isNotEmpty()) {
+            messageStore.onQuickRepliesReceived(this)
+        } else {
+            log.w { "Messages of type Structure without quick replies are not supported." }
         }
     }
 
@@ -564,6 +567,7 @@ internal class MessagingClientImpl(
                             "${decoded.body.errorMessage}. Retry after ${decoded.body.retryAfter} seconds."
                         )
                     }
+
                     is SessionResponse -> {
                         decoded.body.run {
                             reconnectionHandler.clear()
@@ -582,21 +586,33 @@ internal class MessagingClientImpl(
                             }
                         }
                     }
+
                     is JwtResponse ->
                         jwtHandler.jwtResponse = decoded.body
+
                     is PresignedUrlResponse ->
                         attachmentHandler.upload(decoded.body)
+
                     is UploadSuccessEvent ->
                         attachmentHandler.onUploadSuccess(decoded.body)
+
                     is StructuredMessage -> {
-                        if (decoded.body.isHealthCheckResponse()) {
-                            eventHandler.onEvent(Event.HealthChecked)
-                        } else {
-                            handleStructuredMessage(decoded.body)
+                        decoded.body.run {
+                            val message = this.toMessage()
+                            when (type) {
+                                StructuredMessage.Type.Text -> message.handleAsTextMessage()
+                                StructuredMessage.Type.Event -> message.handleAsEvent(
+                                    metadata["readOnly"].toBoolean()
+                                )
+
+                                StructuredMessage.Type.Structured -> message.handleAsStructuredMessage()
+                            }
                         }
                     }
+
                     is AttachmentDeletedResponse ->
                         attachmentHandler.onDetached(decoded.body.attachmentId)
+
                     is GenerateUrlError -> {
                         decoded.body.run {
                             attachmentHandler.onError(
@@ -606,6 +622,7 @@ internal class MessagingClientImpl(
                             )
                         }
                     }
+
                     is UploadFailureEvent -> {
                         decoded.body.run {
                             attachmentHandler.onError(
@@ -615,15 +632,18 @@ internal class MessagingClientImpl(
                             )
                         }
                     }
+
                     is ConnectionClosedEvent -> {
                         disconnect()
                         eventHandler.onEvent(Event.ConnectionClosed)
                     }
+
                     is LogoutEvent -> {
                         authHandler.clear()
                         eventHandler.onEvent(Event.Logout)
                         disconnect()
                     }
+
                     is SessionClearedEvent -> eventHandler.onEvent(Event.ConversationCleared)
                     else -> {
                         log.i { "Unhandled message received from Shyrka: $decoded " }
@@ -658,9 +678,6 @@ private fun String?.isClearConversationError(): Boolean {
     val regex = Regex("Conversation Clear", RegexOption.IGNORE_CASE)
     return this?.let { regex.containsMatchIn(it) } ?: false
 }
-
-private fun StructuredMessageEvent.isDisconnectionEvent(): Boolean =
-    this is PresenceEvent && presence.type == PresenceEvent.Presence.Type.Disconnect
 
 private fun KProperty0<DeploymentConfig?>.isAutostartEnabled(): Boolean =
     this.get()?.messenger?.apps?.conversations?.autoStart?.enabled == true

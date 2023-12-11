@@ -22,15 +22,25 @@ data class Message(
     val id: String = Platform().randomUUID(),
     val direction: Direction = Direction.Inbound,
     val state: State = State.Idle,
-    val type: String = "Text",
+    val messageType: Type = Type.Text,
+    @Deprecated("Use messageType instead.") val type: String = messageType.name,
     val text: String? = null,
     val timeStamp: Long? = null,
     val attachments: Map<String, Attachment> = emptyMap(),
     val events: List<Event> = emptyList(),
+    val quickReplies: List<ButtonResponse> = emptyList(),
     val from: Participant = Participant(
         originatingEntity = Participant.OriginatingEntity.Human
     ),
 ) {
+
+    @Serializable
+    enum class Type {
+        Text,
+        Event,
+        QuickReply,
+    }
+
     /**
      * Direction of the message.
      *
