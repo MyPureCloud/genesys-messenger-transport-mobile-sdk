@@ -1,10 +1,15 @@
 package com.genesys.cloud.messenger.transport.core
 
 import assertk.assertThat
+import assertk.assertions.contains
 import assertk.assertions.containsExactly
 import assertk.assertions.containsOnly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
+import com.genesys.cloud.messenger.transport.core.Message.Content
+import com.genesys.cloud.messenger.transport.core.Message.Direction
+import com.genesys.cloud.messenger.transport.core.Message.Participant
+import com.genesys.cloud.messenger.transport.core.Message.State
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
@@ -35,9 +40,9 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenPrepareMessage() {
+    fun `when prepareMessage()`() {
         val expectedMessage =
-            subject.pendingMessage.copy(state = Message.State.Sending, text = "test message")
+            subject.pendingMessage.copy(state = State.Sending, text = "test message")
         val expectedOnMessageRequest = OnMessageRequest(
             givenToken,
             message = TextMessage(
@@ -62,7 +67,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenPrepareTwoMessages() {
+    fun `when prepareMessage() is called twice`() {
 
         subject.prepareMessage("message 1")
         subject.prepareMessage("message 2")
@@ -71,7 +76,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenPrepareMessageWithUploadedAttachment() {
+    fun `when prepareMessage() with uploaded attachment`() {
         subject.updateAttachmentStateWith(
             attachment(
                 state = Attachment.State.Uploaded("http://someurl.com")
@@ -80,8 +85,8 @@ internal class MessageStoreTest {
 
         subject.prepareMessage("test message").run {
             assertThat(this.message.content).containsOnly(
-                Message.Content(
-                    contentType = Message.Content.Type.Attachment,
+                Content(
+                    contentType = Content.Type.Attachment,
                     attachment(state = Attachment.State.Uploaded("http://someurl.com"))
                 )
             )
@@ -90,7 +95,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenPrepareMessageWithNotUploadedAttachment() {
+    fun `when prepareMessage() with NOT uploaded attachment`() {
         subject.updateAttachmentStateWith(
             attachment()
         )
@@ -102,12 +107,12 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenUpdateInboundMessage() {
+    fun `when update() inbound message`() {
         val sentMessageId =
             subject.prepareMessage("test message").message.metadata?.get("customMessageId")
                 ?: "empty"
         val givenMessage =
-            Message(id = sentMessageId, state = Message.State.Sent, text = "test message")
+            Message(id = sentMessageId, state = State.Sent, text = "test message")
         clearMocks(mockMessageListener)
 
         subject.update(givenMessage)
@@ -121,7 +126,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenUpdateOutboundMessage() {
+    fun `when update outbound message`() {
         val givenMessage = outboundMessage()
 
         subject.update(givenMessage)
@@ -136,13 +141,13 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenUpdateInboundAndThenOutboundMessage() {
+    fun `when update() inbound and then outbound messages`() {
         val sentMessageId =
             subject.prepareMessage("test message").message.metadata?.get("customMessageId")
                 ?: "empty"
         val expectedConversationSize = 2
         val givenMessage =
-            Message(id = sentMessageId, state = Message.State.Sent, text = "test message")
+            Message(id = sentMessageId, state = State.Sent, text = "test message")
         subject.update(outboundMessage())
         clearMocks(mockMessageListener)
 
@@ -158,9 +163,9 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenUpdateInboundWithIdThatDoesNotPresentInConversation() {
+    fun `when update() inbound message with id that does NOT exist in conversation`() {
         val givenMessage =
-            Message(id = "randomId", state = Message.State.Sent, text = "test message")
+            Message(id = "randomId", state = State.Sent, text = "test message")
 
         subject.update(message = givenMessage)
 
@@ -173,7 +178,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenInsertMoreThanDefaultPageSizeMessages() {
+    fun `when inserting more messages than the DEFAULT_PAGE_SIZE`() {
         val expectedConversationSize = 25
         val expectedNextPageIndex = 2
         for (i in 0 until DEFAULT_PAGE_SIZE) {
@@ -185,7 +190,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenUpdateWithNewAttachment() {
+    fun `when update() with new attachment`() {
         val givenAttachment = attachment()
         subject.updateAttachmentStateWith(givenAttachment)
 
@@ -198,7 +203,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenUpdateExistingAttachment() {
+    fun `when update() existing attachment`() {
         val initialAttachment = attachment(state = Attachment.State.Presigning)
         val updatedAttachment = attachment(state = Attachment.State.Uploading)
         subject.updateAttachmentStateWith(initialAttachment)
@@ -215,7 +220,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenUpdateMessageHistory() {
+    fun `when updateMessageHistory()`() {
         val expectedMessageHistory = messageList(2).reversed()
         val expectedConversationSize = 2
         val expectedNextPageIndex = 1
@@ -232,7 +237,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenUpdateMessageHistoryHasMultiplePages() {
+    fun `when updateMessageHistory() has multiple pages`() {
         val givenMessageHistory = messageList(25)
         val givenTotal = DEFAULT_PAGE_SIZE * 2
         val expectedNextPageIndex = 2
@@ -244,7 +249,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenUpdateMessageHistoryContainsMessageThatAlreadyPresentInActiveConversation() {
+    fun `when updateMessageHistory() contains message that already exist in conversation`() {
         val expectedMessage1 = outboundMessage(0)
         val expectedMessage2 = outboundMessage(1)
         val givenMessageHistory = messageList(2).toMutableList()
@@ -261,7 +266,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenOnMessageErrorAndActiveConversationIsEmpty() {
+    fun `when onMessageError() and conversation is empty`() {
         subject.onMessageError(ErrorCode.MessageTooLong, "some message")
 
         verify { mockMessageListener wasNot Called }
@@ -270,7 +275,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenOnMessageErrorAndActiveConversationDoesNotHaveAnyMessagesWithStateSending() {
+    fun `when onMessageError() and conversation does not have any messages with state Sending`() {
         subject.update(outboundMessage())
         clearMocks(mockMessageListener)
 
@@ -281,12 +286,12 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenOnMessageErrorHappensAfterMessageBeingSent() {
+    fun `when onMessageError() happens after message being Sent`() {
         val errorMessage = "some test error message"
         val testMessage = "test message"
         val expectedMessage =
             subject.pendingMessage.copy(
-                state = Message.State.Error(
+                state = State.Error(
                     ErrorCode.MessageTooLong,
                     errorMessage
                 ),
@@ -306,7 +311,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenMessageListenerNotSet() {
+    fun `when messageListener not set`() {
         subject.messageListener = null
 
         subject.prepareMessage("test message")
@@ -315,7 +320,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenInvalidateConversationCache() {
+    fun `when invalidateConversationCache()`() {
         val expectedNextPage = 1
         subject.update(outboundMessage())
 
@@ -327,9 +332,9 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenPrepareMessageWithChannelThatHasCustomAttributes() {
+    fun `when prepareMessage() with channel that has customAttributes`() {
         val expectedMessage =
-            subject.pendingMessage.copy(state = Message.State.Sending, text = "test message")
+            subject.pendingMessage.copy(state = State.Sending, text = "test message")
         val expectedOnMessageRequest = OnMessageRequest(
             givenToken,
             message = TextMessage(
@@ -355,10 +360,39 @@ internal class MessageStoreTest {
         )
     }
 
+    @Test
+    fun `when onQuickRepliesReceived()`() {
+        // TODO: update with proper (quick reply) message after MTSDK-296 is merged.
+        // For now, just ensure that regular message is added to the conversation, messageListener is invoked
+        // and nextPage has a proper value.
+        val givenMessage = outboundMessage()
+        val expectedMessage = Message(
+            id = "0",
+            direction = Direction.Outbound,
+            state = State.Sent,
+            type = "Text",
+            text = "message from agent number 0",
+            timeStamp = 0,
+            attachments = emptyMap(),
+            events = emptyList(),
+            from = Participant(originatingEntity = Participant.OriginatingEntity.Human),
+        )
+
+        subject.onQuickRepliesReceived(givenMessage)
+
+        assertThat(subject.getConversation()).contains(expectedMessage)
+        assertThat(subject.nextPage).isEqualTo(1)
+        verify { mockMessageListener(capture(messageSlot)) }
+        assertEquals(
+            expectedMessage,
+            (messageSlot.captured as MessageEvent.QuickReplyReceived).message
+        )
+    }
+
     private fun outboundMessage(messageId: Int = 0): Message = Message(
         id = "$messageId",
-        direction = Message.Direction.Outbound,
-        state = Message.State.Sent,
+        direction = Direction.Outbound,
+        state = State.Sent,
         text = "message from agent number $messageId",
         timeStamp = 100 * messageId.toLong(),
     )

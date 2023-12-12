@@ -70,6 +70,13 @@ internal class MessageStore(
         publish(MessageEvent.AttachmentUpdated(attachment))
     }
 
+    fun onQuickRepliesReceived(message: Message) {
+        log.i { "QuickReply received: $message" }
+        activeConversation.add(message)
+        nextPage = activeConversation.getNextPage()
+        publish(MessageEvent.QuickReplyReceived(message))
+    }
+
     fun updateMessageHistory(historyPage: List<Message>, total: Int) {
         startOfConversation = isAllHistoryFetched(total)
         with(historyPage.takeInactiveMessages().reversed()) {
@@ -152,4 +159,12 @@ sealed class MessageEvent {
      */
     class HistoryFetched(val messages: List<Message>, val startOfConversation: Boolean) :
         MessageEvent()
+
+    /**
+     * Dispatched when message with quick replies was sent by the Bot. To get the actual quick reply
+     * options refer to [Message.quickReplies] list of [ButtonResponse].
+     *
+     * @property message is the [Message] object with all the details.
+     */
+    class QuickReplyReceived(val message: Message) : MessageEvent()
 }
