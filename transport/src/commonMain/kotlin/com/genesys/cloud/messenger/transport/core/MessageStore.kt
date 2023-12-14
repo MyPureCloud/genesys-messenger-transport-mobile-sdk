@@ -119,10 +119,6 @@ internal class MessageStore(
             }
         }
     }
-
-    fun onQuickRepliesReceived(message: Message) {
-        log.i { "TODO: Handle quick replies here: $message." }
-    }
 }
 
 /**
