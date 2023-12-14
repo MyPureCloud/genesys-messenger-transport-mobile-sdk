@@ -4,6 +4,9 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.Attachment
 import com.genesys.cloud.messenger.transport.core.Message
+import com.genesys.cloud.messenger.transport.core.Message.Direction
+import com.genesys.cloud.messenger.transport.core.Message.State
+import com.genesys.cloud.messenger.transport.core.Message.Type
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.Response
 import io.mockk.Called
@@ -95,7 +98,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
     }
 
     @Test
-    fun `when SocketListener invoke onMessage with StructuredMessage that contains attachment`() {
+    fun `when SocketListener invoke onMessage with Inbound StructuredMessage that contains attachment`() {
         val expectedAttachment = Attachment(
             "attachment_id",
             "image.png",
@@ -103,8 +106,9 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         )
         val expectedMessage = Message(
             "msg_id",
-            Message.Direction.Outbound,
-            Message.State.Sent,
+            Direction.Inbound,
+            State.Sent,
+            Type.Text,
             "Text",
             "Hi",
             null,
@@ -113,13 +117,46 @@ class MCAttachmentTests : BaseMessagingClientTest() {
 
         subject.connect()
 
-        slot.captured.onMessage(Response.onMessageWithAttachment)
+        slot.captured.onMessage(Response.onMessageWithAttachment(Direction.Inbound))
 
         verifySequence {
             connectSequence()
             mockMessageStore.update(expectedMessage)
             mockCustomAttributesStore.onSent()
             mockAttachmentHandler.onSent(mapOf("attachment_id" to expectedAttachment))
+        }
+    }
+
+    @Test
+    fun `when SocketListener invoke onMessage with Outbound StructuredMessage that contains attachment`() {
+        val expectedAttachment = Attachment(
+            "attachment_id",
+            "image.png",
+            Attachment.State.Sent("https://downloadurl.com")
+        )
+        val expectedMessage = Message(
+            "msg_id",
+            Direction.Outbound,
+            State.Sent,
+            Type.Text,
+            "Text",
+            "Hi",
+            null,
+            mapOf("attachment_id" to expectedAttachment)
+        )
+
+        subject.connect()
+
+        slot.captured.onMessage(Response.onMessageWithAttachment(Direction.Outbound))
+
+        verifySequence {
+            connectSequence()
+            mockMessageStore.update(expectedMessage)
+        }
+
+        verify(exactly = 0) {
+            mockCustomAttributesStore.onSent()
+            mockAttachmentHandler.onSent(any())
         }
     }
 }

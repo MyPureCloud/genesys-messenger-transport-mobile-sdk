@@ -13,7 +13,7 @@ import org.junit.Test
 class MCEventHandlingTests : BaseMessagingClientTest() {
 
     @Test
-    fun `when StructuredMessage with multiple events is received`() {
+    fun `when StructuredMessage with outbound multiple events is received`() {
         val firstExpectedEvent = Event.AgentTyping(1000)
         val secondsExpectedEvent = Event.AgentTyping(5000)
 
@@ -30,13 +30,13 @@ class MCEventHandlingTests : BaseMessagingClientTest() {
     }
 
     @Test
-    fun `when StructuredMessage with Unknown event type is received`() {
+    fun `when StructuredMessage with outbound Unknown event type is received`() {
         val givenUnknownEvent = """{"eventType": "Fake","bloop": {"bip": "bop"}}"""
         subject.connect()
 
         slot.captured.onMessage(Response.structuredMessageWithEvents(givenUnknownEvent))
 
-        verify { mockEventHandler.onEvent(null) }
+        verify(exactly = 0) { mockEventHandler.onEvent(any()) }
         verify(exactly = 0) { mockMessageStore.update(any()) }
         verify(exactly = 0) { mockAttachmentHandler.onSent(any()) }
     }

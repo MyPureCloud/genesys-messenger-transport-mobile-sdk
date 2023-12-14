@@ -82,7 +82,7 @@ class MCTypingIndicatorTests : BaseMessagingClientTest() {
         subject.connect()
 
         subject.indicateTyping()
-        slot.captured.onMessage(Response.onMessage)
+        slot.captured.onMessage(Response.onMessage())
         subject.indicateTyping()
 
         verify(exactly = 2) { mockPlatformSocket.sendMessage(expectedMessage) }

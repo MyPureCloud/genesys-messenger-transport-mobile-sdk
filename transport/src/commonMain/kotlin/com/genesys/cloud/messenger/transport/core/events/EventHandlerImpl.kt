@@ -15,11 +15,7 @@ internal class EventHandlerImpl(
 
     override var eventListener: ((Event) -> Unit)? = null
 
-    override fun onEvent(event: Event?) {
-        if (event == null) {
-            log.i { "Unknown event received." }
-            return
-        }
+    override fun onEvent(event: Event) {
         log.i { "on event: $event" }
         eventListener?.invoke(event)
     }
@@ -31,7 +27,7 @@ internal fun StructuredMessageEvent.toTransportEvent(): Event? {
             Event.AgentTyping(typing.duration ?: FALLBACK_TYPING_INDICATOR_DURATION)
         }
         is PresenceEvent -> {
-            when (this.presence.type) {
+            when (presence.type) {
                 PresenceEvent.Presence.Type.Join -> Event.ConversationAutostart
                 PresenceEvent.Presence.Type.Disconnect -> Event.ConversationDisconnect
                 PresenceEvent.Presence.Type.Clear -> null // Ignore. Event.ConversationClear should be dispatched upon receiving SessionClearedEvent and not StructuredMessageEvent with Type.Clear

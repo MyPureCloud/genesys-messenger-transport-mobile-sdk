@@ -1,9 +1,10 @@
 package com.genesys.cloud.messenger.transport.core.messagingclient
 
+import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.HEALTH_CHECK_COOL_DOWN_MILLISECONDS
-import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Request
+import com.genesys.cloud.messenger.transport.util.Response
 import com.genesys.cloud.messenger.transport.util.fromClosedToConnecting
 import com.genesys.cloud.messenger.transport.util.fromConnectedToConfigured
 import com.genesys.cloud.messenger.transport.util.fromConnectingToConnected
@@ -17,8 +18,10 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
 
     @Test
     fun `when send HealthCheck`() {
-        val expectedMessage =
-            """{"token":"${Request.token}","action":"echo","message":{"text":"ping","metadata":{"customMessageId":"$HealthCheckID"},"type":"Text"}}"""
+        every { mockPlatformSocket.sendMessage(Request.echo) } answers {
+            slot.captured.onMessage(Response.echo)
+        }
+        val expectedMessage = Request.echo
         subject.connect()
 
         subject.sendHealthCheck()
@@ -26,12 +29,19 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
         verifySequence {
             connectSequence()
             mockPlatformSocket.sendMessage(expectedMessage)
+            mockEventHandler.onEvent(Event.HealthChecked)
+        }
+        verify(exactly = 0) {
+            mockMessageStore.update(any())
+            mockCustomAttributesStore.onSent()
+            mockAttachmentHandler.onSent(any())
+            userTypingProvider.clear()
         }
     }
 
     @Test
     fun `when send HealthCheck twice without cool down`() {
-        val expectedMessage = Request.echoRequest
+        val expectedMessage = Request.echo
 
         subject.connect()
 
@@ -44,7 +54,7 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
     @Test
     fun `when send HealthCheck twice with cool down`() {
         val healthCheckCoolDownInMilliseconds = HEALTH_CHECK_COOL_DOWN_MILLISECONDS + 250
-        val expectedMessage = Request.echoRequest
+        val expectedMessage = Request.echo
 
         subject.connect()
 
@@ -58,7 +68,7 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
 
     @Test
     fun `when connect send HealthCheck reconnect and send HealthCheck again without delay`() {
-        val expectedMessage = Request.echoRequest
+        val expectedMessage = Request.echo
 
         subject.connect()
         subject.sendHealthCheck()
