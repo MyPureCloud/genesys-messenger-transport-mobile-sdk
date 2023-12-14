@@ -51,7 +51,7 @@ open class BaseMessagingClientTest {
     internal val mockMessageStore: MessageStore = mockk(relaxed = true) {
         every { prepareMessage(any(), any()) } returns OnMessageRequest(
             token = Request.token,
-            message = TextMessage("Hello world")
+            message = TextMessage("Hello world!")
         )
     }
     internal val mockAttachmentHandler: AttachmentHandler = mockk(relaxed = true) {

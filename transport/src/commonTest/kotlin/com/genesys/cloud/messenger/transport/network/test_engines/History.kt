@@ -21,7 +21,7 @@ fun HttpClientConfig<MockEngineConfig>.historyEngine() {
             when (request.url.fullPath) {
                 BASIC_MESSAGE_ENTITY_RESPONSE_PATH -> {
                     respond(
-                        TestWebMessagingApiResponses.messageEntityResponseWith2Messages,
+                        TestWebMessagingApiResponses.messageEntityResponseWith3Messages,
                         headers = responseHeaders
                     )
                 }
