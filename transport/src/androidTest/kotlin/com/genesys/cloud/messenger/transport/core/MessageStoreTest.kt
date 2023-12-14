@@ -362,23 +362,31 @@ internal class MessageStoreTest {
 
     @Test
     fun `when onQuickRepliesReceived()`() {
-        // TODO: update with proper (quick reply) message after MTSDK-296 is merged.
-        // For now, just ensure that regular message is added to the conversation, messageListener is invoked
-        // and nextPage has a proper value.
-        val givenMessage = outboundMessage()
         val expectedMessage = Message(
             id = "0",
             direction = Direction.Outbound,
             state = State.Sent,
-            type = "Text",
-            text = "message from agent number 0",
+            messageType = Message.Type.QuickReply,
+            text = "message from bot",
             timeStamp = 0,
             attachments = emptyMap(),
             events = emptyList(),
-            from = Participant(originatingEntity = Participant.OriginatingEntity.Human),
+            quickReplies = listOf(
+                ButtonResponse(
+                    text = "text_a",
+                    payload = "payload_a",
+                    type = "QuickReply"
+                ),
+                ButtonResponse(
+                    text = "text_b",
+                    payload = "payload_b",
+                    type = "QuickReply"
+                )
+            ),
+            from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
         )
 
-        subject.onQuickRepliesReceived(givenMessage)
+        subject.onQuickRepliesReceived(expectedMessage)
 
         assertThat(subject.getConversation()).contains(expectedMessage)
         assertThat(subject.nextPage).isEqualTo(1)
