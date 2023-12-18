@@ -5,6 +5,7 @@ import com.genesys.cloud.messenger.transport.core.AttachmentHandler
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.CustomAttributesStoreImpl
 import com.genesys.cloud.messenger.transport.core.Empty
+import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.MessageStore
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessagingClientImpl
@@ -34,6 +35,7 @@ import com.genesys.cloud.messenger.transport.util.fromConnectingToConnected
 import com.genesys.cloud.messenger.transport.util.fromIdleToConnecting
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.utility.AuthTest
+import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import io.mockk.MockKVerificationScope
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
@@ -52,6 +54,18 @@ open class BaseMessagingClientTest {
         every { prepareMessage(any(), any()) } returns OnMessageRequest(
             token = Request.token,
             message = TextMessage("Hello world!")
+        )
+        every { prepareMessageWith(any(), null) } returns OnMessageRequest(
+            token = Request.token,
+            message = TextMessage(
+                text = "",
+                content = listOf(
+                    Message.Content(
+                        contentType = Message.Content.Type.ButtonResponse,
+                        buttonResponse = QuickReplyTestValues.buttonResponse_a,
+                    )
+                ),
+            ),
         )
     }
     internal val mockAttachmentHandler: AttachmentHandler = mockk(relaxed = true) {

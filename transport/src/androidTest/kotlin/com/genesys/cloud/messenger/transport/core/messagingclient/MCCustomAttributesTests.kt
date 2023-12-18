@@ -2,6 +2,7 @@ package com.genesys.cloud.messenger.transport.core.messagingclient
 
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
+import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
@@ -13,6 +14,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.Response
+import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
@@ -129,6 +131,37 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
         }
         verify(exactly = 0) {
             mockCustomAttributesStore.onMessageError()
+        }
+    }
+
+    @Test
+    fun `when sendQuickReply() with customAttributes`() {
+        val expectedButtonResponse = QuickReplyTestValues.buttonResponse_a
+        val expectedCustomAttributes = mapOf("A" to "B")
+        val expectedChannel = Channel(Channel.Metadata(expectedCustomAttributes))
+        every { mockMessageStore.prepareMessageWith(any(), expectedChannel) } returns OnMessageRequest(
+            token = Request.token,
+            message = TextMessage(
+                text = "",
+                channel = expectedChannel,
+                content = listOf(
+                    Message.Content(
+                        contentType = Message.Content.Type.ButtonResponse,
+                        buttonResponse = QuickReplyTestValues.buttonResponse_a,
+                    )
+                ),
+            ),
+        )
+        subject.connect()
+
+        subject.sendQuickReply(QuickReplyTestValues.buttonResponse_a)
+
+        verifySequence {
+            connectSequence()
+            mockCustomAttributesStore.getCustomAttributesToSend()
+            mockCustomAttributesStore.onSending()
+            mockMessageStore.prepareMessageWith(expectedButtonResponse, expectedChannel)
+            mockPlatformSocket.sendMessage(Request.quickReplyWith(channel = """"channel":{"metadata":{"customAttributes":{"A":"B"}}},"""))
         }
     }
 }

@@ -15,6 +15,10 @@ internal object Request {
         """{"token":"$token","action":"echo","message":{"text":"ping","metadata":{"customMessageId":"$HealthCheckID"},"type":"Text"}}"""
     fun autostart(channelWithCustomAttributes: String = """"channel":{"metadata":{"customAttributes":{"A":"B"}}},""") =
         """{"token":"$token","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Join"}}],$channelWithCustomAttributes"type":"Event"}}"""
+    fun quickReplyWith(
+        content: String = """"content":[{"contentType":"ButtonResponse","buttonResponse":{"text":"text_a","payload":"payload_a","type":"QuickReply"}}]""",
+        channel: String = ""
+    ) = """{"token":"$token","message":{"text":"",$content,$channel"type":"Text"},"action":"onMessage"}"""
     fun textMessage(text: String = "Hello world!") =
         """{"token":"$token","message":{"text":"$text","type":"Text"},"action":"onMessage"}"""
     const val closeAllConnections =

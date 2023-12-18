@@ -27,6 +27,7 @@ import com.genesys.cloud.messenger.transport.util.extensions.isOutbound
 import com.genesys.cloud.messenger.transport.util.extensions.mapOriginatingEntity
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
+import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import net.bytebuddy.utility.RandomString
 import org.junit.Test
 
@@ -61,8 +62,8 @@ internal class MessageExtensionTest {
             text = "quick reply text",
             timeStamp = null,
             quickReplies = listOf(
-                ButtonResponse("text_a", "payload_a", "QuickReply"),
-                ButtonResponse("text_b", "payload_b", "QuickReply"),
+                QuickReplyTestValues.buttonResponse_a,
+                QuickReplyTestValues.buttonResponse_b,
             ),
             from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
         )

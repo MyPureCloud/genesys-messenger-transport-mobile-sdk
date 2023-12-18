@@ -1,11 +1,14 @@
 package com.genesys.cloud.messenger.transport.core.messagingclient
 
-import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.Message
+import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.Response
+import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
+import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
+import kotlin.test.assertFailsWith
 
 class MCQuickReplyTests : BaseMessagingClientTest() {
 
@@ -19,8 +22,8 @@ class MCQuickReplyTests : BaseMessagingClientTest() {
             text = "Hi",
             timeStamp = null,
             quickReplies = listOf(
-                ButtonResponse("text_a", "payload_a", "QuickReply"),
-                ButtonResponse("text_b", "payload_b", "QuickReply"),
+                QuickReplyTestValues.buttonResponse_a,
+                QuickReplyTestValues.buttonResponse_b,
             ),
             from = Message.Participant(originatingEntity = Message.Participant.OriginatingEntity.Bot),
         )
@@ -47,6 +50,33 @@ class MCQuickReplyTests : BaseMessagingClientTest() {
             mockMessageStore.onQuickRepliesReceived(any())
             mockCustomAttributesStore.onSent()
             mockAttachmentHandler.onSent(any())
+        }
+    }
+
+    @Test
+    fun `when connect() and then sendQuickReply() but no custom attributes`() {
+        val expectedButtonResponse = QuickReplyTestValues.buttonResponse_a
+        every { mockCustomAttributesStore.getCustomAttributesToSend() } returns emptyMap()
+        subject.connect()
+
+        subject.sendQuickReply(QuickReplyTestValues.buttonResponse_a)
+
+        verifySequence {
+            connectSequence()
+            mockCustomAttributesStore.getCustomAttributesToSend()
+            mockMessageStore.prepareMessageWith(expectedButtonResponse, null)
+            mockPlatformSocket.sendMessage(Request.quickReplyWith())
+        }
+
+        verify(exactly = 0) {
+            mockAttachmentHandler.onSending()
+        }
+    }
+
+    @Test
+    fun `when sendQuickReply() but client is not configured`() {
+        assertFailsWith<IllegalStateException> {
+            subject.sendQuickReply(QuickReplyTestValues.buttonResponse_a)
         }
     }
 }

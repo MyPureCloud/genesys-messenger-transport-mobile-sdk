@@ -10,10 +10,12 @@ import com.genesys.cloud.messenger.transport.core.Message.Content
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.core.Message.Participant
 import com.genesys.cloud.messenger.transport.core.Message.State
+import com.genesys.cloud.messenger.transport.core.Message.Type
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.Request
+import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import io.mockk.Called
 import io.mockk.clearMocks
 import io.mockk.mockk
@@ -372,16 +374,8 @@ internal class MessageStoreTest {
             attachments = emptyMap(),
             events = emptyList(),
             quickReplies = listOf(
-                ButtonResponse(
-                    text = "text_a",
-                    payload = "payload_a",
-                    type = "QuickReply"
-                ),
-                ButtonResponse(
-                    text = "text_b",
-                    payload = "payload_b",
-                    type = "QuickReply"
-                )
+                QuickReplyTestValues.buttonResponse_a,
+                QuickReplyTestValues.buttonResponse_b,
             ),
             from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
         )
@@ -394,6 +388,89 @@ internal class MessageStoreTest {
         assertEquals(
             expectedMessage,
             (messageSlot.captured as MessageEvent.QuickReplyReceived).message
+        )
+    }
+
+    @Test
+    fun `when prepareMessageWith() ButtonResponse and channel`() {
+        val givenButtonResponse = QuickReplyTestValues.buttonResponse_a
+        val givenChannel = Channel(Channel.Metadata(mapOf("A" to "B")))
+        val expectedMessage =
+            subject.pendingMessage.copy(
+                state = State.Sending,
+                messageType = Type.QuickReply,
+                type = Type.QuickReply.name,
+                quickReplies = listOf(givenButtonResponse)
+            )
+        val expectedOnMessageRequest = OnMessageRequest(
+            givenToken,
+            message = TextMessage(
+                text = "",
+                content = listOf(
+                    Content(
+                        contentType = Content.Type.ButtonResponse,
+                        buttonResponse = givenButtonResponse
+                    )
+                ),
+                metadata = mapOf("customMessageId" to expectedMessage.id),
+                channel = givenChannel
+            ),
+        )
+
+        subject.prepareMessageWith(givenButtonResponse, givenChannel).run {
+            assertEquals(expectedOnMessageRequest.token, token)
+            assertEquals(expectedOnMessageRequest.message, message)
+            assertEquals(expectedOnMessageRequest.message.content, message.content)
+            assertEquals(expectedOnMessageRequest.message.channel, message.channel)
+            assertNull(time)
+        }
+        assertEquals(expectedMessage, subject.getConversation()[0])
+        assertNotEquals(expectedMessage.id, subject.pendingMessage.id)
+        verify { mockMessageListener(capture(messageSlot)) }
+        assertEquals(
+            expectedMessage,
+            (messageSlot.captured as MessageEvent.MessageInserted).message
+        )
+    }
+
+    @Test
+    fun `when prepareMessageWith() ButtonResponse and no channel`() {
+        val givenButtonResponse = QuickReplyTestValues.buttonResponse_a
+        val expectedMessage =
+            subject.pendingMessage.copy(
+                state = State.Sending,
+                messageType = Type.QuickReply,
+                type = Type.QuickReply.name,
+                quickReplies = listOf(givenButtonResponse)
+            )
+        val expectedOnMessageRequest = OnMessageRequest(
+            givenToken,
+            message = TextMessage(
+                text = "",
+                content = listOf(
+                    Content(
+                        contentType = Content.Type.ButtonResponse,
+                        buttonResponse = givenButtonResponse
+                    )
+                ),
+                metadata = mapOf("customMessageId" to expectedMessage.id)
+            ),
+        )
+
+        subject.prepareMessageWith(givenButtonResponse).run {
+            assertEquals(expectedOnMessageRequest.token, token)
+            assertEquals(expectedOnMessageRequest.message, message)
+            assertEquals(expectedOnMessageRequest.message.content, message.content)
+            assertNull(expectedOnMessageRequest.message.channel)
+            assertNull(time)
+        }
+
+        assertEquals(expectedMessage, subject.getConversation()[0])
+        assertNotEquals(expectedMessage.id, subject.pendingMessage.id)
+        verify { mockMessageListener(capture(messageSlot)) }
+        assertEquals(
+            expectedMessage,
+            (messageSlot.captured as MessageEvent.MessageInserted).message
         )
     }
 
