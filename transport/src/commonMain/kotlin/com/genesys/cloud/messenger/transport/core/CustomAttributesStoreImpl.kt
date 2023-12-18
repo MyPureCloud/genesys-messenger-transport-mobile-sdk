@@ -11,21 +11,28 @@ internal class CustomAttributesStoreImpl(
     private val eventHandler: EventHandler,
 ) : CustomAttributesStore {
     private var customAttributes: MutableMap<String, String> = mutableMapOf()
-    private var maxCustomDataBytes: Int = 0
+    var maxCustomDataBytes: Int = 0
 
     internal var state: State = State.PENDING
         private set
 
     override fun get(): Map<String, String> = customAttributes
 
-    override fun add(customAttributes: Map<String, String>) {
-        if (isSizeExceeded(customAttributes)) {
-            eventHandler.onEvent(Event.SizeLimitExceeded)
+    override fun add(customAttributes: Map<String, String>): Boolean {
+        return if (isSizeExceeded(customAttributes)) {
+            eventHandler.onEvent(
+                Event.Error(
+                    ErrorCode.CustomAttributeSizeTooLarge,
+                    ErrorMessage.customAttributesSizeError(maxCustomDataBytes),
+                    CorrectiveAction.CustomAttributeSizeTooLarge
+                )
+            )
+            false
         } else {
-            eventHandler.onEvent(Event.AttributesAdded(customAttributes))
             this.customAttributes.putAll(customAttributes)
             state = State.PENDING
             log.i { "add: $customAttributes | state = $state" }
+            true
         }
     }
 
@@ -34,10 +41,6 @@ internal class CustomAttributesStoreImpl(
             key.toByteArray(Charsets.UTF_8).size + value.toByteArray(Charsets.UTF_8).size
         }
         return totalSize > maxCustomDataBytes
-    }
-
-    internal fun updateMaxCustomDataBytes(maxBytes: Int) {
-        this.maxCustomDataBytes = maxBytes
     }
 
     internal fun getCustomAttributesToSend(): Map<String, String> {

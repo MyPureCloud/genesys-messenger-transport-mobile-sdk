@@ -342,9 +342,9 @@ internal class MessagingClientImpl(
         }
     }
 
-    private fun handelSessionResponse(sessionResponse: SessionResponse) = sessionResponse.run {
+    private fun handleSessionResponse(sessionResponse: SessionResponse) = sessionResponse.run {
         reconnectionHandler.clear()
-        internalCustomAttributesStore.updateMaxCustomDataBytes(sessionResponse.maxCustomDataBytes)
+        internalCustomAttributesStore.maxCustomDataBytes = this.maxCustomDataBytes
         if (readOnly) {
             stateMachine.onReadOnly()
             if (!connected && isStartingANewSession) {
@@ -583,11 +583,7 @@ internal class MessagingClientImpl(
                             "${decoded.body.errorMessage}. Retry after ${decoded.body.retryAfter} seconds."
                         )
                     }
-                    is SessionResponse -> {
-                        decoded.body.run {
-                            handelSessionResponse(this)
-                        }
-                    }
+                    is SessionResponse -> handleSessionResponse(decoded.body)
                     is JwtResponse ->
                         jwtHandler.jwtResponse = decoded.body
                     is PresignedUrlResponse ->

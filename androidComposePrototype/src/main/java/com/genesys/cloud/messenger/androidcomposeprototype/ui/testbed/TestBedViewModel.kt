@@ -12,7 +12,6 @@ import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
-import com.genesys.cloud.messenger.transport.core.ErrorMessage
 import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessageEvent.AttachmentUpdated
 import com.genesys.cloud.messenger.transport.core.MessagingClient
@@ -279,7 +278,10 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         clearCommand()
         val keyValue = customAttributes.toKeyValuePair()
         if (keyValue.first.isNotEmpty()) {
-            client.customAttributesStore.add(mapOf(keyValue))
+            val addSuccess = client.customAttributesStore.add(mapOf(keyValue))
+            if (addSuccess) {
+                onSocketMessageReceived("Custom attribute added: $keyValue")
+            }
         } else {
             onSocketMessageReceived("Custom attribute key can not be null or empty!")
         }
@@ -362,18 +364,9 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         when (event) {
             is Event.Logout -> authState = AuthState.LoggedOut
             is Event.Authorized -> authState = AuthState.Authorized
-            is Event.AttributesAdded -> {
-                val attributesString = event.customAttributes.entries.joinToString { (key, value) ->
-                    "$key: $value"
-                }
-                onSocketMessageReceived("Custom attribute added: $attributesString")
-            }
-            is Event.SizeLimitExceeded ->
-                onSocketMessageReceived(ErrorMessage.CustomAttributesSizeError)
             is Event.Error -> handleEventError(event)
             else -> println("On event: $event")
         }
-        // onSocketMessageReceived(event)
     }
 
     private fun handleEventError(event: Event.Error) {
@@ -386,7 +379,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             }
             is ErrorCode.CustomAttributeSizeTooLarge
             -> {
-                onSocketMessageReceived(ErrorMessage.CustomAttributesSizeError)
+                onSocketMessageReceived(event.message ?: "CA size too large")
             }
             else -> {
                 println("Handle Event.Error here.")

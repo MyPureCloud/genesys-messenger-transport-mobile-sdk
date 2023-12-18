@@ -79,7 +79,7 @@ object ErrorMessage {
     const val AutoRefreshTokenDisabled = "AutoRefreshTokenWhenExpired is disabled in Configuration."
     const val NoRefreshToken = "No refreshAuthToken. Authentication is required."
     const val FailedToClearConversation = "Failed to clear conversation."
-    const val CustomAttributesSizeError = "Error: Custom attributes exceed allowed size limit."
+    fun customAttributesSizeError(maxSize: Int) = "Error: Custom attributes exceed allowed max size of $maxSize bytes."
 }
 
 sealed class CorrectiveAction(val message: String) {
