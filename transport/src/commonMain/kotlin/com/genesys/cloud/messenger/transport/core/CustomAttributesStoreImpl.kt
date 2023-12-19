@@ -19,7 +19,10 @@ internal class CustomAttributesStoreImpl(
     override fun get(): Map<String, String> = customAttributes
 
     override fun add(customAttributes: Map<String, String>): Boolean {
-        return if (isSizeExceeded(customAttributes)) {
+        return if (customAttributes.isEmpty() || this.customAttributes == customAttributes) {
+            log.i { "custom attributes are empty are same." }
+            false
+        } else if (isSizeExceeded(customAttributes)) {
             eventHandler.onEvent(
                 Event.Error(
                     ErrorCode.CustomAttributeSizeTooLarge,
@@ -27,6 +30,7 @@ internal class CustomAttributesStoreImpl(
                     CorrectiveAction.CustomAttributeSizeTooLarge
                 )
             )
+            log.e { "error: custom attributes size exceeded" }
             false
         } else {
             this.customAttributes.putAll(customAttributes)

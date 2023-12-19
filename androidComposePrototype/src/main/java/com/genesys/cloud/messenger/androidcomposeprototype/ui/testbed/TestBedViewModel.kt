@@ -277,13 +277,11 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     private fun doAddCustomAttributes(customAttributes: String) {
         clearCommand()
         val keyValue = customAttributes.toKeyValuePair()
-        if (keyValue.first.isNotEmpty()) {
-            val addSuccess = client.customAttributesStore.add(mapOf(keyValue))
-            if (addSuccess) {
-                onSocketMessageReceived("Custom attribute added: $keyValue")
-            }
+        val addSuccess = client.customAttributesStore.add(mapOf(keyValue))
+        if (addSuccess) {
+            onSocketMessageReceived("Custom attribute added: $keyValue")
         } else {
-            onSocketMessageReceived("Custom attribute key can not be null or empty!")
+            onSocketMessageReceived("Custom attribute cannot be added: $keyValue")
         }
     }
 
