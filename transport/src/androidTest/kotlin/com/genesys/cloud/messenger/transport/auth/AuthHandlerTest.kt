@@ -415,13 +415,29 @@ class AuthHandlerTest {
 
     @Test
     fun `AuthJwt serialization test`() {
-        val authJwt = AuthJwt("jwt", "refreshToken")
+        val givenAuthJwt = AuthJwt("jwt", "refreshToken")
+        val expectedAuthJwt = AuthJwt("jwt", "refreshToken")
+        val expectedAuthJwtAsJson = """{"jwt":"jwt","refreshToken":"refreshToken"}"""
 
-        val json = WebMessagingJson.json.encodeToString(authJwt)
+        val json = WebMessagingJson.json.encodeToString(givenAuthJwt)
         val deserializedAuthJwt = WebMessagingJson.json.decodeFromString<AuthJwt>(json)
 
-        assertThat(authJwt.jwt).isEqualTo(deserializedAuthJwt.jwt)
-        assertThat(authJwt.refreshToken).isEqualTo(deserializedAuthJwt.refreshToken)
+        assertThat(json).isEqualTo(expectedAuthJwtAsJson)
+        assertThat(deserializedAuthJwt.jwt).isEqualTo(expectedAuthJwt.jwt)
+        assertThat(deserializedAuthJwt.refreshToken).isEqualTo(expectedAuthJwt.refreshToken)
+    }
+
+    @Test
+    fun `RefreshToken serialization test`() {
+        val givenRefreshToken = RefreshToken("refreshToken")
+        val expectedRefreshToken = RefreshToken("refreshToken")
+        val expectedRefreshTokenAsJson = """{"refreshToken":"refreshToken"}"""
+
+        val json = WebMessagingJson.json.encodeToString(givenRefreshToken)
+        val deserializedRefreshToken = WebMessagingJson.json.decodeFromString<RefreshToken>(json)
+
+        assertThat(json).isEqualTo(expectedRefreshTokenAsJson)
+        assertThat(deserializedRefreshToken.refreshToken).isEqualTo(expectedRefreshToken.refreshToken)
     }
 
     private fun buildAuthHandler(givenAutoRefreshTokenWhenExpired: Boolean = true): AuthHandlerImpl {
