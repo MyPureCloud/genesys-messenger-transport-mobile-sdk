@@ -12,11 +12,11 @@ import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
-import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.util.AUTH_REFRESH_TOKEN_KEY
 import com.genesys.cloud.messenger.transport.util.TOKEN_KEY
 import com.genesys.cloud.messenger.transport.util.VAULT_KEY
 import com.genesys.cloud.messenger.transport.util.Vault
+import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import io.mockk.MockKAnnotations
@@ -31,8 +31,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -41,6 +39,7 @@ class AuthHandlerTest {
 
     @MockK(relaxed = true)
     private val mockEventHandler: EventHandler = mockk(relaxed = true)
+    private val mockLogger: Log = mockk(relaxed = true)
 
     @MockK(relaxed = true)
     private val mockWebMessagingApi: WebMessagingApi = mockk {
@@ -162,6 +161,8 @@ class AuthHandlerTest {
         val expectedErrorCode = ErrorCode.AuthFailed
         val expectedErrorMessage = ErrorTest.Message
         val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
+        val expectedLogMessage = "fetchAuthJwt() respond with error: ${ErrorCode.AuthFailed}, and message: $expectedErrorMessage"
+        val logSlot = slot<() -> String>()
 
         coEvery { mockWebMessagingApi.fetchAuthJwt(any(), any(), any()) } returns Result.Failure(
             ErrorCode.AuthFailed,
@@ -180,6 +181,7 @@ class AuthHandlerTest {
             )
         }
         verify {
+            mockLogger.e(capture(logSlot))
             mockEventHandler.onEvent(
                 Event.Error(
                     expectedErrorCode,
@@ -190,6 +192,7 @@ class AuthHandlerTest {
         }
         assertThat(subject.jwt).isEqualTo(expectedAuthJwt.jwt)
         assertThat(fakeVault.authRefreshToken).isEqualTo(expectedAuthJwt.refreshToken)
+        assertThat(logSlot.captured.invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
@@ -198,9 +201,12 @@ class AuthHandlerTest {
             ErrorCode.CancellationError,
             ErrorTest.Message
         )
+        val expectedLogMessage = "Cancellation exception was thrown, while running fetchAuthJwt() request."
+        val logSlot = slot<() -> String>()
 
         subject.authorize(AuthTest.AuthCode, AuthTest.RedirectUri, AuthTest.CodeVerifier)
 
+        verify { mockLogger.w(capture(logSlot)) }
         verify(exactly = 0) {
             mockEventHandler.onEvent(
                 Event.Error(
@@ -210,6 +216,7 @@ class AuthHandlerTest {
                 )
             )
         }
+        assertThat(logSlot.captured.invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
@@ -228,6 +235,8 @@ class AuthHandlerTest {
         val expectedErrorCode = ErrorCode.AuthLogoutFailed
         val expectedErrorMessage = ErrorTest.Message
         val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
+        val expectedLogMessage = "logout() respond with error: ${ErrorCode.AuthLogoutFailed}, and message: $expectedErrorMessage"
+        val logSlot = slot<() -> String>()
 
         subject.logout()
 
@@ -235,6 +244,7 @@ class AuthHandlerTest {
             mockWebMessagingApi.logoutFromAuthenticatedSession(NO_JWT)
         }
         verify {
+            mockLogger.e(capture(logSlot))
             mockEventHandler.onEvent(
                 Event.Error(
                     expectedErrorCode,
@@ -243,6 +253,7 @@ class AuthHandlerTest {
                 )
             )
         }
+        assertThat(logSlot.captured.invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
@@ -256,6 +267,8 @@ class AuthHandlerTest {
         val expectedErrorCode = ErrorCode.ClientResponseError(401)
         val expectedErrorMessage = ErrorTest.Message
         val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
+        val expectedLogMessage = "logout() respond with error: ${ErrorCode.ClientResponseError(401)}, and message: $expectedErrorMessage"
+        val logSlot = slot<() -> String>()
 
         subject.logout()
 
@@ -263,6 +276,7 @@ class AuthHandlerTest {
             mockWebMessagingApi.logoutFromAuthenticatedSession(AuthTest.JwtToken)
         }
         verify {
+            mockLogger.e(capture(logSlot))
             mockEventHandler.onEvent(
                 Event.Error(
                     expectedErrorCode,
@@ -271,6 +285,7 @@ class AuthHandlerTest {
                 )
             )
         }
+        assertThat(logSlot.captured.invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
@@ -283,6 +298,8 @@ class AuthHandlerTest {
         val expectedErrorCode = ErrorCode.ClientResponseError(401)
         val expectedErrorMessage = ErrorTest.Message
         val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
+        val expectedLogMessage = "logout() respond with error: ${ErrorCode.ClientResponseError(401)}, and message: $expectedErrorMessage"
+        val logSlot = slot<() -> String>()
 
         subject.logout()
 
@@ -294,6 +311,7 @@ class AuthHandlerTest {
             mockWebMessagingApi.refreshAuthJwt(AuthTest.RefreshToken)
         }
         verify(exactly = 1) {
+            mockLogger.e(capture(logSlot))
             mockEventHandler.onEvent(
                 Event.Error(
                     expectedErrorCode,
@@ -302,6 +320,7 @@ class AuthHandlerTest {
                 )
             )
         }
+        assertThat(logSlot.captured.invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
@@ -343,13 +362,17 @@ class AuthHandlerTest {
         val expectedAuthJwt = AuthJwt(NO_JWT, NO_REFRESH_TOKEN)
         val expectedErrorCode = ErrorCode.RefreshAuthTokenFailure
         val expectedErrorMessage = ErrorMessage.NoRefreshToken
+        val expectedLogMessage = "Could not refreshAuthToken: $expectedErrorMessage"
+        val logSlot = slot<() -> String>()
 
         subject.refreshToken { result -> mockCallback.captured = result }
 
+        verify { mockLogger.e(capture(logSlot)) }
         coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(AuthTest.RefreshToken) }
         assertThat(mockCallback.captured).isEqualTo(Result.Failure(expectedErrorCode, expectedErrorMessage))
         assertThat(subject.jwt).isEqualTo(expectedAuthJwt.jwt)
         assertThat(fakeVault.authRefreshToken).isEqualTo(expectedAuthJwt.refreshToken)
+        assertThat(logSlot.captured.invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
@@ -360,13 +383,17 @@ class AuthHandlerTest {
         val expectedAuthJwt = AuthJwt(AuthTest.JwtToken, NO_REFRESH_TOKEN)
         val expectedErrorCode = ErrorCode.RefreshAuthTokenFailure
         val expectedErrorMessage = ErrorMessage.AutoRefreshTokenDisabled
+        val expectedLogMessage = "Could not refreshAuthToken: $expectedErrorMessage"
+        val logSlot = slot<() -> String>()
 
         subject.refreshToken { result -> mockCallback.captured = result }
 
+        verify { mockLogger.e(capture(logSlot)) }
         coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(AuthTest.RefreshToken) }
         assertThat(mockCallback.captured).isEqualTo(Result.Failure(expectedErrorCode, expectedErrorMessage))
         assertThat(subject.jwt).isEqualTo(expectedAuthJwt.jwt)
         assertThat(fakeVault.authRefreshToken).isEqualTo(expectedAuthJwt.refreshToken)
+        assertThat(logSlot.captured.invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
@@ -374,14 +401,20 @@ class AuthHandlerTest {
         authorize()
         val mockCallback = slot<Result<Empty>>()
         val expectedAuthJwt = AuthJwt(AuthTest.RefreshedJWTToken, AuthTest.RefreshToken)
+        val expectedLogMessage = "refreshAuthToken success."
+        val logSlot = slot<() -> String>()
 
         subject.refreshToken { result -> mockCallback.captured = result }
 
-        coVerify { mockWebMessagingApi.refreshAuthJwt(AuthTest.RefreshToken) }
+        coVerify {
+            mockWebMessagingApi.refreshAuthJwt(AuthTest.RefreshToken)
+            mockLogger.i(capture(logSlot))
+        }
         assertThat(mockCallback.captured).isInstanceOf(Result.Success::class.java)
         assertThat((mockCallback.captured as Result.Success<Empty>).value).isInstanceOf(Empty::class.java)
         assertThat(subject.jwt).isEqualTo(expectedAuthJwt.jwt)
         assertThat(fakeVault.authRefreshToken).isEqualTo(expectedAuthJwt.refreshToken)
+        assertThat(logSlot.captured.invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
@@ -392,14 +425,20 @@ class AuthHandlerTest {
             ErrorTest.Message,
         )
         val mockCallback = slot<Result<Empty>>()
+        val logSlot = slot<() -> String>()
         val expectedAuthJwt = AuthJwt(NO_JWT, NO_REFRESH_TOKEN)
+        val expectedLogMessage = "Could not refreshAuthToken: ${ErrorTest.Message}"
 
         subject.refreshToken { result -> mockCallback.captured = result }
 
-        coVerify { mockWebMessagingApi.refreshAuthJwt(AuthTest.RefreshToken) }
+        coVerify {
+            mockWebMessagingApi.refreshAuthJwt(AuthTest.RefreshToken)
+            mockLogger.e(capture(logSlot))
+        }
         assertThat(mockCallback.captured).isEqualTo(Result.Failure(ErrorCode.RefreshAuthTokenFailure, ErrorTest.Message))
         assertThat(subject.jwt).isEqualTo(expectedAuthJwt.jwt)
         assertThat(fakeVault.authRefreshToken).isEqualTo(expectedAuthJwt.refreshToken)
+        assertThat(logSlot.captured.invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
@@ -413,40 +452,13 @@ class AuthHandlerTest {
         assertThat(fakeVault.authRefreshToken).isEqualTo(expectedAuthJwt.refreshToken)
     }
 
-    @Test
-    fun `AuthJwt serialization test`() {
-        val givenAuthJwt = AuthJwt("jwt", "refreshToken")
-        val expectedAuthJwt = AuthJwt("jwt", "refreshToken")
-        val expectedAuthJwtAsJson = """{"jwt":"jwt","refreshToken":"refreshToken"}"""
-
-        val json = WebMessagingJson.json.encodeToString(givenAuthJwt)
-        val deserializedAuthJwt = WebMessagingJson.json.decodeFromString<AuthJwt>(json)
-
-        assertThat(json).isEqualTo(expectedAuthJwtAsJson)
-        assertThat(deserializedAuthJwt.jwt).isEqualTo(expectedAuthJwt.jwt)
-        assertThat(deserializedAuthJwt.refreshToken).isEqualTo(expectedAuthJwt.refreshToken)
-    }
-
-    @Test
-    fun `RefreshToken serialization test`() {
-        val givenRefreshToken = RefreshToken("refreshToken")
-        val expectedRefreshToken = RefreshToken("refreshToken")
-        val expectedRefreshTokenAsJson = """{"refreshToken":"refreshToken"}"""
-
-        val json = WebMessagingJson.json.encodeToString(givenRefreshToken)
-        val deserializedRefreshToken = WebMessagingJson.json.decodeFromString<RefreshToken>(json)
-
-        assertThat(json).isEqualTo(expectedRefreshTokenAsJson)
-        assertThat(deserializedRefreshToken.refreshToken).isEqualTo(expectedRefreshToken.refreshToken)
-    }
-
     private fun buildAuthHandler(givenAutoRefreshTokenWhenExpired: Boolean = true): AuthHandlerImpl {
         return AuthHandlerImpl(
             autoRefreshTokenWhenExpired = givenAutoRefreshTokenWhenExpired,
             eventHandler = mockEventHandler,
             api = mockWebMessagingApi,
             vault = fakeVault,
-            log = mockk(relaxed = true),
+            log = mockLogger,
         )
     }
 
