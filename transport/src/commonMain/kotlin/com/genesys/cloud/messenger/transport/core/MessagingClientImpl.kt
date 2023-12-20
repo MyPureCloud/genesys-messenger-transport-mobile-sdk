@@ -177,10 +177,18 @@ internal class MessagingClientImpl(
         stateMachine.checkIfConfigured()
         log.i { "sendMessage(text = $text, customAttributes = $customAttributes)" }
         internalCustomAttributesStore.add(customAttributes)
-        val channel = internalCustomAttributesStore.getCustomAttributesToSend().toChannel()
-        channel?.let { internalCustomAttributesStore.onSending() }
+        val channel = prepareCustomAttributesForSending()
         val request = messageStore.prepareMessage(text, channel)
         attachmentHandler.onSending()
+        val encodedJson = WebMessagingJson.json.encodeToString(request)
+        send(encodedJson)
+    }
+
+    override fun sendQuickReply(buttonResponse: ButtonResponse) {
+        stateMachine.checkIfConfigured()
+        log.i { "sendQuickReply(buttonResponse: $buttonResponse)" }
+        val channel = prepareCustomAttributesForSending()
+        val request = messageStore.prepareMessageWith(buttonResponse, channel)
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         send(encodedJson)
     }
@@ -309,12 +317,9 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     private fun sendAutoStart() {
         sendingAutostart = true
-        val channel = internalCustomAttributesStore.getCustomAttributesToSend().toChannel()
-        WebMessagingJson.json.encodeToString(
-            AutoStartRequest(token, channel)
-        ).let {
+        val channel = prepareCustomAttributesForSending()
+        WebMessagingJson.json.encodeToString(AutoStartRequest(token, channel)).let {
             log.i { "sendAutoStart()" }
-            channel?.let { internalCustomAttributesStore.onSending() }
             send(it)
         }
     }
@@ -535,6 +540,11 @@ internal class MessagingClientImpl(
             )
         )
 
+    private fun prepareCustomAttributesForSending(): Channel? =
+        internalCustomAttributesStore.getCustomAttributesToSend().asChannel()?.also {
+            internalCustomAttributesStore.onSending()
+        }
+
     private val socketListener = SocketListener(
         log = log.withTag(LogTag.WEBSOCKET)
     )
@@ -688,7 +698,7 @@ private fun KProperty0<DeploymentConfig?>.isShowUserTypingEnabled(): Boolean =
 private fun KProperty0<DeploymentConfig?>.isClearConversationEnabled(): Boolean =
     this.get()?.messenger?.apps?.conversations?.conversationClear?.enabled == true
 
-private fun Map<String, String>.toChannel(): Channel? {
+private fun Map<String, String>.asChannel(): Channel? {
     return if (this.isNotEmpty()) {
         Channel(Channel.Metadata(this))
     } else null

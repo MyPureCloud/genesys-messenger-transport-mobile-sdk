@@ -41,6 +41,39 @@ internal class MessageStore(
         )
     }
 
+    fun prepareMessageWith(
+        buttonResponse: ButtonResponse,
+        channel: Channel? = null,
+    ): OnMessageRequest {
+        val type = Message.Type.QuickReply
+        val messageToSend = pendingMessage.copy(
+            messageType = type,
+            type = type.name,
+            state = Message.State.Sending,
+            quickReplies = listOf(buttonResponse),
+        ).also {
+            log.i { "Message with quick reply prepared to send: $it" }
+            activeConversation.add(it)
+            publish(MessageEvent.MessageInserted(it))
+            pendingMessage = Message()
+        }
+        val content = listOf(
+            Message.Content(
+                contentType = Message.Content.Type.ButtonResponse,
+                buttonResponse = buttonResponse,
+            )
+        )
+        return OnMessageRequest(
+            token = token,
+            message = TextMessage(
+                text = "",
+                metadata = mapOf("customMessageId" to messageToSend.id),
+                content = content,
+                channel = channel,
+            )
+        )
+    }
+
     fun update(message: Message) {
         log.i { "Message state updated: $message" }
         when (message.direction) {
@@ -53,6 +86,7 @@ internal class MessageStore(
                     publish(MessageEvent.MessageInserted(message))
                 }
             }
+
             Direction.Outbound -> {
                 activeConversation.add(message)
                 publish(MessageEvent.MessageInserted(message))
