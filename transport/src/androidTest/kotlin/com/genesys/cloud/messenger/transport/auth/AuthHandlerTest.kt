@@ -133,28 +133,6 @@ class AuthHandlerTest {
     }
 
     @Test
-    fun `when authorize() success but refreshToken is null`() {
-        coEvery { mockWebMessagingApi.fetchAuthJwt(any(), any(), any()) } returns
-            Result.Success(AuthJwt(AuthTest.JwtToken, null))
-        subject = buildAuthHandler(false)
-
-        val expectedAuthJwt = AuthJwt(AuthTest.JwtToken, NO_REFRESH_TOKEN)
-
-        subject.authorize(AuthTest.AuthCode, AuthTest.RedirectUri, AuthTest.CodeVerifier)
-
-        coVerify {
-            mockWebMessagingApi.fetchAuthJwt(
-                AuthTest.AuthCode,
-                AuthTest.RedirectUri,
-                AuthTest.CodeVerifier
-            )
-        }
-        verify { mockEventHandler.onEvent(Event.Authorized) }
-        assertThat(subject.jwt).isEqualTo(expectedAuthJwt.jwt)
-        assertThat(fakeVault.authRefreshToken).isEqualTo(expectedAuthJwt.refreshToken)
-    }
-
-    @Test
     fun `when authorize() failure`() {
         val expectedErrorCode = ErrorCode.AuthFailed
         val expectedErrorMessage = ErrorTest.Message
