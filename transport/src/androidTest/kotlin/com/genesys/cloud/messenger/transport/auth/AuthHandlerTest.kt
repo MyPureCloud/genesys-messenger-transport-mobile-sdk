@@ -12,6 +12,7 @@ import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
+import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.util.AUTH_REFRESH_TOKEN_KEY
 import com.genesys.cloud.messenger.transport.util.TOKEN_KEY
 import com.genesys.cloud.messenger.transport.util.VAULT_KEY
@@ -31,6 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.serialization.encodeToString
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -442,6 +444,20 @@ class AuthHandlerTest {
 
         assertThat(subject.jwt).isEqualTo(expectedAuthJwt.jwt)
         assertThat(fakeVault.authRefreshToken).isEqualTo(expectedAuthJwt.refreshToken)
+    }
+
+    @Test
+    fun `when serialize AuthJwt`() {
+        val givenAuthJwt = AuthJwt(AuthTest.JwtToken, AuthTest.RefreshToken)
+        val givenAuthJwtWithoutRefreshToken = AuthJwt(AuthTest.JwtToken, null)
+        val expectedAuthJwtAsJson = """{"jwt":"jwt_Token","refreshToken":"refresh_token"}"""
+        val expectedAuthJwtWithoutRefreshTokenAsJson = """{"jwt":"jwt_Token"}"""
+
+        val authJwtAsJson = WebMessagingJson.json.encodeToString(givenAuthJwt)
+        val authJwtWithoutRefreshTokenAsJson = WebMessagingJson.json.encodeToString(givenAuthJwtWithoutRefreshToken)
+
+        assertThat(authJwtAsJson).isEqualTo(expectedAuthJwtAsJson)
+        assertThat(authJwtWithoutRefreshTokenAsJson).isEqualTo(expectedAuthJwtWithoutRefreshTokenAsJson)
     }
 
     private fun buildAuthHandler(givenAutoRefreshTokenWhenExpired: Boolean = true): AuthHandlerImpl {
