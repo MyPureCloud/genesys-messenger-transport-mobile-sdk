@@ -460,6 +460,16 @@ class AuthHandlerTest {
         assertThat(authJwtWithoutRefreshTokenAsJson).isEqualTo(expectedAuthJwtWithoutRefreshTokenAsJson)
     }
 
+    @Test
+    fun `when serialize RefreshToken`() {
+        val givenRefreshToken = RefreshToken(AuthTest.RefreshToken)
+        val expectedRefreshTokenAsJson = """{"refreshToken":"refresh_token"}"""
+
+        val refreshTokenAsJson = WebMessagingJson.json.encodeToString(givenRefreshToken)
+
+        assertThat(refreshTokenAsJson).isEqualTo(expectedRefreshTokenAsJson)
+    }
+
     private fun buildAuthHandler(givenAutoRefreshTokenWhenExpired: Boolean = true): AuthHandlerImpl {
         return AuthHandlerImpl(
             autoRefreshTokenWhenExpired = givenAutoRefreshTokenWhenExpired,
