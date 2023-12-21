@@ -37,6 +37,7 @@ class JwtHandlerTest {
     @Before
     fun setup() {
         Dispatchers.setMain(threadSurrogate)
+        coEvery { mockJwtFn(capture(slot)) } returns Unit
     }
 
     @ExperimentalCoroutinesApi
@@ -52,7 +53,6 @@ class JwtHandlerTest {
     fun `when withJwt() and jwtResponse is valid`() = runBlocking {
         val givenExpiry = Platform().epochMillis()
         val givenJwtResponse = JwtResponse(AuthTest.JwtToken, givenExpiry)
-        coEvery { mockJwtFn(capture(slot)) } returns Unit
         subject.jwtResponse = givenJwtResponse
 
         subject.withJwt(mockJwtFn)
@@ -70,7 +70,6 @@ class JwtHandlerTest {
     @Test
     fun `when withJwt() and jwtResponse is invalid`() = runBlocking {
         val givenJwtResponse = JwtResponse(AuthTest.JwtToken, 0)
-        coEvery { mockJwtFn(capture(slot)) } returns Unit
         subject.jwtResponse = givenJwtResponse
 
         subject.withJwt(mockJwtFn)
