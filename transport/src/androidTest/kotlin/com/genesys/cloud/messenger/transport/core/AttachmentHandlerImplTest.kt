@@ -8,11 +8,13 @@ import assertk.assertions.isFalse
 import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.core.Attachment.State
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
+import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.util.Request
+import com.genesys.cloud.messenger.transport.util.logs.Log
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.request
@@ -32,6 +34,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.serialization.encodeToString
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -42,6 +45,8 @@ internal class AttachmentHandlerImplTest {
             thirdArg<(Float) -> Unit>().invoke(25f)
         }
     }
+    private val mockLogger: Log = mockk(relaxed = true)
+    private val logSlot = mutableListOf<() -> String>()
     private val attachmentSlot = slot<Attachment>()
     private val mockAttachmentListener: (Attachment) -> Unit = spyk()
     private val processedAttachments = mutableMapOf<String, ProcessedAttachment>()
@@ -57,7 +62,7 @@ internal class AttachmentHandlerImplTest {
     private val subject = AttachmentHandlerImpl(
         mockApi,
         givenToken,
-        mockk(relaxed = true),
+        mockLogger,
         mockAttachmentListener,
         processedAttachments,
     )
@@ -88,13 +93,18 @@ internal class AttachmentHandlerImplTest {
             null,
             true,
         )
+        val expectedLogMessage = "Presigning attachment: $expectedAttachment"
 
         val onAttachmentRequest = subject.prepare(givenAttachmentId, ByteArray(1), "image.png")
 
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockAttachmentListener.invoke(capture(attachmentSlot))
+        }
         assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
         assertThat(processedAttachments).containsOnly(givenAttachmentId to expectedProcessedAttachment)
-        verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
         assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
+        assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
@@ -104,16 +114,19 @@ internal class AttachmentHandlerImplTest {
         val mockUploadProgress: ((Float) -> Unit) = spyk()
         val progressSlot = slot<Float>()
         givenPrepareCalled(uploadProgress = mockUploadProgress)
+        val expectedLogMessage = "Uploading attachment: $expectedAttachment"
 
         subject.upload(givenPresignedUrlResponse)
 
         coVerify {
+            mockLogger.i(capture(logSlot))
             mockAttachmentListener.invoke(capture(attachmentSlot))
             mockApi.uploadFile(givenPresignedUrlResponse, ByteArray(1), mockUploadProgress)
             mockUploadProgress.invoke(capture(progressSlot))
         }
         assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
         assertThat(progressSlot.captured).isEqualTo(expectedProgress)
+        assertThat(logSlot[1].invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
@@ -141,13 +154,15 @@ internal class AttachmentHandlerImplTest {
             mockHttpResponse,
             "something went wrong"
         )
+        val expectedState = State.Error(
+            ErrorCode.ClientResponseError(404),
+            "Client request( http://someurl.com) invalid: 404 page not found. Text: \"something went wrong\""
+        )
         val expectedAttachment = Attachment(
             id = givenAttachmentId,
-            state = State.Error(
-                ErrorCode.ClientResponseError(404),
-                "Client request( http://someurl.com) invalid: 404 page not found. Text: \"something went wrong\""
-            )
+            state = expectedState,
         )
+        val expectedLogMessage = "Attachment error with id: ${expectedAttachment.id}. ErrorCode: ${expectedState.errorCode}, errorMessage: ${expectedState.errorMessage}"
         givenPrepareCalled()
 
         subject.upload(givenPresignedUrlResponse)
@@ -155,10 +170,12 @@ internal class AttachmentHandlerImplTest {
         coVerify {
             mockAttachmentListener.invoke(capture(attachmentSlotList))
             mockApi.uploadFile(any(), any(), any())
+            mockLogger.e(capture(logSlot))
             mockAttachmentListener.invoke(capture(attachmentSlotList))
         }
         assertThat(attachmentSlotList[1]).isEqualTo(expectedAttachment)
         assertThat(processedAttachments.containsKey(givenAttachmentId)).isFalse()
+        assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
@@ -167,13 +184,18 @@ internal class AttachmentHandlerImplTest {
         val expectedAttachment =
             Attachment(givenAttachmentId, "image.png", State.Uploaded(expectedDownloadUrl))
         val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(1))
+        val expectedLogMessage = "Attachment uploaded: $expectedAttachment"
         givenPrepareCalled()
 
         subject.onUploadSuccess(givenUploadSuccessEvent)
 
-        verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockAttachmentListener.invoke(capture(attachmentSlot))
+        }
         assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
         assertThat(processedAttachments).containsOnly(givenAttachmentId to expectedProcessedAttachment)
+        assertThat(logSlot[1].invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
@@ -192,32 +214,38 @@ internal class AttachmentHandlerImplTest {
         val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Detaching)
         val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(1))
         val expectedDeleteAttachmentRequest = DeleteAttachmentRequest(givenToken, givenAttachmentId)
+        val expectedLogMessage = "Detaching attachment: ${expectedAttachment.id}"
         givenPrepareCalled()
         givenUploadSuccessCalled()
 
         val result = subject.detach(givenAttachmentId)
 
         verify {
+            mockLogger.i(capture(logSlot))
             mockAttachmentListener.invoke(capture(attachmentSlot))
         }
         assertThat(result).isEqualTo(expectedDeleteAttachmentRequest)
         assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
         assertThat(processedAttachments).containsOnly(givenAttachmentId to expectedProcessedAttachment)
+        assertThat(logSlot[2].invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
     fun whenDetachNotUploaded() {
         val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Detached)
+        val expectedLogMessage = "Detaching attachment: ${expectedAttachment.id}"
         givenPrepareCalled()
 
         val result = subject.detach(givenAttachmentId)
 
         verify {
+            mockLogger.i(capture(logSlot))
             mockAttachmentListener.invoke(capture(attachmentSlot))
         }
         assertThat(result).isNull()
         assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
         assertThat(processedAttachments.containsKey(givenAttachmentId)).isFalse()
+        assertThat(logSlot[1].invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
@@ -233,46 +261,75 @@ internal class AttachmentHandlerImplTest {
     @Test
     fun whenOnDetached() {
         val expectedAttachment = Attachment(givenAttachmentId, "image.png", State.Detached)
+        val expectedLogMessage = "Attachment detached: ${expectedAttachment.id}"
         givenPrepareCalled()
         givenUploadSuccessCalled()
 
         subject.onDetached(givenAttachmentId)
 
-        verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockAttachmentListener.invoke(capture(attachmentSlot))
+        }
         assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
         assertThat(processedAttachments.containsKey(givenAttachmentId)).isFalse()
+        assertThat(logSlot[2].invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
     fun whenOnError() {
+        val expectedState = State.Error(ErrorCode.FileTypeInvalid, "something went wrong")
         val expectedAttachment = Attachment(
             id = givenAttachmentId,
-            state = State.Error(ErrorCode.FileTypeInvalid, "something went wrong")
+            state = expectedState,
         )
+        val expectedLogMessage = "Attachment error with id: ${expectedAttachment.id}. ErrorCode: ${expectedState.errorCode}, errorMessage: ${expectedState.errorMessage}"
         givenPrepareCalled()
 
         subject.onError(givenAttachmentId, ErrorCode.mapFrom(4001), "something went wrong")
 
-        verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
-        assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
+        verify {
+            mockLogger.e(capture(logSlot))
+            mockAttachmentListener.invoke(capture(attachmentSlot))
+        }
+        attachmentSlot.captured.run {
+            assertThat(this).isEqualTo(expectedAttachment)
+            assertThat(this.id).isEqualTo(expectedAttachment.id)
+            assertThat(this.fileName).isNull()
+            assertThat((this.state as State.Error).errorCode).isEqualTo(expectedState.errorCode)
+            assertThat((this.state as State.Error).errorMessage).isEqualTo(expectedState.errorMessage)
+        }
         assertThat(processedAttachments.containsKey(givenAttachmentId)).isFalse()
+        assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
     fun whenOnMessageErrorWhileHasSendingAttachment() {
+        val expectedState = State.Error(ErrorCode.MessageTooLong, "Message too long")
         val expectedAttachment = Attachment(
             id = givenAttachmentId,
-            state = State.Error(ErrorCode.MessageTooLong, "Message too long")
+            state = expectedState,
         )
+        val expectedLogMessage = "Attachment error with id: ${expectedAttachment.id}. ErrorCode: ${expectedState.errorCode}, errorMessage: ${expectedState.errorMessage}"
         givenPrepareCalled()
         givenUploadSuccessCalled()
         givenOnSendingCalled()
 
         subject.onMessageError(ErrorCode.MessageTooLong, "Message too long")
 
-        verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
-        assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
+        verify {
+            mockLogger.e(capture(logSlot))
+            mockAttachmentListener.invoke(capture(attachmentSlot))
+        }
+        attachmentSlot.captured.run {
+            assertThat(this).isEqualTo(expectedAttachment)
+            assertThat(this.id).isEqualTo(expectedAttachment.id)
+            assertThat(this.fileName).isNull()
+            assertThat((this.state as State.Error).errorCode).isEqualTo(expectedState.errorCode)
+            assertThat((this.state as State.Error).errorMessage).isEqualTo(expectedState.errorMessage)
+        }
         assertThat(processedAttachments.containsKey(givenAttachmentId)).isFalse()
+        assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
@@ -291,14 +348,19 @@ internal class AttachmentHandlerImplTest {
         )
         val expectedProcessedAttachment =
             ProcessedAttachment(expectedAttachment, ByteArray(1))
+        val expectedLogMessage = "Sending attachment: ${expectedAttachment.id}"
         givenPrepareCalled()
         givenUploadSuccessCalled()
 
         subject.onSending()
 
-        verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockAttachmentListener.invoke(capture(attachmentSlot))
+        }
         assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
         assertThat(processedAttachments).containsOnly(givenAttachmentId to expectedProcessedAttachment)
+        assertThat(logSlot[2].invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
@@ -317,7 +379,7 @@ internal class AttachmentHandlerImplTest {
             fileName = "image.png",
             state = State.Sent("http://somedownloadurl.com")
         )
-
+        val expectedLogMessage = "Attachments sent: ${mapOf(expectedAttachment.id to expectedAttachment)}"
         givenPrepareCalled()
         givenUploadSuccessCalled()
         givenOnSendingCalled()
@@ -332,9 +394,13 @@ internal class AttachmentHandlerImplTest {
             )
         )
 
-        verify { mockAttachmentListener.invoke(capture(attachmentSlot)) }
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockAttachmentListener.invoke(capture(attachmentSlot))
+        }
         assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
         assertThat(processedAttachments.containsKey(givenAttachmentId)).isFalse()
+        assertThat(logSlot[3].invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
@@ -360,6 +426,16 @@ internal class AttachmentHandlerImplTest {
         subject.clearAll()
 
         assertThat(processedAttachments).isEmpty()
+    }
+
+    @Test
+    fun whenSerializeAttachment() {
+        val expectedAttachmentJson = """{"id":"$givenAttachmentId"}"""
+        val givenAttachment = Attachment(givenAttachmentId, "image.png")
+
+        val attachmentJson = WebMessagingJson.json.encodeToString(givenAttachment)
+
+        assertThat(attachmentJson).isEqualTo(expectedAttachmentJson)
     }
 
     private fun presignedUrlResponse(id: String = givenAttachmentId): PresignedUrlResponse =

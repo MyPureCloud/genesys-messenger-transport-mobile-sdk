@@ -40,6 +40,7 @@ class AuthHandlerTest {
     @MockK(relaxed = true)
     private val mockEventHandler: EventHandler = mockk(relaxed = true)
     private val mockLogger: Log = mockk(relaxed = true)
+    private val logSlot = slot<() -> String>()
 
     @MockK(relaxed = true)
     private val mockWebMessagingApi: WebMessagingApi = mockk {
@@ -162,7 +163,6 @@ class AuthHandlerTest {
         val expectedErrorMessage = ErrorTest.Message
         val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
         val expectedLogMessage = "fetchAuthJwt() respond with error: ${ErrorCode.AuthFailed}, and message: $expectedErrorMessage"
-        val logSlot = slot<() -> String>()
 
         coEvery { mockWebMessagingApi.fetchAuthJwt(any(), any(), any()) } returns Result.Failure(
             ErrorCode.AuthFailed,
@@ -202,7 +202,6 @@ class AuthHandlerTest {
             ErrorTest.Message
         )
         val expectedLogMessage = "Cancellation exception was thrown, while running fetchAuthJwt() request."
-        val logSlot = slot<() -> String>()
 
         subject.authorize(AuthTest.AuthCode, AuthTest.RedirectUri, AuthTest.CodeVerifier)
 
@@ -236,7 +235,6 @@ class AuthHandlerTest {
         val expectedErrorMessage = ErrorTest.Message
         val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
         val expectedLogMessage = "logout() respond with error: ${ErrorCode.AuthLogoutFailed}, and message: $expectedErrorMessage"
-        val logSlot = slot<() -> String>()
 
         subject.logout()
 
@@ -268,7 +266,6 @@ class AuthHandlerTest {
         val expectedErrorMessage = ErrorTest.Message
         val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
         val expectedLogMessage = "logout() respond with error: ${ErrorCode.ClientResponseError(401)}, and message: $expectedErrorMessage"
-        val logSlot = slot<() -> String>()
 
         subject.logout()
 
@@ -299,7 +296,6 @@ class AuthHandlerTest {
         val expectedErrorMessage = ErrorTest.Message
         val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
         val expectedLogMessage = "logout() respond with error: ${ErrorCode.ClientResponseError(401)}, and message: $expectedErrorMessage"
-        val logSlot = slot<() -> String>()
 
         subject.logout()
 
@@ -363,7 +359,6 @@ class AuthHandlerTest {
         val expectedErrorCode = ErrorCode.RefreshAuthTokenFailure
         val expectedErrorMessage = ErrorMessage.NoRefreshToken
         val expectedLogMessage = "Could not refreshAuthToken: $expectedErrorMessage"
-        val logSlot = slot<() -> String>()
 
         subject.refreshToken { result -> mockCallback.captured = result }
 
@@ -384,7 +379,6 @@ class AuthHandlerTest {
         val expectedErrorCode = ErrorCode.RefreshAuthTokenFailure
         val expectedErrorMessage = ErrorMessage.AutoRefreshTokenDisabled
         val expectedLogMessage = "Could not refreshAuthToken: $expectedErrorMessage"
-        val logSlot = slot<() -> String>()
 
         subject.refreshToken { result -> mockCallback.captured = result }
 
@@ -402,7 +396,6 @@ class AuthHandlerTest {
         val mockCallback = slot<Result<Empty>>()
         val expectedAuthJwt = AuthJwt(AuthTest.RefreshedJWTToken, AuthTest.RefreshToken)
         val expectedLogMessage = "refreshAuthToken success."
-        val logSlot = slot<() -> String>()
 
         subject.refreshToken { result -> mockCallback.captured = result }
 
@@ -425,7 +418,6 @@ class AuthHandlerTest {
             ErrorTest.Message,
         )
         val mockCallback = slot<Result<Empty>>()
-        val logSlot = slot<() -> String>()
         val expectedAuthJwt = AuthJwt(NO_JWT, NO_REFRESH_TOKEN)
         val expectedLogMessage = "Could not refreshAuthToken: ${ErrorTest.Message}"
 
