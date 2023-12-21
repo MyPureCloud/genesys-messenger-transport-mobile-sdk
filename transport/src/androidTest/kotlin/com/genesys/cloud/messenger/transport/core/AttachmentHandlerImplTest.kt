@@ -359,6 +359,35 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
+    fun whenOnMessageErrorWithNullErrorMessage() {
+        val expectedState = State.Error(ErrorCode.MessageTooLong, "")
+        val expectedAttachment = Attachment(
+            id = givenAttachmentId,
+            state = expectedState,
+        )
+        val expectedLogMessage = "Attachment error with id: ${expectedAttachment.id}. ErrorCode: ${expectedState.errorCode}, errorMessage: "
+        givenPrepareCalled()
+        givenUploadSuccessCalled()
+        givenOnSendingCalled()
+
+        subject.onMessageError(ErrorCode.MessageTooLong, null)
+
+        verify {
+            mockLogger.e(capture(logSlot))
+            mockAttachmentListener.invoke(capture(attachmentSlot))
+        }
+        attachmentSlot.captured.run {
+            assertThat(this).isEqualTo(expectedAttachment)
+            assertThat(id).isEqualTo(expectedAttachment.id)
+            assertThat(fileName).isNull()
+            assertThat((state as State.Error).errorCode).isEqualTo(expectedState.errorCode)
+            assertThat((state as State.Error).errorMessage).isEqualTo(expectedState.errorMessage)
+        }
+        assertThat(processedAttachments.containsKey(givenAttachmentId)).isFalse()
+        assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
+    }
+
+    @Test
     fun whenOnMessageErrorHasNoSendingAttachment() {
         subject.onMessageError(ErrorCode.MessageTooLong, "Message too long")
 
