@@ -141,8 +141,11 @@ open class BaseMessagingClientTest {
         every { token } returns Request.token
     }
 
+    private val mockLogger: Log = mockk(relaxed = true)
+    internal val logSlot = mutableListOf<() -> String>()
+
     internal val subject = MessagingClientImpl(
-        log = Log(false, "Log"),
+        log = mockLogger,
         configuration = Configuration("deploymentId", "inindca.com"),
         webSocket = mockPlatformSocket,
         api = mockWebMessagingApi,

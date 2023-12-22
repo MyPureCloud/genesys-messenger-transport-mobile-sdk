@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.core.messagingclient
 
 import assertk.assertThat
+import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
@@ -30,7 +31,11 @@ class MCConnectionTests : BaseMessagingClientTest() {
     fun `when connect`() {
         subject.connect()
 
-        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
+        (subject.currentState as MessagingClient.State.Configured).run {
+            assertThat(this).isConfigured(connected = true, newSession = true)
+            assertThat(connected).isTrue()
+            assertThat(newSession).isTrue()
+        }
         verifySequence {
             connectSequence()
         }
