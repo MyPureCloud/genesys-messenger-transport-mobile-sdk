@@ -28,3 +28,16 @@ object InvalidValues {
     internal const val UnauthorizedJwt = "unauthorized_jwt"
     internal const val InvalidRefreshToken = "invalid_refresh_token"
 }
+
+object MessageValues {
+    internal const val Id = "test_message_id"
+    internal const val ParticipantName = "participant_name"
+    internal const val ParticipantImageUrl = "http://participant.image"
+    internal const val Text = "test_text"
+    internal const val Type = "Text"
+    internal const val TimeStamp = 1L
+}
+
+object AttachmentValues {
+    internal const val Id = "test_attachment_id"
+}

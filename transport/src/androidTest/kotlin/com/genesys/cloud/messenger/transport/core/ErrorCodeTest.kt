@@ -13,6 +13,7 @@ internal class ErrorCodeTest {
         assertThat(ErrorCode.mapFrom(4001)).isEqualTo(ErrorCode.FileTypeInvalid)
         assertThat(ErrorCode.mapFrom(4002)).isEqualTo(ErrorCode.FileSizeInvalid)
         assertThat(ErrorCode.mapFrom(4003)).isEqualTo(ErrorCode.FileContentInvalid)
+        assertThat(ErrorCode.mapFrom(4004)).isEqualTo(ErrorCode.FileNameInvalid)
         assertThat(ErrorCode.mapFrom(4005)).isEqualTo(ErrorCode.FileNameTooLong)
         assertThat(ErrorCode.mapFrom(4006)).isEqualTo(ErrorCode.SessionHasExpired)
         assertThat(ErrorCode.mapFrom(4006)).isEqualTo(ErrorCode.SessionHasExpired)
