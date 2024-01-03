@@ -75,7 +75,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         context: Context,
         onOktaSignIn: (url: String) -> Unit,
     ) {
-
         println("Messenger Transport sdkVersion: ${MessengerTransportSDK.sdkVersion}")
         this.onOktaSingIn = onOktaSignIn
         val mmsdkConfiguration = Configuration(
@@ -365,6 +364,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             is Event.Error -> handleEventError(event)
             else -> println("On event: $event")
         }
+        onSocketMessageReceived(event.toString())
     }
 
     private fun handleEventError(event: Event.Error) {
