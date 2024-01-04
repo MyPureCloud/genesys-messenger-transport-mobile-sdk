@@ -1,5 +1,6 @@
 package com.genesys.cloud.messenger.transport.utility
 
+
 internal const val DEFAULT_TIMEOUT = 10000L
 
 object TestValues {
@@ -40,4 +41,21 @@ object MessageValues {
 
 object AttachmentValues {
     internal const val Id = "test_attachment_id"
+}
+
+object LogMessages {
+    internal const val Connect = "connect()"
+    internal const val ConnectAuthenticated = "connectAuthenticatedSession()"
+    internal const val ConfigureSession = """configureSession(token = 00000000-0000-0000-0000-000000000000, startNew: false)"""
+    internal const val ConfigureAuthenticatedSession = """configureAuthenticatedSession(token = 00000000-0000-0000-0000-000000000000, startNew: false)"""
+    internal const val ClearConversationHistory = "Clear conversation history."
+    internal const val SendClearConversation = "sendClearConversation()"
+    internal const val Autostart = "sendAutoStart()"
+    internal const val HealthCheck = "sendHealthCheck()"
+    internal const val Attach = "attach(fileName = test.png)"
+    internal const val WillSendMessage = "Will send message"
+    internal const val Disconnect = "disconnect()"
+    internal const val Typing = "indicateTyping()"
+    internal fun sendMessageWith(message: String = "Hello world", customAttributes: String = "{A=B}") = "sendMessage(text = $message, customAttributes = $customAttributes)"
+
 }

@@ -1,5 +1,7 @@
 package com.genesys.cloud.messenger.transport.core.messagingclient
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.events.HEALTH_CHECK_COOL_DOWN_MILLISECONDS
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.util.Platform
@@ -7,6 +9,7 @@ import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.fromClosedToConnecting
 import com.genesys.cloud.messenger.transport.util.fromConnectedToConfigured
 import com.genesys.cloud.messenger.transport.util.fromConnectingToConnected
+import com.genesys.cloud.messenger.transport.utility.LogMessages
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
@@ -86,6 +89,16 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.HealthCheck)
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WillSendMessage)
+        assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.Disconnect)
+        assertThat(logSlot[5].invoke()).isEqualTo(LogMessages.ClearConversationHistory)
+        assertThat(logSlot[6].invoke()).isEqualTo(LogMessages.Connect)
+        assertThat(logSlot[7].invoke()).isEqualTo(LogMessages.ConfigureSession)
+        assertThat(logSlot[8].invoke()).isEqualTo(LogMessages.HealthCheck)
+        assertThat(logSlot[9].invoke()).isEqualTo(LogMessages.WillSendMessage)
     }
 
     @Test

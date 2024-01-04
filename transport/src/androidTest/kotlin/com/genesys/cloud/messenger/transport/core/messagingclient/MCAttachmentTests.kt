@@ -6,6 +6,7 @@ import com.genesys.cloud.messenger.transport.core.Attachment
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.Response
+import com.genesys.cloud.messenger.transport.utility.LogMessages
 import io.mockk.Called
 import io.mockk.clearMocks
 import io.mockk.every
@@ -35,6 +36,10 @@ class MCAttachmentTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.Attach)
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WillSendMessage)
     }
 
     @Test

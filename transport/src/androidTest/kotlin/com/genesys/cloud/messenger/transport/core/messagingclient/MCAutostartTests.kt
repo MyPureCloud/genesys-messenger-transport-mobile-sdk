@@ -1,5 +1,7 @@
 package com.genesys.cloud.messenger.transport.core.messagingclient
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
@@ -9,6 +11,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConf
 import com.genesys.cloud.messenger.transport.shyrka.receive.createMessengerVOForTesting
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.Response
+import com.genesys.cloud.messenger.transport.utility.LogMessages
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
@@ -40,6 +43,10 @@ class MCAutostartTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.autostart(""))
         }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.Autostart)
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WillSendMessage)
     }
 
     @Test
