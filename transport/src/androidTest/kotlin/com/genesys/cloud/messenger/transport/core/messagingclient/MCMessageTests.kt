@@ -156,5 +156,11 @@ class MCMessageTests : BaseMessagingClientTest() {
             connectSequence()
             disconnectSequence()
         }
+
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.Disconnect)
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.ForceClose)
+        assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.ClearConversationHistory)
     }
 }

@@ -53,6 +53,7 @@ object LogMessages {
     internal const val HealthCheck = "sendHealthCheck()"
     internal const val Attach = "attach(fileName = test.png)"
     internal const val WillSendMessage = "Will send message"
+    internal const val ForceClose = "Force close web socket."
     internal const val Disconnect = "disconnect()"
     internal const val Typing = "indicateTyping()"
     internal const val TypingCoolDown = "Typing event can be sent only once every 5000 milliseconds."
