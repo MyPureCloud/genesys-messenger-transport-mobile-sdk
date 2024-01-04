@@ -60,6 +60,7 @@ object LogMessages {
     internal const val Typing = "indicateTyping()"
     internal const val TypingCoolDown = "Typing event can be sent only once every 5000 milliseconds."
     internal const val TypingDisabled = "typing indicator is disabled."
+    internal const val HistoryFetched = "All history has been fetched."
     internal fun unhandledErrorCode(errorCode: ErrorCode, message: String) = "Unhandled ErrorCode: $errorCode with optional message: $message"
     internal fun unhandledWebSocketError(errorCode: ErrorCode) = "Unhandled WebSocket errorCode. ErrorCode: $errorCode"
     internal fun sendMessageWith(message: String = "Hello world", customAttributes: String = "{A=B}") = "sendMessage(text = $message, customAttributes = $customAttributes)"

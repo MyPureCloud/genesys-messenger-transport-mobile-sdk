@@ -1,7 +1,10 @@
 package com.genesys.cloud.messenger.transport.core.messagingclient
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.DEFAULT_PAGE_SIZE
 import com.genesys.cloud.messenger.transport.core.Message
+import com.genesys.cloud.messenger.transport.utility.LogMessages
 import io.mockk.every
 import io.mockk.verify
 import kotlinx.coroutines.runBlocking
@@ -25,6 +28,10 @@ class MCHistoryTests : BaseMessagingClientTest() {
 
         verify {
             mockMessageStore.updateMessageHistory(emptyList(), DEFAULT_PAGE_SIZE)
+            mockLogger.i(capture(logSlot))
         }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.HistoryFetched)
     }
 }

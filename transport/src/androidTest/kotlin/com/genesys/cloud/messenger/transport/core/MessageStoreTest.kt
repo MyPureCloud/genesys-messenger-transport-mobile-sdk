@@ -333,6 +333,7 @@ internal class MessageStoreTest {
         subject.prepareMessage("test message")
 
         verify { mockMessageListener wasNot Called }
+        assertThat(subject.messageListener).isNull()
     }
 
     @Test
