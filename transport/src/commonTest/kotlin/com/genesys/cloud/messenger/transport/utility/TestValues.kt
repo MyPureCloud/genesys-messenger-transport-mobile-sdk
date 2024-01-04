@@ -55,5 +55,7 @@ object LogMessages {
     internal const val WillSendMessage = "Will send message"
     internal const val Disconnect = "disconnect()"
     internal const val Typing = "indicateTyping()"
+    internal const val TypingCoolDown = "Typing event can be sent only once every 5000 milliseconds."
+    internal const val TypingDisabled = "typing indicator is disabled."
     internal fun sendMessageWith(message: String = "Hello world", customAttributes: String = "{A=B}") = "sendMessage(text = $message, customAttributes = $customAttributes)"
 }
