@@ -1,6 +1,5 @@
 package com.genesys.cloud.messenger.transport.utility
 
-
 internal const val DEFAULT_TIMEOUT = 10000L
 
 object TestValues {
@@ -57,5 +56,4 @@ object LogMessages {
     internal const val Disconnect = "disconnect()"
     internal const val Typing = "indicateTyping()"
     internal fun sendMessageWith(message: String = "Hello world", customAttributes: String = "{A=B}") = "sendMessage(text = $message, customAttributes = $customAttributes)"
-
 }
