@@ -43,6 +43,14 @@ internal object Response {
         """{"type":"message","class":"SessionClearedEvent","code":200,"body":{}}"""
     const val unknownErrorEvent =
         """{"type":"response","class":"string","code":5000,"body":"Request failed."}"""
+    const val uploadSuccessEvent =
+        """{"type":"message","class":"UploadSuccessEvent","code":200,"body":{"attachmentId":"test_attachment_id","downloadUrl":"https://downloadurl.png","timestamp":"2022-08-22T19:24:26.704Z"}}"""
+    const val presignedUrlResponse =
+        """{"type":"response","class":"PresignedUrlResponse","code":200,"body":{"attachmentId":"test_attachment_id","headers":{"x-amz-tagging":"abc"},"url":"https://downloadurl.png"}}"""
+    const val generateUrlError =
+        """{"type":"message","class":"GenerateUrlError","code":200,"body":{"attachmentId":"test_attachment_id","errorCode":4001,"errorMessage":"This is a generic error message for testing."}}"""
+    const val uploadFailureEvent =
+        """{"type":"message","class":"UploadFailureEvent","code":200,"body":{"attachmentId":"test_attachment_id","errorCode":4001,"errorMessage":"This is a generic error message for testing.","timestamp":"2022-08-22T19:24:26.704Z"}}"""
     fun clearConversationForbidden(errorMessage: String = "Presence events Conversation Clear are not supported") =
         """{"type":"response","class":"string","code":403,"body":"$errorMessage"}"""
 

@@ -7,6 +7,7 @@ internal const val DEFAULT_TIMEOUT = 10000L
 object TestValues {
     internal const val Domain: String = "inindca.com"
     internal const val DeploymentId = "deploymentId"
+    internal const val Timestamp = "2022-08-22T19:24:26.704Z"
 }
 
 object AuthTest {
@@ -42,6 +43,9 @@ object MessageValues {
 
 object AttachmentValues {
     internal const val Id = "test_attachment_id"
+    internal const val DownloadUrl = "https://downloadurl.png"
+    internal const val PresignedHeaderKey = "x-amz-tagging"
+    internal const val PresignedHeaderValue = "abc"
 }
 
 object LogMessages {
