@@ -1,5 +1,7 @@
 package com.genesys.cloud.messenger.transport.utility
 
+import com.genesys.cloud.messenger.transport.core.ErrorCode
+
 internal const val DEFAULT_TIMEOUT = 10000L
 
 object TestValues {
@@ -58,5 +60,6 @@ object LogMessages {
     internal const val Typing = "indicateTyping()"
     internal const val TypingCoolDown = "Typing event can be sent only once every 5000 milliseconds."
     internal const val TypingDisabled = "typing indicator is disabled."
+    internal fun unhandledWebSocket(errorCode: ErrorCode) = "Unhandled WebSocket errorCode. ErrorCode: $errorCode"
     internal fun sendMessageWith(message: String = "Hello world", customAttributes: String = "{A=B}") = "sendMessage(text = $message, customAttributes = $customAttributes)"
 }

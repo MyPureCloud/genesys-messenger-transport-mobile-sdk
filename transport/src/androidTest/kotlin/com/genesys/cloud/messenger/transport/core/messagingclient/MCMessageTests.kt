@@ -2,6 +2,7 @@ package com.genesys.cloud.messenger.transport.core.messagingclient
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessagingClient
@@ -25,6 +26,20 @@ class MCMessageTests : BaseMessagingClientTest() {
 
         verify {
             mockMessageStore.messageListener = givenMessageListener
+        }
+    }
+
+    @Test
+    fun `when messageListener is not set`() {
+        assertThat(subject.messageListener).isNull()
+    }
+
+    @Test
+    fun `when getPendingMessage`() {
+        subject.pendingMessage
+
+        verify {
+            mockMessageStore.pendingMessage
         }
     }
 

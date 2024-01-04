@@ -2,6 +2,7 @@ package com.genesys.cloud.messenger.transport.core.messagingclient
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
@@ -28,6 +29,13 @@ import org.junit.Test
 import kotlin.test.assertFailsWith
 
 class MCConnectionTests : BaseMessagingClientTest() {
+
+    @Test
+    fun `when stateListener is not set`() {
+        subject.stateChangedListener = null
+
+        assertThat(subject.stateChangedListener).isNull()
+    }
 
     @Test
     fun `when connect`() {
@@ -229,5 +237,21 @@ class MCConnectionTests : BaseMessagingClientTest() {
             connectWithFailedConfigureSequence()
             errorSequence(fromConnectedToError(expectedErrorState))
         }
+    }
+
+    @Test
+    fun `when SocketListener invoke onFailure with unknown error code`() {
+        subject.connect()
+        slot.captured.onFailure(Exception(), ErrorCode.UnexpectedError)
+
+        verifySequence {
+            connectSequence()
+            mockLogger.i(capture(logSlot))
+            mockLogger.w(capture(logSlot))
+        }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.ClearConversationHistory)
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.unhandledWebSocket(ErrorCode.UnexpectedError))
     }
 }
