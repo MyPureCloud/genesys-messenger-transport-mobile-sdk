@@ -15,6 +15,17 @@ import org.junit.Test
 class MCEventHandlingTests : BaseMessagingClientTest() {
 
     @Test
+    fun `when eventListener is set`() {
+        val givenEventListener: (Event) -> Unit = {}
+
+        subject.eventListener = givenEventListener
+
+        verify {
+            mockEventHandler.eventListener = givenEventListener
+        }
+    }
+
+    @Test
     fun `when eventListener is not set`() {
         assertThat(subject.eventListener).isNull()
     }

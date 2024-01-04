@@ -252,6 +252,20 @@ class MCConnectionTests : BaseMessagingClientTest() {
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.ClearConversationHistory)
-        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.unhandledWebSocket(ErrorCode.UnexpectedError))
+    }
+
+    @Test
+    fun `when SocketListener invoke onMessage with unknown error string`() {
+
+        subject.connect()
+        slot.captured.onMessage(Response.unknownErrorEvent)
+
+        verifySequence {
+            connectSequence()
+            mockLogger.w(capture(logSlot))
+        }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.unhandledErrorCode(ErrorCode.UnexpectedError, "Request failed."))
     }
 }
