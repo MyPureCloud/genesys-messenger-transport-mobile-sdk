@@ -25,6 +25,8 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
+            mockLogger.i(capture(logSlot))
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
     }
@@ -68,14 +70,20 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
+            mockLogger.i(capture(logSlot))
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
             disconnectSequence()
+            mockLogger.i(capture(logSlot))
             mockStateChangedListener(fromClosedToConnecting)
             mockPlatformSocket.openSocket(any())
             mockStateChangedListener(fromConnectingToConnected)
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.configureRequest())
             mockReconnectionHandler.clear()
             mockStateChangedListener(fromConnectedToConfigured)
+            mockLogger.i(capture(logSlot))
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
     }

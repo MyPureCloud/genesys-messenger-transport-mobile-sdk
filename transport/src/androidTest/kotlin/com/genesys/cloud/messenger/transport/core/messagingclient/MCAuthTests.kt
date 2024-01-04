@@ -179,7 +179,6 @@ class MCAuthTests : BaseMessagingClientTest() {
             MessagingClient.State.Error(ErrorCode.WebsocketError, ErrorMessage.FailedToReconnect)
 
         subject.connectAuthenticatedSession()
-
         slot.captured.onFailure(expectedException, ErrorCode.WebsocketError)
 
         assertThat(subject.currentState).isError(
@@ -188,6 +187,7 @@ class MCAuthTests : BaseMessagingClientTest() {
         )
         verifySequence {
             connectSequence(shouldConfigureAuth = true)
+            mockLogger.i(capture(logSlot))
             mockMessageStore.invalidateConversationCache()
             mockReconnectionHandler.shouldReconnect
             errorSequence(fromConfiguredToError(expectedErrorState))
@@ -216,10 +216,14 @@ class MCAuthTests : BaseMessagingClientTest() {
         assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
         verifySequence {
             connectSequence(shouldConfigureAuth = true)
+            mockLogger.i(capture(logSlot))
+            mockMessageStore.invalidateConversationCache()
             mockReconnectionHandler.shouldReconnect
             mockStateChangedListener(fromConfiguredToReconnecting())
             mockReconnectionHandler.reconnect(any())
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.openSocket(any())
+            mockLogger.i(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.jwt
             mockPlatformSocket.sendMessage(eq(Request.configureAuthenticatedRequest()))

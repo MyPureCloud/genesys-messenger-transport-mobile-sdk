@@ -37,10 +37,12 @@ class MCMessageTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
+            mockLogger.i(capture(logSlot))
             mockCustomAttributesStore.add(emptyMap())
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockMessageStore.prepareMessage(expectedText)
             mockAttachmentHandler.onSending()
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
 

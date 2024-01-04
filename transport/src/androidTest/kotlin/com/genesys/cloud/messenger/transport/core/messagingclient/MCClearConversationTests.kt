@@ -93,6 +93,7 @@ class MCClearConversationTests : BaseMessagingClientTest() {
         assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
         verifySequence {
             connectSequence()
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(eq(Request.clearConversation))
         }
     }
@@ -143,6 +144,7 @@ class MCClearConversationTests : BaseMessagingClientTest() {
         assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
         verifySequence {
             connectSequence()
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(eq(Request.clearConversation))
             mockEventHandler.onEvent(expectedEvent)
         }

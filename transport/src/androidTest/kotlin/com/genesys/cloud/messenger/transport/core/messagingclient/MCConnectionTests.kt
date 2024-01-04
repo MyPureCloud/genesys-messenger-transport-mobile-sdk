@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.core.messagingclient
 
 import assertk.assertThat
+import assertk.assertions.isEqualTo
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
@@ -29,6 +30,8 @@ class MCConnectionTests : BaseMessagingClientTest() {
 
     @Test
     fun `when connect`() {
+        val expectedLogMessage = "connect()"
+
         subject.connect()
 
         (subject.currentState as MessagingClient.State.Configured).run {
@@ -39,6 +42,7 @@ class MCConnectionTests : BaseMessagingClientTest() {
         verifySequence {
             connectSequence()
         }
+        assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
@@ -78,6 +82,7 @@ class MCConnectionTests : BaseMessagingClientTest() {
         )
         verifySequence {
             connectSequence()
+            mockLogger.i(capture(logSlot))
             mockMessageStore.invalidateConversationCache()
             mockReconnectionHandler.shouldReconnect
             errorSequence(fromConfiguredToError(expectedErrorState))
@@ -190,10 +195,13 @@ class MCConnectionTests : BaseMessagingClientTest() {
         assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
         verifySequence {
             connectSequence()
+            mockLogger.i(capture(logSlot))
             mockReconnectionHandler.shouldReconnect
             mockStateChangedListener(fromConfiguredToReconnecting())
             mockReconnectionHandler.reconnect(any())
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.openSocket(any())
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(eq(Request.configureRequest()))
             errorSequence(fromReconnectingToError(expectedErrorState))
         }

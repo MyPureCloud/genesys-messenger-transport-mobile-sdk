@@ -13,6 +13,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.Response
+import io.mockk.MockKVerificationScope
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
@@ -40,11 +41,13 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
+            mockLogger.i(capture(logSlot))
             mockCustomAttributesStore.add(expectedCustomAttributes)
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockCustomAttributesStore.onSending()
             mockMessageStore.prepareMessage(expectedText, expectedChannel)
             mockAttachmentHandler.onSending()
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
     }
@@ -85,9 +88,7 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockCustomAttributesStore.getCustomAttributesToSend()
-            mockCustomAttributesStore.onSending()
-            mockPlatformSocket.sendMessage(Request.autostart())
+            sendingCustomAttributesSequence(Request.autostart())
         }
     }
 
@@ -113,9 +114,7 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockCustomAttributesStore.getCustomAttributesToSend()
-            mockCustomAttributesStore.onSending()
-            mockPlatformSocket.sendMessage(Request.autostart(""""channel":{"metadata":{"customAttributes":{"A":"$fakeLargeCustomAttribute"}}},"""))
+            sendingCustomAttributesSequence(Request.autostart(""""channel":{"metadata":{"customAttributes":{"A":"$fakeLargeCustomAttribute"}}},"""))
             mockCustomAttributesStore.onError()
             mockEventHandler.onEvent(
                 Event.Error(
@@ -130,5 +129,13 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
         verify(exactly = 0) {
             mockCustomAttributesStore.onMessageError()
         }
+    }
+
+    private fun MockKVerificationScope.sendingCustomAttributesSequence(message: String) {
+        mockCustomAttributesStore.getCustomAttributesToSend()
+        mockLogger.i(capture(logSlot))
+        mockCustomAttributesStore.onSending()
+        mockLogger.i(capture(logSlot))
+        mockPlatformSocket.sendMessage(message)
     }
 }

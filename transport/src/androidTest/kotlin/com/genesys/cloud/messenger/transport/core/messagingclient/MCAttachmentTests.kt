@@ -30,7 +30,9 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         assertEquals(expectedAttachmentId, result)
         verifySequence {
             connectSequence()
+            mockLogger.i(capture(logSlot))
             mockAttachmentHandler.prepare(any(), any(), any())
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
     }
