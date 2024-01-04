@@ -189,9 +189,13 @@ open class BaseMessagingClientTest {
     }
 
     protected fun MockKVerificationScope.connectToReadOnlySequence() {
+        mockLogger.withTag(LogTag.STATE_MACHINE)
+        mockLogger.withTag(LogTag.WEBSOCKET)
+        mockLogger.i(capture(logSlot))
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
+        mockLogger.i(capture(logSlot))
         mockPlatformSocket.sendMessage(Request.configureRequest())
         mockReconnectionHandler.clear()
         mockStateChangedListener(fromConnectedToReadOnly)
