@@ -25,6 +25,13 @@ import org.junit.Test
 class MCCustomAttributesTests : BaseMessagingClientTest() {
 
     @Test
+    fun `when getCustomAttributesStore()`() {
+        val result = subject.customAttributesStore
+
+        assertThat(result).isEqualTo(mockCustomAttributesStore)
+    }
+
+    @Test
     fun `when sendMessage with customAttributes`() {
         val expectedMessage =
             """{"token":"${Request.token}","message":{"text":"Hello world","channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"action":"onMessage"}"""
