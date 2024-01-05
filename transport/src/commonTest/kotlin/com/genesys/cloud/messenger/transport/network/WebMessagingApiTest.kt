@@ -185,6 +185,28 @@ class WebMessagingApiTest {
     }
 
     @Test
+    fun whenLogoutFromAuthenticatedSessionResultInCancellationException() {
+        subject = buildWebMessagingApiWith { logoutEngine() }
+        val expectedResult = Result.Failure(ErrorCode.CancellationError, ErrorTest.Message)
+
+        val result =
+            runBlocking { subject.logoutFromAuthenticatedSession(InvalidValues.CancellationException) }
+
+        assertEquals(expectedResult, result)
+    }
+
+    @Test
+    fun whenLogoutFromAuthenticatedSessionResultInUnknownException() {
+        subject = buildWebMessagingApiWith { logoutEngine() }
+        val expectedResult = Result.Failure(ErrorCode.AuthLogoutFailed, ErrorTest.Message)
+
+        val result =
+            runBlocking { subject.logoutFromAuthenticatedSession(InvalidValues.UnknownException) }
+
+        assertEquals(expectedResult, result)
+    }
+
+    @Test
     fun whenLogoutFromAuthenticatedSessionWithInvalidJwt() {
         subject = buildWebMessagingApiWith { logoutEngine() }
         val expectedResult = Result.Failure(ErrorCode.AuthLogoutFailed, "Bad Request")
