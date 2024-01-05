@@ -148,7 +148,7 @@ class EventHandlerTest {
         val expectedErrorCodePayload = ErrorCode.UnexpectedError
         val expectedErrorMessagePayload = ErrorTest.Message
         val expectedCorrectiveActionPayload = CorrectiveAction.Unknown
-        val expectedErrorEvent = Error(expectedErrorCodePayload,expectedErrorMessagePayload, expectedCorrectiveActionPayload)
+        val expectedErrorEvent = Error(expectedErrorCodePayload, expectedErrorMessagePayload, expectedCorrectiveActionPayload)
         val givenErrorEvent =
             Error(ErrorCode.UnexpectedError, ErrorTest.Message, CorrectiveAction.Unknown)
 
@@ -165,7 +165,6 @@ class EventHandlerTest {
             assertThat(correctiveAction).isEqualTo(expectedCorrectiveActionPayload)
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.onEvent(expectedErrorEvent))
-
     }
 
     @Test
