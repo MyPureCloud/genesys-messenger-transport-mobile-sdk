@@ -2,6 +2,7 @@ package com.genesys.cloud.messenger.transport.utility
 
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.events.Event
+import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 
 internal const val DEFAULT_TIMEOUT = 10000L
 
@@ -77,4 +78,18 @@ object LogMessages {
     internal fun sendMessageWith(message: String = "Hello world", customAttributes: String = "{A=B}") = "sendMessage(text = $message, customAttributes = $customAttributes)"
     internal fun stateChangedFromTo(from: String, to: String) = "State changed from: $from, to: $to"
     internal fun onEvent(event: Event): String = "on event: $event"
+}
+
+object DeploymentConfigValues {
+    internal const val ApiEndPoint = "api_endpoint"
+    internal const val DefaultLanguage = "en-us"
+    internal const val SecondaryLanguage = "zh-cn"
+    internal const val Id = "id"
+    internal const val MessagingEndpoint = "messaging_endpoint"
+    internal const val PrimaryColor = "red"
+    internal const val LauncherButtonVisibility = "On"
+    internal const val MaxFileSize = 100L
+    internal const val FileType = "png"
+    internal val Status = DeploymentConfig.Status.Active
+    internal const val Version = "1"
 }
