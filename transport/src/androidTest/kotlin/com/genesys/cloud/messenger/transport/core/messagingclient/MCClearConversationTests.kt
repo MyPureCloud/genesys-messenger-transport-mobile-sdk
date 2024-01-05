@@ -115,6 +115,7 @@ class MCClearConversationTests : BaseMessagingClientTest() {
         assertThat(subject.currentState).isReadOnly()
         verifySequence {
             connectToReadOnlySequence()
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(eq(Request.clearConversation))
         }
     }
