@@ -237,6 +237,28 @@ class WebMessagingApiTest {
 
         assertEquals(expectedResult, result)
     }
+
+    @Test
+    fun whenRefreshTokenResultInCancellationException() {
+        subject = buildWebMessagingApiWith { refreshTokenEngine() }
+        val expectedResult = Result.Failure(ErrorCode.CancellationError, ErrorTest.Message)
+
+        val result =
+            runBlocking { subject.refreshAuthJwt(InvalidValues.CancellationException) }
+
+        assertEquals(expectedResult, result)
+    }
+
+    @Test
+    fun whenRefreshTokenResultInUnknownException() {
+        subject = buildWebMessagingApiWith { refreshTokenEngine() }
+        val expectedResult = Result.Failure(ErrorCode.RefreshAuthTokenFailure, ErrorTest.Message)
+
+        val result =
+            runBlocking { subject.refreshAuthJwt(InvalidValues.UnknownException) }
+
+        assertEquals(expectedResult, result)
+    }
 }
 
 private fun buildWebMessagingApiWith(
