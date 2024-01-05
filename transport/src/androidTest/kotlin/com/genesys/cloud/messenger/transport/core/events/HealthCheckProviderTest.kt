@@ -11,6 +11,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
+import io.mockk.verifySequence
 import org.junit.Test
 
 class HealthCheckProviderTest {
@@ -38,6 +39,10 @@ class HealthCheckProviderTest {
         every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + healthCheckCoolDownInMilliseconds }
         val secondResult = subject.encodeRequest(token = Request.token)
 
+        verifySequence {
+            mockTimestampFunction.invoke()
+            mockTimestampFunction.invoke()
+        }
         assertThat(firstResult).isEqualTo(expected)
         assertThat(secondResult).isEqualTo(expected)
     }
