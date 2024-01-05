@@ -1,9 +1,14 @@
 package com.genesys.cloud.messenger.transport.core
 
 import assertk.assertThat
+import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
+import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.utility.LogMessages
+import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
+import io.mockk.verifySequence
 import org.junit.Before
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
@@ -11,7 +16,10 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class StateMachineTest {
-    private val subject = StateMachineImpl()
+    internal val mockLogger: Log = mockk(relaxed = true)
+    internal val logSlot = mutableListOf<() -> String>()
+
+    private val subject = StateMachineImpl(mockLogger)
     private val mockStateListener: (State) -> Unit = spyk()
     private val mockStateChangedListener: (StateChange) -> Unit = spyk()
 
@@ -35,8 +43,17 @@ class StateMachineTest {
 
         assertThat(subject.currentState).isConnected()
         assertFalse { subject.isInactive() }
-        verify { mockStateListener(State.Connected) }
-        verify { mockStateChangedListener(expectedStateChange) }
+        verifySequence {
+            mockLogger.i(capture(logSlot))
+            mockStateListener(State.Connected)
+            mockStateChangedListener(expectedStateChange)
+        }
+        assertThat(logSlot[0].invoke()).isEqualTo(
+            LogMessages.stateChangedFromTo(
+                expectedStateChange.newState::class.simpleName ?: "",
+                expectedStateChange.newState::class.simpleName ?: ""
+            )
+        )
     }
 
     @Test
