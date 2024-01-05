@@ -120,24 +120,21 @@ class DeploymentConfigTest {
 
     @Test
     fun `when Conversations deserialized`() {
-        val givenConversationsAsJson = """{"messagingEndpoint":"messaging_endpoint","showAgentTypingIndicator":true,"showUserTypingIndicator":true,"autoStart":{"enabled":true},"conversationDisconnect":{"enabled":true,"type":"ReadOnly"},"conversationClear":{"enabled":true}}"""
-        val expectedConversations = Conversations(
-            messagingEndpoint = DeploymentConfigValues.MessagingEndpoint,
-            showAgentTypingIndicator = true,
-            showUserTypingIndicator = true,
-            autoStart = Conversations.AutoStart(enabled = true),
-            conversationDisconnect = Conversations.ConversationDisconnect(
-                enabled = true,
-                Conversations.ConversationDisconnect.Type.ReadOnly
-            ),
-            conversationClear = Conversations.ConversationClear(enabled = true)
-        )
+        val givenConversationsAsJson = """{"messagingEndpoint":"messaging_endpoint","showAgentTypingIndicator":true,"showUserTypingIndicator":true,"autoStart":{"enabled":true},"conversationDisconnect":{"enabled":true,"type":"ReadOnly"},"conversationClear":{"enabled":false}}"""
+        val expectedConversationClear = Conversations.ConversationClear(enabled = false)
         val expectedAutoStart = Conversations.AutoStart(true)
         val expectedConversationDisconnect = Conversations.ConversationDisconnect(
             true,
             Conversations.ConversationDisconnect.Type.ReadOnly
         )
-        val expectedConversationClear = Conversations.ConversationClear(enabled = true)
+        val expectedConversations = Conversations(
+            messagingEndpoint = DeploymentConfigValues.MessagingEndpoint,
+            showAgentTypingIndicator = true,
+            showUserTypingIndicator = true,
+            autoStart = expectedAutoStart,
+            conversationDisconnect = expectedConversationDisconnect,
+            conversationClear = expectedConversationClear
+        )
 
         val result = WebMessagingJson.json.decodeFromString<Conversations>(givenConversationsAsJson)
 
@@ -152,7 +149,71 @@ class DeploymentConfigTest {
             assertThat(conversationDisconnect.enabled).isTrue()
             assertThat(conversationDisconnect.type).isEqualTo(Conversations.ConversationDisconnect.Type.ReadOnly)
             assertThat(conversationClear).isEqualTo(expectedConversationClear)
-            assertThat(conversationClear.enabled).isTrue()
+            assertThat(conversationClear.enabled).isFalse()
         }
+    }
+
+    @Test
+    fun `when Autostart serialized`() {
+        val givenAutostart = Conversations.AutoStart(enabled = true)
+        val expectedAutostartAsJson = """{"enabled":true}"""
+
+        val result = WebMessagingJson.json.encodeToString(givenAutostart)
+
+        assertThat(result).isEqualTo(expectedAutostartAsJson)
+    }
+
+    @Test
+    fun `when Autostart deserialized`() {
+        val givenAutostartAsJson = """{"enabled":true}"""
+        val expectedAutostart = Conversations.AutoStart(enabled = true)
+
+        val result = WebMessagingJson.json.decodeFromString<Conversations.AutoStart>(givenAutostartAsJson)
+
+        assertThat(result).isEqualTo(expectedAutostart)
+        assertThat(result.enabled).isTrue()
+    }
+
+    @Test
+    fun `when ConversationClear serialized`() {
+        val givenConversationClear = Conversations.ConversationClear(enabled = true)
+        val expectedConversationClearAsJson = """{"enabled":true}"""
+
+        val result = WebMessagingJson.json.encodeToString(givenConversationClear)
+
+        assertThat(result).isEqualTo(expectedConversationClearAsJson)
+    }
+
+    @Test
+    fun `when ConversationClear deserialized`() {
+        val givenConversationClearAsJson = """{"enabled":true}"""
+        val expectedConversationClear = Conversations.ConversationClear(enabled = true)
+
+        val result = WebMessagingJson.json.decodeFromString<Conversations.ConversationClear>(givenConversationClearAsJson)
+
+        assertThat(result).isEqualTo(expectedConversationClear)
+        assertThat(result.enabled).isTrue()
+    }
+
+    @Test
+    fun `when ConversationDisconnect serialized`() {
+        val givenConversationDisconnect = Conversations.ConversationDisconnect(enabled = true, type = Conversations.ConversationDisconnect.Type.ReadOnly)
+        val expectedConversationDisconnectAsJson = """{"enabled":true,"type":"ReadOnly"}"""
+
+        val result = WebMessagingJson.json.encodeToString(givenConversationDisconnect)
+
+        assertThat(result).isEqualTo(expectedConversationDisconnectAsJson)
+    }
+
+    @Test
+    fun `when ConversationDisconnect deserialized`() {
+        val givenConversationDisconnectAsJson = """{"enabled":true,"type":"Send"}"""
+        val expectedConversationDisconnect = Conversations.ConversationDisconnect(enabled = true, type = Conversations.ConversationDisconnect.Type.Send)
+
+        val result = WebMessagingJson.json.decodeFromString<Conversations.ConversationDisconnect>(givenConversationDisconnectAsJson)
+
+        assertThat(result).isEqualTo(expectedConversationDisconnect)
+        assertThat(result.enabled).isTrue()
+        assertThat(result.type).isEqualTo(Conversations.ConversationDisconnect.Type.Send)
     }
 }
