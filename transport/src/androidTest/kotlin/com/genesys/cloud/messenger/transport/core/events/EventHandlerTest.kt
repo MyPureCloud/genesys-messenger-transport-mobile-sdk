@@ -17,14 +17,19 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent.Typing
+import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.utility.ErrorTest
+import com.genesys.cloud.messenger.transport.utility.LogMessages
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Test
 import kotlin.test.assertNull
 
 class EventHandlerTest {
+    internal val mockLogger: Log = mockk(relaxed = true)
+    internal val logSlot = mutableListOf<() -> String>()
     private val mockEventListener: ((Event) -> Unit) = mockk(relaxed = true)
-    private val subject = EventHandlerImpl().also {
+    private val subject = EventHandlerImpl(mockLogger).also {
         it.eventListener = mockEventListener
     }
 
@@ -49,7 +54,10 @@ class EventHandlerTest {
         events.forEach {
             subject.onEvent(it)
 
-            verify { mockEventListener.invoke(eq(it)) }
+            verify {
+                mockLogger.i(capture(logSlot))
+                mockEventListener.invoke(eq(it))
+            }
         }
     }
 
@@ -66,7 +74,9 @@ class EventHandlerTest {
     fun whenOnEventNullInvoked() {
         subject.onEvent(null)
 
+        verify { mockLogger.i(capture(logSlot)) }
         verify(exactly = 0) { mockEventListener.invoke(any()) }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.UnknownEvent)
     }
 
     @Test
@@ -131,5 +141,46 @@ class EventHandlerTest {
         ).toTransportEvent()
 
         assertNull(result)
+    }
+
+    @Test
+    fun `validate event Error payload`() {
+        val expectedErrorCodePayload = ErrorCode.UnexpectedError
+        val expectedErrorMessagePayload = ErrorTest.Message
+        val expectedCorrectiveActionPayload = CorrectiveAction.Unknown
+        val expectedErrorEvent = Error(expectedErrorCodePayload,expectedErrorMessagePayload, expectedCorrectiveActionPayload)
+        val givenErrorEvent =
+            Error(ErrorCode.UnexpectedError, ErrorTest.Message, CorrectiveAction.Unknown)
+
+        subject.onEvent(givenErrorEvent)
+
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockEventListener.invoke(eq(expectedErrorEvent))
+        }
+
+        givenErrorEvent.run {
+            assertThat(errorCode).isEqualTo(expectedErrorCodePayload)
+            assertThat(message).isEqualTo(expectedErrorMessagePayload)
+            assertThat(correctiveAction).isEqualTo(expectedCorrectiveActionPayload)
+        }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.onEvent(expectedErrorEvent))
+
+    }
+
+    @Test
+    fun `validate event AgentTyping payload`() {
+        val expectedAgentTypingPayload = 100L
+        val expectedAgentTypingEvent = AgentTyping(expectedAgentTypingPayload)
+        val givenAgentTypingEvent = AgentTyping(100)
+
+        subject.onEvent(givenAgentTypingEvent)
+
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockEventListener.invoke(eq(expectedAgentTypingEvent))
+        }
+        assertThat(givenAgentTypingEvent.durationInMilliseconds).isEqualTo(expectedAgentTypingPayload)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.onEvent(expectedAgentTypingEvent))
     }
 }
