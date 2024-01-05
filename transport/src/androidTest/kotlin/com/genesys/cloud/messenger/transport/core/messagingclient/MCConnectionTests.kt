@@ -11,6 +11,8 @@ import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.StateChange
 import com.genesys.cloud.messenger.transport.core.isClosed
 import com.genesys.cloud.messenger.transport.core.isConfigured
+import com.genesys.cloud.messenger.transport.core.isConnected
+import com.genesys.cloud.messenger.transport.core.isConnecting
 import com.genesys.cloud.messenger.transport.core.isError
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.util.Request
@@ -267,5 +269,16 @@ class MCConnectionTests : BaseMessagingClientTest() {
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.unhandledErrorCode(ErrorCode.UnexpectedError, "Request failed."))
+    }
+
+    @Test
+    fun `when StateChange is tested`() {
+        val subject = StateChange(
+            oldState = MessagingClient.State.Connecting,
+            newState = MessagingClient.State.Connected,
+        )
+
+        assertThat(subject.oldState).isConnecting()
+        assertThat(subject.newState).isConnected()
     }
 }
