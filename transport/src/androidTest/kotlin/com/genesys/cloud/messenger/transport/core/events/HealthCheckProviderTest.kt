@@ -5,17 +5,22 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Request
+import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.utility.LogMessages
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
+import io.mockk.verify
 import org.junit.Test
 
 class HealthCheckProviderTest {
+    internal val mockLogger: Log = mockk(relaxed = true)
+    internal val logSlot = mutableListOf<() -> String>()
     private val mockTimestampFunction: () -> Long = spyk<() -> Long>().also {
         every { it.invoke() } answers { Platform().epochMillis() }
     }
 
-    private val subject = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction)
+    private val subject = HealthCheckProvider(mockLogger, mockTimestampFunction)
 
     @Test
     fun whenEncode() {
@@ -43,8 +48,12 @@ class HealthCheckProviderTest {
         val firstResult = subject.encodeRequest(token = Request.token)
         val secondResult = subject.encodeRequest(token = Request.token)
 
+        verify {
+            mockLogger.w(capture(logSlot))
+        }
         assertThat(firstResult).isEqualTo(expected)
         assertThat(secondResult).isNull()
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.HealthCheckWarning)
     }
 
     @Test

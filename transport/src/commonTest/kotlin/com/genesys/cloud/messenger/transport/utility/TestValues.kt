@@ -58,6 +58,7 @@ object LogMessages {
     internal const val SendClearConversation = "sendClearConversation()"
     internal const val Autostart = "sendAutoStart()"
     internal const val HealthCheck = "sendHealthCheck()"
+    internal const val HealthCheckWarning = "Health check can be sent only once every 30000 milliseconds."
     internal const val Attach = "attach(fileName = test.png)"
     internal const val Detach = "detach(attachmentId = 88888888-8888-8888-8888-888888888888)"
     internal const val WillSendMessage = "Will send message"
