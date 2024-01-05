@@ -5,7 +5,7 @@ import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 
 internal class StateMachineImpl(
-    val log: Log = Log(enableLogs = false, LogTag.STATE_MACHINE),
+    private val log: Log = Log(enableLogs = false, LogTag.STATE_MACHINE),
 ) : StateMachine {
 
     override var currentState: State = State.Idle
