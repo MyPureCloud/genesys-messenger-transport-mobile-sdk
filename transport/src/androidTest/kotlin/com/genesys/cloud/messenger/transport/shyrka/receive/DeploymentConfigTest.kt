@@ -64,7 +64,6 @@ class DeploymentConfigTest {
         result.run {
             assertThat(apiEndpoint).isEqualTo(DeploymentConfigValues.ApiEndPoint)
             assertThat(auth).isEqualTo(expectedAuth)
-            assertThat(auth.enabled).isTrue()
             assertThat(defaultLanguage).isEqualTo(DeploymentConfigValues.DefaultLanguage)
             assertThat(id).isEqualTo(DeploymentConfigValues.Id)
             assertThat(journeyEvents).isEqualTo(expectedJourneyEvents)
@@ -90,5 +89,26 @@ class DeploymentConfigTest {
             assertThat(status).isEqualTo(DeploymentConfigValues.Status)
             assertThat(version).isEqualTo(DeploymentConfigValues.Version)
         }
+    }
+
+    @Test
+    fun `when Auth serialized`() {
+        val givenAuth = Auth(enabled = true)
+        val expectedAuthAsJson = """{"enabled":true}"""
+
+        val result = WebMessagingJson.json.encodeToString(givenAuth)
+
+        assertThat(result).isEqualTo(expectedAuthAsJson)
+    }
+
+    @Test
+    fun `when Auth deserialized`() {
+        val givenAuthAsJson = """{"enabled":true}"""
+        val expectedAuth = Auth(enabled = true)
+
+        val result = WebMessagingJson.json.decodeFromString<Auth>(givenAuthAsJson)
+
+        assertThat(result).isEqualTo(expectedAuth)
+        assertThat(result.enabled).isTrue()
     }
 }
