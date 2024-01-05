@@ -31,6 +31,8 @@ object InvalidValues {
     internal const val InvalidJwt = "invalid_jwt"
     internal const val UnauthorizedJwt = "unauthorized_jwt"
     internal const val InvalidRefreshToken = "invalid_refresh_token"
+    internal const val CancellationException = "cancellation_exception"
+    internal const val UnknownException = "unknown_exception"
 }
 
 object MessageValues {

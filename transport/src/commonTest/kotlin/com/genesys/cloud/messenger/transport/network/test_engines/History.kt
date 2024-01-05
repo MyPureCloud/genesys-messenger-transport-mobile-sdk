@@ -2,6 +2,7 @@ package com.genesys.cloud.messenger.transport.network.test_engines
 
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
+import com.genesys.cloud.messenger.transport.utility.InvalidValues
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.mock.MockEngineConfig
 import io.ktor.client.engine.mock.respond
@@ -34,7 +35,7 @@ fun HttpClientConfig<MockEngineConfig>.historyEngine() {
                     )
                 }
                 else -> {
-                    if (request.headers["Authorization"].equals("bearer cancellation_exception")) {
+                    if (request.headers["Authorization"].equals("bearer ${InvalidValues.CancellationException}")) {
                         throw CancellationException(ErrorTest.Message)
                     } else {
                         error(ErrorTest.Message)

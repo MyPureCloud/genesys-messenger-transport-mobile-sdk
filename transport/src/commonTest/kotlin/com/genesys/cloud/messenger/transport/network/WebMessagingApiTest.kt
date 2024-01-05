@@ -75,7 +75,7 @@ class WebMessagingApiTest {
 
         val result = runBlocking {
             withTimeout(DEFAULT_TIMEOUT) {
-                subject.getMessages(jwt = "cancellation_exception", pageNumber = -1)
+                subject.getMessages(jwt = InvalidValues.CancellationException, pageNumber = -1)
             }
         }
 
@@ -108,6 +108,50 @@ class WebMessagingApiTest {
         subject = buildWebMessagingApiWith(brokenConfigurations) { authorizeEngine() }
 
         val expectedResult = Result.Failure(ErrorCode.AuthFailed, "Bad Request")
+
+        val result = runBlocking {
+            subject.fetchAuthJwt(
+                authCode = AuthTest.AuthCode,
+                redirectUri = AuthTest.RedirectUri,
+                codeVerifier = AuthTest.CodeVerifier,
+            )
+        }
+
+        assertEquals(expectedResult, result)
+    }
+
+    @Test
+    fun fetchShouldReturnResultFailureWhenCancellationExceptionIsThrown() {
+        val brokenConfigurations = Configuration(
+            deploymentId = InvalidValues.CancellationException,
+            domain = InvalidValues.Domain,
+            logging = false
+        )
+        subject = buildWebMessagingApiWith(brokenConfigurations) { authorizeEngine() }
+
+        val expectedResult = Result.Failure(ErrorCode.CancellationError, ErrorTest.Message)
+
+        val result = runBlocking {
+            subject.fetchAuthJwt(
+                authCode = AuthTest.AuthCode,
+                redirectUri = AuthTest.RedirectUri,
+                codeVerifier = AuthTest.CodeVerifier,
+            )
+        }
+
+        assertEquals(expectedResult, result)
+    }
+
+    @Test
+    fun fetchShouldReturnResultFailureWhenUnknownExceptionIsThrown() {
+        val brokenConfigurations = Configuration(
+            deploymentId = InvalidValues.UnknownException,
+            domain = InvalidValues.Domain,
+            logging = false
+        )
+        subject = buildWebMessagingApiWith(brokenConfigurations) { authorizeEngine() }
+
+        val expectedResult = Result.Failure(ErrorCode.AuthFailed, ErrorTest.Message)
 
         val result = runBlocking {
             subject.fetchAuthJwt(
