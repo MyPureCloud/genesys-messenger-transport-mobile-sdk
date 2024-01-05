@@ -11,6 +11,7 @@ import com.genesys.cloud.messenger.transport.network.test_engines.logoutEngine
 import com.genesys.cloud.messenger.transport.network.test_engines.refreshTokenEngine
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.DEFAULT_TIMEOUT
+import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import com.genesys.cloud.messenger.transport.utility.InvalidValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.ktor.client.HttpClientConfig
@@ -47,6 +48,34 @@ class WebMessagingApiTest {
         val result = runBlocking {
             withTimeout(DEFAULT_TIMEOUT) {
                 subject.getMessages(jwt = "abc-123", pageNumber = 0, pageSize = 0)
+            }
+        }
+
+        assertEquals(expectedEntityList, result)
+    }
+
+    @Test
+    fun whenFetchHistoryResultsInUnexpectedError() {
+        subject = buildWebMessagingApiWith { historyEngine() }
+        val expectedEntityList = Result.Failure(ErrorCode.UnexpectedError, ErrorTest.Message)
+
+        val result = runBlocking {
+            withTimeout(DEFAULT_TIMEOUT) {
+                subject.getMessages(jwt = "abc-123", pageNumber = -1)
+            }
+        }
+
+        assertEquals(expectedEntityList, result)
+    }
+
+    @Test
+    fun whenFetchHistoryResultsInCancellationException() {
+        subject = buildWebMessagingApiWith { historyEngine() }
+        val expectedEntityList = Result.Failure(ErrorCode.CancellationError, ErrorTest.Message)
+
+        val result = runBlocking {
+            withTimeout(DEFAULT_TIMEOUT) {
+                subject.getMessages(jwt = "cancellation_exception", pageNumber = -1)
             }
         }
 
