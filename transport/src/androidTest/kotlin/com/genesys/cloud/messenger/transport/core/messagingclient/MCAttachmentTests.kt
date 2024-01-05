@@ -59,10 +59,14 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         subject.detach("88888888-8888-8888-8888-888888888888")
 
         verify {
+            mockLogger.i(capture(logSlot))
             mockAttachmentHandler.detach(capture(attachmentIdSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
         assertThat(attachmentIdSlot.captured).isEqualTo(expectedAttachmentId)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.Detach)
     }
 
     @Test
