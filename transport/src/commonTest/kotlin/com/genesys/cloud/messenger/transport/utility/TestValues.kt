@@ -10,6 +10,7 @@ object TestValues {
     internal const val Domain: String = "inindca.com"
     internal const val DeploymentId = "deploymentId"
     internal const val Timestamp = "2022-08-22T19:24:26.704Z"
+    internal const val Token = "<token>"
 }
 
 object AuthTest {
