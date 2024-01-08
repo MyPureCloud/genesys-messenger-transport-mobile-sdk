@@ -4,6 +4,7 @@ import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
@@ -121,19 +122,24 @@ class RequestSerializationTest {
         )
         val expectedJson =
             """{"token":"<token>","deploymentId":"deploymentId","startNew":false,"data":{"code":"jwt_Token"},"action":"configureAuthenticatedSession"}"""
+        val expectedDataJson = """{"code":"jwt_Token"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
+        val encodedDataString = WebMessagingJson.json.encodeToString(expectedData)
         val decoded = WebMessagingJson.json.decodeFromString<ConfigureAuthenticatedSessionRequest>(expectedJson)
+        val decodedData = WebMessagingJson.json.decodeFromString<ConfigureAuthenticatedSessionRequest.Data>(expectedDataJson)
 
         assertThat(encodedString, "encoded ConfigureAuthenticatedSessionRequest").isEqualTo(expectedJson)
+        assertThat(encodedDataString, "encoded Data").isEqualTo(expectedDataJson)
         decoded.run {
             assertThat(action).isEqualTo(RequestAction.CONFIGURE_AUTHENTICATED_SESSION.value)
             assertThat(token).isEqualTo(TestValues.Token)
             assertThat(deploymentId).isEqualTo(TestValues.DeploymentId)
             assertThat(startNew).isFalse()
-            assertThat(data).isEqualTo(expectedData)
-            assertThat(data.code).isEqualTo(AuthTest.JwtToken)
+            assertThat(journeyContext).isNull()
         }
+        assertThat(decodedData).isEqualTo(expectedData)
+        assertThat(decodedData.code).isEqualTo(AuthTest.JwtToken)
     }
 
     @Test
