@@ -141,7 +141,7 @@ class ResponsesTests {
             assertThat(headers[AttachmentValues.PresignedHeaderKey]).isEqualTo(expectedPresignedUrlResponse.headers[AttachmentValues.PresignedHeaderKey])
             assertThat(url).isEqualTo(expectedPresignedUrlResponse.url)
             assertThat(fileSize).isEqualTo(expectedPresignedUrlResponse.fileSize)
-            assertThat(fileName).isEqualTo(expectedPresignedUrlResponse.fileName)
+            assertThat(fileType).isEqualTo(expectedPresignedUrlResponse.fileType)
         }
     }
 
