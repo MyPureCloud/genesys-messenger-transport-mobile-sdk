@@ -265,4 +265,25 @@ class DeploymentConfigTest {
         assertThat(result).isEqualTo(expectedJourneyEvents)
         assertThat(result.enabled).isTrue()
     }
+
+    @Test
+    fun `when LauncherButton serialized`() {
+        val givenLauncherButton = LauncherButton(DeploymentConfigValues.LauncherButtonVisibility)
+        val expectedLauncherButtonAsJson = """{"visibility":"On"}"""
+
+        val result = WebMessagingJson.json.encodeToString(givenLauncherButton)
+
+        assertThat(result).isEqualTo(expectedLauncherButtonAsJson)
+    }
+
+    @Test
+    fun `when LauncherButton deserialized`() {
+        val givenLauncherButtonAsJson = """{"visibility":"On"}"""
+        val expectedLauncherButton = LauncherButton(DeploymentConfigValues.LauncherButtonVisibility)
+
+        val result = WebMessagingJson.json.decodeFromString<LauncherButton>(givenLauncherButtonAsJson)
+
+        assertThat(result).isEqualTo(expectedLauncherButton)
+        assertThat(result.visibility).isEqualTo(DeploymentConfigValues.LauncherButtonVisibility)
+    }
 }

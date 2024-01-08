@@ -5,6 +5,7 @@ import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
+import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -67,6 +68,36 @@ class ResponsesTests {
             assertThat(attachmentId).isEqualTo(AttachmentValues.Id)
             assertThat(errorCode).isEqualTo(ErrorCode.FileNameInvalid.code)
             assertThat(errorMessage).isEqualTo(ErrorTest.Message)
+        }
+    }
+
+    @Test
+    fun `when JwtResponse serialized`() {
+        val givenJwtResponse = JwtResponse(
+            jwt = AuthTest.JwtToken,
+            exp = AuthTest.JwtExpiry,
+        )
+        val expectedJwtResponseAsJson = """{"jwt":"jwt_Token","exp":100}"""
+
+        val result = WebMessagingJson.json.encodeToString(givenJwtResponse)
+
+        assertThat(result).isEqualTo(expectedJwtResponseAsJson)
+    }
+
+    @Test
+    fun `when JwtResponse deserialized`() {
+        val givenJwtResponseAsJson = """{"jwt":"jwt_Token","exp":100}"""
+        val expectedJwtResponse = JwtResponse(
+            jwt = AuthTest.JwtToken,
+            exp = AuthTest.JwtExpiry,
+        )
+
+        val result = WebMessagingJson.json.decodeFromString<JwtResponse>(givenJwtResponseAsJson)
+
+        result.run {
+            assertThat(this).isEqualTo(expectedJwtResponse)
+            assertThat(jwt).isEqualTo(AuthTest.JwtToken)
+            assertThat(exp).isEqualTo(AuthTest.JwtExpiry)
         }
     }
 }

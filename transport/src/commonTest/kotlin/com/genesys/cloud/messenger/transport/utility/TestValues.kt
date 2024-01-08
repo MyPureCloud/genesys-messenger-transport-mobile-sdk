@@ -20,6 +20,7 @@ object AuthTest {
     internal const val JwtToken = "jwt_Token"
     internal const val RefreshToken = "refresh_token"
     internal const val RefreshedJWTToken = "jwt_token_that_was_refreshed"
+    internal const val JwtExpiry = 100L
 }
 
 object ErrorTest {
@@ -43,6 +44,10 @@ object MessageValues {
     internal const val Text = "test_text"
     internal const val Type = "Text"
     internal const val TimeStamp = 1L
+    internal const val PageSize = 25
+    internal const val PageNumber = 1
+    internal const val Total = 25
+    internal const val PageCount = 1
 }
 
 object AttachmentValues {
