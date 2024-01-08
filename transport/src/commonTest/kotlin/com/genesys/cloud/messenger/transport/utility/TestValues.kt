@@ -40,6 +40,8 @@ object InvalidValues {
 object MessageValues {
     internal const val Id = "test_message_id"
     internal const val ParticipantName = "participant_name"
+    internal const val ParticipantLastName = "participant_last_name"
+    internal const val ParticipantNickname = "participant_nickname"
     internal const val ParticipantImageUrl = "http://participant.image"
     internal const val Text = "test_text"
     internal const val Type = "Text"

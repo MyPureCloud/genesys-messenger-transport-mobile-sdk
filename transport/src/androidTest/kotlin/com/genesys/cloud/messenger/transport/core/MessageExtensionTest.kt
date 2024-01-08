@@ -24,6 +24,7 @@ import com.genesys.cloud.messenger.transport.util.extensions.mapOriginatingEntit
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.utility.MessageValues
+import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import org.junit.Test
@@ -383,7 +384,22 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun `validate default constructor of PreIdentifiedWebMessagingMessage`() {
+    fun `when PreIdentifiedWebMessagingMessage serialized`() {
+        val givenMPreIdentifiedWebMessagingMessage = PreIdentifiedWebMessagingMessage(
+            type = MessageValues.PreIdentifiedMessageType,
+            code = MessageValues.PreIdentifiedMessageCode,
+            className = MessageValues.PreIdentifiedMessageClass,
+        )
+
+        val expectedPreIdentifiedWebMessagingMessageAsJson = """{"type":"type","code":200,"class":"clazz"}"""
+
+        val result = WebMessagingJson.json.encodeToString(givenMPreIdentifiedWebMessagingMessage)
+
+        assertThat(result).isEqualTo(expectedPreIdentifiedWebMessagingMessageAsJson)
+    }
+
+    @Test
+    fun `when PreIdentifiedWebMessagingMessage deserialized`() {
         val givenPreIdentifiedWebMessagingMessageAsJson =
             """{"type":"type","code":200,"class":"clazz"}"""
 
@@ -395,6 +411,69 @@ internal class MessageExtensionTest {
             assertThat(type).isEqualTo(MessageValues.PreIdentifiedMessageType)
             assertThat(code).isEqualTo(MessageValues.PreIdentifiedMessageCode)
             assertThat(className).isEqualTo(MessageValues.PreIdentifiedMessageClass)
+        }
+    }
+
+    @Test
+    fun `when Channel serialized`() {
+        val givenChannel = StructuredMessage.Channel(
+            time = TestValues.Timestamp,
+            messageId = MessageValues.Id,
+            type = MessageValues.Type,
+            to = StructuredMessage.Participant(
+                firstName = MessageValues.ParticipantName,
+                lastName = MessageValues.ParticipantLastName,
+                nickname = MessageValues.ParticipantNickname,
+                image = MessageValues.ParticipantImageUrl,
+            ),
+            from = StructuredMessage.Participant(),
+        )
+
+        val expectedChannelAsJson =
+            """{"time":"2022-08-22T19:24:26.704Z","messageId":"test_message_id","type":"Text","to":{"firstName":"participant_name","lastName":"participant_last_name","nickname":"participant_nickname","image":"http://participant.image"},"from":{}}"""
+
+        val result = WebMessagingJson.json.encodeToString(givenChannel)
+
+        assertThat(result).isEqualTo(expectedChannelAsJson)
+    }
+
+    @Test
+    fun `when Channel deserialized`() {
+        val givenChannelAsJson =
+            """{"time":"2022-08-22T19:24:26.704Z","messageId":"test_message_id","type":"Text","to":{"firstName":"participant_name","lastName":"participant_last_name","nickname":"participant_nickname","image":"http://participant.image"},"from":{}}"""
+        val expectedChannel = StructuredMessage.Channel(
+        time = TestValues.Timestamp,
+        messageId = MessageValues.Id,
+        type = MessageValues.Type,
+        to = StructuredMessage.Participant(
+            firstName = MessageValues.ParticipantName,
+            lastName = MessageValues.ParticipantLastName,
+            nickname = MessageValues.ParticipantNickname,
+            image = MessageValues.ParticipantImageUrl,
+        ),
+        from = StructuredMessage.Participant(),
+        )
+
+        val result = WebMessagingJson.json.decodeFromString<StructuredMessage.Channel>(givenChannelAsJson)
+
+        result.run {
+            assertThat(time).isEqualTo(expectedChannel.time)
+            assertThat(messageId).isEqualTo(expectedChannel.messageId)
+            assertThat(type).isEqualTo(expectedChannel.type)
+            assertThat(to).isEqualTo(expectedChannel.to)
+            to?.run {
+                assertThat(firstName).isEqualTo(expectedChannel.to?.firstName)
+                assertThat(lastName).isEqualTo(expectedChannel.to?.lastName)
+                assertThat(nickname).isEqualTo(expectedChannel.to?.nickname)
+                assertThat(image).isEqualTo(expectedChannel.to?.image)
+            }
+            assertThat(from).isEqualTo(expectedChannel.from)
+            from?.run {
+                assertThat(firstName).isNull()
+                assertThat(lastName).isNull()
+                assertThat(nickname).isNull()
+                assertThat(image).isNull()
+            }
         }
     }
 }
