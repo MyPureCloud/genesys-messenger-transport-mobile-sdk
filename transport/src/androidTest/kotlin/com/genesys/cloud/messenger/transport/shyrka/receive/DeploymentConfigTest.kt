@@ -216,4 +216,32 @@ class DeploymentConfigTest {
         assertThat(result.enabled).isTrue()
         assertThat(result.type).isEqualTo(Conversations.ConversationDisconnect.Type.Send)
     }
+
+    @Test
+    fun `when FileUpload serialized`() {
+        val givenMode = Mode(fileTypes = listOf(DeploymentConfigValues.FileType), maxFileSizeKB = DeploymentConfigValues.MaxFileSize)
+        val givenFileUpload = FileUpload(listOf(givenMode))
+        val expectedFileUploadAsJson = """{"modes":[{"fileTypes":["png"],"maxFileSizeKB":100}]}"""
+
+        val result = WebMessagingJson.json.encodeToString(givenFileUpload)
+
+        assertThat(result).isEqualTo(expectedFileUploadAsJson)
+    }
+
+    @Test
+    fun `when FileUpload deserialized`() {
+        val givenFileUploadAsJson = """{"modes":[{"fileTypes":["png"],"maxFileSizeKB":100}]}"""
+        val expectedFileType = DeploymentConfigValues.FileType
+        val expectedFileTypes = listOf(expectedFileType)
+        val expectedModes = listOf(Mode(fileTypes = expectedFileTypes, maxFileSizeKB = DeploymentConfigValues.MaxFileSize))
+        val expectedFileUpload = FileUpload(expectedModes)
+
+        val result = WebMessagingJson.json.decodeFromString<FileUpload>(givenFileUploadAsJson)
+
+        assertThat(result).isEqualTo(expectedFileUpload)
+        assertThat(result.modes[0].fileTypes[0]).isEqualTo(DeploymentConfigValues.FileType)
+        assertThat(result.modes[0].maxFileSizeKB).isEqualTo(DeploymentConfigValues.MaxFileSize)
+        assertThat(result.modes).containsExactly(*expectedModes.toTypedArray())
+        assertThat(result.modes[0].fileTypes).containsExactly(*expectedFileTypes.toTypedArray())
+    }
 }
