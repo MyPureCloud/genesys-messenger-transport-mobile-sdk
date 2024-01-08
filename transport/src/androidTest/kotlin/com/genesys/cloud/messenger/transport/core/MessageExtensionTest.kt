@@ -442,16 +442,16 @@ internal class MessageExtensionTest {
         val givenChannelAsJson =
             """{"time":"2022-08-22T19:24:26.704Z","messageId":"test_message_id","type":"Text","to":{"firstName":"participant_name","lastName":"participant_last_name","nickname":"participant_nickname","image":"http://participant.image"},"from":{}}"""
         val expectedChannel = StructuredMessage.Channel(
-        time = TestValues.Timestamp,
-        messageId = MessageValues.Id,
-        type = MessageValues.Type,
-        to = StructuredMessage.Participant(
-            firstName = MessageValues.ParticipantName,
-            lastName = MessageValues.ParticipantLastName,
-            nickname = MessageValues.ParticipantNickname,
-            image = MessageValues.ParticipantImageUrl,
-        ),
-        from = StructuredMessage.Participant(),
+            time = TestValues.Timestamp,
+            messageId = MessageValues.Id,
+            type = MessageValues.Type,
+            to = StructuredMessage.Participant(
+                firstName = MessageValues.ParticipantName,
+                lastName = MessageValues.ParticipantLastName,
+                nickname = MessageValues.ParticipantNickname,
+                image = MessageValues.ParticipantImageUrl,
+            ),
+            from = StructuredMessage.Participant(),
         )
 
         val result = WebMessagingJson.json.decodeFromString<StructuredMessage.Channel>(givenChannelAsJson)

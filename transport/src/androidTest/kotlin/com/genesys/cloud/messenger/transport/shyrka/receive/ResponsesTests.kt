@@ -145,7 +145,6 @@ class ResponsesTests {
         }
     }
 
-
     @Test
     fun `when SessionResponse serialized`() {
         val givenSessionResponse = SessionResponse(
