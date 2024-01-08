@@ -48,6 +48,9 @@ object MessageValues {
     internal const val PageNumber = 1
     internal const val Total = 25
     internal const val PageCount = 1
+    internal const val PreIdentifiedMessageType = "type"
+    internal const val PreIdentifiedMessageCode = 200
+    internal const val PreIdentifiedMessageClass = "clazz"
 }
 
 object AttachmentValues {
@@ -55,6 +58,9 @@ object AttachmentValues {
     internal const val DownloadUrl = "https://downloadurl.png"
     internal const val PresignedHeaderKey = "x-amz-tagging"
     internal const val PresignedHeaderValue = "abc"
+    internal const val FileName = "fileName"
+    internal const val FileSize = 100
+    internal const val FileType = "png"
 }
 
 object LogMessages {

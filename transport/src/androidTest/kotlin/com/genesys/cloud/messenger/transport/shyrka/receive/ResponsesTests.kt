@@ -100,4 +100,46 @@ class ResponsesTests {
             assertThat(exp).isEqualTo(AuthTest.JwtExpiry)
         }
     }
+
+    @Test
+    fun `when PresignedUrlResponse serialized`() {
+        val givenPresignedUrlResponse = PresignedUrlResponse(
+            attachmentId = AttachmentValues.Id,
+            fileName = AttachmentValues.FileName,
+            headers = mapOf(AttachmentValues.PresignedHeaderKey to AttachmentValues.PresignedHeaderValue),
+            url = AttachmentValues.DownloadUrl,
+            fileSize = AttachmentValues.FileSize,
+            fileType = AttachmentValues.FileType,
+        )
+        val expectedPresignedUrlResponse = """{"attachmentId":"test_attachment_id","headers":{"x-amz-tagging":"abc"},"url":"https://downloadurl.png","fileName":"fileName","fileSize":100,"fileType":"png"}"""
+
+        val result = WebMessagingJson.json.encodeToString(givenPresignedUrlResponse)
+
+        assertThat(result).isEqualTo(expectedPresignedUrlResponse)
+    }
+
+    @Test
+    fun `when PresignedUrlResponse deserialized`() {
+        val givenPresignedUrlResponseAsJson = """{"attachmentId":"test_attachment_id","headers":{"x-amz-tagging":"abc"},"url":"https://downloadurl.png","fileName":"fileName","fileSize":100,"fileType":"png"}"""
+        val expectedPresignedUrlResponse = PresignedUrlResponse(
+            attachmentId = AttachmentValues.Id,
+            fileName = AttachmentValues.FileName,
+            headers = mapOf(AttachmentValues.PresignedHeaderKey to AttachmentValues.PresignedHeaderValue),
+            url = AttachmentValues.DownloadUrl,
+            fileSize = AttachmentValues.FileSize,
+            fileType = AttachmentValues.FileType,
+        )
+
+        val result = WebMessagingJson.json.decodeFromString<PresignedUrlResponse>(givenPresignedUrlResponseAsJson)
+
+        result.run {
+            assertThat(this).isEqualTo(expectedPresignedUrlResponse)
+            assertThat(attachmentId).isEqualTo(expectedPresignedUrlResponse.attachmentId)
+            assertThat(fileName).isEqualTo(expectedPresignedUrlResponse.fileName)
+            assertThat(headers[AttachmentValues.PresignedHeaderKey]).isEqualTo(expectedPresignedUrlResponse.headers[AttachmentValues.PresignedHeaderKey])
+            assertThat(url).isEqualTo(expectedPresignedUrlResponse.url)
+            assertThat(fileSize).isEqualTo(expectedPresignedUrlResponse.fileSize)
+            assertThat(fileName).isEqualTo(expectedPresignedUrlResponse.fileName)
+        }
+    }
 }

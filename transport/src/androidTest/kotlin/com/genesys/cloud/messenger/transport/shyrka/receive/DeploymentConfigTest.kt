@@ -71,6 +71,9 @@ class DeploymentConfigTest {
             messenger.run {
                 assertThat(enabled).isTrue()
                 assertThat(apps).isEqualTo(expectedApps)
+                assertThat(styles).isEqualTo(expectedStyles)
+                assertThat(launcherButton).isEqualTo(expectedLauncherButton)
+                assertThat(fileUpload).isEqualTo(expectedFileUpload)
             }
             assertThat(status).isEqualTo(DeploymentConfigValues.Status)
             assertThat(version).isEqualTo(DeploymentConfigValues.Version)
@@ -285,5 +288,28 @@ class DeploymentConfigTest {
 
         assertThat(result).isEqualTo(expectedLauncherButton)
         assertThat(result.visibility).isEqualTo(DeploymentConfigValues.LauncherButtonVisibility)
+    }
+
+    @Test
+    fun `when Mode serialized`() {
+        val givenFileTypes = listOf(DeploymentConfigValues.FileType)
+        val givenMode = Mode(givenFileTypes, DeploymentConfigValues.MaxFileSize)
+        val expectedModeAsJson = """{"fileTypes":["png"],"maxFileSizeKB":100}"""
+
+        val result = WebMessagingJson.json.encodeToString(givenMode)
+
+        assertThat(result).isEqualTo(expectedModeAsJson)
+    }
+
+    @Test
+    fun `when Mode deserialized`() {
+        val givenModeAsJson = """{"fileTypes":["png"],"maxFileSizeKB":100}"""
+        val expectedFileTypes = listOf(DeploymentConfigValues.FileType)
+        val expectedMode = Mode(listOf(DeploymentConfigValues.FileType), DeploymentConfigValues.MaxFileSize)
+
+        val result = WebMessagingJson.json.decodeFromString<Mode>(givenModeAsJson)
+
+        assertThat(result).isEqualTo(expectedMode)
+        assertThat(result.fileTypes).containsExactly(*expectedFileTypes.toTypedArray())
     }
 }

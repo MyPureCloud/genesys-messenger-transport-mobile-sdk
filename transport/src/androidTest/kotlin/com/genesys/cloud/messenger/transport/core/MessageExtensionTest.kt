@@ -12,6 +12,7 @@ import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponse
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses.isoTestTimestamp
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageEntityList
+import com.genesys.cloud.messenger.transport.shyrka.receive.PreIdentifiedWebMessagingMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
@@ -331,7 +332,8 @@ internal class MessageExtensionTest {
             pageCount = MessageValues.PageCount,
         )
 
-        val expectedMessageEntityListAsJson = """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
+        val expectedMessageEntityListAsJson =
+            """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
 
         val result = WebMessagingJson.json.encodeToString(givenMessageEntityList)
 
@@ -340,7 +342,8 @@ internal class MessageExtensionTest {
 
     @Test
     fun `when MessageEntityList deserialized`() {
-        val givenMessageEntityListAsJson = """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
+        val givenMessageEntityListAsJson =
+            """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
         val expectedStructuredMessage = StructuredMessage(
             id = "some_id",
             type = StructuredMessage.Type.Text,
@@ -354,7 +357,8 @@ internal class MessageExtensionTest {
             pageCount = MessageValues.PageCount,
         )
 
-        val result = WebMessagingJson.json.decodeFromString<MessageEntityList>(givenMessageEntityListAsJson)
+        val result =
+            WebMessagingJson.json.decodeFromString<MessageEntityList>(givenMessageEntityListAsJson)
 
         result.run {
             assertThat(this).isEqualTo(expectedMessageEntityList)
@@ -363,6 +367,34 @@ internal class MessageExtensionTest {
             assertThat(pageNumber).isEqualTo(expectedMessageEntityList.pageNumber)
             assertThat(total).isEqualTo(expectedMessageEntityList.total)
             assertThat(pageCount).isEqualTo(expectedMessageEntityList.pageCount)
+        }
+    }
+
+    @Test
+    fun `validate default constructor of MessageEntityList`() {
+        val givenMessageEntityList = MessageEntityList(
+            pageSize = MessageValues.PageSize,
+            pageNumber = MessageValues.PageNumber,
+            total = MessageValues.Total,
+            pageCount = MessageValues.PageCount,
+        )
+
+        assertThat(givenMessageEntityList.entities).isEmpty()
+    }
+
+    @Test
+    fun `validate default constructor of PreIdentifiedWebMessagingMessage`() {
+        val givenPreIdentifiedWebMessagingMessageAsJson =
+            """{"type":"type","code":200,"class":"clazz"}"""
+
+        val result = WebMessagingJson.json.decodeFromString<PreIdentifiedWebMessagingMessage>(
+            givenPreIdentifiedWebMessagingMessageAsJson
+        )
+
+        result.run {
+            assertThat(type).isEqualTo(MessageValues.PreIdentifiedMessageType)
+            assertThat(code).isEqualTo(MessageValues.PreIdentifiedMessageCode)
+            assertThat(className).isEqualTo(MessageValues.PreIdentifiedMessageClass)
         }
     }
 }
