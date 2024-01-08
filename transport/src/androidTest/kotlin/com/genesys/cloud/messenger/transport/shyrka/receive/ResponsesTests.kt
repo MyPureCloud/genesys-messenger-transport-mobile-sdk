@@ -2,6 +2,8 @@ package com.genesys.cloud.messenger.transport.shyrka.receive
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
+import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
@@ -140,6 +142,34 @@ class ResponsesTests {
             assertThat(url).isEqualTo(expectedPresignedUrlResponse.url)
             assertThat(fileSize).isEqualTo(expectedPresignedUrlResponse.fileSize)
             assertThat(fileName).isEqualTo(expectedPresignedUrlResponse.fileName)
+        }
+    }
+
+
+    @Test
+    fun `when SessionResponse serialized`() {
+        val givenSessionResponse = SessionResponse(
+            connected = true,
+            newSession = true,
+            readOnly = false,
+        )
+        val expectedSessionResponse = """{"connected":true,"newSession":true}"""
+
+        val result = WebMessagingJson.json.encodeToString(givenSessionResponse)
+
+        assertThat(result).isEqualTo(expectedSessionResponse)
+    }
+
+    @Test
+    fun `when SessionResponse deserialized`() {
+        val givenSessionResponseAsJson = """{"connected":true,"newSession":true,"readOnly":false}"""
+
+        val result = WebMessagingJson.json.decodeFromString<SessionResponse>(givenSessionResponseAsJson)
+
+        result.run {
+            assertThat(connected).isTrue()
+            assertThat(newSession).isTrue()
+            assertThat(readOnly).isFalse()
         }
     }
 }
