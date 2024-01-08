@@ -30,6 +30,5 @@ class RequestSerializationTest {
             assertThat(token).isEqualTo(TestValues.Token)
             assertThat(attachmentId).isEqualTo(AttachmentValues.Id)
         }
-
     }
 }
