@@ -4,23 +4,32 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.send.GetAttachmentRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.RequestAction
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
-import kotlin.test.Test
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
+import kotlin.test.Test
 
 class RequestSerializationTest {
 
     @Test
     fun `validate GetAttachmentRequest serialization`() {
-        val getAttachmentRequest = GetAttachmentRequest(
+        val expectedGetAttachmentRequest = GetAttachmentRequest(
             token = TestValues.Token,
             attachmentId = AttachmentValues.Id
         )
+        val expectedJson = """{"token":"<token>","attachmentId":"test_attachment_id","action":"getAttachment"}"""
 
-        val encodedString = WebMessagingJson.json.encodeToString(getAttachmentRequest)
+        val encodedString = WebMessagingJson.json.encodeToString(expectedGetAttachmentRequest)
+        val decoded = WebMessagingJson.json.decodeFromString<GetAttachmentRequest>(expectedJson)
 
-        assertThat(encodedString, "encoded GetAttachmentRequest")
-            .isEqualTo("""{"token":"<token>","attachmentId":"test_attachment_id","action":"getAttachment"}""")
+        assertThat(encodedString, "encoded GetAttachmentRequest").isEqualTo(expectedJson)
+        decoded.run {
+            assertThat(action).isEqualTo(RequestAction.GET_ATTACHMENT.value)
+            assertThat(token).isEqualTo(TestValues.Token)
+            assertThat(attachmentId).isEqualTo(AttachmentValues.Id)
+        }
+
     }
 }
