@@ -244,4 +244,25 @@ class DeploymentConfigTest {
         assertThat(result.modes).containsExactly(*expectedModes.toTypedArray())
         assertThat(result.modes[0].fileTypes).containsExactly(*expectedFileTypes.toTypedArray())
     }
+
+    @Test
+    fun `when JourneyEvents serialized`() {
+        val givenJourneyEvents = JourneyEvents(enabled = true)
+        val expectedJourneyEventsAsJson = """{"enabled":true}"""
+
+        val result = WebMessagingJson.json.encodeToString(givenJourneyEvents)
+
+        assertThat(result).isEqualTo(expectedJourneyEventsAsJson)
+    }
+
+    @Test
+    fun `when JourneyEvents deserialized`() {
+        val givenJourneyEventsAsJson = """{"enabled":true}"""
+        val expectedJourneyEvents = JourneyEvents(enabled = true)
+
+        val result = WebMessagingJson.json.decodeFromString<JourneyEvents>(givenJourneyEventsAsJson)
+
+        assertThat(result).isEqualTo(expectedJourneyEvents)
+        assertThat(result.enabled).isTrue()
+    }
 }
