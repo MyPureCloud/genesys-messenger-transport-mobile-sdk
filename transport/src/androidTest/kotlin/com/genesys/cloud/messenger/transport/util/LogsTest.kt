@@ -2,6 +2,8 @@ package com.genesys.cloud.messenger.transport.util
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isInstanceOf
+import co.touchlab.kermit.Logger
 import co.touchlab.kermit.Severity
 import com.genesys.cloud.messenger.transport.util.logs.KermitKtorLogger
 import com.genesys.cloud.messenger.transport.util.logs.Log
@@ -14,7 +16,7 @@ import io.mockk.verify
 import org.junit.Test
 
 class LogsTest {
-    private val mockKermit: co.touchlab.kermit.Logger = mockk(relaxed = true) {
+    private val mockKermit: Logger = mockk(relaxed = true) {
         every { tag } returns LogMessages.LogTag
     }
 
@@ -74,14 +76,21 @@ class LogsTest {
     }
 
     @Test
+    fun `when getKtorLogger`() {
+        val result = subject.ktorLogger
+
+        assertThat(result).isInstanceOf(KermitKtorLogger::class)
+    }
+
+    @Test
     fun `when KermitKtorLogger log`() {
-        val mockKermit: co.touchlab.kermit.Logger = mockk(relaxed = true)
+        val mockKermit: Logger = mockk(relaxed = true)
         val kermitKtorLogger = KermitKtorLogger(mockKermit)
 
         kermitKtorLogger.log(LogMessages.Connect)
 
         verify {
-            mockKermit.log(Severity.Info, "", null, LogMessages.Connect)
+            mockKermit.i { LogMessages.Connect }
         }
     }
 }
