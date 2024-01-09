@@ -241,9 +241,9 @@ class RequestSerializationTest {
             assertThat(this).isEqualTo(expectedRequest)
             assertThat(channel).isNull()
             assertThat(events).containsExactly(*expectedEvents.toTypedArray())
-                assertThat((events[0] as TypingEvent).eventType).isEqualTo(StructuredMessageEvent.Type.Typing)
-                assertThat((events[0] as TypingEvent).typing.type).isEqualTo("typing")
-                assertThat((events[0] as TypingEvent).typing.duration).isEqualTo(100)
+            assertThat((events[0] as TypingEvent).eventType).isEqualTo(StructuredMessageEvent.Type.Typing)
+            assertThat((events[0] as TypingEvent).typing.type).isEqualTo("typing")
+            assertThat((events[0] as TypingEvent).typing.duration).isEqualTo(100)
         }
     }
 
