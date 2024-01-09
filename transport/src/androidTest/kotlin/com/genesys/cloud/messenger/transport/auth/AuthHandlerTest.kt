@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.auth
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
+import assertk.assertions.isNotEmpty
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.ErrorCode
@@ -115,6 +116,7 @@ class AuthHandlerTest {
         verify { mockEventHandler.onEvent(Event.Authorized) }
         assertThat(subject.jwt).isEqualTo(expectedAuthJwt.jwt)
         assertThat(fakeVault.authRefreshToken).isEqualTo(expectedAuthJwt.refreshToken)
+        assertThat(fakeVault.token).isNotEmpty()
     }
 
     @Test
