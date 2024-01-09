@@ -33,6 +33,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import org.junit.After
 import org.junit.Before
@@ -464,12 +465,14 @@ class AuthHandlerTest {
 
     @Test
     fun `when serialize RefreshToken`() {
-        val givenRefreshToken = RefreshToken(AuthTest.RefreshToken)
-        val expectedRefreshTokenAsJson = """{"refreshToken":"refresh_token"}"""
+        val refreshToken = RefreshToken(AuthTest.RefreshToken)
+        val expectedRefreshTokenAsJson = """{"refreshToken":"${AuthTest.RefreshToken}"}"""
 
-        val refreshTokenAsJson = WebMessagingJson.json.encodeToString(givenRefreshToken)
+        val encoded = WebMessagingJson.json.encodeToString(refreshToken)
+        val decoded = WebMessagingJson.json.decodeFromString<RefreshToken>(expectedRefreshTokenAsJson)
 
-        assertThat(refreshTokenAsJson).isEqualTo(expectedRefreshTokenAsJson)
+        assertThat(encoded).isEqualTo(expectedRefreshTokenAsJson)
+        assertThat(decoded).isEqualTo(refreshToken)
     }
 
     private fun buildAuthHandler(givenAutoRefreshTokenWhenExpired: Boolean = true): AuthHandlerImpl {
