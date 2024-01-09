@@ -8,10 +8,12 @@ import co.touchlab.kermit.Severity
 import com.genesys.cloud.messenger.transport.util.logs.KermitKtorLogger
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
+import com.genesys.cloud.messenger.transport.util.logs.okHttpLogger
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import com.genesys.cloud.messenger.transport.utility.LogMessages
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import org.junit.Test
 
@@ -84,13 +86,28 @@ class LogsTest {
 
     @Test
     fun `when KermitKtorLogger log`() {
+        val slot = slot<String>()
         val mockKermit: Logger = mockk(relaxed = true)
         val kermitKtorLogger = KermitKtorLogger(mockKermit)
 
         kermitKtorLogger.log(LogMessages.Connect)
 
         verify {
-            mockKermit.i { LogMessages.Connect }
+            mockKermit.log(Severity.Info, "", null ,capture(slot))
         }
+        assertThat(slot.captured).isEqualTo(LogMessages.Connect)
+    }
+
+    @Test
+    fun `when okHttpLogger log`() {
+        val slot = slot<String>()
+
+        val result = subject.okHttpLogger()
+        result.log( LogMessages.Connect)
+
+        verify {
+            mockKermit.i(capture(slot))
+        }
+        assertThat(slot.captured).isEqualTo(LogMessages.Connect)
     }
 }
