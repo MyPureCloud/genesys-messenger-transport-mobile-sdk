@@ -68,6 +68,7 @@ object AttachmentValues {
 }
 
 object LogMessages {
+    internal const val LogTag = "TestLogTag"
     internal const val Connect = "connect()"
     internal const val ConnectAuthenticated = "connectAuthenticatedSession()"
     internal const val ConfigureSession = """configureSession(token = 00000000-0000-0000-0000-000000000000, startNew: false)"""
