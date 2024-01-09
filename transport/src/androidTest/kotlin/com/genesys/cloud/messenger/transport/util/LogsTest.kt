@@ -93,7 +93,7 @@ class LogsTest {
         kermitKtorLogger.log(LogMessages.Connect)
 
         verify {
-            mockKermit.log(Severity.Info, "", null ,capture(slot))
+            mockKermit.log(Severity.Info, "", null, capture(slot))
         }
         assertThat(slot.captured).isEqualTo(LogMessages.Connect)
     }
@@ -103,7 +103,7 @@ class LogsTest {
         val slot = slot<String>()
 
         val result = subject.okHttpLogger()
-        result.log( LogMessages.Connect)
+        result.log(LogMessages.Connect)
 
         verify {
             mockKermit.i(capture(slot))
