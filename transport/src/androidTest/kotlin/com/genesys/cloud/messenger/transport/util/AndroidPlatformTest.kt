@@ -31,4 +31,11 @@ class AndroidPlatformTest {
 
         assertThat(result).isEqualTo(expected)
     }
+
+    @Test
+    fun `test TokenGenerator`() {
+        val result = TokenGenerator.generate()
+
+        assertThat(result, "Android TokenGenerator generated platform UUID").isNotEmpty()
+    }
 }
