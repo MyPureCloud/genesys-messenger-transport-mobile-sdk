@@ -107,3 +107,13 @@ object DeploymentConfigValues {
     internal val Status = DeploymentConfig.Status.Active
     internal const val Version = "1"
 }
+
+object Journey {
+    internal const val CustomerId = "customer_id"
+    internal const val CustomerIdType = "customer_id_type"
+    internal const val CustomerSessionId = "customer_session_id"
+    internal const val CustomerSessionType = "customer_session_type"
+    internal const val ActionId = "action_id"
+    internal const val ActionMapId = "action_map_id"
+    internal const val ActionMapVersion = 1.0f
+}

@@ -21,10 +21,16 @@ import com.genesys.cloud.messenger.transport.shyrka.send.EchoRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.EventMessage
 import com.genesys.cloud.messenger.transport.shyrka.send.GetAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
+import com.genesys.cloud.messenger.transport.shyrka.send.JourneyAction
+import com.genesys.cloud.messenger.transport.shyrka.send.JourneyActionMap
+import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
+import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
+import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.shyrka.send.RequestAction
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.AuthTest
+import com.genesys.cloud.messenger.transport.utility.Journey
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -150,6 +156,7 @@ class RequestSerializationTest {
             assertThat(deploymentId).isEqualTo(TestValues.DeploymentId)
             assertThat(startNew).isFalse()
             assertThat(journeyContext).isNull()
+            assertThat(data).isEqualTo(expectedData)
         }
         assertThat(decodedData).isEqualTo(expectedData)
         assertThat(decodedData.code).isEqualTo(AuthTest.JwtToken)
@@ -264,6 +271,95 @@ class RequestSerializationTest {
             assertThat(action).isEqualTo(RequestAction.GET_ATTACHMENT.value)
             assertThat(token).isEqualTo(TestValues.Token)
             assertThat(attachmentId).isEqualTo(AttachmentValues.Id)
+        }
+    }
+
+    @Test
+    fun `validate JourneyContext serialization`() {
+        val expectedJourneyCustomer =
+            JourneyCustomer(id = Journey.CustomerId, idType = Journey.CustomerIdType)
+        val expectedCustomerSession = JourneyCustomerSession(
+            id = Journey.CustomerSessionId,
+            type = Journey.CustomerSessionType
+        )
+        val expectedJourneyActionMap =
+            JourneyActionMap(id = Journey.ActionMapId, version = Journey.ActionMapVersion)
+        val expectedTriggeringAction =
+            JourneyAction(id = Journey.ActionId, actionMap = expectedJourneyActionMap)
+        val expectedJourneyContext = JourneyContext(
+            customer = expectedJourneyCustomer,
+            customerSession = expectedCustomerSession,
+            triggeringAction = expectedTriggeringAction,
+        )
+        val expectedJourneyCustomerJson =
+            """{"id":"customer_id","idType":"customer_id_type"}"""
+        val expectedCustomerSessionJson =
+            """{"id":"customer_session_id","type":"customer_session_type"}"""
+        val expectedJourneyActionMapJson =
+            """{"id":"action_map_id","version":1.0}"""
+        val expectedTriggeringActionJson =
+            """{"id":"action_id","actionMap":{"id":"action_map_id","version":1.0}}"""
+        val expectedJourneyContextJson =
+            """{"customer":{"id":"customer_id","idType":"customer_id_type"},"customerSession":{"id":"customer_session_id","type":"customer_session_type"},"triggeringAction":{"id":"action_id","actionMap":{"id":"action_map_id","version":1.0}}}"""
+
+        val encodedJourneyCustomerString =
+            WebMessagingJson.json.encodeToString(expectedJourneyCustomer)
+        val encodedCustomerSessionString =
+            WebMessagingJson.json.encodeToString(expectedCustomerSession)
+        val encodedJourneyActionMapString =
+            WebMessagingJson.json.encodeToString(expectedJourneyActionMap)
+        val encodedJourneyActionString =
+            WebMessagingJson.json.encodeToString(expectedTriggeringAction)
+        val encodedJourneyContextString =
+            WebMessagingJson.json.encodeToString(expectedJourneyContext)
+        val decodedJourneyCustomer =
+            WebMessagingJson.json.decodeFromString<JourneyCustomer>(expectedJourneyCustomerJson)
+        val decodedJourneyCustomerSession =
+            WebMessagingJson.json.decodeFromString<JourneyCustomerSession>(
+                expectedCustomerSessionJson
+            )
+        val decodedJourneyActionMap =
+            WebMessagingJson.json.decodeFromString<JourneyActionMap>(expectedJourneyActionMapJson)
+        val decodedJourneyAction =
+            WebMessagingJson.json.decodeFromString<JourneyAction>(expectedTriggeringActionJson)
+        val decodedJourneyContext =
+            WebMessagingJson.json.decodeFromString<JourneyContext>(expectedJourneyContextJson)
+
+        assertThat(encodedJourneyCustomerString, "encoded JourneyCustomer").isEqualTo(
+            expectedJourneyCustomerJson
+        )
+        assertThat(encodedCustomerSessionString, "encoded JourneyCustomerSession").isEqualTo(
+            expectedCustomerSessionJson
+        )
+        assertThat(encodedJourneyActionMapString, "encoded JourneyActionMap").isEqualTo(
+            expectedJourneyActionMapJson
+        )
+        assertThat(encodedJourneyActionString, "encoded JourneyAction").isEqualTo(
+            expectedTriggeringActionJson
+        )
+        assertThat(encodedJourneyContextString, "encoded JourneyContext").isEqualTo(
+            expectedJourneyContextJson
+        )
+        decodedJourneyCustomer.run {
+            assertThat(id).isEqualTo(Journey.CustomerId)
+            assertThat(idType).isEqualTo(Journey.CustomerIdType)
+        }
+        decodedJourneyCustomerSession.run {
+            assertThat(id).isEqualTo(Journey.CustomerSessionId)
+            assertThat(type).isEqualTo(Journey.CustomerSessionType)
+        }
+        decodedJourneyActionMap.run {
+            assertThat(id).isEqualTo(Journey.ActionMapId)
+            assertThat(version).isEqualTo(Journey.ActionMapVersion)
+        }
+        decodedJourneyAction.run {
+            assertThat(id).isEqualTo(Journey.ActionId)
+            assertThat(actionMap).isEqualTo(expectedJourneyActionMap)
+        }
+        decodedJourneyContext.run {
+            assertThat(customer).isEqualTo(expectedJourneyCustomer)
+            assertThat(customerSession).isEqualTo(expectedCustomerSession)
+            assertThat(triggeringAction).isEqualTo(expectedTriggeringAction)
         }
     }
 }
