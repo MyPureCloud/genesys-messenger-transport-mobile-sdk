@@ -12,8 +12,8 @@ import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
 import io.mockk.verifySequence
-import kotlin.test.assertTrue
 import org.junit.Test
+import kotlin.test.assertTrue
 
 class HealthCheckProviderTest {
     internal val mockLogger: Log = mockk(relaxed = true)
