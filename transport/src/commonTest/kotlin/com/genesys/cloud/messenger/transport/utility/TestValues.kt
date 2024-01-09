@@ -11,6 +11,8 @@ object TestValues {
     internal const val DeploymentId = "deploymentId"
     internal const val Timestamp = "2022-08-22T19:24:26.704Z"
     internal const val Token = "<token>"
+    internal const val ReconnectionTimeout = 5000L
+    internal const val NoReconnectionAttempts = 0L
 }
 
 object AuthTest {
