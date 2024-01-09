@@ -1,27 +1,34 @@
 package com.genesys.cloud.messenger.transport.util
 
 import assertk.assertThat
+import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEmpty
 import org.junit.Test
 import kotlin.test.assertTrue
 
 class AndroidPlatformTest {
+    private val subject = Platform()
 
     @Test
-    fun testRandomUUID() {
-        val subject = Platform()
+    fun `test randomUUID()`() {
+        val result = subject.randomUUID()
 
-        val actual = subject.randomUUID()
-
-        assertThat(actual, "Android platform UUID").isNotEmpty()
+        assertThat(result, "Android platform UUID").isNotEmpty()
     }
 
     @Test
-    fun testEpochTime() {
+    fun `test epochTime()`() {
         val givenAcceptableRangeOffset = 10
-        val subject = Platform()
 
-        val actual = System.currentTimeMillis()
-        assertTrue { subject.epochMillis() in (actual - givenAcceptableRangeOffset)..(actual + givenAcceptableRangeOffset) }
+        val result = System.currentTimeMillis()
+        assertTrue { subject.epochMillis() in (result - givenAcceptableRangeOffset)..(result + givenAcceptableRangeOffset) }
+    }
+
+    @Test
+    fun `test getPlatform()`() {
+        val expected = "Android ${android.os.Build.VERSION.SDK_INT}"
+        val result = subject.platform
+
+        assertThat(result).isEqualTo(expected)
     }
 }
