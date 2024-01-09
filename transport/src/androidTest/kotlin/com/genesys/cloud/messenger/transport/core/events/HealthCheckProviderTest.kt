@@ -12,6 +12,7 @@ import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
 import io.mockk.verifySequence
+import kotlin.test.assertTrue
 import org.junit.Test
 
 class HealthCheckProviderTest {
@@ -70,5 +71,14 @@ class HealthCheckProviderTest {
 
         assertThat(firstResult).isEqualTo(expected)
         assertThat(secondResult).isEqualTo(expected)
+    }
+
+    @Test
+    fun `when getCurrentTimestamp()`() {
+        val givenAcceptableRangeOffset = 10
+
+        val result = System.currentTimeMillis()
+
+        assertTrue { subject.getCurrentTimestamp() in (result - givenAcceptableRangeOffset)..(result + givenAcceptableRangeOffset) }
     }
 }

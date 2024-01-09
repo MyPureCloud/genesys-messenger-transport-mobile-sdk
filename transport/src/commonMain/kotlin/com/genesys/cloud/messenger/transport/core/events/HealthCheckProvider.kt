@@ -8,7 +8,7 @@ import kotlinx.serialization.encodeToString
 
 internal const val HEALTH_CHECK_COOL_DOWN_MILLISECONDS = 30000L
 
-internal class HealthCheckProvider(val log: Log, val getCurrentTimestamp: () -> Long = { Platform().epochMillis() }) {
+internal class HealthCheckProvider(private val log: Log, internal val getCurrentTimestamp: () -> Long = { Platform().epochMillis() }) {
     private var lastSentHealthCheckTimestamp = 0L
 
     @Throws(Exception::class)
