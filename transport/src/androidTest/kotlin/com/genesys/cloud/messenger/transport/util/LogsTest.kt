@@ -3,7 +3,9 @@ package com.genesys.cloud.messenger.transport.util
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import co.touchlab.kermit.Severity
+import com.genesys.cloud.messenger.transport.util.logs.KermitKtorLogger
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import com.genesys.cloud.messenger.transport.utility.LogMessages
 import io.mockk.every
@@ -62,5 +64,24 @@ class LogsTest {
 
         assertThat(subject.kermit.tag).isEqualTo(LogMessages.LogTag)
         assertThat(subject.kermit.config.minSeverity).isEqualTo(Severity.Assert)
+    }
+
+    @Test
+    fun `when withTag()`() {
+        val result = subject.withTag(LogTag.API)
+
+        assertThat(result.kermit.tag).isEqualTo(LogTag.API)
+    }
+
+    @Test
+    fun `when KermitKtorLogger log`() {
+        val mockKermit: co.touchlab.kermit.Logger = mockk(relaxed = true)
+        val kermitKtorLogger = KermitKtorLogger(mockKermit)
+
+        kermitKtorLogger.log(LogMessages.Connect)
+
+        verify {
+            mockKermit.log(Severity.Info, "", null, LogMessages.Connect)
+        }
     }
 }
