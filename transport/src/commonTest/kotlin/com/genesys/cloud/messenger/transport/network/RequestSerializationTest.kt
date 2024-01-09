@@ -26,8 +26,12 @@ import com.genesys.cloud.messenger.transport.shyrka.send.JourneyActionMap
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
+import com.genesys.cloud.messenger.transport.shyrka.send.JwtRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.OAuth
+import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.RequestAction
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
+import com.genesys.cloud.messenger.transport.shyrka.send.UserTypingRequest
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.Journey
@@ -360,6 +364,97 @@ class RequestSerializationTest {
             assertThat(customer).isEqualTo(expectedJourneyCustomer)
             assertThat(customerSession).isEqualTo(expectedCustomerSession)
             assertThat(triggeringAction).isEqualTo(expectedTriggeringAction)
+        }
+    }
+
+    @Test
+    fun `validate JwtRequest serialization`() {
+        val expectedRequest = JwtRequest(token = TestValues.Token)
+        val expectedJson = """{"token":"${TestValues.Token}","action":"getJwt"}"""
+
+        val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
+        val decoded = WebMessagingJson.json.decodeFromString<JwtRequest>(expectedJson)
+
+        assertThat(encodedString, "encoded JwtRequest").isEqualTo(expectedJson)
+        decoded.run {
+            assertThat(action).isEqualTo(RequestAction.GET_JWT.value)
+            assertThat(token).isEqualTo(TestValues.Token)
+        }
+    }
+
+    @Test
+    fun `validate OAuth serialization`() {
+        val expectedRequest = OAuth(
+            code = AuthTest.AuthCode,
+            redirectUri = AuthTest.RedirectUri,
+            codeVerifier = AuthTest.CodeVerifier,
+        )
+        val expectedJson =
+            """{"code":"${AuthTest.AuthCode}","redirectUri":"${AuthTest.RedirectUri}","codeVerifier":"${AuthTest.CodeVerifier}"}"""
+
+        val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
+        val decoded = WebMessagingJson.json.decodeFromString<OAuth>(expectedJson)
+
+        assertThat(encodedString, "encoded OAuth").isEqualTo(expectedJson)
+        decoded.run {
+            assertThat(code).isEqualTo(AuthTest.AuthCode)
+            assertThat(redirectUri).isEqualTo(AuthTest.RedirectUri)
+            assertThat(codeVerifier).isEqualTo(AuthTest.CodeVerifier)
+        }
+    }
+
+    @Test
+    fun `validate OnAttachmentRequest serialization`() {
+        val expectedRequest = OnAttachmentRequest(
+            token = TestValues.Token,
+            attachmentId = AttachmentValues.Id,
+            fileName = AttachmentValues.FileName,
+            fileType = AttachmentValues.FileType,
+            fileSize = AttachmentValues.FileSize,
+            fileMd5 = AttachmentValues.FileMD5,
+            errorsAsJson = false,
+        )
+        val expectedJson =
+            """{"token":"${TestValues.Token}","attachmentId":"${AttachmentValues.Id}","fileName":"${AttachmentValues.FileName}","fileType":"${AttachmentValues.FileType}","fileSize":${AttachmentValues.FileSize},"fileMd5":"${AttachmentValues.FileMD5}","errorsAsJson":false,"action":"onAttachment"}"""
+
+        val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
+        val decoded = WebMessagingJson.json.decodeFromString<OnAttachmentRequest>(expectedJson)
+
+        assertThat(encodedString, "encoded OnAttachmentRequest").isEqualTo(expectedJson)
+        decoded.run {
+            assertThat(token).isEqualTo(TestValues.Token)
+            assertThat(action).isEqualTo(RequestAction.ON_ATTACHMENT.value)
+            assertThat(fileName).isEqualTo(AttachmentValues.FileName)
+            assertThat(fileType).isEqualTo(AttachmentValues.FileType)
+            assertThat(fileSize).isEqualTo(AttachmentValues.FileSize)
+            assertThat(fileMd5).isEqualTo(AttachmentValues.FileMD5)
+            assertThat(errorsAsJson).isFalse()
+        }
+    }
+
+    @Test
+    fun `validate UserTypingRequest serialization`() {
+        val expectedEvent = TypingEvent(
+            eventType = StructuredMessageEvent.Type.Typing,
+            typing = TypingEvent.Typing(type = "On")
+        )
+        val expectedEventList = listOf(expectedEvent)
+        val expectedMessage = EventMessage(expectedEventList)
+        val expectedRequest = UserTypingRequest(token = TestValues.Token)
+        val expectedJson =
+            """{"token":"<token>","action":"onMessage","message":{"events":[{"eventType":"Typing","typing":{"type":"On"}}],"type":"Event"}}"""
+
+        val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
+        val decoded = WebMessagingJson.json.decodeFromString<UserTypingRequest>(expectedJson)
+
+        assertThat(encodedString, "encoded UserTypingRequest").isEqualTo(expectedJson)
+        decoded.run {
+            assertThat(token).isEqualTo(TestValues.Token)
+            assertThat(action).isEqualTo(RequestAction.ON_MESSAGE.value)
+            assertThat(message).isEqualTo(expectedMessage)
+            message.run {
+                assertThat(events).containsExactly(*expectedEventList.toTypedArray())
+            }
         }
     }
 }

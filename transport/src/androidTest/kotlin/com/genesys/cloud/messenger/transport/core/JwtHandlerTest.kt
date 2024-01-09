@@ -3,9 +3,7 @@ package com.genesys.cloud.messenger.transport.core
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
-import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
-import com.genesys.cloud.messenger.transport.shyrka.send.JwtRequest
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.utility.AuthTest
@@ -19,7 +17,6 @@ import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
-import kotlinx.serialization.encodeToString
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -84,14 +81,5 @@ class JwtHandlerTest {
             assertThat(jwt).isEqualTo(AuthTest.JwtToken)
             assertThat(exp).isEqualTo(0)
         }
-    }
-
-    @Test
-    fun `when serialize JwtRequest`() {
-        val json = """{"token":"${Request.token}","action":"getJwt"}"""
-
-        val result = WebMessagingJson.json.encodeToString(JwtRequest(Request.token))
-
-        assertThat(result).isEqualTo(json)
     }
 }
