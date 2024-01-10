@@ -111,6 +111,7 @@ class MessageTest {
         decoded.run {
             assertThat(this).isEqualTo(expectedRequest)
             assertThat(attachment).isEqualTo(expectedAttachment)
+            assertThat(contentType).isEqualTo(Message.Content.Type.Attachment)
         }
     }
 

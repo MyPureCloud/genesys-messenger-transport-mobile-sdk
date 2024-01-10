@@ -8,6 +8,7 @@ import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent.Presence
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.AutoStartRequest
@@ -46,7 +47,7 @@ class RequestSerializationTest {
     fun `validate AutoStartRequest serialization`() {
         val expectedPresenceEvent = PresenceEvent(
             eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(type = PresenceEvent.Presence.Type.Join),
+            presence = Presence(type = Presence.Type.Join),
         )
         val expectedEvents = listOf(expectedPresenceEvent)
         val expectedMessage = EventMessage(expectedEvents)
@@ -87,24 +88,29 @@ class RequestSerializationTest {
     fun `validate ClearConversationRequest serialization`() {
         val expectedPresenceEvent = PresenceEvent(
             eventType = StructuredMessageEvent.Type.Presence,
-            presence = PresenceEvent.Presence(type = PresenceEvent.Presence.Type.Clear),
+            presence = Presence(type = Presence.Type.Clear),
         )
         val expectedEvents = listOf(expectedPresenceEvent)
         val expectedMessage = EventMessage(expectedEvents)
         val expectedRequest = ClearConversationRequest(TestValues.Token)
         val expectedJson =
             """{"token":"<token>","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Clear"}}],"type":"Event"}}"""
+        val expectedPresenceJson = """{"type":"Clear"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
+        val encodedPresenceString = WebMessagingJson.json.encodeToString(Presence(Presence.Type.Clear))
         val decoded = WebMessagingJson.json.decodeFromString<ClearConversationRequest>(expectedJson)
+        val decodedPresence = WebMessagingJson.json.decodeFromString<Presence>(expectedPresenceJson)
 
         assertThat(encodedString, "encoded ClearConversationRequest").isEqualTo(expectedJson)
+        assertThat(encodedPresenceString, "encoded Presence").isEqualTo(expectedPresenceJson)
         decoded.run {
             assertThat(action).isEqualTo(RequestAction.ON_MESSAGE.value)
             assertThat(token).isEqualTo(TestValues.Token)
             assertThat(message).isEqualTo(expectedMessage)
             assertThat(message.events).containsExactly(*expectedEvents.toTypedArray())
         }
+        assertThat(decodedPresence.type).isEqualTo(Presence.Type.Clear)
     }
 
     @Test
