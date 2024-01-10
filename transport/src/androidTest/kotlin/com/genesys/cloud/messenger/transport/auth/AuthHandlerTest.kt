@@ -453,7 +453,7 @@ class AuthHandlerTest {
     @Test
     fun `when serialize AuthJwt`() {
         val givenAuthJwt = AuthJwt(AuthTest.JwtToken, AuthTest.RefreshToken)
-        val givenAuthJwtWithoutRefreshToken = AuthJwt(AuthTest.JwtToken, null)
+        val givenAuthJwtWithoutRefreshToken = AuthJwt(AuthTest.JwtToken)
         val expectedAuthJwtAsJson = """{"jwt":"jwt_Token","refreshToken":"refresh_token"}"""
         val expectedAuthJwtWithoutRefreshTokenAsJson = """{"jwt":"jwt_Token"}"""
 
