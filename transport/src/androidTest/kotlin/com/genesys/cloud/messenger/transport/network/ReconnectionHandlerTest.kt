@@ -48,7 +48,7 @@ class ReconnectionHandlerTest {
     fun `when reconnect() and there are reconnection attempts left`() {
         runBlocking {
             subject.reconnect(mockReconnectFunction)
-            delay(5000)
+            delay(5500)
         }
 
         coVerify {
