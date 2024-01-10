@@ -4,6 +4,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEmpty
+import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.ErrorCode
@@ -473,6 +474,16 @@ class AuthHandlerTest {
 
         assertThat(encoded).isEqualTo(expectedRefreshTokenAsJson)
         assertThat(decoded).isEqualTo(refreshToken)
+    }
+
+    @Test
+    fun `validate default constructor of AuthJwt`() {
+        val authJwt = AuthJwt(jwt = AuthTest.JwtAuthUrl)
+
+        authJwt.run {
+            assertThat(jwt).isEqualTo(AuthTest.JwtAuthUrl)
+            assertThat(refreshToken).isNull()
+        }
     }
 
     private fun buildAuthHandler(givenAutoRefreshTokenWhenExpired: Boolean = true): AuthHandlerImpl {
