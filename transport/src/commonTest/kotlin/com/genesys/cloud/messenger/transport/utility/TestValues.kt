@@ -13,6 +13,8 @@ object TestValues {
     internal const val Token = "<token>"
     internal const val ReconnectionTimeout = 5000L
     internal const val NoReconnectionAttempts = 0L
+    internal const val MessageTypeStructured = "Structured"
+    internal const val MessageCode = 200
 }
 
 object AuthTest {
@@ -28,6 +30,7 @@ object AuthTest {
 
 object ErrorTest {
     internal const val Message = "This is a generic error message for testing."
+    internal const val RetryAfter = 1
 }
 
 object InvalidValues {
@@ -67,6 +70,8 @@ object AttachmentValues {
     internal const val FileSize = 100
     internal const val FileMD5 = "file_md5"
     internal const val FileType = "png"
+    internal const val MediaType = "png"
+    internal const val AttachmentContentType = "Attachment"
 }
 
 object LogMessages {

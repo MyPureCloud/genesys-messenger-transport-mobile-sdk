@@ -114,7 +114,8 @@ class DeploymentConfigTest {
             ),
             conversationClear = Conversations.ConversationClear(enabled = true)
         )
-        val expectedConversationsAsJson = """{"messagingEndpoint":"messaging_endpoint","showAgentTypingIndicator":true,"showUserTypingIndicator":true,"autoStart":{"enabled":true},"conversationDisconnect":{"enabled":true,"type":"ReadOnly"},"conversationClear":{"enabled":true}}"""
+        val expectedConversationsAsJson =
+            """{"messagingEndpoint":"messaging_endpoint","showAgentTypingIndicator":true,"showUserTypingIndicator":true,"autoStart":{"enabled":true},"conversationDisconnect":{"enabled":true,"type":"ReadOnly"},"conversationClear":{"enabled":true}}"""
 
         val result = WebMessagingJson.json.encodeToString(givenConversations)
 
@@ -123,7 +124,8 @@ class DeploymentConfigTest {
 
     @Test
     fun `when Conversations deserialized`() {
-        val givenConversationsAsJson = """{"messagingEndpoint":"messaging_endpoint","showAgentTypingIndicator":true,"showUserTypingIndicator":true,"autoStart":{"enabled":true},"conversationDisconnect":{"enabled":true,"type":"ReadOnly"},"conversationClear":{"enabled":false}}"""
+        val givenConversationsAsJson =
+            """{"messagingEndpoint":"messaging_endpoint","showAgentTypingIndicator":true,"showUserTypingIndicator":true,"autoStart":{"enabled":true},"conversationDisconnect":{"enabled":true,"type":"ReadOnly"},"conversationClear":{"enabled":false}}"""
         val expectedConversationClear = Conversations.ConversationClear(enabled = false)
         val expectedAutoStart = Conversations.AutoStart(true)
         val expectedConversationDisconnect = Conversations.ConversationDisconnect(
@@ -171,7 +173,8 @@ class DeploymentConfigTest {
         val givenAutostartAsJson = """{"enabled":true}"""
         val expectedAutostart = Conversations.AutoStart(enabled = true)
 
-        val result = WebMessagingJson.json.decodeFromString<Conversations.AutoStart>(givenAutostartAsJson)
+        val result =
+            WebMessagingJson.json.decodeFromString<Conversations.AutoStart>(givenAutostartAsJson)
 
         assertThat(result).isEqualTo(expectedAutostart)
         assertThat(result.enabled).isTrue()
@@ -192,7 +195,9 @@ class DeploymentConfigTest {
         val givenConversationClearAsJson = """{"enabled":true}"""
         val expectedConversationClear = Conversations.ConversationClear(enabled = true)
 
-        val result = WebMessagingJson.json.decodeFromString<Conversations.ConversationClear>(givenConversationClearAsJson)
+        val result = WebMessagingJson.json.decodeFromString<Conversations.ConversationClear>(
+            givenConversationClearAsJson
+        )
 
         assertThat(result).isEqualTo(expectedConversationClear)
         assertThat(result.enabled).isTrue()
@@ -200,7 +205,10 @@ class DeploymentConfigTest {
 
     @Test
     fun `when ConversationDisconnect serialized`() {
-        val givenConversationDisconnect = Conversations.ConversationDisconnect(enabled = true, type = Conversations.ConversationDisconnect.Type.ReadOnly)
+        val givenConversationDisconnect = Conversations.ConversationDisconnect(
+            enabled = true,
+            type = Conversations.ConversationDisconnect.Type.ReadOnly
+        )
         val expectedConversationDisconnectAsJson = """{"enabled":true,"type":"ReadOnly"}"""
 
         val result = WebMessagingJson.json.encodeToString(givenConversationDisconnect)
@@ -211,9 +219,14 @@ class DeploymentConfigTest {
     @Test
     fun `when ConversationDisconnect deserialized`() {
         val givenConversationDisconnectAsJson = """{"enabled":true,"type":"Send"}"""
-        val expectedConversationDisconnect = Conversations.ConversationDisconnect(enabled = true, type = Conversations.ConversationDisconnect.Type.Send)
+        val expectedConversationDisconnect = Conversations.ConversationDisconnect(
+            enabled = true,
+            type = Conversations.ConversationDisconnect.Type.Send
+        )
 
-        val result = WebMessagingJson.json.decodeFromString<Conversations.ConversationDisconnect>(givenConversationDisconnectAsJson)
+        val result = WebMessagingJson.json.decodeFromString<Conversations.ConversationDisconnect>(
+            givenConversationDisconnectAsJson
+        )
 
         assertThat(result).isEqualTo(expectedConversationDisconnect)
         assertThat(result.enabled).isTrue()
@@ -222,7 +235,10 @@ class DeploymentConfigTest {
 
     @Test
     fun `when FileUpload serialized`() {
-        val givenMode = Mode(fileTypes = listOf(DeploymentConfigValues.FileType), maxFileSizeKB = DeploymentConfigValues.MaxFileSize)
+        val givenMode = Mode(
+            fileTypes = listOf(DeploymentConfigValues.FileType),
+            maxFileSizeKB = DeploymentConfigValues.MaxFileSize
+        )
         val givenFileUpload = FileUpload(listOf(givenMode))
         val expectedFileUploadAsJson = """{"modes":[{"fileTypes":["png"],"maxFileSizeKB":100}]}"""
 
@@ -236,7 +252,12 @@ class DeploymentConfigTest {
         val givenFileUploadAsJson = """{"modes":[{"fileTypes":["png"],"maxFileSizeKB":100}]}"""
         val expectedFileType = DeploymentConfigValues.FileType
         val expectedFileTypes = listOf(expectedFileType)
-        val expectedModes = listOf(Mode(fileTypes = expectedFileTypes, maxFileSizeKB = DeploymentConfigValues.MaxFileSize))
+        val expectedModes = listOf(
+            Mode(
+                fileTypes = expectedFileTypes,
+                maxFileSizeKB = DeploymentConfigValues.MaxFileSize
+            )
+        )
         val expectedFileUpload = FileUpload(expectedModes)
 
         val result = WebMessagingJson.json.decodeFromString<FileUpload>(givenFileUploadAsJson)
@@ -284,7 +305,8 @@ class DeploymentConfigTest {
         val givenLauncherButtonAsJson = """{"visibility":"On"}"""
         val expectedLauncherButton = LauncherButton(DeploymentConfigValues.LauncherButtonVisibility)
 
-        val result = WebMessagingJson.json.decodeFromString<LauncherButton>(givenLauncherButtonAsJson)
+        val result =
+            WebMessagingJson.json.decodeFromString<LauncherButton>(givenLauncherButtonAsJson)
 
         assertThat(result).isEqualTo(expectedLauncherButton)
         assertThat(result.visibility).isEqualTo(DeploymentConfigValues.LauncherButtonVisibility)
@@ -305,11 +327,24 @@ class DeploymentConfigTest {
     fun `when Mode deserialized`() {
         val givenModeAsJson = """{"fileTypes":["png"],"maxFileSizeKB":100}"""
         val expectedFileTypes = listOf(DeploymentConfigValues.FileType)
-        val expectedMode = Mode(listOf(DeploymentConfigValues.FileType), DeploymentConfigValues.MaxFileSize)
+        val expectedMode =
+            Mode(listOf(DeploymentConfigValues.FileType), DeploymentConfigValues.MaxFileSize)
 
         val result = WebMessagingJson.json.decodeFromString<Mode>(givenModeAsJson)
 
         assertThat(result).isEqualTo(expectedMode)
         assertThat(result.fileTypes).containsExactly(*expectedFileTypes.toTypedArray())
+    }
+
+    @Test
+    fun `when Styles serialized`() {
+        val expectedRequest = Styles(primaryColor = DeploymentConfigValues.PrimaryColor)
+        val expectedJson = """{"primaryColor":"red"}"""
+
+        val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
+        val decoded = WebMessagingJson.json.decodeFromString<Styles>(expectedJson)
+
+        assertThat(encodedString, "encoded Styles").isEqualTo(expectedJson)
+        assertThat(decoded.primaryColor).isEqualTo(DeploymentConfigValues.PrimaryColor)
     }
 }
