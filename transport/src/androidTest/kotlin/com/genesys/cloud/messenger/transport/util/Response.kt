@@ -32,7 +32,7 @@ internal object Response {
     const val tooManyRequests =
         """{"type":"response","class":"TooManyRequestsErrorMessage","code":429,"body":{"retryAfter":3,"errorCode":4029,"errorMessage":"Message rate too high for this session"}}"""
     const val customAttributeSizeTooLarge =
-        """{"type": "response","class": "string","code": 4013,"body": "Custom Attributes in channel metadata is larger than 2048 bytes"}"""
+        """{"type":"response","class":"string","code":4013,"body":"Custom Attributes in channel metadata is larger than 2048 bytes"}"""
     const val connectionClosedEvent =
         """{"type":"message","class":"ConnectionClosedEvent","code":200,"body":{}}"""
     const val logoutEvent =
@@ -51,6 +51,8 @@ internal object Response {
         """{"type":"message","class":"GenerateUrlError","code":200,"body":{"attachmentId":"test_attachment_id","errorCode":4001,"errorMessage":"This is a generic error message for testing."}}"""
     const val uploadFailureEvent =
         """{"type":"message","class":"UploadFailureEvent","code":200,"body":{"attachmentId":"test_attachment_id","errorCode":4001,"errorMessage":"This is a generic error message for testing.","timestamp":"2022-08-22T19:24:26.704Z"}}"""
+    const val healthCheckResponse =
+        """{"type":"response","class":"StructuredMessage","code":200,"body":{"text":"ping","type":"Text","direction":"Inbound","id":"ebb7e3aa5829c0fed0f43ccbcca4ade7","metadata":{"customMessageId":"SGVhbHRoQ2hlY2tNZXNzYWdlSWQ="}}}"""
     fun clearConversationForbidden(errorMessage: String = "Presence events Conversation Clear are not supported") =
         """{"type":"response","class":"string","code":403,"body":"$errorMessage"}"""
 

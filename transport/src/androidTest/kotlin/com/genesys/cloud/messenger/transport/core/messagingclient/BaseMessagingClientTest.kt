@@ -5,6 +5,7 @@ import com.genesys.cloud.messenger.transport.core.AttachmentHandler
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.CustomAttributesStoreImpl
 import com.genesys.cloud.messenger.transport.core.Empty
+import com.genesys.cloud.messenger.transport.core.JwtHandler
 import com.genesys.cloud.messenger.transport.core.MessageStore
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessagingClientImpl
@@ -141,6 +142,7 @@ open class BaseMessagingClientTest {
         every { fetch("token") } returns Request.token
         every { token } returns Request.token
     }
+    private val mockJwtHandler: JwtHandler = mockk(relaxed = true)
 
     internal val mockLogger: Log = mockk(relaxed = true)
     internal val logSlot = mutableListOf<() -> String>()
@@ -151,7 +153,7 @@ open class BaseMessagingClientTest {
         webSocket = mockPlatformSocket,
         api = mockWebMessagingApi,
         token = Request.token,
-        jwtHandler = mockk(),
+        jwtHandler = mockJwtHandler,
         vault = mockVault,
         attachmentHandler = mockAttachmentHandler,
         messageStore = mockMessageStore,
