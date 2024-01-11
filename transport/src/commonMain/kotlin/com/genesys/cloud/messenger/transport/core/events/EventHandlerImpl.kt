@@ -10,7 +10,7 @@ import com.genesys.cloud.messenger.transport.util.logs.LogTag
 private const val FALLBACK_TYPING_INDICATOR_DURATION = 5000L
 
 internal class EventHandlerImpl(
-    private val log: Log = Log(enableLogs = false, LogTag.EVENT_HANDLER),
+    internal val log: Log = Log(enableLogs = false, LogTag.EVENT_HANDLER),
 ) : EventHandler {
 
     override var eventListener: ((Event) -> Unit)? = null

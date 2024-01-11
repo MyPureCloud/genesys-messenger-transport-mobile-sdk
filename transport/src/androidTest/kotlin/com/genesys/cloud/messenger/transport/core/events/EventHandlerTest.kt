@@ -18,6 +18,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEve
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent.Typing
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import com.genesys.cloud.messenger.transport.utility.LogMessages
 import io.mockk.mockk
@@ -181,5 +182,12 @@ class EventHandlerTest {
         }
         assertThat(givenAgentTypingEvent.durationInMilliseconds).isEqualTo(expectedAgentTypingPayload)
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.onEvent(expectedAgentTypingEvent))
+    }
+
+    @Test
+    fun `validate default constructor`() {
+        val subject = EventHandlerImpl()
+
+        assertThat(subject.log.kermit.tag).isEqualTo(LogTag.EVENT_HANDLER)
     }
 }
