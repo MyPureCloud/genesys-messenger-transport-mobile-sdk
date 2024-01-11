@@ -6,6 +6,7 @@ import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import com.genesys.cloud.messenger.transport.utility.LogMessages
 import io.mockk.every
 import io.mockk.mockk
@@ -80,5 +81,16 @@ class HealthCheckProviderTest {
         val result = System.currentTimeMillis()
 
         assertTrue { subject.getCurrentTimestamp() in (result - givenAcceptableRangeOffset)..(result + givenAcceptableRangeOffset) }
+    }
+
+    @Test
+    fun `validate default constructor`() {
+        val givenAcceptableRangeOffset = 10
+        val currentTime = System.currentTimeMillis()
+
+        val subject = HealthCheckProvider()
+
+        assertThat(subject.log.kermit.tag).isEqualTo(LogTag.HEALTH_CHECK_PROVIDER)
+        assertTrue { subject.getCurrentTimestamp() in (currentTime - givenAcceptableRangeOffset)..(currentTime + givenAcceptableRangeOffset) }
     }
 }
