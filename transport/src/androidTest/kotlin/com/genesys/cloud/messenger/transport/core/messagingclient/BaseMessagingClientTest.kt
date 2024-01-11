@@ -142,7 +142,7 @@ open class BaseMessagingClientTest {
         every { fetch("token") } returns Request.token
         every { token } returns Request.token
     }
-    private val mockJwtHandler: JwtHandler = mockk(relaxed = true)
+    internal val mockJwtHandler: JwtHandler = mockk(relaxed = true)
 
     internal val mockLogger: Log = mockk(relaxed = true)
     internal val logSlot = mutableListOf<() -> String>()
