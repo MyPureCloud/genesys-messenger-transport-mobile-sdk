@@ -4,6 +4,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import com.genesys.cloud.messenger.transport.utility.LogMessages
 import io.mockk.mockk
 import io.mockk.spyk
@@ -65,8 +66,10 @@ class StateMachineTest {
 
         assertThat(subject.currentState).isReconnecting()
         assertFalse { subject.isInactive() }
-        verify { mockStateListener(State.Reconnecting) }
-        verify { mockStateChangedListener(expectedStateChange) }
+        verify {
+            mockStateListener(State.Reconnecting)
+            mockStateChangedListener(expectedStateChange)
+        }
     }
 
     @Test
@@ -77,8 +80,10 @@ class StateMachineTest {
 
         assertThat(subject.currentState).isConnecting()
         assertFalse { subject.isInactive() }
-        verify { mockStateListener(State.Connecting) }
-        verify { mockStateChangedListener(expectedStateChange) }
+        verify {
+            mockStateListener(State.Connecting)
+            mockStateChangedListener(expectedStateChange)
+        }
     }
 
     @Test
@@ -90,8 +95,10 @@ class StateMachineTest {
 
         assertThat(subject.currentState).isReconnecting()
         assertFalse { subject.isInactive() }
-        verify { mockStateListener(State.Reconnecting) }
-        verify { mockStateChangedListener(expectedStateChange) }
+        verify {
+            mockStateListener(State.Reconnecting)
+            mockStateChangedListener(expectedStateChange)
+        }
     }
 
     @Test
@@ -123,8 +130,10 @@ class StateMachineTest {
 
         assertThat(subject.currentState).isReconnecting()
         assertFalse { subject.isInactive() }
-        verify { mockStateListener(State.Reconnecting) }
-        verify { mockStateChangedListener(expectedStateChange) }
+        verify {
+            mockStateListener(State.Reconnecting)
+            mockStateChangedListener(expectedStateChange)
+        }
     }
 
     @Test
@@ -141,8 +150,8 @@ class StateMachineTest {
         assertFalse { subject.isInactive() }
         verify {
             mockStateListener(State.Configured(connected = true, newSession = true))
+            mockStateChangedListener(expectedStateChange)
         }
-        verify { mockStateChangedListener(expectedStateChange) }
     }
 
     @Test
@@ -159,14 +168,9 @@ class StateMachineTest {
         )
         assertFalse { subject.isInactive() }
         verify {
-            mockStateListener(
-                State.Configured(
-                    connected = true,
-                    newSession = true,
-                )
-            )
+            mockStateListener(State.Configured(connected = true, newSession = true))
+            mockStateChangedListener(expectedStateChange)
         }
-        verify { mockStateChangedListener(expectedStateChange) }
     }
 
     @Test
@@ -179,8 +183,10 @@ class StateMachineTest {
 
         assertThat(subject.currentState).isClosing(code = 1, reason = "A reason.")
         assertTrue { subject.isInactive() }
-        verify { mockStateListener(State.Closing(code = 1, reason = "A reason.")) }
-        verify { mockStateChangedListener(expectedStateChange) }
+        verify {
+            mockStateListener(State.Closing(code = 1, reason = "A reason."))
+            mockStateChangedListener(expectedStateChange)
+        }
     }
 
     @Test
@@ -211,8 +217,10 @@ class StateMachineTest {
 
         assertThat(subject.currentState).isClosed(code = 1, reason = "A reason.")
         assertTrue { subject.isInactive() }
-        verify { mockStateListener(State.Closed(code = 1, reason = "A reason.")) }
-        verify { mockStateChangedListener(expectedStateChange) }
+        verify {
+            mockStateListener(State.Closed(code = 1, reason = "A reason."))
+            mockStateChangedListener(expectedStateChange)
+        }
     }
 
     @Test
@@ -234,8 +242,8 @@ class StateMachineTest {
                     message = "A message."
                 )
             )
+            mockStateChangedListener(expectedStateChange)
         }
-        verify { mockStateChangedListener(expectedStateChange) }
     }
 
     @Test
@@ -247,8 +255,8 @@ class StateMachineTest {
         assertThat(subject.currentState).isReadOnly()
         verify {
             mockStateListener(State.ReadOnly)
+            mockStateChangedListener(expectedStateChange)
         }
-        verify { mockStateChangedListener(expectedStateChange) }
     }
 
     @Test
@@ -260,11 +268,9 @@ class StateMachineTest {
 
         assertThat(subject.currentState).isReadOnly()
         verify {
-            mockStateListener(
-                State.ReadOnly
-            )
+            mockStateListener(State.ReadOnly)
+            mockStateChangedListener(expectedStateChange)
         }
-        verify { mockStateChangedListener(expectedStateChange) }
     }
 
     @Test
@@ -289,5 +295,12 @@ class StateMachineTest {
         assertThat(subject.currentState).isClosing(100, "sss")
         subject.onClosed(100, "sss")
         assertThat(subject.currentState).isClosed(100, "sss")
+    }
+
+    @org.junit.Test
+    fun `validate default constructor`() {
+        val subject = StateMachineImpl()
+
+        assertThat(subject.log.kermit.tag).isEqualTo(LogTag.STATE_MACHINE)
     }
 }
