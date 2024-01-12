@@ -7,6 +7,7 @@ import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import com.genesys.cloud.messenger.transport.utility.LogMessages
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.spyk
 import io.mockk.verify
 import io.mockk.verifySequence
@@ -38,6 +39,7 @@ class StateMachineTest {
 
     @Test
     fun whenOnConnectionOpened() {
+        val slot = slot<StateChange>()
         val expectedStateChange = StateChange(State.Idle, State.Connected)
 
         subject.onConnectionOpened()
@@ -47,7 +49,7 @@ class StateMachineTest {
         verifySequence {
             mockLogger.i(capture(logSlot))
             mockStateListener(State.Connected)
-            mockStateChangedListener(expectedStateChange)
+            mockStateChangedListener(capture(slot))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(
             LogMessages.stateChangedFromTo(
@@ -55,6 +57,7 @@ class StateMachineTest {
                 expectedStateChange.newState::class.simpleName ?: ""
             )
         )
+        assertThat(slot.captured).isEqualTo(expectedStateChange)
     }
 
     @Test
