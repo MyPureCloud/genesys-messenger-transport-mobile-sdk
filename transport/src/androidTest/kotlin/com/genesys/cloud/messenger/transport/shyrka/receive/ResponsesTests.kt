@@ -31,35 +31,19 @@ class ResponsesTests {
 
     @Test
     fun `when GenerateUrlError serialized`() {
-        val givenGenerateUrlError = GenerateUrlError(
+        val expectedRequest = GenerateUrlError(
             attachmentId = AttachmentValues.Id,
             errorCode = ErrorCode.FileNameInvalid.code,
             errorMessage = ErrorTest.Message
         )
-        val expectedGenerateUrlErrorAsJson =
-            """{"attachmentId":"test_attachment_id","errorCode":4004,"errorMessage":"This is a generic error message for testing."}"""
+        val expectedJson = """{"attachmentId":"${AttachmentValues.Id}","errorCode":4004,"errorMessage":"${ErrorTest.Message}"}"""
 
-        val result = WebMessagingJson.json.encodeToString(givenGenerateUrlError)
+        val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
+        val decoded = WebMessagingJson.json.decodeFromString<GenerateUrlError>(expectedJson)
 
-        assertThat(result).isEqualTo(expectedGenerateUrlErrorAsJson)
-    }
-
-    @Test
-    fun `when GenerateUrlError deserialized`() {
-        val givenGenerateUrlErrorAsJson =
-            """{"attachmentId":"test_attachment_id","errorCode":4004,"errorMessage":"This is a generic error message for testing."}"""
-        val expectedGenerateUrlError = GenerateUrlError(
-            attachmentId = AttachmentValues.Id,
-            errorCode = ErrorCode.FileNameInvalid.code,
-            errorMessage = ErrorTest.Message
-        )
-
-        val result = WebMessagingJson.json.decodeFromString<GenerateUrlError>(
-            givenGenerateUrlErrorAsJson
-        )
-
-        result.run {
-            assertThat(this).isEqualTo(expectedGenerateUrlError)
+        assertThat(encodedString, "encoded GenerateUrlError").isEqualTo(expectedJson)
+        decoded.run {
+            assertThat(this).isEqualTo(expectedRequest)
             assertThat(attachmentId).isEqualTo(AttachmentValues.Id)
             assertThat(errorCode).isEqualTo(ErrorCode.FileNameInvalid.code)
             assertThat(errorMessage).isEqualTo(ErrorTest.Message)
@@ -68,29 +52,15 @@ class ResponsesTests {
 
     @Test
     fun `when JwtResponse serialized`() {
-        val givenJwtResponse = JwtResponse(
-            jwt = AuthTest.JwtToken,
-            exp = AuthTest.JwtExpiry,
-        )
-        val expectedJwtResponseAsJson = """{"jwt":"jwt_Token","exp":100}"""
+        val expectedRequest = JwtResponse(AuthTest.JwtToken, AuthTest.JwtExpiry)
+        val expectedJson = """{"jwt":"jwt_Token","exp":100}"""
 
-        val result = WebMessagingJson.json.encodeToString(givenJwtResponse)
+        val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
+        val decoded = WebMessagingJson.json.decodeFromString<JwtResponse>(expectedJson)
 
-        assertThat(result).isEqualTo(expectedJwtResponseAsJson)
-    }
-
-    @Test
-    fun `when JwtResponse deserialized`() {
-        val givenJwtResponseAsJson = """{"jwt":"jwt_Token","exp":100}"""
-        val expectedJwtResponse = JwtResponse(
-            jwt = AuthTest.JwtToken,
-            exp = AuthTest.JwtExpiry,
-        )
-
-        val result = WebMessagingJson.json.decodeFromString<JwtResponse>(givenJwtResponseAsJson)
-
-        result.run {
-            assertThat(this).isEqualTo(expectedJwtResponse)
+        assertThat(encodedString, "encoded JwtResponse").isEqualTo(expectedJson)
+        decoded.run {
+            assertThat(this).isEqualTo(expectedRequest)
             assertThat(jwt).isEqualTo(AuthTest.JwtToken)
             assertThat(exp).isEqualTo(AuthTest.JwtExpiry)
         }
@@ -98,7 +68,7 @@ class ResponsesTests {
 
     @Test
     fun `when PresignedUrlResponse serialized`() {
-        val givenPresignedUrlResponse = PresignedUrlResponse(
+        val expectedRequest = PresignedUrlResponse(
             attachmentId = AttachmentValues.Id,
             fileName = AttachmentValues.FileName,
             headers = mapOf(AttachmentValues.PresignedHeaderKey to AttachmentValues.PresignedHeaderValue),
@@ -106,41 +76,22 @@ class ResponsesTests {
             fileSize = AttachmentValues.FileSize,
             fileType = AttachmentValues.FileType,
         )
-        val expectedPresignedUrlResponse =
-            """{"attachmentId":"test_attachment_id","headers":{"x-amz-tagging":"abc"},"url":"https://downloadurl.png","fileName":"fileName.png","fileSize":100,"fileType":"png"}"""
+        val expectedJson = """{"attachmentId":"test_attachment_id","headers":{"x-amz-tagging":"abc"},"url":"https://downloadurl.png","fileName":"fileName.png","fileSize":100,"fileType":"png"}"""
 
-        val result = WebMessagingJson.json.encodeToString(givenPresignedUrlResponse)
+        val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
+        val decoded = WebMessagingJson.json.decodeFromString<PresignedUrlResponse>(expectedJson)
 
-        assertThat(result).isEqualTo(expectedPresignedUrlResponse)
-    }
-
-    @Test
-    fun `when PresignedUrlResponse deserialized`() {
-        val givenPresignedUrlResponseAsJson =
-            """{"attachmentId":"test_attachment_id","headers":{"x-amz-tagging":"abc"},"url":"https://downloadurl.png","fileName":"fileName.png","fileSize":100,"fileType":"png"}"""
-        val expectedPresignedUrlResponse = PresignedUrlResponse(
-            attachmentId = AttachmentValues.Id,
-            fileName = AttachmentValues.FileName,
-            headers = mapOf(AttachmentValues.PresignedHeaderKey to AttachmentValues.PresignedHeaderValue),
-            url = AttachmentValues.DownloadUrl,
-            fileSize = AttachmentValues.FileSize,
-            fileType = AttachmentValues.FileType,
-        )
-
-        val result = WebMessagingJson.json.decodeFromString<PresignedUrlResponse>(
-            givenPresignedUrlResponseAsJson
-        )
-
-        result.run {
-            assertThat(this).isEqualTo(expectedPresignedUrlResponse)
-            assertThat(attachmentId).isEqualTo(expectedPresignedUrlResponse.attachmentId)
-            assertThat(fileName).isEqualTo(expectedPresignedUrlResponse.fileName)
+        assertThat(encodedString, "encoded PresignedUrlResponse").isEqualTo(expectedJson)
+        decoded.run {
+            assertThat(this).isEqualTo(expectedRequest)
+            assertThat(attachmentId).isEqualTo(expectedRequest.attachmentId)
+            assertThat(fileName).isEqualTo(expectedRequest.fileName)
             assertThat(headers[AttachmentValues.PresignedHeaderKey]).isEqualTo(
-                expectedPresignedUrlResponse.headers[AttachmentValues.PresignedHeaderKey]
+                expectedRequest.headers[AttachmentValues.PresignedHeaderKey]
             )
-            assertThat(url).isEqualTo(expectedPresignedUrlResponse.url)
-            assertThat(fileSize).isEqualTo(expectedPresignedUrlResponse.fileSize)
-            assertThat(fileType).isEqualTo(expectedPresignedUrlResponse.fileType)
+            assertThat(url).isEqualTo(expectedRequest.url)
+            assertThat(fileSize).isEqualTo(expectedRequest.fileSize)
+            assertThat(fileType).isEqualTo(expectedRequest.fileType)
         }
     }
 
