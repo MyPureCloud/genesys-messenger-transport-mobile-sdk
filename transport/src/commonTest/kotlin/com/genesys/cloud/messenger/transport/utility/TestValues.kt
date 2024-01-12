@@ -15,6 +15,9 @@ object TestValues {
     internal const val NoReconnectionAttempts = 0L
     internal const val MessageTypeStructured = "Structured"
     internal const val MessageCode = 200
+    internal const val VaultKey = "vault_key"
+    internal const val TokenKey = "token_key"
+    internal const val AuthRefreshTokenKey = "auth_refresh_token_key"
 }
 
 object AuthTest {
