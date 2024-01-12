@@ -6,9 +6,8 @@ import io.ktor.client.call.body
 import io.ktor.client.request.get
 
 internal class DeploymentConfigUseCase(
-    logging: Boolean,
     private val deploymentConfigUrl: String,
-    private val client: HttpClient = defaultHttpClient(logging),
+    private val client: HttpClient,
 ) {
     suspend fun fetch(): DeploymentConfig {
         return client.get(deploymentConfigUrl).body()
