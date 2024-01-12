@@ -13,8 +13,6 @@ object TestValues {
     internal const val Token = "<token>"
     internal const val ReconnectionTimeout = 5000L
     internal const val NoReconnectionAttempts = 0L
-    internal const val MessageTypeStructured = "Structured"
-    internal const val MessageCode = 200
     internal const val VaultKey = "vault_key"
     internal const val TokenKey = "token_key"
     internal const val AuthRefreshTokenKey = "auth_refresh_token_key"
@@ -69,7 +67,7 @@ object AttachmentValues {
     internal const val DownloadUrl = "https://downloadurl.png"
     internal const val PresignedHeaderKey = "x-amz-tagging"
     internal const val PresignedHeaderValue = "abc"
-    internal const val FileName = "fileName"
+    internal const val FileName = "fileName.png"
     internal const val FileSize = 100
     internal const val FileMD5 = "file_md5"
     internal const val FileType = "png"
@@ -101,7 +99,6 @@ object LogMessages {
     internal const val HistoryFetched = "All history has been fetched."
     internal const val UnknownEvent = "Unknown event received."
     internal fun unhandledErrorCode(errorCode: ErrorCode, message: String) = "Unhandled ErrorCode: $errorCode with optional message: $message"
-    internal fun unhandledWebSocketError(errorCode: ErrorCode) = "Unhandled WebSocket errorCode. ErrorCode: $errorCode"
     internal fun sendMessageWith(message: String = "Hello world", customAttributes: String = "{A=B}") = "sendMessage(text = $message, customAttributes = $customAttributes)"
     internal fun stateChangedFromTo(from: String, to: String) = "State changed from: $from, to: $to"
     internal fun onEvent(event: Event): String = "on event: $event"
