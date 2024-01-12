@@ -118,7 +118,7 @@ class ResponsesTests {
             fileType = AttachmentValues.FileType,
         )
         val expectedPresignedUrlResponse =
-            """{"attachmentId":"test_attachment_id","headers":{"x-amz-tagging":"abc"},"url":"https://downloadurl.png","fileName":"fileName","fileSize":100,"fileType":"png"}"""
+            """{"attachmentId":"test_attachment_id","headers":{"x-amz-tagging":"abc"},"url":"https://downloadurl.png","fileName":"fileName.png","fileSize":100,"fileType":"png"}"""
 
         val result = WebMessagingJson.json.encodeToString(givenPresignedUrlResponse)
 
@@ -128,7 +128,7 @@ class ResponsesTests {
     @Test
     fun `when PresignedUrlResponse deserialized`() {
         val givenPresignedUrlResponseAsJson =
-            """{"attachmentId":"test_attachment_id","headers":{"x-amz-tagging":"abc"},"url":"https://downloadurl.png","fileName":"fileName","fileSize":100,"fileType":"png"}"""
+            """{"attachmentId":"test_attachment_id","headers":{"x-amz-tagging":"abc"},"url":"https://downloadurl.png","fileName":"fileName.png","fileSize":100,"fileType":"png"}"""
         val expectedPresignedUrlResponse = PresignedUrlResponse(
             attachmentId = AttachmentValues.Id,
             fileName = AttachmentValues.FileName,
@@ -201,7 +201,7 @@ class ResponsesTests {
             )
         )
         val expectedJson =
-            """{"contentType":"Attachment","attachment":{"id":"test_attachment_id","url":"https://downloadurl.png","filename":"fileName","mediaType":"png"}}"""
+            """{"contentType":"Attachment","attachment":{"id":"test_attachment_id","url":"https://downloadurl.png","filename":"fileName.png","mediaType":"png"}}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<StructuredMessage.Content.AttachmentContent>(expectedJson)
