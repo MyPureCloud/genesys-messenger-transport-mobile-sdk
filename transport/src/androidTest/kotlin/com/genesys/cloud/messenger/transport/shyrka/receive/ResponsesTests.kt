@@ -19,25 +19,14 @@ class ResponsesTests {
 
     @Test
     fun `when AttachmentDeleteResponse serialized`() {
-        val givenAttachmentDeleteResponse = AttachmentDeletedResponse(AttachmentValues.Id)
-        val expectedAttachmentDeleteResponseAsJson = """{"attachmentId":"test_attachment_id"}"""
+        val expectedRequest = AttachmentDeletedResponse(AttachmentValues.Id)
+        val expectedJson = """{"attachmentId":"${AttachmentValues.Id}"}"""
 
-        val result = WebMessagingJson.json.encodeToString(givenAttachmentDeleteResponse)
+        val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
+        val decoded = WebMessagingJson.json.decodeFromString<AttachmentDeletedResponse>(expectedJson)
 
-        assertThat(result).isEqualTo(expectedAttachmentDeleteResponseAsJson)
-    }
-
-    @Test
-    fun `when AttachmentDeleteResponse deserialized`() {
-        val givenAttachmentDeleteResponseAsJson = """{"attachmentId":"test_attachment_id"}"""
-        val expectedAttachmentDeleteResponse = AttachmentDeletedResponse(AttachmentValues.Id)
-
-        val result = WebMessagingJson.json.decodeFromString<AttachmentDeletedResponse>(
-            givenAttachmentDeleteResponseAsJson
-        )
-
-        assertThat(result).isEqualTo(expectedAttachmentDeleteResponse)
-        assertThat(result.attachmentId).isEqualTo(AttachmentValues.Id)
+        assertThat(encodedString, "encoded AttachmentDeletedResponse").isEqualTo(expectedJson)
+        assertThat(decoded.attachmentId).isEqualTo(AttachmentValues.Id)
     }
 
     @Test
