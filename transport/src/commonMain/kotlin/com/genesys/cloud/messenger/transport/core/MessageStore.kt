@@ -150,7 +150,7 @@ internal class MessageStore(
 }
 
 private fun Message.toMessageEvent(): MessageEvent =
-    if (this.messageType == Message.Type.QuickReply) {
+    if (messageType == Message.Type.QuickReply) {
         MessageEvent.QuickReplyReceived(this)
     } else {
         MessageEvent.MessageInserted(this)
