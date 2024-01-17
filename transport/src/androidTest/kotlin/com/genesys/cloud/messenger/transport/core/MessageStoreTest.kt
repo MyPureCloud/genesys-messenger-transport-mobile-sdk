@@ -363,7 +363,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun `when onQuickRepliesReceived()`() {
+    fun `when update() message with Direction=Outbound and quick replies`() {
         val expectedMessage = Message(
             id = "0",
             direction = Direction.Outbound,
@@ -388,6 +388,34 @@ internal class MessageStoreTest {
         assertEquals(
             expectedMessage,
             (messageSlot.captured as MessageEvent.QuickReplyReceived).message
+        )
+    }
+
+    @Test
+    fun `when update() message with Direction=Inbound and quick replies`() {
+        val expectedMessage = Message(
+            id = "0",
+            direction = Direction.Inbound,
+            state = State.Sent,
+            messageType = Message.Type.QuickReply,
+            timeStamp = 0,
+            attachments = emptyMap(),
+            events = emptyList(),
+            quickReplies = listOf(
+                QuickReplyTestValues.buttonResponse_a,
+                QuickReplyTestValues.buttonResponse_b,
+            ),
+            from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
+        )
+
+        subject.update(expectedMessage)
+
+        assertThat(subject.getConversation()).contains(expectedMessage)
+        assertThat(subject.nextPage).isEqualTo(1)
+        verify { mockMessageListener(capture(messageSlot)) }
+        assertEquals(
+            expectedMessage,
+            (messageSlot.captured as MessageEvent.MessageInserted).message
         )
     }
 
