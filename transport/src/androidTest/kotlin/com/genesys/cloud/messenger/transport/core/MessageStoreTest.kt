@@ -380,7 +380,7 @@ internal class MessageStoreTest {
             from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
         )
 
-        subject.onQuickRepliesReceived(expectedMessage)
+        subject.update(expectedMessage)
 
         assertThat(subject.getConversation()).contains(expectedMessage)
         assertThat(subject.nextPage).isEqualTo(1)

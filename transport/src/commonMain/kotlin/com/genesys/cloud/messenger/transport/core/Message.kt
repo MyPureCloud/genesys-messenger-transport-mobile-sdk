@@ -35,11 +35,20 @@ data class Message(
     ),
 ) {
 
+    /**
+     * The enum type representation of the message.
+     *
+     * @property Text when message is a text.
+     * @property Event when message is an event.
+     * @property QuickReply when message is a quick reply.
+     * @property Unknown when system could not recognize the message type.
+     */
     @Serializable
     enum class Type {
         Text,
         Event,
         QuickReply,
+        Unknown,
     }
 
     /**

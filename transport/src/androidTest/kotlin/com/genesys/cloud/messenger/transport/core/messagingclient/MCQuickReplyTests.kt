@@ -33,7 +33,7 @@ class MCQuickReplyTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockMessageStore.onQuickRepliesReceived(expectedMessage)
+            mockMessageStore.update(expectedMessage)
         }
     }
 
@@ -47,7 +47,7 @@ class MCQuickReplyTests : BaseMessagingClientTest() {
             connectSequence()
         }
         verify(exactly = 0) {
-            mockMessageStore.onQuickRepliesReceived(any())
+            mockMessageStore.update(any())
             mockCustomAttributesStore.onSent()
             mockAttachmentHandler.onSent(any())
         }
