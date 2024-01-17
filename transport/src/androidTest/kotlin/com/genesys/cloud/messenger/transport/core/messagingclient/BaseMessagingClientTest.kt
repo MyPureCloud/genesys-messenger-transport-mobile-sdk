@@ -133,7 +133,7 @@ open class BaseMessagingClientTest {
         val dummyCustomAttributes = mutableMapOf("A" to "B")
         every { get() } returns dummyCustomAttributes
         every { getCustomAttributesToSend() } returns dummyCustomAttributes
-        every { add(emptyMap()) } answers { dummyCustomAttributes.clear() }
+        every { add(emptyMap()) } returns true.also { dummyCustomAttributes.clear() }
     }
 
     private val mockVault: DefaultVault = mockk {

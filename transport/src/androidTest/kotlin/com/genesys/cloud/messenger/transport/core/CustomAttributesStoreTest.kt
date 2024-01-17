@@ -3,13 +3,16 @@ package com.genesys.cloud.messenger.transport.core
 import assertk.assertThat
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
+import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import io.mockk.mockk
 import org.junit.Test
 
 class CustomAttributesStoreTest {
 
+    private val mockEventHandler = mockk<EventHandler>(relaxed = true)
     private val subject: CustomAttributesStoreImpl =
-        CustomAttributesStoreImpl(mockk(relaxed = true))
+        CustomAttributesStoreImpl(mockk(relaxed = true), mockEventHandler).also { it.maxCustomDataBytes = 1000 }
+
 
     @Test
     fun `when add a new customAttribute`() {
