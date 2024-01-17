@@ -27,7 +27,9 @@ import com.genesys.cloud.messenger.transport.util.extensions.isOutbound
 import com.genesys.cloud.messenger.transport.util.extensions.mapOriginatingEntity
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
+import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
+import com.genesys.cloud.messenger.transport.utility.StructuredMessageValues
 import net.bytebuddy.utility.RandomString
 import org.junit.Test
 
@@ -347,5 +349,98 @@ internal class MessageExtensionTest {
         val givenMessage = Message(direction = Direction.Inbound)
 
         assertThat(givenMessage.isOutbound()).isFalse()
+    }
+
+    @Test
+    fun `when StructureMessage toMessage() has Content with QuickReplyContent`() {
+        val givenStructuredMessage = StructuredMessageValues.createStructuredMessageForTesting(
+            type = StructuredMessage.Type.Structured,
+            content = listOf(StructuredMessageValues.createQuickReplyContentForTesting())
+        )
+        val expectedButtonResponse = ButtonResponse(
+            text = MessageValues.Text,
+            payload = StructuredMessageValues.Payload,
+            type = StructuredMessageValues.QuickReply
+        )
+        val expectedMessage = Message(
+            id = MessageValues.Id,
+            state = State.Sent,
+            type = Message.Type.QuickReply.name,
+            messageType = Message.Type.QuickReply,
+            quickReplies = listOf(expectedButtonResponse)
+        )
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result).isEqualTo(expectedMessage)
+    }
+
+    @Test
+    fun `when StructureMessage toMessage() has Content with ButtonResponseContent`() {
+        val givenStructuredMessage = StructuredMessageValues.createStructuredMessageForTesting(
+            type = StructuredMessage.Type.Structured,
+            content = listOf(StructuredMessageValues.createButtonResponseContentForTesting())
+        )
+        val expectedButtonResponse = ButtonResponse(
+            text = MessageValues.Text,
+            payload = StructuredMessageValues.Payload,
+            type = StructuredMessageValues.QuickReply
+        )
+        val expectedMessage = Message(
+            id = MessageValues.Id,
+            state = State.Sent,
+            type = Message.Type.QuickReply.name,
+            messageType = Message.Type.QuickReply,
+            quickReplies = listOf(expectedButtonResponse)
+        )
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result).isEqualTo(expectedMessage)
+    }
+
+    @Test
+    fun `when StructureMessage toMessage() has Content with QuickReplyContent and ButtonResponseContent`() {
+        val givenStructuredMessage = StructuredMessageValues.createStructuredMessageForTesting(
+            type = StructuredMessage.Type.Structured,
+            content = listOf(
+                StructuredMessageValues.createQuickReplyContentForTesting(),
+                StructuredMessageValues.createButtonResponseContentForTesting(),
+            )
+        )
+        val expectedButtonResponse = ButtonResponse(
+            text = MessageValues.Text,
+            payload = StructuredMessageValues.Payload,
+            type = StructuredMessageValues.QuickReply
+        )
+        val expectedMessage = Message(
+            id = MessageValues.Id,
+            state = State.Sent,
+            type = Message.Type.QuickReply.name,
+            messageType = Message.Type.QuickReply,
+            quickReplies = listOf(expectedButtonResponse)
+        )
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result).isEqualTo(expectedMessage)
+    }
+
+    @Test
+    fun `when StructureMessage toMessage() has Content without QuickReplyContent or ButtonResponseContent`() {
+        val givenStructuredMessage = StructuredMessageValues.createStructuredMessageForTesting(
+            type = StructuredMessage.Type.Structured
+        )
+
+        val expectedMessage = Message(
+            id = MessageValues.Id,
+            state = State.Sent,
+            type = Message.Type.Unknown.name,
+            messageType = Message.Type.Unknown,
+        )
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result).isEqualTo(expectedMessage)
     }
 }
