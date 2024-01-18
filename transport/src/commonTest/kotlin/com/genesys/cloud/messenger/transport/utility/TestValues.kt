@@ -85,7 +85,7 @@ object StructuredMessageValues {
     internal fun createButtonResponseContentForTesting(
         text: String = MessageValues.Text,
         payload: String = Payload,
-    ) = ButtonResponseContent (
+    ) = ButtonResponseContent(
         contentType = StructuredMessage.Content.Type.ButtonResponse.name,
         buttonResponse = ButtonResponseContent.ButtonResponse(
             text = text,
