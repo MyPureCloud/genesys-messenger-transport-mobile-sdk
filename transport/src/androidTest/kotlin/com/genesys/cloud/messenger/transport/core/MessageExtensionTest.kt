@@ -355,12 +355,12 @@ internal class MessageExtensionTest {
     fun `when StructureMessage toMessage() has Content with QuickReplyContent`() {
         val givenStructuredMessage = StructuredMessageValues.createStructuredMessageForTesting(
             type = StructuredMessage.Type.Structured,
-            content = listOf(StructuredMessageValues.createQuickReplyContentForTesting())
+            content = listOf(QuickReplyTestValues.createQuickReplyContentForTesting())
         )
         val expectedButtonResponse = ButtonResponse(
             text = MessageValues.Text,
-            payload = StructuredMessageValues.Payload,
-            type = StructuredMessageValues.QuickReply
+            payload = QuickReplyTestValues.Payload_A,
+            type = QuickReplyTestValues.QuickReply
         )
         val expectedMessage = Message(
             id = MessageValues.Id,
@@ -379,12 +379,12 @@ internal class MessageExtensionTest {
     fun `when StructureMessage toMessage() has Content with ButtonResponseContent`() {
         val givenStructuredMessage = StructuredMessageValues.createStructuredMessageForTesting(
             type = StructuredMessage.Type.Structured,
-            content = listOf(StructuredMessageValues.createButtonResponseContentForTesting())
+            content = listOf(QuickReplyTestValues.createButtonResponseContentForTesting())
         )
         val expectedButtonResponse = ButtonResponse(
             text = MessageValues.Text,
-            payload = StructuredMessageValues.Payload,
-            type = StructuredMessageValues.QuickReply
+            payload = QuickReplyTestValues.Payload_A,
+            type = QuickReplyTestValues.QuickReply
         )
         val expectedMessage = Message(
             id = MessageValues.Id,
@@ -404,14 +404,14 @@ internal class MessageExtensionTest {
         val givenStructuredMessage = StructuredMessageValues.createStructuredMessageForTesting(
             type = StructuredMessage.Type.Structured,
             content = listOf(
-                StructuredMessageValues.createQuickReplyContentForTesting(),
-                StructuredMessageValues.createButtonResponseContentForTesting(),
+                QuickReplyTestValues.createQuickReplyContentForTesting(),
+                QuickReplyTestValues.createButtonResponseContentForTesting(),
             )
         )
         val expectedButtonResponse = ButtonResponse(
             text = MessageValues.Text,
-            payload = StructuredMessageValues.Payload,
-            type = StructuredMessageValues.QuickReply
+            payload = QuickReplyTestValues.Payload_A,
+            type = QuickReplyTestValues.QuickReply
         )
         val expectedMessage = Message(
             id = MessageValues.Id,
