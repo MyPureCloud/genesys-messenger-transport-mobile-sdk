@@ -74,22 +74,13 @@ internal class MessageStore(
         )
     }
 
-    fun update(message: Message) {
-        log.i { "Message state updated: $message" }
-        when (message.direction) {
-            Direction.Inbound -> {
-                activeConversation.find { it.id == message.id }?.let {
-                    activeConversation[it.getIndex()] = message
-                    publish(MessageEvent.MessageUpdated(message))
-                } ?: run {
-                    activeConversation.add(message)
-                    publish(MessageEvent.MessageInserted(message))
-                }
-            }
-
+    fun update(message: Message) = message.run {
+        log.i { "Message state updated: $this" }
+        when (direction) {
+            Direction.Inbound -> findAndPublish(this)
             Direction.Outbound -> {
-                activeConversation.add(message)
-                publish(MessageEvent.MessageInserted(message))
+                activeConversation.add(this)
+                publish(this.toMessageEvent())
             }
         }
         nextPage = activeConversation.getNextPage()
@@ -102,13 +93,6 @@ internal class MessageStore(
         }
         pendingMessage = pendingMessage.copy(attachments = attachments)
         publish(MessageEvent.AttachmentUpdated(attachment))
-    }
-
-    fun onQuickRepliesReceived(message: Message) {
-        log.i { "QuickReply received: $message" }
-        activeConversation.add(message)
-        nextPage = activeConversation.getNextPage()
-        publish(MessageEvent.QuickReplyReceived(message))
     }
 
     fun updateMessageHistory(historyPage: List<Message>, total: Int) {
@@ -135,6 +119,16 @@ internal class MessageStore(
         startOfConversation = false
     }
 
+    private fun findAndPublish(message: Message) {
+        activeConversation.find { it.id == message.id }?.let {
+            activeConversation[it.getIndex()] = message
+            publish(MessageEvent.MessageUpdated(message))
+        } ?: run {
+            activeConversation.add(message)
+            publish(MessageEvent.MessageInserted(message))
+        }
+    }
+
     private fun publish(event: MessageEvent) {
         messageListener?.invoke(event)
     }
@@ -154,6 +148,13 @@ internal class MessageStore(
         }
     }
 }
+
+private fun Message.toMessageEvent(): MessageEvent =
+    if (messageType == Message.Type.QuickReply) {
+        MessageEvent.QuickReplyReceived(this)
+    } else {
+        MessageEvent.MessageInserted(this)
+    }
 
 /**
  * Communicates conversation related updates to the UI.

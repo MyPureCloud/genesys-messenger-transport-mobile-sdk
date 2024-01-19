@@ -479,10 +479,10 @@ internal class MessagingClientImpl(
     }
 
     private fun Message.handleAsStructuredMessage() {
-        if (messageType == Message.Type.QuickReply && quickReplies.isNotEmpty()) {
-            messageStore.onQuickRepliesReceived(this)
-        } else {
-            log.w { "Messages of type Structure without quick replies are not supported." }
+        when (messageType) {
+            Message.Type.QuickReply -> messageStore.update(this)
+            Message.Type.Unknown -> log.w { "Unknown messages of type Structure are not supported." }
+            else -> log.w { "Should not happen." }
         }
     }
 

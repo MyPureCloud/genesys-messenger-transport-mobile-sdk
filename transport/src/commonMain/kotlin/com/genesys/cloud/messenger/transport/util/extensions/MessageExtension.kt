@@ -7,6 +7,7 @@ import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.core.events.toTransportEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.AttachmentContent
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ButtonResponseContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.QuickReplyContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.isInbound
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
@@ -15,15 +16,16 @@ import com.soywiz.klock.DateTime
 internal fun List<StructuredMessage>.toMessageList(): List<Message> = map { it.toMessage() }
 
 internal fun StructuredMessage.toMessage(): Message {
+    val quickReplies = content.toQuickReplies()
     return Message(
         id = metadata["customMessageId"] ?: id,
         direction = if (isInbound()) Direction.Inbound else Direction.Outbound,
         state = Message.State.Sent,
-        messageType = type.toMessageType(),
+        messageType = type.toMessageType(quickReplies.isNotEmpty()),
         text = text,
         timeStamp = channel?.time.fromIsoToEpochMilliseconds(),
         attachments = content.filterIsInstance<AttachmentContent>().toAttachments(),
-        quickReplies = content.filterIsInstance<QuickReplyContent>().toQuickReplies(),
+        quickReplies = quickReplies,
         events = events.mapNotNull { it.toTransportEvent() },
         from = Message.Participant(
             name = channel?.from?.nickname,
@@ -75,21 +77,28 @@ private fun List<AttachmentContent>.toAttachments(): Map<String, Attachment> {
     }
 }
 
-private fun List<QuickReplyContent>.toQuickReplies(): List<ButtonResponse> {
-    return map {
-        ButtonResponse(
-            text = it.quickReply.text,
-            payload = it.quickReply.payload,
-            type = "QuickReply",
-        )
+private fun List<StructuredMessage.Content>.toQuickReplies(): List<ButtonResponse> {
+    val filteredQuickReply = this.filterIsInstance<QuickReplyContent>()
+    val filteredButtonResponse = this.filterIsInstance<ButtonResponseContent>()
+    return when {
+        filteredQuickReply.isNotEmpty() -> filteredQuickReply.map {
+            it.quickReply.run { ButtonResponse(text, payload, "QuickReply") }
+        }
+
+        filteredButtonResponse.isNotEmpty() -> filteredButtonResponse.map {
+            it.buttonResponse.run { ButtonResponse(text, payload, type) }
+        }
+
+        else -> emptyList()
     }
 }
 
-private fun StructuredMessage.Type.toMessageType(): Message.Type = when (this) {
-    StructuredMessage.Type.Text -> Message.Type.Text
-    StructuredMessage.Type.Event -> Message.Type.Event
-    StructuredMessage.Type.Structured -> Message.Type.QuickReply
-}
+private fun StructuredMessage.Type.toMessageType(hasQuickReplies: Boolean): Message.Type =
+    when (this) {
+        StructuredMessage.Type.Text -> Message.Type.Text
+        StructuredMessage.Type.Event -> Message.Type.Event
+        StructuredMessage.Type.Structured -> if (hasQuickReplies) Message.Type.QuickReply else Message.Type.Unknown
+    }
 
 internal fun String.isHealthCheckResponseId(): Boolean = this == HealthCheckID
 
