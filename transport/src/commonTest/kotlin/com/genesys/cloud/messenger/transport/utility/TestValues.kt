@@ -5,6 +5,7 @@ internal const val DEFAULT_TIMEOUT = 10000L
 object TestValues {
     internal const val Domain: String = "inindca.com"
     internal const val DeploymentId = "deploymentId"
+    internal const val MaxCustomDataBytes = 100
 }
 
 object AuthTest {
