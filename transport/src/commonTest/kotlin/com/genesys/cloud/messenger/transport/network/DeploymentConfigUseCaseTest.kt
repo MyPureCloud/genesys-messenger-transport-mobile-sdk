@@ -18,7 +18,7 @@ private const val BASIC_DEPLOYMENT_CONFIG_RESPONSE_PATH =
     "/webdeployments/v1/deployments/deploymentId/config.json"
 
 class DeploymentConfigUseCaseTest {
-    private val subject = DeploymentConfigUseCase(false, BASIC_DEPLOYMENT_CONFIG_RESPONSE_PATH, mockHttpClient())
+    private val subject = DeploymentConfigUseCase(BASIC_DEPLOYMENT_CONFIG_RESPONSE_PATH, mockHttpClient())
 
     @Test
     fun whenFetchDeploymentConfig() {

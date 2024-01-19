@@ -11,6 +11,7 @@ import com.genesys.cloud.messenger.transport.network.test_engines.logoutEngine
 import com.genesys.cloud.messenger.transport.network.test_engines.refreshTokenEngine
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.DEFAULT_TIMEOUT
+import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import com.genesys.cloud.messenger.transport.utility.InvalidValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.ktor.client.HttpClientConfig
@@ -47,6 +48,34 @@ class WebMessagingApiTest {
         val result = runBlocking {
             withTimeout(DEFAULT_TIMEOUT) {
                 subject.getMessages(jwt = "abc-123", pageNumber = 0, pageSize = 0)
+            }
+        }
+
+        assertEquals(expectedEntityList, result)
+    }
+
+    @Test
+    fun whenFetchHistoryResultsInUnexpectedError() {
+        subject = buildWebMessagingApiWith { historyEngine() }
+        val expectedEntityList = Result.Failure(ErrorCode.UnexpectedError, ErrorTest.Message)
+
+        val result = runBlocking {
+            withTimeout(DEFAULT_TIMEOUT) {
+                subject.getMessages(jwt = "abc-123", pageNumber = -1)
+            }
+        }
+
+        assertEquals(expectedEntityList, result)
+    }
+
+    @Test
+    fun whenFetchHistoryResultsInCancellationException() {
+        subject = buildWebMessagingApiWith { historyEngine() }
+        val expectedEntityList = Result.Failure(ErrorCode.CancellationError, ErrorTest.Message)
+
+        val result = runBlocking {
+            withTimeout(DEFAULT_TIMEOUT) {
+                subject.getMessages(jwt = InvalidValues.CancellationException, pageNumber = -1)
             }
         }
 
@@ -92,6 +121,50 @@ class WebMessagingApiTest {
     }
 
     @Test
+    fun fetchShouldReturnResultFailureWhenCancellationExceptionIsThrown() {
+        val brokenConfigurations = Configuration(
+            deploymentId = InvalidValues.CancellationException,
+            domain = InvalidValues.Domain,
+            logging = false
+        )
+        subject = buildWebMessagingApiWith(brokenConfigurations) { authorizeEngine() }
+
+        val expectedResult = Result.Failure(ErrorCode.CancellationError, ErrorTest.Message)
+
+        val result = runBlocking {
+            subject.fetchAuthJwt(
+                authCode = AuthTest.AuthCode,
+                redirectUri = AuthTest.RedirectUri,
+                codeVerifier = AuthTest.CodeVerifier,
+            )
+        }
+
+        assertEquals(expectedResult, result)
+    }
+
+    @Test
+    fun fetchShouldReturnResultFailureWhenUnknownExceptionIsThrown() {
+        val brokenConfigurations = Configuration(
+            deploymentId = InvalidValues.UnknownException,
+            domain = InvalidValues.Domain,
+            logging = false
+        )
+        subject = buildWebMessagingApiWith(brokenConfigurations) { authorizeEngine() }
+
+        val expectedResult = Result.Failure(ErrorCode.AuthFailed, ErrorTest.Message)
+
+        val result = runBlocking {
+            subject.fetchAuthJwt(
+                authCode = AuthTest.AuthCode,
+                redirectUri = AuthTest.RedirectUri,
+                codeVerifier = AuthTest.CodeVerifier,
+            )
+        }
+
+        assertEquals(expectedResult, result)
+    }
+
+    @Test
     fun whenLogoutFromAuthenticatedSessionWithValidJwt() {
         subject = buildWebMessagingApiWith { logoutEngine() }
 
@@ -107,6 +180,28 @@ class WebMessagingApiTest {
 
         val result =
             runBlocking { subject.logoutFromAuthenticatedSession(InvalidValues.UnauthorizedJwt) }
+
+        assertEquals(expectedResult, result)
+    }
+
+    @Test
+    fun whenLogoutFromAuthenticatedSessionResultInCancellationException() {
+        subject = buildWebMessagingApiWith { logoutEngine() }
+        val expectedResult = Result.Failure(ErrorCode.CancellationError, ErrorTest.Message)
+
+        val result =
+            runBlocking { subject.logoutFromAuthenticatedSession(InvalidValues.CancellationException) }
+
+        assertEquals(expectedResult, result)
+    }
+
+    @Test
+    fun whenLogoutFromAuthenticatedSessionResultInUnknownException() {
+        subject = buildWebMessagingApiWith { logoutEngine() }
+        val expectedResult = Result.Failure(ErrorCode.AuthLogoutFailed, ErrorTest.Message)
+
+        val result =
+            runBlocking { subject.logoutFromAuthenticatedSession(InvalidValues.UnknownException) }
 
         assertEquals(expectedResult, result)
     }
@@ -139,6 +234,28 @@ class WebMessagingApiTest {
 
         val result =
             runBlocking { subject.refreshAuthJwt(InvalidValues.InvalidRefreshToken) }
+
+        assertEquals(expectedResult, result)
+    }
+
+    @Test
+    fun whenRefreshTokenResultInCancellationException() {
+        subject = buildWebMessagingApiWith { refreshTokenEngine() }
+        val expectedResult = Result.Failure(ErrorCode.CancellationError, ErrorTest.Message)
+
+        val result =
+            runBlocking { subject.refreshAuthJwt(InvalidValues.CancellationException) }
+
+        assertEquals(expectedResult, result)
+    }
+
+    @Test
+    fun whenRefreshTokenResultInUnknownException() {
+        subject = buildWebMessagingApiWith { refreshTokenEngine() }
+        val expectedResult = Result.Failure(ErrorCode.RefreshAuthTokenFailure, ErrorTest.Message)
+
+        val result =
+            runBlocking { subject.refreshAuthJwt(InvalidValues.UnknownException) }
 
         assertEquals(expectedResult, result)
     }

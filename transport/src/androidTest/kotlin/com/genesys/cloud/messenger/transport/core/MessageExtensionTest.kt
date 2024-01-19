@@ -10,6 +10,9 @@ import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses.isoTestTimestamp
+import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
+import com.genesys.cloud.messenger.transport.shyrka.receive.MessageEntityList
+import com.genesys.cloud.messenger.transport.shyrka.receive.PreIdentifiedWebMessagingMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
@@ -20,6 +23,10 @@ import com.genesys.cloud.messenger.transport.util.extensions.getUploadedAttachme
 import com.genesys.cloud.messenger.transport.util.extensions.mapOriginatingEntity
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
+import com.genesys.cloud.messenger.transport.utility.MessageValues
+import com.genesys.cloud.messenger.transport.utility.TestValues
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import org.junit.Test
 
 internal class MessageExtensionTest {
@@ -107,7 +114,20 @@ internal class MessageExtensionTest {
                 )
             )
 
-        assertThat(givenStructuredMessage.toMessage()).isEqualTo(expectedMessage)
+        givenStructuredMessage.toMessage().run {
+            assertThat(this).isEqualTo(expectedMessage)
+            assertThat(id).isEqualTo(expectedMessage.id)
+            assertThat(direction).isEqualTo(expectedMessage.direction)
+            assertThat(state).isEqualTo(expectedMessage.state)
+            assertThat(type).isEqualTo(expectedMessage.type)
+            assertThat(timeStamp).isEqualTo(expectedMessage.timeStamp)
+            assertThat(events).containsExactly(*expectedMessage.events.toTypedArray())
+            from.run {
+                assertThat(name).isEqualTo(expectedMessage.from.name)
+                assertThat(imageUrl).isEqualTo(expectedMessage.from.imageUrl)
+                assertThat(originatingEntity).isEqualTo(expectedMessage.from.originatingEntity)
+            }
+        }
     }
 
     @Test
@@ -296,5 +316,172 @@ internal class MessageExtensionTest {
         val result = originatingEntity.mapOriginatingEntity { givenIsInbound }
 
         assertThat(result).isEqualTo(expectedOriginatingEntity)
+    }
+
+    @Test
+    fun `when MessageEntityList serialized`() {
+        val givenStructuredMessage = StructuredMessage(
+            id = "some_id",
+            type = StructuredMessage.Type.Text,
+            direction = "Inbound"
+        )
+        val givenMessageEntityList = MessageEntityList(
+            entities = listOf(givenStructuredMessage),
+            pageSize = MessageValues.PageSize,
+            pageNumber = MessageValues.PageNumber,
+            total = MessageValues.Total,
+            pageCount = MessageValues.PageCount,
+        )
+
+        val expectedMessageEntityListAsJson =
+            """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
+
+        val result = WebMessagingJson.json.encodeToString(givenMessageEntityList)
+
+        assertThat(result).isEqualTo(expectedMessageEntityListAsJson)
+    }
+
+    @Test
+    fun `when MessageEntityList deserialized`() {
+        val givenMessageEntityListAsJson =
+            """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
+        val expectedStructuredMessage = StructuredMessage(
+            id = "some_id",
+            type = StructuredMessage.Type.Text,
+            direction = "Inbound"
+        )
+        val expectedMessageEntityList = MessageEntityList(
+            entities = listOf(expectedStructuredMessage),
+            pageSize = MessageValues.PageSize,
+            pageNumber = MessageValues.PageNumber,
+            total = MessageValues.Total,
+            pageCount = MessageValues.PageCount,
+        )
+
+        val result =
+            WebMessagingJson.json.decodeFromString<MessageEntityList>(givenMessageEntityListAsJson)
+
+        result.run {
+            assertThat(this).isEqualTo(expectedMessageEntityList)
+            assertThat(entities).containsExactly(*expectedMessageEntityList.entities.toTypedArray())
+            assertThat(pageSize).isEqualTo(expectedMessageEntityList.pageSize)
+            assertThat(pageNumber).isEqualTo(expectedMessageEntityList.pageNumber)
+            assertThat(total).isEqualTo(expectedMessageEntityList.total)
+            assertThat(pageCount).isEqualTo(expectedMessageEntityList.pageCount)
+        }
+    }
+
+    @Test
+    fun `validate default constructor of MessageEntityList`() {
+        val givenMessageEntityList = MessageEntityList(
+            pageSize = MessageValues.PageSize,
+            pageNumber = MessageValues.PageNumber,
+            total = MessageValues.Total,
+            pageCount = MessageValues.PageCount,
+        )
+
+        assertThat(givenMessageEntityList.entities).isEmpty()
+    }
+
+    @Test
+    fun `when PreIdentifiedWebMessagingMessage serialized`() {
+        val givenMPreIdentifiedWebMessagingMessage = PreIdentifiedWebMessagingMessage(
+            type = MessageValues.PreIdentifiedMessageType,
+            code = MessageValues.PreIdentifiedMessageCode,
+            className = MessageValues.PreIdentifiedMessageClass,
+        )
+
+        val expectedPreIdentifiedWebMessagingMessageAsJson = """{"type":"type","code":200,"class":"clazz"}"""
+
+        val result = WebMessagingJson.json.encodeToString(givenMPreIdentifiedWebMessagingMessage)
+
+        assertThat(result).isEqualTo(expectedPreIdentifiedWebMessagingMessageAsJson)
+    }
+
+    @Test
+    fun `when PreIdentifiedWebMessagingMessage deserialized`() {
+        val givenPreIdentifiedWebMessagingMessageAsJson =
+            """{"type":"type","code":200,"class":"clazz"}"""
+
+        val result = WebMessagingJson.json.decodeFromString<PreIdentifiedWebMessagingMessage>(
+            givenPreIdentifiedWebMessagingMessageAsJson
+        )
+
+        result.run {
+            assertThat(type).isEqualTo(MessageValues.PreIdentifiedMessageType)
+            assertThat(code).isEqualTo(MessageValues.PreIdentifiedMessageCode)
+            assertThat(className).isEqualTo(MessageValues.PreIdentifiedMessageClass)
+        }
+    }
+
+    @Test
+    fun `when Channel serialized`() {
+        val givenChannel = StructuredMessage.Channel(
+            time = TestValues.Timestamp,
+            messageId = MessageValues.Id,
+            type = MessageValues.Type,
+            to = StructuredMessage.Participant(
+                firstName = MessageValues.ParticipantName,
+                lastName = MessageValues.ParticipantLastName,
+                nickname = MessageValues.ParticipantNickname,
+                image = MessageValues.ParticipantImageUrl,
+            ),
+            from = StructuredMessage.Participant(),
+        )
+
+        val expectedChannelAsJson =
+            """{"time":"2022-08-22T19:24:26.704Z","messageId":"test_message_id","type":"Text","to":{"firstName":"participant_name","lastName":"participant_last_name","nickname":"participant_nickname","image":"http://participant.image"},"from":{}}"""
+
+        val result = WebMessagingJson.json.encodeToString(givenChannel)
+
+        assertThat(result).isEqualTo(expectedChannelAsJson)
+    }
+
+    @Test
+    fun `when Channel deserialized`() {
+        val givenChannelDefaultConstructor = StructuredMessage.Channel()
+        val givenChannelAsJson =
+            """{"time":"2022-08-22T19:24:26.704Z","messageId":"test_message_id","type":"Text","to":{"firstName":"participant_name","lastName":"participant_last_name","nickname":"participant_nickname","image":"http://participant.image"},"from":{}}"""
+        val expectedChannel = StructuredMessage.Channel(
+            time = TestValues.Timestamp,
+            messageId = MessageValues.Id,
+            type = MessageValues.Type,
+            to = StructuredMessage.Participant(
+                firstName = MessageValues.ParticipantName,
+                lastName = MessageValues.ParticipantLastName,
+                nickname = MessageValues.ParticipantNickname,
+                image = MessageValues.ParticipantImageUrl,
+            ),
+            from = StructuredMessage.Participant(),
+        )
+
+        val result = WebMessagingJson.json.decodeFromString<StructuredMessage.Channel>(givenChannelAsJson)
+
+        result.run {
+            assertThat(time).isEqualTo(expectedChannel.time)
+            assertThat(messageId).isEqualTo(expectedChannel.messageId)
+            assertThat(type).isEqualTo(expectedChannel.type)
+            assertThat(to).isEqualTo(expectedChannel.to)
+            to?.run {
+                assertThat(firstName).isEqualTo(expectedChannel.to?.firstName)
+                assertThat(lastName).isEqualTo(expectedChannel.to?.lastName)
+                assertThat(nickname).isEqualTo(expectedChannel.to?.nickname)
+                assertThat(image).isEqualTo(expectedChannel.to?.image)
+            }
+            assertThat(from).isEqualTo(expectedChannel.from)
+            from?.run {
+                assertThat(firstName).isNull()
+                assertThat(lastName).isNull()
+                assertThat(nickname).isNull()
+                assertThat(image).isNull()
+            }
+            givenChannelDefaultConstructor.run {
+                assertThat(time).isNull()
+                assertThat(messageId).isNull()
+                assertThat(type).isNull()
+                assertThat(to).isNull()
+                assertThat(from).isNull()
+            }
+        }
     }
 }

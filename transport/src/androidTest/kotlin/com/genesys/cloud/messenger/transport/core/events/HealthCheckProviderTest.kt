@@ -5,17 +5,25 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Request
+import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogTag
+import com.genesys.cloud.messenger.transport.utility.LogMessages
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
+import io.mockk.verify
+import io.mockk.verifySequence
 import org.junit.Test
+import kotlin.test.assertTrue
 
 class HealthCheckProviderTest {
+    internal val mockLogger: Log = mockk(relaxed = true)
+    internal val logSlot = mutableListOf<() -> String>()
     private val mockTimestampFunction: () -> Long = spyk<() -> Long>().also {
         every { it.invoke() } answers { Platform().epochMillis() }
     }
 
-    private val subject = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction)
+    private val subject = HealthCheckProvider(mockLogger, mockTimestampFunction)
 
     @Test
     fun whenEncode() {
@@ -33,6 +41,10 @@ class HealthCheckProviderTest {
         every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + healthCheckCoolDownInMilliseconds }
         val secondResult = subject.encodeRequest(token = Request.token)
 
+        verifySequence {
+            mockTimestampFunction.invoke()
+            mockTimestampFunction.invoke()
+        }
         assertThat(firstResult).isEqualTo(expected)
         assertThat(secondResult).isEqualTo(expected)
     }
@@ -43,8 +55,12 @@ class HealthCheckProviderTest {
         val firstResult = subject.encodeRequest(token = Request.token)
         val secondResult = subject.encodeRequest(token = Request.token)
 
+        verify {
+            mockLogger.w(capture(logSlot))
+        }
         assertThat(firstResult).isEqualTo(expected)
         assertThat(secondResult).isNull()
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.HealthCheckWarning)
     }
 
     @Test
@@ -56,5 +72,25 @@ class HealthCheckProviderTest {
 
         assertThat(firstResult).isEqualTo(expected)
         assertThat(secondResult).isEqualTo(expected)
+    }
+
+    @Test
+    fun `when getCurrentTimestamp()`() {
+        val givenAcceptableRangeOffset = 10
+
+        val result = System.currentTimeMillis()
+
+        assertTrue { subject.getCurrentTimestamp() in (result - givenAcceptableRangeOffset)..(result + givenAcceptableRangeOffset) }
+    }
+
+    @Test
+    fun `validate default constructor`() {
+        val givenAcceptableRangeOffset = 10
+        val currentTime = System.currentTimeMillis()
+
+        val subject = HealthCheckProvider()
+
+        assertThat(subject.log.kermit.tag).isEqualTo(LogTag.HEALTH_CHECK_PROVIDER)
+        assertTrue { subject.getCurrentTimestamp() in (currentTime - givenAcceptableRangeOffset)..(currentTime + givenAcceptableRangeOffset) }
     }
 }
