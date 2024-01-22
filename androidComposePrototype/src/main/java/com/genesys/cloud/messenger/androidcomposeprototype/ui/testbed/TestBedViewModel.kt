@@ -322,8 +322,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         val statePayloadMessage = when (newState) {
             is State.Configured ->
                 "connected: ${newState.connected}," +
-                        " newSession: ${newState.newSession}," +
-                        " wasReconnecting: ${oldState is State.Reconnecting}"
+                    " newSession: ${newState.newSession}," +
+                    " wasReconnecting: ${oldState is State.Reconnecting}"
             is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Closed -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Error -> "code: ${newState.code}, message: ${newState.message}"
