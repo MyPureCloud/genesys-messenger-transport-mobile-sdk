@@ -13,7 +13,9 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.isInbound
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.soywiz.klock.DateTime
 
-internal fun List<StructuredMessage>.toMessageList(): List<Message> = map { it.toMessage() }
+internal fun List<StructuredMessage>.toMessageList(): List<Message> =
+    map { it.toMessage() }
+        .filter { it.messageType != Message.Type.Unknown }
 
 internal fun StructuredMessage.toMessage(): Message {
     val quickReplies = content.toQuickReplies()

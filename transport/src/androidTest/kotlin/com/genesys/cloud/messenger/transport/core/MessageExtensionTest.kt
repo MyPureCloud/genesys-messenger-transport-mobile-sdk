@@ -443,4 +443,17 @@ internal class MessageExtensionTest {
 
         assertThat(result).isEqualTo(expectedMessage)
     }
+
+    @Test
+    fun `when MessageEntityList toMessageList() has message with type Unknown`() {
+        val givenStructuredMessageList = listOf(
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured
+            )
+        )
+
+        val result = givenStructuredMessageList.toMessageList()
+
+        assertThat(result).isEmpty()
+    }
 }
