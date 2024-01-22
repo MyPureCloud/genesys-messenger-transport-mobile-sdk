@@ -55,7 +55,7 @@ internal class MessageStore(
             log.i { "Message with quick reply prepared to send: $it" }
             activeConversation.add(it)
             publish(MessageEvent.MessageInserted(it))
-            pendingMessage = Message()
+            pendingMessage = Message(attachments = it.attachments)
         }
         val content = listOf(
             Message.Content(

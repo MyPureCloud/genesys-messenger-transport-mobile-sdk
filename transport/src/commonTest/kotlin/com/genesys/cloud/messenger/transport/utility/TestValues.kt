@@ -41,38 +41,25 @@ object InvalidValues {
 }
 
 object QuickReplyTestValues {
+    internal const val Payload_A = "payload_a"
+    internal const val Payload_B = "payload_b"
+    internal const val QuickReply = "QuickReply"
+
     internal val buttonResponse_a = ButtonResponse(
         text = "text_a",
-        payload = "payload_a",
-        type = "QuickReply"
+        payload = Payload_A,
+        type = QuickReply
     )
 
     internal val buttonResponse_b = ButtonResponse(
         text = "text_b",
-        payload = "payload_b",
-        type = "QuickReply"
-    )
-}
-
-object StructuredMessageValues {
-    internal const val Payload = "payload"
-    internal const val QuickReply = "QuickReply"
-
-    internal fun createStructuredMessageForTesting(
-        id: String = MessageValues.Id,
-        type: StructuredMessage.Type = StructuredMessage.Type.Text,
-        direction: String = Message.Direction.Inbound.name,
-        content: List<StructuredMessage.Content> = emptyList(),
-    ) = StructuredMessage(
-        id = id,
-        type = type,
-        direction = direction,
-        content = content,
+        payload = Payload_B,
+        type = QuickReply
     )
 
     internal fun createQuickReplyContentForTesting(
         text: String = MessageValues.Text,
-        payload: String = Payload,
+        payload: String = Payload_A,
     ) = QuickReplyContent(
         contentType = StructuredMessage.Content.Type.QuickReply.name,
         quickReply = QuickReplyContent.QuickReply(
@@ -84,7 +71,7 @@ object StructuredMessageValues {
 
     internal fun createButtonResponseContentForTesting(
         text: String = MessageValues.Text,
-        payload: String = Payload,
+        payload: String = Payload_A,
     ) = ButtonResponseContent(
         contentType = StructuredMessage.Content.Type.ButtonResponse.name,
         buttonResponse = ButtonResponseContent.ButtonResponse(
@@ -92,5 +79,19 @@ object StructuredMessageValues {
             payload = payload,
             type = QuickReply,
         )
+    )
+}
+
+object StructuredMessageValues {
+    internal fun createStructuredMessageForTesting(
+        id: String = MessageValues.Id,
+        type: StructuredMessage.Type = StructuredMessage.Type.Text,
+        direction: String = Message.Direction.Inbound.name,
+        content: List<StructuredMessage.Content> = emptyList(),
+    ) = StructuredMessage(
+        id = id,
+        type = type,
+        direction = direction,
+        content = content,
     )
 }

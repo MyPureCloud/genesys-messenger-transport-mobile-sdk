@@ -5,6 +5,7 @@ import assertk.assertions.contains
 import assertk.assertions.containsExactly
 import assertk.assertions.containsOnly
 import assertk.assertions.isEqualTo
+import assertk.assertions.isNotEmpty
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.Message.Content
 import com.genesys.cloud.messenger.transport.core.Message.Direction
@@ -500,6 +501,25 @@ internal class MessageStoreTest {
             expectedMessage,
             (messageSlot.captured as MessageEvent.MessageInserted).message
         )
+    }
+
+    @Test
+    fun `when pending message has uploaded attachment and prepareMessageWith() ButtonResponse`() {
+        val givenButtonResponse = QuickReplyTestValues.buttonResponse_a
+        val givenAttachment = attachment(state = Attachment.State.Uploaded("http://someurl.com"))
+        val expectedContent = listOf(
+            Content(
+                contentType = Content.Type.ButtonResponse,
+                buttonResponse = givenButtonResponse
+            )
+        )
+        subject.updateAttachmentStateWith(givenAttachment)
+
+        val result = subject.prepareMessageWith(givenButtonResponse)
+
+        assertThat(result.message.content).containsOnly(*expectedContent.toTypedArray())
+        assertThat(subject.pendingMessage.attachments).isNotEmpty()
+        assertThat(subject.pendingMessage.attachments).contains(givenAttachment.id to givenAttachment)
     }
 
     private fun outboundMessage(messageId: Int = 0): Message = Message(
