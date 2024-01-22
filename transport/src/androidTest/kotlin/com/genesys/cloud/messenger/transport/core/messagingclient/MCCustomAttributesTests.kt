@@ -34,6 +34,7 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
                 channel = expectedChannel,
             ),
         )
+        every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mapOf("A" to "B")
         subject.connect()
 
         subject.sendMessage(text = "Hello world", customAttributes = mapOf("A" to "B"))
@@ -80,6 +81,7 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
                 )
             )
         )
+        every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mapOf("A" to "B")
 
         subject.connect()
 

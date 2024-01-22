@@ -34,6 +34,7 @@ import com.genesys.cloud.messenger.transport.util.fromConnectingToConnected
 import com.genesys.cloud.messenger.transport.util.fromIdleToConnecting
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.utility.AuthTest
+import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.MockKVerificationScope
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
@@ -133,7 +134,7 @@ open class BaseMessagingClientTest {
         val dummyCustomAttributes = mutableMapOf("A" to "B")
         every { get() } returns dummyCustomAttributes
         every { getCustomAttributesToSend() } returns dummyCustomAttributes
-        every { add(emptyMap()) } returns true.also { dummyCustomAttributes.clear() }
+        every { add(eq(emptyMap())) } returns true.also { dummyCustomAttributes.clear() }
     }
 
     private val mockVault: DefaultVault = mockk {
@@ -177,6 +178,7 @@ open class BaseMessagingClientTest {
         }
         mockPlatformSocket.sendMessage(configureRequest)
         mockReconnectionHandler.clear()
+        mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
         mockStateChangedListener(fromConnectedToConfigured)
     }
 
@@ -186,6 +188,7 @@ open class BaseMessagingClientTest {
         mockStateChangedListener(fromConnectingToConnected)
         mockPlatformSocket.sendMessage(Request.configureRequest())
         mockReconnectionHandler.clear()
+        mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
         mockStateChangedListener(fromConnectedToReadOnly)
     }
 

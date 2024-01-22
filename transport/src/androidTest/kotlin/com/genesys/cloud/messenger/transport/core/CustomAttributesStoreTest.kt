@@ -18,7 +18,6 @@ class CustomAttributesStoreTest {
     private val subject: CustomAttributesStoreImpl =
         CustomAttributesStoreImpl(mockk(relaxed = true), mockEventHandler).also { it.maxCustomDataBytes = 1000 }
 
-
     @Test
     fun `when add a new customAttribute`() {
         val givenCustomAttributes = mapOf("A" to "B")

@@ -7,6 +7,7 @@ import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.fromClosedToConnecting
 import com.genesys.cloud.messenger.transport.util.fromConnectedToConfigured
 import com.genesys.cloud.messenger.transport.util.fromConnectingToConnected
+import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
@@ -75,6 +76,7 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
             mockStateChangedListener(fromConnectingToConnected)
             mockPlatformSocket.sendMessage(Request.configureRequest())
             mockReconnectionHandler.clear()
+            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
             mockStateChangedListener(fromConnectedToConfigured)
             mockPlatformSocket.sendMessage(expectedMessage)
         }
