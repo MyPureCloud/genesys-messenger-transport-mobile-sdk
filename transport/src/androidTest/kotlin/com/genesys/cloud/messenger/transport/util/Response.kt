@@ -1,12 +1,13 @@
 package com.genesys.cloud.messenger.transport.util
 
 import com.genesys.cloud.messenger.transport.core.Message
+import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 internal object Response {
-    fun configureSuccess(connected: Boolean = true, readOnly: Boolean = false): String =
-        """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":$connected,"newSession":true,"readOnly":$readOnly}}"""
+    fun configureSuccess(connected: Boolean = true, readOnly: Boolean = false, maxCustomDataBytes: Int = TestValues.MaxCustomDataBytes): String =
+        """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":$connected,"newSession":true,"readOnly":$readOnly,"maxCustomDataBytes":$maxCustomDataBytes}}"""
     const val configureSuccessWithNewSessionFalse =
         """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":false}}"""
     const val webSocketRequestFailed =

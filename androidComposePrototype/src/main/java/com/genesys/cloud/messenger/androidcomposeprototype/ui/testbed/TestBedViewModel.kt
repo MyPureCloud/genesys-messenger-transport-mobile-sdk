@@ -276,13 +276,12 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     private fun doAddCustomAttributes(customAttributes: String) {
         clearCommand()
         val keyValue = customAttributes.toKeyValuePair()
-        val consoleMessage = if (keyValue.first.isNotEmpty()) {
-            client.customAttributesStore.add(mapOf(keyValue))
-            "Custom attribute added: $keyValue"
+        val addSuccess = client.customAttributesStore.add(mapOf(keyValue))
+        if (addSuccess) {
+            onSocketMessageReceived("Custom attribute added: $keyValue")
         } else {
-            "Custom attribute key can not be null or empty!"
+            onSocketMessageReceived("Custom attribute cannot be added: $keyValue")
         }
-        onSocketMessageReceived(consoleMessage)
     }
 
     private fun doIndicateTyping() {
@@ -311,9 +310,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         clientState = newState
         val statePayloadMessage = when (newState) {
             is State.Configured ->
-                "connected: ${newState.connected}," +
-                    " newSession: ${newState.newSession}," +
-                    " wasReconnecting: ${oldState is State.Reconnecting}"
+                "connected: ${newState.connected}," + " newSession: ${newState.newSession}," + " wasReconnecting: ${oldState is State.Reconnecting}"
             is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Closed -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Error -> "code: ${newState.code}, message: ${newState.message}"
@@ -377,6 +374,10 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             is ErrorCode.RefreshAuthTokenFailure,
             -> {
                 authState = AuthState.Error(event.errorCode, event.message, event.correctiveAction)
+            }
+            is ErrorCode.CustomAttributeSizeTooLarge
+            -> {
+                onSocketMessageReceived(event.message ?: "CA size too large")
             }
             else -> {
                 println("Handle Event.Error here.")

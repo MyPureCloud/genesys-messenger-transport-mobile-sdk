@@ -233,6 +233,9 @@ class TestbedViewController: UIViewController {
                 authState = AuthState.error(errorCode: error.errorCode, message: error.message, correctiveAction: error.correctiveAction)
                 updateAuthStateView()
             }
+            if(error.errorCode is ErrorCode.CustomAttributeSizeTooLarge) {
+                displayEvent = "Custom attribute size is too large: \(error.description)"
+            }
             displayEvent = "Event received: \(error.description)"
         case let healthChecked as Event.HealthChecked:
             displayEvent = "Event received: \(healthChecked.description)"
@@ -419,14 +422,18 @@ extension TestbedViewController : UITextFieldDelegate {
                 }
             case (.invalidateConversationCache, _):
                 messenger.invalidateConversationCache()
-            case(.addAttribute, let msg?):
-                
+            case (.addAttribute, let msg?):
                 let segments = segmentUserInput(msg)
-                if let key = segments.0, !key.isEmpty {
-                    let value = segments.1 ?? ""
-                    messenger.addCustomAttributes(customAttributes: [key: value])
-                    self.info.text = "Custom attribute added: key: \(key) value: \(value)"
-                }  else {
+
+                if let key = segments.0, !key.isEmpty, let value = segments.1 {
+                    let addSuccess = messenger.addCustomAttributes(customAttributes: [key: value])
+
+                    if addSuccess {
+                        self.info.text = "Custom attribute added: key: \(key) value: \(value)"
+                    } else {
+                        self.info.text = "Custom attribute cannot be added: key: \(key) value: \(value)"
+                    }
+                } else {
                     self.info.text = "Custom attribute key cannot be nil or empty!"
                 }
             case (.typing, _):

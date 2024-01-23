@@ -82,7 +82,8 @@ internal class MessagingClientImpl(
         log.withTag(LogTag.AUTH_HANDLER)
     ),
     private val internalCustomAttributesStore: CustomAttributesStoreImpl = CustomAttributesStoreImpl(
-        log.withTag(LogTag.CUSTOM_ATTRIBUTES_STORE)
+        log.withTag(LogTag.CUSTOM_ATTRIBUTES_STORE),
+        eventHandler
     ),
 ) : MessagingClient {
     private var connectAuthenticated = false
@@ -341,6 +342,24 @@ internal class MessagingClientImpl(
         }
     }
 
+    private fun handleSessionResponse(sessionResponse: SessionResponse) = sessionResponse.run {
+        reconnectionHandler.clear()
+        internalCustomAttributesStore.maxCustomDataBytes = this.maxCustomDataBytes
+        if (readOnly) {
+            stateMachine.onReadOnly()
+            if (!connected && isStartingANewSession) {
+                cleanUp()
+                configureSession(startNew = true)
+            }
+        } else {
+            isStartingANewSession = false
+            stateMachine.onSessionConfigured(connected, newSession)
+            if (newSession && deploymentConfig.isAutostartEnabled()) {
+                sendAutoStart()
+            }
+        }
+    }
+
     private fun handleError(code: ErrorCode, message: String? = null) {
         when (code) {
             is ErrorCode.SessionHasExpired,
@@ -564,24 +583,7 @@ internal class MessagingClientImpl(
                             "${decoded.body.errorMessage}. Retry after ${decoded.body.retryAfter} seconds."
                         )
                     }
-                    is SessionResponse -> {
-                        decoded.body.run {
-                            reconnectionHandler.clear()
-                            if (readOnly) {
-                                stateMachine.onReadOnly()
-                                if (!connected && isStartingANewSession) {
-                                    cleanUp()
-                                    configureSession(startNew = true)
-                                }
-                            } else {
-                                isStartingANewSession = false
-                                stateMachine.onSessionConfigured(connected, newSession)
-                                if (newSession && deploymentConfig.isAutostartEnabled()) {
-                                    sendAutoStart()
-                                }
-                            }
-                        }
-                    }
+                    is SessionResponse -> handleSessionResponse(decoded.body)
                     is JwtResponse ->
                         jwtHandler.jwtResponse = decoded.body
                     is PresignedUrlResponse ->

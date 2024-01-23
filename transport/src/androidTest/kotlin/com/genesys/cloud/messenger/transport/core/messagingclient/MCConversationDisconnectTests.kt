@@ -23,6 +23,7 @@ import com.genesys.cloud.messenger.transport.util.fromConfiguredToReadOnly
 import com.genesys.cloud.messenger.transport.util.fromConnectedToReadOnly
 import com.genesys.cloud.messenger.transport.util.fromReadOnlyToError
 import com.genesys.cloud.messenger.transport.utility.LogMessages
+import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
@@ -246,6 +247,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
             mockReconnectionHandler.clear()
+            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
             mockLogger.i(capture(logSlot))
             verifyCleanUp()
             mockLogger.i(capture(logSlot))
@@ -271,6 +273,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
             mockReconnectionHandler.clear()
+            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
         }
         verify(exactly = 0) {
             mockMessageStore.invalidateConversationCache()
@@ -289,6 +292,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
         verifySequence {
             connectSequence()
             mockReconnectionHandler.clear()
+            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
             mockStateChangedListener(fromConfiguredToReadOnly())
         }
         verify(exactly = 0) {
