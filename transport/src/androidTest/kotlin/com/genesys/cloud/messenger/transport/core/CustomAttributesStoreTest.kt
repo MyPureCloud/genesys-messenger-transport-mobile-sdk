@@ -16,7 +16,7 @@ class CustomAttributesStoreTest {
 
     private val mockEventHandler = mockk<EventHandler>(relaxed = true)
     private val subject: CustomAttributesStoreImpl =
-        CustomAttributesStoreImpl(mockk(relaxed = true), mockEventHandler).also { it.maxCustomDataBytes = 1000 }
+        CustomAttributesStoreImpl(mockk(relaxed = true), mockEventHandler).also { it.maxCustomDataBytes = TestValues.MaxCustomDataBytes }
 
     @Test
     fun `when add a new customAttribute`() {

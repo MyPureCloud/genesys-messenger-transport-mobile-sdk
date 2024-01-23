@@ -30,7 +30,7 @@ internal class CustomAttributesStoreImpl(
 
     private fun isCustomAttributesValid(customAttributes: Map<String, String>): Boolean {
         if (customAttributes.isEmpty() || this.customAttributes == customAttributes) {
-            log.i { "custom attributes are empty or same." }
+            log.w { "custom attributes are empty or same." }
             return false
         } else if (isSizeExceeded(customAttributes)) {
             eventHandler.onEvent(
