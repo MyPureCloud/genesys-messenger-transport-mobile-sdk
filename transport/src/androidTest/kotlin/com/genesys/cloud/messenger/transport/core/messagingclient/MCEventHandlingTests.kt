@@ -1,5 +1,7 @@
 package com.genesys.cloud.messenger.transport.core.messagingclient
 
+import assertk.assertThat
+import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.MessagingClient
@@ -11,6 +13,22 @@ import io.mockk.verifySequence
 import org.junit.Test
 
 class MCEventHandlingTests : BaseMessagingClientTest() {
+
+    @Test
+    fun `when eventListener is set`() {
+        val givenEventListener: (Event) -> Unit = {}
+
+        subject.eventListener = givenEventListener
+
+        verify {
+            mockEventHandler.eventListener = givenEventListener
+        }
+    }
+
+    @Test
+    fun `when eventListener is not set`() {
+        assertThat(subject.eventListener).isNull()
+    }
 
     @Test
     fun `when StructuredMessage with multiple events is received`() {

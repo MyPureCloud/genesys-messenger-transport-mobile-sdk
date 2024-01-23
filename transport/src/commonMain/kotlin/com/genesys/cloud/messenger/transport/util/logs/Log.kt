@@ -3,9 +3,11 @@ package com.genesys.cloud.messenger.transport.util.logs
 import co.touchlab.kermit.Severity
 import io.ktor.client.plugins.logging.Logger
 
-internal class Log(private val enableLogs: Boolean, tag: String) {
-
-    val kermit = co.touchlab.kermit.Logger.withTag(tag)
+internal class Log(
+    private val enableLogs: Boolean,
+    tag: String,
+    val kermit: co.touchlab.kermit.Logger = co.touchlab.kermit.Logger.withTag(tag),
+) {
 
     init {
         if (!enableLogs) {

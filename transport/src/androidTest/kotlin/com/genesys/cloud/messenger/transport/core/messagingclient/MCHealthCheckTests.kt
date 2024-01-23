@@ -1,12 +1,17 @@
 package com.genesys.cloud.messenger.transport.core.messagingclient
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.HEALTH_CHECK_COOL_DOWN_MILLISECONDS
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Request
+import com.genesys.cloud.messenger.transport.util.Response
 import com.genesys.cloud.messenger.transport.util.fromClosedToConnecting
 import com.genesys.cloud.messenger.transport.util.fromConnectedToConfigured
 import com.genesys.cloud.messenger.transport.util.fromConnectingToConnected
+import com.genesys.cloud.messenger.transport.utility.LogMessages
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.every
 import io.mockk.verify
@@ -26,6 +31,8 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
+            mockLogger.i(capture(logSlot))
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
     }
@@ -69,23 +76,51 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
+            mockLogger.i(capture(logSlot))
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
             disconnectSequence()
+            mockLogger.i(capture(logSlot))
             mockStateChangedListener(fromClosedToConnecting)
             mockPlatformSocket.openSocket(any())
             mockStateChangedListener(fromConnectingToConnected)
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.configureRequest())
             mockReconnectionHandler.clear()
             mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
             mockStateChangedListener(fromConnectedToConfigured)
+            mockLogger.i(capture(logSlot))
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.HealthCheck)
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WillSendMessage)
+        assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.Disconnect)
+        assertThat(logSlot[5].invoke()).isEqualTo(LogMessages.ClearConversationHistory)
+        assertThat(logSlot[6].invoke()).isEqualTo(LogMessages.Connect)
+        assertThat(logSlot[7].invoke()).isEqualTo(LogMessages.ConfigureSession)
+        assertThat(logSlot[8].invoke()).isEqualTo(LogMessages.HealthCheck)
+        assertThat(logSlot[9].invoke()).isEqualTo(LogMessages.WillSendMessage)
     }
 
     @Test
     fun `when not connected and send HealthCheck`() {
         assertFailsWith<IllegalStateException> {
             subject.sendHealthCheck()
+        }
+    }
+
+    @Test
+    fun `when SocketListener invoke onMessage with HealthCheck response message`() {
+        subject.connect()
+
+        slot.captured.onMessage(Response.healthCheckResponse)
+
+        verifySequence {
+            connectSequence()
+            mockEventHandler.onEvent(Event.HealthChecked)
         }
     }
 }

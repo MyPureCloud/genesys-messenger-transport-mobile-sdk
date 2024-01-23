@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.core.messagingclient
 
 import assertk.assertThat
+import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
 import com.genesys.cloud.messenger.transport.core.MessagingClient
@@ -21,6 +22,7 @@ import com.genesys.cloud.messenger.transport.util.Response
 import com.genesys.cloud.messenger.transport.util.fromConfiguredToReadOnly
 import com.genesys.cloud.messenger.transport.util.fromConnectedToReadOnly
 import com.genesys.cloud.messenger.transport.util.fromReadOnlyToError
+import com.genesys.cloud.messenger.transport.utility.LogMessages
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.every
 import io.mockk.verify
@@ -194,8 +196,12 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
         assertThat(subject.currentState).isReadOnly()
         verifySequence {
             connectToReadOnlySequence()
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
         }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CloseSession)
     }
 
     @Test
@@ -216,6 +222,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
         assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
         verifySequence {
             connectToReadOnlySequence()
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
             mockStateChangedListener(fromReadOnlyToError(errorState = expectedErrorState))
             mockReconnectionHandler.clear()
@@ -237,10 +244,13 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
         assertThat(subject.currentState).isReadOnly()
         verifySequence {
             connectToReadOnlySequence()
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
             mockReconnectionHandler.clear()
+            mockLogger.i(capture(logSlot))
             mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
             verifyCleanUp()
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.configureRequest(startNew = true))
         }
     }
@@ -260,6 +270,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
         assertThat(subject.currentState).isReadOnly()
         verifySequence {
             connectToReadOnlySequence()
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
             mockReconnectionHandler.clear()
             mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
