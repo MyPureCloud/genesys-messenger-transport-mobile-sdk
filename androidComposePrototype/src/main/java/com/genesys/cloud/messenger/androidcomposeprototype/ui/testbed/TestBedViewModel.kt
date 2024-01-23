@@ -86,7 +86,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         DefaultVault.context = context
         messengerTransport = MessengerTransportSDK(mmsdkConfiguration)
         client = messengerTransport.createMessagingClient()
-        client.customAttributesStore.add(mapOf("sdkVersion" to "Transport SDK: ${MessengerTransportSDK.sdkVersion}"))
+        client.customAttributesStore.add(mapOf("sdkVersion" to "TransportSDK: ${MessengerTransportSDK.sdkVersion}"))
         with(client) {
             stateChangedListener = {
                 runBlocking {
