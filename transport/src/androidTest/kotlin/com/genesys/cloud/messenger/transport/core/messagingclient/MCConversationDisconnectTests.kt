@@ -247,8 +247,8 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
             mockReconnectionHandler.clear()
-            mockLogger.i(capture(logSlot))
             mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
+            mockLogger.i(capture(logSlot))
             verifyCleanUp()
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.configureRequest(startNew = true))
