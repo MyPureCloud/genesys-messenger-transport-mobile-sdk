@@ -45,6 +45,7 @@ internal class WebMessagingApi(
     ): Result<MessageEntityList> = try {
         val response = client.get("${configuration.apiBaseUrl}/api/v2/webmessaging/messages") {
             headerAuthorizationBearer(jwt)
+            headerOrigin(configuration.domain)
             parameter("pageNumber", pageNumber)
             parameter("pageSize", pageSize)
         }
@@ -141,3 +142,6 @@ private fun HttpStatusCode.isUnauthorized(): Boolean = this == HttpStatusCode.Un
 
 private fun HttpRequestBuilder.headerAuthorizationBearer(jwt: String) =
     header(HttpHeaders.Authorization, "bearer $jwt")
+
+private fun HttpRequestBuilder.headerOrigin(origin: String) =
+    header(HttpHeaders.Origin, origin)
