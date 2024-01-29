@@ -5,6 +5,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEve
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.Unknown
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 
 private const val FALLBACK_TYPING_INDICATOR_DURATION = 5000L
@@ -17,10 +18,10 @@ internal class EventHandlerImpl(
 
     override fun onEvent(event: Event?) {
         if (event == null) {
-            log.i { "Unknown event received." }
+            log.i { LogMessages.UNKNOWN_EVENT_RECEIVED }
             return
         }
-        log.i { "on event: $event" }
+        log.i { LogMessages.onEvent(event) }
         eventListener?.invoke(event)
     }
 }

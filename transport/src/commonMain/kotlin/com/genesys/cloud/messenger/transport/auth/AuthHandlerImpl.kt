@@ -11,6 +11,7 @@ import com.genesys.cloud.messenger.transport.core.isUnauthorized
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -86,7 +87,7 @@ internal class AuthHandlerImpl(
             dispatcher.launch {
                 when (val result = api.refreshAuthJwt(it.refreshToken!!)) {
                     is Result.Success -> {
-                        log.i { "refreshAuthToken success." }
+                        log.i { LogMessages.REFRESH_AUTH_TOKEN_SUCCESS }
                         authJwt = it.copy(jwt = result.value.jwt, refreshToken = it.refreshToken)
                         callback(Result.Success(Empty()))
                     }
