@@ -370,7 +370,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             is MessageEvent.QuickReplyReceived -> event.message.run {
                 quickRepliesMap.clear()
                 quickRepliesMap.putAll(quickReplies.associateBy { it.text })
-                "QuickReplyReceived: $this"
+                "QuickReplyReceived: text: ${this.text} | quick reply options: ${this.quickReplies}"
             }
 
             else -> event.toString()
