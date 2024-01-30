@@ -421,6 +421,31 @@ class iosAppTests: XCTestCase {
         messengerTester.disconnectMessenger()
     }
 
+    // The Quick Reply bot has the following structure:
+    //   First segment: Two replies possible: "Carousel", "Done".
+    //     - Selecting Carousel goes to another part of the flow where a Carousel Reply option is given.
+    //     - Selecting Done will end the flow.
+    //   Second segment: One reply possible: "Done".
+    //     - Selecting "Done" will end the flow.
+    func testQuickReply() {
+        // Connect to the quick reply bot.
+        let deployment = try! Deployment()
+        let testController = MessengerInteractorTester(deployment: Deployment(deploymentId: TestConfig.shared.config?.quickReplyBot ?? "", domain: deployment.domain))
+        testController.quickReplyExpectation = XCTestExpectation(description: "Waiting for quick replies to show up.")
+        testController.startNewMessengerConnection()
+        delay(10, reason: "Allow time for the bot to start.")
+
+        // Wait for quick replies to show up. Navigate to the Carousel portion using quick replies.
+        testController.waitForQuickReplies()
+        testController.testExpectation = XCTestExpectation(description: "Wait for a message to be received from the bot.")
+        testController.sendQuickReply(reply: "Carousel")
+        testController.waitForTestExpectation()
+
+        // Getting here means that we successfully handled a Carousel quick reply.
+        // Support for Carousel replies will be in a different Ticket.
+        testController.disconnectMessenger()
+    }
+
     func testSendAndReceiveMessage() {
         // Setup the session. Send a message.
         guard let messengerTester = messengerTester else {
