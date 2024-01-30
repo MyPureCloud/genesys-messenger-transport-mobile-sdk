@@ -61,7 +61,7 @@ class TestbedViewController: UIViewController {
             case .send: return "send <msg>"
             case .detach: return "detach <attachmentId>"
             case .addAttribute: return "addAttribute <key> <value>"
-            case .sendQuickReply: return "send <quickReply>"
+            case .sendQuickReply: return "sendQuickReply <quickReply>"
             default: return rawValue
             }
         }
