@@ -6,6 +6,7 @@ import com.genesys.cloud.messenger.transport.network.DeploymentConfigUseCase
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
+import com.genesys.cloud.messenger.transport.network.defaultHttpClient
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.TokenStore
@@ -109,8 +110,8 @@ class MessengerTransportSDK(
     @Throws(Exception::class)
     suspend fun fetchDeploymentConfig(): DeploymentConfig {
         return DeploymentConfigUseCase(
-            configuration.logging,
             configuration.deploymentConfigUrl.toString(),
+            defaultHttpClient(configuration.logging)
         ).fetch().also {
             deploymentConfig = it
         }

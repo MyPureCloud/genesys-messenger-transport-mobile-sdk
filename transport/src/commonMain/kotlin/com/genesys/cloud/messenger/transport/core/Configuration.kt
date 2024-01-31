@@ -13,7 +13,7 @@ import io.ktor.http.path
  */
 data class Configuration(
     val deploymentId: String,
-    private val domain: String,
+    val domain: String,
     val logging: Boolean = false,
     val reconnectionTimeoutInSeconds: Long = 60 * 5,
     val autoRefreshTokenWhenExpired: Boolean = true,

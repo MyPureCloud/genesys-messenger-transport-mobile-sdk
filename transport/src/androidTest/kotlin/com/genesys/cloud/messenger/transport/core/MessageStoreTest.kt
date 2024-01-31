@@ -4,8 +4,14 @@ import assertk.assertThat
 import assertk.assertions.contains
 import assertk.assertions.containsExactly
 import assertk.assertions.containsOnly
+import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEmpty
+import assertk.assertions.isFalse
+import assertk.assertions.isNotEmpty
+import assertk.assertions.isNotEqualTo
+import assertk.assertions.isNotNull
+import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.Message.Content
 import com.genesys.cloud.messenger.transport.core.Message.Direction
@@ -16,6 +22,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.Request
+import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import io.mockk.Called
 import io.mockk.clearMocks
@@ -23,21 +30,17 @@ import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 internal class MessageStoreTest {
     private val givenToken = Request.token
     private val messageSlot = slot<MessageEvent>()
+    private val mockLogger: Log = mockk(relaxed = true)
+    private val logSlot = mutableListOf<() -> String>()
     private val mockMessageListener: ((MessageEvent) -> Unit) = mockk(relaxed = true)
 
     private val subject = MessageStore(
         token = givenToken,
-        log = mockk(relaxed = true),
+        log = mockLogger,
     ).also {
         it.messageListener = mockMessageListener
     }
@@ -53,20 +56,26 @@ internal class MessageStoreTest {
                 metadata = mapOf("customMessageId" to expectedMessage.id)
             ),
         )
+        val expectedLogMessage = "Message prepared to send: $expectedMessage"
 
         subject.prepareMessage("test message").run {
-            assertEquals(expectedOnMessageRequest.token, token)
-            assertEquals(expectedOnMessageRequest.message, message)
-            assertNull(time)
+            assertThat(token).isEqualTo(expectedOnMessageRequest.token)
+            assertThat(message).isEqualTo(expectedOnMessageRequest.message)
+            assertThat(time).isNull()
         }
 
-        assertEquals(expectedMessage, subject.getConversation()[0])
-        assertNotEquals(expectedMessage.id, subject.pendingMessage.id)
-        verify { mockMessageListener(capture(messageSlot)) }
-        assertEquals(
-            expectedMessage,
-            (messageSlot.captured as MessageEvent.MessageInserted).message
-        )
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockMessageListener.invoke(capture(messageSlot))
+        }
+        subject.run {
+            assertThat(getConversation().first()).isEqualTo(expectedMessage)
+            assertThat(pendingMessage.id).isNotEqualTo(expectedMessage.id)
+            assertThat((messageSlot.captured as MessageEvent.MessageInserted).message).isEqualTo(
+                expectedMessage
+            )
+            assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
+        }
     }
 
     @Test
@@ -75,7 +84,7 @@ internal class MessageStoreTest {
         subject.prepareMessage("message 1")
         subject.prepareMessage("message 2")
 
-        assertTrue { subject.getConversation().size == 2 }
+        assertThat(subject.getConversation().size).isEqualTo(2)
     }
 
     @Test
@@ -94,18 +103,16 @@ internal class MessageStoreTest {
                 )
             )
         }
-        assertTrue { subject.pendingMessage.attachments.isEmpty() }
+        assertThat(subject.pendingMessage.attachments).isEmpty()
     }
 
     @Test
     fun `when prepareMessage() with NOT uploaded attachment`() {
-        subject.updateAttachmentStateWith(
-            attachment()
-        )
+        subject.updateAttachmentStateWith(attachment())
 
         subject.prepareMessage("test message").run {
-            assertNotNull(this.message.content)
-            assertTrue { this.message.content.isEmpty() }
+            assertThat(message.content).isNotNull()
+            assertThat(message.content).isEmpty()
         }
     }
 
@@ -116,16 +123,20 @@ internal class MessageStoreTest {
                 ?: "empty"
         val givenMessage =
             Message(id = sentMessageId, state = State.Sent, text = "test message")
+        val expectedLogMessage = "Message state updated: $givenMessage"
         clearMocks(mockMessageListener)
 
         subject.update(givenMessage)
 
-        assertEquals(givenMessage, subject.getConversation()[0])
-        verify { mockMessageListener(capture(messageSlot)) }
-        assertEquals(
-            givenMessage,
-            (messageSlot.captured as MessageEvent.MessageUpdated).message
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockMessageListener.invoke(capture(messageSlot))
+        }
+        assertThat(subject.getConversation().first()).isEqualTo(givenMessage)
+        assertThat((messageSlot.captured as MessageEvent.MessageUpdated).message).isEqualTo(
+            givenMessage
         )
+        assertThat(logSlot[1].invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
@@ -134,12 +145,11 @@ internal class MessageStoreTest {
 
         subject.update(givenMessage)
 
-        assertEquals(givenMessage, subject.getConversation()[0])
-        assertEquals(1, subject.nextPage)
-        verify { mockMessageListener(capture(messageSlot)) }
-        assertEquals(
-            givenMessage,
-            (messageSlot.captured as MessageEvent.MessageInserted).message
+        verify { mockMessageListener.invoke(capture(messageSlot)) }
+        assertThat(subject.getConversation().first()).isEqualTo(givenMessage)
+        assertThat(subject.nextPage).isEqualTo(1)
+        assertThat((messageSlot.captured as MessageEvent.MessageInserted).message).isEqualTo(
+            givenMessage
         )
     }
 
@@ -156,12 +166,11 @@ internal class MessageStoreTest {
 
         subject.update(givenMessage)
 
-        assertEquals(expectedConversationSize, subject.getConversation().size)
-        assertEquals(givenMessage, subject.getConversation().first())
-        verify { mockMessageListener(capture(messageSlot)) }
-        assertEquals(
-            givenMessage,
-            (messageSlot.captured as MessageEvent.MessageUpdated).message
+        verify { mockMessageListener.invoke(capture(messageSlot)) }
+        assertThat(subject.getConversation().size).isEqualTo(expectedConversationSize)
+        assertThat(subject.getConversation().first()).isEqualTo(givenMessage)
+        assertThat((messageSlot.captured as MessageEvent.MessageUpdated).message).isEqualTo(
+            givenMessage
         )
     }
 
@@ -172,11 +181,10 @@ internal class MessageStoreTest {
 
         subject.update(message = givenMessage)
 
-        verify { mockMessageListener(capture(messageSlot)) }
-        assertTrue { subject.getConversation().size == 1 }
-        assertEquals(
-            givenMessage,
-            (messageSlot.captured as MessageEvent.MessageInserted).message
+        verify { mockMessageListener.invoke(capture(messageSlot)) }
+        assertThat(subject.getConversation().size).isEqualTo(1)
+        assertThat((messageSlot.captured as MessageEvent.MessageInserted).message).isEqualTo(
+            givenMessage
         )
     }
 
@@ -188,21 +196,26 @@ internal class MessageStoreTest {
             subject.update(outboundMessage(messageId = i))
         }
 
-        assertEquals(expectedConversationSize, subject.getConversation().size)
-        assertEquals(expectedNextPageIndex, subject.nextPage)
+        assertThat(subject.getConversation().size).isEqualTo(expectedConversationSize)
+        assertThat(subject.nextPage).isEqualTo(expectedNextPageIndex)
     }
 
     @Test
     fun `when update() with new attachment`() {
         val givenAttachment = attachment()
+        val expectedLogMessage = "Attachment state updated: $givenAttachment"
+
         subject.updateAttachmentStateWith(givenAttachment)
 
-        assertEquals(givenAttachment, subject.pendingMessage.attachments["given id"])
-        verify { mockMessageListener(capture(messageSlot)) }
-        assertEquals(
-            givenAttachment,
-            (messageSlot.captured as MessageEvent.AttachmentUpdated).attachment
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockMessageListener.invoke(capture(messageSlot))
+        }
+        assertThat(subject.pendingMessage.attachments["given id"]).isEqualTo(givenAttachment)
+        assertThat((messageSlot.captured as MessageEvent.AttachmentUpdated).attachment).isEqualTo(
+            givenAttachment
         )
+        assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
@@ -214,11 +227,10 @@ internal class MessageStoreTest {
 
         subject.updateAttachmentStateWith(updatedAttachment)
 
-        assertEquals(updatedAttachment, subject.pendingMessage.attachments["given id"])
-        verify { mockMessageListener(capture(messageSlot)) }
-        assertEquals(
-            updatedAttachment,
-            (messageSlot.captured as MessageEvent.AttachmentUpdated).attachment
+        verify { mockMessageListener.invoke(capture(messageSlot)) }
+        assertThat(subject.pendingMessage.attachments["given id"]).isEqualTo(updatedAttachment)
+        assertThat((messageSlot.captured as MessageEvent.AttachmentUpdated).attachment).isEqualTo(
+            updatedAttachment
         )
     }
 
@@ -227,16 +239,23 @@ internal class MessageStoreTest {
         val expectedMessageHistory = messageList(2).reversed()
         val expectedConversationSize = 2
         val expectedNextPageIndex = 1
+        val expectedLogMessage = "Message history updated with: $expectedMessageHistory."
 
         subject.updateMessageHistory(messageList(2), 2)
 
-        assertThat(subject.startOfConversation).isTrue()
-        assertThat(subject.getConversation().size).isEqualTo(expectedConversationSize)
-        assertThat(subject.nextPage).isEqualTo(expectedNextPageIndex)
-        verify { mockMessageListener(capture(messageSlot)) }
-        assertThat((messageSlot.captured as MessageEvent.HistoryFetched).messages).isEqualTo(
-            expectedMessageHistory
-        )
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockMessageListener.invoke(capture(messageSlot))
+        }
+        subject.run {
+            assertThat(startOfConversation).isTrue()
+            assertThat(getConversation().size).isEqualTo(expectedConversationSize)
+            assertThat(nextPage).isEqualTo(expectedNextPageIndex)
+            assertThat((messageSlot.captured as MessageEvent.HistoryFetched).messages).isEqualTo(
+                expectedMessageHistory
+            )
+            assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
+        }
     }
 
     @Test
@@ -247,8 +266,8 @@ internal class MessageStoreTest {
 
         subject.updateMessageHistory(givenMessageHistory, givenTotal)
 
-        assertFalse { subject.startOfConversation }
-        assertEquals(expectedNextPageIndex, subject.nextPage)
+        assertThat(subject.startOfConversation).isFalse()
+        assertThat(subject.nextPage).isEqualTo(expectedNextPageIndex)
     }
 
     @Test
@@ -262,7 +281,7 @@ internal class MessageStoreTest {
         subject.updateMessageHistory(givenMessageHistory, givenMessageHistory.size)
 
         assertThat(subject.getConversation()).containsExactly(expectedMessage2, expectedMessage1)
-        verify { mockMessageListener(capture(messageSlot)) }
+        verify { mockMessageListener.invoke(capture(messageSlot)) }
         val captured = messageSlot.captured as MessageEvent.HistoryFetched
         assertThat(captured.messages).containsExactly(expectedMessage2)
         assertThat(captured.startOfConversation).isTrue()
@@ -273,8 +292,8 @@ internal class MessageStoreTest {
         subject.onMessageError(ErrorCode.MessageTooLong, "some message")
 
         verify { mockMessageListener wasNot Called }
-        assertEquals(1, subject.nextPage)
-        assertTrue { subject.getConversation().isEmpty() }
+        assertThat(subject.nextPage).isEqualTo(1)
+        assertThat(subject.getConversation()).isEmpty()
     }
 
     @Test
@@ -285,19 +304,20 @@ internal class MessageStoreTest {
         subject.onMessageError(ErrorCode.MessageTooLong, "some message")
 
         verify { mockMessageListener wasNot Called }
-        assertTrue { subject.getConversation().isNotEmpty() }
+        assertThat(subject.getConversation()).isNotEmpty()
     }
 
     @Test
     fun `when onMessageError() happens after message being Sent`() {
         val errorMessage = "some test error message"
         val testMessage = "test message"
+        val expectedState = Message.State.Error(
+            ErrorCode.MessageTooLong,
+            errorMessage
+        )
         val expectedMessage =
             subject.pendingMessage.copy(
-                state = State.Error(
-                    ErrorCode.MessageTooLong,
-                    errorMessage
-                ),
+                state = expectedState,
                 text = testMessage
             )
         subject.prepareMessage(testMessage)
@@ -306,11 +326,12 @@ internal class MessageStoreTest {
         subject.onMessageError(ErrorCode.MessageTooLong, errorMessage)
 
         assertThat { subject.getConversation().contains(expectedMessage) }
-        verify { mockMessageListener(capture(messageSlot)) }
-        assertEquals(
-            expectedMessage,
-            (messageSlot.captured as MessageEvent.MessageUpdated).message
-        )
+        verify { mockMessageListener.invoke(capture(messageSlot)) }
+        (messageSlot.captured as MessageEvent.MessageUpdated).message.run {
+            assertThat(this).isEqualTo(expectedMessage)
+            assertThat((state as Message.State.Error).code).isEqualTo(expectedState.code)
+            assertThat((state as Message.State.Error).message).isEqualTo(expectedState.message)
+        }
     }
 
     @Test
@@ -320,6 +341,7 @@ internal class MessageStoreTest {
         subject.prepareMessage("test message")
 
         verify { mockMessageListener wasNot Called }
+        assertThat(subject.messageListener).isNull()
     }
 
     @Test
@@ -329,9 +351,11 @@ internal class MessageStoreTest {
 
         subject.invalidateConversationCache()
 
-        assertFalse { subject.startOfConversation }
-        assertTrue { subject.getConversation().isEmpty() }
-        assertThat(subject.nextPage).isEqualTo(expectedNextPage)
+        subject.run {
+            assertThat(startOfConversation).isFalse()
+            assertThat(getConversation()).isEmpty()
+            assertThat(nextPage).isEqualTo(expectedNextPage)
+        }
     }
 
     @Test
@@ -347,20 +371,23 @@ internal class MessageStoreTest {
             ),
         )
 
-        subject.prepareMessage("test message", Channel(Channel.Metadata(mapOf("A" to "B")))).run {
-            assertEquals(expectedOnMessageRequest.token, token)
-            assertEquals(expectedOnMessageRequest.message, message)
-            assertEquals(expectedOnMessageRequest.message.channel, message.channel)
-            assertNull(time)
-        }
+        val onMessageRequest =
+            subject.prepareMessage("test message", Channel(Channel.Metadata(mapOf("A" to "B"))))
 
-        assertEquals(expectedMessage, subject.getConversation()[0])
-        assertNotEquals(expectedMessage.id, subject.pendingMessage.id)
-        verify { mockMessageListener(capture(messageSlot)) }
-        assertEquals(
-            expectedMessage,
-            (messageSlot.captured as MessageEvent.MessageInserted).message
-        )
+        verify { mockMessageListener.invoke(capture(messageSlot)) }
+        onMessageRequest.run {
+            assertThat(token).isEqualTo(expectedOnMessageRequest.token)
+            assertThat(message).isEqualTo(expectedOnMessageRequest.message)
+            assertThat(message.channel).isEqualTo(expectedOnMessageRequest.message.channel)
+            assertThat(time).isNull()
+        }
+        subject.run {
+            assertThat(getConversation().first()).isEqualTo(expectedMessage)
+            assertThat(pendingMessage.id).isNotEqualTo(expectedMessage)
+            assertThat((messageSlot.captured as MessageEvent.MessageInserted).message).isEqualTo(
+                expectedMessage
+            )
+        }
     }
 
     @Test

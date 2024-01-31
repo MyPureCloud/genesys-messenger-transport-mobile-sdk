@@ -1,6 +1,8 @@
 package com.genesys.cloud.messenger.transport.core.messagingclient
 
 import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.Message.Direction
@@ -13,6 +15,7 @@ import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.isClosed
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.Response
+import com.genesys.cloud.messenger.transport.utility.LogMessages
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
@@ -29,6 +32,20 @@ class MCMessageTests : BaseMessagingClientTest() {
 
         verify {
             mockMessageStore.messageListener = givenMessageListener
+        }
+    }
+
+    @Test
+    fun `when messageListener is not set`() {
+        assertThat(subject.messageListener).isNull()
+    }
+
+    @Test
+    fun `when getPendingMessage`() {
+        subject.pendingMessage
+
+        verify {
+            mockMessageStore.pendingMessage
         }
     }
 
@@ -54,10 +71,12 @@ class MCMessageTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
+            mockLogger.i(capture(logSlot))
             mockCustomAttributesStore.add(emptyMap())
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockMessageStore.prepareMessage(expectedText)
             mockAttachmentHandler.onSending()
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessageRequest)
             mockMessageStore.update(expectedMessage)
             mockCustomAttributesStore.onSent()
@@ -68,6 +87,10 @@ class MCMessageTests : BaseMessagingClientTest() {
             mockCustomAttributesStore.onSending()
             mockEventHandler.onEvent(Event.HealthChecked)
         }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessageWith(customAttributes = "{}"))
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WillSendMessage)
     }
 
     @Test
@@ -169,6 +192,12 @@ class MCMessageTests : BaseMessagingClientTest() {
             connectSequence()
             disconnectSequence()
         }
+
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.Disconnect)
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.ForceClose)
+        assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.ClearConversationHistory)
     }
 
     @Test

@@ -3,12 +3,19 @@ package com.genesys.cloud.messenger.transport.core.messagingclient
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.Attachment
+import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Message
+import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.core.Message.State
 import com.genesys.cloud.messenger.transport.core.Message.Type
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.Response
+import com.genesys.cloud.messenger.transport.utility.AttachmentValues
+import com.genesys.cloud.messenger.transport.utility.ErrorTest
+import com.genesys.cloud.messenger.transport.utility.LogMessages
+import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.Called
 import io.mockk.clearMocks
 import io.mockk.every
@@ -33,9 +40,15 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         assertEquals(expectedAttachmentId, result)
         verifySequence {
             connectSequence()
+            mockLogger.i(capture(logSlot))
             mockAttachmentHandler.prepare(any(), any(), any())
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.Attach)
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WillSendMessage)
     }
 
     @Test
@@ -49,10 +62,14 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         subject.detach("88888888-8888-8888-8888-888888888888")
 
         verify {
+            mockLogger.i(capture(logSlot))
             mockAttachmentHandler.detach(capture(attachmentIdSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
         assertThat(attachmentIdSlot.captured).isEqualTo(expectedAttachmentId)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.Detach)
     }
 
     @Test
@@ -157,6 +174,66 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         verify(exactly = 0) {
             mockCustomAttributesStore.onSent()
             mockAttachmentHandler.onSent(any())
+        }
+    }
+
+    @Test
+    fun `when SocketListener invoke OnMessage with UploadSuccessEvent response`() {
+        val expectedEvent = UploadSuccessEvent(
+            attachmentId = AttachmentValues.Id,
+            downloadUrl = AttachmentValues.DownloadUrl,
+            timestamp = TestValues.Timestamp,
+        )
+
+        subject.connect()
+
+        slot.captured.onMessage(Response.uploadSuccessEvent)
+
+        verifySequence {
+            connectSequence()
+            mockAttachmentHandler.onUploadSuccess(expectedEvent)
+        }
+    }
+
+    @Test
+    fun `when SocketListener invoke OnMessage with PresignedUrlResponse response`() {
+        val expectedEvent = PresignedUrlResponse(
+            attachmentId = AttachmentValues.Id,
+            headers = mapOf(AttachmentValues.PresignedHeaderKey to AttachmentValues.PresignedHeaderValue),
+            url = AttachmentValues.DownloadUrl,
+        )
+
+        subject.connect()
+
+        slot.captured.onMessage(Response.presignedUrlResponse)
+
+        verifySequence {
+            connectSequence()
+            mockAttachmentHandler.upload(expectedEvent)
+        }
+    }
+
+    @Test
+    fun `when SocketListener invoke OnMessage with GenerateUrlError response`() {
+        subject.connect()
+
+        slot.captured.onMessage(Response.generateUrlError)
+
+        verifySequence {
+            connectSequence()
+            mockAttachmentHandler.onError(AttachmentValues.Id, ErrorCode.FileTypeInvalid, ErrorTest.Message)
+        }
+    }
+
+    @Test
+    fun `when SocketListener invoke OnMessage with UploadFailureEvent response`() {
+        subject.connect()
+
+        slot.captured.onMessage(Response.uploadFailureEvent)
+
+        verifySequence {
+            connectSequence()
+            mockAttachmentHandler.onError(AttachmentValues.Id, ErrorCode.FileTypeInvalid, ErrorTest.Message)
         }
     }
 }

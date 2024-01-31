@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.core.messagingclient
 
 import assertk.assertThat
+import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.auth.NO_JWT
 import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.ErrorCode
@@ -21,6 +22,7 @@ import com.genesys.cloud.messenger.transport.util.fromIdleToConnecting
 import com.genesys.cloud.messenger.transport.util.fromReconnectingToError
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
+import com.genesys.cloud.messenger.transport.utility.LogMessages
 import io.mockk.every
 import io.mockk.invoke
 import io.mockk.verify
@@ -179,7 +181,6 @@ class MCAuthTests : BaseMessagingClientTest() {
             MessagingClient.State.Error(ErrorCode.WebsocketError, ErrorMessage.FailedToReconnect)
 
         subject.connectAuthenticatedSession()
-
         slot.captured.onFailure(expectedException, ErrorCode.WebsocketError)
 
         assertThat(subject.currentState).isError(
@@ -188,10 +189,14 @@ class MCAuthTests : BaseMessagingClientTest() {
         )
         verifySequence {
             connectSequence(shouldConfigureAuth = true)
+            mockLogger.i(capture(logSlot))
             mockMessageStore.invalidateConversationCache()
             mockReconnectionHandler.shouldReconnect
             errorSequence(fromConfiguredToError(expectedErrorState))
         }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.ConnectAuthenticated)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureAuthenticatedSession)
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.ClearConversationHistory)
     }
 
     @Test
@@ -216,14 +221,23 @@ class MCAuthTests : BaseMessagingClientTest() {
         assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
         verifySequence {
             connectSequence(shouldConfigureAuth = true)
+            mockLogger.i(capture(logSlot))
+            mockMessageStore.invalidateConversationCache()
             mockReconnectionHandler.shouldReconnect
             mockStateChangedListener(fromConfiguredToReconnecting())
             mockReconnectionHandler.reconnect(any())
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.openSocket(any())
+            mockLogger.i(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.jwt
             mockPlatformSocket.sendMessage(eq(Request.configureAuthenticatedRequest()))
             errorSequence(fromReconnectingToError(expectedErrorState))
         }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.ConnectAuthenticated)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureAuthenticatedSession)
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.ClearConversationHistory)
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.ConnectAuthenticated)
+        assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.ConfigureAuthenticatedSession)
     }
 }
