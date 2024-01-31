@@ -72,7 +72,7 @@ internal actual class PlatformSocket actual constructor(
                     reason: NSData?,
                 ) {
                     val why = reason?.string() ?: "Reason not specified."
-                    log.i { LogMessages.socketDidClose(didCloseWithCode.toInt(), why, active) }
+                    log.i { LogMessages.socketDidClose(didCloseWithCode, why, active) }
                     if (webSocketTask == webSocket) {
                         deactivate()
                         listener.onClosed(code = didCloseWithCode.toInt(), reason = why)

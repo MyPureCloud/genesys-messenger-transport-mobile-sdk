@@ -22,7 +22,7 @@ import com.genesys.cloud.messenger.transport.util.fromIdleToConnecting
 import com.genesys.cloud.messenger.transport.util.fromReconnectingToError
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
-import com.genesys.cloud.messenger.transport.utility.LogMessages
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.mockk.every
 import io.mockk.invoke
 import io.mockk.verify
@@ -194,9 +194,9 @@ class MCAuthTests : BaseMessagingClientTest() {
             mockReconnectionHandler.shouldReconnect
             errorSequence(fromConfiguredToError(expectedErrorState))
         }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.ConnectAuthenticated)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureAuthenticatedSession)
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.ClearConversationHistory)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT_AUTHENTICATED_SESSION)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(Request.token, false))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
     }
 
     @Test
@@ -234,10 +234,10 @@ class MCAuthTests : BaseMessagingClientTest() {
             mockPlatformSocket.sendMessage(eq(Request.configureAuthenticatedRequest()))
             errorSequence(fromReconnectingToError(expectedErrorState))
         }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.ConnectAuthenticated)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureAuthenticatedSession)
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.ClearConversationHistory)
-        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.ConnectAuthenticated)
-        assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.ConfigureAuthenticatedSession)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT_AUTHENTICATED_SESSION)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(Request.token, false))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.CONNECT_AUTHENTICATED_SESSION)
+        assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(Request.token, false))
     }
 }

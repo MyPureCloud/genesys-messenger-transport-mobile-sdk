@@ -79,7 +79,7 @@ internal class AuthHandlerImpl(
             } else {
                 ErrorMessage.NoRefreshToken
             }
-            log.e { "Could not refreshAuthToken: $message" }
+            log.e { LogMessages.couldNotRefreshAuthToken(message) }
             callback(Result.Failure(ErrorCode.RefreshAuthTokenFailure, message))
             return
         }
@@ -92,7 +92,7 @@ internal class AuthHandlerImpl(
                         callback(Result.Success(Empty()))
                     }
                     is Result.Failure -> {
-                        log.e { "Could not refreshAuthToken: ${result.message}" }
+                        log.e { LogMessages.couldNotRefreshAuthToken(result.message) }
                         clear()
                         callback(result)
                     }
@@ -108,10 +108,10 @@ internal class AuthHandlerImpl(
 
     private fun handleRequestError(result: Result.Failure, requestName: String) {
         if (result.errorCode is ErrorCode.CancellationError) {
-            log.w { "Cancellation exception was thrown, while running $requestName request." }
+            log.w { LogMessages.cancellationExceptionRequestName(requestName) }
             return
         }
-        log.e { "$requestName respond with error: ${result.errorCode}, and message: ${result.message}" }
+        log.e { LogMessages.requestError(requestName, result.errorCode, result.message) }
         eventHandler.onEvent(
             Event.Error(result.errorCode, result.message, CorrectiveAction.ReAuthenticate)
         )

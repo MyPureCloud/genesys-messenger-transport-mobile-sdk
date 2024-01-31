@@ -25,13 +25,13 @@ internal class CustomAttributesStoreImpl(
         }
         this.customAttributes.putAll(customAttributes)
         state = State.PENDING
-        log.i { LogMessages.addCustomState(customAttributes, state.name) }
+        log.i { LogMessages.addCustomAttribute(customAttributes, state.name) }
         return true
     }
 
     private fun isCustomAttributesValid(customAttributes: Map<String, String>): Boolean {
         if (customAttributes.isEmpty() || this.customAttributes == customAttributes) {
-            log.w { "custom attributes are empty or same." }
+            log.w { LogMessages.CUSTOM_ATTRIBUTES_EMPTY_OR_SAME }
             return false
         } else if (isSizeExceeded(customAttributes)) {
             eventHandler.onEvent(
@@ -41,7 +41,7 @@ internal class CustomAttributesStoreImpl(
                     CorrectiveAction.CustomAttributeSizeTooLarge
                 )
             )
-            log.e { "error: custom attributes size exceeded" }
+            log.e { LogMessages.CUSTOM_ATTRIBUTES_SIZE_EXCEEDED }
             return false
         }
         return true

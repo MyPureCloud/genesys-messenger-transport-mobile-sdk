@@ -5,7 +5,7 @@ import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
-import com.genesys.cloud.messenger.transport.utility.LogMessages
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
@@ -50,7 +50,7 @@ class StateMachineTest {
             mockStateChangedListener(expectedStateChange)
         }
         assertThat(logSlot[0].invoke()).isEqualTo(
-            LogMessages.stateChangedFromTo(
+            LogMessages.stateChanged(
                 expectedStateChange.newState::class.simpleName ?: "",
                 expectedStateChange.newState::class.simpleName ?: ""
             )

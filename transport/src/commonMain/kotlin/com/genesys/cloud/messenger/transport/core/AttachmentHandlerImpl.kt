@@ -73,7 +73,7 @@ internal class AttachmentHandlerImpl(
                         responseException.message ?: "ResponseException during attachment upload"
                     )
                 } catch (cancellationException: CancellationException) {
-                    log.w { "cancellationException during attachment upload: ${it.attachment}" }
+                    log.w { LogMessages.cancellationExceptionAttachmentUpload(it.attachment) }
                 }
             }
         }
@@ -115,7 +115,7 @@ internal class AttachmentHandlerImpl(
     }
 
     override fun onError(attachmentId: String, errorCode: ErrorCode, errorMessage: String) {
-        log.e { "Attachment error with id: $attachmentId. ErrorCode: $errorCode, errorMessage: $errorMessage" }
+        log.e { LogMessages.attachmentError(attachmentId, errorCode, errorMessage) }
         processedAttachments.remove(attachmentId)
         updateAttachmentStateWith(Attachment(attachmentId, state = Error(errorCode, errorMessage)))
     }

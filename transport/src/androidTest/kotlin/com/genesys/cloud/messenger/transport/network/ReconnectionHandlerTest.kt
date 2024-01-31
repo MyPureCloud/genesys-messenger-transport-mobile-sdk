@@ -5,7 +5,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.util.logs.Log
-import com.genesys.cloud.messenger.transport.utility.LogMessages
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.MockKAnnotations
 import io.mockk.coVerify
@@ -56,7 +56,7 @@ class ReconnectionHandlerTest {
             mockReconnectFunction()
         }
         assertThat(subject.shouldReconnect).isTrue()
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Reconnecting)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.tryingToReconnect(1, 100))
     }
 
     @Test

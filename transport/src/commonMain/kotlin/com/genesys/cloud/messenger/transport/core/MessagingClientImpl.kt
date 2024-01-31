@@ -251,10 +251,11 @@ internal class MessagingClientImpl(
                     }
                     is Result.Failure -> {
                         if (it.errorCode is ErrorCode.CancellationError) {
-                            log.w { "Cancellation exception was thrown, while running getMessages() request." }
+                            log.w { LogMessages.CANCELLATION_EXCEPTION_GET_MESSAGES }
                             return
                         }
-                        log.w { "History fetch failed with: $it" }
+                        log.w { LogMessages.historyFetchFailed(it) }
+                        log.w { LogMessages.historyFetchFailed(it) }
                         eventHandler.onEvent(
                             Event.Error(
                                 ErrorCode.HistoryFetchFailure,
@@ -399,7 +400,7 @@ internal class MessagingClientImpl(
                 }
             }
             is ErrorCode.WebsocketError -> handleWebSocketError(ErrorCode.WebsocketError)
-            else -> log.w { "Unhandled ErrorCode: $code with optional message: $message" }
+            else -> log.w { LogMessages.unhandledErrorCode(code, message) }
         }
     }
 
@@ -431,7 +432,7 @@ internal class MessagingClientImpl(
             is ErrorCode.NetworkDisabled -> {
                 transitionToStateError(errorCode, ErrorMessage.InternetConnectionIsOffline)
             }
-            else -> log.w { "Unhandled WebSocket errorCode. ErrorCode: $errorCode" }
+            else -> log.w { LogMessages.unhandledWebSocketError(errorCode) }
         }
     }
 
@@ -493,7 +494,7 @@ internal class MessagingClientImpl(
                 }
             }
             else -> {
-                log.w { "Messages of type: ${structuredMessage.type} are not supported." }
+                log.w { LogMessages.unsupportedMessageType(structuredMessage.type) }
             }
         }
     }
@@ -629,13 +630,13 @@ internal class MessagingClientImpl(
                     }
                     is SessionClearedEvent -> eventHandler.onEvent(Event.ConversationCleared)
                     else -> {
-                        log.i { LogMessages.unhandledMessage(decoded.type) }
+                        log.i { LogMessages.unhandledMessage(decoded) }
                     }
                 }
             } catch (exception: SerializationException) {
-                log.e(throwable = exception) { "Failed to deserialize message" }
+                log.e(throwable = exception) { LogMessages.FAILED_TO_DESERIALIZE }
             } catch (exception: IllegalArgumentException) {
-                log.e(throwable = exception) { "Message decoded as null" }
+                log.e(throwable = exception) { LogMessages.MESSAGE_DECODED_NULL }
             }
         }
 
