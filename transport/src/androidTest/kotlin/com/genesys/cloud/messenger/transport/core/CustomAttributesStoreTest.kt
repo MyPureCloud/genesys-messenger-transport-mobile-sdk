@@ -209,9 +209,13 @@ class CustomAttributesStoreTest {
 
     @Test
     fun `when onSent and current state is Pending`() {
+        val expectedLogMessage = "onSent. state = ${State.PENDING}"
+
         subject.onSent()
 
         assertThat(subject.state).isPending()
+        verify { mockLogger.i(capture(logSlot)) }
+        assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
