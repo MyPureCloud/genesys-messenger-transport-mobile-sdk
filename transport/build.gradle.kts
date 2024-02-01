@@ -266,4 +266,4 @@ signing {
     sign(publishing.publications)
 }
 
-//apply(from = "${rootDir}/jacoco.gradle.kts")
+apply(from = "${rootDir}/jacoco.gradle.kts")
