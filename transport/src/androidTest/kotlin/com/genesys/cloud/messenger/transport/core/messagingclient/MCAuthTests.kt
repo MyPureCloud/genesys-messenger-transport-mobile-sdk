@@ -20,9 +20,9 @@ import com.genesys.cloud.messenger.transport.util.fromConnectedToError
 import com.genesys.cloud.messenger.transport.util.fromConnectingToConnected
 import com.genesys.cloud.messenger.transport.util.fromIdleToConnecting
 import com.genesys.cloud.messenger.transport.util.fromReconnectingToError
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
-import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.mockk.every
 import io.mockk.invoke
 import io.mockk.verify

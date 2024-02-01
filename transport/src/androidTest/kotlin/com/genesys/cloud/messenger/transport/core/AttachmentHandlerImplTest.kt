@@ -14,6 +14,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import com.genesys.cloud.messenger.transport.utility.TestValues
@@ -187,7 +188,7 @@ internal class AttachmentHandlerImplTest {
             fileName = AttachmentValues.FileName,
             state = State.Uploading
         )
-        val expectedLogMessage = "cancellationException during attachment upload: $expectedAttachment"
+        val expectedLogMessage = LogMessages.cancellationExceptionAttachmentUpload(expectedAttachment)
         givenPrepareCalled()
 
         subject.upload(givenPresignedUrlResponse)

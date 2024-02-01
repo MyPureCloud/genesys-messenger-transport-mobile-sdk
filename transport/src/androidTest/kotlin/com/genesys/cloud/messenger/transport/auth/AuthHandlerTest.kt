@@ -20,6 +20,7 @@ import com.genesys.cloud.messenger.transport.util.TOKEN_KEY
 import com.genesys.cloud.messenger.transport.util.VAULT_KEY
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import io.mockk.MockKAnnotations
@@ -168,7 +169,7 @@ class AuthHandlerTest {
         val expectedErrorCode = ErrorCode.AuthFailed
         val expectedErrorMessage = ErrorTest.Message
         val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
-        val expectedLogMessage = "fetchAuthJwt() respond with error: ${ErrorCode.AuthFailed}, and message: $expectedErrorMessage"
+        val expectedLogMessage = LogMessages.requestError("fetchAuthJwt()", ErrorCode.AuthFailed, expectedErrorMessage)
 
         coEvery { mockWebMessagingApi.fetchAuthJwt(any(), any(), any()) } returns Result.Failure(
             ErrorCode.AuthFailed,
@@ -240,7 +241,7 @@ class AuthHandlerTest {
         val expectedErrorCode = ErrorCode.AuthLogoutFailed
         val expectedErrorMessage = ErrorTest.Message
         val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
-        val expectedLogMessage = "logout() respond with error: ${ErrorCode.AuthLogoutFailed}, and message: $expectedErrorMessage"
+        val expectedLogMessage = LogMessages.requestError("logout()", ErrorCode.AuthLogoutFailed, expectedErrorMessage)
 
         subject.logout()
 
@@ -271,7 +272,7 @@ class AuthHandlerTest {
         val expectedErrorCode = ErrorCode.ClientResponseError(401)
         val expectedErrorMessage = ErrorTest.Message
         val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
-        val expectedLogMessage = "logout() respond with error: ${ErrorCode.ClientResponseError(401)}, and message: $expectedErrorMessage"
+        val expectedLogMessage = LogMessages.requestError("logout()", ErrorCode.ClientResponseError(401), expectedErrorMessage)
 
         subject.logout()
 
@@ -301,7 +302,7 @@ class AuthHandlerTest {
         val expectedErrorCode = ErrorCode.ClientResponseError(401)
         val expectedErrorMessage = ErrorTest.Message
         val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
-        val expectedLogMessage = "logout() respond with error: ${ErrorCode.ClientResponseError(401)}, and message: $expectedErrorMessage"
+        val expectedLogMessage = LogMessages.requestError("logout()", ErrorCode.ClientResponseError(401), expectedErrorMessage)
 
         subject.logout()
 

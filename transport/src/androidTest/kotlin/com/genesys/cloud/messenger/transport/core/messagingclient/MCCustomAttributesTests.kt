@@ -62,7 +62,7 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
             mockPlatformSocket.sendMessage(expectedMessage)
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessage(expectedText, expectedCustomAttributes))
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WILL_SEND_MESSAGE)
     }
@@ -107,7 +107,7 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
             sendingCustomAttributesSequence(Request.autostart())
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.SEND_AUTO_START)
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WILL_SEND_MESSAGE)
     }
@@ -150,7 +150,7 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
             mockCustomAttributesStore.onMessageError()
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.SEND_AUTO_START)
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WILL_SEND_MESSAGE)
     }

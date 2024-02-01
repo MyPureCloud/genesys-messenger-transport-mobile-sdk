@@ -67,7 +67,7 @@ class MCMessageTests : BaseMessagingClientTest() {
             mockCustomAttributesStore.onSending()
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessage(expectedText))
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WILL_SEND_MESSAGE)
     }
@@ -173,7 +173,7 @@ class MCMessageTests : BaseMessagingClientTest() {
         }
 
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.DISCONNECT)
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.FORCE_CLOSE_WEB_SOCKET)
         assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)

@@ -12,6 +12,7 @@ import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.TokenStore
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -64,7 +65,7 @@ class MessengerTransportSDK(
                 try {
                     fetchDeploymentConfig()
                 } catch (t: Throwable) {
-                    log.w { "Failed to fetch deployment config: $t" }
+                    log.w { LogMessages.failedFetchDeploymentConfig(t) }
                 }
             }
         }

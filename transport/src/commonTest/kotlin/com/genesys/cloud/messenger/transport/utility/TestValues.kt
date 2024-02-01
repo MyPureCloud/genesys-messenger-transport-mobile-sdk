@@ -16,7 +16,6 @@ object TestValues {
     internal const val TokenKey = "token_key"
     internal const val AuthRefreshTokenKey = "auth_refresh_token_key"
     internal const val LogTag = "TestLogTag"
-
 }
 
 object AuthTest {
@@ -75,34 +74,6 @@ object AttachmentValues {
     internal const val MediaType = "png"
     internal const val AttachmentContentType = "Attachment"
 }
-
-//object LogMessages {
-//    internal const val Connect = "connect()"
-//    internal const val ConnectAuthenticated = "connectAuthenticatedSession()"
-//    internal const val ConfigureSession = """configureSession(token = 00000000-0000-0000-0000-000000000000, startNew: false)"""
-//    internal const val ConfigureAuthenticatedSession = """configureAuthenticatedSession(token = 00000000-0000-0000-0000-000000000000, startNew: false)"""
-//    internal const val ClearConversationHistory = "Clear conversation history."
-//    internal const val SendClearConversation = "sendClearConversation()"
-//    internal const val Autostart = "sendAutoStart()"
-//    internal const val HealthCheck = "sendHealthCheck()"
-//    internal const val HealthCheckWarning = "Health check can be sent only once every 30000 milliseconds."
-//    internal const val Attach = "attach(fileName = test.png)"
-//    internal const val Detach = "detach(attachmentId = 88888888-8888-8888-8888-888888888888)"
-//    internal const val WillSendMessage = "Will send message"
-//    internal const val Reconnecting = "Trying to reconnect. Attempt number: 1 out of 1000"
-//    internal const val ForceClose = "Force close web socket."
-//    internal const val CloseSession = "closeSession()"
-//    internal const val Disconnect = "disconnect()"
-//    internal const val Typing = "indicateTyping()"
-//    internal const val TypingCoolDown = "Typing event can be sent only once every 5000 milliseconds."
-//    internal const val TypingDisabled = "typing indicator is disabled."
-//    internal const val HistoryFetched = "All history has been fetched."
-//    internal const val UnknownEvent = "Unknown event received."
-//    internal fun unhandledErrorCode(errorCode: ErrorCode, message: String) = "Unhandled ErrorCode: $errorCode with optional message: $message"
-//    internal fun sendMessageWith(message: String = "Hello world", customAttributes: String = "{A=B}") = "sendMessage(text = $message, customAttributes = $customAttributes)"
-//    internal fun stateChangedFromTo(from: String, to: String) = "State changed from: $from, to: $to"
-//    internal fun onEvent(event: Event): String = "on event: $event"
-//}
 
 object DeploymentConfigValues {
     internal const val ApiEndPoint = "api_endpoint"

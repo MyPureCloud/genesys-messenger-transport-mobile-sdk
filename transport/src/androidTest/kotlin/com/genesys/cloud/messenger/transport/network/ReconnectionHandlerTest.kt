@@ -56,7 +56,7 @@ class ReconnectionHandlerTest {
             mockReconnectFunction()
         }
         assertThat(subject.shouldReconnect).isTrue()
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.tryingToReconnect(1, 100))
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.tryingToReconnect(1, 1000))
     }
 
     @Test

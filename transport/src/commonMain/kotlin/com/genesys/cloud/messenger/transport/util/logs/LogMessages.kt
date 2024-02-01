@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.util.logs
 import com.genesys.cloud.messenger.transport.core.Attachment
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Message
+import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
@@ -26,14 +27,14 @@ internal object LogMessages {
     // Authentication
     fun configureAuthenticatedSession(token: String, startNew: Boolean) =
         "configureAuthenticatedSession(token = $token, startNew: $startNew)"
-    fun configureSession(token: String, startNew: Boolean = true) =
+    fun configureSession(token: String, startNew: Boolean = false) =
         "configureSession (token = $token, startNew: $startNew)"
     // Message
     fun messagePreparedToSend(message: Message) = "Message prepared to send: $message"
     fun messageStateUpdated(message: Message) = "Message state updated: $message"
-    fun messageHistoryUpdated(messages: List<Message>) = "Message history updated with: $messages"
-    fun receiveMessageError(nsError: Any) =
-        "receiveMessageWithCompletionHandler error [$nsError.code] $nsError.localizedDescription"
+    fun messageHistoryUpdated(messages: List<Message>) = "Message history updated with: $messages."
+    fun receiveMessageError(code: Long, localizedDescription: String) =
+        "receiveMessageWithCompletionHandler error [$code] $localizedDescription"
     const val ON_ERROR = "onError"
     const val ON_MESSAGE_ERROR = "onMessageError()"
     const val ON_SENDING = "onSending"
@@ -46,7 +47,6 @@ internal object LogMessages {
     fun onMessage(text: String) = "onMessage(text = $text)"
     fun sendMessage(text: String, customAttributes: Map<String, String> = emptyMap()) =
         "sendMessage(text = $text, customAttributes = $customAttributes)"
-    // help *****************************
     fun unhandledMessage(decoded: WebMessagingMessage<*>) = "Unhandled message received from Shyrka: $decoded"
     fun historyFetchFailed(error: Result.Failure) = "History fetch failed with: $error"
     fun onFailure(throwable: Throwable) = "onFailure(message: ${throwable.message})"
@@ -54,7 +54,6 @@ internal object LogMessages {
     fun typingIndicatorCoolDown(milliseconds: Long) =
         "Typing event can be sent only once every $milliseconds milliseconds."
     const val TYPING_INDICATOR_DISABLED = "typing indicator is disabled."
-
     // Session State
     const val ON_SESSION_CLOSED = "onSessionClosed"
     const val CONNECT = "connect"
@@ -64,13 +63,11 @@ internal object LogMessages {
     const val CLOSE_SESSION = "closeSession"
     const val FAILED_TO_DESERIALIZE = "Failed to deserialize message"
     fun couldNotRefreshAuthToken(message: String?) = "Could not refreshAuthToken: $message"
-    fun handleError(context: String?, errorCode: Int, error: String) =
-        "handleError (${context ?: "no context"}) [$errorCode] $error"
     fun requestError(requestName: String, errorCode: ErrorCode, message: String?) =
         "$requestName responded with error: $errorCode, and message: $message"
     fun onClosing(code: Int, reason: String) = "onClosing(code = $code, reason = $reason)"
     fun onClosed(code: Int, reason: String) = "onClosed(code = $code, reason = $reason)"
-    fun stateChanged(field: Any, value: Any) =
+    fun stateChanged(field: MessagingClient.State, value: MessagingClient.State) =
         "State changed from: ${field::class.simpleName}, to: ${value::class.simpleName}"
     const val UNKNOWN_EVENT_RECEIVED = "Unknown event received."
     fun onEvent(event: Event) = "on event: $event"
@@ -101,7 +98,6 @@ internal object LogMessages {
         "Unhandled ErrorCode: $code with optional message: $message"
     fun unhandledWebSocketError(errorCode: ErrorCode) =
         "Unhandled WebSocket errorCode. ErrorCode: $errorCode"
-
     // Custom Attributes
     fun addCustomAttribute(customAttributes: Map<String, String>, state: String) =
         "add: $customAttributes | state = $state"
@@ -109,9 +105,4 @@ internal object LogMessages {
     const val CUSTOM_ATTRIBUTES_EMPTY_OR_SAME = "custom attributes are empty or same."
     const val CANCELLATION_EXCEPTION_GET_MESSAGES =
         "Cancellation exception was thrown, while running getMessages() request."
-
-
-
-
-
 }

@@ -107,7 +107,7 @@ internal actual class PlatformSocket actual constructor(
         webSocket?.receiveMessageWithCompletionHandler { message, nsError ->
             when {
                 nsError != null -> {
-                    log.e { "receiveMessageWithCompletionHandler error [${nsError.code}] ${nsError.localizedDescription}" }
+                    log.e { LogMessages.receiveMessageError(nsError.code, nsError.localizedDescription) }
                     handleError(
                         nsError, "Receive handler error"
                     )
