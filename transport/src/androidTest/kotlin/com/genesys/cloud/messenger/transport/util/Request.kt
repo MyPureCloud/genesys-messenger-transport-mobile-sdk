@@ -2,6 +2,7 @@ package com.genesys.cloud.messenger.transport.util
 
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.utility.AuthTest
+import com.genesys.cloud.messenger.transport.utility.MessageValues
 
 internal object Request {
     const val token = "00000000-0000-0000-0000-000000000000"
@@ -19,7 +20,7 @@ internal object Request {
         content: String = """"content":[{"contentType":"ButtonResponse","buttonResponse":{"text":"text_a","payload":"payload_a","type":"QuickReply"}}]""",
         channel: String = ""
     ) = """{"token":"$token","message":{"text":"",$content,$channel"type":"Text"},"action":"onMessage"}"""
-    fun textMessage(text: String = "Hello world!") =
+    fun textMessage(text: String = MessageValues.Text) =
         """{"token":"$token","message":{"text":"$text","type":"Text"},"action":"onMessage"}"""
     const val closeAllConnections =
         """{"token":"$token","closeAllConnections":true,"action":"closeSession"}"""

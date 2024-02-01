@@ -56,7 +56,7 @@ object MessageValues {
     internal const val ParticipantLastName = "participant_last_name"
     internal const val ParticipantNickname = "participant_nickname"
     internal const val ParticipantImageUrl = "http://participant.image"
-    internal const val Text = "test_text"
+    internal const val Text = "Hello world!"
     internal const val Type = "Text"
     internal const val TimeStamp = 1L
     internal const val PageSize = 25

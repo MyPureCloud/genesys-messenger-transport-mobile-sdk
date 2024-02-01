@@ -16,6 +16,7 @@ import com.genesys.cloud.messenger.transport.core.isClosed
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.Response
 import com.genesys.cloud.messenger.transport.utility.LogMessages
+import com.genesys.cloud.messenger.transport.utility.MessageValues
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
@@ -55,16 +56,15 @@ class MCMessageTests : BaseMessagingClientTest() {
             slot.captured.onMessage(Response.onMessage())
         }
         val expectedMessageRequest =
-            """{"token":"${Request.token}","message":{"text":"Hello world!","type":"Text"},"action":"onMessage"}"""
+            """{"token":"${Request.token}","message":{"text":"${MessageValues.Text}","type":"Text"},"action":"onMessage"}"""
         val expectedMessage = Message(
             id = "some_custom_message_id",
             state = State.Sent,
             messageType = Type.Text,
             type = "Text",
-            text = "Hello world!",
+            text = MessageValues.Text,
             timeStamp = 1661196266704,
         )
-        val expectedText = "Hello world!"
         subject.connect()
 
         subject.sendMessage("Hello world!")
@@ -74,7 +74,7 @@ class MCMessageTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockCustomAttributesStore.add(emptyMap())
             mockCustomAttributesStore.getCustomAttributesToSend()
-            mockMessageStore.prepareMessage(expectedText)
+            mockMessageStore.prepareMessage(MessageValues.Text)
             mockAttachmentHandler.onSending()
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessageRequest)
@@ -89,7 +89,7 @@ class MCMessageTests : BaseMessagingClientTest() {
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessageWith(message = "Hello world!", customAttributes = "{}"))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessageWith(message = MessageValues.Text, customAttributes = "{}"))
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WillSendMessage)
     }
 
