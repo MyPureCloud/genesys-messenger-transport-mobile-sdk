@@ -79,6 +79,13 @@ class ComposePrototypeUITest : BaseTests() {
     private val clearConversation = "clearConversation"
     private val connectionClosedMessage = "Connection Closed Normally"
     private val connectionClosedCode = "1000"
+    private val quickReplyCommand = "sendQuickReply"
+    private val quickReplyText = "Carousel"
+    private val quickReplyResponse = "Welcome to the Carousel Pal."
+    private val invalidQuickReplyText = "dummy"
+    private val invalidQuickReplyResponse = "Selected quickReply option: dummy does not exist"
+    private val doneText = "Done"
+    private val conversationDisconnectText = "ConversationDisconnect"
 
     fun enterDeploymentInfo(deploymentId: String) {
         opening {
@@ -158,6 +165,21 @@ class ComposePrototypeUITest : BaseTests() {
             enterCommand("$sendMsgText $messageText")
             waitForProperResponse(messageText)
             checkSendMsgFullResponse()
+        }
+    }
+
+    fun sendQuickResponse(messageText: String) {
+        messenger {
+            verifyPageIsVisible()
+            enterCommand("$quickReplyCommand $messageText")
+        }
+    }
+
+    fun sendDoneAndWaitForResponse(messageText: String) {
+        messenger {
+            verifyPageIsVisible()
+            enterCommand("$sendMsgText $doneText")
+            waitForProperResponse(messageText)
         }
     }
 
@@ -559,6 +581,19 @@ class ComposePrototypeUITest : BaseTests() {
             // wait for agent to disconnect
             apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id)
         }
+        bye()
+    }
+
+    @Test
+    fun testQuickReply() {
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.quickReplyDeploymentId)
+        connect()
+        sendQuickResponse(quickReplyText)
+        verifyResponse(quickReplyResponse)
+        sendQuickResponse(invalidQuickReplyText)
+        verifyResponse(invalidQuickReplyResponse)
+        sendDoneAndWaitForResponse(conversationDisconnectText)
         bye()
     }
 }
