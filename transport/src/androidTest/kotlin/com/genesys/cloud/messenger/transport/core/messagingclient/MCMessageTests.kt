@@ -89,7 +89,7 @@ class MCMessageTests : BaseMessagingClientTest() {
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessageWith(customAttributes = "{}"))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessageWith(message = "Hello world!", customAttributes = "{}"))
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WillSendMessage)
     }
 

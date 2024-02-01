@@ -6,7 +6,6 @@ import assertk.assertions.containsExactly
 import assertk.assertions.containsOnly
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
-import assertk.assertions.isNotEmpty
 import assertk.assertions.isFalse
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isNotEqualTo
@@ -413,10 +412,7 @@ internal class MessageStoreTest {
         assertThat(subject.getConversation()).contains(expectedMessage)
         assertThat(subject.nextPage).isEqualTo(1)
         verify { mockMessageListener(capture(messageSlot)) }
-        assertEquals(
-            expectedMessage,
-            (messageSlot.captured as MessageEvent.QuickReplyReceived).message
-        )
+        assertThat((messageSlot.captured as MessageEvent.QuickReplyReceived).message).isEqualTo(expectedMessage)
     }
 
     @Test
@@ -441,10 +437,7 @@ internal class MessageStoreTest {
         assertThat(subject.getConversation()).contains(expectedMessage)
         assertThat(subject.nextPage).isEqualTo(1)
         verify { mockMessageListener(capture(messageSlot)) }
-        assertEquals(
-            expectedMessage,
-            (messageSlot.captured as MessageEvent.MessageInserted).message
-        )
+        assertThat((messageSlot.captured as MessageEvent.MessageInserted).message).isEqualTo(expectedMessage)
     }
 
     @Test
@@ -474,19 +467,16 @@ internal class MessageStoreTest {
         )
 
         subject.prepareMessageWith(givenButtonResponse, givenChannel).run {
-            assertEquals(expectedOnMessageRequest.token, token)
-            assertEquals(expectedOnMessageRequest.message, message)
-            assertEquals(expectedOnMessageRequest.message.content, message.content)
-            assertEquals(expectedOnMessageRequest.message.channel, message.channel)
-            assertNull(time)
+            assertThat(token).isEqualTo(expectedOnMessageRequest.token)
+            assertThat(message).isEqualTo(expectedOnMessageRequest.message)
+            assertThat(message.content).isEqualTo(expectedOnMessageRequest.message.content)
+            assertThat(message.channel).isEqualTo(expectedOnMessageRequest.message.channel)
+            assertThat(time).isNull()
         }
-        assertEquals(expectedMessage, subject.getConversation()[0])
-        assertNotEquals(expectedMessage.id, subject.pendingMessage.id)
+        assertThat(subject.getConversation()[0]).isEqualTo(expectedMessage)
+        assertThat(subject.pendingMessage.id).isNotEqualTo(expectedMessage.id)
         verify { mockMessageListener(capture(messageSlot)) }
-        assertEquals(
-            expectedMessage,
-            (messageSlot.captured as MessageEvent.MessageInserted).message
-        )
+        assertThat((messageSlot.captured as MessageEvent.MessageInserted).message).isEqualTo(expectedMessage)
     }
 
     @Test
@@ -514,20 +504,16 @@ internal class MessageStoreTest {
         )
 
         subject.prepareMessageWith(givenButtonResponse).run {
-            assertEquals(expectedOnMessageRequest.token, token)
-            assertEquals(expectedOnMessageRequest.message, message)
-            assertEquals(expectedOnMessageRequest.message.content, message.content)
-            assertNull(expectedOnMessageRequest.message.channel)
-            assertNull(time)
+            assertThat(token).isEqualTo(expectedOnMessageRequest.token)
+            assertThat(message).isEqualTo(expectedOnMessageRequest.message)
+            assertThat(message.content).isEqualTo(expectedOnMessageRequest.message.content)
+            assertThat(message.channel).isNull()
+            assertThat(time).isNull()
         }
-
-        assertEquals(expectedMessage, subject.getConversation()[0])
-        assertNotEquals(expectedMessage.id, subject.pendingMessage.id)
+        assertThat(subject.getConversation()[0]).isEqualTo(expectedMessage)
+        assertThat(subject.pendingMessage.id).isNotEqualTo(expectedMessage.id)
         verify { mockMessageListener(capture(messageSlot)) }
-        assertEquals(
-            expectedMessage,
-            (messageSlot.captured as MessageEvent.MessageInserted).message
-        )
+        assertThat((messageSlot.captured as MessageEvent.MessageInserted).message).isEqualTo(expectedMessage)
     }
 
     @Test

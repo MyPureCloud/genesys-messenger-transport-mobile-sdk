@@ -17,8 +17,8 @@ import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.Response
 import com.genesys.cloud.messenger.transport.utility.LogMessages
-import io.mockk.MockKVerificationScope
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
+import io.mockk.MockKVerificationScope
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
@@ -175,23 +175,26 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
                 ),
             ),
         )
+        every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mapOf("A" to "B")
         subject.connect()
 
         subject.sendQuickReply(QuickReplyTestValues.buttonResponse_a)
 
         verifySequence {
             connectSequence()
+            mockLogger.i(capture(logSlot))
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockCustomAttributesStore.onSending()
             mockMessageStore.prepareMessageWith(expectedButtonResponse, expectedChannel)
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.quickReplyWith(channel = """"channel":{"metadata":{"customAttributes":{"A":"B"}}},"""))
         }
     }
 
     private fun MockKVerificationScope.sendingCustomAttributesSequence(message: String) {
         mockCustomAttributesStore.getCustomAttributesToSend()
-        mockLogger.i(capture(logSlot))
         mockCustomAttributesStore.onSending()
+        mockLogger.i(capture(logSlot))
         mockLogger.i(capture(logSlot))
         mockPlatformSocket.sendMessage(message)
     }

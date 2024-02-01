@@ -33,11 +33,10 @@ import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.StructuredMessageValues
-import net.bytebuddy.utility.RandomString
-import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
+import net.bytebuddy.utility.RandomString
 import org.junit.Test
 
 internal class MessageExtensionTest {

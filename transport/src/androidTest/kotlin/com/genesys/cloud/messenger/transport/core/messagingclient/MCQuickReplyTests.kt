@@ -45,6 +45,7 @@ class MCQuickReplyTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
+            mockLogger.w(capture(logSlot))
         }
         verify(exactly = 0) {
             mockMessageStore.update(any())
@@ -63,8 +64,10 @@ class MCQuickReplyTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
+            mockLogger.i(capture(logSlot))
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockMessageStore.prepareMessageWith(expectedButtonResponse, null)
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.quickReplyWith())
         }
 
