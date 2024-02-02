@@ -428,21 +428,38 @@ class iosAppTests: XCTestCase {
     //   Second segment: One reply possible: "Done".
     //     - Selecting "Done" will end the flow.
     func testQuickReply() {
+        // Continuing after failure to ensure that we finish the bot flow.
+        continueAfterFailure = true
+
+        // Create a new instance of the MessengerInteractorTester.
+        // This will be used to handle sending/receiving messages through the SDK.
         // Connect to the quick reply bot.
         let deployment = try! Deployment()
         let testController = MessengerInteractorTester(deployment: Deployment(deploymentId: TestConfig.shared.config?.quickReplyBot ?? "", domain: deployment.domain))
         testController.quickReplyExpectation = XCTestExpectation(description: "Waiting for quick replies to show up.")
         testController.startNewMessengerConnection()
-        delay(10, reason: "Allow time for the bot to start.")
 
-        // Wait for quick replies to show up. Navigate to the Carousel portion using quick replies.
+        // Wait for quick replies to show up. Verify the expected options are shown.
         testController.waitForQuickReplies()
-        testController.testExpectation = XCTestExpectation(description: "Wait for a message to be received from the bot.")
-        testController.sendQuickReply(reply: "Carousel")
-        testController.waitForTestExpectation()
+        let repliesFirstSegment = testController.getQuickReplyOptions()
+        XCTAssertEqual(repliesFirstSegment.count, 2, "An unexpected number of replies were received.")
+        XCTAssertTrue(repliesFirstSegment.contains("Carousel"), "The \"Carousel\" quick reply option was not received.")
+        XCTAssertTrue(repliesFirstSegment.contains("Done"), "The \"Done\" quick reply option was not received.")
 
-        // Getting here means that we successfully handled a Carousel quick reply.
-        // Support for Carousel replies will be in a different Ticket.
+        // Create a test expectation to ensure the test waits for an incoming message from the bot.
+        // Send the quick reply to go to the Carousel digital menu.
+        testController.receivedMessageExpectation = XCTestExpectation(description: "Wait for a message to be received from the bot.")
+        testController.sendQuickReply(reply: "Carousel")
+
+        // After sending the quick reply, wait for the expected digital menu message to be received.
+        // Getting to this point ensures that we do not error out after getting to a Carousel digital menu.
+        // Send a "Done" message to end the bot flow.
+        testController.waitForMessageReceiveExpectation()
+        let receivedMessageText = "Welcome to the Carousel Pal. Reply \"Done\" to end the flow."
+        testController.verifyReceivedMessage(expectedMessage: receivedMessageText)
+        testController.sendText(text: "Done")
+
+        // Disconnect the test messenger.
         testController.disconnectMessenger()
     }
 

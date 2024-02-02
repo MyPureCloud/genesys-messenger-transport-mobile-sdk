@@ -295,6 +295,10 @@ class MessengerInteractorTester {
         }
     }
 
+    func getQuickReplyOptions() -> [String] {
+        return Array(quickRepliesMap.keys)
+    }
+
     func attemptImageAttach(kotlinByteArray: KotlinByteArray, file: StaticString = #file, line: UInt = #line) {
         do {
             try attachImage(kotlinByteArray: kotlinByteArray)
