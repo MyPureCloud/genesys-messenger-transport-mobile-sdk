@@ -502,6 +502,7 @@ internal class MessageStoreTest {
                 metadata = mapOf("customMessageId" to expectedMessage.id)
             ),
         )
+        val expectedLogMessage = "Message with quick reply prepared to send: $expectedMessage"
 
         subject.prepareMessageWith(givenButtonResponse).run {
             assertThat(token).isEqualTo(expectedOnMessageRequest.token)
@@ -512,8 +513,12 @@ internal class MessageStoreTest {
         }
         assertThat(subject.getConversation()[0]).isEqualTo(expectedMessage)
         assertThat(subject.pendingMessage.id).isNotEqualTo(expectedMessage.id)
-        verify { mockMessageListener(capture(messageSlot)) }
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockMessageListener(capture(messageSlot))
+        }
         assertThat((messageSlot.captured as MessageEvent.MessageInserted).message).isEqualTo(expectedMessage)
+        assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
     }
 
     @Test
