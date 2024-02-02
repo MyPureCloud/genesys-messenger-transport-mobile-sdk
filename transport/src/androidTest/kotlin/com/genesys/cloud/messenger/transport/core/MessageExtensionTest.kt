@@ -377,7 +377,7 @@ internal class MessageExtensionTest {
             content = listOf(QuickReplyTestValues.createQuickReplyContentForTesting())
         )
         val expectedButtonResponse = ButtonResponse(
-            text = MessageValues.Text,
+            text = QuickReplyTestValues.Text_A,
             payload = QuickReplyTestValues.Payload_A,
             type = QuickReplyTestValues.QuickReply
         )
@@ -401,7 +401,7 @@ internal class MessageExtensionTest {
             content = listOf(QuickReplyTestValues.createButtonResponseContentForTesting())
         )
         val expectedButtonResponse = ButtonResponse(
-            text = MessageValues.Text,
+            text = QuickReplyTestValues.Text_A,
             payload = QuickReplyTestValues.Payload_A,
             type = QuickReplyTestValues.QuickReply
         )
@@ -428,7 +428,7 @@ internal class MessageExtensionTest {
             )
         )
         val expectedButtonResponse = ButtonResponse(
-            text = MessageValues.Text,
+            text = QuickReplyTestValues.Text_A,
             payload = QuickReplyTestValues.Payload_A,
             type = QuickReplyTestValues.QuickReply
         )

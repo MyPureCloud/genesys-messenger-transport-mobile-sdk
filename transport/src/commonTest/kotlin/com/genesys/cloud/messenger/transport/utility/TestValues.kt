@@ -135,24 +135,27 @@ object Journey {
 }
 
 object QuickReplyTestValues {
+    internal const val Text_A = "text_a"
+    internal const val Text_B = "text_b"
     internal const val Payload_A = "payload_a"
     internal const val Payload_B = "payload_b"
     internal const val QuickReply = "QuickReply"
+    internal const val ButtonResponse = "ButtonResponse"
 
     internal val buttonResponse_a = ButtonResponse(
-        text = "text_a",
+        text = Text_A,
         payload = Payload_A,
         type = QuickReply
     )
 
     internal val buttonResponse_b = ButtonResponse(
-        text = "text_b",
+        text = Text_B,
         payload = Payload_B,
         type = QuickReply
     )
 
     internal fun createQuickReplyContentForTesting(
-        text: String = MessageValues.Text,
+        text: String = Text_A,
         payload: String = Payload_A,
     ) = QuickReplyContent(
         contentType = StructuredMessage.Content.Type.QuickReply.name,
@@ -164,7 +167,7 @@ object QuickReplyTestValues {
     )
 
     internal fun createButtonResponseContentForTesting(
-        text: String = MessageValues.Text,
+        text: String = Text_A,
         payload: String = Payload_A,
     ) = ButtonResponseContent(
         contentType = StructuredMessage.Content.Type.ButtonResponse.name,
