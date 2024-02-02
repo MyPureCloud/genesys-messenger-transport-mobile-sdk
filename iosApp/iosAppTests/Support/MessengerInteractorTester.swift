@@ -24,6 +24,7 @@ class MessengerInteractorTester {
     var closedStateChange: XCTestExpectation?
     var conversationCleared: XCTestExpectation?
     var authExpectation: XCTestExpectation?
+    var quickReplyExpectation: XCTestExpectation?
     var receivedMessageText: String? = nil
     var receivedDownloadUrl: String? = nil
     var humanizeEnabled: Bool = true
@@ -32,7 +33,8 @@ class MessengerInteractorTester {
 
     private var historyExpectation: XCTestExpectation?
     private var historyMessages: [Message] = []
-    
+    var quickRepliesMap = [String: ButtonResponse]()
+
     private var cancellables = Set<AnyCancellable>()
 
     init(deployment: Deployment, reconnectTimeout: Int64 = 60 * 5) {
@@ -114,6 +116,10 @@ class MessengerInteractorTester {
                     }
                     self?.historyMessages = history.messages
                     self?.historyExpectation?.fulfill()
+                case let quickReplies as MessageEvent.QuickReplyReceived:
+                    self?.quickReplyExpectation?.fulfill()
+                    self?.quickRepliesMap =  Dictionary(uniqueKeysWithValues: quickReplies.message.quickReplies.map { ($0.text, $0) })
+                    print("Quick Replies received: <\(quickReplies.message.text ?? "N/A")> | quick reply optoins: <\(quickReplies.message.quickReplies)>")
                 default:
                     print("Unexpected messageListener event: \(message)")
                 }
@@ -277,6 +283,22 @@ class MessengerInteractorTester {
         verifyReceivedMessage(expectedMessage: text)
     }
 
+    func sendQuickReply(reply: String, file: StaticString = #file, line: UInt = #line) {
+        guard let button = quickRepliesMap[reply] else {
+            XCTFail("The quick reply \(reply) was not available.", file: file, line: line)
+            return
+        }
+        do {
+            try messenger.sendQuickReply(buttonResponse: button)
+        } catch {
+            XCTFail("Failed to send the quick reply message '\(reply)'\n\(error.localizedDescription)", file: file, line: line)
+        }
+    }
+
+    func getQuickReplyOptions() -> [String] {
+        return Array(quickRepliesMap.keys)
+    }
+
     func attemptImageAttach(kotlinByteArray: KotlinByteArray, file: StaticString = #file, line: UInt = #line) {
         do {
             try attachImage(kotlinByteArray: kotlinByteArray)
@@ -345,6 +367,14 @@ class MessengerInteractorTester {
 
     func waitForErrorExpectation(timeout: Double = 60.0) {
         guard let expectation = errorExpectation else {
+            XCTFail("No expectation to wait for.")
+            return
+        }
+        waitForExpectation(expectation, timeout: timeout)
+    }
+
+    func waitForQuickReplies(timeout: Double = 60.0) {
+        guard let expectation = quickReplyExpectation else {
             XCTFail("No expectation to wait for.")
             return
         }
