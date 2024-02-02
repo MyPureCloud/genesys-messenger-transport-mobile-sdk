@@ -81,7 +81,7 @@ class ComposePrototypeUITest : BaseTests() {
     private val connectionClosedCode = "1000"
     private val quickReplyCommand = "sendQuickReply"
     private val quickReplyText = "Carousel"
-    private val quickReplyResponse = "Welcome to the Carousel Pal."
+    private val quickReplyResponse = "Welcome to the Carousel menu."
     private val invalidQuickReplyText = "dummy"
     private val invalidQuickReplyResponse = "Selected quickReply option: dummy does not exist"
     private val doneText = "Done"
