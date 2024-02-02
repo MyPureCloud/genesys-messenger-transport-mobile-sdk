@@ -455,7 +455,7 @@ class iosAppTests: XCTestCase {
         // Getting to this point ensures that we do not error out after getting to a Carousel digital menu.
         // Send a "Done" message to end the bot flow.
         testController.waitForMessageReceiveExpectation()
-        let receivedMessageText = "Welcome to the Carousel Pal. Reply \"Done\" to end the flow."
+        let receivedMessageText = "Welcome to the Carousel menu. Reply \"Done\" to end the flow."
         testController.verifyReceivedMessage(expectedMessage: receivedMessageText)
         testController.sendText(text: "Done")
 
