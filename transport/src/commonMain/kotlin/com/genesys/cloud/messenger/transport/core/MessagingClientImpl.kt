@@ -48,6 +48,7 @@ import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
@@ -125,7 +126,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun connect() {
-        log.i { "connect()" }
+        log.i { LogMessages.CONNECT }
         connectAuthenticated = false
         stateMachine.onConnect()
         webSocket.openSocket(socketListener)
@@ -133,7 +134,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun connectAuthenticatedSession() {
-        log.i { "connectAuthenticatedSession()" }
+        log.i { LogMessages.CONNECT_AUTHENTICATED_SESSION }
         connectAuthenticated = true
         stateMachine.onConnect()
         webSocket.openSocket(socketListener)
@@ -148,7 +149,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun disconnect() {
-        log.i { "disconnect()" }
+        log.i { LogMessages.DISCONNECT }
         val code = SocketCloseCode.NORMAL_CLOSURE.value
         val reason = "The user has closed the connection."
         reconnectionHandler.clear()
@@ -158,7 +159,7 @@ internal class MessagingClientImpl(
 
     private fun configureSession(startNew: Boolean = false) {
         val encodedJson = if (connectAuthenticated) {
-            log.i { "configureAuthenticatedSession(token = $token, startNew: $startNew)" }
+            log.i { LogMessages.configureAuthenticatedSession(token, startNew) }
             if (authHandler.jwt == NO_JWT) {
                 if (reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
                     reconfigureAttempts++
@@ -170,7 +171,7 @@ internal class MessagingClientImpl(
             }
             encodeAuthenticatedConfigureSessionRequest(startNew)
         } else {
-            log.i { "configureSession(token = $token, startNew: $startNew)" }
+            log.i { LogMessages.configureSession(token, startNew) }
             encodeAnonymousConfigureSessionRequest(startNew)
         }
         webSocket.sendMessage(encodedJson)
@@ -179,7 +180,7 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun sendMessage(text: String, customAttributes: Map<String, String>) {
         stateMachine.checkIfConfigured()
-        log.i { "sendMessage(text = $text, customAttributes = $customAttributes)" }
+        log.i { LogMessages.sendMessage(text, customAttributes) }
         internalCustomAttributesStore.add(customAttributes)
         val channel = internalCustomAttributesStore.getCustomAttributesToSend().toChannel()
         channel?.let { internalCustomAttributesStore.onSending() }
@@ -192,7 +193,7 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun sendHealthCheck() {
         healthCheckProvider.encodeRequest(token)?.let {
-            log.i { "sendHealthCheck()" }
+            log.i { LogMessages.SEND_HEALTH_CHECK }
             send(it)
         }
     }
@@ -202,7 +203,7 @@ internal class MessagingClientImpl(
         fileName: String,
         uploadProgress: ((Float) -> Unit)?,
     ): String {
-        log.i { "attach(fileName = $fileName)" }
+        log.i { LogMessages.attach(fileName) }
         val request = attachmentHandler.prepare(
             Platform().randomUUID(),
             byteArray,
@@ -216,7 +217,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun detach(attachmentId: String) {
-        log.i { "detach(attachmentId = $attachmentId)" }
+        log.i { LogMessages.detach(attachmentId) }
         attachmentHandler.detach(attachmentId)?.let {
             val encodedJson = WebMessagingJson.json.encodeToString(it)
             send(encodedJson)
@@ -226,7 +227,7 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     private fun send(message: String) {
         stateMachine.checkIfConfigured()
-        log.i { "Will send message" }
+        log.i { LogMessages.WILL_SEND_MESSAGE }
         webSocket.sendMessage(message)
     }
 
@@ -234,11 +235,11 @@ internal class MessagingClientImpl(
     override suspend fun fetchNextPage() {
         stateMachine.checkIfConfiguredOrReadOnly()
         if (messageStore.startOfConversation) {
-            log.i { "All history has been fetched." }
+            log.i { LogMessages.ALL_HISTORY_FETCHED }
             messageStore.updateMessageHistory(emptyList(), conversation.size)
             return
         }
-        log.i { "fetching history for page index = ${messageStore.nextPage}" }
+        log.i { LogMessages.fetchingHistory(messageStore.nextPage) }
         jwtHandler.withJwt { jwt ->
             api.getMessages(jwt, messageStore.nextPage).also {
                 when (it) {
@@ -250,10 +251,11 @@ internal class MessagingClientImpl(
                     }
                     is Result.Failure -> {
                         if (it.errorCode is ErrorCode.CancellationError) {
-                            log.w { "Cancellation exception was thrown, while running getMessages() request." }
+                            log.w { LogMessages.CANCELLATION_EXCEPTION_GET_MESSAGES }
                             return
                         }
-                        log.w { "History fetch failed with: $it" }
+                        log.w { LogMessages.historyFetchFailed(it) }
+                        log.w { LogMessages.historyFetchFailed(it) }
                         eventHandler.onEvent(
                             Event.Error(
                                 ErrorCode.HistoryFetchFailure,
@@ -287,20 +289,20 @@ internal class MessagingClientImpl(
             return
         }
         WebMessagingJson.json.encodeToString(ClearConversationRequest(token)).let {
-            log.i { "sendClearConversation()" }
+            log.i { LogMessages.SEND_CLEAR_CONVERSATION }
             webSocket.sendMessage(it)
         }
     }
 
     override fun invalidateConversationCache() {
-        log.i { "Clear conversation history." }
+        log.i { LogMessages.CLEAR_CONVERSATION_HISTORY }
         messageStore.invalidateConversationCache()
     }
 
     @Throws(IllegalStateException::class)
     override fun indicateTyping() {
         userTypingProvider.encodeRequest(token)?.let {
-            log.i { "indicateTyping()" }
+            log.i { LogMessages.INDICATE_TYPING }
             send(it)
         }
     }
@@ -316,7 +318,7 @@ internal class MessagingClientImpl(
         WebMessagingJson.json.encodeToString(
             AutoStartRequest(token, channel)
         ).let {
-            log.i { "sendAutoStart()" }
+            log.i { LogMessages.SEND_AUTO_START }
             channel?.let { internalCustomAttributesStore.onSending() }
             send(it)
         }
@@ -337,7 +339,7 @@ internal class MessagingClientImpl(
                 closeAllConnections = true
             )
         ).also {
-            log.i { "closeSession()" }
+            log.i { LogMessages.CLOSE_SESSION }
             webSocket.sendMessage(it)
         }
     }
@@ -398,7 +400,7 @@ internal class MessagingClientImpl(
                 }
             }
             is ErrorCode.WebsocketError -> handleWebSocketError(ErrorCode.WebsocketError)
-            else -> log.w { "Unhandled ErrorCode: $code with optional message: $message" }
+            else -> log.w { LogMessages.unhandledErrorCode(code, message) }
         }
     }
 
@@ -430,7 +432,7 @@ internal class MessagingClientImpl(
             is ErrorCode.NetworkDisabled -> {
                 transitionToStateError(errorCode, ErrorMessage.InternetConnectionIsOffline)
             }
-            else -> log.w { "Unhandled WebSocket errorCode. ErrorCode: $errorCode" }
+            else -> log.w { LogMessages.unhandledWebSocketError(errorCode) }
         }
     }
 
@@ -492,7 +494,7 @@ internal class MessagingClientImpl(
                 }
             }
             else -> {
-                log.w { "Messages of type: ${structuredMessage.type} are not supported." }
+                log.w { LogMessages.unsupportedMessageType(structuredMessage.type) }
             }
         }
     }
@@ -518,7 +520,7 @@ internal class MessagingClientImpl(
 
     private fun considerForceClose() {
         if (stateMachine.isClosing()) {
-            log.i { "Force close web socket." }
+            log.i { LogMessages.FORCE_CLOSE_WEB_SOCKET }
             val closingState = stateMachine.currentState as State.Closing
             socketListener.onClosed(closingState.code, closingState.reason)
         }
@@ -560,7 +562,7 @@ internal class MessagingClientImpl(
     ) : PlatformSocketListener {
 
         override fun onOpen() {
-            log.i { "onOpen()" }
+            log.i { LogMessages.ON_OPEN }
             stateMachine.onConnectionOpened()
             configureSession()
         }
@@ -571,7 +573,7 @@ internal class MessagingClientImpl(
         }
 
         override fun onMessage(text: String) {
-            log.i { "onMessage(text = $text)" }
+            log.i { LogMessages.onMessage(text) }
             try {
                 val decoded = WebMessagingJson.decodeFromString(text)
                 when (decoded.body) {
@@ -628,23 +630,23 @@ internal class MessagingClientImpl(
                     }
                     is SessionClearedEvent -> eventHandler.onEvent(Event.ConversationCleared)
                     else -> {
-                        log.i { "Unhandled message received from Shyrka: $decoded " }
+                        log.i { LogMessages.unhandledMessage(decoded) }
                     }
                 }
             } catch (exception: SerializationException) {
-                log.e(throwable = exception) { "Failed to deserialize message" }
+                log.e(throwable = exception) { LogMessages.FAILED_TO_DESERIALIZE }
             } catch (exception: IllegalArgumentException) {
-                log.e(throwable = exception) { "Message decoded as null" }
+                log.e(throwable = exception) { LogMessages.MESSAGE_DECODED_NULL }
             }
         }
 
         override fun onClosing(code: Int, reason: String) {
-            log.i { "onClosing(code = $code, reason = $reason)" }
+            log.i { LogMessages.onClosing(code, reason) }
             stateMachine.onClosing(code, reason)
         }
 
         override fun onClosed(code: Int, reason: String) {
-            log.i { "onClosed(code = $code, reason = $reason)" }
+            log.i { LogMessages.onClosed(code, reason) }
             stateMachine.onClosed(code, reason)
             cleanUp()
         }

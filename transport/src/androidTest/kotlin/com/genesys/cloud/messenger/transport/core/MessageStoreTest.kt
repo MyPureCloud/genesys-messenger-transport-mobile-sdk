@@ -16,6 +16,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.mockk.Called
 import io.mockk.clearMocks
 import io.mockk.mockk
@@ -231,7 +232,7 @@ internal class MessageStoreTest {
         val expectedMessageHistory = messageList(2).reversed()
         val expectedConversationSize = 2
         val expectedNextPageIndex = 1
-        val expectedLogMessage = "Message history updated with: $expectedMessageHistory."
+        val expectedLogMessage = LogMessages.messageHistoryUpdated(expectedMessageHistory)
 
         subject.updateMessageHistory(messageList(2), 2)
 

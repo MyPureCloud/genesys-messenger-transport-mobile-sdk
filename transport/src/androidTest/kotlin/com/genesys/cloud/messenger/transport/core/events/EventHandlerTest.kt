@@ -18,9 +18,9 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEve
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent.Typing
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
-import com.genesys.cloud.messenger.transport.utility.LogMessages
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Test
@@ -77,7 +77,7 @@ class EventHandlerTest {
 
         verify { mockLogger.i(capture(logSlot)) }
         verify(exactly = 0) { mockEventListener.invoke(any()) }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.UnknownEvent)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.UNKNOWN_EVENT_RECEIVED)
     }
 
     @Test

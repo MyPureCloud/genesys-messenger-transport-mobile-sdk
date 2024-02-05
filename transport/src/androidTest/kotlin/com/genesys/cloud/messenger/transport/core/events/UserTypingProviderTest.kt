@@ -6,7 +6,7 @@ import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.logs.Log
-import com.genesys.cloud.messenger.transport.utility.LogMessages
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
@@ -67,7 +67,7 @@ class UserTypingProviderTest {
 
         assertThat(firstResult).isEqualTo(expected)
         assertThat(secondResult).isNull()
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.TypingCoolDown)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.typingIndicatorCoolDown(TYPING_INDICATOR_COOL_DOWN_MILLISECONDS))
     }
 
     @Test
@@ -93,6 +93,6 @@ class UserTypingProviderTest {
         }
 
         assertThat(result).isNull()
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.TypingDisabled)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.TYPING_INDICATOR_DISABLED)
     }
 }

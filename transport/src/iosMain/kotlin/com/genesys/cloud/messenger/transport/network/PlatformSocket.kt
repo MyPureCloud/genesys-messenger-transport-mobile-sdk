@@ -5,6 +5,7 @@ import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.extensions.string
 import com.genesys.cloud.messenger.transport.util.extensions.toNSData
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.ktor.http.Url
 import kotlinx.cinterop.convert
 import platform.Foundation.NSData
@@ -58,7 +59,7 @@ internal actual class PlatformSocket actual constructor(
                     webSocketTask: NSURLSessionWebSocketTask,
                     didOpenWithProtocol: String?,
                 ) {
-                    log.i { "Socket did open. Active: $active." }
+                    log.i { LogMessages.socketDidOpen(active) }
                     if (webSocketTask == webSocket) {
                         keepAlive()
                         listener.onOpen()
@@ -71,7 +72,7 @@ internal actual class PlatformSocket actual constructor(
                     reason: NSData?,
                 ) {
                     val why = reason?.string() ?: "Reason not specified."
-                    log.i { "Socket did close (code: $didCloseWithCode, reason: $why). Active: $active." }
+                    log.i { LogMessages.socketDidClose(didCloseWithCode, why, active) }
                     if (webSocketTask == webSocket) {
                         deactivate()
                         listener.onClosed(code = didCloseWithCode.toInt(), reason = why)
@@ -87,13 +88,13 @@ internal actual class PlatformSocket actual constructor(
     }
 
     actual fun closeSocket(code: Int, reason: String) {
-        log.i { "closeSocket(code = $code, reason = $reason)" }
+        log.i { LogMessages.closeSocket(code, reason) }
         deactivateAndCancelWebSocket(code, reason)
         listener?.onClosed(code, reason)
     }
 
     actual fun sendMessage(text: String) {
-        log.i { "sendMessage(text = $text)" }
+        log.i { LogMessages.sendMessage(text) }
         val message = NSURLSessionWebSocketMessage(text)
         webSocket?.sendMessage(message) { nsError ->
             if (nsError != null) {
@@ -106,7 +107,7 @@ internal actual class PlatformSocket actual constructor(
         webSocket?.receiveMessageWithCompletionHandler { message, nsError ->
             when {
                 nsError != null -> {
-                    log.e { "receiveMessageWithCompletionHandler error [${nsError.code}] ${nsError.localizedDescription}" }
+                    log.e { LogMessages.receiveMessageError(nsError.code, nsError.localizedDescription) }
                     handleError(
                         nsError, "Receive handler error"
                     )
@@ -139,14 +140,14 @@ internal actual class PlatformSocket actual constructor(
                 }
 
                 waitingOnPong = true
-                log.i { "Sending ping" }
+                log.i { LogMessages.SENDING_PING }
                 sendPing { nsError ->
                     if (nsError != null) {
                         handleError(nsError, "Pong handler failure")
                         return@sendPing
                     }
                     waitingOnPong = false
-                    log.i { "Received pong" }
+                    log.i { LogMessages.RECEIVED_PONG }
                 }
             }
         }
@@ -173,7 +174,7 @@ internal actual class PlatformSocket actual constructor(
     }
 
     private fun deactivate() {
-        log.i { "deactivate()" }
+        log.i { LogMessages.DEACTIVATE }
         cancelPings()
         webSocket = null
     }
@@ -183,7 +184,7 @@ internal actual class PlatformSocket actual constructor(
      * Attempt to send a final close frame with the given code and reason without `listener.onClosed()` being called.
      */
     private fun deactivateAndCancelWebSocket(code: Int, reason: String?) {
-        log.i { "deactivateWithCloseCode(code = $code, reason = $reason)" }
+        log.i { LogMessages.deactivateWithCloseCode(code, reason) }
         val webSocketRef = webSocket
         deactivate()
         webSocketRef?.cancelWithCloseCode(code.toLong(), reason?.toNSData())

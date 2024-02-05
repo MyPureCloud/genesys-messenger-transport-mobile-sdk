@@ -5,8 +5,9 @@ import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.DEFAULT_PAGE_SIZE
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
+import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.Response
-import com.genesys.cloud.messenger.transport.utility.LogMessages
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
@@ -33,9 +34,9 @@ class MCHistoryTests : BaseMessagingClientTest() {
             mockMessageStore.updateMessageHistory(emptyList(), DEFAULT_PAGE_SIZE)
             mockLogger.i(capture(logSlot))
         }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.HistoryFetched)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.ALL_HISTORY_FETCHED)
     }
 
     @Test

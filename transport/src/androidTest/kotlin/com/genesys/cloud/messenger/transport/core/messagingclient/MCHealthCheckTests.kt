@@ -11,7 +11,7 @@ import com.genesys.cloud.messenger.transport.util.Response
 import com.genesys.cloud.messenger.transport.util.fromClosedToConnecting
 import com.genesys.cloud.messenger.transport.util.fromConnectedToConfigured
 import com.genesys.cloud.messenger.transport.util.fromConnectingToConnected
-import com.genesys.cloud.messenger.transport.utility.LogMessages
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.every
 import io.mockk.verify
@@ -93,16 +93,16 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.HealthCheck)
-        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WillSendMessage)
-        assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.Disconnect)
-        assertThat(logSlot[5].invoke()).isEqualTo(LogMessages.ClearConversationHistory)
-        assertThat(logSlot[6].invoke()).isEqualTo(LogMessages.Connect)
-        assertThat(logSlot[7].invoke()).isEqualTo(LogMessages.ConfigureSession)
-        assertThat(logSlot[8].invoke()).isEqualTo(LogMessages.HealthCheck)
-        assertThat(logSlot[9].invoke()).isEqualTo(LogMessages.WillSendMessage)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.SEND_HEALTH_CHECK)
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WILL_SEND_MESSAGE)
+        assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.DISCONNECT)
+        assertThat(logSlot[5].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
+        assertThat(logSlot[6].invoke()).isEqualTo(LogMessages.CONNECT)
+        assertThat(logSlot[7].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
+        assertThat(logSlot[8].invoke()).isEqualTo(LogMessages.SEND_HEALTH_CHECK)
+        assertThat(logSlot[9].invoke()).isEqualTo(LogMessages.WILL_SEND_MESSAGE)
     }
 
     @Test

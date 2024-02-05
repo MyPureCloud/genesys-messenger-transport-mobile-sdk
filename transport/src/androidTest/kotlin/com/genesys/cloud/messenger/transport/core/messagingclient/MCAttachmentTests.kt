@@ -9,9 +9,9 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.Response
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
-import com.genesys.cloud.messenger.transport.utility.LogMessages
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.Called
 import io.mockk.clearMocks
@@ -42,10 +42,10 @@ class MCAttachmentTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.Attach)
-        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WillSendMessage)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.attach("test.png"))
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WILL_SEND_MESSAGE)
     }
 
     @Test
@@ -64,9 +64,9 @@ class MCAttachmentTests : BaseMessagingClientTest() {
             mockPlatformSocket.sendMessage(expectedMessage)
         }
         assertThat(attachmentIdSlot.captured).isEqualTo(expectedAttachmentId)
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.Detach)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.detach(expectedAttachmentId))
     }
 
     @Test
