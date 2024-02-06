@@ -1,9 +1,7 @@
 package com.genesys.cloud.messenger.transport.utility
 
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
-import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Message
-import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ButtonResponseContent

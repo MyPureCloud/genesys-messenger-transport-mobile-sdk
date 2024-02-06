@@ -6,7 +6,6 @@ import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.events.Event
-import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
 
 internal object LogMessages {
@@ -36,7 +35,7 @@ internal object LogMessages {
     fun receiveMessageError(code: Long, localizedDescription: String) =
         "receiveMessageWithCompletionHandler error [$code] $localizedDescription"
     const val ON_ERROR = "onError"
-    const val ON_MESSAGE_ERROR = "onMessageError()"
+    const val ON_MESSAGE_ERROR = "onMessageError"
     const val ON_SENDING = "onSending"
     const val WILL_SEND_MESSAGE = "Will send message"
     const val ALL_HISTORY_FETCHED = "All history has been fetched."
@@ -50,7 +49,7 @@ internal object LogMessages {
     fun unhandledMessage(decoded: WebMessagingMessage<*>) = "Unhandled message received from Shyrka: $decoded"
     fun historyFetchFailed(error: Result.Failure) = "History fetch failed with: $error"
     fun onFailure(throwable: Throwable) = "onFailure(message: ${throwable.message})"
-    fun unsupportedMessageType(type: StructuredMessage.Type) = "Messages of type: $type are not supported."
+    fun unsupportedMessageType(type: Message.Type) = "Messages of type: $type are not supported."
     fun typingIndicatorCoolDown(milliseconds: Long) =
         "Typing event can be sent only once every $milliseconds milliseconds."
     const val TYPING_INDICATOR_DISABLED = "typing indicator is disabled."
@@ -105,4 +104,6 @@ internal object LogMessages {
     const val CUSTOM_ATTRIBUTES_EMPTY_OR_SAME = "custom attributes are empty or same."
     const val CANCELLATION_EXCEPTION_GET_MESSAGES =
         "Cancellation exception was thrown, while running getMessages() request."
+    // Quick Replies
+    fun quickReplyPrepareToSend(message: Message) = "Message with quick reply prepared to send: $message"
 }

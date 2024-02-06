@@ -53,7 +53,7 @@ internal class MessageStore(
             state = Message.State.Sending,
             quickReplies = listOf(buttonResponse),
         ).also {
-            log.i { LogMessages.messageStateUpdated(message) }
+            log.i { LogMessages.quickReplyPrepareToSend(it) }
             activeConversation.add(it)
             publish(MessageEvent.MessageInserted(it))
             pendingMessage = Message(attachments = it.attachments)

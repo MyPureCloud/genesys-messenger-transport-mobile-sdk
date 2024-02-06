@@ -15,9 +15,8 @@ import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.isClosed
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.Response
-import com.genesys.cloud.messenger.transport.utility.LogMessages
-import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
+import com.genesys.cloud.messenger.transport.utility.MessageValues
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
@@ -90,7 +89,7 @@ class MCMessageTests : BaseMessagingClientTest() {
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessage(expectedText))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessage(MessageValues.Text))
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WILL_SEND_MESSAGE)
     }
 

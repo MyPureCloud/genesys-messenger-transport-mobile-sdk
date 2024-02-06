@@ -9,6 +9,7 @@ import com.genesys.cloud.messenger.transport.core.CustomAttributesStoreImpl.Stat
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.mockk
 import io.mockk.verify
@@ -48,8 +49,6 @@ class CustomAttributesStoreTest {
 
     @Test
     fun `when add a customAttribute and then add an empty map`() {
-        val expectedLogMessage = "custom attributes are empty or same."
-
         val result = subject.add(emptyMap())
 
         assertThat(subject.state).isPending()
@@ -57,14 +56,13 @@ class CustomAttributesStoreTest {
         assertThat(subject.getCustomAttributesToSend()).isEmpty()
         assertThat(result).isFalse()
         verify { mockLogger.w(capture(logSlot)) }
-        assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CUSTOM_ATTRIBUTES_EMPTY_OR_SAME)
     }
 
     @Test
     fun `when add the same customAttribute twice`() {
         val givenCustomAttributes = mapOf("A" to "B")
         val expectedCustomAttributes = mapOf("A" to "B")
-        val expectedLogMessage = "custom attributes are empty or same."
 
         val result1 = subject.add(givenCustomAttributes)
         val result2 = subject.add(givenCustomAttributes)
@@ -76,7 +74,7 @@ class CustomAttributesStoreTest {
         assertThat(result2).isFalse()
         verify { mockLogger.w(capture(logSlot)) }
         verify(exactly = 0) { mockEventHandler.onEvent(any()) }
-        assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CUSTOM_ATTRIBUTES_EMPTY_OR_SAME)
     }
 
     @Test
@@ -150,48 +148,40 @@ class CustomAttributesStoreTest {
 
     @Test
     fun `when onSending`() {
-        val expectedLogMessage = "onSending()"
-
         subject.onSending()
 
         assertThat(subject.state).isSending()
         verify { mockLogger.i(capture(logSlot)) }
-        assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.ON_SENDING)
     }
 
     @Test
     fun `when onError`() {
-        val expectedLogMessage = "onError()"
-
         subject.onError()
 
         assertThat(subject.state).isError()
         assertThat(subject.get()).isEmpty()
         assertThat(subject.getCustomAttributesToSend()).isEmpty()
         verify { mockLogger.i(capture(logSlot)) }
-        assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.ON_ERROR)
     }
 
     @Test
     fun `when onSessionClosed`() {
-        val expectedLogMessage = "onSessionClosed()"
-
         subject.onSessionClosed()
 
         assertThat(subject.state).isPending()
         verify { mockLogger.i(capture(logSlot)) }
-        assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.ON_SESSION_CLOSED)
     }
 
     @Test
     fun `when onMessageError`() {
-        val expectedLogMessage = "onMessageError()"
-
         subject.onMessageError()
 
         assertThat(subject.state).isPending()
         verify { mockLogger.i(capture(logSlot)) }
-        assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.ON_MESSAGE_ERROR)
     }
 
     @Test
@@ -209,13 +199,11 @@ class CustomAttributesStoreTest {
 
     @Test
     fun `when onSent and current state is Pending`() {
-        val expectedLogMessage = "onSent. state = ${State.PENDING}"
-
         subject.onSent()
 
         assertThat(subject.state).isPending()
         verify { mockLogger.i(capture(logSlot)) }
-        assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.onSentState(State.PENDING.name))
     }
 
     @Test
@@ -264,7 +252,6 @@ class CustomAttributesStoreTest {
             ErrorMessage.customAttributesSizeError(0),
             CorrectiveAction.CustomAttributeSizeTooLarge
         )
-        val expectedLogMessage = "error: custom attributes size exceeded"
         subject.maxCustomDataBytes = 0
 
         val result = subject.add(mapOf("A" to "B"))
@@ -277,6 +264,6 @@ class CustomAttributesStoreTest {
             mockEventHandler.onEvent(expectedEvent)
             mockLogger.e(capture(logSlot))
         }
-        assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CUSTOM_ATTRIBUTES_SIZE_EXCEEDED)
     }
 }

@@ -22,8 +22,8 @@ import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.logs.Log
-import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
+import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import io.mockk.Called
 import io.mockk.clearMocks
 import io.mockk.mockk
@@ -503,7 +503,6 @@ internal class MessageStoreTest {
                 metadata = mapOf("customMessageId" to expectedMessage.id)
             ),
         )
-        val expectedLogMessage = "Message with quick reply prepared to send: $expectedMessage"
 
         subject.prepareMessageWith(givenButtonResponse).run {
             assertThat(token).isEqualTo(expectedOnMessageRequest.token)
@@ -519,7 +518,7 @@ internal class MessageStoreTest {
             mockMessageListener(capture(messageSlot))
         }
         assertThat((messageSlot.captured as MessageEvent.MessageInserted).message).isEqualTo(expectedMessage)
-        assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.quickReplyPrepareToSend(expectedMessage))
     }
 
     @Test
