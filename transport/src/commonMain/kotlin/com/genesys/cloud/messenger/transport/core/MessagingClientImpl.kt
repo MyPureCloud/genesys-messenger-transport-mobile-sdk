@@ -188,7 +188,7 @@ internal class MessagingClientImpl(
 
     override fun sendQuickReply(buttonResponse: ButtonResponse) {
         stateMachine.checkIfConfigured()
-        log.i { "sendQuickReply(buttonResponse: $buttonResponse)" }
+        log.i { LogMessages.sendQuickReply(buttonResponse) }
         val channel = prepareCustomAttributesForSending()
         val request = messageStore.prepareMessageWith(buttonResponse, channel)
         val encodedJson = WebMessagingJson.json.encodeToString(request)
@@ -580,7 +580,7 @@ internal class MessagingClientImpl(
         }
 
         override fun onFailure(t: Throwable, errorCode: ErrorCode) {
-            log.e(throwable = t) { "onFailure(message: ${t.message})" }
+            log.e(throwable = t) { LogMessages.onFailure(t) }
             handleWebSocketError(errorCode)
         }
 

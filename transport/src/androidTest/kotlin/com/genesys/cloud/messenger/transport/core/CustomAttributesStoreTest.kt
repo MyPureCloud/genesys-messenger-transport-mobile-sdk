@@ -26,7 +26,6 @@ class CustomAttributesStoreTest {
     fun `when add a new customAttribute`() {
         val givenCustomAttributes = mapOf("A" to "B")
         val expectedCustomAttributes = mapOf("A" to "B")
-        val expectedLogMessage = "add: $expectedCustomAttributes | state = ${State.PENDING}"
 
         val result = subject.add(givenCustomAttributes)
 
@@ -35,7 +34,7 @@ class CustomAttributesStoreTest {
         assertThat(subject.get()).isEqualTo(expectedCustomAttributes)
         assertThat(subject.getCustomAttributesToSend()).isEqualTo(expectedCustomAttributes)
         assertThat(result).isTrue()
-        assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.addCustomAttribute(expectedCustomAttributes, State.PENDING.name))
     }
 
     @Test

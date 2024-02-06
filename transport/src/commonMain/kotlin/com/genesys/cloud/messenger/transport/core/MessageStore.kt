@@ -76,7 +76,7 @@ internal class MessageStore(
     }
 
     fun update(message: Message) = message.run {
-        log.i { "Message state updated: $this" }
+        log.i { LogMessages.messageStateUpdated(this) }
         when (direction) {
             Direction.Inbound -> findAndPublish(this)
             Direction.Outbound -> {

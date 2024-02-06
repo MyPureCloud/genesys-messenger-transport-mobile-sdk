@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.util.logs
 
 import com.genesys.cloud.messenger.transport.core.Attachment
+import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.MessagingClient
@@ -9,7 +10,6 @@ import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
 
 internal object LogMessages {
-    const val REFRESH_AUTH_TOKEN_SUCCESS = "refreshAuthToken success."
     // Attachment
     fun presigningAttachment(attachment: Attachment) = "Presigning attachment: $attachment"
     fun uploadingAttachment(attachment: Attachment) = "Uploading attachment: $attachment"
@@ -24,6 +24,7 @@ internal object LogMessages {
     fun attachmentError(attachmentId: String, errorCode: ErrorCode, errorMessage: String) =
         "Attachment error with id: $attachmentId. ErrorCode: $errorCode, errorMessage: $errorMessage"
     // Authentication
+    const val REFRESH_AUTH_TOKEN_SUCCESS = "refreshAuthToken success."
     fun configureAuthenticatedSession(token: String, startNew: Boolean) =
         "configureAuthenticatedSession(token = $token, startNew: $startNew)"
     fun configureSession(token: String, startNew: Boolean = false) =
@@ -68,7 +69,6 @@ internal object LogMessages {
     fun onClosed(code: Int, reason: String) = "onClosed(code = $code, reason = $reason)"
     fun stateChanged(field: MessagingClient.State, value: MessagingClient.State) =
         "State changed from: ${field::class.simpleName}, to: ${value::class.simpleName}"
-    const val UNKNOWN_EVENT_RECEIVED = "Unknown event received."
     fun onEvent(event: Event) = "on event: $event"
     fun socketDidOpen(active: Boolean) = "Socket did open. Active: $active."
     fun socketDidClose(didCloseWithCode: Long, why: String, active: Boolean) =
@@ -106,4 +106,5 @@ internal object LogMessages {
         "Cancellation exception was thrown, while running getMessages() request."
     // Quick Replies
     fun quickReplyPrepareToSend(message: Message) = "Message with quick reply prepared to send: $message"
+    fun sendQuickReply(buttonResponse: ButtonResponse) = "sendQuickReply(buttonResponse: $buttonResponse)"
 }

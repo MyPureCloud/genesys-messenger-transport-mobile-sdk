@@ -56,7 +56,6 @@ internal class MessageStoreTest {
                 metadata = mapOf("customMessageId" to expectedMessage.id)
             ),
         )
-        val expectedLogMessage = "Message prepared to send: $expectedMessage"
 
         subject.prepareMessage("test message").run {
             assertThat(token).isEqualTo(expectedOnMessageRequest.token)
@@ -74,7 +73,7 @@ internal class MessageStoreTest {
             assertThat((messageSlot.captured as MessageEvent.MessageInserted).message).isEqualTo(
                 expectedMessage
             )
-            assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
+            assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.messagePreparedToSend(expectedMessage))
         }
     }
 
@@ -123,7 +122,6 @@ internal class MessageStoreTest {
                 ?: "empty"
         val givenMessage =
             Message(id = sentMessageId, state = State.Sent, text = "test message")
-        val expectedLogMessage = "Message state updated: $givenMessage"
         clearMocks(mockMessageListener)
 
         subject.update(givenMessage)
@@ -136,7 +134,7 @@ internal class MessageStoreTest {
         assertThat((messageSlot.captured as MessageEvent.MessageUpdated).message).isEqualTo(
             givenMessage
         )
-        assertThat(logSlot[1].invoke()).isEqualTo(expectedLogMessage)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.messageStateUpdated(givenMessage))
     }
 
     @Test
@@ -203,7 +201,6 @@ internal class MessageStoreTest {
     @Test
     fun `when update() with new attachment`() {
         val givenAttachment = attachment()
-        val expectedLogMessage = "Attachment state updated: $givenAttachment"
 
         subject.updateAttachmentStateWith(givenAttachment)
 
@@ -215,7 +212,7 @@ internal class MessageStoreTest {
         assertThat((messageSlot.captured as MessageEvent.AttachmentUpdated).attachment).isEqualTo(
             givenAttachment
         )
-        assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.attachmentStateUpdated(givenAttachment))
     }
 
     @Test
@@ -239,7 +236,6 @@ internal class MessageStoreTest {
         val expectedMessageHistory = messageList(2).reversed()
         val expectedConversationSize = 2
         val expectedNextPageIndex = 1
-        val expectedLogMessage = LogMessages.messageHistoryUpdated(expectedMessageHistory)
 
         subject.updateMessageHistory(messageList(2), 2)
 
@@ -254,7 +250,7 @@ internal class MessageStoreTest {
             assertThat((messageSlot.captured as MessageEvent.HistoryFetched).messages).isEqualTo(
                 expectedMessageHistory
             )
-            assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
+            assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.messageHistoryUpdated(expectedMessageHistory))
         }
     }
 
