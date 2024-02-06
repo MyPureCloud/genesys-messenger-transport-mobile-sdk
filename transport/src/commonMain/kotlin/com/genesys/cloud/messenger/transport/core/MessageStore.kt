@@ -6,6 +6,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.extensions.getUploadedAttachments
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 
 internal const val DEFAULT_PAGE_SIZE = 25
 
@@ -25,7 +26,7 @@ internal class MessageStore(
 
     fun prepareMessage(text: String, channel: Channel? = null): OnMessageRequest {
         val messageToSend = pendingMessage.copy(text = text, state = Message.State.Sending).also {
-            log.i { "Message prepared to send: $it" }
+            log.i { LogMessages.messagePreparedToSend(it) }
             activeConversation.add(it)
             publish(MessageEvent.MessageInserted(it))
             pendingMessage = Message()
@@ -52,7 +53,7 @@ internal class MessageStore(
             state = Message.State.Sending,
             quickReplies = listOf(buttonResponse),
         ).also {
-            log.i { "Message with quick reply prepared to send: $it" }
+            log.i { LogMessages.messageStateUpdated(message) }
             activeConversation.add(it)
             publish(MessageEvent.MessageInserted(it))
             pendingMessage = Message(attachments = it.attachments)
@@ -87,7 +88,7 @@ internal class MessageStore(
     }
 
     private fun update(attachment: Attachment) {
-        log.i { "Attachment state updated: $attachment" }
+        log.i { LogMessages.attachmentStateUpdated(attachment) }
         val attachments = pendingMessage.attachments.toMutableMap().also {
             it[attachment.id] = attachment
         }
@@ -98,7 +99,7 @@ internal class MessageStore(
     fun updateMessageHistory(historyPage: List<Message>, total: Int) {
         startOfConversation = isAllHistoryFetched(total)
         with(historyPage.takeInactiveMessages().reversed()) {
-            log.i { "Message history updated with: $this." }
+            log.i { LogMessages.messageHistoryUpdated(this) }
             activeConversation.addAll(0, this)
             nextPage = activeConversation.getNextPage()
             publish(MessageEvent.HistoryFetched(this, startOfConversation))

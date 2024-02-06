@@ -6,8 +6,8 @@ import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
-import com.genesys.cloud.messenger.transport.utility.LogMessages
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
@@ -60,7 +60,7 @@ class HealthCheckProviderTest {
         }
         assertThat(firstResult).isEqualTo(expected)
         assertThat(secondResult).isNull()
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.HealthCheckWarning)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.healthCheckCoolDown(HEALTH_CHECK_COOL_DOWN_MILLISECONDS))
     }
 
     @Test

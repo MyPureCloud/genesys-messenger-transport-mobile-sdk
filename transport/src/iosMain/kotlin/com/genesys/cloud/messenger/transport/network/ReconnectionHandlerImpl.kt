@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.network
 
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import kotlin.native.concurrent.AtomicInt
 
 internal const val TIMEOUT_INTERVAL = 30.0
@@ -17,7 +18,7 @@ internal actual class ReconnectionHandlerImpl actual constructor(
 
     override fun reconnect(reconnectFun: () -> Unit) {
         if (!shouldReconnect) return
-        log.i { "Trying to reconnect. Attempt number: $attempts out of $maxAttempts" }
+        log.i { LogMessages.tryingToReconnect(attempts.value, maxAttempts) }
         attempts.value++
         reconnectFun()
     }

@@ -22,7 +22,7 @@ import com.genesys.cloud.messenger.transport.util.fromConfiguredToReconnecting
 import com.genesys.cloud.messenger.transport.util.fromConnectedToError
 import com.genesys.cloud.messenger.transport.util.fromIdleToConnecting
 import com.genesys.cloud.messenger.transport.util.fromReconnectingToError
-import com.genesys.cloud.messenger.transport.utility.LogMessages
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.mockk.every
 import io.mockk.invoke
 import io.mockk.slot
@@ -51,8 +51,8 @@ class MCConnectionTests : BaseMessagingClientTest() {
         verifySequence {
             connectSequence()
         }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
     }
 
     @Test
@@ -97,9 +97,9 @@ class MCConnectionTests : BaseMessagingClientTest() {
             mockReconnectionHandler.shouldReconnect
             errorSequence(fromConfiguredToError(expectedErrorState))
         }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.ClearConversationHistory)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
     }
 
     @Test
@@ -218,11 +218,11 @@ class MCConnectionTests : BaseMessagingClientTest() {
             mockPlatformSocket.sendMessage(eq(Request.configureRequest()))
             errorSequence(fromReconnectingToError(expectedErrorState))
         }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.ClearConversationHistory)
-        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.Connect)
-        assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.ConfigureSession)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.CONNECT)
+        assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
     }
 
     @Test
@@ -251,9 +251,9 @@ class MCConnectionTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockLogger.w(capture(logSlot))
         }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.ClearConversationHistory)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
     }
 
     @Test
@@ -266,8 +266,8 @@ class MCConnectionTests : BaseMessagingClientTest() {
             connectSequence()
             mockLogger.w(capture(logSlot))
         }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.Connect)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.ConfigureSession)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.unhandledErrorCode(ErrorCode.UnexpectedError, "Request failed."))
     }
 

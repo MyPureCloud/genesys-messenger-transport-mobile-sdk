@@ -4,6 +4,7 @@ import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.send.EchoRequest
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import kotlinx.serialization.encodeToString
 
@@ -24,7 +25,7 @@ internal class HealthCheckProvider(
             val request = EchoRequest(token = token)
             WebMessagingJson.json.encodeToString(request)
         } else {
-            log.w { "Health check can be sent only once every $HEALTH_CHECK_COOL_DOWN_MILLISECONDS milliseconds." }
+            log.w { LogMessages.healthCheckCoolDown(HEALTH_CHECK_COOL_DOWN_MILLISECONDS) }
             null
         }
     }

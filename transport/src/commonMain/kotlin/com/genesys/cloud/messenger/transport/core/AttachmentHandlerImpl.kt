@@ -13,6 +13,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.ktor.client.plugins.ResponseException
 import io.ktor.http.ContentType
 import io.ktor.http.defaultForFilePath
@@ -39,7 +40,7 @@ internal class AttachmentHandlerImpl(
         uploadProgress: ((Float) -> Unit)?,
     ): OnAttachmentRequest {
         Attachment(id = attachmentId, fileName = fileName, state = Presigning).also {
-            log.i { "Presigning attachment: $it" }
+            log.i { LogMessages.presigningAttachment(it) }
             updateAttachmentStateWith(it)
             processedAttachments[it.id] = ProcessedAttachment(
                 attachment = it,
@@ -59,7 +60,7 @@ internal class AttachmentHandlerImpl(
 
     override fun upload(presignedUrlResponse: PresignedUrlResponse) {
         processedAttachments[presignedUrlResponse.attachmentId]?.let {
-            log.i { "Uploading attachment: ${it.attachment}" }
+            log.i { LogMessages.uploadingAttachment(it.attachment) }
             it.attachment = it.attachment.copy(state = Uploading)
                 .also(updateAttachmentStateWith)
             it.job = uploadDispatcher.launch {
@@ -72,7 +73,7 @@ internal class AttachmentHandlerImpl(
                         responseException.message ?: "ResponseException during attachment upload"
                     )
                 } catch (cancellationException: CancellationException) {
-                    log.w { "cancellationException during attachment upload: ${it.attachment}" }
+                    log.w { LogMessages.cancellationExceptionAttachmentUpload(it.attachment) }
                 }
             }
         }
@@ -80,7 +81,7 @@ internal class AttachmentHandlerImpl(
 
     override fun onUploadSuccess(uploadSuccessEvent: UploadSuccessEvent) {
         processedAttachments[uploadSuccessEvent.attachmentId]?.let {
-            log.i { "Attachment uploaded: ${it.attachment}" }
+            log.i { LogMessages.attachmentUploaded(it.attachment) }
             it.attachment = it.attachment.copy(
                 state = Uploaded(uploadSuccessEvent.downloadUrl)
             ).also(updateAttachmentStateWith)
@@ -90,7 +91,7 @@ internal class AttachmentHandlerImpl(
 
     override fun detach(attachmentId: String): DeleteAttachmentRequest? {
         processedAttachments[attachmentId]?.let {
-            log.i { "Detaching attachment: $attachmentId" }
+            log.i { LogMessages.detachingAttachment(attachmentId) }
             it.job?.cancel()
             if (it.attachment.state is Uploaded) {
                 it.attachment =
@@ -107,14 +108,14 @@ internal class AttachmentHandlerImpl(
     }
 
     override fun onDetached(attachmentId: String) {
-        log.i { "Attachment detached: $attachmentId" }
+        log.i { LogMessages.attachmentDetached(attachmentId) }
         processedAttachments.remove(attachmentId)?.let {
             updateAttachmentStateWith(it.attachment.copy(state = Detached))
         }
     }
 
     override fun onError(attachmentId: String, errorCode: ErrorCode, errorMessage: String) {
-        log.e { "Attachment error with id: $attachmentId. ErrorCode: $errorCode, errorMessage: $errorMessage" }
+        log.e { LogMessages.attachmentError(attachmentId, errorCode, errorMessage) }
         processedAttachments.remove(attachmentId)
         updateAttachmentStateWith(Attachment(attachmentId, state = Error(errorCode, errorMessage)))
     }
@@ -128,7 +129,7 @@ internal class AttachmentHandlerImpl(
     override fun onSending() {
         processedAttachments.forEach { entry ->
             entry.value.takeUploaded()?.let {
-                log.i { "Sending attachment: ${it.attachment.id}" }
+                log.i { LogMessages.sendingAttachment(it.attachment.id) }
                 it.attachment = it.attachment.copy(state = Sending)
                     .also(updateAttachmentStateWith)
             }
@@ -136,7 +137,7 @@ internal class AttachmentHandlerImpl(
     }
 
     override fun onSent(attachments: Map<String, Attachment>) {
-        log.i { "Attachments sent: $attachments" }
+        log.i { LogMessages.attachmentSent(attachments) }
         attachments.forEach { entry ->
             processedAttachments.remove(entry.key)?.also {
                 updateAttachmentStateWith(entry.value)

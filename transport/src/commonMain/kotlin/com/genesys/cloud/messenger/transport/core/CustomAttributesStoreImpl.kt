@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.core
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.ktor.utils.io.charsets.Charsets
 import io.ktor.utils.io.core.toByteArray
 
@@ -24,13 +25,13 @@ internal class CustomAttributesStoreImpl(
         }
         this.customAttributes.putAll(customAttributes)
         state = State.PENDING
-        log.i { "add: $customAttributes | state = $state" }
+        log.i { LogMessages.addCustomAttribute(customAttributes, state.name) }
         return true
     }
 
     private fun isCustomAttributesValid(customAttributes: Map<String, String>): Boolean {
         if (customAttributes.isEmpty() || this.customAttributes == customAttributes) {
-            log.w { "custom attributes are empty or same." }
+            log.w { LogMessages.CUSTOM_ATTRIBUTES_EMPTY_OR_SAME }
             return false
         } else if (isSizeExceeded(customAttributes)) {
             eventHandler.onEvent(
@@ -40,7 +41,7 @@ internal class CustomAttributesStoreImpl(
                     CorrectiveAction.CustomAttributeSizeTooLarge
                 )
             )
-            log.e { "error: custom attributes size exceeded" }
+            log.e { LogMessages.CUSTOM_ATTRIBUTES_SIZE_EXCEEDED }
             return false
         }
         return true
@@ -62,28 +63,28 @@ internal class CustomAttributesStoreImpl(
     }
 
     internal fun onSending() {
-        log.i { "onSending()" }
+        log.i { LogMessages.ON_SENDING }
         state = State.SENDING
     }
 
     internal fun onSent() {
-        log.i { "onSent. state = $state" }
+        log.i { LogMessages.onSentState(state.name) }
         state = if (state == State.PENDING) State.PENDING else State.SENT
     }
 
     internal fun onError() {
-        log.i { "onError()" }
+        log.i { LogMessages.ON_ERROR }
         customAttributes.clear()
         state = State.ERROR
     }
 
     internal fun onMessageError() {
-        log.i { "onMessageError()" }
+        log.i { LogMessages.ON_MESSAGE_ERROR }
         state = State.PENDING
     }
 
     internal fun onSessionClosed() {
-        log.i { "onSessionClosed()" }
+        log.i { LogMessages.ON_SESSION_CLOSED }
         state = State.PENDING
     }
 
