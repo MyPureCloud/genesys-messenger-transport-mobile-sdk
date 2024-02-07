@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
 import assertk.assertThat
+import assertk.assertions.contains
 import assertk.assertions.containsExactly
 import assertk.assertions.containsOnly
 import assertk.assertions.isEmpty
@@ -11,12 +12,18 @@ import assertk.assertions.isNotEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import com.genesys.cloud.messenger.transport.core.Message.Content
+import com.genesys.cloud.messenger.transport.core.Message.Direction
+import com.genesys.cloud.messenger.transport.core.Message.Participant
+import com.genesys.cloud.messenger.transport.core.Message.State
+import com.genesys.cloud.messenger.transport.core.Message.Type
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
+import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import io.mockk.Called
 import io.mockk.clearMocks
 import io.mockk.mockk
@@ -39,9 +46,9 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenPrepareMessage() {
+    fun `when prepareMessage()`() {
         val expectedMessage =
-            subject.pendingMessage.copy(state = Message.State.Sending, text = "test message")
+            subject.pendingMessage.copy(state = State.Sending, text = "test message")
         val expectedOnMessageRequest = OnMessageRequest(
             givenToken,
             message = TextMessage(
@@ -49,7 +56,6 @@ internal class MessageStoreTest {
                 metadata = mapOf("customMessageId" to expectedMessage.id)
             ),
         )
-        val expectedLogMessage = "Message prepared to send: $expectedMessage"
 
         subject.prepareMessage("test message").run {
             assertThat(token).isEqualTo(expectedOnMessageRequest.token)
@@ -67,12 +73,13 @@ internal class MessageStoreTest {
             assertThat((messageSlot.captured as MessageEvent.MessageInserted).message).isEqualTo(
                 expectedMessage
             )
-            assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
+            assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.messagePreparedToSend(expectedMessage))
         }
     }
 
     @Test
-    fun whenPrepareTwoMessages() {
+    fun `when prepareMessage() is called twice`() {
+
         subject.prepareMessage("message 1")
         subject.prepareMessage("message 2")
 
@@ -80,7 +87,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenPrepareMessageWithUploadedAttachment() {
+    fun `when prepareMessage() with uploaded attachment`() {
         subject.updateAttachmentStateWith(
             attachment(
                 state = Attachment.State.Uploaded("http://someurl.com")
@@ -89,18 +96,17 @@ internal class MessageStoreTest {
 
         subject.prepareMessage("test message").run {
             assertThat(this.message.content).containsOnly(
-                Message.Content(
-                    contentType = Message.Content.Type.Attachment,
+                Content(
+                    contentType = Content.Type.Attachment,
                     attachment(state = Attachment.State.Uploaded("http://someurl.com"))
                 )
             )
         }
-
         assertThat(subject.pendingMessage.attachments).isEmpty()
     }
 
     @Test
-    fun whenPrepareMessageWithNotUploadedAttachment() {
+    fun `when prepareMessage() with NOT uploaded attachment`() {
         subject.updateAttachmentStateWith(attachment())
 
         subject.prepareMessage("test message").run {
@@ -110,13 +116,12 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenUpdateInboundMessage() {
+    fun `when update() inbound message`() {
         val sentMessageId =
             subject.prepareMessage("test message").message.metadata?.get("customMessageId")
                 ?: "empty"
         val givenMessage =
-            Message(id = sentMessageId, state = Message.State.Sent, text = "test message")
-        val expectedLogMessage = "Message state updated: $givenMessage"
+            Message(id = sentMessageId, state = State.Sent, text = "test message")
         clearMocks(mockMessageListener)
 
         subject.update(givenMessage)
@@ -129,11 +134,11 @@ internal class MessageStoreTest {
         assertThat((messageSlot.captured as MessageEvent.MessageUpdated).message).isEqualTo(
             givenMessage
         )
-        assertThat(logSlot[1].invoke()).isEqualTo(expectedLogMessage)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.messageStateUpdated(givenMessage))
     }
 
     @Test
-    fun whenUpdateOutboundMessage() {
+    fun `when update outbound message`() {
         val givenMessage = outboundMessage()
 
         subject.update(givenMessage)
@@ -147,13 +152,13 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenUpdateInboundAndThenOutboundMessage() {
+    fun `when update() inbound and then outbound messages`() {
         val sentMessageId =
             subject.prepareMessage("test message").message.metadata?.get("customMessageId")
                 ?: "empty"
         val expectedConversationSize = 2
         val givenMessage =
-            Message(id = sentMessageId, state = Message.State.Sent, text = "test message")
+            Message(id = sentMessageId, state = State.Sent, text = "test message")
         subject.update(outboundMessage())
         clearMocks(mockMessageListener)
 
@@ -168,9 +173,9 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenUpdateInboundWithIdThatDoesNotPresentInConversation() {
+    fun `when update() inbound message with id that does NOT exist in conversation`() {
         val givenMessage =
-            Message(id = "randomId", state = Message.State.Sent, text = "test message")
+            Message(id = "randomId", state = State.Sent, text = "test message")
 
         subject.update(message = givenMessage)
 
@@ -182,7 +187,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenInsertMoreThanDefaultPageSizeMessages() {
+    fun `when inserting more messages than the DEFAULT_PAGE_SIZE`() {
         val expectedConversationSize = 25
         val expectedNextPageIndex = 2
         for (i in 0 until DEFAULT_PAGE_SIZE) {
@@ -194,9 +199,8 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenUpdateWithNewAttachment() {
+    fun `when update() with new attachment`() {
         val givenAttachment = attachment()
-        val expectedLogMessage = "Attachment state updated: $givenAttachment"
 
         subject.updateAttachmentStateWith(givenAttachment)
 
@@ -208,11 +212,11 @@ internal class MessageStoreTest {
         assertThat((messageSlot.captured as MessageEvent.AttachmentUpdated).attachment).isEqualTo(
             givenAttachment
         )
-        assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.attachmentStateUpdated(givenAttachment))
     }
 
     @Test
-    fun whenUpdateExistingAttachment() {
+    fun `when update() existing attachment`() {
         val initialAttachment = attachment(state = Attachment.State.Presigning)
         val updatedAttachment = attachment(state = Attachment.State.Uploading)
         subject.updateAttachmentStateWith(initialAttachment)
@@ -228,11 +232,10 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenUpdateMessageHistory() {
+    fun `when updateMessageHistory()`() {
         val expectedMessageHistory = messageList(2).reversed()
         val expectedConversationSize = 2
         val expectedNextPageIndex = 1
-        val expectedLogMessage = LogMessages.messageHistoryUpdated(expectedMessageHistory)
 
         subject.updateMessageHistory(messageList(2), 2)
 
@@ -247,12 +250,12 @@ internal class MessageStoreTest {
             assertThat((messageSlot.captured as MessageEvent.HistoryFetched).messages).isEqualTo(
                 expectedMessageHistory
             )
-            assertThat(logSlot[0].invoke()).isEqualTo(expectedLogMessage)
+            assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.messageHistoryUpdated(expectedMessageHistory))
         }
     }
 
     @Test
-    fun whenUpdateMessageHistoryHasMultiplePages() {
+    fun `when updateMessageHistory() has multiple pages`() {
         val givenMessageHistory = messageList(25)
         val givenTotal = DEFAULT_PAGE_SIZE * 2
         val expectedNextPageIndex = 2
@@ -264,7 +267,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenUpdateMessageHistoryContainsMessageThatAlreadyPresentInActiveConversation() {
+    fun `when updateMessageHistory() contains message that already exist in conversation`() {
         val expectedMessage1 = outboundMessage(0)
         val expectedMessage2 = outboundMessage(1)
         val givenMessageHistory = messageList(2).toMutableList()
@@ -281,7 +284,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenOnMessageErrorAndActiveConversationIsEmpty() {
+    fun `when onMessageError() and conversation is empty`() {
         subject.onMessageError(ErrorCode.MessageTooLong, "some message")
 
         verify { mockMessageListener wasNot Called }
@@ -290,7 +293,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenOnMessageErrorAndActiveConversationDoesNotHaveAnyMessagesWithStateSending() {
+    fun `when onMessageError() and conversation does not have any messages with state Sending`() {
         subject.update(outboundMessage())
         clearMocks(mockMessageListener)
 
@@ -301,7 +304,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenOnMessageErrorHappensAfterMessageBeingSent() {
+    fun `when onMessageError() happens after message being Sent`() {
         val errorMessage = "some test error message"
         val testMessage = "test message"
         val expectedState = Message.State.Error(
@@ -328,7 +331,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenMessageListenerNotSet() {
+    fun `when messageListener not set`() {
         subject.messageListener = null
 
         subject.prepareMessage("test message")
@@ -338,7 +341,7 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenInvalidateConversationCache() {
+    fun `when invalidateConversationCache()`() {
         val expectedNextPage = 1
         subject.update(outboundMessage())
 
@@ -352,9 +355,9 @@ internal class MessageStoreTest {
     }
 
     @Test
-    fun whenPrepareMessageWithChannelThatHasCustomAttributes() {
+    fun `when prepareMessage() with channel that has customAttributes`() {
         val expectedMessage =
-            subject.pendingMessage.copy(state = Message.State.Sending, text = "test message")
+            subject.pendingMessage.copy(state = State.Sending, text = "test message")
         val expectedOnMessageRequest = OnMessageRequest(
             givenToken,
             message = TextMessage(
@@ -383,10 +386,160 @@ internal class MessageStoreTest {
         }
     }
 
+    @Test
+    fun `when update() message with Direction=Outbound and quick replies`() {
+        val expectedMessage = Message(
+            id = "0",
+            direction = Direction.Outbound,
+            state = State.Sent,
+            messageType = Message.Type.QuickReply,
+            text = "message from bot",
+            timeStamp = 0,
+            attachments = emptyMap(),
+            events = emptyList(),
+            quickReplies = listOf(
+                QuickReplyTestValues.buttonResponse_a,
+                QuickReplyTestValues.buttonResponse_b,
+            ),
+            from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
+        )
+
+        subject.update(expectedMessage)
+
+        assertThat(subject.getConversation()).contains(expectedMessage)
+        assertThat(subject.nextPage).isEqualTo(1)
+        verify { mockMessageListener(capture(messageSlot)) }
+        assertThat((messageSlot.captured as MessageEvent.QuickReplyReceived).message).isEqualTo(expectedMessage)
+    }
+
+    @Test
+    fun `when update() message with Direction=Inbound and quick replies`() {
+        val expectedMessage = Message(
+            id = "0",
+            direction = Direction.Inbound,
+            state = State.Sent,
+            messageType = Message.Type.QuickReply,
+            timeStamp = 0,
+            attachments = emptyMap(),
+            events = emptyList(),
+            quickReplies = listOf(
+                QuickReplyTestValues.buttonResponse_a,
+                QuickReplyTestValues.buttonResponse_b,
+            ),
+            from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
+        )
+
+        subject.update(expectedMessage)
+
+        assertThat(subject.getConversation()).contains(expectedMessage)
+        assertThat(subject.nextPage).isEqualTo(1)
+        verify { mockMessageListener(capture(messageSlot)) }
+        assertThat((messageSlot.captured as MessageEvent.MessageInserted).message).isEqualTo(expectedMessage)
+    }
+
+    @Test
+    fun `when prepareMessageWith() ButtonResponse and channel`() {
+        val givenButtonResponse = QuickReplyTestValues.buttonResponse_a
+        val givenChannel = Channel(Channel.Metadata(mapOf("A" to "B")))
+        val expectedMessage =
+            subject.pendingMessage.copy(
+                state = State.Sending,
+                messageType = Type.QuickReply,
+                type = Type.QuickReply.name,
+                quickReplies = listOf(givenButtonResponse)
+            )
+        val expectedOnMessageRequest = OnMessageRequest(
+            givenToken,
+            message = TextMessage(
+                text = "",
+                content = listOf(
+                    Content(
+                        contentType = Content.Type.ButtonResponse,
+                        buttonResponse = givenButtonResponse
+                    )
+                ),
+                metadata = mapOf("customMessageId" to expectedMessage.id),
+                channel = givenChannel
+            ),
+        )
+
+        subject.prepareMessageWith(givenButtonResponse, givenChannel).run {
+            assertThat(token).isEqualTo(expectedOnMessageRequest.token)
+            assertThat(message).isEqualTo(expectedOnMessageRequest.message)
+            assertThat(message.content).isEqualTo(expectedOnMessageRequest.message.content)
+            assertThat(message.channel).isEqualTo(expectedOnMessageRequest.message.channel)
+            assertThat(time).isNull()
+        }
+        assertThat(subject.getConversation()[0]).isEqualTo(expectedMessage)
+        assertThat(subject.pendingMessage.id).isNotEqualTo(expectedMessage.id)
+        verify { mockMessageListener(capture(messageSlot)) }
+        assertThat((messageSlot.captured as MessageEvent.MessageInserted).message).isEqualTo(expectedMessage)
+    }
+
+    @Test
+    fun `when prepareMessageWith() ButtonResponse and no channel`() {
+        val givenButtonResponse = QuickReplyTestValues.buttonResponse_a
+        val expectedMessage =
+            subject.pendingMessage.copy(
+                state = State.Sending,
+                messageType = Type.QuickReply,
+                type = Type.QuickReply.name,
+                quickReplies = listOf(givenButtonResponse)
+            )
+        val expectedOnMessageRequest = OnMessageRequest(
+            givenToken,
+            message = TextMessage(
+                text = "",
+                content = listOf(
+                    Content(
+                        contentType = Content.Type.ButtonResponse,
+                        buttonResponse = givenButtonResponse
+                    )
+                ),
+                metadata = mapOf("customMessageId" to expectedMessage.id)
+            ),
+        )
+
+        subject.prepareMessageWith(givenButtonResponse).run {
+            assertThat(token).isEqualTo(expectedOnMessageRequest.token)
+            assertThat(message).isEqualTo(expectedOnMessageRequest.message)
+            assertThat(message.content).isEqualTo(expectedOnMessageRequest.message.content)
+            assertThat(message.channel).isNull()
+            assertThat(time).isNull()
+        }
+        assertThat(subject.getConversation()[0]).isEqualTo(expectedMessage)
+        assertThat(subject.pendingMessage.id).isNotEqualTo(expectedMessage.id)
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockMessageListener(capture(messageSlot))
+        }
+        assertThat((messageSlot.captured as MessageEvent.MessageInserted).message).isEqualTo(expectedMessage)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.quickReplyPrepareToSend(expectedMessage))
+    }
+
+    @Test
+    fun `when pending message has uploaded attachment and prepareMessageWith() ButtonResponse`() {
+        val givenButtonResponse = QuickReplyTestValues.buttonResponse_a
+        val givenAttachment = attachment(state = Attachment.State.Uploaded("http://someurl.com"))
+        val expectedContent = listOf(
+            Content(
+                contentType = Content.Type.ButtonResponse,
+                buttonResponse = givenButtonResponse
+            )
+        )
+        subject.updateAttachmentStateWith(givenAttachment)
+
+        val result = subject.prepareMessageWith(givenButtonResponse)
+
+        assertThat(result.message.content).containsOnly(*expectedContent.toTypedArray())
+        assertThat(subject.pendingMessage.attachments).isNotEmpty()
+        assertThat(subject.pendingMessage.attachments).contains(givenAttachment.id to givenAttachment)
+    }
+
     private fun outboundMessage(messageId: Int = 0): Message = Message(
         id = "$messageId",
-        direction = Message.Direction.Outbound,
-        state = Message.State.Sent,
+        direction = Direction.Outbound,
+        state = State.Sent,
         text = "message from agent number $messageId",
         timeStamp = 100 * messageId.toLong(),
     )

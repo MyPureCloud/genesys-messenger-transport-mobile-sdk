@@ -10,7 +10,8 @@ import kotlinx.serialization.Serializable
  *  @property id a unique message identifier.
  *  @property direction the direction in which the message was sent.
  *  @property state the current message state.
- *  @property type the message type. The default type is "Text".
+ *  @property messageType the message type as enum. The default type is Type.Text.
+ *  @property type the message type as String. The default type is "Text".
  *  @property text the text payload of the message.
  *  @property timeStamp the time when the message occurred represented in Unix epoch time, the number of milliseconds since January 1, 1970 UTC.
  *  @property attachments a map of [Attachment] files to the message. Empty by default.
@@ -22,15 +23,34 @@ data class Message(
     val id: String = Platform().randomUUID(),
     val direction: Direction = Direction.Inbound,
     val state: State = State.Idle,
-    val type: String = "Text",
+    val messageType: Type = Type.Text,
+    @Deprecated("Use messageType instead.") val type: String = messageType.name,
     val text: String? = null,
     val timeStamp: Long? = null,
     val attachments: Map<String, Attachment> = emptyMap(),
     val events: List<Event> = emptyList(),
+    val quickReplies: List<ButtonResponse> = emptyList(),
     val from: Participant = Participant(
         originatingEntity = Participant.OriginatingEntity.Human
     ),
 ) {
+
+    /**
+     * The enum type representation of the message.
+     *
+     * @property Text when message is a text.
+     * @property Event when message is an event.
+     * @property QuickReply when message is a quick reply.
+     * @property Unknown when system could not recognize the message type.
+     */
+    @Serializable
+    enum class Type {
+        Text,
+        Event,
+        QuickReply,
+        Unknown,
+    }
+
     /**
      * Direction of the message.
      *
@@ -81,11 +101,13 @@ data class Message(
     @Serializable
     data class Content(
         val contentType: Type,
-        val attachment: Attachment,
+        val attachment: Attachment? = null,
+        val buttonResponse: ButtonResponse? = null,
     ) {
         @Serializable
         enum class Type {
-            Attachment
+            Attachment,
+            ButtonResponse,
         }
     }
 

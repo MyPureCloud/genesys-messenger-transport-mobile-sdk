@@ -42,21 +42,46 @@ internal class MessageStore(
         )
     }
 
-    fun update(message: Message) {
-        log.i { LogMessages.messageStateUpdated(message) }
-        when (message.direction) {
-            Direction.Inbound -> {
-                activeConversation.find { it.id == message.id }?.let {
-                    activeConversation[it.getIndex()] = message
-                    publish(MessageEvent.MessageUpdated(message))
-                } ?: run {
-                    activeConversation.add(message)
-                    publish(MessageEvent.MessageInserted(message))
-                }
-            }
+    fun prepareMessageWith(
+        buttonResponse: ButtonResponse,
+        channel: Channel? = null,
+    ): OnMessageRequest {
+        val type = Message.Type.QuickReply
+        val messageToSend = pendingMessage.copy(
+            messageType = type,
+            type = type.name,
+            state = Message.State.Sending,
+            quickReplies = listOf(buttonResponse),
+        ).also {
+            log.i { LogMessages.quickReplyPrepareToSend(it) }
+            activeConversation.add(it)
+            publish(MessageEvent.MessageInserted(it))
+            pendingMessage = Message(attachments = it.attachments)
+        }
+        val content = listOf(
+            Message.Content(
+                contentType = Message.Content.Type.ButtonResponse,
+                buttonResponse = buttonResponse,
+            )
+        )
+        return OnMessageRequest(
+            token = token,
+            message = TextMessage(
+                text = "",
+                metadata = mapOf("customMessageId" to messageToSend.id),
+                content = content,
+                channel = channel,
+            )
+        )
+    }
+
+    fun update(message: Message) = message.run {
+        log.i { LogMessages.messageStateUpdated(this) }
+        when (direction) {
+            Direction.Inbound -> findAndPublish(this)
             Direction.Outbound -> {
-                activeConversation.add(message)
-                publish(MessageEvent.MessageInserted(message))
+                activeConversation.add(this)
+                publish(this.toMessageEvent())
             }
         }
         nextPage = activeConversation.getNextPage()
@@ -95,6 +120,16 @@ internal class MessageStore(
         startOfConversation = false
     }
 
+    private fun findAndPublish(message: Message) {
+        activeConversation.find { it.id == message.id }?.let {
+            activeConversation[it.getIndex()] = message
+            publish(MessageEvent.MessageUpdated(message))
+        } ?: run {
+            activeConversation.add(message)
+            publish(MessageEvent.MessageInserted(message))
+        }
+    }
+
     private fun publish(event: MessageEvent) {
         messageListener?.invoke(event)
     }
@@ -114,6 +149,13 @@ internal class MessageStore(
         }
     }
 }
+
+private fun Message.toMessageEvent(): MessageEvent =
+    if (messageType == Message.Type.QuickReply) {
+        MessageEvent.QuickReplyReceived(this)
+    } else {
+        MessageEvent.MessageInserted(this)
+    }
 
 /**
  * Communicates conversation related updates to the UI.
@@ -153,4 +195,12 @@ sealed class MessageEvent {
      */
     class HistoryFetched(val messages: List<Message>, val startOfConversation: Boolean) :
         MessageEvent()
+
+    /**
+     * Dispatched when message with quick replies was sent by the Bot. To get the actual quick reply
+     * options refer to [Message.quickReplies] list of [ButtonResponse].
+     *
+     * @property message is the [Message] object with all the details.
+     */
+    class QuickReplyReceived(val message: Message) : MessageEvent()
 }

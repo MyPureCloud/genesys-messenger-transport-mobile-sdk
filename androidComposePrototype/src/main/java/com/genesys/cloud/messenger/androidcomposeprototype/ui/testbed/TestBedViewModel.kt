@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.genesys.cloud.messenger.androidcomposeprototype.BuildConfig
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
+import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
@@ -54,7 +55,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         private set
     var authState: AuthState by mutableStateOf(AuthState.NoAuth)
         private set
-    var pkceEnabled by mutableStateOf(false)
+    private var pkceEnabled by mutableStateOf(false)
 
     var authCode: String = ""
         set(value) {
@@ -70,6 +71,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     val regions = listOf("inindca.com", "inintca.com", "mypurecloud.com")
     private lateinit var onOktaSingIn: (url: String) -> Unit
+    private val quickRepliesMap = mutableMapOf<String, ButtonResponse>()
 
     fun init(
         context: Context,
@@ -129,6 +131,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "connectAuthenticated" -> doConnectAuthenticated()
             "bye" -> doDisconnect()
             "send" -> doSendMessage(input)
+            "sendQuickReply" -> doSendQuickReply(input)
             "history" -> fetchNextPage()
             "healthCheck" -> doSendHealthCheck()
             "attach" -> doAttach()
@@ -214,6 +217,17 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         } catch (t: Throwable) {
             handleException(t, "send message")
         }
+    }
+
+    private fun doSendQuickReply(quickReply: String) {
+        quickRepliesMap[quickReply]?.let { buttonResponse ->
+            try {
+                client.sendQuickReply(buttonResponse)
+                quickRepliesMap.clear()
+            } catch (t: Throwable) {
+                handleException(t, "send quickReply")
+            }
+        } ?: onSocketMessageReceived("Selected quickReply option: $quickReply does not exist.")
     }
 
     private fun fetchNextPage() {
@@ -340,8 +354,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private fun onMessage(event: MessageEvent) {
         val eventMessage = when (event) {
-            is MessageEvent.MessageUpdated -> event.message.toString()
-            is MessageEvent.MessageInserted -> event.message.toString()
+            is MessageEvent.MessageUpdated -> "MessageUpdated: ${event.message}"
+            is MessageEvent.MessageInserted -> "MessageInserted: ${event.message}"
             is MessageEvent.HistoryFetched -> "start of conversation: ${event.startOfConversation}, messages: ${event.messages}"
             is AttachmentUpdated -> {
                 when (event.attachment.state) {
@@ -349,9 +363,17 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
                         attachedIds.remove(event.attachment.id)
                         event.attachment.toString()
                     }
+
                     else -> event.attachment.toString()
                 }
             }
+
+            is MessageEvent.QuickReplyReceived -> event.message.run {
+                quickRepliesMap.clear()
+                quickRepliesMap.putAll(quickReplies.associateBy { it.text })
+                "QuickReplyReceived: text: $text | quick reply options: $quickReplies"
+            }
+
             else -> event.toString()
         }
         onSocketMessageReceived(eventMessage)
