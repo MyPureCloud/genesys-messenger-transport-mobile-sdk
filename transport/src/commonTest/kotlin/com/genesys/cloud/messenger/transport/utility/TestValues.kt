@@ -1,6 +1,11 @@
 package com.genesys.cloud.messenger.transport.utility
 
+import com.genesys.cloud.messenger.transport.core.ButtonResponse
+import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ButtonResponseContent
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.QuickReplyContent
 
 internal const val DEFAULT_TIMEOUT = 10000L
 
@@ -50,7 +55,7 @@ object MessageValues {
     internal const val ParticipantLastName = "participant_last_name"
     internal const val ParticipantNickname = "participant_nickname"
     internal const val ParticipantImageUrl = "http://participant.image"
-    internal const val Text = "test_text"
+    internal const val Text = "Hello world!"
     internal const val Type = "Text"
     internal const val TimeStamp = 1L
     internal const val PageSize = 25
@@ -97,4 +102,63 @@ object Journey {
     internal const val ActionId = "action_id"
     internal const val ActionMapId = "action_map_id"
     internal const val ActionMapVersion = 1.0f
+}
+
+object QuickReplyTestValues {
+    internal const val Text_A = "text_a"
+    internal const val Text_B = "text_b"
+    internal const val Payload_A = "payload_a"
+    internal const val Payload_B = "payload_b"
+    internal const val QuickReply = "QuickReply"
+    internal const val ButtonResponse = "ButtonResponse"
+
+    internal val buttonResponse_a = ButtonResponse(
+        text = Text_A,
+        payload = Payload_A,
+        type = QuickReply
+    )
+
+    internal val buttonResponse_b = ButtonResponse(
+        text = Text_B,
+        payload = Payload_B,
+        type = QuickReply
+    )
+
+    internal fun createQuickReplyContentForTesting(
+        text: String = Text_A,
+        payload: String = Payload_A,
+    ) = QuickReplyContent(
+        contentType = StructuredMessage.Content.Type.QuickReply.name,
+        quickReply = QuickReplyContent.QuickReply(
+            text = text,
+            payload = payload,
+            action = "action"
+        )
+    )
+
+    internal fun createButtonResponseContentForTesting(
+        text: String = Text_A,
+        payload: String = Payload_A,
+    ) = ButtonResponseContent(
+        contentType = StructuredMessage.Content.Type.ButtonResponse.name,
+        buttonResponse = ButtonResponseContent.ButtonResponse(
+            text = text,
+            payload = payload,
+            type = QuickReply,
+        )
+    )
+}
+
+object StructuredMessageValues {
+    internal fun createStructuredMessageForTesting(
+        id: String = MessageValues.Id,
+        type: StructuredMessage.Type = StructuredMessage.Type.Text,
+        direction: String = Message.Direction.Inbound.name,
+        content: List<StructuredMessage.Content> = emptyList(),
+    ) = StructuredMessage(
+        id = id,
+        type = type,
+        direction = direction,
+        content = content,
+    )
 }

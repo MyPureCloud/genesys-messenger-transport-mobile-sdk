@@ -5,11 +5,15 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
+import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
+import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues.createButtonResponseContentForTesting
+import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues.createQuickReplyContentForTesting
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -224,6 +228,63 @@ class ResponsesTests {
             assertThat(attachmentId).isEqualTo(AttachmentValues.Id)
             assertThat(downloadUrl).isEqualTo(AttachmentValues.DownloadUrl)
             assertThat(timestamp).isEqualTo(TestValues.Timestamp)
+        }
+    }
+
+    @Test
+    fun `when ButtonResponse serialized`() {
+        val expectedRequest = QuickReplyTestValues.buttonResponse_a
+        val expectedJson = """{"text":"text_a","payload":"payload_a","type":"QuickReply"}"""
+
+        val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
+        val decoded = WebMessagingJson.json.decodeFromString<ButtonResponse>(expectedJson)
+
+        assertThat(encodedString, "encoded ButtonResponse").isEqualTo(expectedJson)
+        decoded.run {
+            assertThat(this).isEqualTo(expectedRequest)
+            assertThat(text).isEqualTo("text_a")
+            assertThat(payload).isEqualTo(QuickReplyTestValues.Payload_A)
+            assertThat(type).isEqualTo(QuickReplyTestValues.QuickReply)
+        }
+    }
+
+    @Test
+    fun `validate StructuredMessage_ButtonResponse serialization`() {
+        val expectedRequest = createButtonResponseContentForTesting()
+        val expectedJson =
+            """{"contentType":"ButtonResponse","buttonResponse":{"text":"text_a","payload":"payload_a","type":"QuickReply"}}"""
+
+        val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
+        val decoded = WebMessagingJson.json.decodeFromString<StructuredMessage.Content.ButtonResponseContent>(expectedJson)
+
+        assertThat(encodedString, "encoded StructuredMessage.Content.ButtonResponse").isEqualTo(expectedJson)
+        decoded.run {
+            assertThat(contentType).isEqualTo(QuickReplyTestValues.ButtonResponse)
+            buttonResponse.run {
+                assertThat(text).isEqualTo(QuickReplyTestValues.Text_A)
+                assertThat(payload).isEqualTo(QuickReplyTestValues.Payload_A)
+                assertThat(type).isEqualTo(QuickReplyTestValues.QuickReply)
+            }
+        }
+    }
+
+    @Test
+    fun `validate StructuredMessage_QuickReply serialization`() {
+        val expectedRequest = createQuickReplyContentForTesting()
+        val expectedJson =
+            """{"contentType":"QuickReply","quickReply":{"text":"text_a","payload":"payload_a","action":"action"}}"""
+
+        val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
+        val decoded = WebMessagingJson.json.decodeFromString<StructuredMessage.Content.QuickReplyContent>(expectedJson)
+
+        assertThat(encodedString, "encoded StructuredMessage.Content.QuickReply").isEqualTo(expectedJson)
+        decoded.run {
+            assertThat(contentType).isEqualTo(QuickReplyTestValues.QuickReply)
+            quickReply.run {
+                assertThat(text).isEqualTo(QuickReplyTestValues.Text_A)
+                assertThat(payload).isEqualTo(QuickReplyTestValues.Payload_A)
+                assertThat(action).isEqualTo("action")
+            }
         }
     }
 }

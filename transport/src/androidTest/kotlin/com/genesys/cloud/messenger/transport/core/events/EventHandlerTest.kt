@@ -72,15 +72,6 @@ class EventHandlerTest {
     }
 
     @Test
-    fun whenOnEventNullInvoked() {
-        subject.onEvent(null)
-
-        verify { mockLogger.i(capture(logSlot)) }
-        verify(exactly = 0) { mockEventListener.invoke(any()) }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.UNKNOWN_EVENT_RECEIVED)
-    }
-
-    @Test
     fun whenTypingEventToTransportEvent() {
         val expectedEvent = AgentTyping(3000)
 
