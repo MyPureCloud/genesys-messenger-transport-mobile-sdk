@@ -99,7 +99,8 @@ fun DrawerContent(testBedViewModel: TestBedViewModel) {
     val commands = listOf(
         "oktaSignIn", "oktaSignInWithPKCE", "oktaLogout", "connect", "connectAuthenticated", "newChat",
         "send <msg>", "history", "invalidateConversationCache", "attach", "detach", "delete <attachmentID>",
-        "deployment", "bye", "healthcheck", "addAttribute <key> <value>", "typing", "authorize", "clearConversation"
+        "deployment", "bye", "healthcheck", "addAttribute <key> <value>", "typing", "authorize", "clearConversation",
+        "sendQuickReply <quickReply>"
     )
     Column(modifier = Modifier
         .fillMaxSize()

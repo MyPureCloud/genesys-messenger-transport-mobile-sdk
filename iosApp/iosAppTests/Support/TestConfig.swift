@@ -27,6 +27,7 @@ struct Config: Codable {
     public let authDeploymentId: String
     public let redirectUri: String
     public let oktaCodeVerifier: String
+    public let quickReplyBot: String
 }
 
 struct TestConfig {
