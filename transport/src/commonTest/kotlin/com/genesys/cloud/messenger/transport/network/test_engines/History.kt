@@ -1,12 +1,15 @@
 package com.genesys.cloud.messenger.transport.network.test_engines
 
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
+import com.genesys.cloud.messenger.transport.utility.ErrorTest
+import com.genesys.cloud.messenger.transport.utility.InvalidValues
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.mock.MockEngineConfig
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.ContentType
 import io.ktor.http.fullPath
 import io.ktor.http.headersOf
+import kotlinx.coroutines.CancellationException
 
 private const val EMPTY_MESSAGE_ENTITY_RESPONSE_PATH =
     "/api/v2/webmessaging/messages?pageNumber=0&pageSize=0"
@@ -21,7 +24,7 @@ fun HttpClientConfig<MockEngineConfig>.historyEngine() {
             when (request.url.fullPath) {
                 BASIC_MESSAGE_ENTITY_RESPONSE_PATH -> {
                     respond(
-                        TestWebMessagingApiResponses.messageEntityResponseWith2Messages,
+                        TestWebMessagingApiResponses.messageEntityResponseWith3Messages,
                         headers = responseHeaders
                     )
                 }
@@ -31,7 +34,13 @@ fun HttpClientConfig<MockEngineConfig>.historyEngine() {
                         headers = responseHeaders
                     )
                 }
-                else -> error("Unhandled ${request.url.fullPath}")
+                else -> {
+                    if (request.headers["Authorization"].equals("bearer ${InvalidValues.CancellationException}")) {
+                        throw CancellationException(ErrorTest.Message)
+                    } else {
+                        error(ErrorTest.Message)
+                    }
+                }
             }
         }
     }

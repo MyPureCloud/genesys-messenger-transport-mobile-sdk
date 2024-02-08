@@ -12,14 +12,15 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.Messenger
 import com.genesys.cloud.messenger.transport.shyrka.receive.Mode
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.QuickReplyContent.QuickReply
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.Styles
 
 object TestWebMessagingApiResponses {
 
     internal const val isoTestTimestamp = "2014-04-30T21:09:51.411Z"
-    internal const val messageEntityResponseWith2Messages =
-        """{"entities":[{"id":"5befde6373a23f32f20b59b4e1cba0e6","channel":{"time":"$isoTestTimestamp"},"type":"Text","text":"\uD83E\uDD2A","content":[],"direction":"Outbound","originatingEntity":"Bot"},{"id":"46e7001c24abed05e9bcd1a006eb54b7","channel":{"time":null},"type":"Text","events":[{"eventType":"Presence","presence":{"type":"Join"}}],"metadata":{"customMessageId":"1234567890"},"text":"customer msg 7","content":[],"direction":"Inbound","originatingEntity":"Human"}],"pageSize":25,"pageNumber":1, "total": 2, "pageCount": 1}"""
+    internal const val messageEntityResponseWith3Messages =
+        """{"entities":[{"id":"5befde6373a23f32f20b59b4e1cba0e6","channel":{"time":"$isoTestTimestamp"},"type":"Text","text":"\uD83E\uDD2A","content":[],"direction":"Outbound","originatingEntity":"Bot"},{"id":"46e7001c24abed05e9bcd1a006eb54b7","channel":{"time":null},"type":"Event","events":[{"eventType":"Presence","presence":{"type":"Join"}}],"metadata":{"customMessageId":"1234567890"},"text":"customer msg 7","content":[],"direction":"Inbound","originatingEntity":"Human"},{"text":"quick reply text","type":"Structured","direction":"Outbound","id":"message3_id","channel":{"time":null},"content":[{"contentType":"QuickReply","quickReply":{"text":"text_a","payload":"payload_a","action":"action_a"}},{"contentType":"QuickReply","quickReply":{"text":"text_b","payload":"payload_b","action":"action_b"}}],"metadata":{"customMessageId":"1234567890"},"originatingEntity":"Bot"}],"pageSize":25,"pageNumber":1, "total": 3, "pageCount": 1}"""
 
     internal const val messageEntityListResponseWithoutMessages =
         """{"entities":[],"pageSize":0,"pageNumber":1, "total": 0, "pageCount": 0}"""
@@ -32,7 +33,7 @@ object TestWebMessagingApiResponses {
             entities = buildEntities(),
             pageSize = 25,
             pageNumber = 1,
-            total = 2,
+            total = 3,
             pageCount = 1
         )
     internal val emptyMessageEntityList =
@@ -81,6 +82,7 @@ object TestWebMessagingApiResponses {
 
     private fun buildEntities(): List<StructuredMessage> =
         listOf(
+            // Text message
             messageEntity(
                 id = "5befde6373a23f32f20b59b4e1cba0e6",
                 time = isoTestTimestamp,
@@ -88,9 +90,11 @@ object TestWebMessagingApiResponses {
                 isInbound = false,
                 originatingEntity = "Bot",
             ),
+            // Event message
             messageEntity(
                 id = "46e7001c24abed05e9bcd1a006eb54b7",
                 time = null,
+                type = StructuredMessage.Type.Event,
                 text = "customer msg 7",
                 customMessageId = "1234567890",
                 events = listOf(
@@ -100,24 +104,54 @@ object TestWebMessagingApiResponses {
                     )
                 ),
                 originatingEntity = "Human",
+            ),
+            // Structured message with Quick Replies
+            messageEntity(
+                id = "message3_id",
+                time = null,
+                type = StructuredMessage.Type.Structured,
+                text = "quick reply text",
+                customMessageId = "1234567890",
+                isInbound = false,
+                content = listOf(
+                    StructuredMessage.Content.QuickReplyContent(
+                        contentType = "QuickReply",
+                        QuickReply(
+                            text = "text_a",
+                            payload = "payload_a",
+                            action = "action_a"
+                        )
+                    ),
+                    StructuredMessage.Content.QuickReplyContent(
+                        contentType = "QuickReply",
+                        QuickReply(
+                            text = "text_b",
+                            payload = "payload_b",
+                            action = "action_b"
+                        )
+                    ),
+                ),
+                originatingEntity = "Bot",
             )
         )
 
     private fun messageEntity(
         id: String,
         time: String?,
+        type: StructuredMessage.Type = StructuredMessage.Type.Text,
         text: String,
         isInbound: Boolean = true,
         customMessageId: String? = null,
         events: List<StructuredMessageEvent> = emptyList(),
+        content: List<StructuredMessage.Content> = emptyList(),
         originatingEntity: String?,
     ): StructuredMessage {
         return StructuredMessage(
             id = id,
             channel = StructuredMessage.Channel(time = time),
-            type = StructuredMessage.Type.Text,
+            type = type,
             text = text,
-            content = emptyList(),
+            content = content,
             direction = if (isInbound) "Inbound" else "Outbound",
             metadata = if (customMessageId != null) mapOf("customMessageId" to customMessageId) else emptyMap(),
             events = events,

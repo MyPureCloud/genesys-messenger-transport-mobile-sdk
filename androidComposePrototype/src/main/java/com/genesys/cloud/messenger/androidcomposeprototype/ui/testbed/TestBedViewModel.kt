@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.genesys.cloud.messenger.androidcomposeprototype.BuildConfig
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
+import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
@@ -25,6 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 private const val ATTACHMENT_FILE_NAME = "test_asset.png"
 
@@ -53,7 +55,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         private set
     var authState: AuthState by mutableStateOf(AuthState.NoAuth)
         private set
-    var pkceEnabled by mutableStateOf(false)
+    private var pkceEnabled by mutableStateOf(false)
 
     var authCode: String = ""
         set(value) {
@@ -69,6 +71,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     val regions = listOf("inindca.com", "inintca.com", "mypurecloud.com")
     private lateinit var onOktaSingIn: (url: String) -> Unit
+    private val quickRepliesMap = mutableMapOf<String, ButtonResponse>()
 
     fun init(
         context: Context,
@@ -128,6 +131,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "connectAuthenticated" -> doConnectAuthenticated()
             "bye" -> doDisconnect()
             "send" -> doSendMessage(input)
+            "sendQuickReply" -> doSendQuickReply(input)
             "history" -> fetchNextPage()
             "healthCheck" -> doSendHealthCheck()
             "attach" -> doAttach()
@@ -215,14 +219,28 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
+    private fun doSendQuickReply(quickReply: String) {
+        quickRepliesMap[quickReply]?.let { buttonResponse ->
+            try {
+                client.sendQuickReply(buttonResponse)
+                quickRepliesMap.clear()
+            } catch (t: Throwable) {
+                handleException(t, "send quickReply")
+            }
+        } ?: onSocketMessageReceived("Selected quickReply option: $quickReply does not exist.")
+    }
+
     private fun fetchNextPage() {
-        try {
-            viewModelScope.launch {
+        viewModelScope.launch {
+            try {
                 client.fetchNextPage()
                 commandWaiting = false
+            } catch (t: Throwable) {
+                Log.d(TAG, "fetchNextPage: error")
+                withContext(Dispatchers.Main) {
+                    handleException(t, "request history")
+                }
             }
-        } catch (t: Throwable) {
-            handleException(t, "request history")
         }
     }
 
@@ -272,13 +290,12 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     private fun doAddCustomAttributes(customAttributes: String) {
         clearCommand()
         val keyValue = customAttributes.toKeyValuePair()
-        val consoleMessage = if (keyValue.first.isNotEmpty()) {
-            client.customAttributesStore.add(mapOf(keyValue))
-            "Custom attribute added: $keyValue"
+        val addSuccess = client.customAttributesStore.add(mapOf(keyValue))
+        if (addSuccess) {
+            onSocketMessageReceived("Custom attribute added: $keyValue")
         } else {
-            "Custom attribute key can not be null or empty!"
+            onSocketMessageReceived("Custom attribute cannot be added: $keyValue")
         }
-        onSocketMessageReceived(consoleMessage)
     }
 
     private fun doIndicateTyping() {
@@ -307,9 +324,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         clientState = newState
         val statePayloadMessage = when (newState) {
             is State.Configured ->
-                "connected: ${newState.connected}," +
-                    " newSession: ${newState.newSession}," +
-                    " wasReconnecting: ${oldState is State.Reconnecting}"
+                "connected: ${newState.connected}," + " newSession: ${newState.newSession}," + " wasReconnecting: ${oldState is State.Reconnecting}"
             is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Closed -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Error -> "code: ${newState.code}, message: ${newState.message}"
@@ -339,8 +354,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private fun onMessage(event: MessageEvent) {
         val eventMessage = when (event) {
-            is MessageEvent.MessageUpdated -> event.message.toString()
-            is MessageEvent.MessageInserted -> event.message.toString()
+            is MessageEvent.MessageUpdated -> "MessageUpdated: ${event.message}"
+            is MessageEvent.MessageInserted -> "MessageInserted: ${event.message}"
             is MessageEvent.HistoryFetched -> "start of conversation: ${event.startOfConversation}, messages: ${event.messages}"
             is AttachmentUpdated -> {
                 when (event.attachment.state) {
@@ -348,9 +363,17 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
                         attachedIds.remove(event.attachment.id)
                         event.attachment.toString()
                     }
+
                     else -> event.attachment.toString()
                 }
             }
+
+            is MessageEvent.QuickReplyReceived -> event.message.run {
+                quickRepliesMap.clear()
+                quickRepliesMap.putAll(quickReplies.associateBy { it.text })
+                "QuickReplyReceived: text: $text | quick reply options: $quickReplies"
+            }
+
             else -> event.toString()
         }
         onSocketMessageReceived(eventMessage)
@@ -373,6 +396,10 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             is ErrorCode.RefreshAuthTokenFailure,
             -> {
                 authState = AuthState.Error(event.errorCode, event.message, event.correctiveAction)
+            }
+            is ErrorCode.CustomAttributeSizeTooLarge
+            -> {
+                onSocketMessageReceived(event.message ?: "CA size too large")
             }
             else -> {
                 println("Handle Event.Error here.")

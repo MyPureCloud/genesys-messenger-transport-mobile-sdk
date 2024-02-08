@@ -20,7 +20,7 @@ UI -> MobileMessenger: createMessagingClient(Configuration)
 MobileMessenger -> ReconnectionHandler: init(reconnectionTimeoutInSeconds)
 ReconnectionHandler -> ReconnectionHandler: setMaxAttempts
 MobileMessenger --> UI: MessagingClient
-UI -> MessagingClient: connectAndConfigure
+UI -> MessagingClient: connect
 MessagingClient -> StateMachine: onConnect
 StateMachine --> UI: stateChangedListener(old = Idle, new = Connecting)
 MessagingClient -> PlatformSocket: connect

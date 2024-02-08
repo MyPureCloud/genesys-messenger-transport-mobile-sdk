@@ -104,6 +104,15 @@ final class MessengerInteractor {
             throw error
         }
     }
+    
+    func sendQuickReply(buttonResponse: ButtonResponse) throws {
+        do {
+            try messagingClient.sendQuickReply(buttonResponse: buttonResponse)
+        } catch {
+            print("sendQuickReply(buttonResponse:) failed. \(error.localizedDescription)")
+            throw error
+        }
+    }
 
     func fetchNextPage(completion: ((Error?) -> Void)? = nil) {
         messagingClient.fetchNextPage() { error in
@@ -166,7 +175,7 @@ final class MessengerInteractor {
         }
     }
     
-    func addCustomAttributes(customAttributes: [String: String] = [:]) {
-         messagingClient.customAttributesStore.add(customAttributes: customAttributes)
+    func addCustomAttributes(customAttributes: [String: String] = [:]) -> Bool {
+         return messagingClient.customAttributesStore.add(customAttributes: customAttributes)
     }
 }

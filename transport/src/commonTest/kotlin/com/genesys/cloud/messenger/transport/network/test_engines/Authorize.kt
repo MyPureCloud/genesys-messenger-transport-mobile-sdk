@@ -4,6 +4,8 @@ import com.genesys.cloud.messenger.transport.auth.AuthJwt
 import com.genesys.cloud.messenger.transport.respondNotFound
 import com.genesys.cloud.messenger.transport.shyrka.send.AuthJwtRequest
 import com.genesys.cloud.messenger.transport.utility.AuthTest
+import com.genesys.cloud.messenger.transport.utility.ErrorTest
+import com.genesys.cloud.messenger.transport.utility.InvalidValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.mock.MockEngineConfig
@@ -15,6 +17,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.fullPath
 import io.ktor.http.headersOf
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
 
 private const val BASIC_OAUTH_CODE_EXCHANGE_PATH =
@@ -43,12 +46,24 @@ internal fun HttpClientConfig<MockEngineConfig>.authorizeEngine() {
                                 )
                             )
                         } else {
-                            respondBadRequest()
+                            when (requestBody.deploymentId) {
+                                InvalidValues.CancellationException -> {
+                                    throw CancellationException(ErrorTest.Message)
+                                }
+
+                                InvalidValues.UnknownException -> {
+                                    error(ErrorTest.Message)
+                                }
+                                else -> {
+                                    respondBadRequest()
+                                }
+                            }
                         }
                     } else {
                         respondBadRequest()
                     }
                 }
+
                 else -> {
                     respondNotFound()
                 }
