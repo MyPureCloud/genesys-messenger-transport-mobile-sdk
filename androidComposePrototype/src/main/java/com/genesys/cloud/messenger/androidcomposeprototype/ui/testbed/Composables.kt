@@ -45,18 +45,25 @@ fun TestBedScreen(testBedViewModel: TestBedViewModel) {
             TopAppBar(
                 title = { Text("Web Messaging Testbed") },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        coroutineScope.launch {
-                            scaffoldState.drawerState.open()
+                    IconButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                scaffoldState.drawerState.open()
+                            }
                         }
-                    }) {
+                    ) {
                         Icon(Icons.Filled.Menu, contentDescription = "Menu")
                     }
                 }
             )
         },
         drawerContent = {
-            DrawerContent(testBedViewModel)
+            DrawerContent { selectedCommand ->
+                testBedViewModel.onCommandChanged(selectedCommand)
+                coroutineScope.launch {
+                    scaffoldState.drawerState.close()
+                }
+            }
         }
     ) { innerPadding ->
         TestBedContent(
@@ -95,21 +102,39 @@ fun TestBedContent(
 }
 
 @Composable
-fun DrawerContent(testBedViewModel: TestBedViewModel) {
+fun DrawerContent(onCommandSelected: (String) -> Unit) {
     val commands = listOf(
-        "oktaSignIn", "oktaSignInWithPKCE", "oktaLogout", "connect", "connectAuthenticated", "newChat",
-        "send <msg>", "history", "invalidateConversationCache", "attach", "detach", "delete <attachmentID>",
-        "deployment", "bye", "healthcheck", "addAttribute <key> <value>", "typing", "authorize", "clearConversation",
-        "sendQuickReply <quickReply>"
+        "addAttribute <key> <value>",
+        "attach",
+        "authorize",
+        "bye",
+        "clearConversation",
+        "connect",
+        "connectAuthenticated",
+        "delete <attachmentID>",
+        "deployment",
+        "detach",
+        "healthcheck",
+        "history",
+        "invalidateConversationCache",
+        "newChat",
+        "oktaLogout",
+        "oktaSignIn",
+        "oktaSignInWithPKCE",
+        "send <msg>",
+        "sendQuickReply <quickReply>",
+        "typing"
     )
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
         Text("Commands", style = MaterialTheme.typography.h6)
         Spacer(modifier = Modifier.height(16.dp))
         LazyColumn {
             items(commands) { command ->
-                TextButton(onClick = { /* command selection action */ }) {
+                TextButton(onClick = { onCommandSelected(command) }) {
                     Text(command, style = MaterialTheme.typography.body2)
                 }
                 Divider()
@@ -117,7 +142,6 @@ fun DrawerContent(testBedViewModel: TestBedViewModel) {
         }
     }
 }
-
 
 @Composable
 private fun CommandView(
