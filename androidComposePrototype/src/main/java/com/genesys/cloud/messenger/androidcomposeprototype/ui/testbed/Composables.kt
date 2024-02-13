@@ -103,28 +103,6 @@ fun TestBedContent(
 
 @Composable
 fun DrawerContent(onCommandSelected: (String) -> Unit) {
-    val commands = listOf(
-        "addAttribute <key> <value>",
-        "attach",
-        "authorize",
-        "bye",
-        "clearConversation",
-        "connect",
-        "connectAuthenticated",
-        "delete <attachmentID>",
-        "deployment",
-        "detach",
-        "healthcheck",
-        "history",
-        "invalidateConversationCache",
-        "newChat",
-        "oktaLogout",
-        "oktaSignIn",
-        "oktaSignInWithPKCE",
-        "send <msg>",
-        "sendQuickReply <quickReply>",
-        "typing"
-    )
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -133,9 +111,9 @@ fun DrawerContent(onCommandSelected: (String) -> Unit) {
         Text("Commands", style = MaterialTheme.typography.h6)
         Spacer(modifier = Modifier.height(16.dp))
         LazyColumn {
-            items(commands) { command ->
-                TextButton(onClick = { onCommandSelected(command) }) {
-                    Text(command, style = MaterialTheme.typography.body2)
+            items(enumValues<Command>()) { command ->
+                TextButton(onClick = { onCommandSelected(command.description) }) {
+                    Text(command.description, style = MaterialTheme.typography.body2)
                 }
                 Divider()
             }
