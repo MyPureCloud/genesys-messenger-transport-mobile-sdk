@@ -7,43 +7,81 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Divider
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Surface
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
+import androidx.compose.material.TopAppBar
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.genesys.cloud.messenger.androidcomposeprototype.ui.theme.WebMessagingTheme
 import com.genesys.cloud.messenger.transport.core.MessagingClient
+import kotlinx.coroutines.launch
 
 @Composable
 fun TestBedScreen(testBedViewModel: TestBedViewModel) {
-    WebMessagingTheme {
-        Surface(color = MaterialTheme.colors.background) {
-            TestBedContent(
-                command = testBedViewModel.command,
-                onCommandChange = testBedViewModel::onCommandChanged,
-                onCommandSend = testBedViewModel::onCommandSend,
-                clientState = testBedViewModel.clientState,
-                socketMessage = testBedViewModel.socketMessage,
-                commandWaiting = testBedViewModel.commandWaiting,
-                currentAuthState = testBedViewModel.authState,
+    val scaffoldState = rememberScaffoldState()
+    val coroutineScope = rememberCoroutineScope()
+    Scaffold(
+        scaffoldState = scaffoldState,
+        topBar = {
+            TopAppBar(
+                title = { Text("Web Messaging Testbed") },
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                scaffoldState.drawerState.open()
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Filled.Menu, contentDescription = "Menu")
+                    }
+                }
             )
+        },
+        drawerContent = {
+            DrawerContent { selectedCommand ->
+                testBedViewModel.onCommandChanged(selectedCommand)
+                coroutineScope.launch {
+                    scaffoldState.drawerState.close()
+                }
+            }
         }
+    ) { innerPadding ->
+        TestBedContent(
+            modifier = Modifier.padding(innerPadding),
+            command = testBedViewModel.command,
+            onCommandChange = testBedViewModel::onCommandChanged,
+            onCommandSend = testBedViewModel::onCommandSend,
+            clientState = testBedViewModel.clientState,
+            socketMessage = testBedViewModel.socketMessage,
+            commandWaiting = testBedViewModel.commandWaiting,
+            currentAuthState = testBedViewModel.authState,
+        )
     }
 }
 
 @Composable
 fun TestBedContent(
+    modifier: Modifier,
     command: String,
     onCommandChange: (String) -> Unit,
     onCommandSend: () -> Unit,
@@ -55,21 +93,31 @@ fun TestBedContent(
     Column(
         modifier = Modifier.padding(8.dp)
     ) {
-        val typography = MaterialTheme.typography
-        Text(
-            "Web Messaging Testbed",
-            style = typography.h5
-        )
-        Text(
-            "Commands: oktaSignIn, oktaSignInWithPKCE, oktaLogout, connect, connectAuthenticated, newChat, send <msg>, sendQuickReply <quickReply>, history, invalidateConversationCache, attach, detach, delete <attachmentId> , deployment, bye, healthCheck, addAttribute <key> <value>, typing, authorize, clearConversation",
-            style = typography.caption,
-            softWrap = true
-        )
         CommandView(command, onCommandChange, onCommandSend, commandWaiting)
         Spacer(modifier = Modifier.height(16.dp))
         ConnectionStateView(clientState)
         AuthStateView(currentAuthState)
         SocketMessageView(socketMessage)
+    }
+}
+
+@Composable
+fun DrawerContent(onCommandSelected: (String) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Text("Commands", style = MaterialTheme.typography.h6)
+        Spacer(modifier = Modifier.height(16.dp))
+        LazyColumn {
+            items(enumValues<Command>()) { command ->
+                TextButton(onClick = { onCommandSelected(command.description) }) {
+                    Text(command.description, style = MaterialTheme.typography.body2)
+                }
+                Divider()
+            }
+        }
     }
 }
 
