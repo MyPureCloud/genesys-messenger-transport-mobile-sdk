@@ -1,6 +1,8 @@
 package com.genesys.cloud.messenger.uitest.page
 
 import android.app.Activity
+import android.content.ContentValues.TAG
+import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiSelector
@@ -12,6 +14,8 @@ class OpeningPage(activity: Activity) : BasePage(activity) {
     val title = "Deployment ID"
     val regionDefault = "inindca.com"
     val tcaEnvironment = "inintca.com"
+    val prodEnvironment = "mypurecloud.com"
+    val usWestEnvironment = "usw2.pure.cloud"
     val prodRegion = ""
 
     // Wait until android compose prototype begins
@@ -48,11 +52,21 @@ class OpeningPage(activity: Activity) : BasePage(activity) {
             if (tcaView != null) {
                 tcaView.click()
             }
-        } else {
-            val prodView = listOfSrollView.getChild(UiSelector().className("android.view.View").index(2))
-            if (prodView != null) {
-                prodView.click()
+        } else if (testConfig.domain == prodEnvironment) {
+            val prodview = listOfSrollView.getChild(UiSelector().className("android.view.View").index(2))
+            if (prodview != null) {
+                prodview.click()
             }
         }
+        else if (testConfig.domain == usWestEnvironment) {
+            val usWestview = listOfSrollView.getChild(UiSelector().className("android.view.View").index(3))
+            if (usWestview != null) {
+                usWestview.click()
+            }
+        }
+        //to do add other regions
+        else {
+            Log.e(TAG, "region not found")
+            }
     }
 }
