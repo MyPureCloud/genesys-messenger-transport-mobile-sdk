@@ -41,7 +41,7 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     fun enterCommand(command: String) {
         val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         val commandBox = mDevice.findObject(
-            UiSelector().className(commandClass).index(2)
+            UiSelector().className(commandClass).index(1)
         )
         commandBox.click()
         commandBox.clearTextField()
@@ -61,7 +61,7 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         val commandBox = mDevice.findObject(
             UiSelector()
                 .className(commandClass)
-                .index(3)
+                .index(2)
         )
         return commandBox.getText()
     }
@@ -73,7 +73,7 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         val commandBox = mDevice.findObject(
             UiSelector()
                 .className(commandClass)
-                .index(4)
+                .index(3)
         )
         return commandBox.getText()
     }
@@ -141,13 +141,7 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     fun getFullResponse(): String {
         val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         val responseBox = mDevice.findObject(
-            UiSelector()
-                .fromParent(
-                    UiSelector()
-                        .className(responseClass)
-                        .index(5)
-                )
-                .className("android.widget.TextView")
+            UiSelector().index(4)
         )
         return responseBox.getText()
     }
@@ -205,9 +199,9 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
             tapTextWithUIAutomator(noThanksText)
         }
         waitForElementWithUIAutomator(signInText)
-        typeWithUIAutomator(signInUserNameId, email)
+        typeIndexWithUIAutomator(2, email)
         pressTab()
-        typeWithUIAutomator(signInPasswordId, password)
+        typeIndexWithUIAutomator(3, password)
         pressEnterKey()
     }
 
@@ -217,6 +211,16 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         target.clearTextField()
         target.click()
         target.setText(text)
+    }
+
+    protected fun typeIndexWithUIAutomator(index: Int, text: String) {
+        val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        val responseBox = mDevice.findObject(
+            UiSelector().index(index)
+        )
+        responseBox.click()
+        responseBox.clearTextField()
+        responseBox.legacySetText(text)
     }
 
     protected fun pressTab() {
