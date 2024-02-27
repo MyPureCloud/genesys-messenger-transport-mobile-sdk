@@ -42,31 +42,34 @@ class OpeningPage(activity: Activity) : BasePage(activity) {
         regionField.click()
         sleep(2000)
         val listOfSrollView = mDevice.findObject(UiSelector().className("android.widget.ScrollView"))
-        if (testConfig.domain == regionDefault) {
-            val dcaView = listOfSrollView.getChild(UiSelector().className("android.view.View").index(0))
-            if (dcaView != null) {
-                dcaView.click()
+        when (testConfig.domain) {
+            regionDefault -> {
+                val envView =
+                    listOfSrollView.getChild(UiSelector().className("android.view.View").index(0))!!
+                        .click()
             }
-        } else if (testConfig.domain == tcaEnvironment) {
-            val tcaView = listOfSrollView.getChild(UiSelector().className("android.view.View").index(1))
-            if (tcaView != null) {
-                tcaView.click()
+
+            tcaEnvironment -> {
+                val envView =
+                    listOfSrollView.getChild(UiSelector().className("android.view.View").index(1))!!
+                        .click()
             }
-        } else if (testConfig.domain == prodEnvironment) {
-            val prodview = listOfSrollView.getChild(UiSelector().className("android.view.View").index(2))
-            if (prodview != null) {
-                prodview.click()
+
+            prodEnvironment -> {
+                val envView =
+                    listOfSrollView.getChild(UiSelector().className("android.view.View").index(2))!!
+                        .click()
+            }
+
+            usWestEnvironment -> {
+                val envView =
+                    listOfSrollView.getChild(UiSelector().className("android.view.View").index(3))!!
+                        .click()
+            }
+            //to do add other regions as needed
+            else -> {
+                Log.e(TAG, "region not found")
             }
         }
-        else if (testConfig.domain == usWestEnvironment) {
-            val usWestview = listOfSrollView.getChild(UiSelector().className("android.view.View").index(3))
-            if (usWestview != null) {
-                usWestview.click()
-            }
-        }
-        //to do add other regions
-        else {
-            Log.e(TAG, "region not found")
-            }
     }
 }
