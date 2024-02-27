@@ -200,7 +200,6 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         }
         waitForElementWithUIAutomator(signInText)
         typeIndexWithUIAutomator(2, email)
-        pressTab()
         typeIndexWithUIAutomator(3, password)
         pressEnterKey()
     }
