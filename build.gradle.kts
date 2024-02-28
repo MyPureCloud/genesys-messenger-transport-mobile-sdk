@@ -31,4 +31,13 @@ val buildVersion = "2.6.0-rc2"
 val snapshot = System.getenv("SNAPSHOT_BUILD") ?: ""
 version = "${buildVersion}${snapshot}"
 group = "cloud.genesys"
-//nexusPublishing {    repositories {        sonatype {            username.set(System.getenv("SONATYPE_USERNAME"))            password.set(System.getenv("SONATYPE_PASSWORD"))            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))        }    }}
+nexusPublishing {
+    repositories {
+        sonatype {
+            username.set(System.getenv("SONATYPE_USERNAME"))
+            password.set(System.getenv("SONATYPE_PASSWORD"))
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+        }
+    }
+}
