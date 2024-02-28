@@ -31,6 +31,7 @@ val buildVersion = "2.6.0-rc2"
 val snapshot = System.getenv("SNAPSHOT_BUILD") ?: ""
 version = "${buildVersion}${snapshot}"
 group = "cloud.genesys"
+
 nexusPublishing {
     repositories {
         sonatype {
