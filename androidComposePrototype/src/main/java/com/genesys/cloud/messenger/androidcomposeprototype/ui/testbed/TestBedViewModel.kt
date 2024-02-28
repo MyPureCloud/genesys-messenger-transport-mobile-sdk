@@ -69,7 +69,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             this.authState = authState
         }
 
-    val regions = listOf("inindca.com", "inintca.com", "mypurecloud.com")
+    val regions = listOf("inindca.com", "inintca.com", "mypurecloud.com", "usw2.pure.cloud", "mypurecloud.jp", "mypurecloud.com.au", "mypurecloud.de", "euw2.pure.cloud", "cac1.pure.cloud", "apne2.pure.cloud", "aps1.pure.cloud", "sae1.pure.cloud", "mec1.pure.cloud", "apne3.pure.cloud", "euc2.pure.cloud")
     private lateinit var onOktaSingIn: (url: String) -> Unit
     private val quickRepliesMap = mutableMapOf<String, ButtonResponse>()
 

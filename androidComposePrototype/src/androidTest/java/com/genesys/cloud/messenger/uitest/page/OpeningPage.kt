@@ -1,6 +1,8 @@
 package com.genesys.cloud.messenger.uitest.page
 
 import android.app.Activity
+import android.content.ContentValues.TAG
+import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiSelector
@@ -12,6 +14,8 @@ class OpeningPage(activity: Activity) : BasePage(activity) {
     val title = "Deployment ID"
     val regionDefault = "inindca.com"
     val tcaEnvironment = "inintca.com"
+    val prodEnvironment = "mypurecloud.com"
+    val usWestEnvironment = "usw2.pure.cloud"
     val prodRegion = ""
 
     // Wait until android compose prototype begins
@@ -38,20 +42,33 @@ class OpeningPage(activity: Activity) : BasePage(activity) {
         regionField.click()
         sleep(2000)
         val listOfSrollView = mDevice.findObject(UiSelector().className("android.widget.ScrollView"))
-        if (testConfig.domain == regionDefault) {
-            val dcaView = listOfSrollView.getChild(UiSelector().className("android.view.View").index(0))
-            if (dcaView != null) {
-                dcaView.click()
+        when (testConfig.domain) {
+            regionDefault -> {
+                val envView =
+                    listOfSrollView.getChild(UiSelector().className("android.view.View").index(0))!!
+                        .click()
             }
-        } else if (testConfig.domain == tcaEnvironment) {
-            val tcaView = listOfSrollView.getChild(UiSelector().className("android.view.View").index(1))
-            if (tcaView != null) {
-                tcaView.click()
+
+            tcaEnvironment -> {
+                val envView =
+                    listOfSrollView.getChild(UiSelector().className("android.view.View").index(1))!!
+                        .click()
             }
-        } else {
-            val prodView = listOfSrollView.getChild(UiSelector().className("android.view.View").index(2))
-            if (prodView != null) {
-                prodView.click()
+
+            prodEnvironment -> {
+                val envView =
+                    listOfSrollView.getChild(UiSelector().className("android.view.View").index(2))!!
+                        .click()
+            }
+
+            usWestEnvironment -> {
+                val envView =
+                    listOfSrollView.getChild(UiSelector().className("android.view.View").index(3))!!
+                        .click()
+            }
+            //to do add other regions as needed
+            else -> {
+                Log.e(TAG, "region not found")
             }
         }
     }
