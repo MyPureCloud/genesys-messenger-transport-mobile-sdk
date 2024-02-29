@@ -16,12 +16,12 @@ internal class CustomAttributesStoreImpl(
     private var customAttributes: MutableMap<String, String> = mutableMapOf()
     var maxCustomDataBytes: Int = MAX_CUSTOM_DATA_BYTES_UNSET
         internal set(value) {
-            if (!value.isUnset()) {
+            field = value
+            if (maxCustomDataBytes.isSet()) {
                 if (maybeReportFailure(customAttributes)) {
                     customAttributes.clear()
                 }
             }
-            field = value
         }
 
     internal var state: State = State.PENDING
@@ -40,14 +40,27 @@ internal class CustomAttributesStoreImpl(
     }
 
     private fun isCustomAttributesValid(customAttributes: Map<String, String>): Boolean {
-        return maxCustomDataBytes.isUnset() || (
-            !(customAttributes.isEmpty() || this.customAttributes == customAttributes) &&
-                !maybeReportFailure(customAttributes)
-            )
+        // Check if the size limit is unset, which means any size is valid
+        if (maxCustomDataBytes.isUnset()) {
+            return true
+        }
+        // Check if the custom attributes map is empty or the same
+        // If so, it's not valid
+        if (customAttributes.isEmpty() || this.customAttributes == customAttributes) {
+            log.w { LogMessages.CUSTOM_ATTRIBUTES_EMPTY_OR_SAME }
+            return false
+        }
+        // Check if adding the new custom attributes would exceed the size limit
+        // If so report failure
+        if (maybeReportFailure(customAttributes)) {
+            return false
+        }
+        return true
     }
 
     private fun maybeReportFailure(customAttributes: Map<String, String>): Boolean {
-        return isSizeExceeded(customAttributes).also {
+        val isSizeExceeded = isSizeExceeded(customAttributes)
+        if (isSizeExceeded)  {
             eventHandler.onEvent(
                 Event.Error(
                     ErrorCode.CustomAttributeSizeTooLarge,
@@ -57,6 +70,7 @@ internal class CustomAttributesStoreImpl(
             )
             log.e { LogMessages.CUSTOM_ATTRIBUTES_SIZE_EXCEEDED }
         }
+        return isSizeExceeded
     }
 
     private fun isSizeExceeded(attributes: Map<String, String>): Boolean {
@@ -111,3 +125,4 @@ internal class CustomAttributesStoreImpl(
 }
 
 private fun Int.isUnset(): Boolean = this == MAX_CUSTOM_DATA_BYTES_UNSET
+private fun Int.isSet(): Boolean = this != MAX_CUSTOM_DATA_BYTES_UNSET
