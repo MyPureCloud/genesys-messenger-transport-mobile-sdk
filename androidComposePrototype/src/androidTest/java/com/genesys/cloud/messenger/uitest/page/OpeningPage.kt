@@ -66,7 +66,7 @@ class OpeningPage(activity: Activity) : BasePage(activity) {
                     listOfSrollView.getChild(UiSelector().className("android.view.View").index(3))!!
                         .click()
             }
-            //to do add other regions as needed
+            // to do add other regions as needed
             else -> {
                 Log.e(TAG, "region not found")
             }
