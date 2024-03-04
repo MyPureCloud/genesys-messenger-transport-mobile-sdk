@@ -60,7 +60,7 @@ internal class CustomAttributesStoreImpl(
 
     private fun maybeReportFailure(customAttributes: Map<String, String>): Boolean {
         val isSizeExceeded = isSizeExceeded(customAttributes)
-        if (isSizeExceeded)  {
+        if (isSizeExceeded) {
             eventHandler.onEvent(
                 Event.Error(
                     ErrorCode.CustomAttributeSizeTooLarge,
