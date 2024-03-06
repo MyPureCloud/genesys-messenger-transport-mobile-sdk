@@ -95,6 +95,7 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.configureRequest())
             mockReconnectionHandler.clear()
+            mockJwtHandler.clear()
             mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
             mockStateChangedListener(fromConnectedToConfigured)
             mockLogger.i(capture(logSlot))
