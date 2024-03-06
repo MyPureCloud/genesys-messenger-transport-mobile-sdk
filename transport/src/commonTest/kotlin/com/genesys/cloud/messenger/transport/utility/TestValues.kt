@@ -13,6 +13,7 @@ object TestValues {
     internal const val Domain: String = "inindca.com"
     internal const val DeploymentId = "deploymentId"
     internal const val MaxCustomDataBytes = 100
+    internal const val DefaultNumber = 1
     internal const val Timestamp = "2022-08-22T19:24:26.704Z"
     internal const val Token = "<token>"
     internal const val ReconnectionTimeout = 5000L
@@ -21,6 +22,7 @@ object TestValues {
     internal const val TokenKey = "token_key"
     internal const val AuthRefreshTokenKey = "auth_refresh_token_key"
     internal const val LogTag = "TestLogTag"
+    internal val defaultMap = mapOf("A" to "B")
 }
 
 object AuthTest {

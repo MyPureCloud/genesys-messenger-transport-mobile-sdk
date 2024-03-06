@@ -7,7 +7,7 @@ import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.ktor.utils.io.charsets.Charsets
 import io.ktor.utils.io.core.toByteArray
 
-private const val MAX_CUSTOM_DATA_BYTES_UNSET = -1
+internal const val MAX_CUSTOM_DATA_BYTES_UNSET = -1
 
 internal class CustomAttributesStoreImpl(
     private val log: Log,
@@ -40,18 +40,13 @@ internal class CustomAttributesStoreImpl(
     }
 
     private fun isCustomAttributesValid(customAttributes: Map<String, String>): Boolean {
-        // Check if the size limit is unset, which means any size is valid
         if (maxCustomDataBytes.isUnset()) {
             return true
         }
-        // Check if the custom attributes map is empty or the same
-        // If so, it's not valid
         if (customAttributes.isEmpty() || this.customAttributes == customAttributes) {
             log.w { LogMessages.CUSTOM_ATTRIBUTES_EMPTY_OR_SAME }
             return false
         }
-        // Check if adding the new custom attributes would exceed the size limit
-        // If so report failure
         if (maybeReportFailure(customAttributes)) {
             return false
         }
@@ -60,7 +55,7 @@ internal class CustomAttributesStoreImpl(
 
     private fun maybeReportFailure(customAttributes: Map<String, String>): Boolean {
         val isSizeExceeded = isSizeExceeded(customAttributes)
-        if (isSizeExceeded)  {
+        if (isSizeExceeded) {
             eventHandler.onEvent(
                 Event.Error(
                     ErrorCode.CustomAttributeSizeTooLarge,
