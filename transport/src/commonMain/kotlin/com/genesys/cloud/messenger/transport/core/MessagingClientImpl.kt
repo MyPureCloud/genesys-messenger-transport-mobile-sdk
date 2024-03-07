@@ -347,6 +347,7 @@ internal class MessagingClientImpl(
 
     private fun handleSessionResponse(sessionResponse: SessionResponse) = sessionResponse.run {
         reconnectionHandler.clear()
+        jwtHandler.clear()
         internalCustomAttributesStore.maxCustomDataBytes = this.maxCustomDataBytes
         if (readOnly) {
             stateMachine.onReadOnly()
@@ -512,6 +513,7 @@ internal class MessagingClientImpl(
         healthCheckProvider.clear()
         attachmentHandler.clearAll()
         reconnectionHandler.clear()
+        jwtHandler.clear()
         reconfigureAttempts = 0
         sendingAutostart = false
         internalCustomAttributesStore.onSessionClosed()
@@ -521,6 +523,7 @@ internal class MessagingClientImpl(
         stateMachine.onError(errorCode, errorMessage)
         attachmentHandler.clearAll()
         reconnectionHandler.clear()
+        jwtHandler.clear()
         reconfigureAttempts = 0
         sendingAutostart = false
     }

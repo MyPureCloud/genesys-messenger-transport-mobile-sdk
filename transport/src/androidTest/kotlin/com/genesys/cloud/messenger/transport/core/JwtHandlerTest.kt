@@ -82,4 +82,14 @@ class JwtHandlerTest {
             assertThat(exp).isEqualTo(0)
         }
     }
+
+    @Test
+    fun `when clear() after jwt was set`() {
+        val expectedJwtResponse = JwtResponse()
+        subject.jwtResponse = JwtResponse(AuthTest.JwtToken, Platform().epochMillis())
+
+        subject.clear()
+
+        assertThat(subject.jwtResponse).isEqualTo(expectedJwtResponse)
+    }
 }

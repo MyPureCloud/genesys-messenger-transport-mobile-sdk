@@ -226,6 +226,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
             mockStateChangedListener(fromReadOnlyToError(errorState = expectedErrorState))
             mockReconnectionHandler.clear()
+            mockJwtHandler.clear()
         }
     }
 
@@ -247,6 +248,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
             mockReconnectionHandler.clear()
+            mockJwtHandler.clear()
             mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
             mockLogger.i(capture(logSlot))
             verifyCleanUp()
@@ -273,6 +275,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
             mockReconnectionHandler.clear()
+            mockJwtHandler.clear()
             mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
         }
         verify(exactly = 0) {
@@ -292,6 +295,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
         verifySequence {
             connectSequence()
             mockReconnectionHandler.clear()
+            mockJwtHandler.clear()
             mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
             mockStateChangedListener(fromConfiguredToReadOnly())
         }

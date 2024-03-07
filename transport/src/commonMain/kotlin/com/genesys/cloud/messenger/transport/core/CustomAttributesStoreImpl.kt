@@ -7,12 +7,22 @@ import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.ktor.utils.io.charsets.Charsets
 import io.ktor.utils.io.core.toByteArray
 
+internal const val MAX_CUSTOM_DATA_BYTES_UNSET = -1
+
 internal class CustomAttributesStoreImpl(
     private val log: Log,
     private val eventHandler: EventHandler,
 ) : CustomAttributesStore {
     private var customAttributes: MutableMap<String, String> = mutableMapOf()
-    var maxCustomDataBytes: Int = 0
+    var maxCustomDataBytes: Int = MAX_CUSTOM_DATA_BYTES_UNSET
+        internal set(value) {
+            field = value
+            if (maxCustomDataBytes.isSet()) {
+                if (maybeReportFailure(customAttributes)) {
+                    customAttributes.clear()
+                }
+            }
+        }
 
     internal var state: State = State.PENDING
         private set
@@ -30,10 +40,22 @@ internal class CustomAttributesStoreImpl(
     }
 
     private fun isCustomAttributesValid(customAttributes: Map<String, String>): Boolean {
+        if (maxCustomDataBytes.isUnset()) {
+            return true
+        }
         if (customAttributes.isEmpty() || this.customAttributes == customAttributes) {
             log.w { LogMessages.CUSTOM_ATTRIBUTES_EMPTY_OR_SAME }
             return false
-        } else if (isSizeExceeded(customAttributes)) {
+        }
+        if (maybeReportFailure(customAttributes)) {
+            return false
+        }
+        return true
+    }
+
+    private fun maybeReportFailure(customAttributes: Map<String, String>): Boolean {
+        val isSizeExceeded = isSizeExceeded(customAttributes)
+        if (isSizeExceeded) {
             eventHandler.onEvent(
                 Event.Error(
                     ErrorCode.CustomAttributeSizeTooLarge,
@@ -42,13 +64,13 @@ internal class CustomAttributesStoreImpl(
                 )
             )
             log.e { LogMessages.CUSTOM_ATTRIBUTES_SIZE_EXCEEDED }
-            return false
         }
-        return true
+        return isSizeExceeded
     }
 
     private fun isSizeExceeded(attributes: Map<String, String>): Boolean {
-        val totalSize = attributes.entries.sumOf { (key, value) ->
+        val attributesToValidate = customAttributes + attributes
+        val totalSize = attributesToValidate.entries.sumOf { (key, value) ->
             key.toByteArray(Charsets.UTF_8).size + value.toByteArray(Charsets.UTF_8).size
         }
         return totalSize > maxCustomDataBytes
@@ -86,6 +108,7 @@ internal class CustomAttributesStoreImpl(
     internal fun onSessionClosed() {
         log.i { LogMessages.ON_SESSION_CLOSED }
         state = State.PENDING
+        maxCustomDataBytes = MAX_CUSTOM_DATA_BYTES_UNSET
     }
 
     internal enum class State {
@@ -95,3 +118,6 @@ internal class CustomAttributesStoreImpl(
         ERROR,
     }
 }
+
+private fun Int.isUnset(): Boolean = this == MAX_CUSTOM_DATA_BYTES_UNSET
+private fun Int.isSet(): Boolean = this != MAX_CUSTOM_DATA_BYTES_UNSET

@@ -202,6 +202,7 @@ open class BaseMessagingClientTest {
         }
         mockPlatformSocket.sendMessage(configureRequest)
         mockReconnectionHandler.clear()
+        mockJwtHandler.clear()
         mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
         mockStateChangedListener(fromConnectedToConfigured)
     }
@@ -216,6 +217,7 @@ open class BaseMessagingClientTest {
         mockLogger.i(capture(logSlot))
         mockPlatformSocket.sendMessage(Request.configureRequest())
         mockReconnectionHandler.clear()
+        mockJwtHandler.clear()
         mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
         mockStateChangedListener(fromConnectedToReadOnly)
     }
@@ -254,12 +256,14 @@ open class BaseMessagingClientTest {
         mockStateChangedListener(stateChange)
         mockAttachmentHandler.clearAll()
         mockReconnectionHandler.clear()
+        mockJwtHandler.clear()
     }
 
     protected fun verifyCleanUp() {
         mockMessageStore.invalidateConversationCache()
         mockAttachmentHandler.clearAll()
         mockReconnectionHandler.clear()
+        mockJwtHandler.clear()
         mockCustomAttributesStore.onSessionClosed()
     }
 }
