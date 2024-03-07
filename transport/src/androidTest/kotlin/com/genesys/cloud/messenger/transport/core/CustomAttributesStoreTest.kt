@@ -84,8 +84,8 @@ class CustomAttributesStoreTest {
     @Test
     fun `when add customAttributes with similar key but different value`() {
         val initialCustomAttributes = TestValues.defaultMap
-        val updatedCustomAttributes = TestValues.defaultMap
-        val expectedCustomAttributes = TestValues.defaultMap
+        val updatedCustomAttributes = mapOf("A" to "C")
+        val expectedCustomAttributes = mapOf("A" to "C")
 
         subject.add(initialCustomAttributes)
         subject.add(updatedCustomAttributes)
