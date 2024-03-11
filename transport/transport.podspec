@@ -11,6 +11,17 @@ Pod::Spec.new do |spec|
     spec.ios.deployment_target = '13.0'
                 
                 
+    if !Dir.exist?('build/cocoapods/framework/MessengerTransport.framework') || Dir.empty?('build/cocoapods/framework/MessengerTransport.framework')
+        raise "
+
+        Kotlin framework 'MessengerTransport' doesn't exist yet, so a proper Xcode project can't be generated.
+        'pod install' should be executed after running ':generateDummyFramework' Gradle task:
+
+            ./gradlew :transport:generateDummyFramework
+
+        Alternatively, proper pod installation is performed during Gradle sync in the IDE (if Podfile location is set)"
+    end
+                
     spec.pod_target_xcconfig = {
         'KOTLIN_PROJECT_PATH' => ':transport',
         'PRODUCT_MODULE_NAME' => 'MessengerTransport',

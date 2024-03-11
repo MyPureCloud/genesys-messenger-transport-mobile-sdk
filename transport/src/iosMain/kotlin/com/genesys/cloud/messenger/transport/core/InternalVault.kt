@@ -38,6 +38,7 @@ import platform.Security.kSecValueData
 import platform.darwin.OSStatus
 import platform.darwin.noErr
 
+@OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
 internal class InternalVault(private val serviceName: String) {
     /**
      * Saves a string value in the Keychain.

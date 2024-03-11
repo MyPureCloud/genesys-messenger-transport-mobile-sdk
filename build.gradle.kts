@@ -1,5 +1,4 @@
 buildscript {
-    val compose_version by extra("1.4.0-alpha02")
 
     repositories {
         gradlePluginPortal()
@@ -7,11 +6,11 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.21")
-        classpath("com.android.tools.build:gradle:7.3.1")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Deps.kotlinVersion}")
+        classpath("com.android.tools.build:gradle:${Deps.agp}")
         classpath("org.jmailen.gradle:kotlinter-gradle:3.4.0")
         classpath("com.vanniktech:gradle-android-junit-jacoco-plugin:0.16.0")
-        classpath("com.codingfeline.buildkonfig:buildkonfig-gradle-plugin:0.13.3")
+        classpath("com.codingfeline.buildkonfig:buildkonfig-gradle-plugin:${Deps.buildKonfig}")
     }
 }
 
@@ -23,7 +22,7 @@ allprojects {
 }
 
 plugins {
-    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
+    id("io.github.gradle-nexus.publish-plugin") version Deps.nexusPublish
 }
 
 // CocoaPods requires the podspec to have a `version`.
