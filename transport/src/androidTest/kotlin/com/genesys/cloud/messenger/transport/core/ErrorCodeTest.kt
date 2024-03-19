@@ -1,68 +1,88 @@
 package com.genesys.cloud.messenger.transport.core
 
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import org.junit.Test
 import kotlin.random.Random
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 internal class ErrorCodeTest {
 
     @Test
     fun whenMapFrom() {
-        assertTrue(ErrorCode.mapFrom(4000) is ErrorCode.FeatureUnavailable)
-        assertTrue(ErrorCode.mapFrom(4001) is ErrorCode.FileTypeInvalid)
-        assertTrue(ErrorCode.mapFrom(4002) is ErrorCode.FileSizeInvalid)
-        assertTrue(ErrorCode.mapFrom(4003) is ErrorCode.FileContentInvalid)
-        assertTrue(ErrorCode.mapFrom(4004) is ErrorCode.FileNameInvalid)
-        assertTrue(ErrorCode.mapFrom(4005) is ErrorCode.FileNameTooLong)
-        assertTrue(ErrorCode.mapFrom(4006) is ErrorCode.SessionHasExpired)
-        assertTrue(ErrorCode.mapFrom(4007) is ErrorCode.SessionNotFound)
-        assertTrue(ErrorCode.mapFrom(4008) is ErrorCode.AttachmentHasExpired)
-        assertTrue(ErrorCode.mapFrom(4009) is ErrorCode.AttachmentNotFound)
-        assertTrue(ErrorCode.mapFrom(4010) is ErrorCode.AttachmentNotSuccessfullyUploaded)
-        assertTrue(ErrorCode.mapFrom(4011) is ErrorCode.MessageTooLong)
-        assertTrue(ErrorCode.mapFrom(4013) is ErrorCode.CustomAttributeSizeTooLarge)
-        assertTrue(ErrorCode.mapFrom(4020) is ErrorCode.MissingParameter)
-        assertTrue(ErrorCode.mapFrom(4029) is ErrorCode.RequestRateTooHigh)
-        assertTrue(ErrorCode.mapFrom(5000) is ErrorCode.UnexpectedError)
-        assertTrue(ErrorCode.mapFrom(1001) is ErrorCode.WebsocketError)
-        assertTrue(ErrorCode.mapFrom(1002) is ErrorCode.WebsocketAccessDenied)
-        assertTrue(ErrorCode.mapFrom(-1009) is ErrorCode.NetworkDisabled)
-        assertTrue(ErrorCode.mapFrom(6000) is ErrorCode.CancellationError)
-        assertTrue(ErrorCode.mapFrom(6001) is ErrorCode.AuthFailed)
-        assertTrue(ErrorCode.mapFrom(6002) is ErrorCode.AuthLogoutFailed)
-        assertTrue(ErrorCode.mapFrom(6003) is ErrorCode.RefreshAuthTokenFailure)
-        assertTrue(ErrorCode.mapFrom(6004) is ErrorCode.HistoryFetchFailure)
-        assertTrue(ErrorCode.mapFrom(6005) is ErrorCode.ClearConversationFailure)
+        assertThat(ErrorCode.mapFrom(4000)).isEqualTo(ErrorCode.FeatureUnavailable)
+        assertThat(ErrorCode.mapFrom(4001)).isEqualTo(ErrorCode.FileTypeInvalid)
+        assertThat(ErrorCode.mapFrom(4002)).isEqualTo(ErrorCode.FileSizeInvalid)
+        assertThat(ErrorCode.mapFrom(4003)).isEqualTo(ErrorCode.FileContentInvalid)
+        assertThat(ErrorCode.mapFrom(4004)).isEqualTo(ErrorCode.FileNameInvalid)
+        assertThat(ErrorCode.mapFrom(4005)).isEqualTo(ErrorCode.FileNameTooLong)
+        assertThat(ErrorCode.mapFrom(4006)).isEqualTo(ErrorCode.SessionHasExpired)
+        assertThat(ErrorCode.mapFrom(4006)).isEqualTo(ErrorCode.SessionHasExpired)
+        assertThat(ErrorCode.mapFrom(4007)).isEqualTo(ErrorCode.SessionNotFound)
+        assertThat(ErrorCode.mapFrom(4008)).isEqualTo(ErrorCode.AttachmentHasExpired)
+        assertThat(ErrorCode.mapFrom(4009)).isEqualTo(ErrorCode.AttachmentNotFound)
+        assertThat(ErrorCode.mapFrom(4010)).isEqualTo(ErrorCode.AttachmentNotSuccessfullyUploaded)
+        assertThat(ErrorCode.mapFrom(4011)).isEqualTo(ErrorCode.MessageTooLong)
+        assertThat(ErrorCode.mapFrom(4013)).isEqualTo(ErrorCode.CustomAttributeSizeTooLarge)
+        assertThat(ErrorCode.mapFrom(4020)).isEqualTo(ErrorCode.MissingParameter)
+        assertThat(ErrorCode.mapFrom(4029)).isEqualTo(ErrorCode.RequestRateTooHigh)
+        assertThat(ErrorCode.mapFrom(5000)).isEqualTo(ErrorCode.UnexpectedError)
+        assertThat(ErrorCode.mapFrom(1001)).isEqualTo(ErrorCode.WebsocketError)
+        assertThat(ErrorCode.mapFrom(1002)).isEqualTo(ErrorCode.WebsocketAccessDenied)
+        assertThat(ErrorCode.mapFrom(-1009)).isEqualTo(ErrorCode.NetworkDisabled)
+        assertThat(ErrorCode.mapFrom(6000)).isEqualTo(ErrorCode.CancellationError)
+        assertThat(ErrorCode.mapFrom(6001)).isEqualTo(ErrorCode.AuthFailed)
+        assertThat(ErrorCode.mapFrom(6002)).isEqualTo(ErrorCode.AuthLogoutFailed)
+        assertThat(ErrorCode.mapFrom(6003)).isEqualTo(ErrorCode.RefreshAuthTokenFailure)
+        assertThat(ErrorCode.mapFrom(6004)).isEqualTo(ErrorCode.HistoryFetchFailure)
+        assertThat(ErrorCode.mapFrom(6005)).isEqualTo(ErrorCode.ClearConversationFailure)
+
         val randomIn300Range = Random.nextInt(300, 400)
-        assertEquals(
-            ErrorCode.mapFrom(randomIn300Range),
-            ErrorCode.RedirectResponseError(randomIn300Range)
-        )
+        ErrorCode.mapFrom(randomIn300Range).run {
+            assertThat(this).isEqualTo(ErrorCode.RedirectResponseError(randomIn300Range))
+            assertThat(this.code).isEqualTo(randomIn300Range)
+        }
+
         val randomIn400Range = Random.nextInt(400, 500)
-        assertEquals(
-            ErrorCode.mapFrom(randomIn400Range),
-            ErrorCode.ClientResponseError(randomIn400Range)
-        )
+        ErrorCode.mapFrom(randomIn400Range).run {
+            assertThat(this).isEqualTo(ErrorCode.ClientResponseError(randomIn400Range))
+            assertThat(this.code).isEqualTo(randomIn400Range)
+        }
+
         val randomIn500Range = Random.nextInt(500, 600)
-        assertEquals(
-            ErrorCode.mapFrom(randomIn500Range),
-            ErrorCode.ServerResponseError(randomIn500Range)
-        )
+        ErrorCode.mapFrom(randomIn500Range).run {
+            assertThat(this).isEqualTo(ErrorCode.ServerResponseError(randomIn500Range))
+            assertThat(this.code).isEqualTo(randomIn500Range)
+        }
     }
 
     @Test
     fun whenErrorCodeToCorrectiveAction() {
-        assertEquals(ErrorCode.ClientResponseError(400).toCorrectiveAction(), CorrectiveAction.BadRequest)
-        assertEquals(ErrorCode.ClientResponseError(403).toCorrectiveAction(), CorrectiveAction.Forbidden)
-        assertEquals(ErrorCode.ClientResponseError(404).toCorrectiveAction(), CorrectiveAction.NotFound)
-        assertEquals(ErrorCode.ClientResponseError(408).toCorrectiveAction(), CorrectiveAction.RequestTimeOut)
-        assertEquals(ErrorCode.ClientResponseError(429).toCorrectiveAction(), CorrectiveAction.TooManyRequests)
-        assertEquals(ErrorCode.ClientResponseError(randomCodeExcludingKnown()).toCorrectiveAction(), CorrectiveAction.Unknown)
-        assertEquals(ErrorCode.AuthFailed.toCorrectiveAction(), CorrectiveAction.ReAuthenticate)
-        assertEquals(ErrorCode.RefreshAuthTokenFailure.toCorrectiveAction(), CorrectiveAction.ReAuthenticate)
-        assertEquals(ErrorCode.AuthLogoutFailed.toCorrectiveAction(), CorrectiveAction.ReAuthenticate)
-        assertEquals(ErrorCode.CustomAttributeSizeTooLarge.toCorrectiveAction(), CorrectiveAction.CustomAttributeSizeTooLarge)
+        assertThat(ErrorCode.ClientResponseError(400).toCorrectiveAction()).isEqualTo(
+            CorrectiveAction.BadRequest
+        )
+        assertThat(ErrorCode.ClientResponseError(403).toCorrectiveAction()).isEqualTo(
+            CorrectiveAction.Forbidden
+        )
+        assertThat(ErrorCode.ClientResponseError(404).toCorrectiveAction()).isEqualTo(
+            CorrectiveAction.NotFound
+        )
+        assertThat(ErrorCode.ClientResponseError(408).toCorrectiveAction()).isEqualTo(
+            CorrectiveAction.RequestTimeOut
+        )
+        assertThat(ErrorCode.ClientResponseError(429).toCorrectiveAction()).isEqualTo(
+            CorrectiveAction.TooManyRequests
+        )
+        assertThat(
+            ErrorCode.ClientResponseError(randomCodeExcludingKnown()).toCorrectiveAction()
+        ).isEqualTo(CorrectiveAction.Unknown)
+        assertThat(ErrorCode.AuthFailed.toCorrectiveAction()).isEqualTo(CorrectiveAction.ReAuthenticate)
+        assertThat(ErrorCode.RefreshAuthTokenFailure.toCorrectiveAction()).isEqualTo(
+            CorrectiveAction.ReAuthenticate
+        )
+        assertThat(ErrorCode.AuthLogoutFailed.toCorrectiveAction()).isEqualTo(CorrectiveAction.ReAuthenticate)
+        assertThat(ErrorCode.CustomAttributeSizeTooLarge.toCorrectiveAction()).isEqualTo(
+            CorrectiveAction.CustomAttributeSizeTooLarge
+        )
     }
 
     private fun randomCodeExcludingKnown(): Int {

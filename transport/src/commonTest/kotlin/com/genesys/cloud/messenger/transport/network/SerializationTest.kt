@@ -37,6 +37,8 @@ import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
+import com.genesys.cloud.messenger.transport.utility.TestValues
+import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlin.test.Test
@@ -168,8 +170,8 @@ class SerializationTest {
               "code": 200,
               "body": {
                 "connected": true,
-                "newSession": true,
-                "readOnly": false,
+                "newSession": true
+                "maxCustomDataBytes": 100,
                 "allowedMedia": {
                     "inbound": {
                         "fileTypes": [{"type": "*/*"},{"type": "video/3gpp"}],
@@ -187,6 +189,7 @@ class SerializationTest {
                 connected = true,
                 newSession = true,
                 readOnly = false,
+                maxCustomDataBytes = TestValues.MaxCustomDataBytesm,
                 allowedMedia = AllowedMedia(
                     Inbound(
                         fileTypes = listOf(FileType("*/*"), FileType("video/3gpp")),

@@ -4,6 +4,7 @@ import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.okHttpLogger
 import io.ktor.http.Url
 import okhttp3.OkHttpClient
@@ -63,14 +64,14 @@ internal actual class PlatformSocket actual constructor(
     }
 
     actual fun closeSocket(code: Int, reason: String) {
-        log.i { "closeSocket(code = $code, reason = $reason) " }
+        log.i { LogMessages.closeSocket(code, reason) }
         val shutdownInitiatedByThisCall = webSocket?.close(code, reason) ?: false
         if (!shutdownInitiatedByThisCall) { listener?.onClosed(code, reason) }
         webSocket = null
     }
 
     actual fun sendMessage(text: String) {
-        log.i { "sendMessage(text = $text)" }
+        log.i { LogMessages.sendMessage(text) }
         webSocket?.send(text)
     }
 }

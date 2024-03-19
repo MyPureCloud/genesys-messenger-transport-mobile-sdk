@@ -5,13 +5,23 @@ import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.Attachment
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
 import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
+import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createFileUploadVOForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createMessengerVOForTesting
+import com.genesys.cloud.messenger.transport.core.Message.Direction
+import com.genesys.cloud.messenger.transport.core.Message.State
+import com.genesys.cloud.messenger.transport.core.Message.Type
+import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.Response
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
+import com.genesys.cloud.messenger.transport.utility.AttachmentValues
+import com.genesys.cloud.messenger.transport.utility.ErrorTest
+import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.Called
 import io.mockk.CapturingSlot
 import io.mockk.Runs
@@ -40,9 +50,15 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         assertEquals(expectedAttachmentId, result)
         verifySequence {
             connectSequence()
+            mockLogger.i(capture(logSlot))
             mockAttachmentHandler.prepare(any(), any(), any())
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.attach("test.png"))
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WILL_SEND_MESSAGE)
     }
 
     @Test
@@ -56,10 +72,14 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         subject.detach("88888888-8888-8888-8888-888888888888")
 
         verify {
+            mockLogger.i(capture(logSlot))
             mockAttachmentHandler.detach(capture(attachmentIdSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
         assertThat(attachmentIdSlot.captured).isEqualTo(expectedAttachmentId)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.detach(expectedAttachmentId))
     }
 
     @Test
@@ -105,7 +125,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
     }
 
     @Test
-    fun `when SocketListener invoke onMessage with StructuredMessage that contains attachment`() {
+    fun `when SocketListener invoke onMessage with Inbound StructuredMessage that contains attachment`() {
         val expectedAttachment = Attachment(
             "attachment_id",
             "image.png",
@@ -113,8 +133,9 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         )
         val expectedMessage = Message(
             "msg_id",
-            Message.Direction.Outbound,
-            Message.State.Sent,
+            Direction.Inbound,
+            State.Sent,
+            Type.Text,
             "Text",
             "Hi",
             null,
@@ -123,7 +144,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
 
         subject.connect()
 
-        slot.captured.onMessage(Response.onMessageWithAttachment)
+        slot.captured.onMessage(Response.onMessageWithAttachment(Direction.Inbound))
 
         verifySequence {
             connectSequence()
@@ -349,5 +370,98 @@ class MCAttachmentTests : BaseMessagingClientTest() {
             mockAttachmentHandler.fileAttachmentProfile = capture(fileAttachmentProfileSlot)
         } just Runs
         return fileAttachmentProfileSlot
+    }
+
+    @Test
+    fun `when SocketListener invoke onMessage with Outbound StructuredMessage that contains attachment`() {
+        val expectedAttachment = Attachment(
+            "attachment_id",
+            "image.png",
+            Attachment.State.Sent("https://downloadurl.com")
+        )
+        val expectedMessage = Message(
+            "msg_id",
+            Direction.Outbound,
+            State.Sent,
+            Type.Text,
+            "Text",
+            "Hi",
+            null,
+            mapOf("attachment_id" to expectedAttachment)
+        )
+
+        subject.connect()
+
+        slot.captured.onMessage(Response.onMessageWithAttachment(Direction.Outbound))
+
+        verifySequence {
+            connectSequence()
+            mockMessageStore.update(expectedMessage)
+        }
+
+        verify(exactly = 0) {
+            mockCustomAttributesStore.onSent()
+            mockAttachmentHandler.onSent(any())
+        }
+    }
+
+    @Test
+    fun `when SocketListener invoke OnMessage with UploadSuccessEvent response`() {
+        val expectedEvent = UploadSuccessEvent(
+            attachmentId = AttachmentValues.Id,
+            downloadUrl = AttachmentValues.DownloadUrl,
+            timestamp = TestValues.Timestamp,
+        )
+
+        subject.connect()
+
+        slot.captured.onMessage(Response.uploadSuccessEvent)
+
+        verifySequence {
+            connectSequence()
+            mockAttachmentHandler.onUploadSuccess(expectedEvent)
+        }
+    }
+
+    @Test
+    fun `when SocketListener invoke OnMessage with PresignedUrlResponse response`() {
+        val expectedEvent = PresignedUrlResponse(
+            attachmentId = AttachmentValues.Id,
+            headers = mapOf(AttachmentValues.PresignedHeaderKey to AttachmentValues.PresignedHeaderValue),
+            url = AttachmentValues.DownloadUrl,
+        )
+
+        subject.connect()
+
+        slot.captured.onMessage(Response.presignedUrlResponse)
+
+        verifySequence {
+            connectSequence()
+            mockAttachmentHandler.upload(expectedEvent)
+        }
+    }
+
+    @Test
+    fun `when SocketListener invoke OnMessage with GenerateUrlError response`() {
+        subject.connect()
+
+        slot.captured.onMessage(Response.generateUrlError)
+
+        verifySequence {
+            connectSequence()
+            mockAttachmentHandler.onError(AttachmentValues.Id, ErrorCode.FileTypeInvalid, ErrorTest.Message)
+        }
+    }
+
+    @Test
+    fun `when SocketListener invoke OnMessage with UploadFailureEvent response`() {
+        subject.connect()
+
+        slot.captured.onMessage(Response.uploadFailureEvent)
+
+        verifySequence {
+            connectSequence()
+            mockAttachmentHandler.onError(AttachmentValues.Id, ErrorCode.FileTypeInvalid, ErrorTest.Message)
+        }
     }
 }

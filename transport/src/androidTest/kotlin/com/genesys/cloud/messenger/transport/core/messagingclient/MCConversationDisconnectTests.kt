@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.core.messagingclient
 
 import assertk.assertThat
+import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
 import com.genesys.cloud.messenger.transport.core.MessagingClient
@@ -21,6 +22,8 @@ import com.genesys.cloud.messenger.transport.util.Response
 import com.genesys.cloud.messenger.transport.util.fromConfiguredToReadOnly
 import com.genesys.cloud.messenger.transport.util.fromConnectedToReadOnly
 import com.genesys.cloud.messenger.transport.util.fromReadOnlyToError
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
+import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
@@ -193,8 +196,12 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
         assertThat(subject.currentState).isReadOnly()
         verifySequence {
             connectToReadOnlySequence()
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
         }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLOSE_SESSION)
     }
 
     @Test
@@ -215,10 +222,12 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
         assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
         verifySequence {
             connectToReadOnlySequence()
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
             mockStateChangedListener(fromReadOnlyToError(errorState = expectedErrorState))
             mockAttachmentHandler.clearAll()
             mockReconnectionHandler.clear()
+            mockJwtHandler.clear()
         }
     }
 
@@ -237,10 +246,15 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
         assertThat(subject.currentState).isReadOnly()
         verifySequence {
             connectToReadOnlySequence()
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
+            mockJwtHandler.clear()
+            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
+            mockLogger.i(capture(logSlot))
             verifyCleanUp()
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.configureRequest(startNew = true))
         }
     }
@@ -260,9 +274,12 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
         assertThat(subject.currentState).isReadOnly()
         verifySequence {
             connectToReadOnlySequence()
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
+            mockJwtHandler.clear()
+            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
         }
         verify(exactly = 0) {
             mockMessageStore.invalidateConversationCache()
@@ -282,6 +299,8 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
             connectSequence()
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
+            mockJwtHandler.clear()
+            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
             mockStateChangedListener(fromConfiguredToReadOnly())
         }
         verify(exactly = 0) {

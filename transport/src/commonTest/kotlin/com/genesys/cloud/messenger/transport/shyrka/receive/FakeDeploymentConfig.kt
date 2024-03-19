@@ -1,16 +1,18 @@
 package com.genesys.cloud.messenger.transport.shyrka.receive
 
+import com.genesys.cloud.messenger.transport.utility.DeploymentConfigValues
+
 fun createDeploymentConfigForTesting(
     messenger: Messenger = createMessengerVOForTesting(),
 ) = DeploymentConfig(
-    id = "id",
-    version = "1",
-    languages = listOf("en-us", "zh-cn"),
-    defaultLanguage = "en-us",
-    apiEndpoint = "api_endpoint",
+    id = DeploymentConfigValues.Id,
+    version = DeploymentConfigValues.Version,
+    languages = listOf(DeploymentConfigValues.DefaultLanguage, DeploymentConfigValues.SecondaryLanguage),
+    defaultLanguage = DeploymentConfigValues.DefaultLanguage,
+    apiEndpoint = DeploymentConfigValues.ApiEndPoint,
     messenger = messenger,
     journeyEvents = JourneyEvents(enabled = false),
-    status = DeploymentConfig.Status.Active,
+    status = DeploymentConfigValues.Status,
     auth = Auth(enabled = true)
 )
 
@@ -20,8 +22,8 @@ fun createMessengerVOForTesting(
 ) = Messenger(
     enabled = true,
     apps = apps,
-    styles = Styles(primaryColor = "red"),
-    launcherButton = LauncherButton(visibility = "On"),
+    styles = Styles(primaryColor = DeploymentConfigValues.PrimaryColor),
+    launcherButton = LauncherButton(visibility = DeploymentConfigValues.LauncherButtonVisibility),
     fileUpload = fileUpload
 )
 
@@ -29,8 +31,8 @@ fun createFileUploadVOForTesting(
     enableAttachments: Boolean? = false,
     modes: List<Mode> = listOf(
         Mode(
-            fileTypes = listOf("png"),
-            maxFileSizeKB = 100,
+            fileTypes = listOf(DeploymentConfigValues.FileType),
+            maxFileSizeKB = DeploymentConfigValues.MaxFileSize,
         )
     ),
 ): FileUpload {
@@ -42,7 +44,7 @@ fun createConversationsVOForTesting(
     conversationDisconnect: Conversations.ConversationDisconnect = Conversations.ConversationDisconnect(),
     conversationClear: Conversations.ConversationClear = Conversations.ConversationClear(enabled = true),
 ): Conversations = Conversations(
-    messagingEndpoint = "messaging_endpoint",
+    messagingEndpoint = DeploymentConfigValues.MessagingEndpoint,
     autoStart = autoStart,
     conversationDisconnect = conversationDisconnect,
     conversationClear = conversationClear,

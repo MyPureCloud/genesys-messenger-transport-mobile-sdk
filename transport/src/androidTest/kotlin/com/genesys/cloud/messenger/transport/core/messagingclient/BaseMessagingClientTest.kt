@@ -5,6 +5,8 @@ import com.genesys.cloud.messenger.transport.core.AttachmentHandler
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.CustomAttributesStoreImpl
 import com.genesys.cloud.messenger.transport.core.Empty
+import com.genesys.cloud.messenger.transport.core.JwtHandler
+import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.MessageStore
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessagingClientImpl
@@ -33,7 +35,10 @@ import com.genesys.cloud.messenger.transport.util.fromConnectedToReadOnly
 import com.genesys.cloud.messenger.transport.util.fromConnectingToConnected
 import com.genesys.cloud.messenger.transport.util.fromIdleToConnecting
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import com.genesys.cloud.messenger.transport.utility.AuthTest
+import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
+import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.MockKVerificationScope
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
@@ -51,7 +56,19 @@ open class BaseMessagingClientTest {
     internal val mockMessageStore: MessageStore = mockk(relaxed = true) {
         every { prepareMessage(any(), any()) } returns OnMessageRequest(
             token = Request.token,
-            message = TextMessage("Hello world")
+            message = TextMessage("Hello world!")
+        )
+        every { prepareMessageWith(any(), null) } returns OnMessageRequest(
+            token = Request.token,
+            message = TextMessage(
+                text = "",
+                content = listOf(
+                    Message.Content(
+                        contentType = Message.Content.Type.ButtonResponse,
+                        buttonResponse = QuickReplyTestValues.buttonResponse_a,
+                    )
+                ),
+            ),
         )
     }
     internal val mockAttachmentHandler: AttachmentHandler = mockk(relaxed = true) {
@@ -134,21 +151,25 @@ open class BaseMessagingClientTest {
         val dummyCustomAttributes = mutableMapOf("A" to "B")
         every { get() } returns dummyCustomAttributes
         every { getCustomAttributesToSend() } returns dummyCustomAttributes
-        every { add(emptyMap()) } answers { dummyCustomAttributes.clear() }
+        every { add(eq(emptyMap())) } returns true.also { dummyCustomAttributes.clear() }
     }
 
     private val mockVault: DefaultVault = mockk {
         every { fetch("token") } returns Request.token
         every { token } returns Request.token
     }
+    internal val mockJwtHandler: JwtHandler = mockk(relaxed = true)
+
+    internal val mockLogger: Log = mockk(relaxed = true)
+    internal val logSlot = mutableListOf<() -> String>()
 
     internal val subject = MessagingClientImpl(
-        log = Log(false, "Log"),
+        log = mockLogger,
         configuration = Configuration("deploymentId", "inindca.com"),
         webSocket = mockPlatformSocket,
         api = mockWebMessagingApi,
         token = Request.token,
-        jwtHandler = mockk(),
+        jwtHandler = mockJwtHandler,
         vault = mockVault,
         attachmentHandler = mockAttachmentHandler,
         messageStore = mockMessageStore,
@@ -169,9 +190,13 @@ open class BaseMessagingClientTest {
     protected fun MockKVerificationScope.connectSequence(shouldConfigureAuth: Boolean = false) {
         val configureRequest =
             if (shouldConfigureAuth) Request.configureAuthenticatedRequest() else Request.configureRequest()
+        mockLogger.withTag(LogTag.STATE_MACHINE)
+        mockLogger.withTag(LogTag.WEBSOCKET)
+        mockLogger.i(capture(logSlot))
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
+        mockLogger.i(capture(logSlot))
         if (shouldConfigureAuth) {
             mockAuthHandler.jwt // check if jwt is valid
             mockAuthHandler.jwt // use jwt for request
@@ -179,20 +204,28 @@ open class BaseMessagingClientTest {
         mockPlatformSocket.sendMessage(configureRequest)
         mockAttachmentHandler.fileAttachmentProfile = any()
         mockReconnectionHandler.clear()
+        mockJwtHandler.clear()
+        mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
         mockStateChangedListener(fromConnectedToConfigured)
     }
 
     protected fun MockKVerificationScope.connectToReadOnlySequence() {
+        mockLogger.withTag(LogTag.STATE_MACHINE)
+        mockLogger.withTag(LogTag.WEBSOCKET)
+        mockLogger.i(capture(logSlot))
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
+        mockLogger.i(capture(logSlot))
         mockPlatformSocket.sendMessage(Request.configureRequest())
         mockAttachmentHandler.fileAttachmentProfile = any()
         mockReconnectionHandler.clear()
+        mockJwtHandler.clear()
+        mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
         mockStateChangedListener(fromConnectedToReadOnly)
     }
 
-    protected fun disconnectSequence(
+    protected fun MockKVerificationScope.disconnectSequence(
         expectedCloseCode: Int = 1000,
         expectedCloseReason: String = "The user has closed the connection.",
     ) {
@@ -204,10 +237,12 @@ open class BaseMessagingClientTest {
             oldState = MessagingClient.State.Closing(expectedCloseCode, expectedCloseReason),
             newState = MessagingClient.State.Closed(expectedCloseCode, expectedCloseReason)
         )
+        mockLogger.i(capture(logSlot))
         mockReconnectionHandler.clear()
-        this.mockStateChangedListener(fromConfiguredToClosing)
+        mockStateChangedListener(fromConfiguredToClosing)
         mockPlatformSocket.closeSocket(expectedCloseCode, expectedCloseReason)
-        this.mockStateChangedListener(fromClosingToClosed)
+        mockStateChangedListener(fromClosingToClosed)
+        mockLogger.i(capture(logSlot))
         verifyCleanUp()
     }
 
@@ -220,16 +255,18 @@ open class BaseMessagingClientTest {
         mockPlatformSocket.sendMessage(configureRequest)
     }
 
-    protected fun errorSequence(stateChange: StateChange) {
-        this.mockStateChangedListener(stateChange)
+    protected fun MockKVerificationScope.errorSequence(stateChange: StateChange) {
+        mockStateChangedListener(stateChange)
         mockAttachmentHandler.clearAll()
         mockReconnectionHandler.clear()
+        mockJwtHandler.clear()
     }
 
     protected fun verifyCleanUp() {
         mockMessageStore.invalidateConversationCache()
         mockAttachmentHandler.clearAll()
         mockReconnectionHandler.clear()
+        mockJwtHandler.clear()
         mockCustomAttributesStore.onSessionClosed()
     }
 }

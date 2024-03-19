@@ -9,7 +9,6 @@ import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
-import com.genesys.cloud.messenger.transport.core.events.toTransportEvent
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
@@ -22,18 +21,14 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.LogoutEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionClearedEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionExpiredEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
-import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TooManyRequestsErrorMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.isHealthCheckResponse
-import com.genesys.cloud.messenger.transport.shyrka.receive.isOutbound
 import com.genesys.cloud.messenger.transport.shyrka.send.AutoStartRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.ClearConversationRequest
@@ -48,9 +43,12 @@ import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.extensions.isRefreshUrl
 import com.genesys.cloud.messenger.transport.util.extensions.toFileAttachmentProfile
+import com.genesys.cloud.messenger.transport.util.extensions.isHealthCheckResponseId
+import com.genesys.cloud.messenger.transport.util.extensions.isOutbound
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
@@ -85,7 +83,8 @@ internal class MessagingClientImpl(
         log.withTag(LogTag.AUTH_HANDLER)
     ),
     private val internalCustomAttributesStore: CustomAttributesStoreImpl = CustomAttributesStoreImpl(
-        log.withTag(LogTag.CUSTOM_ATTRIBUTES_STORE)
+        log.withTag(LogTag.CUSTOM_ATTRIBUTES_STORE),
+        eventHandler
     ),
 ) : MessagingClient {
     private var connectAuthenticated = false
@@ -130,7 +129,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun connect() {
-        log.i { "connect()" }
+        log.i { LogMessages.CONNECT }
         connectAuthenticated = false
         stateMachine.onConnect()
         webSocket.openSocket(socketListener)
@@ -138,7 +137,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun connectAuthenticatedSession() {
-        log.i { "connectAuthenticatedSession()" }
+        log.i { LogMessages.CONNECT_AUTHENTICATED_SESSION }
         connectAuthenticated = true
         stateMachine.onConnect()
         webSocket.openSocket(socketListener)
@@ -153,7 +152,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun disconnect() {
-        log.i { "disconnect()" }
+        log.i { LogMessages.DISCONNECT }
         val code = SocketCloseCode.NORMAL_CLOSURE.value
         val reason = "The user has closed the connection."
         reconnectionHandler.clear()
@@ -163,7 +162,7 @@ internal class MessagingClientImpl(
 
     private fun configureSession(startNew: Boolean = false) {
         val encodedJson = if (connectAuthenticated) {
-            log.i { "configureAuthenticatedSession(token = $token, startNew: $startNew)" }
+            log.i { LogMessages.configureAuthenticatedSession(token, startNew) }
             if (authHandler.jwt == NO_JWT) {
                 if (reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
                     reconfigureAttempts++
@@ -175,7 +174,7 @@ internal class MessagingClientImpl(
             }
             encodeAuthenticatedConfigureSessionRequest(startNew)
         } else {
-            log.i { "configureSession(token = $token, startNew: $startNew)" }
+            log.i { LogMessages.configureSession(token, startNew) }
             encodeAnonymousConfigureSessionRequest(startNew)
         }
         webSocket.sendMessage(encodedJson)
@@ -184,12 +183,20 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun sendMessage(text: String, customAttributes: Map<String, String>) {
         stateMachine.checkIfConfigured()
-        log.i { "sendMessage(text = $text, customAttributes = $customAttributes)" }
+        log.i { LogMessages.sendMessage(text, customAttributes) }
         internalCustomAttributesStore.add(customAttributes)
-        val channel = internalCustomAttributesStore.getCustomAttributesToSend().toChannel()
-        channel?.let { internalCustomAttributesStore.onSending() }
+        val channel = prepareCustomAttributesForSending()
         val request = messageStore.prepareMessage(text, channel)
         attachmentHandler.onSending()
+        val encodedJson = WebMessagingJson.json.encodeToString(request)
+        send(encodedJson)
+    }
+
+    override fun sendQuickReply(buttonResponse: ButtonResponse) {
+        stateMachine.checkIfConfigured()
+        log.i { LogMessages.sendQuickReply(buttonResponse) }
+        val channel = prepareCustomAttributesForSending()
+        val request = messageStore.prepareMessageWith(buttonResponse, channel)
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         send(encodedJson)
     }
@@ -197,7 +204,7 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun sendHealthCheck() {
         healthCheckProvider.encodeRequest(token)?.let {
-            log.i { "sendHealthCheck()" }
+            log.i { LogMessages.SEND_HEALTH_CHECK }
             send(it)
         }
     }
@@ -208,7 +215,7 @@ internal class MessagingClientImpl(
         fileName: String,
         uploadProgress: ((Float) -> Unit)?,
     ): String {
-        log.i { "attach(fileName = $fileName)" }
+        log.i { LogMessages.attach(fileName) }
         val request = attachmentHandler.prepare(
             Platform().randomUUID(),
             byteArray,
@@ -222,7 +229,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun detach(attachmentId: String) {
-        log.i { "detach(attachmentId = $attachmentId)" }
+        log.i { LogMessages.detach(attachmentId) }
         attachmentHandler.detach(attachmentId)?.let {
             val encodedJson = WebMessagingJson.json.encodeToString(it)
             send(encodedJson)
@@ -245,7 +252,7 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     private fun send(message: String) {
         stateMachine.checkIfConfigured()
-        log.i { "Will send message" }
+        log.i { LogMessages.WILL_SEND_MESSAGE }
         webSocket.sendMessage(message)
     }
 
@@ -253,11 +260,11 @@ internal class MessagingClientImpl(
     override suspend fun fetchNextPage() {
         stateMachine.checkIfConfiguredOrReadOnly()
         if (messageStore.startOfConversation) {
-            log.i { "All history has been fetched." }
+            log.i { LogMessages.ALL_HISTORY_FETCHED }
             messageStore.updateMessageHistory(emptyList(), conversation.size)
             return
         }
-        log.i { "fetching history for page index = ${messageStore.nextPage}" }
+        log.i { LogMessages.fetchingHistory(messageStore.nextPage) }
         jwtHandler.withJwt { jwt ->
             api.getMessages(jwt, messageStore.nextPage).also {
                 when (it) {
@@ -267,12 +274,13 @@ internal class MessagingClientImpl(
                             it.value.total,
                         )
                     }
+
                     is Result.Failure -> {
                         if (it.errorCode is ErrorCode.CancellationError) {
-                            log.w { "Cancellation exception was thrown, while running getMessages() request." }
+                            log.w { LogMessages.CANCELLATION_EXCEPTION_GET_MESSAGES }
                             return
                         }
-                        log.w { "History fetch failed with: $it" }
+                        log.w { LogMessages.historyFetchFailed(it) }
                         eventHandler.onEvent(
                             Event.Error(
                                 ErrorCode.HistoryFetchFailure,
@@ -306,20 +314,20 @@ internal class MessagingClientImpl(
             return
         }
         WebMessagingJson.json.encodeToString(ClearConversationRequest(token)).let {
-            log.i { "sendClearConversation()" }
+            log.i { LogMessages.SEND_CLEAR_CONVERSATION }
             webSocket.sendMessage(it)
         }
     }
 
     override fun invalidateConversationCache() {
-        log.i { "Clear conversation history." }
+        log.i { LogMessages.CLEAR_CONVERSATION_HISTORY }
         messageStore.invalidateConversationCache()
     }
 
     @Throws(IllegalStateException::class)
     override fun indicateTyping() {
         userTypingProvider.encodeRequest(token)?.let {
-            log.i { "indicateTyping()" }
+            log.i { LogMessages.INDICATE_TYPING }
             send(it)
         }
     }
@@ -331,12 +339,9 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     private fun sendAutoStart() {
         sendingAutostart = true
-        val channel = internalCustomAttributesStore.getCustomAttributesToSend().toChannel()
-        WebMessagingJson.json.encodeToString(
-            AutoStartRequest(token, channel)
-        ).let {
-            log.i { "sendAutoStart()" }
-            channel?.let { internalCustomAttributesStore.onSending() }
+        val channel = prepareCustomAttributesForSending()
+        WebMessagingJson.json.encodeToString(AutoStartRequest(token, channel)).let {
+            log.i { LogMessages.SEND_AUTO_START }
             send(it)
         }
     }
@@ -347,7 +352,6 @@ internal class MessagingClientImpl(
      * by sending them a [ConnectionClosedEvent].
      * After successful closure an event [SessionResponse] with `connected=false` will be received,
      * indicating that new chat should be configured.
-     *
      */
     private fun closeAllConnectionsForTheSession() {
         WebMessagingJson.json.encodeToString(
@@ -356,8 +360,28 @@ internal class MessagingClientImpl(
                 closeAllConnections = true
             )
         ).also {
-            log.i { "closeSession()" }
+            log.i { LogMessages.CLOSE_SESSION }
             webSocket.sendMessage(it)
+        }
+    }
+
+    private fun handleSessionResponse(sessionResponse: SessionResponse) = sessionResponse.run {
+        attachmentHandler.fileAttachmentProfile = createFileAttachmentProfile(this)
+        reconnectionHandler.clear()
+        jwtHandler.clear()
+        internalCustomAttributesStore.maxCustomDataBytes = this.maxCustomDataBytes
+        if (readOnly) {
+            stateMachine.onReadOnly()
+            if (!connected && isStartingANewSession) {
+                cleanUp()
+                configureSession(startNew = true)
+            }
+        } else {
+            isStartingANewSession = false
+            stateMachine.onSessionConfigured(connected, newSession)
+            if (newSession && deploymentConfig.isAutostartEnabled()) {
+                sendAutoStart()
+            }
         }
     }
 
@@ -366,6 +390,7 @@ internal class MessagingClientImpl(
             is ErrorCode.SessionHasExpired,
             is ErrorCode.SessionNotFound,
             -> transitionToStateError(code, message)
+
             is ErrorCode.MessageTooLong,
             is ErrorCode.RequestRateTooHigh,
             is ErrorCode.CustomAttributeSizeTooLarge,
@@ -388,6 +413,7 @@ internal class MessagingClientImpl(
                 messageStore.onMessageError(code, message)
                 attachmentHandler.onMessageError(code, message)
             }
+
             is ErrorCode.ClientResponseError,
             is ErrorCode.ServerResponseError,
             is ErrorCode.RedirectResponseError,
@@ -398,8 +424,9 @@ internal class MessagingClientImpl(
                     handleConventionalHttpErrorResponse(code, message)
                 }
             }
+
             is ErrorCode.WebsocketError -> handleWebSocketError(ErrorCode.WebsocketError)
-            else -> log.w { "Unhandled ErrorCode: $code with optional message: $message" }
+            else -> log.w { LogMessages.unhandledErrorCode(code, message) }
         }
     }
 
@@ -425,13 +452,16 @@ internal class MessagingClientImpl(
                     transitionToStateError(errorCode, ErrorMessage.FailedToReconnect)
                 }
             }
+
             is ErrorCode.WebsocketAccessDenied -> {
                 transitionToStateError(errorCode, CorrectiveAction.Forbidden.message)
             }
+
             is ErrorCode.NetworkDisabled -> {
                 transitionToStateError(errorCode, ErrorMessage.InternetConnectionIsOffline)
             }
-            else -> log.w { "Unhandled WebSocket errorCode. ErrorCode: $errorCode" }
+
+            else -> log.w { LogMessages.unhandledWebSocketError(errorCode) }
         }
     }
 
@@ -460,41 +490,41 @@ internal class MessagingClientImpl(
         )
     }
 
-    private fun handleStructuredMessage(structuredMessage: StructuredMessage) {
-        when (structuredMessage.type) {
-            StructuredMessage.Type.Text -> {
-                with(structuredMessage.toMessage()) {
-                    messageStore.update(this)
-                    internalCustomAttributesStore.onSent()
-                    attachmentHandler.onSent(this.attachments)
-                    userTypingProvider.clear()
-                }
-            }
+    private fun Message.handleAsTextMessage() {
+        if (id.isHealthCheckResponseId()) {
+            eventHandler.onEvent(Event.HealthChecked)
+            return
+        }
+        messageStore.update(this)
+        if (direction == Message.Direction.Inbound) {
+            internalCustomAttributesStore.onSent()
+            attachmentHandler.onSent(attachments)
+            userTypingProvider.clear()
+        }
+    }
 
-            StructuredMessage.Type.Event -> {
-                if (structuredMessage.isOutbound()) {
-                    structuredMessage.events.forEach {
-                        if (it.isDisconnectionEvent() && structuredMessage.metadata["readOnly"].toBoolean()) {
-                            stateMachine.onReadOnly()
-                        }
-                        eventHandler.onEvent(it.toTransportEvent())
-                    }
-                } else {
-                    structuredMessage.events.forEach {
-                        if (it is PresenceEvent) {
-                            val event = it.toTransportEvent()
-                            if (event is Event.ConversationAutostart) {
-                                sendingAutostart = false
-                                internalCustomAttributesStore.onSent()
-                            }
-                            eventHandler.onEvent(event)
-                        }
-                    }
-                }
+    private fun Message.handleAsEvent(isReadOnly: Boolean) = this.run {
+        if (isOutbound()) {
+            // Every Outbound event should be reported to UI.
+            events.forEach {
+                if (it is Event.ConversationDisconnect && isReadOnly) stateMachine.onReadOnly()
+                eventHandler.onEvent(it)
             }
-            else -> {
-                log.w { "Messages of type: ${structuredMessage.type} are not supported." }
+        } else {
+            // Autostart is the only Inbound event that should be reported to UI.
+            events.find { it is Event.ConversationAutostart }?.let { autostart ->
+                sendingAutostart = false
+                internalCustomAttributesStore.onSent()
+                eventHandler.onEvent(autostart)
             }
+        }
+    }
+
+    private fun Message.handleAsStructuredMessage() {
+        when (messageType) {
+            Message.Type.QuickReply -> messageStore.update(this)
+            Message.Type.Unknown -> log.w { LogMessages.unsupportedMessageType(messageType) }
+            else -> log.w { "Should not happen." }
         }
     }
 
@@ -504,6 +534,7 @@ internal class MessagingClientImpl(
         healthCheckProvider.clear()
         attachmentHandler.clearAll()
         reconnectionHandler.clear()
+        jwtHandler.clear()
         reconfigureAttempts = 0
         sendingAutostart = false
         internalCustomAttributesStore.onSessionClosed()
@@ -513,13 +544,14 @@ internal class MessagingClientImpl(
         stateMachine.onError(errorCode, errorMessage)
         attachmentHandler.clearAll()
         reconnectionHandler.clear()
+        jwtHandler.clear()
         reconfigureAttempts = 0
         sendingAutostart = false
     }
 
     private fun considerForceClose() {
         if (stateMachine.isClosing()) {
-            log.i { "Force close web socket." }
+            log.i { LogMessages.FORCE_CLOSE_WEB_SOCKET }
             val closingState = stateMachine.currentState as State.Closing
             socketListener.onClosed(closingState.code, closingState.reason)
         }
@@ -552,6 +584,11 @@ internal class MessagingClientImpl(
             )
         )
 
+    private fun prepareCustomAttributesForSending(): Channel? =
+        internalCustomAttributesStore.getCustomAttributesToSend().asChannel()?.also {
+            internalCustomAttributesStore.onSending()
+        }
+
     private val socketListener = SocketListener(
         log = log.withTag(LogTag.WEBSOCKET)
     )
@@ -561,18 +598,18 @@ internal class MessagingClientImpl(
     ) : PlatformSocketListener {
 
         override fun onOpen() {
-            log.i { "onOpen()" }
+            log.i { LogMessages.ON_OPEN }
             stateMachine.onConnectionOpened()
             configureSession()
         }
 
         override fun onFailure(t: Throwable, errorCode: ErrorCode) {
-            log.e(throwable = t) { "onFailure(message: ${t.message})" }
+            log.e(throwable = t) { LogMessages.onFailure(t) }
             handleWebSocketError(errorCode)
         }
 
         override fun onMessage(text: String) {
-            log.i { "onMessage(text = $text)" }
+            log.i { LogMessages.onMessage(text) }
             try {
                 val decoded = WebMessagingJson.decodeFromString(text)
                 when (decoded.body) {
@@ -584,27 +621,10 @@ internal class MessagingClientImpl(
                             "${decoded.body.errorMessage}. Retry after ${decoded.body.retryAfter} seconds."
                         )
                     }
-                    is SessionResponse -> {
-                        decoded.body.run {
-                            attachmentHandler.fileAttachmentProfile = createFileAttachmentProfile(this)
-                            reconnectionHandler.clear()
-                            if (readOnly) {
-                                stateMachine.onReadOnly()
-                                if (!connected && isStartingANewSession) {
-                                    cleanUp()
-                                    configureSession(startNew = true)
-                                }
-                            } else {
-                                isStartingANewSession = false
-                                stateMachine.onSessionConfigured(connected, newSession)
-                                if (newSession && deploymentConfig.isAutostartEnabled()) {
-                                    sendAutoStart()
-                                }
-                            }
-                        }
-                    }
+                    is SessionResponse -> handleSessionResponse(decoded.body)
                     is JwtResponse ->
                         jwtHandler.jwtResponse = decoded.body
+
                     is PresignedUrlResponse -> {
                         if (decoded.body.isRefreshUrl()) {
                             attachmentHandler.onAttachmentRefreshed(decoded.body)
@@ -614,15 +634,24 @@ internal class MessagingClientImpl(
                     }
                     is UploadSuccessEvent ->
                         attachmentHandler.onUploadSuccess(decoded.body)
+
                     is StructuredMessage -> {
-                        if (decoded.body.isHealthCheckResponse()) {
-                            eventHandler.onEvent(Event.HealthChecked)
-                        } else {
-                            handleStructuredMessage(decoded.body)
+                        decoded.body.run {
+                            val message = this.toMessage()
+                            when (type) {
+                                StructuredMessage.Type.Text -> message.handleAsTextMessage()
+                                StructuredMessage.Type.Event -> message.handleAsEvent(
+                                    metadata["readOnly"].toBoolean()
+                                )
+
+                                StructuredMessage.Type.Structured -> message.handleAsStructuredMessage()
+                            }
                         }
                     }
+
                     is AttachmentDeletedResponse ->
                         attachmentHandler.onDetached(decoded.body.attachmentId)
+
                     is GenerateUrlError -> {
                         decoded.body.run {
                             attachmentHandler.onError(
@@ -632,6 +661,7 @@ internal class MessagingClientImpl(
                             )
                         }
                     }
+
                     is UploadFailureEvent -> {
                         decoded.body.run {
                             attachmentHandler.onError(
@@ -641,34 +671,37 @@ internal class MessagingClientImpl(
                             )
                         }
                     }
+
                     is ConnectionClosedEvent -> {
                         disconnect()
                         eventHandler.onEvent(Event.ConnectionClosed)
                     }
+
                     is LogoutEvent -> {
                         authHandler.clear()
                         eventHandler.onEvent(Event.Logout)
                         disconnect()
                     }
+
                     is SessionClearedEvent -> eventHandler.onEvent(Event.ConversationCleared)
                     else -> {
-                        log.i { "Unhandled message received from Shyrka: $decoded " }
+                        log.i { LogMessages.unhandledMessage(decoded) }
                     }
                 }
             } catch (exception: SerializationException) {
-                log.e(throwable = exception) { "Failed to deserialize message" }
+                log.e(throwable = exception) { LogMessages.FAILED_TO_DESERIALIZE }
             } catch (exception: IllegalArgumentException) {
-                log.e(throwable = exception) { "Message decoded as null" }
+                log.e(throwable = exception) { LogMessages.MESSAGE_DECODED_NULL }
             }
         }
 
         override fun onClosing(code: Int, reason: String) {
-            log.i { "onClosing(code = $code, reason = $reason)" }
+            log.i { LogMessages.onClosing(code, reason) }
             stateMachine.onClosing(code, reason)
         }
 
         override fun onClosed(code: Int, reason: String) {
-            log.i { "onClosed(code = $code, reason = $reason)" }
+            log.i { LogMessages.onClosed(code, reason) }
             stateMachine.onClosed(code, reason)
             cleanUp()
         }
@@ -691,9 +724,6 @@ private fun String?.isClearConversationError(): Boolean {
     return this?.let { regex.containsMatchIn(it) } ?: false
 }
 
-private fun StructuredMessageEvent.isDisconnectionEvent(): Boolean =
-    this is PresenceEvent && presence.type == PresenceEvent.Presence.Type.Disconnect
-
 private fun KProperty0<DeploymentConfig?>.isAutostartEnabled(): Boolean =
     this.get()?.messenger?.apps?.conversations?.autoStart?.enabled == true
 
@@ -703,7 +733,7 @@ private fun KProperty0<DeploymentConfig?>.isShowUserTypingEnabled(): Boolean =
 private fun KProperty0<DeploymentConfig?>.isClearConversationEnabled(): Boolean =
     this.get()?.messenger?.apps?.conversations?.conversationClear?.enabled == true
 
-private fun Map<String, String>.toChannel(): Channel? {
+private fun Map<String, String>.asChannel(): Channel? {
     return if (this.isNotEmpty()) {
         Channel(Channel.Metadata(this))
     } else null

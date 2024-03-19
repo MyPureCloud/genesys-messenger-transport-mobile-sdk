@@ -83,6 +83,7 @@ object ErrorMessage {
     const val FileAttachmentIsDisabled = "File attachment is disabled in Deployment Configuration."
     fun fileSizeIsTooBig(maxFileSize: Long?) = "Reduce the attachment size to $maxFileSize KB or less."
     fun fileTypeIsProhibited(fileName: String) = "File type  $fileName is prohibited for upload."
+    fun customAttributesSizeError(maxSize: Int) = "Error: Custom attributes exceed allowed max size of $maxSize bytes."
 }
 
 sealed class CorrectiveAction(val message: String) {
@@ -99,7 +100,7 @@ sealed class CorrectiveAction(val message: String) {
     object TooManyRequests : CorrectiveAction("Retry later.")
     object Unknown : CorrectiveAction("Action unknown.")
     object ReAuthenticate : CorrectiveAction("User re-authentication is required.")
-    object CustomAttributeSizeTooLarge : CorrectiveAction("Shorten the custom attributes to 2048 bytes or fewer")
+    object CustomAttributeSizeTooLarge : CorrectiveAction("Shorten the custom attributes.")
 
     override fun toString(): String {
         return message

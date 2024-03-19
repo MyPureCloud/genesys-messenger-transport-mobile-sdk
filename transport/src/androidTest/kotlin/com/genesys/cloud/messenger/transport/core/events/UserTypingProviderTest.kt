@@ -5,12 +5,17 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Request
+import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
+import io.mockk.verify
 import org.junit.Test
 
 class UserTypingProviderTest {
+    private val mockLogger: Log = mockk(relaxed = true)
+    private val logSlot = mutableListOf<() -> String>()
     private val mockTimestampFunction: () -> Long = spyk<() -> Long>().also {
         every { it.invoke() } answers { Platform().epochMillis() }
     }
@@ -19,7 +24,7 @@ class UserTypingProviderTest {
     }
 
     private val subject = UserTypingProvider(
-        log = mockk(relaxed = true),
+        log = mockLogger,
         showUserTypingEnabled = mockShowUserTypingIndicatorFunction,
         getCurrentTimestamp = mockTimestampFunction,
     )
@@ -29,6 +34,10 @@ class UserTypingProviderTest {
         val expected = Request.userTypingRequest
         val result = subject.encodeRequest(token = Request.token)
 
+        verify {
+            mockShowUserTypingIndicatorFunction.invoke()
+            mockTimestampFunction.invoke()
+        }
         assertThat(result).isEqualTo(expected)
     }
 
@@ -50,8 +59,15 @@ class UserTypingProviderTest {
         val firstResult = subject.encodeRequest(token = Request.token)
         val secondResult = subject.encodeRequest(token = Request.token)
 
+        verify {
+            mockShowUserTypingIndicatorFunction.invoke()
+            mockShowUserTypingIndicatorFunction.invoke()
+            mockLogger.w(capture(logSlot))
+        }
+
         assertThat(firstResult).isEqualTo(expected)
         assertThat(secondResult).isNull()
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.typingIndicatorCoolDown(TYPING_INDICATOR_COOL_DOWN_MILLISECONDS))
     }
 
     @Test
@@ -71,6 +87,12 @@ class UserTypingProviderTest {
 
         val result = subject.encodeRequest(token = Request.token)
 
+        verify {
+            mockShowUserTypingIndicatorFunction.invoke()
+            mockLogger.w(capture(logSlot))
+        }
+
         assertThat(result).isNull()
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.TYPING_INDICATOR_DISABLED)
     }
 }

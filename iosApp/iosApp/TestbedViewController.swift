@@ -17,6 +17,7 @@ class TestbedViewController: UIViewController {
     private var pkceEnabled = false
     private var authCode: String? = nil
     private var authState: AuthState = AuthState.noAuth
+    private var quickRepliesMap = [String: ButtonResponse]()
 
     init(messenger: MessengerInteractor) {
         self.messenger = messenger
@@ -38,6 +39,7 @@ class TestbedViewController: UIViewController {
         case connectAuthenticated
         case newChat
         case send
+        case sendQuickReply
         case history
         case attach
         case refreshAttachment
@@ -57,6 +59,7 @@ class TestbedViewController: UIViewController {
             case .send: return "send <msg>"
             case .detach: return "detach <attachmentId>"
             case .addAttribute: return "addAttribute <key> <value>"
+            case .sendQuickReply: return "sendQuickReply <quickReply>"
             case .refreshAttachment: return "refreshAttachment <attachmentId>"
             default: return rawValue
             }
@@ -214,6 +217,9 @@ class TestbedViewController: UIViewController {
         case let history as MessageEvent.HistoryFetched:
             displayMessage = "History Fetched: startOfConversation: <\(history.startOfConversation.description)>, messages: <\(history.messages.description)> "
             print(displayMessage)
+        case let quickReplies as MessageEvent.QuickReplyReceived:
+            quickRepliesMap =  Dictionary(uniqueKeysWithValues: quickReplies.message.quickReplies.map { ($0.text, $0) })
+            displayMessage = "QuickReplyReceived: text: <\(quickReplies.message.text)> | quick reply optoins: <\(quickReplies.message.quickReplies)>"
         default:
             break
         }
@@ -232,6 +238,9 @@ class TestbedViewController: UIViewController {
                 authState = AuthState.error(errorCode: error.errorCode, message: error.message, correctiveAction: error.correctiveAction)
                 updateAuthStateView()
             }
+            if(error.errorCode is ErrorCode.CustomAttributeSizeTooLarge) {
+                displayEvent = "Custom attribute size is too large: \(error.description)"
+            }
             displayEvent = "Event received: \(error.description)"
         case let healthChecked as Event.HealthChecked:
             displayEvent = "Event received: \(healthChecked.description)"
@@ -247,6 +256,8 @@ class TestbedViewController: UIViewController {
             authState = AuthState.loggedOut
             updateAuthStateView()
             displayEvent = "Event received: \(logout.description)"
+        case let disconnect as Event.ConversationDisconnect:
+            displayEvent = "Event received: \(disconnect.description)"
         default:
             break
         }
@@ -387,6 +398,13 @@ extension TestbedViewController : UITextFieldDelegate {
                 try messenger.disconnect()
             case (.send, let msg?):
                 try messenger.sendMessage(text: msg.trimmingCharacters(in: .whitespaces))
+            case (.sendQuickReply, let quickReply?):
+                if let buttonResponse = quickRepliesMap[quickReply] {
+                    try messenger.sendQuickReply(buttonResponse: buttonResponse)
+                    quickRepliesMap.removeAll()
+                } else {
+                    self.info.text = "Selected quickReply option: \(quickReply) does not exist."
+                }
             case (.history, _):
                 messenger.fetchNextPage()
             case (.healthCheck, _):
@@ -419,13 +437,18 @@ extension TestbedViewController : UITextFieldDelegate {
                 }
             case (.invalidateConversationCache, _):
                 messenger.invalidateConversationCache()
-            case(.addAttribute, let msg?):
+            case (.addAttribute, let msg?):
                 let segments = segmentUserInput(msg)
-                if let key = segments.0, !key.isEmpty {
-                    let value = segments.1 ?? ""
-                    messenger.addCustomAttributes(customAttributes: [key: value])
-                    self.info.text = "Custom attribute added: key: \(key) value: \(value)"
-                }  else {
+
+                if let key = segments.0, !key.isEmpty, let value = segments.1 {
+                    let addSuccess = messenger.addCustomAttributes(customAttributes: [key: value])
+
+                    if addSuccess {
+                        self.info.text = "Custom attribute added: key: \(key) value: \(value)"
+                    } else {
+                        self.info.text = "Custom attribute cannot be added: key: \(key) value: \(value)"
+                    }
+                } else {
                     self.info.text = "Custom attribute key cannot be nil or empty!"
                 }
             case (.typing, _):

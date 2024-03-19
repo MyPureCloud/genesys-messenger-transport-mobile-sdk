@@ -20,6 +20,7 @@ internal class JwtHandler(private val webSocket: PlatformSocket, private val tok
     internal var jwtResponse: JwtResponse = JwtResponse()
         set(value) {
             field = value
+            if (field.jwt.isEmpty()) return
             socketDispatcher.launch {
                 jwtChannel.send(field.jwt)
             }
@@ -33,6 +34,10 @@ internal class JwtHandler(private val webSocket: PlatformSocket, private val tok
             fetchJwt()
             jwtFn.invoke(jwtChannel.receive())
         }
+    }
+
+    internal fun clear() {
+        jwtResponse = JwtResponse()
     }
 
     private fun fetchJwt() {

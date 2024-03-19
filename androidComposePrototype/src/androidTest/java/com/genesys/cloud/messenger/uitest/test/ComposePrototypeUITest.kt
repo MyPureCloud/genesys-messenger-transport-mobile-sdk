@@ -80,6 +80,13 @@ class ComposePrototypeUITest : BaseTests() {
     private val clearConversation = "clearConversation"
     private val connectionClosedMessage = "Connection Closed Normally"
     private val connectionClosedCode = "1000"
+    private val quickReplyCommand = "sendQuickReply"
+    private val quickReplyText = "Carousel"
+    private val quickReplyResponse = "Welcome to the Carousel menu."
+    private val invalidQuickReplyText = "dummy"
+    private val invalidQuickReplyResponse = "Selected quickReply option: dummy does not exist"
+    private val doneText = "Done"
+    private val conversationDisconnectText = "ConversationDisconnect"
     private val deploymentConfigText = "deployment"
     private val imageFormatsText = "modes=[Mode(fileTypes=[image/png, image/jpeg, image/gif]"
     private val savedFileNameText = "savedFileName"
@@ -168,6 +175,21 @@ class ComposePrototypeUITest : BaseTests() {
             enterCommand("$sendMsgText $messageText")
             waitForProperResponse(messageText)
             checkSendMsgFullResponse()
+        }
+    }
+
+    fun sendQuickResponse(messageText: String) {
+        messenger {
+            verifyPageIsVisible()
+            enterCommand("$quickReplyCommand $messageText")
+        }
+    }
+
+    fun sendDoneAndWaitForResponse(messageText: String) {
+        messenger {
+            verifyPageIsVisible()
+            enterCommand("$sendMsgText $doneText")
+            waitForProperResponse(messageText)
         }
     }
 
@@ -319,7 +341,7 @@ class ComposePrototypeUITest : BaseTests() {
 
     @Test
     // Adjusting the test name to force this test to run first
-    fun test3VerifyAutoStart() {
+    fun testVerifyAutoStart() {
         apiHelper.disconnectAllConversations()
         enterDeploymentInfo(testConfig.deploymentId)
         // Force a new session. AutoStart is enabled and newSession is true
@@ -463,7 +485,7 @@ class ComposePrototypeUITest : BaseTests() {
     @Test
     fun testDisconnectAgent_ReadOnly() {
         apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.agentDisconnectDeploymentId)
+        enterDeploymentInfo(testConfig.deploymentId)
         connect()
         sendMsg(helloText)
         val conversationInfo = apiHelper.answerNewConversation()
@@ -486,7 +508,7 @@ class ComposePrototypeUITest : BaseTests() {
     @Test
     fun testDisconnectAgent_NotReadOnly() {
         apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.deploymentId)
+        enterDeploymentInfo(testConfig.agentDisconnectDeploymentId)
         connect()
         sendMsg(helloText)
         val conversationInfo = apiHelper.answerNewConversation()
@@ -515,7 +537,7 @@ class ComposePrototypeUITest : BaseTests() {
     @Test
     fun testHistoryPull() {
         apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.agentDisconnectDeploymentId)
+        enterDeploymentInfo(testConfig.deploymentId)
         connect()
         sendMsg(helloText)
         val conversationInfo = apiHelper.answerNewConversation()
@@ -546,6 +568,7 @@ class ComposePrototypeUITest : BaseTests() {
     fun test2AuthenticatedUser() {
         apiHelper.disconnectAllConversations()
         enterDeploymentInfo(testConfig.authDeploymentId)
+        clearBrowser()
         oktaSignInWithPKCE(testConfig.oktaUsername, testConfig.oktaPassword)
         authorize()
         connect(authenticateConnectText)
@@ -558,8 +581,9 @@ class ComposePrototypeUITest : BaseTests() {
             verifyResponse(outboundMessage)
             apiHelper.sendConnectOrDisconnect(conversationInfo)
             oktaLogout()
-            clearBrowser()
-            oktaSignInWithPKCE(testConfig.oktaUser2name, testConfig.oktaPassword2)
+            messenger {
+                enterCommand(oktaSignInWithPKCEText)
+            }
             authorize()
             connect(authenticateConnectText)
             sendMsg(helloText)
@@ -614,6 +638,19 @@ class ComposePrototypeUITest : BaseTests() {
             // wait for agent to disconnect
             apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id)
         }
+        bye()
+    }
+
+    @Test
+    fun testQuickReply() {
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.quickReplyDeploymentId)
+        connect()
+        sendQuickResponse(quickReplyText)
+        verifyResponse(quickReplyResponse)
+        sendQuickResponse(invalidQuickReplyText)
+        verifyResponse(invalidQuickReplyResponse)
+        sendDoneAndWaitForResponse(conversationDisconnectText)
         bye()
     }
 }

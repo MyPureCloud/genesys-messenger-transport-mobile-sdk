@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.network
 
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -25,7 +26,7 @@ internal actual class ReconnectionHandlerImpl actual constructor(
         if (!shouldReconnect) return
         resetDispatcher()
         reconnectJob = dispatcher.launch {
-            log.i { "Trying to reconnect. Attempt number: $attempts out of $maxAttempts" }
+            log.i { LogMessages.tryingToReconnect(attempts, maxAttempts) }
             delay(TIMEOUT_INTERVAL_IN_SECONDS.toMilliseconds())
             attempts++
             reconnectFun()
