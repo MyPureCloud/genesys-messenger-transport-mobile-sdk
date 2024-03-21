@@ -7,6 +7,7 @@ import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.ErrorCode
+import com.genesys.cloud.messenger.transport.core.MAX_CUSTOM_DATA_BYTES_UNSET
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.AuthTest
@@ -125,6 +126,7 @@ class ResponsesTests {
             assertThat(connected).isTrue()
             assertThat(newSession).isTrue()
             assertThat(readOnly).isFalse()
+            assertThat(maxCustomDataBytes).isEqualTo(MAX_CUSTOM_DATA_BYTES_UNSET)
         }
         givenDefaultSessionResponseConstructor.run {
             assertThat(connected).isTrue()
