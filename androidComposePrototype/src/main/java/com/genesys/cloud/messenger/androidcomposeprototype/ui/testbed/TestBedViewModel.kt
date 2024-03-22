@@ -51,7 +51,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         private set
     var deploymentId: String by mutableStateOf("")
         private set
-    var region: String by mutableStateOf(BuildConfig.DEPLOYMENT_DOMAIN)
+    var region: String by mutableStateOf("inintca.com")
         private set
     var authState: AuthState by mutableStateOf(AuthState.NoAuth)
         private set
