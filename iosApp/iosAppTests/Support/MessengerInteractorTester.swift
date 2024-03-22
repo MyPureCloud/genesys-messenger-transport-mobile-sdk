@@ -288,8 +288,6 @@ class MessengerInteractorTester {
         verifyReceivedMessage(expectedMessage: text)
     }
 
-    func attemptImageAttach(attachmentName: String, kotlinByteArray: KotlinByteArray, shouldSucceed: Bool = true, file: StaticString = #file, line: UInt = #line) {
-
     func sendQuickReply(reply: String, file: StaticString = #file, line: UInt = #line) {
         guard let button = quickRepliesMap[reply] else {
             XCTFail("The quick reply \(reply) was not available.", file: file, line: line)
@@ -306,7 +304,7 @@ class MessengerInteractorTester {
         return Array(quickRepliesMap.keys)
     }
 
-    func attemptImageAttach(kotlinByteArray: KotlinByteArray, file: StaticString = #file, line: UInt = #line) {
+    func attemptImageAttach(attachmentName: String, kotlinByteArray: KotlinByteArray, shouldSucceed: Bool = true, file: StaticString = #file, line: UInt = #line) {
         do {
             try attachImage(attachmentName: attachmentName, kotlinByteArray: kotlinByteArray, shouldSucceed: shouldSucceed)
         } catch {
