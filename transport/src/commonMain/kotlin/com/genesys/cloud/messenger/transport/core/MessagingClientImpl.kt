@@ -41,10 +41,10 @@ import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Vault
-import com.genesys.cloud.messenger.transport.util.extensions.isRefreshUrl
-import com.genesys.cloud.messenger.transport.util.extensions.toFileAttachmentProfile
 import com.genesys.cloud.messenger.transport.util.extensions.isHealthCheckResponseId
 import com.genesys.cloud.messenger.transport.util.extensions.isOutbound
+import com.genesys.cloud.messenger.transport.util.extensions.isRefreshUrl
+import com.genesys.cloud.messenger.transport.util.extensions.toFileAttachmentProfile
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.util.logs.Log

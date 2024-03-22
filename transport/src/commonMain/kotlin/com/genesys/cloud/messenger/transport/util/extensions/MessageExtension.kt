@@ -1,8 +1,8 @@
 package com.genesys.cloud.messenger.transport.util.extensions
 
 import com.genesys.cloud.messenger.transport.core.Attachment
-import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
+import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.core.events.toTransportEvent
@@ -14,8 +14,8 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Co
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ButtonResponseContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.QuickReplyContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.isInbound
-import com.genesys.cloud.messenger.transport.util.WILD_CARD
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
+import com.genesys.cloud.messenger.transport.util.WILD_CARD
 import com.soywiz.klock.DateTime
 
 internal fun List<StructuredMessage>.toMessageList(): List<Message> =

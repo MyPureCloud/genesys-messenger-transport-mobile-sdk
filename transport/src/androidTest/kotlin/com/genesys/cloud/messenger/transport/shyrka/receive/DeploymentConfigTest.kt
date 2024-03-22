@@ -17,7 +17,7 @@ class DeploymentConfigTest {
     fun `when DeploymentConfig serialized`() {
         val givenDeploymentConfig = createDeploymentConfigForTesting()
         val expectedDeploymentConfigAsJson =
-            """{"id":"id","version":"1","languages":["en-us","zh-cn"],"defaultLanguage":"en-us","apiEndpoint":"api_endpoint","messenger":{"enabled":true,"apps":{"conversations":{"messagingEndpoint":"messaging_endpoint","conversationClear":{"enabled":true}}},"styles":{"primaryColor":"red"},"launcherButton":{"visibility":"On"},"fileUpload":{"modes":[{"fileTypes":["png"],"maxFileSizeKB":100}]}},"journeyEvents":{"enabled":false},"status":"Active","auth":{"enabled":true}}"""
+            """{"id":"id","version":"1","languages":["en-us","zh-cn"],"defaultLanguage":"en-us","apiEndpoint":"api_endpoint","messenger":{"enabled":true,"apps":{"conversations":{"messagingEndpoint":"messaging_endpoint","conversationClear":{"enabled":true}}},"styles":{"primaryColor":"red"},"launcherButton":{"visibility":"On"},"fileUpload":{"enableAttachments":false,"modes":[{"fileTypes":["png"],"maxFileSizeKB":100}]}},"journeyEvents":{"enabled":false},"status":"Active","auth":{"enabled":true}}"""
 
         val result = WebMessagingJson.json.encodeToString(givenDeploymentConfig)
 
@@ -27,7 +27,7 @@ class DeploymentConfigTest {
     @Test
     fun `when DeploymentConfig deserialized`() {
         val givenDeploymentConfigAsJson =
-            """{"id":"id","version":"1","languages":["en-us","zh-cn"],"defaultLanguage":"en-us","apiEndpoint":"api_endpoint","messenger":{"enabled":true,"apps":{"conversations":{"messagingEndpoint":"messaging_endpoint","conversationClear":{"enabled":true}}},"styles":{"primaryColor":"red"},"launcherButton":{"visibility":"On"},"fileUpload":{"modes":[{"fileTypes":["png"],"maxFileSizeKB":100}]}},"journeyEvents":{"enabled":false},"status":"Active","auth":{"enabled":true}}"""
+            """{"id":"id","version":"1","languages":["en-us","zh-cn"],"defaultLanguage":"en-us","apiEndpoint":"api_endpoint","messenger":{"enabled":true,"apps":{"conversations":{"messagingEndpoint":"messaging_endpoint","conversationClear":{"enabled":true}}},"styles":{"primaryColor":"red"},"launcherButton":{"visibility":"On"},"fileUpload":{"enableAttachments":false,"modes":[{"fileTypes":["png"],"maxFileSizeKB":100}]}},"journeyEvents":{"enabled":false},"status":"Active","auth":{"enabled":true}}"""
         val expectedDeploymentConfig = createDeploymentConfigForTesting()
         val expectedAuth = Auth(enabled = true)
         val expectedJourneyEvents = JourneyEvents(enabled = false)
@@ -44,7 +44,7 @@ class DeploymentConfigTest {
         )
         val expectedLauncherButton =
             LauncherButton(visibility = DeploymentConfigValues.LauncherButtonVisibility)
-        val expectedFileUpload = FileUpload(modes = listOf(expectedMode))
+        val expectedFileUpload = FileUpload(enableAttachments = false, modes = listOf(expectedMode))
         val expectedMessenger = Messenger(
             enabled = true,
             apps = expectedApps,
@@ -239,7 +239,7 @@ class DeploymentConfigTest {
             fileTypes = listOf(DeploymentConfigValues.FileType),
             maxFileSizeKB = DeploymentConfigValues.MaxFileSize
         )
-        val givenFileUpload = FileUpload(listOf(givenMode))
+        val givenFileUpload = FileUpload(modes = listOf(givenMode))
         val expectedFileUploadAsJson = """{"modes":[{"fileTypes":["png"],"maxFileSizeKB":100}]}"""
 
         val result = WebMessagingJson.json.encodeToString(givenFileUpload)
@@ -258,7 +258,7 @@ class DeploymentConfigTest {
                 maxFileSizeKB = DeploymentConfigValues.MaxFileSize
             )
         )
-        val expectedFileUpload = FileUpload(expectedModes)
+        val expectedFileUpload = FileUpload(modes = expectedModes)
 
         val result = WebMessagingJson.json.decodeFromString<FileUpload>(givenFileUploadAsJson)
 

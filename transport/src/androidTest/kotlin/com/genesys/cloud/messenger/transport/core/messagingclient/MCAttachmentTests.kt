@@ -3,19 +3,18 @@ package com.genesys.cloud.messenger.transport.core.messagingclient
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.Attachment
+import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
 import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
-import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Message
-import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
-import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
-import com.genesys.cloud.messenger.transport.shyrka.receive.createFileUploadVOForTesting
-import com.genesys.cloud.messenger.transport.shyrka.receive.createMessengerVOForTesting
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.core.Message.State
 import com.genesys.cloud.messenger.transport.core.Message.Type
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
+import com.genesys.cloud.messenger.transport.shyrka.receive.createFileUploadVOForTesting
+import com.genesys.cloud.messenger.transport.shyrka.receive.createMessengerVOForTesting
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.Response
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
@@ -165,7 +164,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         // FileAttachmentProfileSlot captured value has to be returned after "connect" sequence, as it is initialized from SessionResponse.
         every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
 
-        slot.captured.onMessage(Response.onMessageWithAttachment)
+        slot.captured.onMessage(Response.onMessageWithAttachment())
 
         assertThat(subject.fileAttachmentProfile).isEqualTo(expectedFileAttachmentProfile)
     }
@@ -180,7 +179,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         subject.connect()
         every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
 
-        slot.captured.onMessage(Response.onMessageWithAttachment)
+        slot.captured.onMessage(Response.onMessageWithAttachment())
 
         assertThat(subject.fileAttachmentProfile).isEqualTo(expectedFileAttachmentProfile)
     }
@@ -195,7 +194,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         subject.connect()
         every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
 
-        slot.captured.onMessage(Response.onMessageWithAttachment)
+        slot.captured.onMessage(Response.onMessageWithAttachment())
 
         assertThat(subject.fileAttachmentProfile).isEqualTo(expectedFileAttachmentProfile)
     }
@@ -221,7 +220,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         subject.connect()
         every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
 
-        slot.captured.onMessage(Response.onMessageWithAttachment)
+        slot.captured.onMessage(Response.onMessageWithAttachment())
 
         assertThat(subject.fileAttachmentProfile).isEqualTo(expectedFileAttachmentProfile)
     }
@@ -247,7 +246,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         subject.connect()
         every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
 
-        slot.captured.onMessage(Response.onMessageWithAttachment)
+        slot.captured.onMessage(Response.onMessageWithAttachment())
 
         assertThat(subject.fileAttachmentProfile).isEqualTo(expectedFileAttachmentProfile)
     }
@@ -275,7 +274,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         subject.connect()
         every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
 
-        slot.captured.onMessage(Response.onMessageWithAttachment)
+        slot.captured.onMessage(Response.onMessageWithAttachment())
 
         assertThat(subject.fileAttachmentProfile).isEqualTo(expectedFileAttachmentProfile)
     }
@@ -298,7 +297,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         subject.connect()
         every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
 
-        slot.captured.onMessage(Response.onMessageWithAttachment)
+        slot.captured.onMessage(Response.onMessageWithAttachment())
 
         assertThat(subject.fileAttachmentProfile).isEqualTo(expectedFileAttachmentProfile)
     }

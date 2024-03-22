@@ -14,7 +14,6 @@ import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
-import io.ktor.client.plugins.ResponseException
 import io.ktor.http.ContentType
 import io.ktor.http.defaultForFilePath
 import kotlinx.coroutines.CoroutineScope
@@ -179,11 +178,11 @@ internal class AttachmentHandlerImpl(
 
     private fun handleUploadFailure(attachmentId: String, result: Result.Failure) {
         if (result.errorCode is ErrorCode.CancellationError) {
-            log.w { "Cancellation exception was thrown, while uploading attachment." }
+            log.w { LogMessages.cancellationExceptionAttachmentUpload(attachmentId) }
             return
         }
 
-        log.e { "uploadFile($attachmentId) respond with error: ${result.errorCode}, and message: ${result.message}" }
+        log.e { LogMessages.attachmentError(attachmentId, result.errorCode, result.message ?: "") }
         onError(
             attachmentId = attachmentId,
             errorCode = result.errorCode,

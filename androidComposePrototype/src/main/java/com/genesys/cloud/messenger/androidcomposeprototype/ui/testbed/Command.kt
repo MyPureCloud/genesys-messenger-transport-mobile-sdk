@@ -9,6 +9,8 @@ enum class Command(val description: String) {
     CONNECT("connect"),
     CONNECT_AUTHENTICATED("connectAuthenticated"),
     DELETE("delete <attachmentID>"),
+    REFRESH("refreshAttachment <attachmentId>"),
+    FILE_ATTACHMENT_PROFILE("fileAttachmentProfile"),
     DEPLOYMENT("deployment"),
     DETACH("detach"),
     HEALTH_CHECK("healthcheck"),

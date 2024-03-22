@@ -15,11 +15,11 @@ import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses.isoTestTimestamp
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
-import com.genesys.cloud.messenger.transport.shyrka.receive.MessageEntityList
-import com.genesys.cloud.messenger.transport.shyrka.receive.PreIdentifiedWebMessagingMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.AllowedMedia
 import com.genesys.cloud.messenger.transport.shyrka.receive.FileType
 import com.genesys.cloud.messenger.transport.shyrka.receive.Inbound
+import com.genesys.cloud.messenger.transport.shyrka.receive.MessageEntityList
+import com.genesys.cloud.messenger.transport.shyrka.receive.PreIdentifiedWebMessagingMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
