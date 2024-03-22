@@ -169,7 +169,8 @@ class SerializationTest {
               "code": 200,
               "body": {
                 "connected": true,
-                "newSession": true
+                "newSession": true,
+                "readOnly": false,
                 "maxCustomDataBytes": 100,
                 "allowedMedia": {
                     "inbound": {
