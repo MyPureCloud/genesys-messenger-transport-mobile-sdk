@@ -10,7 +10,6 @@ buildscript {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.21")
         classpath("com.android.tools.build:gradle:7.3.1")
         classpath("org.jmailen.gradle:kotlinter-gradle:3.4.0")
-        classpath("com.vanniktech:gradle-android-junit-jacoco-plugin:0.16.0")
         classpath("com.codingfeline.buildkonfig:buildkonfig-gradle-plugin:0.13.3")
     }
 }
@@ -24,10 +23,11 @@ allprojects {
 
 plugins {
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
+    id("org.jetbrains.kotlinx.kover") version "0.7.6"
 }
 
 // CocoaPods requires the podspec to have a `version`.
-val buildVersion = "2.6.2"
+val buildVersion = "2.7.0-rc1"
 val snapshot = System.getenv("SNAPSHOT_BUILD") ?: ""
 version = "${buildVersion}${snapshot}"
 group = "cloud.genesys"
@@ -41,4 +41,8 @@ nexusPublishing {
             snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
         }
     }
+}
+
+kover {
+    useJacoco()
 }
