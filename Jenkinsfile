@@ -54,7 +54,7 @@ pipeline{
         }
         stage("CI Unit Tests"){
             steps{
-                sh './gradlew :transport:test :transport:jacocoTestReportDebug :transport:jacocoTestReportRelease'
+                sh './gradlew :transport:test :transport:koverHtmlReportDebug :transport:koverHtmlReportRelease'
                 jacoco classPattern: '**/kotlin-classes/debug,**/kotlin-classes/release', inclusionPattern: '**/*.class', sourcePattern: '**/src/*main/kotlin'
             }
         }

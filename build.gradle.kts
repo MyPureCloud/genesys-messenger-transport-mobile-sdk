@@ -23,7 +23,6 @@ allprojects {
 
 plugins {
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
-    id("org.jetbrains.kotlinx.kover") version "0.7.6"
 }
 
 // CocoaPods requires the podspec to have a `version`.
@@ -43,6 +42,5 @@ nexusPublishing {
     }
 }
 
-kover {
-    useJacoco()
-}
+
+

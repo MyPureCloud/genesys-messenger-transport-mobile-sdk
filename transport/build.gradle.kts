@@ -13,6 +13,7 @@ plugins {
     id("signing")
     id("transportValidationPlugin")
     id("com.codingfeline.buildkonfig")
+    id("org.jetbrains.kotlinx.kover") version "0.7.6"
 }
 
 version = project.rootProject.version
@@ -266,7 +267,27 @@ signing {
     sign(publishing.publications)
 }
 
-
+koverReport {
+    defaults {
+        plugins.withId("com.android.library") {
+            mergeWith("release")
+            mergeWith("debug")
+        }
+        plugins.withId("com.android.application") {
+            mergeWith("release")
+            mergeWith("debug")
+        }
+    }
+    filters {
+        excludes {
+            classes(
+                "*.MR*",
+                "*.BuildConfig",
+                "*.di.*",
+            )
+        }
+    }
+}
 
 
 
