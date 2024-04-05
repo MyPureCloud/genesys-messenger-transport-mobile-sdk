@@ -55,7 +55,6 @@ pipeline{
         stage("CI Unit Tests"){
             steps{
                 sh './gradlew :transport:test :transport:koverHtmlReportDebug :transport:koverHtmlReportRelease'
-                sh 'cp build/reports/kover/htmlDebug/index.html'
                 publishHTML(target: [
                     allowMissing: false,
                     alwaysLinkToLastBuild: false,
