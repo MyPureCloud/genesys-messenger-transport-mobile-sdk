@@ -267,6 +267,10 @@ signing {
     sign(publishing.publications)
 }
 
+kover {
+    useJacoco()
+}
+
 koverReport {
     defaults {
         plugins.withId("com.android.library") {
