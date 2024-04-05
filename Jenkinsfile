@@ -55,14 +55,6 @@ pipeline{
         stage("CI Unit Tests"){
             steps{
                 sh './gradlew :transport:test :transport:koverHtmlReportDebug :transport:koverHtmlReportRelease'
-                publishHTML(target: [
-                    allowMissing: false,
-                    alwaysLinkToLastBuild: false,
-                    keepAll: true,
-                    reportDir: 'file:///Users/jenkins/opt/jenkins-swarm-client/workspace/dk_techdebt_MTSDK-326_fix_jacoco/transport/build/reports/kover/htmlRelease',
-                    reportFiles: 'index.html',
-                    reportName: "Kover Coverage Report"
-                ])
             }
         }
         stage("Dependency validation") {
