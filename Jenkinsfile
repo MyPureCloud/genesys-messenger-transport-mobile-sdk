@@ -55,9 +55,8 @@ pipeline{
         stage("CI Unit Tests"){
             steps{
                 sh './gradlew :transport:test :transport:koverHtmlReportDebug :transport:koverHtmlReportRelease'
-                sh './gradlew clean build koverMergedReport --parallel'
-                sh 'cp build/reports/kover/merged/xml/report.xml build/koverTestReport.xml'
-                publishCoverage adapters: [jacocoAdapter('build/reports/kover/merged/xml/report.xml')]
+                sh 'cp build/reports/kover/htmlDebug/index.html'
+                publishCoverage adapters: [jacocoAdapter('build/reports/kover/htmlDebug/index.html')]
             }
         }
         stage("Dependency validation") {
