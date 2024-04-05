@@ -56,7 +56,14 @@ pipeline{
             steps{
                 sh './gradlew :transport:test :transport:koverHtmlReportDebug :transport:koverHtmlReportRelease'
                 sh 'cp build/reports/kover/htmlDebug/index.html'
-                publishCoverage adapters: [jacocoAdapter('build/reports/kover/htmlDebug/index.html')]
+                publishHTML(target: [
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: false,
+                    keepAll: true,
+                    reportDir: 'file:///Users/jenkins/opt/jenkins-swarm-client/workspace/dk_techdebt_MTSDK-326_fix_jacoco/transport/build/reports/kover/htmlRelease',
+                    reportFiles: 'index.html',
+                    reportName: "Kover Coverage Report"
+                ])
             }
         }
         stage("Dependency validation") {
