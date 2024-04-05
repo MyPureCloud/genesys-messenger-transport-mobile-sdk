@@ -278,15 +278,6 @@ koverReport {
             mergeWith("debug")
         }
     }
-    filters {
-        excludes {
-            classes(
-                "*.MR*",
-                "*.BuildConfig",
-                "*.di.*",
-            )
-        }
-    }
 }
 
 

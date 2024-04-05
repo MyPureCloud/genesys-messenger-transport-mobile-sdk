@@ -55,7 +55,9 @@ pipeline{
         stage("CI Unit Tests"){
             steps{
                 sh './gradlew :transport:test :transport:koverHtmlReportDebug :transport:koverHtmlReportRelease'
-                jacoco classPattern: '**/kotlin-classes/debug,**/kotlin-classes/release', inclusionPattern: '**/*.class', sourcePattern: '**/src/*main/kotlin'
+                sh './gradlew clean build koverMergedReport --parallel'
+                sh 'cp build/reports/kover/merged/xml/report.xml build/koverTestReport.xml'
+                publishCoverage adapters: [jacocoAdapter('build/reports/kover/merged/xml/report.xml')]
             }
         }
         stage("Dependency validation") {
