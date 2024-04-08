@@ -270,16 +270,3 @@ signing {
 kover {
     useJacoco()
 }
-
-koverReport {
-    defaults {
-        plugins.withId("com.android.library") {
-            mergeWith("release")
-            mergeWith("debug")
-        }
-        plugins.withId("com.android.application") {
-            mergeWith("release")
-            mergeWith("debug")
-        }
-    }
-}
