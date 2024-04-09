@@ -15,7 +15,7 @@ void setBuildStatus(String message, String state) {
 
 pipeline{
     agent{
-        label "mmsdk"
+        label "mobile-sdk-test"
     }
     options{
         parallelsAlwaysFailFast()
