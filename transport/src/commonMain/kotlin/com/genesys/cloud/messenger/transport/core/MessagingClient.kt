@@ -142,6 +142,9 @@ interface MessagingClient {
     @Throws(IllegalStateException::class)
     fun connectAuthenticatedSession()
 
+    @Throws(IllegalStateException::class)
+    fun stepUpToAuthenticatedSession()
+
     /**
      * Configure a new chat once the previous one is in State.ReadOnly.
      * It is important to note that once new chat started,

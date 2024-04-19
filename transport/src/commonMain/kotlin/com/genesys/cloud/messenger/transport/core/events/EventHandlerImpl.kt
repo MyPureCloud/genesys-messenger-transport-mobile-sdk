@@ -32,6 +32,7 @@ internal fun StructuredMessageEvent.toTransportEvent(): Event? {
                 PresenceEvent.Presence.Type.Join -> Event.ConversationAutostart
                 PresenceEvent.Presence.Type.Disconnect -> Event.ConversationDisconnect
                 PresenceEvent.Presence.Type.Clear -> null // Ignore. Event.ConversationClear should be dispatched upon receiving SessionClearedEvent and not StructuredMessageEvent with Type.Clear
+                PresenceEvent.Presence.Type.SignIn -> Event.StepUp(firstName = "John", lastName = "Doe")
             }
         }
         is Unknown -> null

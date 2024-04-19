@@ -64,4 +64,8 @@ sealed class Event {
      * Sent when conversation was successfully cleared.
      */
     object ConversationCleared : Event()
+
+    data class StepUp(val firstName: String, val lastName: String) : Event()
+
+    object ExistingAuthSessionCleared: Event()
 }

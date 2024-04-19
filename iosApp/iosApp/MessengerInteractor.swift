@@ -191,4 +191,12 @@ final class MessengerInteractor {
     func addCustomAttributes(customAttributes: [String: String] = [:]) -> Bool {
          return messagingClient.customAttributesStore.add(customAttributes: customAttributes)
     }
+    
+    func stepUp() throws {
+        do {
+            try messagingClient.stepUpToAuthenticatedSession()
+        } catch {
+            print("stepUp() failed. \(error.localizedDescription)")
+        }
+    }
 }

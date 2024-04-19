@@ -53,6 +53,7 @@ class TestbedViewController: UIViewController {
         case typing
         case authorize
         case clearConversation
+        case stepUp
 
         var helpDescription: String {
             switch self {
@@ -258,6 +259,9 @@ class TestbedViewController: UIViewController {
             displayEvent = "Event received: \(logout.description)"
         case let disconnect as Event.ConversationDisconnect:
             displayEvent = "Event received: \(disconnect.description)"
+        case let stepUp as Event.StepUp:
+            displayEvent = "Event received: \(stepUp.description)"
+            break
         default:
             break
         }
@@ -476,6 +480,8 @@ extension TestbedViewController : UITextFieldDelegate {
                 messenger.authorize(authCode: self.authCode ?? "", redirectUri: signInRedirectURI, codeVerifier: codeVerifier)
             case (.clearConversation, _):
                 try messenger.clearConversation()
+            case (.stepUp, _):
+                try messenger.stepUp()
             default:
                 self.info.text = "Invalid command"
             }

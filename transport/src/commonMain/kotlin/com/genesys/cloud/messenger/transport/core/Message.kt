@@ -33,6 +33,7 @@ data class Message(
     val from: Participant = Participant(
         originatingEntity = Participant.OriginatingEntity.Human
     ),
+    val authenticated: Boolean = false,
 ) {
 
     /**

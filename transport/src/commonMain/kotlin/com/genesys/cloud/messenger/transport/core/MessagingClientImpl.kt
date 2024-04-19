@@ -143,6 +143,13 @@ internal class MessagingClientImpl(
         webSocket.openSocket(socketListener)
     }
 
+    override fun stepUpToAuthenticatedSession() {
+        log.i { LogMessages.STEP_UP_TO_AUTHENTICATED_SESSION }
+        stateMachine.checkIfConfigured()
+        connectAuthenticated = true
+        configureSession(stepUp = true)
+    }
+
     @Throws(IllegalStateException::class)
     override fun startNewChat() {
         stateMachine.checkIfCanStartANewChat()
@@ -160,7 +167,7 @@ internal class MessagingClientImpl(
         webSocket.closeSocket(code, reason)
     }
 
-    private fun configureSession(startNew: Boolean = false) {
+    private fun configureSession(startNew: Boolean = false, stepUp: Boolean = false) {
         val encodedJson = if (connectAuthenticated) {
             log.i { LogMessages.configureAuthenticatedSession(token, startNew) }
             if (authHandler.jwt == NO_JWT) {
@@ -172,7 +179,7 @@ internal class MessagingClientImpl(
                 transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
                 return
             }
-            encodeAuthenticatedConfigureSessionRequest(startNew)
+            encodeAuthenticatedConfigureSessionRequest(startNew = startNew, stepUp = stepUp)
         } else {
             log.i { LogMessages.configureSession(token, startNew) }
             encodeAnonymousConfigureSessionRequest(startNew)
@@ -383,6 +390,9 @@ internal class MessagingClientImpl(
                 sendAutoStart()
             }
         }
+        if (clearedExistingSession) {
+            eventHandler.onEvent(Event.ExistingAuthSessionCleared)
+        }
     }
 
     private fun handleError(code: ErrorCode, message: String? = null) {
@@ -570,7 +580,7 @@ internal class MessagingClientImpl(
             )
         )
 
-    private fun encodeAuthenticatedConfigureSessionRequest(startNew: Boolean) =
+    private fun encodeAuthenticatedConfigureSessionRequest(startNew: Boolean, stepUp: Boolean = false) =
         WebMessagingJson.json.encodeToString(
             ConfigureAuthenticatedSessionRequest(
                 token = token,
