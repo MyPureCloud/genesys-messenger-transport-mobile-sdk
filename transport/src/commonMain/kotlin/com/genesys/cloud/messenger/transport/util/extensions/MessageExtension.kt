@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.util.extensions
 import com.genesys.cloud.messenger.transport.core.Attachment
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
+import com.genesys.cloud.messenger.transport.core.Carousel
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.core.events.toTransportEvent
@@ -10,9 +11,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.FileUpload
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
-import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.AttachmentContent
-import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ButtonResponseContent
-import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.QuickReplyContent
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.*
 import com.genesys.cloud.messenger.transport.shyrka.receive.isInbound
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.util.WILD_CARD
@@ -24,15 +23,19 @@ internal fun List<StructuredMessage>.toMessageList(): List<Message> =
 
 internal fun StructuredMessage.toMessage(): Message {
     val quickReplies = content.toQuickReplies()
+    val cards = content.toCards()
+    val carousel = content.toCarousel()
+    val cardsAndCarousel = cards + carousel
     return Message(
         id = metadata["customMessageId"] ?: id,
         direction = if (isInbound()) Direction.Inbound else Direction.Outbound,
         state = Message.State.Sent,
-        messageType = type.toMessageType(quickReplies.isNotEmpty()),
+        messageType = type.toMessageType(quickReplies.isNotEmpty(), carousel.isNotEmpty()),
         text = text,
         timeStamp = channel?.time.fromIsoToEpochMilliseconds(),
         attachments = content.filterIsInstance<AttachmentContent>().toAttachments(),
         quickReplies = quickReplies,
+        cards = cardsAndCarousel,
         events = events.mapNotNull { it.toTransportEvent() },
         from = Message.Participant(
             name = channel?.from?.nickname,
@@ -99,12 +102,68 @@ private fun List<StructuredMessage.Content>.toQuickReplies(): List<ButtonRespons
         else -> emptyList()
     }
 }
+/*
+Want to merge toCards and toCarousel because we don't know if we will receive both in the same message with
+mix content. Need to double check w/ shyrka if its a valid scenario.
+ */
 
-private fun StructuredMessage.Type.toMessageType(hasQuickReplies: Boolean): Message.Type =
+private fun List<StructuredMessage.Content>.toCards(): List<Message.Card> {
+    return this.filterIsInstance<CardContent>().map {
+        Message.Card(
+            title = it.card.title.filterNot{it.isWhitespace()},
+            description = it.card.description,
+            imageUrl = it.card.image,
+            actions = it.card.actions.map { action ->
+                Message.Card.Action(
+                    type = action.type,
+                    text = action.text,
+                    url = action.url,
+                    payload = action.payload
+                )
+            }
+        )
+    }
+}
+/*
+Is it possible to have multiple carousels in structured message content???
+ */
+private fun List<StructuredMessage.Content>.toCarousel(): List<Message.Card> {
+    val carousel = this.filterIsInstance<CarouselContent>().map {
+        Message.Carousel(
+            cards = it.carousel.cards.map { card ->
+                Message.Card(
+                    title = card.title.filterNot{it.isWhitespace()},
+                    description = card.description,
+                    imageUrl = card.image,
+                    actions = card.actions.map { action ->
+                        Message.Card.Action(
+                            type = action.type,
+                            text = action.text,
+                            url = action.url,
+                            payload = "Button"
+                        )
+                    }
+                )
+            }
+        )
+    }
+    return carousel.flatMap { carousel ->
+        carousel.cards
+    }
+}
+
+
+
+private fun StructuredMessage.Type.toMessageType(hasQuickReplies: Boolean, hasCarousel: Boolean): Message.Type =
     when (this) {
         StructuredMessage.Type.Text -> Message.Type.Text
         StructuredMessage.Type.Event -> Message.Type.Event
-        StructuredMessage.Type.Structured -> if (hasQuickReplies) Message.Type.QuickReply else Message.Type.Unknown
+        StructuredMessage.Type.Structured -> {
+            if (hasQuickReplies) Message.Type.QuickReply
+            else if (hasCarousel) Message.Type.Carousel
+            else Message.Type.Unknown
+        }
+
     }
 
 internal fun String.isHealthCheckResponseId(): Boolean = this == HealthCheckID

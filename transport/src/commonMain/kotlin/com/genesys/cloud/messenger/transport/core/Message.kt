@@ -30,6 +30,7 @@ data class Message(
     val attachments: Map<String, Attachment> = emptyMap(),
     val events: List<Event> = emptyList(),
     val quickReplies: List<ButtonResponse> = emptyList(),
+    val cards: List<Card> = emptyList(),
     val from: Participant = Participant(
         originatingEntity = Participant.OriginatingEntity.Human
     ),
@@ -48,6 +49,8 @@ data class Message(
         Text,
         Event,
         QuickReply,
+        Card,
+        Carousel,
         Unknown,
     }
 
@@ -103,11 +106,15 @@ data class Message(
         val contentType: Type,
         val attachment: Attachment? = null,
         val buttonResponse: ButtonResponse? = null,
+        val card: Card? = null,
+        val carousel: Carousel? = null,
     ) {
         @Serializable
         enum class Type {
             Attachment,
             ButtonResponse,
+            Card,
+            Carousel,
         }
     }
 
@@ -138,4 +145,25 @@ data class Message(
             Unknown,
         }
     }
+
+    @Serializable
+    data class Card(
+        val title: String,
+        val description: String,
+        val imageUrl: String,
+        val actions: List<Action>
+    ) {
+        @Serializable
+        data class Action(
+            val type: String,
+            val text: String? = null,
+            val url: String? = null,
+            val payload: String? = null,
+        )
+    }
+
+    @Serializable
+    data class Carousel(
+        val cards: List<Card>
+    )
 }

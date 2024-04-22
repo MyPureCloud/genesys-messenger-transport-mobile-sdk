@@ -1,6 +1,9 @@
 package com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed
 
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -8,11 +11,14 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.genesys.cloud.messenger.androidcomposeprototype.BuildConfig
+import com.genesys.cloud.messenger.transport.core.Action
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
+import com.genesys.cloud.messenger.transport.core.Card
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
+import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
 import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessageEvent.AttachmentUpdated
@@ -56,6 +62,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     var authState: AuthState by mutableStateOf(AuthState.NoAuth)
         private set
     private var pkceEnabled by mutableStateOf(false)
+    private var cards: Map<String, Card> = emptyMap()
 
     var authCode: String = ""
         set(value) {
@@ -73,6 +80,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     private lateinit var onOktaSingIn: (url: String) -> Unit
     private val quickRepliesMap = mutableMapOf<String, ButtonResponse>()
     private lateinit var selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit
+    private val carouselMap = mutableMapOf<String, Message.Card>()
 
     fun init(
         context: Context,
@@ -101,7 +109,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
                     )
                 }
             }
-            messageListener = { onMessage(it) }
+            messageListener = { onMessage(it, context) }
             eventListener = { onEvent(it) }
             clientState = client.currentState
         }
@@ -153,9 +161,30 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "refreshAttachment" -> doRefreshAttachmentUrl(input)
             "savedFileName" -> doChangeFileName(input)
             "fileAttachmentProfile" -> doFileAttachmentProfile()
+            "sendCardReply" -> doSendCardReply(input)
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
+            }
+        }
+    }
+
+    private fun doSendCardReply(input: String) {
+        val components = input.split(" ", limit = 2)
+        val card = components.firstOrNull()
+        val inputAction = components.getOrNull(1) ?: ""
+        carouselMap[card]?.let {
+            it.actions.forEach { action ->
+                if (action.text == inputAction) {
+                    client.sendQuickReply(
+                        ButtonResponse(
+                            text = action.text ?: "",
+                            payload = action.payload ?: "",
+                            type = action.type
+                            //type = "Button"
+                        )
+                    )
+                }
             }
         }
     }
@@ -388,7 +417,34 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         commandWaiting = false
     }
 
-    private fun onMessage(event: MessageEvent) {
+//    private fun handleCardAction(context: Context, actions: List<Action>) {
+//        val buttonResponses = actions.map { action ->
+//            if (action.type == "Postback") {
+//                ButtonResponse(
+//                    text = action.text,
+//                    payload = action.payload!!,
+//                    type = action.type
+//                )
+//
+//            }
+//
+//        }
+//        quickRepliesMap.putAll(buttonResponses.associateBy { it.text })
+//
+//    }
+
+    private fun openExternalLink(url: String?, context: Context) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        try {
+            context.startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
+            Log.e(TAG, "No activity found to handle URL: $url", e)
+        }
+
+    }
+
+    private fun onMessage(event: MessageEvent, context: Context) {
         val eventMessage = when (event) {
             is MessageEvent.MessageUpdated -> "MessageUpdated: ${event.message}"
             is MessageEvent.MessageInserted -> "MessageInserted: ${event.message}"
@@ -403,13 +459,16 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
                     else -> event.attachment.toString()
                 }
             }
-
             is MessageEvent.QuickReplyReceived -> event.message.run {
                 quickRepliesMap.clear()
                 quickRepliesMap.putAll(quickReplies.associateBy { it.text })
                 "QuickReplyReceived: text: $text | quick reply options: $quickReplies"
             }
-
+            is MessageEvent.CarouselMessageReceived -> {
+                carouselMap.clear()
+                carouselMap.putAll(event.message.cards.associateBy { it.title })
+                "CarouselMessageReceived | cards options: $carouselMap"
+            }
             else -> event.toString()
         }
         onSocketMessageReceived(eventMessage)

@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
 import com.genesys.cloud.messenger.transport.core.Message.Direction
+import com.genesys.cloud.messenger.transport.shyrka.send.BaseMessageProtocol
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
@@ -42,6 +43,43 @@ internal class MessageStore(
         )
     }
 
+//    fun prepareMessageWith(
+//        card: Card,
+//        channel: Channel? = null,
+//    ): OnMessageRequest {
+//        val type = Message.Type.QuickReply
+//        val messageToSend = pendingMessage.copy(
+//            messageType = type,
+//            type = type.name,
+//            state = Message.State.Sending,
+//            carousel = listOf(card),
+//        ).also {
+//            log.i { LogMessages.quickReplyPrepareToSend(it) }
+//            activeConversation.add(it)
+//            publish(MessageEvent.MessageInserted(it))
+//            pendingMessage = Message(attachments = it.attachments)
+//        }
+//        val content = listOf(
+//            Message.Content(
+//                contentType = Message.Content.Type.ButtonResponse,
+//                buttonResponse = ButtonResponse(
+//                    text = card.actions[0].text,
+//                    payload = card.actions[0].payload,
+//                    type = "Button",
+//                ),
+//            )
+//        )
+//        return OnMessageRequest(
+//            token = token,
+//            message = TextMessage(
+//                text = "",
+//                metadata = mapOf("customMessageId" to messageToSend.id),
+//                content = content,
+//                channel = channel,
+//            )
+//        )
+//    }
+
     fun prepareMessageWith(
         buttonResponse: ButtonResponse,
         channel: Channel? = null,
@@ -64,15 +102,46 @@ internal class MessageStore(
                 buttonResponse = buttonResponse,
             )
         )
-        return OnMessageRequest(
+        //"action": "onMessage",
+        //  "token": "0000000-0000-0000-0000-0000000000",
+        //  "tracingId": "11111111-1111-1111-1111-111111111111",
+        //  "message": {
+        //    "type": "Structured",
+        //    "text": "Book Now",
+        //    "content": [
+        //      {
+        //        "contentType": "ButtonResponse",
+        //        "buttonResponse": {
+        //          "text": "Book Now",
+        //          "type": "Postback",
+        //          "payload": "I want it"
+        //        }
+        //      }
+        //    ]
+        //  }
+        //}
+        if (buttonResponse.type == "QuickReply" || buttonResponse.type == "ButtonResponse") {
+            return OnMessageRequest(
+                token = token,
+                message = TextMessage(
+                    text = "",
+                    metadata = mapOf("customMessageId" to messageToSend.id),
+                    content = content,
+                    channel = channel,
+                )
+            )
+        } else return OnMessageRequest(
             token = token,
             message = TextMessage(
-                text = "",
+                text = buttonResponse.text,
                 metadata = mapOf("customMessageId" to messageToSend.id),
                 content = content,
                 channel = channel,
+                _type = BaseMessageProtocol.Type.Structured
+
             )
         )
+
     }
 
     fun update(message: Message) = message.run {
@@ -151,11 +220,13 @@ internal class MessageStore(
 }
 
 private fun Message.toMessageEvent(): MessageEvent =
-    if (messageType == Message.Type.QuickReply) {
-        MessageEvent.QuickReplyReceived(this)
-    } else {
-        MessageEvent.MessageInserted(this)
+    when(messageType) {
+        Message.Type.QuickReply -> MessageEvent.QuickReplyReceived(this)
+        Message.Type.Card -> MessageEvent.CardMessageReceived(this)
+        Message.Type.Carousel -> MessageEvent.CarouselMessageReceived(this)
+        else -> MessageEvent.MessageInserted(this)
     }
+
 
 /**
  * Communicates conversation related updates to the UI.
@@ -203,4 +274,7 @@ sealed class MessageEvent {
      * @property message is the [Message] object with all the details.
      */
     class QuickReplyReceived(val message: Message) : MessageEvent()
+    class CardsInserted(val message: Message) : MessageEvent()
+    class CardMessageReceived(val message: Message) : MessageEvent()
+    class CarouselMessageReceived(val message: Message) : MessageEvent()
 }

@@ -21,5 +21,6 @@ enum class Command(val description: String) {
     OKTA_SIGN_IN_WITH_PKCE("oktaSignInWithPKCE"),
     SEND("send <msg>"),
     SEND_QUICK_REPLY("sendQuickReply <quickReply>"),
-    TYPING("typing")
+    TYPING("typing"),
+    SEND_CARD_REPLY("sendCardReply <card> <action>")
 }
