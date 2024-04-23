@@ -1,0 +1,32 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+!theme bluegray
+!pragma teoz true
+
+skinparam backgroundColor #whitesmoke
+title Authorization Code Flow
+
+participant App
+participant "Auth Server"
+participant "Transport SDK"
+participant "Genesys Cloud Platform API"
+participant "Shyrka API"
+participant Agent
+
+autonumber
+group Authorization code flow
+    App -> "Auth Server" : Authentication request with clientId, scopes, redirectUri etc.
+    "Auth Server" --> App : 302 Redirect to authentication prompt / login page.
+    App -> "Auth Server" : Login and consent.
+    "Auth Server" --> App : Redirect back to App with authCode response.
+    App -> "Transport SDK" : authorize(authCode, redirectUri, codeVerifier)
+    "Transport SDK" -> "Genesys Cloud Platform API" : authCode to jwt exchange.
+    "Genesys Cloud Platform API" -> "Auth Server" : Exchange authorization code for tokens using pre-stored clientSecret.
+    "Auth Server" --> "Genesys Cloud Platform API" : Return tokens.
+    "Genesys Cloud Platform API" --> "Transport SDK" : Returns Genesys Cloud authentication JWT and RefreshToken
+    "Transport SDK" -> "Transport SDK" : Store JWT/RefreshToken
+    "Transport SDK" -> App : Event.Authorized
+end
+
+@enduml
