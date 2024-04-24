@@ -1,0 +1,57 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+!theme bluegray
+!pragma teoz true
+
+participant "App Device A" as App
+
+note over "App Device B"
+Has an existing authenticated session
+end note
+
+rnote over "App"
+  Given:
+  * Anonymous session was configured
+  * User exchanged messages with an Agent/Bot
+  * User decides to step up to authenticated session
+   using the same token as for anonymous sessoin
+end rnote
+
+!include authorization_code_flow.puml
+
+skinparam backgroundColor #whitesmoke
+title Step-Up Authentication
+
+participant "App Device B"
+participant "Auth Server"
+participant "Transport SDK"
+participant "Genesys Cloud Platform API"
+participant "Shyrka API"
+participant Agent
+
+autonumber 12
+group StepUp Auth Flow
+    App -> "Transport SDK" : connectAuthenticatedSession
+    "Transport SDK" -> "Shyrka API" : Send ConfigureAuthenticatedSession request.
+    alt User already has an existing authenticated session on another device
+    "Shyrka API" -> "Transport SDK" : ConnectionClosedEvent(reason: signedIn)
+    "Transport SDK" -> "App Device B" : Event.ConnectionClosed(reason: signedIn)
+    "Transport SDK" -> "Transport SDK" : close socket and dismiss connection
+    end
+    "Shyrka API" -> "Transport SDK" : PresenceEvent.SignIn
+    "Transport SDK" -> App : Event.SignedIn(firstName,lastName)
+    "Shyrka API" --> "Transport SDK" : SessionResponse: clearedExistingSession=false/true
+    alt clearedExistingSession=true
+    "Transport SDK" -> App : Event.AllExistingAuthSessionsCleared
+    else clearedExistingSession=false/null
+    rnote over "Transport SDK"
+    Do nothing
+    end rnote
+    end
+    "Transport SDK" -> "Shyrka API" : sendMessage
+    "Shyrka API" --> "Transport SDK" : confirm message sent (authenticated=true)
+end
+
+
+@enduml
