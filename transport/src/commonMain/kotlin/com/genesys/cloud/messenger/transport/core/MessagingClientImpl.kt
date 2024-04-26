@@ -144,6 +144,14 @@ internal class MessagingClientImpl(
     }
 
     @Throws(IllegalStateException::class)
+    override fun stepUpToAuthenticatedSession() {
+        log.i { LogMessages.STEP_UP_TO_AUTHENTICATED_SESSION }
+        stateMachine.checkIfConfigured()
+        connectAuthenticated = true
+        configureSession()
+    }
+
+    @Throws(IllegalStateException::class)
     override fun startNewChat() {
         stateMachine.checkIfCanStartANewChat()
         isStartingANewSession = true
@@ -172,10 +180,10 @@ internal class MessagingClientImpl(
                 transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
                 return
             }
-            encodeAuthenticatedConfigureSessionRequest(startNew)
+            encodeConfigureAuthenticatedSessionRequest(startNew)
         } else {
             log.i { LogMessages.configureSession(token, startNew) }
-            encodeAnonymousConfigureSessionRequest(startNew)
+            encodeConfigureGuestSessionRequest(startNew)
         }
         webSocket.sendMessage(encodedJson)
     }
@@ -557,7 +565,7 @@ internal class MessagingClientImpl(
         }
     }
 
-    private fun encodeAnonymousConfigureSessionRequest(startNew: Boolean) =
+    private fun encodeConfigureGuestSessionRequest(startNew: Boolean) =
         WebMessagingJson.json.encodeToString(
             ConfigureSessionRequest(
                 token = token,
@@ -570,7 +578,7 @@ internal class MessagingClientImpl(
             )
         )
 
-    private fun encodeAuthenticatedConfigureSessionRequest(startNew: Boolean) =
+    private fun encodeConfigureAuthenticatedSessionRequest(startNew: Boolean) =
         WebMessagingJson.json.encodeToString(
             ConfigureAuthenticatedSessionRequest(
                 token = token,
