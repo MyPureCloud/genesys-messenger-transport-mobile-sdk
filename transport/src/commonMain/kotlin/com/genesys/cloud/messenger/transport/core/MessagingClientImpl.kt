@@ -511,11 +511,19 @@ internal class MessagingClientImpl(
                 eventHandler.onEvent(it)
             }
         } else {
-            // Autostart is the only Inbound event that should be reported to UI.
-            events.find { it is Event.ConversationAutostart }?.let { autostart ->
-                sendingAutostart = false
-                internalCustomAttributesStore.onSent()
-                eventHandler.onEvent(autostart)
+            events.forEach {
+                when (it) {
+                    is Event.ConversationAutostart -> {
+                        sendingAutostart = false
+                        internalCustomAttributesStore.onSent()
+                        eventHandler.onEvent(it)
+                    }
+                    is Event.SignedIn -> eventHandler.onEvent(it)
+                    else -> {
+                        // Do nothing. Autostart and SignedIn are the only Inbound events that should be reported to UI.
+                        log.i { LogMessages.ignoreInboundEvent(it) }
+                    }
+                }
             }
         }
     }

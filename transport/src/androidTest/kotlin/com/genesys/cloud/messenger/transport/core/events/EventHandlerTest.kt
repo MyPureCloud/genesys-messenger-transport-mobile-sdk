@@ -13,7 +13,9 @@ import com.genesys.cloud.messenger.transport.core.events.Event.ConversationDisco
 import com.genesys.cloud.messenger.transport.core.events.Event.Error
 import com.genesys.cloud.messenger.transport.core.events.Event.HealthChecked
 import com.genesys.cloud.messenger.transport.core.events.Event.Logout
+import com.genesys.cloud.messenger.transport.core.events.Event.SignedIn
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent.Typing
@@ -21,6 +23,7 @@ import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
+import com.genesys.cloud.messenger.transport.utility.MessageValues
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Test
@@ -29,13 +32,14 @@ import kotlin.test.assertNull
 class EventHandlerTest {
     internal val mockLogger: Log = mockk(relaxed = true)
     internal val logSlot = mutableListOf<() -> String>()
+    private val eventSlot = mutableListOf<Event>()
     private val mockEventListener: ((Event) -> Unit) = mockk(relaxed = true)
     private val subject = EventHandlerImpl(mockLogger).also {
         it.eventListener = mockEventListener
     }
 
     @Test
-    fun whenOnEvent() {
+    fun `when onEvent()`() {
         val events = listOf(
             AgentTyping(3000),
             HealthChecked,
@@ -50,6 +54,7 @@ class EventHandlerTest {
             Authorized,
             Logout,
             ConversationCleared,
+            SignedIn(MessageValues.ParticipantName, MessageValues.ParticipantLastName),
         )
 
         events.forEach {
@@ -63,7 +68,7 @@ class EventHandlerTest {
     }
 
     @Test
-    fun whenNoEventListenerSetAndOnEventInvoked() {
+    fun `when no eventListener set and onEvent() invoked`() {
         subject.eventListener = null
 
         subject.onEvent(HealthChecked)
@@ -72,7 +77,7 @@ class EventHandlerTest {
     }
 
     @Test
-    fun whenTypingEventToTransportEvent() {
+    fun `when TypingEvent toTransportEvent()`() {
         val expectedEvent = AgentTyping(3000)
 
         val result = TypingEvent(
@@ -84,7 +89,7 @@ class EventHandlerTest {
     }
 
     @Test
-    fun whenTypingEventWithNullDurationToTransportEvent() {
+    fun `when TypingEvent with null duration toTransportEvent()`() {
         val expectedEvent = AgentTyping(5000)
 
         val result = TypingEvent(
@@ -96,7 +101,7 @@ class EventHandlerTest {
     }
 
     @Test
-    fun whenPresenceEventJoinToTransportEvent() {
+    fun `when PresenceEvent Join toTransportEvent()`() {
         val expectedEvent = ConversationAutostart
 
         val result = PresenceEvent(
@@ -110,7 +115,7 @@ class EventHandlerTest {
     }
 
     @Test
-    fun whenPresenceEventDisconnectToTransportEvent() {
+    fun `when PresenceEvent Disconnect toTransportEvent()`() {
         val expectedEvent = ConversationDisconnect
 
         val result = PresenceEvent(
@@ -124,7 +129,7 @@ class EventHandlerTest {
     }
 
     @Test
-    fun whenPresenceEventClearToTransportEvent() {
+    fun `when PresenceEvent Clear toTransportEvent()`() {
         val result = PresenceEvent(
             StructuredMessageEvent.Type.Presence,
             PresenceEvent.Presence(
@@ -136,11 +141,48 @@ class EventHandlerTest {
     }
 
     @Test
+    fun `when PresenceEvent SignIn with Participant data toTransportEvent()`() {
+        val givenParticipantData = StructuredMessage.Participant(
+            firstName = MessageValues.ParticipantName,
+            lastName = MessageValues.ParticipantLastName,
+        )
+        val expectedEvent =
+            SignedIn(MessageValues.ParticipantName, MessageValues.ParticipantLastName)
+
+        val result = PresenceEvent(
+            StructuredMessageEvent.Type.Presence,
+            PresenceEvent.Presence(
+                PresenceEvent.Presence.Type.SignIn
+            )
+        ).toTransportEvent(givenParticipantData)
+
+        assertThat(result).isEqualTo(expectedEvent)
+    }
+
+    @Test
+    fun `when PresenceEvent SignIn without Participant data toTransportEvent()`() {
+        val expectedEvent = SignedIn()
+
+        val result = PresenceEvent(
+            StructuredMessageEvent.Type.Presence,
+            PresenceEvent.Presence(
+                PresenceEvent.Presence.Type.SignIn
+            )
+        ).toTransportEvent()
+
+        assertThat(result).isEqualTo(expectedEvent)
+    }
+
+    @Test
     fun `validate event Error payload`() {
         val expectedErrorCodePayload = ErrorCode.UnexpectedError
         val expectedErrorMessagePayload = ErrorTest.Message
         val expectedCorrectiveActionPayload = CorrectiveAction.Unknown
-        val expectedErrorEvent = Error(expectedErrorCodePayload, expectedErrorMessagePayload, expectedCorrectiveActionPayload)
+        val expectedErrorEvent = Error(
+            expectedErrorCodePayload,
+            expectedErrorMessagePayload,
+            expectedCorrectiveActionPayload
+        )
         val givenErrorEvent =
             Error(ErrorCode.UnexpectedError, ErrorTest.Message, CorrectiveAction.Unknown)
 
@@ -148,10 +190,10 @@ class EventHandlerTest {
 
         verify {
             mockLogger.i(capture(logSlot))
-            mockEventListener.invoke(eq(expectedErrorEvent))
+            mockEventListener.invoke(capture(eventSlot))
         }
 
-        givenErrorEvent.run {
+        (eventSlot[0] as Error).run {
             assertThat(errorCode).isEqualTo(expectedErrorCodePayload)
             assertThat(message).isEqualTo(expectedErrorMessagePayload)
             assertThat(correctiveAction).isEqualTo(expectedCorrectiveActionPayload)
@@ -169,10 +211,29 @@ class EventHandlerTest {
 
         verify {
             mockLogger.i(capture(logSlot))
-            mockEventListener.invoke(eq(expectedAgentTypingEvent))
+            mockEventListener.invoke(capture(eventSlot))
         }
-        assertThat(givenAgentTypingEvent.durationInMilliseconds).isEqualTo(expectedAgentTypingPayload)
+        (eventSlot[0] as AgentTyping).run {
+            assertThat(durationInMilliseconds).isEqualTo(expectedAgentTypingPayload)
+        }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.onEvent(expectedAgentTypingEvent))
+    }
+
+    @Test
+    fun `validate event SignedIn payload`() {
+        val givenSignedInEvent = SignedIn(MessageValues.ParticipantName, MessageValues.ParticipantLastName)
+
+        subject.onEvent(givenSignedInEvent)
+
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockEventListener.invoke(capture(eventSlot))
+        }
+        (eventSlot[0] as SignedIn).run {
+            assertThat(firstName).isEqualTo(MessageValues.ParticipantName)
+            assertThat(lastName).isEqualTo(MessageValues.ParticipantLastName)
+        }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.onEvent(givenSignedInEvent))
     }
 
     @Test

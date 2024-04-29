@@ -64,4 +64,12 @@ sealed class Event {
      * Sent when conversation was successfully cleared.
      */
     object ConversationCleared : Event()
+
+    /**
+     * Sent when user successfully stepped up from guest to authenticated session.
+     *
+     * @param firstName is an optional first name of the user.
+     * @param lastName is an optional last name of the user.
+     */
+    data class SignedIn(val firstName: String? = null, val lastName: String? = null) : Event()
 }
