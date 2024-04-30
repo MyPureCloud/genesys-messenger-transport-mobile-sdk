@@ -136,11 +136,21 @@ interface MessagingClient {
     /**
      * Open and configure an authenticated and secure WebSocket connection to the Web Messaging service using the url and deploymentId
      * configured on this MessagingClient instance. Note, once Authenticated session is configured it can not be downgraded to Anonymous session.
+     * When called on a session that was previously configured as anonymous/guest, it will perform a Step-Up.
      *
      * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
      */
     @Throws(IllegalStateException::class)
     fun connectAuthenticatedSession()
+
+    /**
+     * Performs a step-up of from existing anonymous/guest session to an authenticated session.
+     * To perform this action, the MessagingClient must be in State.Configured and authorized(see [authorize] function)
+     *
+     * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
+     */
+    @Throws(IllegalStateException::class)
+    fun stepUpToAuthenticatedSession()
 
     /**
      * Configure a new chat once the previous one is in State.ReadOnly.

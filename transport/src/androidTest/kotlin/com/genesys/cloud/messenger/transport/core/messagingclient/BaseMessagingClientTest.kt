@@ -188,14 +188,19 @@ open class BaseMessagingClientTest {
     fun after() = clearAllMocks()
 
     protected fun MockKVerificationScope.connectSequence(shouldConfigureAuth: Boolean = false) {
-        val configureRequest =
-            if (shouldConfigureAuth) Request.configureAuthenticatedRequest() else Request.configureRequest()
         mockLogger.withTag(LogTag.STATE_MACHINE)
         mockLogger.withTag(LogTag.WEBSOCKET)
         mockLogger.i(capture(logSlot))
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
+        configureSequence(shouldConfigureAuth)
+        mockStateChangedListener(fromConnectedToConfigured)
+    }
+
+    protected fun MockKVerificationScope.configureSequence(shouldConfigureAuth: Boolean = false) {
+        val configureRequest =
+            if (shouldConfigureAuth) Request.configureAuthenticatedRequest() else Request.configureRequest()
         mockLogger.i(capture(logSlot))
         if (shouldConfigureAuth) {
             mockAuthHandler.jwt // check if jwt is valid
@@ -206,7 +211,6 @@ open class BaseMessagingClientTest {
         mockReconnectionHandler.clear()
         mockJwtHandler.clear()
         mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
-        mockStateChangedListener(fromConnectedToConfigured)
     }
 
     protected fun MockKVerificationScope.connectToReadOnlySequence() {
