@@ -1,0 +1,59 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+!theme bluegray
+!pragma teoz true
+
+skinparam backgroundColor #whitesmoke
+title Cards and Carousels
+
+participant App
+box TransportSDK #lightcyan
+participant MessagingClient
+participant MessageStore
+end box
+box BackEnd
+participant Shyrka
+end box
+
+rnote over MessagingClient
+  Given:
+  * Cards and Carousels flow is configured in Architect.
+  * newSession=true
+end rnote
+
+App -> MessagingClient: connect()
+MessagingClient -> Shyrka: configureSession(startNew=true)
+Shyrka --> MessagingClient: SessionConfigured(newSession=true)
+alt #aaff8833 Welcome "Outbound Message" (optional)
+Shyrka -> MessagingClient: onMessage(Message("Welcome Message from bot"))
+MessagingClient -> MessageStore: update(Message)
+MessageStore -> MessageStore: add message to Conversation
+MessageStore -> App: messageListener(MessageUpdated(Type.Text,"Welcome Message from bot"))
+App -> App: display text message in UI
+end
+Shyrka -> MessagingClient: onMessage(type = Type.Carousel, text = String, content = listOf(Cards(text,payload,action)))
+MessagingClient -> MessageStore: update(Message)
+MessageStore -> MessageStore: add message to Conversation
+MessageStore -> App: messageListener(CarouselMessageReceived(Message(type:Type.Structured, content: List<Cards(title, description, image), Action(type, text, url, payload>))
+App -> App: Display cards/carousel in UI
+
+alt #aaff8833 user selects cards/carousel option with ""Postback"
+App -> MessagingClient: doSendCardReply(input : String)
+MessagingClient -> MessageStore: sendQuickReply(quickReply: ButtonResponse)
+MessageStore -> MessageStore: add message to Conversation
+MessageStore --> MessagingClient: OnMessageRequest(text="",content="ButtonResponse(text=text,payload=payload,type="Button")))
+MessageStore -> App: messageListener(MessageInserted(Message(Type.QuickReply,ButtonResponse("SelectedQuickReply"), State.Sending))
+App -> App: Display as text message with State.Sending
+MessagingClient -> Shyrka: send(OnMessageRequest)
+Shyrka --> MessagingClient: response 200 (Success)
+else #aaff8833 user selects cards/carousel option with "Link"
+App -> MessagingClient: doSendCardReply(input : String)
+App -> App: Open link
+else #ffaaff33 Failure (MessageTooLong,RequestRateTooHigh,CustomAttributeSizeTooLarge)
+MessagingClient -> MessageStore: updateMessageState(Message(State.Error))
+MessageStore -> App: messageListener(MessageUpdated(Message(Type.Text,State.Error)))
+App -> App: Display error message
+end
+
+@enduml
