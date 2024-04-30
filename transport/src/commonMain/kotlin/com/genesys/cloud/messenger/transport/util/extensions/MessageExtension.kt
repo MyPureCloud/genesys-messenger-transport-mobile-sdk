@@ -140,7 +140,7 @@ private fun List<StructuredMessage.Content>.toCarousel(): List<Message.Card> {
                             type = action.type,
                             text = action.text,
                             url = action.url,
-                            payload = "Button"
+                            payload = action.payload
                         )
                     }
                 )

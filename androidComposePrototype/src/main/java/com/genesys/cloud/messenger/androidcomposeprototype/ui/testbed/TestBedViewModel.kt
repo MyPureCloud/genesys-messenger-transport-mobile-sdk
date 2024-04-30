@@ -47,6 +47,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     private lateinit var client: MessagingClient
     private val attachedIds = mutableListOf<String>()
 
+
     var command: String by mutableStateOf("")
         private set
     var commandWaiting: Boolean by mutableStateOf(false)
@@ -170,9 +171,16 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     }
 
     private fun doSendCardReply(input: String) {
+        commandWaiting = false
         val components = input.split(" ", limit = 2)
         val card = components.firstOrNull()
         val inputAction = components.getOrNull(1) ?: ""
+        carouselMap[card]?.actions?.forEach {
+            if (it.type == "Link") {
+                openExternalLink(it.url, DefaultVault.context!!)
+            }
+            return
+        }
         carouselMap[card]?.let {
             it.actions.forEach { action ->
                 if (action.text == inputAction) {
@@ -180,8 +188,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
                         ButtonResponse(
                             text = action.text ?: "",
                             payload = action.payload ?: "",
-                            type = action.type
-                            //type = "Button"
+                            //type = action.type
+                            type = "Button"
                         )
                     )
                 }
