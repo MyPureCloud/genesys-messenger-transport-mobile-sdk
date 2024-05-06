@@ -32,28 +32,58 @@ MessageStore -> MessageStore: add message to Conversation
 MessageStore -> App: messageListener(MessageUpdated(Type.Text,"Welcome Message from bot"))
 App -> App: display text message in UI
 end
-Shyrka -> MessagingClient: onMessage(type = Type.Carousel, text = String, content = listOf(Cards(text,payload,action)))
+Shyrka -> MessagingClient: onMessage(type = Type.Carousel, text = String, content = listOf(Carousel/Cards)
+MessagingClient -> MessagingClient : Normalize the (Carousel/Cards) to listOf(Cards)
 MessagingClient -> MessageStore: update(Message)
 MessageStore -> MessageStore: add message to Conversation
-MessageStore -> App: messageListener(CarouselMessageReceived(Message(type:Type.Structured, content: List<Cards(title, description, image), Action(type, text, url, payload>))
+MessageStore -> App: messageListener(CardsReceived(Message(type:Type.Cards, content: List<Cards(title, description, image), Action(type, text, url, payload>)))
 App -> App: Display cards/carousel in UI
 
 alt #aaff8833 user selects cards/carousel option with ""Postback"
-App -> MessagingClient: doSendCardReply(input : String)
-MessagingClient -> MessageStore: sendQuickReply(quickReply: ButtonResponse)
+App -> MessagingClient: doSendCardReply(title : String)
+MessagingClient -> MessageStore: sendCardReply(cardReply: BotResponse)
 MessageStore -> MessageStore: add message to Conversation
 MessageStore --> MessagingClient: OnMessageRequest(text="",content="ButtonResponse(text=text,payload=payload,type="Button")))
-MessageStore -> App: messageListener(MessageInserted(Message(Type.QuickReply,ButtonResponse("SelectedQuickReply"), State.Sending))
+MessageStore -> App: messageListener(MessageInserted(Message(Type.Cards,ButtonResponse("SelectedQuickReply"), State.Sending))
 App -> App: Display as text message with State.Sending
 MessagingClient -> Shyrka: send(OnMessageRequest)
 Shyrka --> MessagingClient: response 200 (Success)
 else #aaff8833 user selects cards/carousel option with "Link"
-App -> MessagingClient: doSendCardReply(input : String)
 App -> App: Open link
+else #aaff8833 user sends a direct message
+App -> MessagingClient: sendMessage("user message")
+MessagingClient -> MessageStore: prepareMessage("user message")
+MessageStore -> MessageStore: add message to Conversation
+MessageStore --> MessagingClient: OnMessageRequest(text="user message")
+MessageStore -> App: messageListener(MessageInserted(Message(Type.Text,"user message", State.Sending))
+MessagingClient -> Shyrka: send(OnMessageRequest)
 else #ffaaff33 Failure (MessageTooLong,RequestRateTooHigh,CustomAttributeSizeTooLarge)
 MessagingClient -> MessageStore: updateMessageState(Message(State.Error))
 MessageStore -> App: messageListener(MessageUpdated(Message(Type.Text,State.Error)))
 App -> App: Display error message
+end
+
+rnote over MessagingClient
+  Given:
+  * newSession=false
+end rnote
+alt #aaff8833 Connection lost/ Session reconfigured
+App -> MessagingClient: connect
+MessagingClient -> Shyrka: configureSession
+Shyrka --> MessagingClient: SessionConfigured(newSession=false)
+App -> MessagingClient: fetchNextPage()
+MessagingClient -> Shyrka: getJwtToken
+Shyrka --> MessagingClient:  jwt
+MessagingClient -> GenesysCloud: fetch history
+GenesysCloud --> MessagingClient: history response
+MessagingClient -> MessagingClient: parse history response.
+ rnote over App
+   All non consumed (Carousel/Cards) will be part of history response. Including the options.
+ end rnote
+MessagingClient -> MessageStore: updateMessageHistory
+MessageStore -> MessageStore: add messages to Conversation
+MessageStore -> App: messageListener(MessageEvent.HistoryFetched)
+
 end
 
 @enduml
