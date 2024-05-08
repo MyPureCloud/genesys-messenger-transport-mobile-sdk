@@ -153,6 +153,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "refreshAttachment" -> doRefreshAttachmentUrl(input)
             "savedFileName" -> doChangeFileName(input)
             "fileAttachmentProfile" -> doFileAttachmentProfile()
+            "removeToken" -> doRemoveTokenFromVault()
+            "removeAuthRefreshToken" -> doRemoveAuthRefreshTokenFromVault()
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
@@ -353,6 +355,20 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             redirectUri = BuildConfig.SIGN_IN_REDIRECT_URI,
             codeVerifier = if (pkceEnabled) BuildConfig.CODE_VERIFIER else null
         )
+    }
+
+    private fun doRemoveTokenFromVault() {
+        messengerTransport.vault.run {
+            remove(keys.tokenKey)
+            commandWaiting = false
+        }
+    }
+
+    private fun doRemoveAuthRefreshTokenFromVault() {
+        messengerTransport.vault.run {
+            remove(keys.authRefreshTokenKey)
+            commandWaiting = false
+        }
     }
 
     private fun onClientStateChanged(oldState: State, newState: State) {

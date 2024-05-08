@@ -26,6 +26,7 @@ import platform.Foundation.CFBridgingRetain
 import platform.Foundation.NSData
 import platform.Security.SecItemAdd
 import platform.Security.SecItemCopyMatching
+import platform.Security.SecItemDelete
 import platform.Security.SecItemUpdate
 import platform.Security.kSecAttrAccount
 import platform.Security.kSecAttrService
@@ -53,6 +54,16 @@ internal class InternalVault(private val serviceName: String) {
      * @return The stored string value, or null if it is missing
      */
     fun string(forKey: String): String? = value(forKey)?.string()
+
+    fun remove(key: String) = context(key) { (account) ->
+        val query = query(
+            kSecClass to kSecClassGenericPassword,
+            kSecAttrAccount to account
+        )
+
+        SecItemDelete(query)
+            .validate()
+    }
 
     private fun existsObject(forKey: String): Boolean = context(forKey) { (account) ->
         val query = query(
