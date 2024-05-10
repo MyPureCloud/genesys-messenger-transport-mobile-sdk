@@ -1,5 +1,6 @@
 package com.genesys.cloud.messenger.transport.util
 
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
 import platform.Foundation.NSData
@@ -14,6 +15,7 @@ class TransportUtil {
      *
      * @return the resulting KotlinByteArray.
      */
+    @OptIn(ExperimentalForeignApi::class)
     fun nsDataToKotlinByteArray(data: NSData): ByteArray {
         return ByteArray(data.length.toInt()).apply {
             usePinned {

@@ -7,6 +7,7 @@ package com.genesys.cloud.messenger.transport.core
 
 import com.genesys.cloud.messenger.transport.util.extensions.string
 import com.genesys.cloud.messenger.transport.util.extensions.toNSData
+import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
@@ -47,6 +48,7 @@ internal class InternalVault(private val serviceName: String) {
      * @param stringValue The value to store
      * @return True or false, depending on whether the value has been stored in the Keychain
      */
+    @BetaInteropApi
     fun set(key: String, stringValue: String): Boolean = addOrUpdate(key, stringValue.toNSData())
 
     /**
@@ -54,8 +56,10 @@ internal class InternalVault(private val serviceName: String) {
      * @param forKey The key to query
      * @return The stored string value, or null if it is missing
      */
+    @BetaInteropApi
     fun string(forKey: String): String? = value(forKey)?.string()
 
+    @BetaInteropApi
     fun remove(key: String) = context(key) { (account) ->
         val query = query(
             kSecClass to kSecClassGenericPassword,
