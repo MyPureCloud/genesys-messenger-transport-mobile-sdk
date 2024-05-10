@@ -7,10 +7,10 @@ import platform.Foundation.NSUTF8StringEncoding
 import platform.Foundation.create
 import platform.Foundation.dataUsingEncoding
 
-@BetaInteropApi
+@OptIn(BetaInteropApi::class)
 internal fun NSData.string(): String? =
     NSString.create(data = this, encoding = NSUTF8StringEncoding)?.toString()
 
-@BetaInteropApi
+@OptIn(BetaInteropApi::class)
 internal fun String.toNSData(): NSData? =
     NSString.create(string = this).dataUsingEncoding(NSUTF8StringEncoding)

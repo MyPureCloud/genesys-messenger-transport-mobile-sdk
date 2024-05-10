@@ -49,7 +49,7 @@ internal actual class PlatformSocket actual constructor(
         get() = webSocket != null
     private var waitingOnPong = false
 
-    @BetaInteropApi
+    @OptIn(BetaInteropApi::class)
     actual fun openSocket(listener: PlatformSocketListener) {
         val urlRequest = NSMutableURLRequest(socketEndpoint)
         urlRequest.setValue(url.host, forHTTPHeaderField = "Origin")
@@ -187,7 +187,7 @@ internal actual class PlatformSocket actual constructor(
      * Deactivates the webSocket connection per `deactivate()`.
      * Attempt to send a final close frame with the given code and reason without `listener.onClosed()` being called.
      */
-    @BetaInteropApi
+    @OptIn(BetaInteropApi::class)
     private fun deactivateAndCancelWebSocket(code: Int, reason: String?) {
         log.i { LogMessages.deactivateWithCloseCode(code, reason) }
         val webSocketRef = webSocket
