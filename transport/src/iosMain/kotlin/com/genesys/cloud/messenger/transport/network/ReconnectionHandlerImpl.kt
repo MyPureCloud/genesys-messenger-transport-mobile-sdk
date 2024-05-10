@@ -3,10 +3,11 @@ package com.genesys.cloud.messenger.transport.network
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import kotlin.concurrent.AtomicInt
+import kotlinx.cinterop.ExperimentalForeignApi
 
 internal const val TIMEOUT_INTERVAL = 30.0
 
-@OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+@ExperimentalForeignApi
 internal actual class ReconnectionHandlerImpl actual constructor(
     reconnectionTimeoutInSeconds: Long,
     private val log: Log,

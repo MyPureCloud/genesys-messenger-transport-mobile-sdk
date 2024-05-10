@@ -15,7 +15,7 @@ class TransportUtil {
      *
      * @return the resulting KotlinByteArray.
      */
-    @OptIn(ExperimentalForeignApi::class)
+    @ExperimentalForeignApi
     fun nsDataToKotlinByteArray(data: NSData): ByteArray {
         return ByteArray(data.length.toInt()).apply {
             usePinned {

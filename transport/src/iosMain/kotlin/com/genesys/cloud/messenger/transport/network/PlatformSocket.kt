@@ -8,6 +8,7 @@ import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.ktor.http.Url
 import kotlinx.cinterop.BetaInteropApi
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.convert
 import platform.Foundation.NSData
 import platform.Foundation.NSError
@@ -30,7 +31,7 @@ import platform.darwin.NSObject
 import platform.posix.ENOTCONN
 import platform.posix.ETIMEDOUT
 
-@OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+@ExperimentalForeignApi
 internal actual class PlatformSocket actual constructor(
     private val log: Log,
     private val url: Url,
