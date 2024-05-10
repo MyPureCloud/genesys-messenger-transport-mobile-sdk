@@ -52,7 +52,7 @@ android {
         create("testDebugApi")
         create("testReleaseApi")
     }
-    packagingOptions {
+    packaging {
         resources {
             excludes += "META-INF/*.kotlin_module"
             excludes += "META-INF/LICENSE.md"
@@ -63,7 +63,14 @@ android {
 }
 
 kotlin {
-    android {
+    targets.configureEach {
+        compilations.configureEach {
+            compilerOptions.configure {
+                freeCompilerArgs.add("-Xexpect-actual-classes")
+            }
+        }
+    }
+    androidTarget {
         compilations.all {
             kotlinOptions {
                 jvmTarget = Deps.Android.jvmTarget
@@ -80,7 +87,7 @@ kotlin {
         iosSimulatorArm64()
     ).forEach {
         it.binaries.framework {
-            embedBitcode = BitcodeEmbeddingMode.DISABLE
+            embedBitcodeMode = BitcodeEmbeddingMode.DISABLE
             baseName = iosFrameworkName
             xcf.add(this)
         }
