@@ -1,14 +1,23 @@
 package com.genesys.cloud.messenger.transport.network
 
+import assertk.assertThat
+import assertk.assertions.isEqualToWithGivenProperties
 import com.genesys.cloud.messenger.transport.auth.AuthJwt
 import com.genesys.cloud.messenger.transport.core.Configuration
+import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.mockHttpClientWith
+import com.genesys.cloud.messenger.transport.network.test_engines.UPLOAD_FILE_PATH
+import com.genesys.cloud.messenger.transport.network.test_engines.UPLOAD_FILE_SIZE
 import com.genesys.cloud.messenger.transport.network.test_engines.authorizeEngine
 import com.genesys.cloud.messenger.transport.network.test_engines.historyEngine
+import com.genesys.cloud.messenger.transport.network.test_engines.invalidHeaders
 import com.genesys.cloud.messenger.transport.network.test_engines.logoutEngine
 import com.genesys.cloud.messenger.transport.network.test_engines.refreshTokenEngine
+import com.genesys.cloud.messenger.transport.network.test_engines.uploadFileEngine
+import com.genesys.cloud.messenger.transport.network.test_engines.validHeaders
+import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.DEFAULT_TIMEOUT
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
@@ -16,6 +25,7 @@ import com.genesys.cloud.messenger.transport.utility.InvalidValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.mock.MockEngineConfig
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
@@ -26,7 +36,7 @@ class WebMessagingApiTest {
     private lateinit var subject: WebMessagingApi
 
     @Test
-    fun whenFetchHistory() {
+    fun `when fetchHistory`() {
         subject = buildWebMessagingApiWith { historyEngine() }
         val expectedEntityList = Result.Success(TestWebMessagingApiResponses.testMessageEntityList)
 
@@ -40,7 +50,7 @@ class WebMessagingApiTest {
     }
 
     @Test
-    fun whenFetchHistoryAndThereAreNoHistory() {
+    fun `when fetchHistory but there is no history`() {
         subject = buildWebMessagingApiWith { historyEngine() }
 
         val expectedEntityList = Result.Success(TestWebMessagingApiResponses.emptyMessageEntityList)
@@ -55,7 +65,7 @@ class WebMessagingApiTest {
     }
 
     @Test
-    fun whenFetchHistoryResultsInUnexpectedError() {
+    fun `when fetchHistory results in Unexpected Error`() {
         subject = buildWebMessagingApiWith { historyEngine() }
         val expectedEntityList = Result.Failure(ErrorCode.UnexpectedError, ErrorTest.Message)
 
@@ -69,7 +79,7 @@ class WebMessagingApiTest {
     }
 
     @Test
-    fun whenFetchHistoryResultsInCancellationException() {
+    fun `when fetchHistory results in CancellationException`() {
         subject = buildWebMessagingApiWith { historyEngine() }
         val expectedEntityList = Result.Failure(ErrorCode.CancellationError, ErrorTest.Message)
 
@@ -83,7 +93,53 @@ class WebMessagingApiTest {
     }
 
     @Test
-    fun fetchAuthJwtShouldReturnResultSuccessWithAuthJwtWhenRequestIsSuccessful() {
+    fun `when uploadFile with valid headers`() {
+        subject = buildWebMessagingApiWith { uploadFileEngine() }
+        val expectedResult = Result.Success(Empty())
+
+        val givenPresignedUrlResponse = PresignedUrlResponse(
+            attachmentId = "99999999-9999-9999-9999-999999999999",
+            url = UPLOAD_FILE_PATH,
+            fileName = "image.png",
+            headers = validHeaders
+        )
+
+        val result = runBlocking {
+            subject.uploadFile(
+                presignedUrlResponse = givenPresignedUrlResponse,
+                byteArray = ByteArray(UPLOAD_FILE_SIZE.toInt()),
+                progressCallback = { /* mock progress callback */ }
+            )
+        }
+
+        assertThat(result).isEqualToWithGivenProperties(expectedResult)
+    }
+
+    @Test
+    fun `when uploadFile with invalid headers`() {
+        subject = buildWebMessagingApiWith { uploadFileEngine() }
+        val givenPresignedUrlResponse = PresignedUrlResponse(
+            attachmentId = "99999999-9999-9999-9999-999999999999",
+            url = UPLOAD_FILE_PATH,
+            fileName = "image.png",
+            headers = invalidHeaders
+        )
+
+        val expectedResult = Result.Failure(ErrorCode.mapFrom(HttpStatusCode.NotFound.value), "Not found")
+
+        val result = runBlocking {
+            subject.uploadFile(
+                presignedUrlResponse = givenPresignedUrlResponse,
+                byteArray = ByteArray(UPLOAD_FILE_SIZE.toInt()),
+                progressCallback = { /* mock progress callback */ }
+            )
+        }
+
+        assertThat(result).isEqualToWithGivenProperties(expectedResult)
+    }
+
+    @Test
+    fun `when fetchAuthJwt is successful`() {
         subject = buildWebMessagingApiWith { authorizeEngine() }
         val expectedResult = Result.Success(AuthJwt(AuthTest.JwtToken, AuthTest.RefreshToken))
 
@@ -99,7 +155,7 @@ class WebMessagingApiTest {
     }
 
     @Test
-    fun fetchShouldReturnResultFailureWhenRequestBodyHasBrokenParams() {
+    fun `when fetchAuthJwt request body has invalid params`() {
         val brokenConfigurations = Configuration(
             deploymentId = InvalidValues.DeploymentId,
             domain = InvalidValues.Domain,
@@ -121,7 +177,7 @@ class WebMessagingApiTest {
     }
 
     @Test
-    fun fetchShouldReturnResultFailureWhenCancellationExceptionIsThrown() {
+    fun `fetch should return result Failure when CancellationException is thrown`() {
         val brokenConfigurations = Configuration(
             deploymentId = InvalidValues.CancellationException,
             domain = InvalidValues.Domain,
@@ -143,7 +199,7 @@ class WebMessagingApiTest {
     }
 
     @Test
-    fun fetchShouldReturnResultFailureWhenUnknownExceptionIsThrown() {
+    fun `fetch should return result Failure when UnknownException is thrown`() {
         val brokenConfigurations = Configuration(
             deploymentId = InvalidValues.UnknownException,
             domain = InvalidValues.Domain,
@@ -165,7 +221,7 @@ class WebMessagingApiTest {
     }
 
     @Test
-    fun whenLogoutFromAuthenticatedSessionWithValidJwt() {
+    fun `when logoutFromAuthenticatedSession with valid jwt`() {
         subject = buildWebMessagingApiWith { logoutEngine() }
 
         val result = runBlocking { subject.logoutFromAuthenticatedSession(jwt = AuthTest.JwtToken) }
@@ -174,7 +230,7 @@ class WebMessagingApiTest {
     }
 
     @Test
-    fun whenLogoutFromAuthenticatedSessionWithUnauthorizedJwt() {
+    fun `when logoutFromAuthenticatedSession with unauthorized jwt`() {
         subject = buildWebMessagingApiWith { logoutEngine() }
         val expectedResult = Result.Failure(ErrorCode.ClientResponseError(401), "You are not authorized")
 
@@ -185,7 +241,7 @@ class WebMessagingApiTest {
     }
 
     @Test
-    fun whenLogoutFromAuthenticatedSessionResultInCancellationException() {
+    fun `when logoutFromAuthenticatedSession result in CancellationException`() {
         subject = buildWebMessagingApiWith { logoutEngine() }
         val expectedResult = Result.Failure(ErrorCode.CancellationError, ErrorTest.Message)
 
@@ -196,7 +252,7 @@ class WebMessagingApiTest {
     }
 
     @Test
-    fun whenLogoutFromAuthenticatedSessionResultInUnknownException() {
+    fun `when logoutFromAuthenticatedSession result in UnknownException`() {
         subject = buildWebMessagingApiWith { logoutEngine() }
         val expectedResult = Result.Failure(ErrorCode.AuthLogoutFailed, ErrorTest.Message)
 
@@ -207,7 +263,7 @@ class WebMessagingApiTest {
     }
 
     @Test
-    fun whenLogoutFromAuthenticatedSessionWithInvalidJwt() {
+    fun `when logoutFromAuthenticatedSession with invalid jwt`() {
         subject = buildWebMessagingApiWith { logoutEngine() }
         val expectedResult = Result.Failure(ErrorCode.AuthLogoutFailed, "Bad Request")
 
@@ -218,7 +274,7 @@ class WebMessagingApiTest {
     }
 
     @Test
-    fun whenRefreshTokenWithValidRefreshToken() {
+    fun `when refreshToken with valid refreshToken`() {
         subject = buildWebMessagingApiWith { refreshTokenEngine() }
         val expectedResult = Result.Success(AuthJwt(AuthTest.RefreshedJWTToken, null))
 
@@ -228,7 +284,7 @@ class WebMessagingApiTest {
     }
 
     @Test
-    fun whenRefreshTokenWithUnauthorizedRefreshToken() {
+    fun `when refreshToken with unauthorized refreshToken`() {
         subject = buildWebMessagingApiWith { refreshTokenEngine() }
         val expectedResult = Result.Failure(ErrorCode.RefreshAuthTokenFailure, "Bad Request")
 
@@ -239,7 +295,7 @@ class WebMessagingApiTest {
     }
 
     @Test
-    fun whenRefreshTokenResultInCancellationException() {
+    fun `when refreshToken result in CancellationException`() {
         subject = buildWebMessagingApiWith { refreshTokenEngine() }
         val expectedResult = Result.Failure(ErrorCode.CancellationError, ErrorTest.Message)
 
@@ -250,7 +306,7 @@ class WebMessagingApiTest {
     }
 
     @Test
-    fun whenRefreshTokenResultInUnknownException() {
+    fun `when refreshToken result in UnknownException`() {
         subject = buildWebMessagingApiWith { refreshTokenEngine() }
         val expectedResult = Result.Failure(ErrorCode.RefreshAuthTokenFailure, ErrorTest.Message)
 

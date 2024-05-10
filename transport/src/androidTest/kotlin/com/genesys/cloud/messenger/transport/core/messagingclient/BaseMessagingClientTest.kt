@@ -91,6 +91,7 @@ open class BaseMessagingClientTest {
             token = Request.token,
             attachmentId = "88888888-8888-8888-8888-888888888888"
         )
+        every { fileAttachmentProfile } returns null
     }
     internal val mockPlatformSocket: PlatformSocket = mockk {
         every { openSocket(capture(slot)) } answers {
@@ -201,6 +202,7 @@ open class BaseMessagingClientTest {
             mockAuthHandler.jwt // use jwt for request
         }
         mockPlatformSocket.sendMessage(configureRequest)
+        mockAttachmentHandler.fileAttachmentProfile = any()
         mockReconnectionHandler.clear()
         mockJwtHandler.clear()
         mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
@@ -216,6 +218,7 @@ open class BaseMessagingClientTest {
         mockStateChangedListener(fromConnectingToConnected)
         mockLogger.i(capture(logSlot))
         mockPlatformSocket.sendMessage(Request.configureRequest())
+        mockAttachmentHandler.fileAttachmentProfile = any()
         mockReconnectionHandler.clear()
         mockJwtHandler.clear()
         mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes

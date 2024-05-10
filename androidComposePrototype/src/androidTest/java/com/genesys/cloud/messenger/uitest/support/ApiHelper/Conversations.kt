@@ -42,6 +42,13 @@ data class Participant(
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+data class Media(
+    val id: String,
+    val uploadUrl: String,
+    val Status: String
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class CallDetails(
     val state: String,
     val id: String
@@ -177,4 +184,14 @@ fun API.disconnectAllConversations() {
 fun API.checkForConversationMessages(conversationId: String) {
     val listOfMessages = getConversationInfo(conversationId).getParticipantFromPurpose("agent")?.messages?.toList()
     if (listOfMessages != null) AssertionError("Conversation still has messages associated with it but should not")
+}
+
+fun API.attachImage(conversationInfo: Conversation) {
+    val agentParticipant = conversationInfo.getParticipantFromPurpose("agent")
+    val communicationId = conversationInfo.getCommunicationId(agentParticipant!!)
+    val mediaResult = publicApiCall(
+        "POST",
+        "/api/v2/conversations/messages/${conversationInfo.id}/communications/$communicationId/messages/media"
+    )
+    val result: Media = parseJsonToClass(mediaResult)
 }

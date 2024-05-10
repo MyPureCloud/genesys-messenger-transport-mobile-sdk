@@ -3,7 +3,7 @@ package com.genesys.cloud.messenger.transport.core
 import com.genesys.cloud.messenger.transport.util.Vault
 import java.lang.IllegalArgumentException
 
-class FakeVault(private val keys: Keys) : Vault(keys) {
+class FakeVault(keys: Keys) : Vault(keys) {
 
     private var fakeJwtToken: String? = null
     private var fakeAuthRefreshToken: String? = null
@@ -21,6 +21,14 @@ class FakeVault(private val keys: Keys) : Vault(keys) {
             keys.authRefreshTokenKey -> fakeAuthRefreshToken
             keys.tokenKey -> fakeJwtToken
             else -> null
+        }
+    }
+
+    override fun remove(key: String) {
+        when (key) {
+            keys.authRefreshTokenKey -> fakeAuthRefreshToken = null
+            keys.tokenKey -> fakeJwtToken = null
+            else -> throw IllegalArgumentException("Key is not supported in FakeVault.")
         }
     }
 }

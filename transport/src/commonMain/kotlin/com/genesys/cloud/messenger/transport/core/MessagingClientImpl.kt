@@ -35,6 +35,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.ClearConversationReques
 import com.genesys.cloud.messenger.transport.shyrka.send.CloseSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureAuthenticatedSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.GetAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
@@ -42,6 +43,8 @@ import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.extensions.isHealthCheckResponseId
 import com.genesys.cloud.messenger.transport.util.extensions.isOutbound
+import com.genesys.cloud.messenger.transport.util.extensions.isRefreshUrl
+import com.genesys.cloud.messenger.transport.util.extensions.toFileAttachmentProfile
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.util.logs.Log
@@ -120,6 +123,9 @@ internal class MessagingClientImpl(
 
     override val customAttributesStore: CustomAttributesStore
         get() = internalCustomAttributesStore
+
+    override val fileAttachmentProfile: FileAttachmentProfile?
+        get() = attachmentHandler.fileAttachmentProfile
 
     @Throws(IllegalStateException::class)
     override fun connect() {
@@ -203,6 +209,7 @@ internal class MessagingClientImpl(
         }
     }
 
+    @Throws(IllegalStateException::class, IllegalArgumentException::class)
     override fun attach(
         byteArray: ByteArray,
         fileName: String,
@@ -226,6 +233,19 @@ internal class MessagingClientImpl(
         attachmentHandler.detach(attachmentId)?.let {
             val encodedJson = WebMessagingJson.json.encodeToString(it)
             send(encodedJson)
+        }
+    }
+
+    @Throws(IllegalStateException::class)
+    override fun refreshAttachmentUrl(attachmentId: String) {
+        WebMessagingJson.json.encodeToString(
+            GetAttachmentRequest(
+                token = token,
+                attachmentId = attachmentId
+            )
+        ).also {
+            log.i { "getAttachmentRequest()" }
+            send(it)
         }
     }
 
@@ -346,6 +366,7 @@ internal class MessagingClientImpl(
     }
 
     private fun handleSessionResponse(sessionResponse: SessionResponse) = sessionResponse.run {
+        attachmentHandler.fileAttachmentProfile = createFileAttachmentProfile(this)
         reconnectionHandler.clear()
         jwtHandler.clear()
         internalCustomAttributesStore.maxCustomDataBytes = this.maxCustomDataBytes
@@ -604,9 +625,13 @@ internal class MessagingClientImpl(
                     is JwtResponse ->
                         jwtHandler.jwtResponse = decoded.body
 
-                    is PresignedUrlResponse ->
-                        attachmentHandler.upload(decoded.body)
-
+                    is PresignedUrlResponse -> {
+                        if (decoded.body.isRefreshUrl()) {
+                            attachmentHandler.onAttachmentRefreshed(decoded.body)
+                        } else {
+                            attachmentHandler.upload(decoded.body)
+                        }
+                    }
                     is UploadSuccessEvent ->
                         attachmentHandler.onUploadSuccess(decoded.body)
 
@@ -680,6 +705,12 @@ internal class MessagingClientImpl(
             stateMachine.onClosed(code, reason)
             cleanUp()
         }
+    }
+
+    private fun createFileAttachmentProfile(sessionResponse: SessionResponse): FileAttachmentProfile {
+        val fileUpload = deploymentConfig.get()?.messenger?.fileUpload
+        return fileUpload?.enableAttachments?.let { sessionResponse.toFileAttachmentProfile() }
+            ?: fileUpload.toFileAttachmentProfile()
     }
 }
 

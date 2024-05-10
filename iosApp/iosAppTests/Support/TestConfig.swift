@@ -8,6 +8,7 @@
 
 import Foundation
 import XCTest
+import MessengerTransport
 
 struct Config: Codable {
     public let agentToken: String
@@ -57,5 +58,34 @@ struct TestConfig {
             XCTFail("Cannot load test PNG.")
             return nil
         }
+    }
+
+    func pullConfigDataAsKotlinByteArray() -> KotlinByteArray? {
+        let url = Bundle.main.bundleURL.appendingPathComponent("PlugIns/iosAppTests.xctest/config.json")
+        do {
+            let data = (try Data(contentsOf: url)) as NSData
+            let swiftByteArray: [UInt8] = data.toByteArray()
+            let intArray : [Int8] = swiftByteArray
+                .map { Int8(bitPattern: $0) }
+            let kotlinByteArray: KotlinByteArray = KotlinByteArray.init(size: Int32(swiftByteArray.count))
+            for (index, element) in intArray.enumerated() {
+                kotlinByteArray.set(index: Int32(index), value: element)
+            }
+            return kotlinByteArray
+        } catch {
+            XCTFail("Cannot load test config or failed to parse into a KotlinByteArray")
+            return nil
+        }
+    }
+}
+
+extension NSData {
+    func toByteArray() -> [UInt8] {
+        let count = self.length / MemoryLayout<Int8>.size
+        var bytes = [UInt8](repeating: 0, count: count)
+
+        self.getBytes(&bytes, length:count * MemoryLayout<Int8>.size)
+
+        return bytes
     }
 }

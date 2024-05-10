@@ -15,7 +15,7 @@ void setBuildStatus(String message, String state) {
 
 pipeline{
     agent{
-        label "mmsdk"
+        label "mobile-sdk-test"
     }
     options{
         parallelsAlwaysFailFast()
@@ -54,7 +54,7 @@ pipeline{
         }
         stage("CI Unit Tests"){
             steps{
-                sh './gradlew :transport:test :transport:jacocoTestReportDebug :transport:jacocoTestReportRelease'
+                sh './gradlew :transport:test :transport:koverXmlReportDebug :transport:koverXmlReportRelease '
                 jacoco classPattern: '**/kotlin-classes/debug,**/kotlin-classes/release', inclusionPattern: '**/*.class', sourcePattern: '**/src/*main/kotlin'
             }
         }

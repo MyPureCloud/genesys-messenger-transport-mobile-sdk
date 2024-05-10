@@ -91,8 +91,8 @@ internal object LogMessages {
     const val MESSAGE_DECODED_NULL = "Message decoded as null."
     fun cancellationExceptionRequestName(requestName: String) =
         "Cancellation exception was thrown, while running $requestName request."
-    fun cancellationExceptionAttachmentUpload(attachment: Attachment) =
-        "Cancellation exception during attachment upload: $attachment"
+    fun cancellationExceptionAttachmentUpload(attachmentId: String) =
+        "Cancellation exception during attachment upload: $attachmentId"
     fun unhandledErrorCode(code: ErrorCode, message: String?) =
         "Unhandled ErrorCode: $code with optional message: $message"
     fun unhandledWebSocketError(errorCode: ErrorCode) =

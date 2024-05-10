@@ -112,6 +112,19 @@ interface MessagingClient {
     val customAttributesStore: CustomAttributesStore
 
     /**
+     * Represents the configuration for supported content profiles in the Admin Console.
+     *
+     * This property contains information about the allowed and blocked file extensions, maximum file size,
+     * and whether a wildcard is present in the allowed file types list.
+     *
+     * If an attempt is made to upload a file with an extension that is not included in the `allowedFileTypes` list,
+     * it will result in an `IllegalArgumentException` when using the [attach] function.
+     *
+     * NOTE: `fileAttachmentProfile` should be accessible (not null) once `MessagingClient` has transitioned to `State.Configured`.
+     */
+    val fileAttachmentProfile: FileAttachmentProfile?
+
+    /**
      * Open and Configure a secure WebSocket connection to the Web Messaging service with the url and
      * deploymentId configured on this MessagingClient instance.
      *
@@ -179,9 +192,10 @@ interface MessagingClient {
      * @param uploadProgress optional callback to track attachment upload progress.
      *
      * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
+     * @throws IllegalArgumentException If provided file size exceeds [FileAttachmentProfile.maxFileSizeKB].
      * @return internally generated attachmentId. Can be used to track upload progress
      */
-    @Throws(IllegalStateException::class)
+    @Throws(IllegalStateException::class, IllegalArgumentException::class)
     fun attach(
         byteArray: ByteArray,
         fileName: String,
@@ -198,6 +212,19 @@ interface MessagingClient {
      */
     @Throws(IllegalStateException::class)
     fun detach(attachmentId: String)
+
+    /**
+     * Refreshes the downloadUrl for a given attachment.
+     * The `downloadUrl` of an attachment typically expires after 10 minutes.
+     * If this URL is consumed after the expiration period, it will result in an error.
+     * To mitigate this, the `refreshAttachmentUrl` function can be used to obtain a new valid `downloadUrl` for the specified attachment.
+     *
+     * @param attachmentId the ID of the attachment to refresh.
+     *
+     * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
+     */
+    @Throws(IllegalStateException::class)
+    fun refreshAttachmentUrl(attachmentId: String)
 
     /**
      * Get message history for a conversation.

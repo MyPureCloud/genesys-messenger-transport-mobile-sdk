@@ -27,4 +27,6 @@ internal object Request {
     const val clearConversation =
         """{"token":"$token","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Clear"}}],"type":"Event"}}"""
     const val jwt = """{"token":"00000000-0000-0000-0000-000000000000","action":"getJwt"}"""
+    const val refreshAttachmentUrl =
+        """{"token":"$token","attachmentId":"88888888-8888-8888-8888-888888888888","action":"getAttachment"}"""
 }

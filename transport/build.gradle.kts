@@ -13,6 +13,7 @@ plugins {
     id("signing")
     id("transportValidationPlugin")
     id("com.codingfeline.buildkonfig")
+    id("org.jetbrains.kotlinx.kover") version "0.7.6"
 }
 
 version = project.rootProject.version
@@ -267,4 +268,6 @@ signing {
     sign(publishing.publications)
 }
 
-//apply(from = "${rootDir}/jacoco.gradle.kts")
+kover {
+    useJacoco()
+}

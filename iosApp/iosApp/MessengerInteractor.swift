@@ -46,7 +46,11 @@ final class MessengerInteractor {
             self?.eventSubject.send(event)
         }
     }
-    
+
+    func getFileAttachmentProfile() -> FileAttachmentProfile? {
+        return messagingClient.fileAttachmentProfile
+    }
+
     func authorize(authCode: String, redirectUri: String, codeVerifier: String?) {
         messagingClient.authorize(authCode: authCode, redirectUri: redirectUri, codeVerifier: codeVerifier)
     }
@@ -129,13 +133,22 @@ final class MessengerInteractor {
         }
     }
 
-    func attachImage(kotlinByteArray: KotlinByteArray, fileName: String = "image.png") throws {
+    func attachImage(kotlinByteArray: KotlinByteArray, fileName: String) throws {
         do {
             try messagingClient.attach(byteArray: kotlinByteArray, fileName: fileName, uploadProgress: { progress in
                 print("Attachment upload progress: \(progress)")
             })
         } catch {
             print("attachImage(kotlinByteArray:) failed. \(error.localizedDescription)")
+            throw error
+        }
+    }    
+    
+    func refreshAttachmentUrl(attachId: String) throws {
+        do {
+            try messagingClient.refreshAttachmentUrl(attachmentId: attachId)
+        } catch {
+            print("refreshAttachmentUrl(attachId:) failed. \(error.localizedDescription)")
             throw error
         }
     }
@@ -177,5 +190,15 @@ final class MessengerInteractor {
     
     func addCustomAttributes(customAttributes: [String: String] = [:]) -> Bool {
          return messagingClient.customAttributesStore.add(customAttributes: customAttributes)
+    }
+    
+    func removeToken() {
+        let tokenKey = messengerTransport.vault.keys.tokenKey
+        messengerTransport.vault.remove(key: tokenKey)
+    }
+    
+    func removeAuthRefreshToken() {
+        let authRefreshTokenKey = messengerTransport.vault.keys.authRefreshTokenKey
+        messengerTransport.vault.remove(key: authRefreshTokenKey)
     }
 }

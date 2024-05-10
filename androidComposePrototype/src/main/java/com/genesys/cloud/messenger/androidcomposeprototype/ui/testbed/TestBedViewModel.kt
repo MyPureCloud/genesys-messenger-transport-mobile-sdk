@@ -13,6 +13,7 @@ import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
+import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
 import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessageEvent.AttachmentUpdated
 import com.genesys.cloud.messenger.transport.core.MessagingClient
@@ -28,7 +29,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
-private const val ATTACHMENT_FILE_NAME = "test_asset.png"
+private const val SAVED_ATTACHMENT_FILE_NAME = "test_asset.png"
 
 class TestBedViewModel : ViewModel(), CoroutineScope {
 
@@ -38,7 +39,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private lateinit var messengerTransport: MessengerTransportSDK
     private lateinit var client: MessagingClient
-    private lateinit var attachment: ByteArray
     private val attachedIds = mutableListOf<String>()
 
     var command: String by mutableStateOf("")
@@ -72,13 +72,16 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     val regions = listOf("inindca.com", "inintca.com", "mypurecloud.com", "usw2.pure.cloud", "mypurecloud.jp", "mypurecloud.com.au", "mypurecloud.de", "euw2.pure.cloud", "cac1.pure.cloud", "apne2.pure.cloud", "aps1.pure.cloud", "sae1.pure.cloud", "mec1.pure.cloud", "apne3.pure.cloud", "euc2.pure.cloud")
     private lateinit var onOktaSingIn: (url: String) -> Unit
     private val quickRepliesMap = mutableMapOf<String, ButtonResponse>()
+    private lateinit var selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit
 
     fun init(
         context: Context,
+        selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit,
         onOktaSignIn: (url: String) -> Unit,
     ) {
         println("Messenger Transport sdkVersion: ${MessengerTransportSDK.sdkVersion}")
         this.onOktaSingIn = onOktaSignIn
+        this.selectFile = selectFile
         val mmsdkConfiguration = Configuration(
             deploymentId = deploymentId.ifEmpty { BuildConfig.DEPLOYMENT_ID },
             domain = region.ifEmpty { BuildConfig.DEPLOYMENT_DOMAIN },
@@ -102,10 +105,10 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             eventListener = { onEvent(it) }
             clientState = client.currentState
         }
-        viewModelScope.launch(Dispatchers.IO) {
-            context.assets.open(ATTACHMENT_FILE_NAME).use { inputStream ->
-                inputStream.readBytes().also { attachment = it }
-            }
+
+        // Loading saved attachment example.
+        context.assets.open(SAVED_ATTACHMENT_FILE_NAME).use { inputStream ->
+            inputStream.readBytes().also { attachment = it }
         }
     }
 
@@ -135,6 +138,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "history" -> fetchNextPage()
             "healthCheck" -> doSendHealthCheck()
             "attach" -> doAttach()
+            "attachSavedImage" -> doAttachSavedImage()
             "detach" -> doDetach(input)
             "deployment" -> doDeployment()
             "invalidateConversationCache" -> doInvalidateConversationCache()
@@ -146,6 +150,11 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "oktaLogout" -> logoutFromOktaSession()
             "authorize" -> doAuthorize()
             "clearConversation" -> doClearConversation()
+            "refreshAttachment" -> doRefreshAttachmentUrl(input)
+            "savedFileName" -> doChangeFileName(input)
+            "fileAttachmentProfile" -> doFileAttachmentProfile()
+            "removeToken" -> doRemoveTokenFromVault()
+            "removeAuthRefreshToken" -> doRemoveAuthRefreshTokenFromVault()
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
@@ -254,10 +263,22 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     }
 
     private fun doAttach() {
+        client.fileAttachmentProfile?.let {
+            if (it.allowedFileTypes.isNotEmpty() || it.hasWildCard) {
+                selectFile(it)
+            } else {
+                onSocketMessageReceived("Allowed file types is empty. Can not launch file picker.")
+            }
+        } ?: onSocketMessageReceived("FileAttachmentProfile is not set. Can not launch file picker.")
+    }
+
+    private var sendFileName = SAVED_ATTACHMENT_FILE_NAME
+    private lateinit var attachment: ByteArray
+    private fun doAttachSavedImage() {
         try {
             client.attach(
                 attachment,
-                ATTACHMENT_FILE_NAME
+                sendFileName
             ) { progress -> println("Attachment upload progress: $progress") }.also {
                 attachedIds.add(it)
             }
@@ -272,6 +293,23 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         } catch (t: Throwable) {
             handleException(t, "detach")
         }
+    }
+
+    private fun doRefreshAttachmentUrl(attachmentId: String) {
+        try {
+            client.refreshAttachmentUrl(attachmentId)
+        } catch (t: Throwable) {
+            handleException(t, "refreshAttachmentUrl")
+        }
+    }
+
+    private fun doFileAttachmentProfile() =
+        onSocketMessageReceived("FileAttachmentProfile: ${client.fileAttachmentProfile}")
+
+    private fun doChangeFileName(newFileName: String) {
+        sendFileName = newFileName
+        Log.i(TAG, "Attachment name changed to $newFileName")
+        clearCommand()
     }
 
     private fun doClearConversation() {
@@ -317,6 +355,20 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             redirectUri = BuildConfig.SIGN_IN_REDIRECT_URI,
             codeVerifier = if (pkceEnabled) BuildConfig.CODE_VERIFIER else null
         )
+    }
+
+    private fun doRemoveTokenFromVault() {
+        messengerTransport.vault.run {
+            remove(keys.tokenKey)
+            commandWaiting = false
+        }
+    }
+
+    private fun doRemoveAuthRefreshTokenFromVault() {
+        messengerTransport.vault.run {
+            remove(keys.authRefreshTokenKey)
+            commandWaiting = false
+        }
     }
 
     private fun onClientStateChanged(oldState: State, newState: State) {
@@ -405,6 +457,26 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
                 println("Handle Event.Error here.")
             }
         }
+    }
+
+    fun onFileSelected(byteArray: ByteArray, fileName: String) {
+        commandWaiting = false
+        client.attach(
+            byteArray,
+            fileName
+        ) { progress -> println("Attachment upload progress: $progress") }.also {
+            attachedIds.add(it)
+        }
+    }
+
+    fun onCancelFileSelection() {
+        commandWaiting = false
+        onSocketMessageReceived("File selection canceled. No attachment selected.")
+    }
+
+    fun onErrorFilePick(exception: Exception) {
+        commandWaiting = false
+        onSocketMessageReceived("Exception happened during attachment file selection: ${exception.message}")
     }
 
     private fun buildOktaAuthorizeUrl(): String {

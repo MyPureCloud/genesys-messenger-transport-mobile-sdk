@@ -9,7 +9,6 @@ buildscript {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Deps.kotlinVersion}")
         classpath("com.android.tools.build:gradle:${Deps.agp}")
         classpath("org.jmailen.gradle:kotlinter-gradle:3.4.0")
-        classpath("com.vanniktech:gradle-android-junit-jacoco-plugin:0.16.0")
         classpath("com.codingfeline.buildkonfig:buildkonfig-gradle-plugin:${Deps.buildKonfig}")
     }
 }
@@ -26,7 +25,7 @@ plugins {
 }
 
 // CocoaPods requires the podspec to have a `version`.
-val buildVersion = "2.6.1"
+val buildVersion = "2.6.2"
 val snapshot = System.getenv("SNAPSHOT_BUILD") ?: ""
 version = "${buildVersion}${snapshot}"
 group = "cloud.genesys"

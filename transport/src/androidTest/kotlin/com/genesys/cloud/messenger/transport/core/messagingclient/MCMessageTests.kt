@@ -121,9 +121,6 @@ class MCMessageTests : BaseMessagingClientTest() {
             mockMessageStore.onMessageError(ErrorCode.MessageTooLong, "message too long")
             mockAttachmentHandler.onMessageError(ErrorCode.MessageTooLong, "message too long")
         }
-        verify(exactly = 0) {
-            mockCustomAttributesStore.onError()
-        }
     }
 
     @Test

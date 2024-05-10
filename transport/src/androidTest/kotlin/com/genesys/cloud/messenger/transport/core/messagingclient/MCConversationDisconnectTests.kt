@@ -225,6 +225,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
             mockStateChangedListener(fromReadOnlyToError(errorState = expectedErrorState))
+            mockAttachmentHandler.clearAll()
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()
         }
@@ -247,6 +248,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
             connectToReadOnlySequence()
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
+            mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()
             mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
@@ -274,6 +276,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
             connectToReadOnlySequence()
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
+            mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()
             mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
@@ -294,6 +297,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
         assertThat(subject.currentState).isReadOnly()
         verifySequence {
             connectSequence()
+            mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()
             mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes

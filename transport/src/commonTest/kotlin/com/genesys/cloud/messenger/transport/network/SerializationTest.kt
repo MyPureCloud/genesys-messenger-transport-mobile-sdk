@@ -7,8 +7,11 @@ import assertk.assertions.isNotNull
 import com.genesys.cloud.messenger.transport.core.Attachment
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
+import com.genesys.cloud.messenger.transport.shyrka.receive.AllowedMedia
 import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosedEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.FileType
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
+import com.genesys.cloud.messenger.transport.shyrka.receive.Inbound
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.LogoutEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageType
@@ -166,8 +169,16 @@ class SerializationTest {
               "code": 200,
               "body": {
                 "connected": true,
-                "newSession": true
-                "maxCustomDataBytes": 100
+                "newSession": true,
+                "readOnly": false,
+                "maxCustomDataBytes": 100,
+                "allowedMedia": {
+                    "inbound": {
+                        "fileTypes": [{"type": "*/*"},{"type": "video/3gpp"}],
+                        "maxFileSizeKB": 10240
+                    }
+                },
+                "blockedExtensions": [".ade"]
               }
             }
             """.trimIndent()
@@ -177,7 +188,15 @@ class SerializationTest {
             body = SessionResponse(
                 connected = true,
                 newSession = true,
-                maxCustomDataBytes = TestValues.MaxCustomDataBytes
+                readOnly = false,
+                maxCustomDataBytes = TestValues.MaxCustomDataBytes,
+                allowedMedia = AllowedMedia(
+                    Inbound(
+                        fileTypes = listOf(FileType("*/*"), FileType("video/3gpp")),
+                        maxFileSizeKB = 10240,
+                    ),
+                ),
+                blockedExtensions = listOf(".ade")
             )
         )
 
