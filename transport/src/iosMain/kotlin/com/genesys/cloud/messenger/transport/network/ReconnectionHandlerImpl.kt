@@ -7,7 +7,7 @@ import kotlin.concurrent.AtomicInt
 
 internal const val TIMEOUT_INTERVAL = 30.0
 
-@ExperimentalForeignApi
+@OptIn(ExperimentalForeignApi::class)
 internal actual class ReconnectionHandlerImpl actual constructor(
     reconnectionTimeoutInSeconds: Long,
     private val log: Log,

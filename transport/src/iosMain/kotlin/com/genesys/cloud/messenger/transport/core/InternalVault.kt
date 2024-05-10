@@ -8,6 +8,7 @@ package com.genesys.cloud.messenger.transport.core
 import com.genesys.cloud.messenger.transport.util.extensions.string
 import com.genesys.cloud.messenger.transport.util.extensions.toNSData
 import kotlinx.cinterop.BetaInteropApi
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
@@ -40,7 +41,7 @@ import platform.Security.kSecValueData
 import platform.darwin.OSStatus
 import platform.darwin.noErr
 
-@OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+@OptIn(ExperimentalForeignApi::class)
 internal class InternalVault(private val serviceName: String) {
     /**
      * Saves a string value in the Keychain.

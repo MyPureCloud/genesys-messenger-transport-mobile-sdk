@@ -31,7 +31,7 @@ import platform.darwin.NSObject
 import platform.posix.ENOTCONN
 import platform.posix.ETIMEDOUT
 
-@ExperimentalForeignApi
+@OptIn(ExperimentalForeignApi::class)
 internal actual class PlatformSocket actual constructor(
     private val log: Log,
     private val url: Url,
