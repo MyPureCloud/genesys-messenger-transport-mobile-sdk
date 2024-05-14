@@ -223,9 +223,6 @@ tasks {
 
 publishing {
     publications {
-        tasks.publishToSonatype {
-            dependsOn("signIosArm64Publication")
-        }
         withType<MavenPublication> {
             artifact(tasks["fakeJavadocJar"])
 
