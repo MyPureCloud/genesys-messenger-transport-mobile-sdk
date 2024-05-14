@@ -53,7 +53,7 @@ internal object Unknown : StructuredMessageEvent()
 
 internal object StructuredMessageEventSerializer :
     JsonContentPolymorphicSerializer<StructuredMessageEvent>(StructuredMessageEvent::class) {
-    override fun selectDeserializer(element: JsonElement): DeserializationStrategy<out StructuredMessageEvent> {
+    override fun selectDeserializer(element: JsonElement): DeserializationStrategy<StructuredMessageEvent> {
         return when (element.jsonObject["eventType"]?.jsonPrimitive?.content) {
             Type.Typing.name -> TypingEvent.serializer()
             Type.Presence.name -> PresenceEvent.serializer()

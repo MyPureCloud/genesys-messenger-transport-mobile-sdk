@@ -7,6 +7,8 @@ import com.genesys.cloud.messenger.transport.util.extensions.toNSData
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.ktor.http.Url
+import kotlinx.cinterop.BetaInteropApi
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.convert
 import platform.Foundation.NSData
 import platform.Foundation.NSError
@@ -29,6 +31,7 @@ import platform.darwin.NSObject
 import platform.posix.ENOTCONN
 import platform.posix.ETIMEDOUT
 
+@OptIn(ExperimentalForeignApi::class)
 internal actual class PlatformSocket actual constructor(
     private val log: Log,
     private val url: Url,
@@ -46,6 +49,7 @@ internal actual class PlatformSocket actual constructor(
         get() = webSocket != null
     private var waitingOnPong = false
 
+    @OptIn(BetaInteropApi::class)
     actual fun openSocket(listener: PlatformSocketListener) {
         val urlRequest = NSMutableURLRequest(socketEndpoint)
         urlRequest.setValue(url.host, forHTTPHeaderField = "Origin")
@@ -183,6 +187,7 @@ internal actual class PlatformSocket actual constructor(
      * Deactivates the webSocket connection per `deactivate()`.
      * Attempt to send a final close frame with the given code and reason without `listener.onClosed()` being called.
      */
+    @OptIn(BetaInteropApi::class)
     private fun deactivateAndCancelWebSocket(code: Int, reason: String?) {
         log.i { LogMessages.deactivateWithCloseCode(code, reason) }
         val webSocketRef = webSocket
