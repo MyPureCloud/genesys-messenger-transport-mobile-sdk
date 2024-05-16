@@ -16,7 +16,7 @@ object Deps {
     const val lifecycleViewModelComposeVersion = "1.0.0-alpha05"
     const val agp = "8.2.0"
     const val buildKonfig = "0.15.1"
-    const val nexusPublish = "1.1.0"
+    const val nexusPublish = "1.3.0"
 
 
     object Libs {

@@ -168,8 +168,9 @@ kotlin {
     }
 }
 
-tasks.named("publishAndroidPublicationToSonatypeRepository") {
-    dependsOn("signIosArm64Publication")
+tasks.withType<AbstractPublishToMaven>().configureEach {
+    val signingTasks = tasks.withType<Sign>()
+    mustRunAfter(signingTasks)
 }
 
 tasks {
