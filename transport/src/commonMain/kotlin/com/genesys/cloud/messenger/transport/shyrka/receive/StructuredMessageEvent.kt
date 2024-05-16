@@ -44,6 +44,7 @@ internal data class PresenceEvent(
             Disconnect,
             Join,
             Clear,
+            SignIn,
         }
     }
 }

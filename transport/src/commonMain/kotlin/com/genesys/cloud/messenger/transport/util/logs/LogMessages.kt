@@ -108,4 +108,5 @@ internal object LogMessages {
     // Quick Replies
     fun quickReplyPrepareToSend(message: Message) = "Message with quick reply prepared to send: $message"
     fun sendQuickReply(buttonResponse: ButtonResponse) = "sendQuickReply(buttonResponse: $buttonResponse)"
+    fun ignoreInboundEvent(event: Event) = "Ignore inbound event: $event."
 }

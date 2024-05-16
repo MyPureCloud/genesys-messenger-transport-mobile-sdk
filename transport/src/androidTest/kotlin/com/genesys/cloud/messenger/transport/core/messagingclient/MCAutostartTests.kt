@@ -112,14 +112,13 @@ class MCAutostartTests : BaseMessagingClientTest() {
 
     @Test
     fun `when event Presence Join received`() {
-        val givenPresenceJoinEvent = """{"eventType":"Presence","presence":{"type":"Join"}}"""
         val expectedEvent = Event.ConversationAutostart
 
         subject.connect()
         slot.captured.onMessage(
             Response.structuredMessageWithEvents(
                 direction = Message.Direction.Inbound,
-                events = givenPresenceJoinEvent
+                events = Response.StructuredEvent.presenceJoin
             )
         )
 
