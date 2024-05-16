@@ -168,6 +168,10 @@ kotlin {
     }
 }
 
+tasks.named("publishAndroidPublicationToSonatypeRepository") {
+    dependsOn("signIosArm64Publication")
+}
+
 tasks {
 
     create<Jar>("fakeJavadocJar") {
