@@ -19,6 +19,8 @@ enum class Command(val description: String) {
     NEW_CHAT("newChat"),
     OKTA_LOGOUT("oktaLogout"),
     OKTA_SIGN_IN_WITH_PKCE("oktaSignInWithPKCE"),
+    REMOVE_TOKEN_FROM_VAULT("removeToken"),
+    REMOVE_AUTH_REFRESH_TOKEN_FROM_VAULT("removeAuthRefreshToken"),
     SEND("send <msg>"),
     SEND_QUICK_REPLY("sendQuickReply <quickReply>"),
     TYPING("typing")

@@ -191,4 +191,14 @@ final class MessengerInteractor {
     func addCustomAttributes(customAttributes: [String: String] = [:]) -> Bool {
          return messagingClient.customAttributesStore.add(customAttributes: customAttributes)
     }
+    
+    func removeToken() {
+        let tokenKey = messengerTransport.vault.keys.tokenKey
+        messengerTransport.vault.remove(key: tokenKey)
+    }
+    
+    func removeAuthRefreshToken() {
+        let authRefreshTokenKey = messengerTransport.vault.keys.authRefreshTokenKey
+        messengerTransport.vault.remove(key: authRefreshTokenKey)
+    }
 }

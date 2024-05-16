@@ -7,6 +7,8 @@ package com.genesys.cloud.messenger.transport.core
 
 import com.genesys.cloud.messenger.transport.util.extensions.string
 import com.genesys.cloud.messenger.transport.util.extensions.toNSData
+import kotlinx.cinterop.BetaInteropApi
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
@@ -26,6 +28,7 @@ import platform.Foundation.CFBridgingRetain
 import platform.Foundation.NSData
 import platform.Security.SecItemAdd
 import platform.Security.SecItemCopyMatching
+import platform.Security.SecItemDelete
 import platform.Security.SecItemUpdate
 import platform.Security.kSecAttrAccount
 import platform.Security.kSecAttrService
@@ -38,6 +41,7 @@ import platform.Security.kSecValueData
 import platform.darwin.OSStatus
 import platform.darwin.noErr
 
+@OptIn(ExperimentalForeignApi::class)
 internal class InternalVault(private val serviceName: String) {
     /**
      * Saves a string value in the Keychain.
@@ -45,6 +49,7 @@ internal class InternalVault(private val serviceName: String) {
      * @param stringValue The value to store
      * @return True or false, depending on whether the value has been stored in the Keychain
      */
+    @OptIn(BetaInteropApi::class)
     fun set(key: String, stringValue: String): Boolean = addOrUpdate(key, stringValue.toNSData())
 
     /**
@@ -52,7 +57,19 @@ internal class InternalVault(private val serviceName: String) {
      * @param forKey The key to query
      * @return The stored string value, or null if it is missing
      */
+    @OptIn(BetaInteropApi::class)
     fun string(forKey: String): String? = value(forKey)?.string()
+
+    @OptIn(BetaInteropApi::class)
+    fun remove(key: String) = context(key) { (account) ->
+        val query = query(
+            kSecClass to kSecClassGenericPassword,
+            kSecAttrAccount to account
+        )
+
+        SecItemDelete(query)
+            .validate()
+    }
 
     private fun existsObject(forKey: String): Boolean = context(forKey) { (account) ->
         val query = query(

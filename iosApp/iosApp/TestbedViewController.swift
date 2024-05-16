@@ -53,6 +53,8 @@ class TestbedViewController: UIViewController {
         case typing
         case authorize
         case clearConversation
+        case removeToken
+        case removeAuthRefreshToken
 
         var helpDescription: String {
             switch self {
@@ -476,6 +478,10 @@ extension TestbedViewController : UITextFieldDelegate {
                 messenger.authorize(authCode: self.authCode ?? "", redirectUri: signInRedirectURI, codeVerifier: codeVerifier)
             case (.clearConversation, _):
                 try messenger.clearConversation()
+            case (.removeToken, _):
+                messenger.removeToken()
+            case (.removeAuthRefreshToken, _):
+                messenger.removeAuthRefreshToken()
             default:
                 self.info.text = "Invalid command"
             }
