@@ -21,11 +21,13 @@ import kotlinx.coroutines.launch
 
 /**
  * The entry point to the services provided by the transport SDK.
+ *
+ * @param vault the storage mechanism for managing session-related data.
  */
 class MessengerTransportSDK(
     private val configuration: Configuration,
     @Deprecated("Use Vault instead.") private val tokenStore: TokenStore?,
-    private val vault: Vault,
+    val vault: Vault,
 ) {
     private var deploymentConfig: DeploymentConfig? = null
 

@@ -116,7 +116,7 @@ internal data class StructuredMessage(
 
     internal object ContentSerializer :
         JsonContentPolymorphicSerializer<Content>(Content::class) {
-        override fun selectDeserializer(element: JsonElement): DeserializationStrategy<out Content> {
+        override fun selectDeserializer(element: JsonElement): DeserializationStrategy<Content> {
             return when (element.jsonObject["contentType"]?.jsonPrimitive?.content) {
                 Content.Type.Attachment.name -> Content.AttachmentContent.serializer()
                 Content.Type.QuickReply.name -> Content.QuickReplyContent.serializer()

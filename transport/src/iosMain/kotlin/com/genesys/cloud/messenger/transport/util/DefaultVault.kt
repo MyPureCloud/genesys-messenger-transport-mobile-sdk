@@ -13,4 +13,8 @@ actual class DefaultVault actual constructor(keys: Keys) : Vault(keys) {
     override fun fetch(key: String): String? {
         return vault.string(key)
     }
+
+    override fun remove(key: String) {
+        vault.remove(key)
+    }
 }

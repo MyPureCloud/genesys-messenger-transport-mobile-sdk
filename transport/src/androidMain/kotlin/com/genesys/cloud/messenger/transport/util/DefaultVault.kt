@@ -25,6 +25,13 @@ actual class DefaultVault actual constructor(keys: Keys) : Vault(keys) {
         return sharedPreferences.getString(key, null)
     }
 
+    override fun remove(key: String) {
+        with(sharedPreferences.edit()) {
+            remove(key)
+            apply()
+        }
+    }
+
     companion object {
         private var contextRef: WeakReference<Context>? = null
 

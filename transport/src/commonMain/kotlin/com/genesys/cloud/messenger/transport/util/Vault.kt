@@ -10,7 +10,7 @@ import com.genesys.cloud.messenger.transport.auth.NO_REFRESH_TOKEN
  *
  * @param keys The set of keys used to access stored data in the vault.
  */
-abstract class Vault(private val keys: Keys) {
+abstract class Vault(val keys: Keys) {
     /**
      * Retrieves the token value from the vault or generates a new token if it doesn't exist.
      * The token is stored in the vault for future retrieval.
@@ -44,6 +44,11 @@ abstract class Vault(private val keys: Keys) {
      * @return the previous stored value for specified key or null if not in storage.
      */
     abstract fun fetch(key: String): String?
+
+    /**
+     * Removes specified key from storage.
+     */
+    abstract fun remove(key: String)
 
     /**
      * Set of keys Vault will use to access stored data.

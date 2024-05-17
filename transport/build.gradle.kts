@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.BitcodeEmbeddingMode
 plugins {
     kotlin("multiplatform")
     kotlin("native.cocoapods")
-    kotlin("plugin.serialization") version "1.4.31"
+    kotlin("plugin.serialization") version Deps.kotlinVersion
     id("com.android.library")
     id("org.jetbrains.dokka") version "1.4.30"
     id("org.jmailen.kotlinter")
@@ -53,7 +53,7 @@ android {
         create("testDebugApi")
         create("testReleaseApi")
     }
-    packagingOptions {
+    packaging {
         resources {
             excludes += "META-INF/*.kotlin_module"
             excludes += "META-INF/LICENSE.md"
@@ -64,7 +64,14 @@ android {
 }
 
 kotlin {
-    android {
+    targets.configureEach {
+        compilations.configureEach {
+            compilerOptions.configure {
+                freeCompilerArgs.add("-Xexpect-actual-classes")
+            }
+        }
+    }
+    androidTarget {
         compilations.all {
             kotlinOptions {
                 jvmTarget = Deps.Android.jvmTarget
@@ -75,16 +82,13 @@ kotlin {
     }
 
     val xcf = XCFramework(iosFrameworkName)
-    ios {
-        binaries.framework {
-            embedBitcode = BitcodeEmbeddingMode.DISABLE
-            baseName = iosFrameworkName
-            xcf.add(this)
-        }
-    }
-    iosSimulatorArm64 {
-        binaries.framework {
-            embedBitcode = BitcodeEmbeddingMode.DISABLE
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach {
+        it.binaries.framework {
+            embedBitcodeMode = BitcodeEmbeddingMode.DISABLE
             baseName = iosFrameworkName
             xcf.add(this)
         }
@@ -130,7 +134,7 @@ kotlin {
                 implementation(Deps.Libs.Ktor.mock)
             }
         }
-        val androidMain by getting {
+        androidMain {
             dependencies {
                 implementation(Deps.Libs.OkHttp.client)
                 implementation(Deps.Libs.OkHttp.loggingInterceptor)
@@ -139,7 +143,7 @@ kotlin {
                 implementation(Deps.Libs.Kotlinx.coroutinesAndroid)
             }
         }
-        val androidTest by getting {
+        val androidUnitTest by getting {
             dependencies {
                 implementation(kotlin("test-junit"))
                 implementation(Deps.Libs.junit)
@@ -149,19 +153,24 @@ kotlin {
                 implementation(Deps.Libs.Kotlinx.coroutinesTest)
             }
         }
-        val iosMain by getting {
+        val iosX64Main by getting
+        val iosArm64Main by getting
+        val iosSimulatorArm64Main by getting
+        val iosMain by creating {
             dependencies {
                 implementation(Deps.Libs.Ktor.ios)
             }
+            dependsOn(commonMain.get())
+            iosX64Main.dependsOn(this)
+            iosArm64Main.dependsOn(this)
+            iosSimulatorArm64Main.dependsOn(this)
         }
-        val iosTest by getting
-        val iosSimulatorArm64Main by getting
-        val iosSimulatorArm64Test by getting
-
-        // Set up dependencies between the source sets
-        iosSimulatorArm64Main.dependsOn(iosMain)
-        iosSimulatorArm64Test.dependsOn(iosTest)
     }
+}
+
+tasks.withType<AbstractPublishToMaven>().configureEach {
+    val signingTasks = tasks.withType<Sign>()
+    mustRunAfter(signingTasks)
 }
 
 tasks {
@@ -176,7 +185,7 @@ tasks {
             doLast {
                 listOf("ios-arm64", "ios-arm64_x86_64-simulator").forEach { arch ->
                     val xcframeworkPath =
-                        "build/XCFrameworks/${buildVariant.toLowerCase()}/$iosFrameworkName.xcframework/$arch/$iosFrameworkName.framework"
+                        "build/XCFrameworks/${buildVariant.lowercase()}/$iosFrameworkName.xcframework/$arch/$iosFrameworkName.framework"
                     val infoPlistPath = "$xcframeworkPath/Info.plist"
                     val propertiesMap = mapOf(
                         "CFBundleShortVersionString" to version,
