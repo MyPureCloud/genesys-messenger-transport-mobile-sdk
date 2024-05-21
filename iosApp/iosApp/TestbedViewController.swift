@@ -431,11 +431,13 @@ extension TestbedViewController : UITextFieldDelegate {
                 self.info.text = "FileAttachmentProfile: <\(messenger.getFileAttachmentProfile())>"
             case (.deployment, _):
                 messenger.fetchDeployment { deploymentConfig, error in
-                    if let error = error {
-                        self.info.text = "<\(error.localizedDescription)>"
-                        return
+                    DispatchQueue.main.async {
+                        if let error = error {
+                            self.info.text = "<\(error.localizedDescription)>"
+                            return
+                        }
+                        self.info.text = "<\(deploymentConfig?.description() ?? "Unknown deployment config")>"
                     }
-                    self.info.text = "<\(deploymentConfig?.description() ?? "Unknown deployment config")>"
                 }
             case (.invalidateConversationCache, _):
                 messenger.invalidateConversationCache()

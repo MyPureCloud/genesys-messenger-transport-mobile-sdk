@@ -168,6 +168,11 @@ kotlin {
     }
 }
 
+tasks.withType<AbstractPublishToMaven>().configureEach {
+    val signingTasks = tasks.withType<Sign>()
+    mustRunAfter(signingTasks)
+}
+
 tasks {
 
     create<Jar>("fakeJavadocJar") {
