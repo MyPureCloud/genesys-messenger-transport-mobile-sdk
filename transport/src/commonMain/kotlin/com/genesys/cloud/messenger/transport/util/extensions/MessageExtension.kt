@@ -40,7 +40,8 @@ internal fun StructuredMessage.toMessage(): Message {
             originatingEntity = originatingEntity.mapOriginatingEntity {
                 isInbound()
             }
-        )
+        ),
+        authenticated = metadata["authenticated"].toBoolean()
     )
 }
 

@@ -18,7 +18,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.Styles
 
 object TestWebMessagingApiResponses {
 
-    internal const val isoTestTimestamp = "2014-04-30T21:09:51.411Z"
+    private const val isoTestTimestamp = "2014-04-30T21:09:51.411Z"
     internal const val messageEntityResponseWith3Messages =
         """{"entities":[{"id":"5befde6373a23f32f20b59b4e1cba0e6","channel":{"time":"$isoTestTimestamp"},"type":"Text","text":"\uD83E\uDD2A","content":[],"direction":"Outbound","originatingEntity":"Bot"},{"id":"46e7001c24abed05e9bcd1a006eb54b7","channel":{"time":null},"type":"Event","events":[{"eventType":"Presence","presence":{"type":"Join"}}],"metadata":{"customMessageId":"1234567890"},"text":"customer msg 7","content":[],"direction":"Inbound","originatingEntity":"Human"},{"text":"quick reply text","type":"Structured","direction":"Outbound","id":"message3_id","channel":{"time":null},"content":[{"contentType":"QuickReply","quickReply":{"text":"text_a","payload":"payload_a","action":"action_a"}},{"contentType":"QuickReply","quickReply":{"text":"text_b","payload":"payload_b","action":"action_b"}}],"metadata":{"customMessageId":"1234567890"},"originatingEntity":"Bot"}],"pageSize":25,"pageNumber":1, "total": 3, "pageCount": 1}"""
 
@@ -26,7 +26,7 @@ object TestWebMessagingApiResponses {
         """{"entities":[],"pageSize":0,"pageNumber":1, "total": 0, "pageCount": 0}"""
 
     internal const val deploymentConfigResponse =
-        """{"id":"test_config_id","version":"3","languages":["en-us"],"defaultLanguage":"en-us","apiEndpoint":"https://api.inindca.com","messenger":{"enabled":true,"apps":{"conversations":{"messagingEndpoint":"wss://webmessaging.inindca.com","conversationDisconnect":{"enabled":true,"type":"ReadOnly"},"conversationClear":{"enabled":true}}},"styles":{"primaryColor":"#ff0000"},"launcherButton":{"visibility":"On"},"fileUpload":{"modes":[{"fileTypes":["image/png","image/jpeg","image/gif"],"maxFileSizeKB":10000}]}},"journeyEvents":{"enabled":true},"status":"Active","auth":{"enabled":true}}"""
+        """{"id":"test_config_id","version":"3","languages":["en-us"],"defaultLanguage":"en-us","apiEndpoint":"https://api.inindca.com","messenger":{"enabled":true,"apps":{"conversations":{"messagingEndpoint":"wss://webmessaging.inindca.com","conversationDisconnect":{"enabled":true,"type":"ReadOnly"},"conversationClear":{"enabled":true}}},"styles":{"primaryColor":"#ff0000"},"launcherButton":{"visibility":"On"},"fileUpload":{"modes":[{"fileTypes":["image/png","image/jpeg","image/gif"],"maxFileSizeKB":10000}]}},"journeyEvents":{"enabled":true},"status":"Active","auth":{"enabled":true,"allowSessionUpgrade":true}}"""
 
     internal val testMessageEntityList =
         MessageEntityList(
@@ -77,7 +77,10 @@ object TestWebMessagingApiResponses {
         ),
         journeyEvents = JourneyEvents(enabled = true),
         status = DeploymentConfig.Status.Active,
-        auth = Auth(enabled = true)
+        auth = Auth(
+            enabled = true,
+            allowSessionUpgrade = true,
+        )
     )
 
     private fun buildEntities(): List<StructuredMessage> =
