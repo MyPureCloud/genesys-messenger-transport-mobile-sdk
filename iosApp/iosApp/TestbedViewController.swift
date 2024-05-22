@@ -486,7 +486,7 @@ extension TestbedViewController : UITextFieldDelegate {
             case (.removeAuthRefreshToken, _):
                 messenger.removeAuthRefreshToken()
             case (.stepUp, _):
-                try messenger.stepUp
+                try messenger.stepUp()
             default:
                 self.info.text = "Invalid command"
             }
