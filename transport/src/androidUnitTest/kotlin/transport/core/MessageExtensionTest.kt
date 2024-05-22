@@ -37,6 +37,7 @@ import com.genesys.cloud.messenger.transport.util.extensions.mapOriginatingEntit
 import com.genesys.cloud.messenger.transport.util.extensions.toFileAttachmentProfile
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
+import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.StructuredMessageValues
@@ -171,11 +172,13 @@ internal class MessageExtensionTest {
                     "first test attachment id" to Attachment(
                         id = "first test attachment id",
                         fileName = "test.png",
+                        fileSize = AttachmentValues.FileSize,
                         Attachment.State.Uploaded("http://test.com")
                     ),
                     "second test attachment id" to Attachment(
                         id = "second test attachment id",
                         fileName = "test2.png",
+                        fileSize = null,
                         Attachment.State.Detached,
                     )
                 )
@@ -185,6 +188,7 @@ internal class MessageExtensionTest {
             attachment = Attachment(
                 id = "first test attachment id",
                 fileName = "test.png",
+                fileSize = AttachmentValues.FileSize,
                 state = Attachment.State.Uploaded("http://test.com")
             )
         )
