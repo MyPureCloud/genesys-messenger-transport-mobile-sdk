@@ -55,6 +55,7 @@ class TestbedViewController: UIViewController {
         case clearConversation
         case removeToken
         case removeAuthRefreshToken
+        case stepUp
 
         var helpDescription: String {
             switch self {
@@ -484,6 +485,8 @@ extension TestbedViewController : UITextFieldDelegate {
                 messenger.removeToken()
             case (.removeAuthRefreshToken, _):
                 messenger.removeAuthRefreshToken()
+            case (.stepUp, _):
+                try messenger.stepUp
             default:
                 self.info.text = "Invalid command"
             }
