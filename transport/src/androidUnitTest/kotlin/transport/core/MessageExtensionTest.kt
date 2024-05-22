@@ -42,7 +42,6 @@ import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.StructuredMessageValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import net.bytebuddy.utility.RandomString
 import org.junit.Test
@@ -172,13 +171,13 @@ internal class MessageExtensionTest {
                     "first test attachment id" to Attachment(
                         id = "first test attachment id",
                         fileName = "test.png",
-                        fileSize = AttachmentValues.FileSize,
+                        fileSizeInBytes = AttachmentValues.FileSize,
                         Attachment.State.Uploaded("http://test.com")
                     ),
                     "second test attachment id" to Attachment(
                         id = "second test attachment id",
                         fileName = "test2.png",
-                        fileSize = null,
+                        fileSizeInBytes = null,
                         Attachment.State.Detached,
                     )
                 )
@@ -188,7 +187,7 @@ internal class MessageExtensionTest {
             attachment = Attachment(
                 id = "first test attachment id",
                 fileName = "test.png",
-                fileSize = AttachmentValues.FileSize,
+                fileSizeInBytes = AttachmentValues.FileSize,
                 state = Attachment.State.Uploaded("http://test.com")
             )
         )

@@ -78,7 +78,7 @@ private fun List<AttachmentContent>.toAttachments(): Map<String, Attachment> {
             attachment.id to Attachment(
                 id = attachment.id,
                 fileName = attachment.filename,
-                fileSize = attachment.fileSize,
+                fileSizeInBytes = attachment.fileSize,
                 state = Attachment.State.Sent(attachment.url),
             )
         }
