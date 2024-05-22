@@ -79,20 +79,25 @@ internal class AttachmentHandlerImplTest {
 
     @Test
     fun `when prepare()`() {
-        val expectedAttachment = Attachment(AttachmentValues.Id, AttachmentValues.FileName, State.Presigning)
-        val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(1))
+        val expectedAttachment = Attachment(
+            AttachmentValues.Id,
+            AttachmentValues.FileName,
+            null,
+            State.Presigning
+        )
+        val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(AttachmentValues.FileSize))
         val expectedOnAttachmentRequest = OnAttachmentRequest(
             token = TestValues.Token,
             attachmentId = AttachmentValues.Id,
             fileName = AttachmentValues.FileName,
             fileType = "image/png",
-            1,
+            fileSize = AttachmentValues.FileSize,
             null,
             true,
         )
 
         val onAttachmentRequest =
-            subject.prepare(AttachmentValues.Id, ByteArray(1), AttachmentValues.FileName)
+            subject.prepare(AttachmentValues.Id, ByteArray(AttachmentValues.FileSize), AttachmentValues.FileName)
 
         verify {
             mockLogger.i(capture(logSlot))
@@ -112,7 +117,7 @@ internal class AttachmentHandlerImplTest {
     fun `when upload() processed attachment`() {
         val expectedProgress = 25f
         val expectedAttachment =
-            Attachment(AttachmentValues.Id, AttachmentValues.FileName, State.Uploading)
+            Attachment(AttachmentValues.Id, AttachmentValues.FileName, null, State.Uploading)
         val mockUploadProgress: ((Float) -> Unit) = spyk()
         val progressSlot = slot<Float>()
         givenPrepareCalled(uploadProgress = mockUploadProgress)
@@ -208,7 +213,7 @@ internal class AttachmentHandlerImplTest {
         val expectedDownloadUrl = "http://somedownloadurl.com"
         val expectedState = State.Uploaded(expectedDownloadUrl)
         val expectedAttachment =
-            Attachment(AttachmentValues.Id, AttachmentValues.FileName, expectedState)
+            Attachment(AttachmentValues.Id, AttachmentValues.FileName, null, expectedState)
         val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(1))
         givenPrepareCalled()
 
@@ -241,7 +246,7 @@ internal class AttachmentHandlerImplTest {
     @Test
     fun `when detach() on uploaded attachment`() {
         val expectedAttachment =
-            Attachment(AttachmentValues.Id, AttachmentValues.FileName, State.Detaching)
+            Attachment(AttachmentValues.Id, AttachmentValues.FileName, null, State.Detaching)
         val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(1))
         val expectedDeleteAttachmentRequest =
             DeleteAttachmentRequest(TestValues.Token, AttachmentValues.Id)
@@ -263,7 +268,7 @@ internal class AttachmentHandlerImplTest {
     @Test
     fun `when detach() on not uploaded attachment`() {
         val expectedAttachment =
-            Attachment(AttachmentValues.Id, AttachmentValues.FileName, State.Detached)
+            Attachment(AttachmentValues.Id, AttachmentValues.FileName, null, State.Detached)
 
         givenPrepareCalled()
 
@@ -292,7 +297,7 @@ internal class AttachmentHandlerImplTest {
     @Test
     fun `when OnDetached()`() {
         val expectedAttachment =
-            Attachment(AttachmentValues.Id, AttachmentValues.FileName, State.Detached)
+            Attachment(AttachmentValues.Id, AttachmentValues.FileName, null, State.Detached)
         givenPrepareCalled()
         givenUploadSuccessCalled()
 
@@ -451,7 +456,7 @@ internal class AttachmentHandlerImplTest {
         val expectedDownloadUrl = "http://somedownloadurl.com"
         val expectedState = State.Sent(expectedDownloadUrl)
         val expectedAttachment =
-            Attachment(AttachmentValues.Id, AttachmentValues.FileName, expectedState)
+            Attachment(AttachmentValues.Id, AttachmentValues.FileName, AttachmentValues.FileSize, expectedState)
         givenPrepareCalled()
         givenUploadSuccessCalled()
         givenOnSendingCalled()
@@ -461,6 +466,7 @@ internal class AttachmentHandlerImplTest {
                 AttachmentValues.Id to Attachment(
                     AttachmentValues.Id,
                     AttachmentValues.FileName,
+                    AttachmentValues.FileSize,
                     State.Sent("http://somedownloadurl.com")
                 )
             )
@@ -492,6 +498,7 @@ internal class AttachmentHandlerImplTest {
                 AttachmentValues.Id to Attachment(
                     AttachmentValues.Id,
                     AttachmentValues.FileName,
+                    AttachmentValues.FileSize,
                     State.Sent("http://somedownloadurl.com")
                 )
             )
@@ -524,7 +531,8 @@ internal class AttachmentHandlerImplTest {
 
         val givenByteArray = ByteArray(2000)
 
-        val onAttachmentRequest = subject.prepare(AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
+        val onAttachmentRequest =
+            subject.prepare(AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
 
         assertThat(subject.fileAttachmentProfile).isNull()
         assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
@@ -556,7 +564,8 @@ internal class AttachmentHandlerImplTest {
             true,
         )
 
-        val onAttachmentRequest = subject.prepare(AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
+        val onAttachmentRequest =
+            subject.prepare(AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
 
         assertThat(subject.fileAttachmentProfile?.maxFileSizeKB).isEqualTo(expectedFileSizeInKB)
         assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
@@ -588,7 +597,8 @@ internal class AttachmentHandlerImplTest {
             true,
         )
 
-        val onAttachmentRequest = subject.prepare(AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
+        val onAttachmentRequest =
+            subject.prepare(AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
 
         assertThat(subject.fileAttachmentProfile?.maxFileSizeKB).isEqualTo(expectedFileSizeInKB)
         assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
@@ -629,7 +639,8 @@ internal class AttachmentHandlerImplTest {
             true,
         )
 
-        val onAttachmentRequest = subject.prepare(AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
+        val onAttachmentRequest =
+            subject.prepare(AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
 
         assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
     }
