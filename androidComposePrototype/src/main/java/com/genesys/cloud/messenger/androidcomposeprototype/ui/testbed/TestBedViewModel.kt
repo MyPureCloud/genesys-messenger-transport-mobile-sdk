@@ -155,6 +155,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "fileAttachmentProfile" -> doFileAttachmentProfile()
             "removeToken" -> doRemoveTokenFromVault()
             "removeAuthRefreshToken" -> doRemoveAuthRefreshTokenFromVault()
+            "stepUp" -> doStepUp()
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
@@ -201,6 +202,14 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             client.connectAuthenticatedSession()
         } catch (t: Throwable) {
             handleException(t, "connectAuthenticated")
+        }
+    }
+
+    private fun doStepUp() {
+        try {
+            client.stepUpToAuthenticatedSession()
+        } catch (t: Throwable) {
+            handleException(t, "stepUp")
         }
     }
 
