@@ -50,7 +50,7 @@ class EventHandlerTest {
             ),
             ConversationAutostart,
             ConversationDisconnect,
-            ConnectionClosed,
+            ConnectionClosed(ConnectionClosed.Reason.UserSignedIn),
             Authorized,
             Logout,
             ConversationCleared,

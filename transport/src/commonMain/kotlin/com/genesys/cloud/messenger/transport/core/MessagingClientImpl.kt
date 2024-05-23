@@ -29,6 +29,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.TooManyRequestsErrorMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.toTransportConnectionClosedReason
 import com.genesys.cloud.messenger.transport.shyrka.send.AutoStartRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.ClearConversationRequest
@@ -91,6 +92,7 @@ internal class MessagingClientImpl(
     private var isStartingANewSession = false
     private var reconfigureAttempts = 0
     private var sendingAutostart = false
+    private var clearingConversation = false
 
     override val currentState: State
         get() {
@@ -553,6 +555,7 @@ internal class MessagingClientImpl(
         jwtHandler.clear()
         reconfigureAttempts = 0
         sendingAutostart = false
+        clearingConversation = false
         internalCustomAttributesStore.onSessionClosed()
     }
 
@@ -563,6 +566,7 @@ internal class MessagingClientImpl(
         jwtHandler.clear()
         reconfigureAttempts = 0
         sendingAutostart = false
+        clearingConversation = false
     }
 
     private fun considerForceClose() {
@@ -690,7 +694,11 @@ internal class MessagingClientImpl(
 
                     is ConnectionClosedEvent -> {
                         disconnect()
-                        eventHandler.onEvent(Event.ConnectionClosed)
+                        eventHandler.onEvent(
+                            Event.ConnectionClosed(
+                                decoded.body.reason.toTransportConnectionClosedReason(clearingConversation)
+                            )
+                        )
                     }
 
                     is LogoutEvent -> {
@@ -699,7 +707,10 @@ internal class MessagingClientImpl(
                         disconnect()
                     }
 
-                    is SessionClearedEvent -> eventHandler.onEvent(Event.ConversationCleared)
+                    is SessionClearedEvent -> {
+                        clearingConversation = true
+                        eventHandler.onEvent(Event.ConversationCleared)
+                    }
                     else -> {
                         log.i { LogMessages.unhandledMessage(decoded) }
                     }

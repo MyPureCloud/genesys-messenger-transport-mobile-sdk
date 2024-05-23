@@ -45,10 +45,23 @@ sealed class Event {
     object ConversationDisconnect : Event()
 
     /**
-     * Sent when the connection is closed due to exceeding the maximum number of simultaneously open sessions.
+     * Sent when the connection is closed. A more detailed reason is provided in the [reason] parameter.
      * Detailed information about Genesys Cloud Web Messaging capabilities is available in the [Developer Center](https://developer.genesys.cloud).
      */
-    object ConnectionClosed : Event()
+    data class ConnectionClosed(val reason: Reason) : Event() {
+        /**
+         * Reasons for connection closure.
+         *
+         * @property UserSignedIn Indicates the connection was closed because the user signed in to an authenticated session on another device.
+         * @property ConversationCleared Indicates the connection was closed because the user cleared the conversation.
+         * @property SessionLimitReached Indicates the connection was closed due to exceeding the maximum number of simultaneously open sessions.
+         */
+        enum class Reason {
+            UserSignedIn,
+            ConversationCleared,
+            SessionLimitReached,
+        }
+    }
 
     /**
      * Sent when auth code was successfully exchanged for access token.
