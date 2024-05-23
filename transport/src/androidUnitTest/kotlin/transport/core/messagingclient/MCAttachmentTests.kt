@@ -128,6 +128,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         val expectedAttachment = Attachment(
             "attachment_id",
             "image.png",
+            AttachmentValues.FileSize,
             Attachment.State.Sent("https://downloadurl.com")
         )
         val expectedMessage = Message(
@@ -376,6 +377,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         val expectedAttachment = Attachment(
             "attachment_id",
             "image.png",
+            AttachmentValues.FileSize,
             Attachment.State.Sent("https://downloadurl.com")
         )
         val expectedMessage = Message(

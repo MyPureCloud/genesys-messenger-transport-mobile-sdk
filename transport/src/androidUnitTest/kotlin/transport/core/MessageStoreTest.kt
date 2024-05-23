@@ -23,6 +23,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
+import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import io.mockk.Called
 import io.mockk.clearMocks
@@ -307,7 +308,7 @@ internal class MessageStoreTest {
     fun `when onMessageError() happens after message being Sent`() {
         val errorMessage = "some test error message"
         val testMessage = "test message"
-        val expectedState = Message.State.Error(
+        val expectedState = State.Error(
             ErrorCode.MessageTooLong,
             errorMessage
         )
@@ -325,8 +326,8 @@ internal class MessageStoreTest {
         verify { mockMessageListener.invoke(capture(messageSlot)) }
         (messageSlot.captured as MessageEvent.MessageUpdated).message.run {
             assertThat(this).isEqualTo(expectedMessage)
-            assertThat((state as Message.State.Error).code).isEqualTo(expectedState.code)
-            assertThat((state as Message.State.Error).message).isEqualTo(expectedState.message)
+            assertThat((state as State.Error).code).isEqualTo(expectedState.code)
+            assertThat((state as State.Error).message).isEqualTo(expectedState.message)
         }
     }
 
@@ -547,7 +548,7 @@ internal class MessageStoreTest {
     private fun attachment(
         id: String = "given id",
         state: Attachment.State = Attachment.State.Presigning,
-    ) = Attachment(id, "file.png", state)
+    ) = Attachment(id, "file.png", AttachmentValues.FileSize, state)
 
     private fun messageList(size: Int = 5): List<Message> {
         val messageList = mutableListOf<Message>()
