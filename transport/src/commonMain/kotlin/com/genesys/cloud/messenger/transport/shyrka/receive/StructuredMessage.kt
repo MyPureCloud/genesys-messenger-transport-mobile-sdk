@@ -111,7 +111,7 @@ internal data class StructuredMessage(
         }
 
         @Serializable
-        internal object UnknownContent : Content()
+        internal data object UnknownContent : Content()
     }
 
     internal object ContentSerializer :

@@ -505,10 +505,10 @@ private fun String.toKeyValuePair(): Pair<String, String> {
 }
 
 sealed class AuthState {
-    object NoAuth : AuthState()
+    data object NoAuth : AuthState()
     data class AuthCodeReceived(val authCode: String) : AuthState()
-    object Authorized : AuthState()
-    object LoggedOut : AuthState()
+    data object Authorized : AuthState()
+    data object LoggedOut : AuthState()
     data class Error(
         val errorCode: ErrorCode,
         val message: String? = null,
