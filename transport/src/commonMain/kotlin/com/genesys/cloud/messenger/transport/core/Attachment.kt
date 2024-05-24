@@ -22,22 +22,22 @@ data class Attachment(
          * Attachment was requested to be detached from the message,
          * but there were no confirmation of success or failure yet.
          */
-        object Detaching : State()
+        data object Detaching : State()
 
         /**
          * Attachment was detached from the Message.
          */
-        object Detached : State()
+        data object Detached : State()
 
         /**
          * Obtaining the presigned url for the attachment.
          */
-        object Presigning : State()
+        data object Presigning : State()
 
         /**
          * Uploading attachment to the server.
          */
-        object Uploading : State()
+        data object Uploading : State()
 
         /**
          * Attachment was successfully uploaded to the server and is ready to be sent with the message.
@@ -56,7 +56,7 @@ data class Attachment(
         /**
          * Message that holds this attachment was sent, but there were no confirmation of delivery or failure yet.
          */
-        object Sending : State()
+        data object Sending : State()
 
         /**
          * Attachment was sent.

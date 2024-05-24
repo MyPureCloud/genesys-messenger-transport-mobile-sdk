@@ -49,7 +49,7 @@ internal data class PresenceEvent(
 }
 
 @Serializable
-internal object Unknown : StructuredMessageEvent()
+internal data object Unknown : StructuredMessageEvent()
 
 internal object StructuredMessageEventSerializer :
     JsonContentPolymorphicSerializer<StructuredMessageEvent>(StructuredMessageEvent::class) {
