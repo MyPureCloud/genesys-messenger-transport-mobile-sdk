@@ -87,7 +87,7 @@ sealed class Event {
     data class SignedIn(val firstName: String? = null, val lastName: String? = null) : Event()
 
     /**
-     *  Sent as confirmation when existing authenticated session was closed on other devices as a result of step-up.
+     *  Sent as confirmation when existing authenticated session was cleared on other devices as a result of step-up.
      */
     data object ExistingAuthSessionCleared : Event()
 }
