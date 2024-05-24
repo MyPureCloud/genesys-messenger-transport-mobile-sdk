@@ -393,6 +393,9 @@ internal class MessagingClientImpl(
                 sendAutoStart()
             }
         }
+        if (clearedExistingSession) {
+            eventHandler.onEvent(Event.ExistingAuthSessionCleared)
+        }
     }
 
     private fun handleError(code: ErrorCode, message: String? = null) {

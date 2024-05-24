@@ -85,4 +85,9 @@ sealed class Event {
      * @param lastName is an optional last name of the user.
      */
     data class SignedIn(val firstName: String? = null, val lastName: String? = null) : Event()
+
+    /**
+     *  Sent as confirmation when existing authenticated session was closed on other devices as a result of step-up.
+     */
+    data object ExistingAuthSessionCleared : Event()
 }

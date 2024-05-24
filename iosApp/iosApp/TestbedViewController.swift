@@ -261,6 +261,10 @@ class TestbedViewController: UIViewController {
             displayEvent = "Event received: \(logout.description)"
         case let disconnect as Event.ConversationDisconnect:
             displayEvent = "Event received: \(disconnect.description)"
+        case let signedIn as Event.SignedIn:
+            displayEvent = "Event received: \(signedIn.description)"
+        case let existingAuthSessionCleared as Event.ExistingAuthSessionCleared:
+            displayEvent = "Event received: \(existingAuthSessionCleared.description)"
         default:
             break
         }

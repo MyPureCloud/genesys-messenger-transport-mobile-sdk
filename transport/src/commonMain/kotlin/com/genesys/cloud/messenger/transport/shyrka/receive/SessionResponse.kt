@@ -10,7 +10,8 @@ internal data class SessionResponse(
     val readOnly: Boolean = false,
     val maxCustomDataBytes: Int = MAX_CUSTOM_DATA_BYTES_UNSET,
     val allowedMedia: AllowedMedia? = null,
-    val blockedExtensions: List<String> = emptyList()
+    val blockedExtensions: List<String> = emptyList(),
+    val clearedExistingSession: Boolean = false,
 )
 
 @Serializable
