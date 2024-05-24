@@ -23,6 +23,7 @@ object TestValues {
     internal const val AuthRefreshTokenKey = "auth_refresh_token_key"
     internal const val LogTag = "TestLogTag"
     internal val defaultMap = mapOf("A" to "B")
+    internal val DEFAULT_STRING = "any string"
 }
 
 object AuthTest {
