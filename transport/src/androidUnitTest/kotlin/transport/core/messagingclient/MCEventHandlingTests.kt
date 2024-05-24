@@ -76,7 +76,7 @@ class MCEventHandlingTests : BaseMessagingClientTest() {
 
     @Test
     fun `when event ConnectionClosed is received`() {
-        val expectedEvent = Event.ConnectionClosed
+        val expectedEvent = Event.ConnectionClosed(Event.ConnectionClosed.Reason.SessionLimitReached)
 
         subject.connect()
         slot.captured.onMessage(Response.connectionClosedEvent)
