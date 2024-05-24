@@ -11,6 +11,7 @@ import com.genesys.cloud.messenger.transport.core.events.Event.ConversationAutos
 import com.genesys.cloud.messenger.transport.core.events.Event.ConversationCleared
 import com.genesys.cloud.messenger.transport.core.events.Event.ConversationDisconnect
 import com.genesys.cloud.messenger.transport.core.events.Event.Error
+import com.genesys.cloud.messenger.transport.core.events.Event.ExistingAuthSessionCleared
 import com.genesys.cloud.messenger.transport.core.events.Event.HealthChecked
 import com.genesys.cloud.messenger.transport.core.events.Event.Logout
 import com.genesys.cloud.messenger.transport.core.events.Event.SignedIn
@@ -55,6 +56,7 @@ class EventHandlerTest {
             Logout,
             ConversationCleared,
             SignedIn(MessageValues.ParticipantName, MessageValues.ParticipantLastName),
+            ExistingAuthSessionCleared,
         )
 
         events.forEach {

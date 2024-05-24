@@ -13,8 +13,9 @@ internal object Response {
         maxCustomDataBytes: Int = TestValues.MaxCustomDataBytes,
         allowedMedia: String = AllowedMedia.empty,
         blockedExtensions: String = AllowedMedia.emptyBlockedExtensions,
+        clearedExistingSession: Boolean = false,
     ): String =
-        """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":$connected,"newSession":true,"readOnly":$readOnly,"maxCustomDataBytes":$maxCustomDataBytes$allowedMedia$blockedExtensions}}"""
+        """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":$connected,"newSession":true,"readOnly":$readOnly,"maxCustomDataBytes":$maxCustomDataBytes$allowedMedia$blockedExtensions,"clearedExistingSession":$clearedExistingSession}}"""
     const val configureSuccessWithNewSessionFalse =
         """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":false}}"""
     const val webSocketRequestFailed =
