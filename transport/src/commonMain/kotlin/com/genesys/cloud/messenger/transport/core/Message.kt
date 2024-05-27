@@ -73,17 +73,17 @@ data class Message(
         /**
          * Message was constructed but not sent.
          */
-        object Idle : State()
+        data object Idle : State()
 
         /**
          * Message was sent, but there were no confirmation of delivery or failure yet.
          */
-        object Sending : State()
+        data object Sending : State()
 
         /**
          * Message was successfully sent.
          */
-        object Sent : State()
+        data object Sent : State()
 
         /**
          * Message failed to deliver.

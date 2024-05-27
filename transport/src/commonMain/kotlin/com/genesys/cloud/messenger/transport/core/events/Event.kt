@@ -19,7 +19,7 @@ sealed class Event {
      * This event indicates a successful health check response to the
      * [com.genesys.cloud.messenger.transport.core.MessagingClient.sendHealthCheck] call.
      */
-    object HealthChecked : Event()
+    data object HealthChecked : Event()
 
     /**
      * This event indicates error.
@@ -37,12 +37,12 @@ sealed class Event {
     /**
      * This event indicates that the conversation was successfully autostarted.
      */
-    object ConversationAutostart : Event()
+    data object ConversationAutostart : Event()
 
     /**
      * This event indicates that the conversation was ended by an agent.
      */
-    object ConversationDisconnect : Event()
+    data object ConversationDisconnect : Event()
 
     /**
      * Sent when the connection is closed. A more detailed reason is provided in the [reason] parameter.
@@ -66,17 +66,17 @@ sealed class Event {
     /**
      * Sent when auth code was successfully exchanged for access token.
      */
-    object Authorized : Event()
+    data object Authorized : Event()
 
     /**
      * Sent when user has been logged out from authenticated session.
      */
-    object Logout : Event()
+    data object Logout : Event()
 
     /**
      * Sent when conversation was successfully cleared.
      */
-    object ConversationCleared : Event()
+    data object ConversationCleared : Event()
 
     /**
      * Sent when user successfully stepped up from guest to authenticated session.

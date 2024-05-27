@@ -15,22 +15,22 @@ interface MessagingClient {
         /**
          * MessagingClient has been instantiated and has not attempted to connect.
          */
-        object Idle : State()
+        data object Idle : State()
 
         /**
          * Trying to establish secure connection via WebSocket.
          */
-        object Connecting : State()
+        data object Connecting : State()
 
         /**
          * Secure connection with WebSocket was opened.
          */
-        object Connected : State()
+        data object Connected : State()
 
         /**
          * Trying to reconnect after WebSocket failure.
          */
-        object Reconnecting : State()
+        data object Reconnecting : State()
 
         /**
          * Session was successfully configured.
@@ -51,7 +51,7 @@ interface MessagingClient {
          *
          * An IllegalStateException will be thrown on any attempt to send an action.
          */
-        object ReadOnly : State()
+        data object ReadOnly : State()
 
         /**
          * Remote peer has indicated that no more incoming messages will be transmitted.
