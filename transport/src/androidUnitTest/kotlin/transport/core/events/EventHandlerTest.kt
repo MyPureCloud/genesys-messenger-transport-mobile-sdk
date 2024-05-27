@@ -239,6 +239,24 @@ class EventHandlerTest {
     }
 
     @Test
+    fun `validate event ConnectionClosed payload`() {
+        val expectedReason = ConnectionClosed.Reason.UserSignedIn
+        val expectedConnectionClosedEvent = ConnectionClosed(ConnectionClosed.Reason.UserSignedIn)
+        val givenConnectionClosedEvent = ConnectionClosed(ConnectionClosed.Reason.UserSignedIn)
+
+        subject.onEvent(givenConnectionClosedEvent)
+
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockEventListener.invoke(capture(eventSlot))
+        }
+        (eventSlot[0] as ConnectionClosed).run {
+            assertThat(reason).isEqualTo(expectedReason)
+        }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.onEvent(expectedConnectionClosedEvent))
+    }
+
+    @Test
     fun `validate default constructor`() {
         val subject = EventHandlerImpl()
 

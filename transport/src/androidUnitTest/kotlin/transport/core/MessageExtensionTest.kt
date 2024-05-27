@@ -99,6 +99,8 @@ internal class MessageExtensionTest {
                 time = isoTestTimestamp,
                 from = StructuredMessage.Participant(
                     nickname = "Bob",
+                    firstName = MessageValues.ParticipantName,
+                    lastName = MessageValues.ParticipantLastName,
                     image = "http://image.png",
                 )
             ),
@@ -121,6 +123,10 @@ internal class MessageExtensionTest {
                 PresenceEvent(
                     eventType = StructuredMessageEvent.Type.Presence,
                     presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Join)
+                ),
+                PresenceEvent(
+                    eventType = StructuredMessageEvent.Type.Presence,
+                    presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.SignIn)
                 )
             )
         )
@@ -139,7 +145,7 @@ internal class MessageExtensionTest {
                         state = Attachment.State.Sent("http://test.com")
                     )
                 ),
-                events = listOf<Event>(Event.ConversationAutostart),
+                events = listOf(Event.ConversationAutostart, Event.SignedIn(MessageValues.ParticipantName, MessageValues.ParticipantLastName)),
                 from = Participant(
                     name = "Bob",
                     imageUrl = "http://image.png",
