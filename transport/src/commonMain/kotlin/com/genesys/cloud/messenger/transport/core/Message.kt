@@ -30,6 +30,7 @@ data class Message(
     val attachments: Map<String, Attachment> = emptyMap(),
     val events: List<Event> = emptyList(),
     val quickReplies: List<ButtonResponse> = emptyList(),
+    val card: List<Card> = emptyList(),
     val from: Participant = Participant(
         originatingEntity = Participant.OriginatingEntity.Human
     ),
