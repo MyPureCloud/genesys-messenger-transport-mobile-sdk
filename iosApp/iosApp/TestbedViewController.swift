@@ -263,7 +263,9 @@ class TestbedViewController: UIViewController {
         default:
             break
         }
-        info.text = displayEvent
+        DispatchQueue.main.async {
+            self.info.text = displayEvent
+        }
     }
 
     private func observeKeyboard() {
