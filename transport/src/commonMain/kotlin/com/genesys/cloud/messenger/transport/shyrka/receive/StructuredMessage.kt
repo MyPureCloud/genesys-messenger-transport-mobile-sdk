@@ -122,7 +122,7 @@ internal data class StructuredMessage(
             data class Card(
                 val title: String,
                 val description: String,
-                val image: String,
+                val image: String? = null,
                 val defaultAction: Action? = null,
                 val actions: List<Action>
             )
