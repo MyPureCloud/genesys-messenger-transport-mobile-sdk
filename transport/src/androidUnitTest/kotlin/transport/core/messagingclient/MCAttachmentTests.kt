@@ -50,7 +50,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         verifySequence {
             connectSequence()
             mockLogger.i(capture(logSlot))
-            mockAttachmentHandler.prepare(any(), any(), any())
+            mockAttachmentHandler.prepare(Request.token, any(), any(), any())
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
@@ -72,7 +72,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
 
         verify {
             mockLogger.i(capture(logSlot))
-            mockAttachmentHandler.detach(capture(attachmentIdSlot))
+            mockAttachmentHandler.detach(Request.token, capture(attachmentIdSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
         assertThat(attachmentIdSlot.captured).isEqualTo(expectedAttachmentId)
@@ -85,12 +85,12 @@ class MCAttachmentTests : BaseMessagingClientTest() {
     fun `when detach() non existing attachmentId`() {
         subject.connect()
         clearMocks(mockPlatformSocket)
-        every { mockAttachmentHandler.detach(any()) } returns null
+        every { mockAttachmentHandler.detach(any(), any()) } returns null
 
         subject.detach("88888888-8888-8888-8888-888888888888")
 
         verify {
-            mockAttachmentHandler.detach("88888888-8888-8888-8888-888888888888")
+            mockAttachmentHandler.detach(Request.token, "88888888-8888-8888-8888-888888888888")
             mockPlatformSocket wasNot Called
         }
     }
@@ -318,6 +318,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         val givenByteArray = ByteArray(1)
         every {
             mockAttachmentHandler.prepare(
+                any(),
                 any(),
                 any(),
                 any()

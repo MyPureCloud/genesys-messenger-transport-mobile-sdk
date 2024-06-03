@@ -7,6 +7,7 @@ import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
+import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.StateChange
 import com.genesys.cloud.messenger.transport.core.events.Event
@@ -24,6 +25,7 @@ import com.genesys.cloud.messenger.transport.util.fromConnectedToError
 import com.genesys.cloud.messenger.transport.util.fromIdleToConnecting
 import com.genesys.cloud.messenger.transport.util.fromReconnectingToError
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
+import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import io.mockk.every
 import io.mockk.invoke
 import io.mockk.slot
@@ -321,5 +323,21 @@ class MCConnectionTests : BaseMessagingClientTest() {
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+    }
+
+    @Test
+    fun `when unstructured error message with ErrorCode_CannotDowngradeToUnauthenticated is received`() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.cannotDowngradeToUnauthenticated)
+        }
+        subject.connect()
+
+        verifySequence {
+            fromIdleToConnectedSequence()
+            mockLogger.i(capture(logSlot))
+            mockPlatformSocket.sendMessage(Request.configureRequest())
+            invalidateSessionTokenSequence()
+            mockStateChangedListener(fromConnectedToError(MessagingClient.State.Error(ErrorCode.CannotDowngradeToUnauthenticated, ErrorTest.Message)))
+        }
     }
 }

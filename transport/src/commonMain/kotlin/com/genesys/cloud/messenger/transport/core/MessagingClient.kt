@@ -125,6 +125,11 @@ interface MessagingClient {
     val fileAttachmentProfile: FileAttachmentProfile?
 
     /**
+     * This property helps to indicate if previously connected session was guest or authenticated.
+     */
+    val wasAuthenticated: Boolean
+
+    /**
      * Open and Configure a secure WebSocket connection to the Web Messaging service with the url and
      * deploymentId configured on this MessagingClient instance.
      *

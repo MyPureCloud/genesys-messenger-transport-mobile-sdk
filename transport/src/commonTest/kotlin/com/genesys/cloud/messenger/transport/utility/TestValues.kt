@@ -6,6 +6,11 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ButtonResponseContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.QuickReplyContent
+import com.genesys.cloud.messenger.transport.util.AUTH_REFRESH_TOKEN_KEY
+import com.genesys.cloud.messenger.transport.util.TOKEN_KEY
+import com.genesys.cloud.messenger.transport.util.VAULT_KEY
+import com.genesys.cloud.messenger.transport.util.Vault
+import com.genesys.cloud.messenger.transport.util.WAS_AUTHENTICATED
 
 internal const val DEFAULT_TIMEOUT = 10000L
 
@@ -16,14 +21,22 @@ object TestValues {
     internal const val DefaultNumber = 1
     internal const val Timestamp = "2022-08-22T19:24:26.704Z"
     internal const val Token = "<token>"
+    internal const val SecondaryToken = "<secondary_token>"
     internal const val ReconnectionTimeout = 5000L
     internal const val NoReconnectionAttempts = 0L
     internal const val VaultKey = "vault_key"
     internal const val TokenKey = "token_key"
     internal const val AuthRefreshTokenKey = "auth_refresh_token_key"
+    internal const val WasAuthenticated = "was_authenticated"
     internal const val LogTag = "TestLogTag"
     internal val defaultMap = mapOf("A" to "B")
-    internal val DEFAULT_STRING = "any string"
+    internal const val DEFAULT_STRING = "any string"
+    internal val vaultKeys = Vault.Keys(
+        vaultKey = VAULT_KEY,
+        tokenKey = TOKEN_KEY,
+        authRefreshTokenKey = AUTH_REFRESH_TOKEN_KEY,
+        wasAuthenticated = WAS_AUTHENTICATED,
+    )
 }
 
 object AuthTest {

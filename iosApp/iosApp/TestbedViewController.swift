@@ -56,6 +56,7 @@ class TestbedViewController: UIViewController {
         case removeToken
         case removeAuthRefreshToken
         case stepUp
+        case wasAuthenticated
 
         var helpDescription: String {
             switch self {
@@ -226,7 +227,9 @@ class TestbedViewController: UIViewController {
         default:
             break
         }
-        info.text = displayMessage
+        DispatchQueue.main.async {
+            self.info.text = displayMessage
+        }
     }
     
     private func updateWithEvent(_ event: Event) {
@@ -493,6 +496,8 @@ extension TestbedViewController : UITextFieldDelegate {
                 messenger.removeAuthRefreshToken()
             case (.stepUp, _):
                 try messenger.stepUp()
+            case (.wasAuthenticated, _):
+                self.info.text = "wasAuthenticated: \(messenger.wasAuthenticated())"
             default:
                 self.info.text = "Invalid command"
             }

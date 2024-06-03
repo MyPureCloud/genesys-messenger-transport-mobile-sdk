@@ -94,6 +94,7 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
             mockStateChangedListener(fromConnectingToConnected)
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.configureRequest())
+            mockVault.wasAuthenticated = false
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()

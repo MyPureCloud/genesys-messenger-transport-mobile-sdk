@@ -75,16 +75,32 @@ class MCEventHandlingTests : BaseMessagingClientTest() {
     }
 
     @Test
-    fun `when event ConnectionClosed is received`() {
+    fun `when event ConnectionClosed with no reason is received`() {
         val expectedEvent = Event.ConnectionClosed(Event.ConnectionClosed.Reason.SessionLimitReached)
 
         subject.connect()
-        slot.captured.onMessage(Response.connectionClosedEvent)
+        slot.captured.onMessage(Response.connectionClosedEventNoReason)
 
         verifySequence {
             connectSequence()
-            disconnectSequence()
             mockEventHandler.onEvent(eq(expectedEvent))
+            disconnectSequence()
+        }
+    }
+
+    @Test
+    fun `when event ConnectionClosed with reason=signedIn is received`() {
+        val expectedEvent = Event.ConnectionClosed(Event.ConnectionClosed.Reason.UserSignedIn)
+
+        subject.connect()
+        slot.captured.onMessage(Response.connectionClosedEventReasonSignIn)
+
+        verifySequence {
+            connectSequence()
+            invalidateSessionTokenSequence()
+            mockVault.wasAuthenticated = false
+            mockEventHandler.onEvent(eq(expectedEvent))
+            disconnectSequence()
         }
     }
 

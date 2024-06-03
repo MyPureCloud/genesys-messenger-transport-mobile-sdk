@@ -74,7 +74,7 @@ class MCMessageTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockCustomAttributesStore.add(emptyMap())
             mockCustomAttributesStore.getCustomAttributesToSend()
-            mockMessageStore.prepareMessage(MessageValues.Text)
+            mockMessageStore.prepareMessage(Request.token, MessageValues.Text)
             mockAttachmentHandler.onSending()
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessageRequest)
