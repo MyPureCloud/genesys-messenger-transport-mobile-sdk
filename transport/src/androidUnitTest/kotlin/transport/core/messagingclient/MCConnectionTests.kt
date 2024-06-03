@@ -9,6 +9,7 @@ import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.StateChange
+import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.isClosed
 import com.genesys.cloud.messenger.transport.core.isConfigured
 import com.genesys.cloud.messenger.transport.core.isConnected
@@ -26,6 +27,7 @@ import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.mockk.every
 import io.mockk.invoke
 import io.mockk.slot
+import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
 import kotlin.test.assertFailsWith
@@ -280,5 +282,44 @@ class MCConnectionTests : BaseMessagingClientTest() {
 
         assertThat(subject.oldState).isConnecting()
         assertThat(subject.newState).isConnected()
+    }
+
+    @Test
+    fun `when configure response has clearedExistingSession=true`() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.configureSuccess(clearedExistingSession = true))
+        }
+        subject.connect()
+
+        (subject.currentState as MessagingClient.State.Configured).run {
+            assertThat(this).isConfigured(connected = true, newSession = true)
+            assertThat(connected).isTrue()
+            assertThat(newSession).isTrue()
+        }
+        verifySequence {
+            connectSequence()
+            mockEventHandler.onEvent(eq(Event.ExistingAuthSessionCleared))
+        }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+    }
+
+    @Test
+    fun `when configure response has clearedExistingSession=false`() {
+        subject.connect()
+
+        (subject.currentState as MessagingClient.State.Configured).run {
+            assertThat(this).isConfigured(connected = true, newSession = true)
+            assertThat(connected).isTrue()
+            assertThat(newSession).isTrue()
+        }
+        verifySequence {
+            connectSequence()
+        }
+        verify(exactly = 0) {
+            mockEventHandler.onEvent(eq(Event.ExistingAuthSessionCleared))
+        }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
     }
 }

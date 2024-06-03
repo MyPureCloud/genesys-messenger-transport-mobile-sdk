@@ -55,6 +55,7 @@ class TestbedViewController: UIViewController {
         case clearConversation
         case removeToken
         case removeAuthRefreshToken
+        case stepUp
 
         var helpDescription: String {
             switch self {
@@ -260,6 +261,10 @@ class TestbedViewController: UIViewController {
             displayEvent = "Event received: \(logout.description)"
         case let disconnect as Event.ConversationDisconnect:
             displayEvent = "Event received: \(disconnect.description)"
+        case let signedIn as Event.SignedIn:
+            displayEvent = "Event received: \(signedIn.description)"
+        case let existingAuthSessionCleared as Event.ExistingAuthSessionCleared:
+            displayEvent = "Event received: \(existingAuthSessionCleared.description)"
         default:
             break
         }
@@ -486,6 +491,8 @@ extension TestbedViewController : UITextFieldDelegate {
                 messenger.removeToken()
             case (.removeAuthRefreshToken, _):
                 messenger.removeAuthRefreshToken()
+            case (.stepUp, _):
+                try messenger.stepUp()
             default:
                 self.info.text = "Invalid command"
             }

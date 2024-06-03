@@ -12,6 +12,7 @@ import com.genesys.cloud.messenger.transport.core.Message.Participant
 import com.genesys.cloud.messenger.transport.core.Message.State
 import com.genesys.cloud.messenger.transport.core.Message.Type
 import com.genesys.cloud.messenger.transport.core.events.Event
+import com.genesys.cloud.messenger.transport.core.events.Event.ConnectionClosed.Reason
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses.isoTestTimestamp
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
@@ -27,7 +28,9 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.isInbound
 import com.genesys.cloud.messenger.transport.shyrka.receive.isOutbound
+import com.genesys.cloud.messenger.transport.shyrka.receive.toTransportConnectionClosedReason
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
+import com.genesys.cloud.messenger.transport.util.SIGNED_IN
 import com.genesys.cloud.messenger.transport.util.extensions.fromIsoToEpochMilliseconds
 import com.genesys.cloud.messenger.transport.util.extensions.getUploadedAttachments
 import com.genesys.cloud.messenger.transport.util.extensions.isHealthCheckResponseId
@@ -96,6 +99,8 @@ internal class MessageExtensionTest {
                 time = isoTestTimestamp,
                 from = StructuredMessage.Participant(
                     nickname = "Bob",
+                    firstName = MessageValues.ParticipantName,
+                    lastName = MessageValues.ParticipantLastName,
                     image = "http://image.png",
                 )
             ),
@@ -118,6 +123,10 @@ internal class MessageExtensionTest {
                 PresenceEvent(
                     eventType = StructuredMessageEvent.Type.Presence,
                     presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Join)
+                ),
+                PresenceEvent(
+                    eventType = StructuredMessageEvent.Type.Presence,
+                    presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.SignIn)
                 )
             )
         )
@@ -136,7 +145,7 @@ internal class MessageExtensionTest {
                         state = Attachment.State.Sent("http://test.com")
                     )
                 ),
-                events = listOf<Event>(Event.ConversationAutostart),
+                events = listOf(Event.ConversationAutostart, Event.SignedIn(MessageValues.ParticipantName, MessageValues.ParticipantLastName)),
                 from = Participant(
                     name = "Bob",
                     imageUrl = "http://image.png",
@@ -559,7 +568,8 @@ internal class MessageExtensionTest {
             className = MessageValues.PreIdentifiedMessageClass,
         )
 
-        val expectedPreIdentifiedWebMessagingMessageAsJson = """{"type":"type","code":200,"class":"clazz"}"""
+        val expectedPreIdentifiedWebMessagingMessageAsJson =
+            """{"type":"type","code":200,"class":"clazz"}"""
 
         val result = WebMessagingJson.json.encodeToString(givenMPreIdentifiedWebMessagingMessage)
 
@@ -623,7 +633,8 @@ internal class MessageExtensionTest {
             from = StructuredMessage.Participant(),
         )
 
-        val result = WebMessagingJson.json.decodeFromString<StructuredMessage.Channel>(givenChannelAsJson)
+        val result =
+            WebMessagingJson.json.decodeFromString<StructuredMessage.Channel>(givenChannelAsJson)
 
         result.run {
             assertThat(time).isEqualTo(expectedChannel.time)
@@ -788,5 +799,15 @@ internal class MessageExtensionTest {
         val result = givenPresignedUrlResponse.isRefreshUrl()
 
         assertThat(result).isTrue()
+    }
+
+    @Test
+    fun `when toTransportConnectionClosedReason`() {
+        assertThat(SIGNED_IN.toTransportConnectionClosedReason(false)).isEqualTo(Reason.UserSignedIn)
+        assertThat(SIGNED_IN.toTransportConnectionClosedReason(true)).isEqualTo(Reason.UserSignedIn)
+        assertThat(TestValues.DEFAULT_STRING.toTransportConnectionClosedReason(false)).isEqualTo(Reason.SessionLimitReached)
+        assertThat(TestValues.DEFAULT_STRING.toTransportConnectionClosedReason(true)).isEqualTo(Reason.ConversationCleared)
+        assertThat(null.toTransportConnectionClosedReason(true)).isEqualTo(Reason.ConversationCleared)
+        assertThat(null.toTransportConnectionClosedReason(false)).isEqualTo(Reason.SessionLimitReached)
     }
 }

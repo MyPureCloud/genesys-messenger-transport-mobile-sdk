@@ -178,7 +178,8 @@ class SerializationTest {
                         "maxFileSizeKB": 10240
                     }
                 },
-                "blockedExtensions": [".ade"]
+                "blockedExtensions": [".ade"],
+                "clearedExistingSession":false
               }
             }
             """.trimIndent()
@@ -196,7 +197,8 @@ class SerializationTest {
                         maxFileSizeKB = 10240,
                     ),
                 ),
-                blockedExtensions = listOf(".ade")
+                blockedExtensions = listOf(".ade"),
+                clearedExistingSession = false,
             )
         )
 

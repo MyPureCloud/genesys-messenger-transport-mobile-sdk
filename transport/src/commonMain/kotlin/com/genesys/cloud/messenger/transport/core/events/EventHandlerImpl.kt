@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.core.events
 
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.Unknown
@@ -22,7 +23,7 @@ internal class EventHandlerImpl(
     }
 }
 
-internal fun StructuredMessageEvent.toTransportEvent(): Event? {
+internal fun StructuredMessageEvent.toTransportEvent(from: StructuredMessage.Participant? = null): Event? {
     return when (this) {
         is TypingEvent -> {
             Event.AgentTyping(typing.duration ?: FALLBACK_TYPING_INDICATOR_DURATION)
@@ -32,6 +33,7 @@ internal fun StructuredMessageEvent.toTransportEvent(): Event? {
                 PresenceEvent.Presence.Type.Join -> Event.ConversationAutostart
                 PresenceEvent.Presence.Type.Disconnect -> Event.ConversationDisconnect
                 PresenceEvent.Presence.Type.Clear -> null // Ignore. Event.ConversationClear should be dispatched upon receiving SessionClearedEvent and not StructuredMessageEvent with Type.Clear
+                PresenceEvent.Presence.Type.SignIn -> Event.SignedIn(firstName = from?.firstName, lastName = from?.lastName)
             }
         }
         is Unknown -> null

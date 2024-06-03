@@ -23,5 +23,6 @@ enum class Command(val description: String) {
     REMOVE_AUTH_REFRESH_TOKEN_FROM_VAULT("removeAuthRefreshToken"),
     SEND("send <msg>"),
     SEND_QUICK_REPLY("sendQuickReply <quickReply>"),
+    STEP_UP("stepUp"),
     TYPING("typing")
 }

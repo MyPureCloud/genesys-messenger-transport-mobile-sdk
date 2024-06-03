@@ -29,6 +29,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.TooManyRequestsErrorMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.toTransportConnectionClosedReason
 import com.genesys.cloud.messenger.transport.shyrka.send.AutoStartRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.ClearConversationRequest
@@ -91,6 +92,7 @@ internal class MessagingClientImpl(
     private var isStartingANewSession = false
     private var reconfigureAttempts = 0
     private var sendingAutostart = false
+    private var clearingConversation = false
 
     override val currentState: State
         get() {
@@ -144,6 +146,14 @@ internal class MessagingClientImpl(
     }
 
     @Throws(IllegalStateException::class)
+    override fun stepUpToAuthenticatedSession() {
+        log.i { LogMessages.STEP_UP_TO_AUTHENTICATED_SESSION }
+        stateMachine.checkIfConfigured()
+        connectAuthenticated = true
+        configureSession()
+    }
+
+    @Throws(IllegalStateException::class)
     override fun startNewChat() {
         stateMachine.checkIfCanStartANewChat()
         isStartingANewSession = true
@@ -172,10 +182,10 @@ internal class MessagingClientImpl(
                 transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
                 return
             }
-            encodeAuthenticatedConfigureSessionRequest(startNew)
+            encodeConfigureAuthenticatedSessionRequest(startNew)
         } else {
             log.i { LogMessages.configureSession(token, startNew) }
-            encodeAnonymousConfigureSessionRequest(startNew)
+            encodeConfigureGuestSessionRequest(startNew)
         }
         webSocket.sendMessage(encodedJson)
     }
@@ -383,6 +393,9 @@ internal class MessagingClientImpl(
                 sendAutoStart()
             }
         }
+        if (clearedExistingSession) {
+            eventHandler.onEvent(Event.ExistingAuthSessionCleared)
+        }
     }
 
     private fun handleError(code: ErrorCode, message: String? = null) {
@@ -511,11 +524,19 @@ internal class MessagingClientImpl(
                 eventHandler.onEvent(it)
             }
         } else {
-            // Autostart is the only Inbound event that should be reported to UI.
-            events.find { it is Event.ConversationAutostart }?.let { autostart ->
-                sendingAutostart = false
-                internalCustomAttributesStore.onSent()
-                eventHandler.onEvent(autostart)
+            events.forEach {
+                when (it) {
+                    is Event.ConversationAutostart -> {
+                        sendingAutostart = false
+                        internalCustomAttributesStore.onSent()
+                        eventHandler.onEvent(it)
+                    }
+                    is Event.SignedIn -> eventHandler.onEvent(it)
+                    else -> {
+                        // Do nothing. Autostart and SignedIn are the only Inbound events that should be reported to UI.
+                        log.i { LogMessages.ignoreInboundEvent(it) }
+                    }
+                }
             }
         }
     }
@@ -537,6 +558,7 @@ internal class MessagingClientImpl(
         jwtHandler.clear()
         reconfigureAttempts = 0
         sendingAutostart = false
+        clearingConversation = false
         internalCustomAttributesStore.onSessionClosed()
     }
 
@@ -547,6 +569,7 @@ internal class MessagingClientImpl(
         jwtHandler.clear()
         reconfigureAttempts = 0
         sendingAutostart = false
+        clearingConversation = false
     }
 
     private fun considerForceClose() {
@@ -557,7 +580,7 @@ internal class MessagingClientImpl(
         }
     }
 
-    private fun encodeAnonymousConfigureSessionRequest(startNew: Boolean) =
+    private fun encodeConfigureGuestSessionRequest(startNew: Boolean) =
         WebMessagingJson.json.encodeToString(
             ConfigureSessionRequest(
                 token = token,
@@ -570,7 +593,7 @@ internal class MessagingClientImpl(
             )
         )
 
-    private fun encodeAuthenticatedConfigureSessionRequest(startNew: Boolean) =
+    private fun encodeConfigureAuthenticatedSessionRequest(startNew: Boolean) =
         WebMessagingJson.json.encodeToString(
             ConfigureAuthenticatedSessionRequest(
                 token = token,
@@ -674,7 +697,11 @@ internal class MessagingClientImpl(
 
                     is ConnectionClosedEvent -> {
                         disconnect()
-                        eventHandler.onEvent(Event.ConnectionClosed)
+                        eventHandler.onEvent(
+                            Event.ConnectionClosed(
+                                decoded.body.reason.toTransportConnectionClosedReason(clearingConversation)
+                            )
+                        )
                     }
 
                     is LogoutEvent -> {
@@ -683,7 +710,10 @@ internal class MessagingClientImpl(
                         disconnect()
                     }
 
-                    is SessionClearedEvent -> eventHandler.onEvent(Event.ConversationCleared)
+                    is SessionClearedEvent -> {
+                        clearingConversation = true
+                        eventHandler.onEvent(Event.ConversationCleared)
+                    }
                     else -> {
                         log.i { LogMessages.unhandledMessage(decoded) }
                     }

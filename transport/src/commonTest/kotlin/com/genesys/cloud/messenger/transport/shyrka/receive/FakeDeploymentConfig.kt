@@ -7,13 +7,19 @@ fun createDeploymentConfigForTesting(
 ) = DeploymentConfig(
     id = DeploymentConfigValues.Id,
     version = DeploymentConfigValues.Version,
-    languages = listOf(DeploymentConfigValues.DefaultLanguage, DeploymentConfigValues.SecondaryLanguage),
+    languages = listOf(
+        DeploymentConfigValues.DefaultLanguage,
+        DeploymentConfigValues.SecondaryLanguage
+    ),
     defaultLanguage = DeploymentConfigValues.DefaultLanguage,
     apiEndpoint = DeploymentConfigValues.ApiEndPoint,
     messenger = messenger,
     journeyEvents = JourneyEvents(enabled = false),
     status = DeploymentConfigValues.Status,
-    auth = Auth(enabled = true)
+    auth = Auth(
+        enabled = true,
+        allowSessionUpgrade = true,
+    )
 )
 
 fun createMessengerVOForTesting(

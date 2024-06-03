@@ -13,14 +13,14 @@ internal object Response {
         maxCustomDataBytes: Int = TestValues.MaxCustomDataBytes,
         allowedMedia: String = AllowedMedia.empty,
         blockedExtensions: String = AllowedMedia.emptyBlockedExtensions,
+        clearedExistingSession: Boolean = false,
     ): String =
-        """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":$connected,"newSession":true,"readOnly":$readOnly,"maxCustomDataBytes":$maxCustomDataBytes$allowedMedia$blockedExtensions}}"""
+        """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":$connected,"newSession":true,"readOnly":$readOnly,"maxCustomDataBytes":$maxCustomDataBytes$allowedMedia$blockedExtensions,"clearedExistingSession":$clearedExistingSession}}"""
     const val configureSuccessWithNewSessionFalse =
         """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":false}}"""
     const val webSocketRequestFailed =
         """{"type":"response","class":"string","code":400,"body":"Request failed."}"""
-    const val defaultStructuredEvents =
-        """{"eventType": "Typing","typing": {"type": "Off","duration": 1000}},{"eventType": "Typing","typing": {"type": "On","duration": 5000}}"""
+    const val defaultStructuredEvents = """${StructuredEvent.typingOff},${StructuredEvent.typingOn}"""
     fun onMessage(direction: Message.Direction = Message.Direction.Inbound) =
         """{"type":"message","class":"StructuredMessage","code":200,"body":{"text":"Hello world!","direction":"${direction.name}","id":"test_id","channel":{"time":"2022-08-22T19:24:26.704Z","messageId":"message_id"},"type":"Text","metadata":{"customMessageId":"some_custom_message_id"}}}"""
     fun onMessageWithAttachment(direction: Message.Direction = Message.Direction.Outbound) =
@@ -101,5 +101,14 @@ internal object Response {
         const val emptyInbound = ""","allowedMedia":{"inbound":{}}"""
         const val listOfFileTypesWithMaxSize = ""","allowedMedia":{"inbound":{"fileTypes":[{"type":"video/mpg"},{"type":"video/3gpp"}],"maxFileSizeKB":10240}}"""
         const val listOfFileTypesWithWildcardAndMaxSize = ""","allowedMedia":{"inbound":{"fileTypes":[{"type":"*/*"},{"type":"video/3gpp"}],"maxFileSizeKB":10240}}"""
+    }
+
+    object StructuredEvent {
+        const val presenceJoin = """{"eventType":"Presence","presence":{"type":"Join"}}"""
+        const val presenceDisconnect = """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
+        const val presenceSignIn = """{"eventType":"Presence","presence":{"type":"SignIn"}}"""
+        const val typingOn = """{"eventType": "Typing","typing": {"type": "On","duration": 5000}}"""
+        const val typingOff = """{"eventType": "Typing","typing": {"type": "Off","duration": 1000}}"""
+        const val unknown = """{"eventType":"Fake","bloop":{"bip":"bop"}}"""
     }
 }

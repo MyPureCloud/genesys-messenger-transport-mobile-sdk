@@ -58,6 +58,7 @@ internal object LogMessages {
     const val ON_SESSION_CLOSED = "onSessionClosed"
     const val CONNECT = "connect"
     const val CONNECT_AUTHENTICATED_SESSION = "connectAuthenticatedSession"
+    const val STEP_UP_TO_AUTHENTICATED_SESSION = "stepUpToAuthenticatedSession"
     const val DISCONNECT = "disconnect"
     fun onSentState(state: String) = "onSent. state = $state"
     const val CLOSE_SESSION = "closeSession"
@@ -107,4 +108,5 @@ internal object LogMessages {
     // Quick Replies
     fun quickReplyPrepareToSend(message: Message) = "Message with quick reply prepared to send: $message"
     fun sendQuickReply(buttonResponse: ButtonResponse) = "sendQuickReply(buttonResponse: $buttonResponse)"
+    fun ignoreInboundEvent(event: Event) = "Ignore inbound event: $event."
 }
