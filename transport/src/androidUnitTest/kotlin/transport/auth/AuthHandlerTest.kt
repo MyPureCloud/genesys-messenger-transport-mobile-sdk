@@ -15,14 +15,11 @@ import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
-import com.genesys.cloud.messenger.transport.util.AUTH_REFRESH_TOKEN_KEY
-import com.genesys.cloud.messenger.transport.util.TOKEN_KEY
-import com.genesys.cloud.messenger.transport.util.VAULT_KEY
-import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
+import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -35,7 +32,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import org.junit.After
 import org.junit.Before
@@ -79,13 +75,7 @@ class AuthHandlerTest {
         )
     }
 
-    private val fakeVault: FakeVault = FakeVault(
-        Vault.Keys(
-            vaultKey = VAULT_KEY,
-            tokenKey = TOKEN_KEY,
-            authRefreshTokenKey = AUTH_REFRESH_TOKEN_KEY,
-        )
-    )
+    private val fakeVault: FakeVault = FakeVault(TestValues.vaultKeys)
     private val dispatcher: CoroutineDispatcher = Dispatchers.Unconfined
 
     private var subject = buildAuthHandler()

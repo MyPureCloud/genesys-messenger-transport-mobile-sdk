@@ -45,13 +45,15 @@ class AndroidPlatformTest {
         val result = Vault.Keys(
             vaultKey = TestValues.VaultKey,
             tokenKey = TestValues.TokenKey,
-            authRefreshTokenKey = TestValues.AuthRefreshTokenKey
+            authRefreshTokenKey = TestValues.AuthRefreshTokenKey,
+            wasAuthenticated = TestValues.WasAuthenticated,
         )
 
         result.run {
             assertThat(vaultKey).isEqualTo(TestValues.VaultKey)
             assertThat(tokenKey).isEqualTo(TestValues.TokenKey)
             assertThat(authRefreshTokenKey).isEqualTo(TestValues.AuthRefreshTokenKey)
+            assertThat(wasAuthenticated).isEqualTo(TestValues.WasAuthenticated)
         }
     }
 }

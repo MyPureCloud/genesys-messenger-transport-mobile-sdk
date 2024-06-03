@@ -31,6 +31,16 @@ abstract class Vault(val keys: Keys) {
         }
 
     /**
+     * Retrieves the wasAuthenticated value from the vault or false if it doesn't exist.
+     * The wasAuthenticated can also be set to a new value, which will then be stored in the vault.
+     */
+    internal var wasAuthenticated: Boolean
+        get() = fetch(keys.wasAuthenticated).toBoolean()
+        set(value) {
+            store(keys.wasAuthenticated, value.toString())
+        }
+
+    /**
      * Stores the value with given key into the storage for later fetching.
      *
      * @param key the key to use for storage.
@@ -56,10 +66,12 @@ abstract class Vault(val keys: Keys) {
      * @param vaultKey the key used to access the Vault itself.
      * @param tokenKey the key used to fetch the token value from the Vault.
      * @param authRefreshTokenKey the key used to fetch the auth refresh token value from the Vault.
+     * @param wasAuthenticated the key used to fetch the wasAuthenticated boolean value from the Vault.
      */
     data class Keys(
         val vaultKey: String,
         val tokenKey: String,
         val authRefreshTokenKey: String,
+        val wasAuthenticated: String,
     )
 }

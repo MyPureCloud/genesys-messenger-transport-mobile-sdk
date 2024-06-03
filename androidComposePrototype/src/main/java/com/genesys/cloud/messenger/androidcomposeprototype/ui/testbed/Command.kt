@@ -24,5 +24,6 @@ enum class Command(val description: String) {
     SEND("send <msg>"),
     SEND_QUICK_REPLY("sendQuickReply <quickReply>"),
     STEP_UP("stepUp"),
-    TYPING("typing")
+    TYPING("typing"),
+    WAS_AUTHENTICATED("wasAuthenticated"),
 }

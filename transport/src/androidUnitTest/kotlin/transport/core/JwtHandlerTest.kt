@@ -25,7 +25,7 @@ class JwtHandlerTest {
     private val mockWebSocket: PlatformSocket = mockk(relaxed = true)
     val mockJwtFn: (String) -> Any = mockk(relaxed = true)
 
-    private val subject = JwtHandler(mockWebSocket, Request.token)
+    private val subject = JwtHandler(mockWebSocket)
 
     @ExperimentalCoroutinesApi
     private val threadSurrogate = newSingleThreadContext("main thread")
@@ -52,7 +52,7 @@ class JwtHandlerTest {
         val givenJwtResponse = JwtResponse(AuthTest.JwtToken, givenExpiry)
         subject.jwtResponse = givenJwtResponse
 
-        subject.withJwt(mockJwtFn)
+        subject.withJwt(Request.token, mockJwtFn)
 
         coVerify { mockJwtFn(AuthTest.JwtToken) }
         coVerify(exactly = 0) { mockWebSocket.sendMessage(Request.jwt) }
@@ -69,7 +69,7 @@ class JwtHandlerTest {
         val givenJwtResponse = JwtResponse(AuthTest.JwtToken, 0)
         subject.jwtResponse = givenJwtResponse
 
-        subject.withJwt(mockJwtFn)
+        subject.withJwt(Request.token, mockJwtFn)
 
         coVerify {
             mockJwtFn(AuthTest.JwtToken)

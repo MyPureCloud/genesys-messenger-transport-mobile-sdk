@@ -2,6 +2,7 @@ package com.genesys.cloud.messenger.transport.util
 
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
+import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -37,6 +38,8 @@ internal object Response {
         """{"type": "response","class": "string","code": 4007,"body": "session not found error message"}"""
     const val sessionExpired =
         """{"type": "response","class": "string","code": 4006,"body": "session expired error message"}"""
+    const val cannotDowngradeToUnauthenticated =
+        """{"type": "response","class": "string","code": 4017,"body": "${ErrorTest.Message}"}"""
     const val sessionExpiredEvent =
         """{"type": "response","class": "SessionExpiredEvent","code": 200,"body": {}}"""
     const val messageTooLong =
@@ -45,8 +48,10 @@ internal object Response {
         """{"type":"response","class":"TooManyRequestsErrorMessage","code":429,"body":{"retryAfter":3,"errorCode":4029,"errorMessage":"Message rate too high for this session"}}"""
     const val customAttributeSizeTooLarge =
         """{"type":"response","class":"string","code":4013,"body":"Custom Attributes in channel metadata is larger than 2048 bytes"}"""
-    const val connectionClosedEvent =
+    const val connectionClosedEventNoReason =
         """{"type":"message","class":"ConnectionClosedEvent","code":200,"body":{}}"""
+    const val connectionClosedEventReasonSignIn =
+        """{"type":"message","class":"ConnectionClosedEvent","code":200,"body":{"reason":"$SIGNED_IN"}}"""
     const val logoutEvent =
         """{"type":"message","class":"LogoutEvent","code":200,"body":{}}"""
     const val unauthorized =

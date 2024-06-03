@@ -156,11 +156,17 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "removeToken" -> doRemoveTokenFromVault()
             "removeAuthRefreshToken" -> doRemoveAuthRefreshTokenFromVault()
             "stepUp" -> doStepUp()
+            "wasAuthenticated" -> doWasAuthenticated()
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
             }
         }
+    }
+
+    private fun doWasAuthenticated() {
+        onSocketMessageReceived("wasAuthenticated: ${client.wasAuthenticated}")
+        commandWaiting = false
     }
 
     private fun doOktaSignIn(withPKCE: Boolean) {
