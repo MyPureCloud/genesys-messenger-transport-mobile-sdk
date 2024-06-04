@@ -36,7 +36,7 @@ Shyrka -> MessagingClient: onMessage(type = Type.Carousel, text = String, conten
 MessagingClient -> MessagingClient : Normalize the (Carousel/Cards) to listOf(Cards)
 MessagingClient -> MessageStore: update(Message)
 MessageStore -> MessageStore: add message to Conversation
-MessageStore -> App: messageListener(CardsReceived(Message(type:Type.Cards, content: List<Card(title, description, image), BotResponse(type, text, url?, payload?>)))
+MessageStore -> App: messageListener(CardsReceived(Message(type:Type.Cards, content: List<Card(title, description, image), Action(type, text, url?, payload?>)))
 App -> App: Display cards in UI
 
 alt #aaff8833 user selects cards option with "Postback"
