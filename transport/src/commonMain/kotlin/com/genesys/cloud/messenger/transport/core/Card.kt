@@ -5,7 +5,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Card(
     val title: String,
+    val description: String? = null,
     val image: String? = null,
     val defaultResponse: Action? = null,
-    val response: List<Action> = emptyList()
+    val response: List<Action> = emptyList(),
 )

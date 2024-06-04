@@ -66,7 +66,7 @@ internal data class StructuredMessage(
             QuickReply,
             ButtonResponse,
             Card,
-            Carousel
+            Carousel,
         }
 
         @Serializable
@@ -121,7 +121,7 @@ internal data class StructuredMessage(
             @Serializable
             data class Card(
                 val title: String,
-                val description: String,
+                val description: String? = null,
                 val image: String? = null,
                 val defaultAction: Action? = null,
                 val actions: List<Action>
