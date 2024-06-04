@@ -62,3 +62,9 @@ internal fun fromConfiguredToReconnecting(): StateChange =
         oldState = MessagingClient.State.Configured(connected = true, newSession = true),
         newState = MessagingClient.State.Reconnecting
     )
+
+internal val fromReadOnlyToConfigured =
+    StateChange(
+        oldState = MessagingClient.State.ReadOnly,
+        newState = MessagingClient.State.Configured(connected = true, newSession = true)
+    )

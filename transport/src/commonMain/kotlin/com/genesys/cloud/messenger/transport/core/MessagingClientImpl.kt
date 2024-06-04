@@ -498,7 +498,7 @@ internal class MessagingClientImpl(
     private fun handleConfigureSessionErrorResponse(code: ErrorCode, message: String?) {
         if (connectAuthenticated && code.isUnauthorized() && reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
             reconfigureAttempts++
-            if (stateMachine.isConnected()) {
+            if (stateMachine.isConnected() || stateMachine.isReadOnly()) {
                 refreshTokenAndPerform { configureSession(isStartingANewSession) }
             } else {
                 refreshTokenAndPerform { connectAuthenticatedSession() }

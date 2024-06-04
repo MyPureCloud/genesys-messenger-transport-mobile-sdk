@@ -18,11 +18,13 @@ import com.genesys.cloud.messenger.transport.core.isReconnecting
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.Response
 import com.genesys.cloud.messenger.transport.util.fromConfiguredToError
+import com.genesys.cloud.messenger.transport.util.fromConfiguredToReadOnly
 import com.genesys.cloud.messenger.transport.util.fromConfiguredToReconnecting
 import com.genesys.cloud.messenger.transport.util.fromConnectedToConfigured
 import com.genesys.cloud.messenger.transport.util.fromConnectedToError
 import com.genesys.cloud.messenger.transport.util.fromConnectingToConnected
 import com.genesys.cloud.messenger.transport.util.fromIdleToConnecting
+import com.genesys.cloud.messenger.transport.util.fromReadOnlyToConfigured
 import com.genesys.cloud.messenger.transport.util.fromReconnectingToError
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AuthTest
@@ -248,6 +250,54 @@ class MCAuthTests : BaseMessagingClientTest() {
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.CONNECT_AUTHENTICATED_SESSION)
         assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(Request.token, false))
+    }
+
+    @Test
+    fun `when authenticated conversation was disconnected with ReadOnly and startNewChat resulted in ClientResponseError(401)`() {
+        var configureSessionResponsesCounter = 0 // Needed to exit the retry attempts from failing Response.unauthorized
+        every {
+            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest(startNew = true))
+        } answers {
+            if (configureSessionResponsesCounter < 1) {
+                configureSessionResponsesCounter++
+                slot.captured.onMessage(Response.unauthorized)
+            } else {
+                slot.captured.onMessage(Response.configureSuccess())
+            }
+        }
+        every { mockPlatformSocket.sendMessage(Request.closeAllConnections) } answers {
+            slot.captured.onMessage(Response.configureSuccess(connected = false, readOnly = true))
+        }
+        every { mockAuthHandler.refreshToken(captureLambda()) } answers {
+            every { mockAuthHandler.jwt } returns AuthTest.JwtToken
+            lambda<(Result<Empty>) -> Unit>().invoke(Result.Success(Empty()))
+        }
+        subject.connectAuthenticatedSession()
+        slot.captured.onMessage(
+            Response.structuredMessageWithEvents(
+                events = Response.StructuredEvent.presenceDisconnect,
+                metadata = mapOf("readOnly" to "true"),
+            )
+        )
+
+        subject.startNewChat()
+
+        assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
+        verifySequence {
+            fromIdleToConnectedSequence()
+            mockLogger.i(capture(logSlot))
+            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
+            mockStateChangedListener(fromConnectedToConfigured)
+            mockStateChangedListener(fromConfiguredToReadOnly())
+            mockLogger.i(capture(logSlot))
+            mockPlatformSocket.sendMessage(Request.closeAllConnections)
+            mockLogger.i(capture(logSlot))
+            mockLogger.i(capture(logSlot))
+            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest(startNew = true))
+            mockLogger.i(capture(logSlot))
+            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest(startNew = true))
+            mockStateChangedListener(fromReadOnlyToConfigured)
+        }
     }
 
     @Test
