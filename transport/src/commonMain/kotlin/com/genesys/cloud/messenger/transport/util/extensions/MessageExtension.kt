@@ -33,14 +33,15 @@ internal fun StructuredMessage.toMessage(): Message {
         timeStamp = channel?.time.fromIsoToEpochMilliseconds(),
         attachments = content.filterIsInstance<AttachmentContent>().toAttachments(),
         quickReplies = quickReplies,
-        events = events.mapNotNull { it.toTransportEvent() },
+        events = events.mapNotNull { it.toTransportEvent(channel?.from) },
         from = Message.Participant(
             name = channel?.from?.nickname,
             imageUrl = channel?.from?.image,
             originatingEntity = originatingEntity.mapOriginatingEntity {
                 isInbound()
             }
-        )
+        ),
+        authenticated = metadata["authenticated"].toBoolean()
     )
 }
 

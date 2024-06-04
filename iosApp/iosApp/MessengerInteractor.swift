@@ -201,4 +201,12 @@ final class MessengerInteractor {
         let authRefreshTokenKey = messengerTransport.vault.keys.authRefreshTokenKey
         messengerTransport.vault.remove(key: authRefreshTokenKey)
     }
+
+    func stepUp() throws {
+        do {
+            try messagingClient.stepUpToAuthenticatedSession()
+        } catch {
+            print("stepUp() failed. \(error.localizedDescription)")
+        }
+    }
 }
