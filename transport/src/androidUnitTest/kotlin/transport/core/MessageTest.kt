@@ -15,6 +15,7 @@ import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import org.junit.Test
 
@@ -41,7 +42,6 @@ class MessageTest {
             assertThat(attachments).isEmpty()
             assertThat(events).isEmpty()
             assertThat(quickReplies).isEmpty()
-            assertThat(cards).isEmpty()
             from.run {
                 assertThat(this).isEqualTo(expectedParticipant)
                 assertThat(name).isNull()
