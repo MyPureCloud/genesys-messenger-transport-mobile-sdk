@@ -1,6 +1,8 @@
 package com.genesys.cloud.messenger.transport.utility
 
+import com.genesys.cloud.messenger.transport.core.Action
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
+import com.genesys.cloud.messenger.transport.core.Card
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
@@ -162,5 +164,25 @@ object StructuredMessageValues {
         type = type,
         direction = direction,
         content = content,
+    )
+}
+
+object CardTestValues {
+    internal const val title = "Title"
+    internal const val description = "Description"
+    internal const val image = "Image"
+    internal const val text = "text_a"
+    internal const val url = "www.test.com"
+    internal const val payload = "text_b"
+    internal val postback = Action.Postback(text = text, payload = payload)
+    internal val link = Action.Link(text = text, url = url)
+    internal val responses: List<Action> = listOf(postback, link)
+
+    internal val card = Card(
+        title = title,
+        description = description,
+        image = image,
+        defaultResponse = postback,
+        responses = responses
     )
 }
