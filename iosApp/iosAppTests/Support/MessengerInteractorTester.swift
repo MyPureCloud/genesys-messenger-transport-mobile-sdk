@@ -64,7 +64,7 @@ class MessengerInteractorTester {
                 }
             }
             .store(in: &cancellables)
-        
+
         messenger.messageEventSubject
             .sink { [weak self] message in
                 switch message {
@@ -167,7 +167,7 @@ class MessengerInteractorTester {
     func pullDeploymentConfig() -> DeploymentConfig? {
         var deploymentConfig: DeploymentConfig?
         let expectation = XCTestExpectation(description: "Wait for deployment config.")
-        
+
         messenger.fetchDeployment { config, error in
             if let error = error {
                 print(error.localizedDescription)
@@ -220,7 +220,7 @@ class MessengerInteractorTester {
             XCTFail("Possible issue with connecting to the backend: \(error.localizedDescription)", file: file, line: line)
         }
     }
-    
+
     func startMessengerConnectionWithErrorExpectation(_ errorExpectation: XCTestExpectation, file: StaticString = #file, line: UInt = #line) {
         do {
             self.errorExpectation = errorExpectation
@@ -428,11 +428,20 @@ class MessengerInteractorTester {
         }
         waitForExpectation(readOnlyStateExpectation)
     }
-    
+
     private func waitForExpectation(_ expectation: XCTestExpectation, timeout: Double = 60.0) {
         let result = XCTWaiter().wait(for: [expectation], timeout: timeout)
         XCTAssertEqual(result, .completed, "Test expectation never fullfilled: \(expectation.description)")
     }
+    
+    func waitForConnectionClosedExpectation() {
+        guard let expectation = connectionClosed else {
+            XCTFail("No connection closed expectation to wait for.")
+            return
+        }
+        waitForExpectation(expectation)
+    }
+
 
     func verifyReceivedMessage(expectedMessage: String) {
         print("Checking the received message.\nExpecting: '\(expectedMessage)'")
@@ -453,6 +462,61 @@ class MessengerInteractorTester {
         XCTAssertTrue(result == .completed, "The Clear Conversation command may have had an error, or the expected state changes didn't happen.")
     }
 
+    func verifyExistingConversationRestored() {
+        let messages = pullHistory()
+        XCTAssertFalse(messages.isEmpty, "Expected to find existing messages in the conversation history.")
+        print("Existing conversation messages: \(messages)")
+    }
+
+    func verifyEventConnectionClosed(reason: Event.ConnectionClosedReason) {
+            connectionClosed = XCTestExpectation(description: "Wait for connection to be closed.")
+            messenger.eventSubject
+                .sink { event in
+                    if let connectionClosedEvent = event as? Event.ConnectionClosed {
+                        XCTAssertEqual(connectionClosedEvent.reason, reason, "Expected reason: \(reason), but got: \(connectionClosedEvent.reason)")
+                        self.connectionClosed?.fulfill()
+                    }
+                }
+                .store(in: &cancellables)
+            waitForExpectation(connectionClosed!)
+        }
+
+        func verifyEventSignedIn() {
+            testExpectation = XCTestExpectation(description: "Wait for signed-in event.")
+            messenger.eventSubject
+                .sink { event in
+                    if event is Event.SignedIn {
+                        self.testExpectation?.fulfill()
+                    }
+                }
+                .store(in: &cancellables)
+            waitForExpectation(testExpectation!)
+        }
+
+        func verifyEventExistingAuthSessionCleared() {
+            testExpectation = XCTestExpectation(description: "Wait for existing auth session cleared event.")
+            messenger.eventSubject
+                .sink { event in
+                    if event is Event.ExistingAuthSessionCleared {
+                        self.testExpectation?.fulfill()
+                    }
+                }
+                .store(in: &cancellables)
+            waitForExpectation(testExpectation!)
+        }
+
+
+    func verifyStepUpToAuthenticatedSessionThrowsException() {
+        errorExpectation = XCTestExpectation(description: "Wait for step-up to authenticated session exception.")
+        do {
+            try messenger.stepUp()
+            XCTFail("Expected an exception but stepUpToAuthenticatedSession() succeeded.")
+        } catch {
+            print("Caught expected exception: \(error.localizedDescription)")
+            errorExpectation?.fulfill()
+        }
+        waitForErrorExpectation()
+    }
 }
 
 public enum AuthState {

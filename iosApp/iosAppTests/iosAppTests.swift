@@ -563,13 +563,13 @@ class iosAppTests: XCTestCase {
         ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
         messengerTester.disconnectMessenger()
     }
-    
+
     func testAccessDenied() {
         let deployment = try! Deployment()
         let tester = MessengerInteractorTester(deployment: Deployment(deploymentId: "InvalidDeploymentId", domain: deployment.domain))
-                 
+
         tester.startMessengerConnectionWithErrorExpectation(XCTestExpectation(description: "Expecting access denied."))
-        
+
         if let state = tester.messenger.messagingClient.currentState as? MessagingClientState.Error {
             XCTAssertTrue(state.code is ErrorCode.WebsocketAccessDenied)
         } else {
@@ -600,6 +600,140 @@ class iosAppTests: XCTestCase {
         // Disconnect the conversation for the agent and disconnect the session.
         ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
         testController.disconnectMessenger()
+    }
+
+        func testStepUpAuthentication() {
+            guard let config = TestConfig.shared.config else {
+                XCTFail("Failed to pull the test config.")
+                return
+            }
+
+            // Start Session 1: Authenticated Conversation
+            let testController1 = MessengerInteractorTester(deployment: Deployment(deploymentId: config.authDeploymentId, domain: config.domain))
+            testController1.authorize(config: config, authCode: config.authCode)
+            testController1.startNewMessengerConnection(authorized: true)
+            testController1.sendText(text: "Session 1 - Authenticated message.")
+
+            guard let conversationInfo1 = ApiHelper.shared.answerNewConversation() else {
+                XCTFail("Session 1 message did not connect to an agent.")
+                return
+            }
+            let receivedMessageText1 = "Session 1 message received!"
+            testController1.testExpectation = XCTestExpectation(description: "Wait for message to be received in Session 1.")
+            ApiHelper.shared.sendOutboundSmsMessage(conversationId: conversationInfo1.conversationId, communicationId: conversationInfo1.communicationId, message: receivedMessageText1)
+            testController1.waitForTestExpectation()
+            testController1.verifyReceivedMessage(expectedMessage: receivedMessageText1)
+
+            // Start Session 2: Unauthenticated Conversation
+            let testController2 = MessengerInteractorTester(deployment: Deployment(deploymentId: config.unauthDeploymentId, domain: config.domain))
+            testController2.startNewMessengerConnection(authorized: false)
+            testController2.sendText(text: "Session 2 - Unauthenticated message.")
+
+            guard let conversationInfo2 = ApiHelper.shared.answerNewConversation() else {
+                XCTFail("Session 2 message did not connect to an agent.")
+                return
+            }
+            let receivedMessageText2 = "Session 2 message received!"
+            testController2.testExpectation = XCTestExpectation(description: "Wait for message to be received in Session 2.")
+            ApiHelper.shared.sendOutboundSmsMessage(conversationId: conversationInfo2.conversationId, communicationId: conversationInfo2.communicationId, message: receivedMessageText2)
+            testController2.waitForTestExpectation()
+            testController2.verifyReceivedMessage(expectedMessage: receivedMessageText2)
+
+            // Step-Up Authentication for Session 2
+            testController2.authorize(config: config, authCode: config.authCode)
+            testController2.sendText(text: "Session 2 - Authenticated message after step-up.")
+
+            // Check Session 1 for Disconnection
+            testController1.connectionClosed = XCTestExpectation(description: "Wait for Session 1 to be closed due to step-up in Session 2.")
+            let result = XCTWaiter().wait(for: [testController1.connectionClosed!], timeout: 30)
+            XCTAssertEqual(result, .completed, "Session 1 was not closed as expected.")
+            testController1.verifyEventConnectionClosed(reason: .usersignedin)
+
+            // Verify existing conversations for Session 2
+            testController2.verifyExistingConversationRestored()
+
+            // Check Session 2 for Continuation and Merging of Sessions
+            testController2.testExpectation = XCTestExpectation(description: "Wait for event.signedin and event.existingAuthSessionCleared in Session 2.")
+            testController2.waitForTestExpectation()
+            testController2.verifyEventSignedIn()
+            testController2.verifyEventExistingAuthSessionCleared()
+
+            // Resume Session 1 and Check for Merging with Session 2
+            testController1.startNewMessengerConnection(authorized: true)
+            testController1.sendText(text: "Session 1 - Attempt to resume after step-up.")
+
+            // Session 1 should be merged with Session 2
+            testController2.verifyReceivedMessage(expectedMessage: "Session 1 - Attempt to resume after step-up.")
+        }
+
+        func testAuthenticatedSessionRestoration() {
+                guard let config = TestConfig.shared.config else {
+                    XCTFail("Failed to pull the test config.")
+                    return
+                }
+
+                // Step 1: Authenticate the user and start a conversation
+                let testController = MessengerInteractorTester(deployment: Deployment(deploymentId: config.authDeploymentId, domain: config.domain))
+                testController.authorize(config: config, authCode: config.authCode)
+                testController.startNewMessengerConnection(authorized: true)
+                testController.sendText(text: "Initial message to establish conversation.")
+
+                guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
+                    XCTFail("Initial message did not connect to an agent.")
+                    return
+                }
+                let initialMessage = "Initial message received!"
+                testController.testExpectation = XCTestExpectation(description: "Wait for initial message to be received.")
+                ApiHelper.shared.sendOutboundSmsMessage(conversationId: conversationInfo.conversationId, communicationId: conversationInfo.communicationId, message: initialMessage)
+                testController.waitForTestExpectation()
+                testController.verifyReceivedMessage(expectedMessage: initialMessage)
+
+                // Step 2: Disconnect and ensure the user is still authenticated
+                testController.authLogout()
+                testController.authorize(config: config, authCode: config.authCode)
+                testController.startNewMessengerConnection(authorized: true)
+
+                // Step 3: Verify the previous session is restored automatically
+                testController.testExpectation = XCTestExpectation(description: "Wait for previously authenticated session to be restored.")
+                testController.waitForTestExpectation()
+
+                // Send a message to verify the session restoration
+                testController.sendText(text: "Message after session restoration.")
+                let restoredMessage = "Message after session restoration received!"
+                testController.testExpectation = XCTestExpectation(description: "Wait for message after session restoration to be received.")
+                ApiHelper.shared.sendOutboundSmsMessage(conversationId: conversationInfo.conversationId, communicationId: conversationInfo.communicationId, message: restoredMessage)
+                testController.waitForTestExpectation()
+                testController.verifyReceivedMessage(expectedMessage: restoredMessage)
+                }
+    
+    func testDisplayConversationStatusAndDisconnectSession() {
+        guard let config = TestConfig.shared.config else {
+            XCTFail("Failed to pull the test config.")
+            return
+        }
+
+        // Start a non-authenticated conversation
+        var testController = MessengerInteractorTester(deployment: Deployment(deploymentId: config.unauthDeploymentId, domain: config.domain))
+        testController.startNewMessengerConnection(authorized: false)
+        testController.sendText(text: "Non-authenticated message.")
+
+        guard let conversationInfo = ApiHelper.shared.answerNewConversation() else {
+            XCTFail("Non-authenticated message did not connect to an agent.")
+            return
+        }
+        let receivedMessageText = "Non-authenticated message received!"
+        testController.testExpectation = XCTestExpectation(description: "Wait for message to be received.")
+        ApiHelper.shared.sendOutboundSmsMessage(conversationId: conversationInfo.conversationId, communicationId: conversationInfo.communicationId, message: receivedMessageText)
+        testController.waitForTestExpectation()
+        testController.verifyReceivedMessage(expectedMessage: receivedMessageText)
+
+        // Close the conversation
+        testController.connectionClosed = XCTestExpectation(description: "Wait for the conversation to be closed.")
+        ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
+        testController.waitForConnectionClosedExpectation()
+        
+        // Attempt to step up to authenticated session and verify exception
+        testController.verifyStepUpToAuthenticatedSessionThrowsException()
     }
 
 }
