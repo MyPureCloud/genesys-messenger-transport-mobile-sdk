@@ -232,6 +232,7 @@ class MessengerInteractorTester {
     }
 
     func authorize(config: Config, authCode: String, shouldFail: Bool = false) {
+    
         authExpectation = XCTestExpectation(description: "Wait for authorization to finish.")
         errorExpectation = XCTestExpectation(description: "Wait for authorization to fail.")
         messenger.authorize(authCode: authCode, redirectUri: config.redirectUri, codeVerifier: config.oktaCodeVerifier)
@@ -243,6 +244,11 @@ class MessengerInteractorTester {
             XCTAssertEqual(result, .completed, "The test may not have authorized correctly.")
         }
     }
+
+        func verifyStepUpToAuthenticatedSession() throws {
+            try messenger.stepUp()
+        }
+
 
     func authLogout() {
         authExpectation = XCTestExpectation(description: "Wait for authentication to log out.")
@@ -517,6 +523,19 @@ class MessengerInteractorTester {
         }
         waitForErrorExpectation()
     }
+    
+    func clearTokens() {
+        messenger.tokenVault.remove(key: "token")
+        messenger.tokenVault.remove(key: "auth_refresh_token")
+    }
+    
+    func logCurrentTokens() {
+        let token = messenger.tokenVault.fetch(key: "token")
+        let refreshToken = messenger.tokenVault.fetch(key: "auth_refresh_token")
+        print("Current token: \(token ?? "nil")")
+        print("Current refresh token: \(refreshToken ?? "nil")")
+    }
+
 }
 
 public enum AuthState {
