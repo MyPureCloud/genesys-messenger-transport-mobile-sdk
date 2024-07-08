@@ -447,6 +447,14 @@ class MessengerInteractorTester {
         }
         waitForExpectation(expectation)
     }
+    
+    func stepUpToAuthenticatedSession() {
+            do {
+                try messenger.stepUp()
+            } catch {
+                XCTFail("Failed to step up to authenticated session: \(error.localizedDescription)")
+            }
+        }
 
 
     func verifyReceivedMessage(expectedMessage: String) {

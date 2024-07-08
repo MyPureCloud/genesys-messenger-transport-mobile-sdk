@@ -25,6 +25,7 @@ struct Config: Codable {
     public let domain: String
     public let authCode: String
     public let authCode2: String
+    public let authCode3: String
     public let authDeploymentId: String
     public let redirectUri: String
     public let oktaCodeVerifier: String
