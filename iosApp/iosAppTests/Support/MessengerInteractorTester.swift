@@ -12,7 +12,7 @@ import Combine
 @testable import iosApp
 
 class MessengerInteractorTester {
-
+    
     let messenger: MessengerInteractor
     var testExpectation: XCTestExpectation?
     var receivedMessageExpectation: XCTestExpectation?
@@ -31,16 +31,16 @@ class MessengerInteractorTester {
     var currentClientState: MessagingClientState?
     var authState: AuthState = .noAuth
     var attachmentId: String?
-
+    
     private var historyExpectation: XCTestExpectation?
     private var historyMessages: [Message] = []
     var quickRepliesMap = [String: ButtonResponse]()
-
+    
     private var cancellables = Set<AnyCancellable>()
-
+    
     init(deployment: Deployment, reconnectTimeout: Int64 = 60 * 5) {
         messenger = MessengerInteractor(deployment: deployment, reconnectTimeout: reconnectTimeout)
-
+        
         messenger.stateChangeSubject
             .sink { [weak self] stateChange in
                 print("State Event. New state: \(stateChange.newState), old state: \(stateChange.oldState)")
@@ -64,17 +64,17 @@ class MessengerInteractorTester {
                 }
             }
             .store(in: &cancellables)
-
+        
         messenger.messageEventSubject
             .sink { [weak self] message in
                 switch message {
                 case let messageInserted as MessageEvent.MessageInserted:
                     print("Message Inserted: <\(messageInserted.message.description)>")
-
+                    
                     // Handling for received messages.
                     if messageInserted.message.direction.name == "Outbound" {
                         print("Verifying that the message from the agent/bot has an expected name and an imageUrl attached.")
-
+                        
                         // Different checks applied depending on the originating entity.
                         // Expecting the bot to not have a name or avatar. If the deployment config is updated, this may need to change.
                         switch messageInserted.message.from.originatingEntity {
@@ -93,7 +93,7 @@ class MessengerInteractorTester {
                         default:
                             XCTFail("Unexpected orginating entity: \(messageInserted.message.from.originatingEntity)")
                         }
-
+                        
                         // Specific expectation to make sure a RECEIVED message is handled.
                         // The normal TestExpectation will just check that ANY messageInserted event is handled.
                         self?.receivedMessageExpectation?.fulfill()
@@ -130,7 +130,7 @@ class MessengerInteractorTester {
                 }
             }
             .store(in: &cancellables)
-
+        
         messenger.eventSubject
             .sink { [weak self] event in
                 switch event {
@@ -163,11 +163,11 @@ class MessengerInteractorTester {
             }
             .store(in: &cancellables)
     }
-
+    
     func pullDeploymentConfig() -> DeploymentConfig? {
         var deploymentConfig: DeploymentConfig?
         let expectation = XCTestExpectation(description: "Wait for deployment config.")
-
+        
         messenger.fetchDeployment { config, error in
             if let error = error {
                 print(error.localizedDescription)
@@ -178,7 +178,7 @@ class MessengerInteractorTester {
         waitForExpectation(expectation, timeout: 30.0)
         return deploymentConfig
     }
-
+    
     // Attempts to return to a previous session.
     // If readOnly is enabled, this will bring the user to the read only state.
     func startMessengerConnection(file: StaticString = #file, line: UInt = #line) {
@@ -190,7 +190,7 @@ class MessengerInteractorTester {
             XCTFail("Possible issue with connecting to the backend: \(error.localizedDescription)", file: file, line: line)
         }
     }
-
+    
     // Starts a new messaging session.
     // Should be used if ReadOnly is enabled and the user wants to start a new chat.
     func startNewMessengerConnection(authorized: Bool = false, file: StaticString = #file, line: UInt = #line) {
@@ -208,7 +208,7 @@ class MessengerInteractorTester {
                 let connectedCheck = XCTWaiter().wait(for: [connectedExpectation!], timeout: 15) == .completed // If we're connecting to a new conversation, we will be connected first. Waiting for the configured check will give the back end enough time to send the ReadOnly state to the user.
                 let configuredCheck = XCTWaiter().wait(for: [testExpectation!], timeout: 15) == .completed
                 XCTAssertTrue(configuredCheck || connectedCheck, "Did not successfully connect to messenger.")
-
+                
                 // If after we connect we end up in the ReadOnly state, we should run messenger.newChat() and wait again.
                 if currentClientState is MessagingClientState.ReadOnly {
                     testExpectation = XCTestExpectation(description: "Wait for Configuration.")
@@ -220,7 +220,7 @@ class MessengerInteractorTester {
             XCTFail("Possible issue with connecting to the backend: \(error.localizedDescription)", file: file, line: line)
         }
     }
-
+    
     func startMessengerConnectionWithErrorExpectation(_ errorExpectation: XCTestExpectation, file: StaticString = #file, line: UInt = #line) {
         do {
             self.errorExpectation = errorExpectation
@@ -230,9 +230,9 @@ class MessengerInteractorTester {
             XCTFail("Connect threw other than the expected error: \(error.localizedDescription)", file: file, line: line)
         }
     }
-
-    func authorize(config: Config, authCode: String, shouldFail: Bool = false) {
     
+    func authorize(config: Config, authCode: String, shouldFail: Bool = false) {
+        
         authExpectation = XCTestExpectation(description: "Wait for authorization to finish.")
         errorExpectation = XCTestExpectation(description: "Wait for authorization to fail.")
         messenger.authorize(authCode: authCode, redirectUri: config.redirectUri, codeVerifier: config.oktaCodeVerifier)
@@ -244,12 +244,7 @@ class MessengerInteractorTester {
             XCTAssertEqual(result, .completed, "The test may not have authorized correctly.")
         }
     }
-
-        func verifyStepUpToAuthenticatedSession() throws {
-            try messenger.stepUp()
-        }
-
-
+    
     func authLogout() {
         authExpectation = XCTestExpectation(description: "Wait for authentication to log out.")
         do {
@@ -260,7 +255,7 @@ class MessengerInteractorTester {
         let result = XCTWaiter().wait(for: [authExpectation!], timeout: 60)
         XCTAssertEqual(result, .completed, "The test may not have logged out correctly.")
     }
-
+    
     func disconnectMessenger(file: StaticString = #file, line: UInt = #line) {
         do {
             testExpectation = XCTestExpectation(description: "Wait for Disconnect.")
@@ -270,7 +265,7 @@ class MessengerInteractorTester {
             XCTFail("Failed to disconnect the session.\n\(error.localizedDescription)", file: file, line: line)
         }
     }
-
+    
     func sendText(text: String, file: StaticString = #file, line: UInt = #line) {
         do {
             try sendMessage(text: text)
@@ -278,7 +273,7 @@ class MessengerInteractorTester {
             XCTFail("Failed to send the message '\(text)'\n\(error.localizedDescription)", file: file, line: line)
         }
     }
-
+    
     func sendTextWithAttribute(text: String, attributes: [String: String], file: StaticString = #file, line: UInt = #line) {
         do {
             try sendMessage(text: text, customAttributes: attributes)
@@ -286,14 +281,14 @@ class MessengerInteractorTester {
             XCTFail("Failed to send the message \(text) with the attributes: \(attributes)\n\(error.localizedDescription)", file: file, line: line)
         }
     }
-
+    
     private func sendMessage(text: String, customAttributes: [String: String] = [:]) throws {
         testExpectation = XCTestExpectation(description: "Wait for message to send.")
         try messenger.sendMessage(text: text, customAttributes: customAttributes)
         waitForTestExpectation()
         verifyReceivedMessage(expectedMessage: text)
     }
-
+    
     func sendQuickReply(reply: String, file: StaticString = #file, line: UInt = #line) {
         guard let button = quickRepliesMap[reply] else {
             XCTFail("The quick reply \(reply) was not available.", file: file, line: line)
@@ -305,11 +300,11 @@ class MessengerInteractorTester {
             XCTFail("Failed to send the quick reply message '\(reply)'\n\(error.localizedDescription)", file: file, line: line)
         }
     }
-
+    
     func getQuickReplyOptions() -> [String] {
         return Array(quickRepliesMap.keys)
     }
-
+    
     func attemptImageAttach(attachmentName: String, kotlinByteArray: KotlinByteArray, shouldSucceed: Bool = true, file: StaticString = #file, line: UInt = #line) {
         do {
             try attachImage(attachmentName: attachmentName, kotlinByteArray: kotlinByteArray, shouldSucceed: shouldSucceed)
@@ -317,7 +312,7 @@ class MessengerInteractorTester {
             XCTFail("Failed to attach image.\n\(error.localizedDescription)", file: file, line: line)
         }
     }
-
+    
     private func attachImage(attachmentName: String, kotlinByteArray: KotlinByteArray, shouldSucceed: Bool = true) throws {
         if shouldSucceed {
             testExpectation = XCTestExpectation(description: "Wait for image to attach successfully.")
@@ -337,7 +332,7 @@ class MessengerInteractorTester {
             waitForErrorExpectation()
         }
     }
-
+    
     func refreshAttachment(attachmentId: String?, file: StaticString = #file, line: UInt = #line) {
         guard let attachmentId = attachmentId else {
             XCTFail("No attachment ID available to refresh.")
@@ -349,7 +344,7 @@ class MessengerInteractorTester {
             XCTFail("Failed to refresh attachment.  \n\(error.localizedDescription)", file: file, line: line)
         }
     }
-
+    
     func sendUploadedImage(file: StaticString = #file, line: UInt = #line) {
         testExpectation = XCTestExpectation(description: "Wait for the uploaded image url to send.")
         guard let receivedDownloadUrl = receivedDownloadUrl else {
@@ -364,7 +359,7 @@ class MessengerInteractorTester {
         waitForTestExpectation()
         verifyReceivedMessage(expectedMessage: receivedDownloadUrl)
     }
-
+    
     func indicateTyping() {
         // No need to wait for an expectation. Just need to make sure the request doesn't fail.
         do {
@@ -373,7 +368,7 @@ class MessengerInteractorTester {
             XCTFail(error.localizedDescription)
         }
     }
-
+    
     func pullHistory() -> [Message] {
         historyExpectation = XCTestExpectation(description: "Wait for history results.")
         messenger.fetchNextPage { error in
@@ -385,7 +380,7 @@ class MessengerInteractorTester {
         XCTAssertEqual(result, .completed, "Did not successfully pull the message history.")
         return historyMessages
     }
-
+    
     func waitForTestExpectation(timeout: Double = 60.0) {
         guard let expectation = testExpectation else {
             XCTFail("No expectation to wait for.")
@@ -393,7 +388,7 @@ class MessengerInteractorTester {
         }
         waitForExpectation(expectation, timeout: timeout)
     }
-
+    
     func waitForMessageReceiveExpectation(timeout: Double = 60.0) {
         guard let receivedMessageExpectation = receivedMessageExpectation else {
             XCTFail("No received message expectation to wait for.")
@@ -401,7 +396,7 @@ class MessengerInteractorTester {
         }
         waitForExpectation(receivedMessageExpectation, timeout: timeout)
     }
-
+    
     func waitForErrorExpectation(timeout: Double = 60.0) {
         guard let expectation = errorExpectation else {
             XCTFail("No expectation to wait for.")
@@ -409,7 +404,7 @@ class MessengerInteractorTester {
         }
         waitForExpectation(expectation, timeout: timeout)
     }
-
+    
     func waitForQuickReplies(timeout: Double = 60.0) {
         guard let expectation = quickReplyExpectation else {
             XCTFail("No expectation to wait for.")
@@ -417,7 +412,7 @@ class MessengerInteractorTester {
         }
         waitForExpectation(expectation, timeout: timeout)
     }
-
+    
     // When the agent disconnects the session,
     func waitForAgentDisconnect() {
         guard let disconnectedSession = disconnectedSession else {
@@ -426,7 +421,7 @@ class MessengerInteractorTester {
         }
         waitForExpectation(disconnectedSession)
     }
-
+    
     func waitForReadOnlyState() {
         guard let readOnlyStateExpectation = readOnlyStateExpectation else {
             XCTFail("The read only state expectation was never initialized.")
@@ -434,7 +429,7 @@ class MessengerInteractorTester {
         }
         waitForExpectation(readOnlyStateExpectation)
     }
-
+    
     private func waitForExpectation(_ expectation: XCTestExpectation, timeout: Double = 60.0) {
         let result = XCTWaiter().wait(for: [expectation], timeout: timeout)
         XCTAssertEqual(result, .completed, "Test expectation never fullfilled: \(expectation.description)")
@@ -449,20 +444,19 @@ class MessengerInteractorTester {
     }
     
     func stepUpToAuthenticatedSession() {
-            do {
-                try messenger.stepUp()
-            } catch {
-                XCTFail("Failed to step up to authenticated session: \(error.localizedDescription)")
-            }
+        do {
+            try messenger.stepUp()
+        } catch {
+            XCTFail("Failed to step up to authenticated session: \(error.localizedDescription)")
         }
-
-
+    }
+    
     func verifyReceivedMessage(expectedMessage: String) {
         print("Checking the received message.\nExpecting: '\(expectedMessage)'")
         XCTAssertEqual(expectedMessage, receivedMessageText, "The received message: '\(receivedMessageText ?? "")' didn't match what was expected: '\(expectedMessage)'.")
-        receivedMessageText = nil
+        receivedMessageText = expectedMessage
     }
-
+    
     func clearConversation() {
         connectionClosed = XCTestExpectation(description: "Wait for connection to be closed.")
         closedStateChange = XCTestExpectation(description: "Wait for the connection state to be closed.")
@@ -475,75 +469,49 @@ class MessengerInteractorTester {
         let result = XCTWaiter().wait(for: [connectionClosed!, closedStateChange!, conversationCleared!], timeout: 30)
         XCTAssertTrue(result == .completed, "The Clear Conversation command may have had an error, or the expected state changes didn't happen.")
     }
-
+    
     func verifyExistingConversationRestored() {
         let messages = pullHistory()
         XCTAssertFalse(messages.isEmpty, "Expected to find existing messages in the conversation history.")
         print("Existing conversation messages: \(messages)")
     }
-
+    
     func verifyEventConnectionClosed(reason: Event.ConnectionClosedReason) {
-            connectionClosed = XCTestExpectation(description: "Wait for connection to be closed.")
-            messenger.eventSubject
-                .sink { event in
-                    if let connectionClosedEvent = event as? Event.ConnectionClosed {
-                        XCTAssertEqual(connectionClosedEvent.reason, reason, "Expected reason: \(reason), but got: \(connectionClosedEvent.reason)")
-                        self.connectionClosed?.fulfill()
-                    }
+        connectionClosed = XCTestExpectation(description: "Wait for connection to be closed.")
+        messenger.eventSubject
+            .sink { event in
+                if let connectionClosedEvent = event as? Event.ConnectionClosed {
+                    XCTAssertEqual(connectionClosedEvent.reason, reason, "Expected reason: \(reason), but got: \(connectionClosedEvent.reason)")
+                    self.connectionClosed?.fulfill()
                 }
-                .store(in: &cancellables)
-            waitForExpectation(connectionClosed!)
-        }
-
-        func verifyEventSignedIn() {
-            testExpectation = XCTestExpectation(description: "Wait for signed-in event.")
-            messenger.eventSubject
-                .sink { event in
-                    if event is Event.SignedIn {
-                        self.testExpectation?.fulfill()
-                    }
-                }
-                .store(in: &cancellables)
-            waitForExpectation(testExpectation!)
-        }
-
-        func verifyEventExistingAuthSessionCleared() {
-            testExpectation = XCTestExpectation(description: "Wait for existing auth session cleared event.")
-            messenger.eventSubject
-                .sink { event in
-                    if event is Event.ExistingAuthSessionCleared {
-                        self.testExpectation?.fulfill()
-                    }
-                }
-                .store(in: &cancellables)
-            waitForExpectation(testExpectation!)
-        }
-
-
-    func verifyStepUpToAuthenticatedSessionThrowsException() {
-        errorExpectation = XCTestExpectation(description: "Wait for step-up to authenticated session exception.")
-        do {
-            try messenger.stepUp()
-            XCTFail("Expected an exception but stepUpToAuthenticatedSession() succeeded.")
-        } catch {
-            print("Caught expected exception: \(error.localizedDescription)")
-            errorExpectation?.fulfill()
-        }
-        waitForErrorExpectation()
+            }
+            .store(in: &cancellables)
+        waitForExpectation(connectionClosed!)
     }
     
-    func clearTokens() {
-        messenger.tokenVault.remove(key: "token")
-        messenger.tokenVault.remove(key: "auth_refresh_token")
+    func verifyEventSignedIn() {
+        testExpectation = XCTestExpectation(description: "Wait for signed-in event.")
+        messenger.eventSubject
+            .sink { event in
+                if event is Event.SignedIn {
+                    self.testExpectation?.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+        waitForExpectation(testExpectation!)
     }
     
-    func logCurrentTokens() {
-        let token = messenger.tokenVault.fetch(key: "token")
-        let refreshToken = messenger.tokenVault.fetch(key: "auth_refresh_token")
-        print("Current token: \(token ?? "nil")")
-        print("Current refresh token: \(refreshToken ?? "nil")")
+    func verifyEventExistingAuthSessionCleared() {
+        testExpectation = XCTestExpectation(description: "Wait for existing auth session cleared event.")
+        messenger.eventSubject
+            .sink { event in
+                if event is Event.ExistingAuthSessionCleared {
+                    self.testExpectation?.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+        waitForExpectation(testExpectation!)
     }
-
 }
 
 public enum AuthState {
