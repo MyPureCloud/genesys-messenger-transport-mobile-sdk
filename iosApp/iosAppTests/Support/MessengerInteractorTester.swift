@@ -157,6 +157,8 @@ class MessengerInteractorTester {
                 case let error as Event.Error:
                     print("Error Event: \(error.description())")
                     self?.errorExpectation?.fulfill()
+                case let authCleared as Event.ExistingAuthSessionCleared:
+                    print("Existing auth session cleared event: \(authCleared.description())")
                 default:
                     print("Other event. \(event)")
                 }

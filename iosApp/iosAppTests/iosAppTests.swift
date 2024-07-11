@@ -709,19 +709,6 @@ class iosAppTests: XCTestCase {
             return
         }
         
-        let testController2: MessengerInteractorTester!
-        do {
-            let deployment = try Deployment()
-            testController2 = MessengerInteractorTester(deployment: Deployment(deploymentId: config.authDeploymentId, domain: deployment.domain))
-        } catch {
-            XCTFail(error.localizedDescription)
-            return
-        }
-        guard let messengerHandler = testController2 else {
-            XCTFail("Failed to setup the Messenger tester.")
-            return
-        }
-        
         // Step 1: Start authenticated conversation (session 1)
         testController1.authorize(config: config, authCode: config.authCode7)
         testController1.startNewMessengerConnection(authorized: true)
@@ -739,6 +726,20 @@ class iosAppTests: XCTestCase {
         testController1.verifyReceivedMessage(expectedMessage: authMessageSession1)
         
         // Step 2: Start un-authenticated conversation (session 2)
+        // Save a new token.
+        let newToken = UUID().uuidString
+        messengerTester?.messenger.tokenVault.store(key: "token", value: newToken)
+        print("New token: \(newToken)")
+
+        // Create another test controller.
+        let testController2: MessengerInteractorTester!
+        do {
+            let deployment = try Deployment()
+            testController2 = MessengerInteractorTester(deployment: Deployment(deploymentId: config.authDeploymentId, domain: deployment.domain))
+        } catch {
+            XCTFail(error.localizedDescription)
+            return
+        }
         testController2.startNewMessengerConnection(authorized: false)
         testController2.sendText(text: "Unauthenticated message in session 2.")
         
