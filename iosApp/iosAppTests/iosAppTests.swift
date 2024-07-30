@@ -602,7 +602,7 @@ class iosAppTests: XCTestCase {
         testController.disconnectMessenger()
     }
     
-    func testStepUpAuthentication() {
+    func testAAB_StepUpAuthentication() {
         guard let config = TestConfig.shared.config else {
             XCTFail("Failed to pull the test config.")
             return
@@ -658,7 +658,7 @@ class iosAppTests: XCTestCase {
         ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
     }
     
-    func testAuthenticatedSessionsSync() {
+    func testAAC_AuthenticatedSessionsSync() {
         guard let config = TestConfig.shared.config else {
             XCTFail("Failed to pull the test config.")
             return
