@@ -96,6 +96,13 @@ class ComposePrototypeUITest : BaseTests() {
     private val refreshedText = "Refreshed"
     private val refreshCommandText = "refreshAttachment"
     private val attachmentIdText = "Attachment(id="
+    private val authenticatedMessage = "Session 2 - Authenticated message after step-up."
+    private val connectionClosedText = "Connection Closed Normally"
+    private val authenticatedResponseText = "event.signedin"
+    private val authSessionClearedText = "event.existingAuthSessionCleared"
+    private val helloSession1 = "Session 1 - Authenticated message."
+    private val helloSession2 = "Session 2 - Unauthenticated message."
+    private val helloResumeSession1 = "Session 1 - Attempt to resume after step-up."
 
     fun enterDeploymentInfo(deploymentId: String) {
         opening {
@@ -306,6 +313,19 @@ class ComposePrototypeUITest : BaseTests() {
     fun verifyResponse(response: String) {
         messenger {
             waitForProperResponse(response)
+        }
+    }
+
+    fun verifyReceivedMessage(expectedMessage: String) {
+        messenger {
+            waitForProperResponse(expectedMessage)
+        }
+    }
+
+    fun disconnectAndWait() {
+        messenger {
+            waitForClosed()
+            pressBackKey()
         }
     }
 
@@ -651,6 +671,70 @@ class ComposePrototypeUITest : BaseTests() {
         sendQuickResponse(invalidQuickReplyText)
         verifyResponse(invalidQuickReplyResponse)
         sendDoneAndWaitForResponse(conversationDisconnectText)
+        bye()
+    }
+
+    @Test
+    fun testStepUpAuthentication() {
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.deploymentId)
+
+        // Start Session 1: Authenticated Conversation
+        clearBrowser()
+        authorize()
+        connect(authenticateConnectText)
+        sendMsg(helloSession1)
+
+        var conversationInfo1 = apiHelper.answerNewConversation()
+        if (conversationInfo1 == null) {
+            AssertionError("Session 1 message did not connect to an agent.")
+        } else {
+            Log.i(TAG, "Session 1 started successfully.")
+            apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo1, helloSession1)
+            verifyReceivedMessage(helloSession1)
+        }
+
+        // Disconnect Session 1
+        DefaultVault().store("token", UUID.randomUUID().toString())
+        Log.i(TAG, "New token for Session 1: ${UUID.randomUUID()}")
+        disconnectAndWait()
+
+        // Start Session 2: Unauthenticated Conversation
+        connect()
+        sendMsg(helloSession2)
+
+        var conversationInfo2 = apiHelper.answerNewConversation()
+        if (conversationInfo2 == null) {
+            AssertionError("Session 2 message did not connect to an agent.")
+        } else {
+            Log.i(TAG, "Session 2 started successfully.")
+            apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo2, helloSession2)
+            verifyReceivedMessage(helloSession2)
+        }
+
+        // Step-Up Authentication for Session 2
+        authorize()
+        sendMsg(authenticatedMessage)
+
+        // Check Session 1 for Disconnection
+        verifyReceivedMessage(connectionClosedText)
+        verifyReceivedMessage(connectionClosedCode)
+
+        // Verify existing conversations for Session 2
+        verifyReceivedMessage(authenticatedResponseText)
+        verifyReceivedMessage(authSessionClearedText)
+
+        // Resume Session 1 and Check for Merging with Session 2
+        connect(authenticateConnectText)
+        sendMsg(helloResumeSession1)
+        verifyReceivedMessage(helloResumeSession1)
+
+        if (conversationInfo1 != null) {
+            apiHelper.sendConnectOrDisconnect(conversationInfo1)
+        }
+        if (conversationInfo2 != null) {
+            apiHelper.sendConnectOrDisconnect(conversationInfo2)
+        }
         bye()
     }
 }
