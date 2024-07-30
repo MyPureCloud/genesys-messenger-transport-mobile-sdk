@@ -5,6 +5,7 @@ import android.content.ContentValues.TAG
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.UiObject
 import androidx.test.uiautomator.UiSelector
 import com.genesys.cloud.messenger.uitest.support.testConfig
 import java.lang.Thread.sleep
@@ -36,7 +37,9 @@ class OpeningPage(activity: Activity) : BasePage(activity) {
         val deploymentIdField = mDevice.findObject(UiSelector().text(title))
         deploymentIdField.click()
         deploymentIdField.clearTextField()
-        deploymentIdField.legacySetText(deploymentId)
+        mDevice.executeShellCommand("input text $deploymentId")
+        //deploymentIdField.legacySetText(deploymentId)
+        //UiObject(UiSelector().text(title)).setText(deploymentId)
         sleep(2000)
         val regionField = mDevice.findObject(UiSelector().className("android.widget.Button").index(1))
         regionField.click()

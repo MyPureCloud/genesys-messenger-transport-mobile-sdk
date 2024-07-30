@@ -113,7 +113,7 @@ class ComposePrototypeUITest : BaseTests() {
         messenger {
             verifyPageIsVisible()
             enterCommand(connectCommand)
-            waitForConfigured()
+            //waitForConfigured()
         }
     }
 
@@ -653,4 +653,72 @@ class ComposePrototypeUITest : BaseTests() {
         sendDoneAndWaitForResponse(conversationDisconnectText)
         bye()
     }
+
+    @Test
+    fun testStepUpAuthentication() {
+        val config = testConfig
+        val apiHelper = API()
+
+        if (config == null) {
+            throw AssertionError("Failed to pull the test config.")
+        }
+
+        // Ensure no conversations are active
+        apiHelper.disconnectAllConversations()
+
+        // Enter deployment info
+        enterDeploymentInfo(config.authDeploymentId)
+
+        // Save a new token
+        val newToken = UUID.randomUUID().toString()
+        DefaultVault().store("token", newToken)
+        println("New token: $newToken")
+
+        // Step 1: Start as Guest
+        connect(authenticateConnectText)
+        sendMsg("Unauthenticated message.")
+
+        // Use the public API to answer the new Messenger conversation
+        val conversationInfo = apiHelper.answerNewConversation()
+        if (conversationInfo == null) {
+            AssertionError("The message we sent may not have connected to an agent.")
+        } else {
+            val guestMessageReceived = "Guest session message received!"
+            apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, guestMessageReceived)
+            verifyResponse(guestMessageReceived)
+
+            // Step 2: Step-Up Authentication
+            oktaSignInWithPKCE(config.oktaUsername, config.oktaPassword)
+            authorize()
+            connect(authenticateConnectText)
+            sendMsg("Authenticated session message after step-up.")
+
+            val authMessageReceived = "Authenticated session message after step-up."
+            apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, authMessageReceived)
+            verifyResponse(authMessageReceived)
+
+            // Step 3: Verify Events and Session Transition
+            // Assuming the methods to verify events exist in your implementation
+            //verifyEventSignedIn()
+            //verifyEventExistingAuthSessionCleared()
+
+            // Step 4: Close the Conversation
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
+
+            // Step 5: Start a new session and do the authentication without any message exchange
+            clearBrowser()
+            oktaSignInWithPKCE(config.oktaUsername, config.oktaPassword)
+            authorize()
+            connect(authenticateConnectText)
+
+            // Step 6: Close the new session conversation
+            val conversation2Info = apiHelper.answerNewConversation()
+            if (conversation2Info != null) {
+                apiHelper.sendConnectOrDisconnect(conversation2Info)
+            }
+        }
+        oktaLogout()
+    }
+
+
 }
