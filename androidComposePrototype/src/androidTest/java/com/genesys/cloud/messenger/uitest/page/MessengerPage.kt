@@ -49,7 +49,6 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         commandBox.click()
         commandBox.clearTextField()
         mDevice.executeShellCommand("input text $command")
-        //commandBox.legacySetText(command)
         UiObject(UiSelector().className(commandClass)).setText(command)
 
         sleep(3000)
@@ -67,7 +66,7 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         val commandBox = mDevice.findObject(
             UiSelector()
                 .className(commandClass)
-                .index(2)
+                .index(1)
         )
         return commandBox.getText()
     }
@@ -156,7 +155,7 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     fun getFullResponse(): String {
         val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         val responseBox = mDevice.findObject(
-            UiSelector().index(4)
+            UiSelector().index(3)
         )
         return responseBox.getText()
     }
@@ -235,9 +234,7 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         responseBox.click()
         responseBox.clearTextField()
         mDevice.executeShellCommand("input text $text")
-        //responseBox.legacySetText(text)
         UiObject(UiSelector().index(index)).setText(text)
-
     }
 
     protected fun pressTab() {
