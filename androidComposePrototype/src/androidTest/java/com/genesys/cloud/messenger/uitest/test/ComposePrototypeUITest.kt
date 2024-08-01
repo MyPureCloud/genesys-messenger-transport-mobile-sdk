@@ -69,6 +69,7 @@ class ComposePrototypeUITest : BaseTests() {
     private val oktaSignInWithPKCEText = "oktaSignInWithPKCE"
     private val oktaLogoutText = "oktaLogout"
     private val authCodeReceivedText = "AuthCodeReceived"
+    private val existingAuthSessionClearedText = "ExistingAuthSessionCleared"
     private val loggedOutText = "LoggedOut"
     private val authorizeText = "authorize"
     private val authorizedText = "Authorized"
@@ -81,6 +82,7 @@ class ComposePrototypeUITest : BaseTests() {
     private val connectionClosedMessage = "Connection Closed Normally"
     private val connectionClosedCode = "1000"
     private val quickReplyCommand = "sendQuickReply"
+    private val stepUpCommand = "stepUp"
     private val quickReplyText = "Carousel"
     private val quickReplyResponse = "Welcome to the Carousel menu."
     private val invalidQuickReplyText = "dummy"
@@ -121,6 +123,14 @@ class ComposePrototypeUITest : BaseTests() {
             verifyPageIsVisible()
             enterCommand(connectCommand)
             waitForConfigured()
+        }
+    }
+
+    fun stepUp() {
+        messenger {
+            verifyPageIsVisible()
+            enterCommand(stepUpCommand)
+            waitForProperResponse(existingAuthSessionClearedText)
         }
     }
 
@@ -677,64 +687,14 @@ class ComposePrototypeUITest : BaseTests() {
     @Test
     fun testStepUpAuthentication() {
         apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.deploymentId)
-
-        // Start Session 1: Authenticated Conversation
-        clearBrowser()
-        authorize()
-        connect(authenticateConnectText)
-        sendMsg(helloSession1)
-
-        var conversationInfo1 = apiHelper.answerNewConversation()
-        if (conversationInfo1 == null) {
-            AssertionError("Session 1 message did not connect to an agent.")
-        } else {
-            Log.i(TAG, "Session 1 started successfully.")
-            apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo1, helloSession1)
-            verifyReceivedMessage(helloSession1)
-        }
-
-        // Disconnect Session 1
-        DefaultVault().store("token", UUID.randomUUID().toString())
-        Log.i(TAG, "New token for Session 1: ${UUID.randomUUID()}")
-        disconnectAndWait()
-
-        // Start Session 2: Unauthenticated Conversation
+        enterDeploymentInfo(testConfig.authDeploymentId)
         connect()
-        sendMsg(helloSession2)
-
-        var conversationInfo2 = apiHelper.answerNewConversation()
-        if (conversationInfo2 == null) {
-            AssertionError("Session 2 message did not connect to an agent.")
-        } else {
-            Log.i(TAG, "Session 2 started successfully.")
-            apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo2, helloSession2)
-            verifyReceivedMessage(helloSession2)
-        }
-
-        // Step-Up Authentication for Session 2
+        sendMsg("Unauthenticated message.")
+        clearBrowser()
+        oktaSignInWithPKCE(testConfig.oktaUsername, testConfig.oktaPassword)
         authorize()
-        sendMsg(authenticatedMessage)
-
-        // Check Session 1 for Disconnection
-        verifyReceivedMessage(connectionClosedText)
-        verifyReceivedMessage(connectionClosedCode)
-
-        // Verify existing conversations for Session 2
-        verifyReceivedMessage(authenticatedResponseText)
-        verifyReceivedMessage(authSessionClearedText)
-
-        // Resume Session 1 and Check for Merging with Session 2
-        connect(authenticateConnectText)
-        sendMsg(helloResumeSession1)
-        verifyReceivedMessage(helloResumeSession1)
-
-        if (conversationInfo1 != null) {
-            apiHelper.sendConnectOrDisconnect(conversationInfo1)
-        }
-        if (conversationInfo2 != null) {
-            apiHelper.sendConnectOrDisconnect(conversationInfo2)
-        }
-        bye()
+        stepUp()
+        sendMsg("Authenticated session message after step-up.")
+        oktaLogout()
     }
 }
