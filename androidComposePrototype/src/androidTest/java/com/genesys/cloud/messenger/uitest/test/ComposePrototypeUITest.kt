@@ -98,6 +98,13 @@ class ComposePrototypeUITest : BaseTests() {
     private val refreshedText = "Refreshed"
     private val refreshCommandText = "refreshAttachment"
     private val attachmentIdText = "Attachment(id="
+    private val authenticatedMessage = "Session 2 - Authenticated message after step-up."
+    private val connectionClosedText = "Connection Closed Normally"
+    private val authenticatedResponseText = "event.signedin"
+    private val authSessionClearedText = "event.existingAuthSessionCleared"
+    private val helloSession1 = "Session 1 - Authenticated message."
+    private val helloSession2 = "Session 2 - Unauthenticated message."
+    private val helloResumeSession1 = "Session 1 - Attempt to resume after step-up."
 
     fun enterDeploymentInfo(deploymentId: String) {
         opening {
@@ -316,6 +323,19 @@ class ComposePrototypeUITest : BaseTests() {
     fun verifyResponse(response: String) {
         messenger {
             waitForProperResponse(response)
+        }
+    }
+
+    fun verifyReceivedMessage(expectedMessage: String) {
+        messenger {
+            waitForProperResponse(expectedMessage)
+        }
+    }
+
+    fun disconnectAndWait() {
+        messenger {
+            waitForClosed()
+            pressBackKey()
         }
     }
 
