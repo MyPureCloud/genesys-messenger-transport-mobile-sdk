@@ -137,7 +137,7 @@ pipeline{
         }
         always{
             archiveArtifacts 'transport/build/reports/tests/testReleaseUnitTest/**/*.html, transport/build/reports/tests/testReleaseUnitTest/**/*.js, transport/build/reports/tests/testReleaseUnitTest/**/*.css'
-            stash includes: "*.xml", name: "testLogs"
+
             junit 'transport/build/test-results/testReleaseUnitTest/*.xml'
             cleanWs()
         }
