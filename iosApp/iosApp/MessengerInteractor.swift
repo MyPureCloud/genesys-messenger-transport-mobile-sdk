@@ -29,7 +29,7 @@ final class MessengerInteractor {
                                            logging: true,
                                            reconnectionTimeoutInSeconds: reconnectTimeout,
                                            autoRefreshTokenWhenExpired: true)
-        self.tokenVault = DefaultVault(keys: Vault.Keys(vaultKey: "com.genesys.cloud.messenger", tokenKey: "token", authRefreshTokenKey: "auth_refresh_token"))
+        self.tokenVault = DefaultVault(keys: Vault.Keys(vaultKey: "com.genesys.cloud.messenger", tokenKey: "token", authRefreshTokenKey: "auth_refresh_token", wasAuthenticated: "wasAuthenticated"))
         self.messengerTransport = MessengerTransportSDK(configuration: self.configuration, vault: self.tokenVault)
         self.messagingClient = self.messengerTransport.createMessagingClient()
         
@@ -200,5 +200,17 @@ final class MessengerInteractor {
     func removeAuthRefreshToken() {
         let authRefreshTokenKey = messengerTransport.vault.keys.authRefreshTokenKey
         messengerTransport.vault.remove(key: authRefreshTokenKey)
+    }
+
+    func stepUp() throws {
+        do {
+            try messagingClient.stepUpToAuthenticatedSession()
+        } catch {
+            print("stepUp() failed. \(error.localizedDescription)")
+        }
+    }
+    
+    func wasAuthenticated() -> Bool {
+        return messagingClient.wasAuthenticated
     }
 }

@@ -30,6 +30,7 @@ import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.Response
+import com.genesys.cloud.messenger.transport.util.TOKEN_KEY
 import com.genesys.cloud.messenger.transport.util.fromConnectedToConfigured
 import com.genesys.cloud.messenger.transport.util.fromConnectedToReadOnly
 import com.genesys.cloud.messenger.transport.util.fromConnectingToConnected
@@ -44,6 +45,7 @@ import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.invoke
+import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.spyk
@@ -51,15 +53,16 @@ import kotlin.reflect.KProperty0
 import kotlin.test.AfterTest
 
 open class BaseMessagingClientTest {
+    private var testToken = Request.token
     internal val slot = slot<PlatformSocketListener>()
     protected val mockStateChangedListener: (StateChange) -> Unit = spyk()
     internal val mockMessageStore: MessageStore = mockk(relaxed = true) {
-        every { prepareMessage(any(), any()) } returns OnMessageRequest(
-            token = Request.token,
+        every { prepareMessage(any(), any(), any()) } returns OnMessageRequest(
+            token = testToken,
             message = TextMessage("Hello world!")
         )
-        every { prepareMessageWith(any(), null) } returns OnMessageRequest(
-            token = Request.token,
+        every { prepareMessageWith(any(), any(), null) } returns OnMessageRequest(
+            token = testToken,
             message = TextMessage(
                 text = "",
                 content = listOf(
@@ -77,6 +80,7 @@ open class BaseMessagingClientTest {
                 any(),
                 any(),
                 any(),
+                any(),
                 any()
             )
         } returns OnAttachmentRequest(
@@ -87,7 +91,7 @@ open class BaseMessagingClientTest {
             errorsAsJson = true,
         )
 
-        every { detach(any()) } returns DeleteAttachmentRequest(
+        every { detach(any(), any()) } returns DeleteAttachmentRequest(
             token = Request.token,
             attachmentId = "88888888-8888-8888-8888-888888888888"
         )
@@ -154,9 +158,12 @@ open class BaseMessagingClientTest {
         every { add(eq(emptyMap())) } returns true.also { dummyCustomAttributes.clear() }
     }
 
-    private val mockVault: DefaultVault = mockk {
-        every { fetch("token") } returns Request.token
-        every { token } returns Request.token
+    internal val mockVault: DefaultVault = mockk {
+        every { fetch(TOKEN_KEY) } returns testToken
+        every { token } returns testToken
+        every { remove(TOKEN_KEY) } answers { testToken = TestValues.SecondaryToken }
+        every { keys } returns TestValues.vaultKeys
+        justRun { wasAuthenticated = any() }
     }
     internal val mockJwtHandler: JwtHandler = mockk(relaxed = true)
 
@@ -168,7 +175,7 @@ open class BaseMessagingClientTest {
         configuration = Configuration("deploymentId", "inindca.com"),
         webSocket = mockPlatformSocket,
         api = mockWebMessagingApi,
-        token = Request.token,
+        token = testToken,
         jwtHandler = mockJwtHandler,
         vault = mockVault,
         attachmentHandler = mockAttachmentHandler,
@@ -187,35 +194,39 @@ open class BaseMessagingClientTest {
     @AfterTest
     fun after() = clearAllMocks()
 
-    protected fun MockKVerificationScope.connectSequence(shouldConfigureAuth: Boolean = false) {
-        val configureRequest =
-            if (shouldConfigureAuth) Request.configureAuthenticatedRequest() else Request.configureRequest()
+    protected fun MockKVerificationScope.fromIdleToConnectedSequence() {
         mockLogger.withTag(LogTag.STATE_MACHINE)
         mockLogger.withTag(LogTag.WEBSOCKET)
         mockLogger.i(capture(logSlot))
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
+    }
+
+    protected fun MockKVerificationScope.connectSequence(shouldConfigureAuth: Boolean = false) {
+        fromIdleToConnectedSequence()
+        configureSequence(shouldConfigureAuth)
+        mockStateChangedListener(fromConnectedToConfigured)
+    }
+
+    protected fun MockKVerificationScope.configureSequence(shouldConfigureAuth: Boolean = false) {
+        val configureRequest =
+            if (shouldConfigureAuth) Request.configureAuthenticatedRequest() else Request.configureRequest()
         mockLogger.i(capture(logSlot))
         if (shouldConfigureAuth) {
             mockAuthHandler.jwt // check if jwt is valid
             mockAuthHandler.jwt // use jwt for request
         }
         mockPlatformSocket.sendMessage(configureRequest)
+        mockVault.wasAuthenticated = shouldConfigureAuth
         mockAttachmentHandler.fileAttachmentProfile = any()
         mockReconnectionHandler.clear()
         mockJwtHandler.clear()
         mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
-        mockStateChangedListener(fromConnectedToConfigured)
     }
 
     protected fun MockKVerificationScope.connectToReadOnlySequence() {
-        mockLogger.withTag(LogTag.STATE_MACHINE)
-        mockLogger.withTag(LogTag.WEBSOCKET)
-        mockLogger.i(capture(logSlot))
-        mockStateChangedListener(fromIdleToConnecting)
-        mockPlatformSocket.openSocket(any())
-        mockStateChangedListener(fromConnectingToConnected)
+        fromIdleToConnectedSequence()
         mockLogger.i(capture(logSlot))
         mockPlatformSocket.sendMessage(Request.configureRequest())
         mockAttachmentHandler.fileAttachmentProfile = any()
@@ -260,6 +271,12 @@ open class BaseMessagingClientTest {
         mockAttachmentHandler.clearAll()
         mockReconnectionHandler.clear()
         mockJwtHandler.clear()
+    }
+    protected fun MockKVerificationScope.invalidateSessionTokenSequence() {
+        mockLogger.i(capture(logSlot))
+        mockVault.keys
+        mockVault.remove(TOKEN_KEY)
+        mockVault.token
     }
 
     protected fun verifyCleanUp() {

@@ -40,7 +40,7 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
         val expectedText = "Hello world"
         val expectedCustomAttributes = mapOf("A" to "B")
         val expectedChannel = Channel(Channel.Metadata(expectedCustomAttributes))
-        every { mockMessageStore.prepareMessage(any(), any()) } returns OnMessageRequest(
+        every { mockMessageStore.prepareMessage(any(), any(), any()) } returns OnMessageRequest(
             token = Request.token,
             message = TextMessage(
                 text = "Hello world",
@@ -58,7 +58,7 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
             mockCustomAttributesStore.add(expectedCustomAttributes)
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockCustomAttributesStore.onSending()
-            mockMessageStore.prepareMessage(expectedText, expectedChannel)
+            mockMessageStore.prepareMessage(Request.token, expectedText, expectedChannel)
             mockAttachmentHandler.onSending()
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
@@ -162,7 +162,7 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
         val expectedButtonResponse = QuickReplyTestValues.buttonResponse_a
         val expectedCustomAttributes = mapOf("A" to "B")
         val expectedChannel = Channel(Channel.Metadata(expectedCustomAttributes))
-        every { mockMessageStore.prepareMessageWith(any(), expectedChannel) } returns OnMessageRequest(
+        every { mockMessageStore.prepareMessageWith(Request.token, any(), expectedChannel) } returns OnMessageRequest(
             token = Request.token,
             message = TextMessage(
                 text = "",
@@ -185,7 +185,7 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockCustomAttributesStore.onSending()
-            mockMessageStore.prepareMessageWith(expectedButtonResponse, expectedChannel)
+            mockMessageStore.prepareMessageWith(Request.token, expectedButtonResponse, expectedChannel)
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.quickReplyWith(channel = """"channel":{"metadata":{"customAttributes":{"A":"B"}}},"""))
         }

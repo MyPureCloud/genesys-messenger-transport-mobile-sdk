@@ -79,10 +79,9 @@ class MessengerTransportSDK(
         )
         // Support old TokenStore. If TokenStore not present fallback to the Vault.
         val token = tokenStore?.token ?: vault.token
-        val messageStore = MessageStore(token, log.withTag(LogTag.MESSAGE_STORE))
+        val messageStore = MessageStore(log.withTag(LogTag.MESSAGE_STORE))
         val attachmentHandler = AttachmentHandlerImpl(
             api,
-            token,
             log.withTag(LogTag.ATTACHMENT_HANDLER),
             messageStore.updateAttachmentStateWith,
         )
@@ -94,7 +93,7 @@ class MessengerTransportSDK(
             token = token,
             vault = vault,
             configuration = configuration,
-            jwtHandler = JwtHandler(webSocket, token),
+            jwtHandler = JwtHandler(webSocket),
             attachmentHandler = attachmentHandler,
             messageStore = messageStore,
             reconnectionHandler = ReconnectionHandlerImpl(

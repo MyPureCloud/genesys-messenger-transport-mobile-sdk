@@ -35,12 +35,10 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
 
     @Test
     fun `when event Presence Disconnect received and there is no readOnly field in metadata`() {
-        val givenPresenceDisconnectEvent =
-            """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
         val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
-        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
+        slot.captured.onMessage(Response.structuredMessageWithEvents(events = Response.StructuredEvent.presenceDisconnect))
 
         assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
         verify { mockEventHandler.onEvent(eq(expectedEvent)) }
@@ -52,14 +50,12 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
 
     @Test
     fun `when event Presence Disconnect received and readOnly field in metadata is true`() {
-        val givenPresenceDisconnectEvent =
-            """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
         val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
         slot.captured.onMessage(
             Response.structuredMessageWithEvents(
-                events = givenPresenceDisconnectEvent,
+                events = Response.StructuredEvent.presenceDisconnect,
                 metadata = mapOf("readOnly" to "true")
             )
         )
@@ -74,14 +70,12 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
 
     @Test
     fun `when event Presence Disconnect received and readOnly field in metadata is false`() {
-        val givenPresenceDisconnectEvent =
-            """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
         val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
         slot.captured.onMessage(
             Response.structuredMessageWithEvents(
-                events = givenPresenceDisconnectEvent,
+                events = Response.StructuredEvent.presenceDisconnect,
                 metadata = mapOf("readOnly" to "false")
             )
         )
@@ -297,6 +291,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
         assertThat(subject.currentState).isReadOnly()
         verifySequence {
             connectSequence()
+            mockVault.wasAuthenticated = false
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()

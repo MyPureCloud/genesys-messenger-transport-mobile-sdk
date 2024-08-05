@@ -19,6 +19,7 @@ sealed class ErrorCode(val code: Int) {
     data object AttachmentNotSuccessfullyUploaded : ErrorCode(4010)
     data object MessageTooLong : ErrorCode(4011)
     data object CustomAttributeSizeTooLarge : ErrorCode(4013)
+    data object CannotDowngradeToUnauthenticated : ErrorCode(4017)
     data object MissingParameter : ErrorCode(4020)
     data object RequestRateTooHigh : ErrorCode(4029)
     data object UnexpectedError : ErrorCode(5000)
@@ -53,6 +54,7 @@ sealed class ErrorCode(val code: Int) {
                 4010 -> AttachmentNotSuccessfullyUploaded
                 4011 -> MessageTooLong
                 4013 -> CustomAttributeSizeTooLarge
+                4017 -> CannotDowngradeToUnauthenticated
                 4020 -> MissingParameter
                 4029 -> RequestRateTooHigh
                 6000 -> CancellationError

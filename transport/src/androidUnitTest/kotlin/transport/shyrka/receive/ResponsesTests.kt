@@ -106,6 +106,7 @@ class ResponsesTests {
             connected = true,
             newSession = true,
             readOnly = false,
+            clearedExistingSession = false
         )
         val expectedSessionResponse = """{"connected":true,"newSession":true}"""
 
@@ -117,7 +118,7 @@ class ResponsesTests {
     @Test
     fun `when SessionResponse deserialized`() {
         val givenDefaultSessionResponseConstructor = SessionResponse(connected = true)
-        val givenSessionResponseAsJson = """{"connected":true,"newSession":true,"readOnly":false}"""
+        val givenSessionResponseAsJson = """{"connected":true,"newSession":true,"readOnly":false,"clearedExistingSession":true}"""
 
         val result =
             WebMessagingJson.json.decodeFromString<SessionResponse>(givenSessionResponseAsJson)
@@ -126,12 +127,14 @@ class ResponsesTests {
             assertThat(connected).isTrue()
             assertThat(newSession).isTrue()
             assertThat(readOnly).isFalse()
+            assertThat(clearedExistingSession).isTrue()
             assertThat(maxCustomDataBytes).isEqualTo(MAX_CUSTOM_DATA_BYTES_UNSET)
         }
         givenDefaultSessionResponseConstructor.run {
             assertThat(connected).isTrue()
             assertThat(newSession).isFalse()
             assertThat(readOnly).isFalse()
+            assertThat(clearedExistingSession).isFalse()
         }
     }
 

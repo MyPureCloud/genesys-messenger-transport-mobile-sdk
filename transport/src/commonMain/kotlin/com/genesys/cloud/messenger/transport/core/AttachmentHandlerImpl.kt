@@ -24,7 +24,6 @@ import kotlinx.coroutines.launch
 
 internal class AttachmentHandlerImpl(
     private val api: WebMessagingApi,
-    private val token: String,
     private val log: Log,
     private val updateAttachmentStateWith: (Attachment) -> Unit,
     private val processedAttachments: MutableMap<String, ProcessedAttachment> = mutableMapOf(),
@@ -35,6 +34,7 @@ internal class AttachmentHandlerImpl(
 
     @Throws(IllegalArgumentException::class)
     override fun prepare(
+        token: String,
         attachmentId: String,
         byteArray: ByteArray,
         fileName: String,
@@ -84,7 +84,7 @@ internal class AttachmentHandlerImpl(
         }
     }
 
-    override fun detach(attachmentId: String): DeleteAttachmentRequest? {
+    override fun detach(token: String, attachmentId: String): DeleteAttachmentRequest? {
         processedAttachments[attachmentId]?.let {
             log.i { LogMessages.detachingAttachment(attachmentId) }
             it.job?.cancel()

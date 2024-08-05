@@ -4,7 +4,9 @@ import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
 import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.core.Message.Participant
 import com.genesys.cloud.messenger.transport.core.Message.State
@@ -47,6 +49,7 @@ class MessageTest {
                 assertThat(originatingEntity).isEqualTo(Participant.OriginatingEntity.Human)
             }
             assertThat(from).isEqualTo(expectedParticipant)
+            assertThat(authenticated).isFalse()
         }
     }
 
@@ -83,7 +86,8 @@ class MessageTest {
                 name = MessageValues.ParticipantName,
                 imageUrl = MessageValues.ParticipantImageUrl,
                 originatingEntity = Participant.OriginatingEntity.Bot,
-            )
+            ),
+            authenticated = true
         )
 
         message.run {
@@ -98,6 +102,7 @@ class MessageTest {
             assertThat(events).containsExactly(*expectedEvents.toTypedArray())
             assertThat(quickReplies).containsExactly(*expectedQuickReplies.toTypedArray())
             assertThat(from).isEqualTo(expectedParticipant)
+            assertThat(authenticated).isTrue()
         }
     }
 
