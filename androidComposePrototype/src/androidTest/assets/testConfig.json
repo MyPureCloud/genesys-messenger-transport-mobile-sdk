@@ -1,5 +1,19 @@
 {
-  "token": "",
-  "agentId": "",
-  "deploymentId": ""
+  "agentToken": "jJ8dkgLE6RLEJbCUsFDwuq1uiWe5-Q65eX9ROkFTJ_5BxdK8vgWFbGs75BGPsOs1iRSUakHJHU9PZM2kHUPIlg",
+  "agentEmail": "transport.android-6utblg1auv0@example.com",
+  "agentUserId": "0d9aa6ed-176f-4e2a-acee-c0a8c4fac452",
+  "apiBaseAddress": "https://api.mypurecloud.com",
+  "deploymentId": "3140a3b4-6295-4a1a-8f9b-a1bce98b8ae4",
+  "humanizeDisableDeploymentId": "64b0f91c-9d40-4cf3-a492-4a3fa40c613d",
+  "botDeploymentId": "01bed6cf-8922-4db4-ae42-3a36e90ec063",
+  "agentDisconnectDeploymentId": "ec77c761-d7ab-4b01-9606-2822bd2b2760",
+  "quickReplyDeploymentId": "2d80aa02-402d-4b8b-a7c5-024e68e1c224",
+  "botName": "Test-Bot-Name",
+  "password": "Test1234!",
+  "domain": "mypurecloud.com",
+  "authDeploymentId": "e6e626c9-f6df-4db2-89e0-a78be2419c9a",
+  "oktaUsername": "Anton.Afanasiev@genesys.com",
+  "oktaPassword": "TSpace2023!",
+  "oktaUser2name": "matthew.morehouse@genesys.com",
+  "oktaPassword2": "Test1234!"
 }
