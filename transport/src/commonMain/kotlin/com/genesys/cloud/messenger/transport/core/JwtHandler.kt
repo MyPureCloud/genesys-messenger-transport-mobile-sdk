@@ -12,7 +12,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 
-internal class JwtHandler(private val webSocket: PlatformSocket, private val token: String) {
+internal class JwtHandler(private val webSocket: PlatformSocket) {
 
     private val jwtChannel = Channel<String>()
     private val socketDispatcher = CoroutineScope(Dispatchers.Main + SupervisorJob())
@@ -26,12 +26,12 @@ internal class JwtHandler(private val webSocket: PlatformSocket, private val tok
             }
         }
 
-    internal suspend inline fun <reified R> withJwt(jwtFn: (String) -> R): R {
+    internal suspend inline fun <reified R> withJwt(token: String, jwtFn: (String) -> R): R {
         val jwtResponse = jwtResponse
         return if (jwtResponse.isValid()) {
             jwtFn.invoke(jwtResponse.jwt)
         } else {
-            fetchJwt()
+            fetchJwt(token)
             jwtFn.invoke(jwtChannel.receive())
         }
     }
@@ -40,7 +40,7 @@ internal class JwtHandler(private val webSocket: PlatformSocket, private val tok
         jwtResponse = JwtResponse()
     }
 
-    private fun fetchJwt() {
+    private fun fetchJwt(token: String) {
         val request = JwtRequest(token)
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         webSocket.sendMessage(encodedJson)

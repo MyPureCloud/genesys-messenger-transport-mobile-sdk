@@ -55,6 +55,8 @@ class TestbedViewController: UIViewController {
         case clearConversation
         case removeToken
         case removeAuthRefreshToken
+        case stepUp
+        case wasAuthenticated
 
         var helpDescription: String {
             switch self {
@@ -225,7 +227,9 @@ class TestbedViewController: UIViewController {
         default:
             break
         }
-        info.text = displayMessage
+        DispatchQueue.main.async {
+            self.info.text = displayMessage
+        }
     }
     
     private func updateWithEvent(_ event: Event) {
@@ -260,10 +264,16 @@ class TestbedViewController: UIViewController {
             displayEvent = "Event received: \(logout.description)"
         case let disconnect as Event.ConversationDisconnect:
             displayEvent = "Event received: \(disconnect.description)"
+        case let signedIn as Event.SignedIn:
+            displayEvent = "Event received: \(signedIn.description)"
+        case let existingAuthSessionCleared as Event.ExistingAuthSessionCleared:
+            displayEvent = "Event received: \(existingAuthSessionCleared.description)"
         default:
             break
         }
-        info.text = displayEvent
+        DispatchQueue.main.async {
+            self.info.text = displayEvent
+        }
     }
 
     private func observeKeyboard() {
@@ -484,6 +494,10 @@ extension TestbedViewController : UITextFieldDelegate {
                 messenger.removeToken()
             case (.removeAuthRefreshToken, _):
                 messenger.removeAuthRefreshToken()
+            case (.stepUp, _):
+                try messenger.stepUp()
+            case (.wasAuthenticated, _):
+                self.info.text = "wasAuthenticated: \(messenger.wasAuthenticated())"
             default:
                 self.info.text = "Invalid command"
             }

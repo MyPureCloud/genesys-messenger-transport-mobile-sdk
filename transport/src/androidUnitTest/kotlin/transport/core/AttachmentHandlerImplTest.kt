@@ -58,7 +58,6 @@ internal class AttachmentHandlerImplTest {
 
     private val subject = AttachmentHandlerImpl(
         mockApi,
-        TestValues.Token,
         mockLogger,
         mockAttachmentListener,
         processedAttachments,
@@ -97,7 +96,7 @@ internal class AttachmentHandlerImplTest {
         )
 
         val onAttachmentRequest =
-            subject.prepare(AttachmentValues.Id, ByteArray(AttachmentValues.FileSize), AttachmentValues.FileName)
+            subject.prepare(TestValues.Token, AttachmentValues.Id, ByteArray(AttachmentValues.FileSize), AttachmentValues.FileName)
 
         verify {
             mockLogger.i(capture(logSlot))
@@ -253,7 +252,7 @@ internal class AttachmentHandlerImplTest {
         givenPrepareCalled()
         givenUploadSuccessCalled()
 
-        val result = subject.detach(AttachmentValues.Id)
+        val result = subject.detach(TestValues.Token, AttachmentValues.Id)
 
         verify {
             mockLogger.i(capture(logSlot))
@@ -272,7 +271,7 @@ internal class AttachmentHandlerImplTest {
 
         givenPrepareCalled()
 
-        val result = subject.detach(AttachmentValues.Id)
+        val result = subject.detach(TestValues.Token, AttachmentValues.Id)
 
         verify {
             mockLogger.i(capture(logSlot))
@@ -286,7 +285,7 @@ internal class AttachmentHandlerImplTest {
 
     @Test
     fun `when detach() on not processed attachment`() {
-        val result = subject.detach("not processed attachment id")
+        val result = subject.detach(TestValues.Token, "not processed attachment id")
 
         verify {
             listOf(mockAttachmentListener) wasNot Called
@@ -532,7 +531,7 @@ internal class AttachmentHandlerImplTest {
         val givenByteArray = ByteArray(2000)
 
         val onAttachmentRequest =
-            subject.prepare(AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
+            subject.prepare(TestValues.Token, AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
 
         assertThat(subject.fileAttachmentProfile).isNull()
         assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
@@ -545,7 +544,7 @@ internal class AttachmentHandlerImplTest {
         subject.fileAttachmentProfile = FileAttachmentProfile(enabled = true, maxFileSizeKB = 1)
 
         assertFailsWith<IllegalArgumentException>(expectedExceptionMessage) {
-            subject.prepare(AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
+            subject.prepare(TestValues.Token, AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
         }
     }
 
@@ -565,7 +564,7 @@ internal class AttachmentHandlerImplTest {
         )
 
         val onAttachmentRequest =
-            subject.prepare(AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
+            subject.prepare(TestValues.Token, AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
 
         assertThat(subject.fileAttachmentProfile?.maxFileSizeKB).isEqualTo(expectedFileSizeInKB)
         assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
@@ -578,7 +577,7 @@ internal class AttachmentHandlerImplTest {
         subject.fileAttachmentProfile = FileAttachmentProfile(enabled = true, maxFileSizeKB = 2)
 
         assertFailsWith<IllegalArgumentException>(expectedExceptionMessage) {
-            subject.prepare(AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
+            subject.prepare(TestValues.Token, AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
         }
     }
 
@@ -598,7 +597,7 @@ internal class AttachmentHandlerImplTest {
         )
 
         val onAttachmentRequest =
-            subject.prepare(AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
+            subject.prepare(TestValues.Token, AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
 
         assertThat(subject.fileAttachmentProfile?.maxFileSizeKB).isEqualTo(expectedFileSizeInKB)
         assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
@@ -616,7 +615,7 @@ internal class AttachmentHandlerImplTest {
             )
 
         assertFailsWith<IllegalArgumentException>(expectedExceptionMessage) {
-            subject.prepare(AttachmentValues.Id, givenByteArray, "foo.exe")
+            subject.prepare(TestValues.Token, AttachmentValues.Id, givenByteArray, "foo.exe")
         }
     }
 
@@ -640,7 +639,7 @@ internal class AttachmentHandlerImplTest {
         )
 
         val onAttachmentRequest =
-            subject.prepare(AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
+            subject.prepare(TestValues.Token, AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
 
         assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
     }
@@ -652,7 +651,7 @@ internal class AttachmentHandlerImplTest {
         val expectedExceptionMessage = ErrorMessage.FileAttachmentIsDisabled
 
         assertFailsWith<IllegalArgumentException>(expectedExceptionMessage) {
-            subject.prepare(AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
+            subject.prepare(TestValues.Token, AttachmentValues.Id, givenByteArray, AttachmentValues.FileName)
         }
     }
 
@@ -707,6 +706,7 @@ internal class AttachmentHandlerImplTest {
         uploadProgress: ((Float) -> Unit)? = null,
     ) {
         subject.prepare(
+            token = TestValues.Token,
             attachmentId = attachmentId,
             byteArray = byteArray,
             fileName = fileName,

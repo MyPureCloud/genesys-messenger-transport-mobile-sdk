@@ -10,10 +10,7 @@ import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 
 internal const val DEFAULT_PAGE_SIZE = 25
 
-internal class MessageStore(
-    private val token: String,
-    private val log: Log,
-) {
+internal class MessageStore(private val log: Log) {
     var nextPage: Int = 1
         private set
     var startOfConversation = false
@@ -24,7 +21,7 @@ internal class MessageStore(
     val updateAttachmentStateWith = { attachment: Attachment -> update(attachment) }
     var messageListener: ((MessageEvent) -> Unit)? = null
 
-    fun prepareMessage(text: String, channel: Channel? = null): OnMessageRequest {
+    fun prepareMessage(token: String, text: String, channel: Channel? = null): OnMessageRequest {
         val messageToSend = pendingMessage.copy(text = text, state = Message.State.Sending).also {
             log.i { LogMessages.messagePreparedToSend(it) }
             activeConversation.add(it)
@@ -43,6 +40,7 @@ internal class MessageStore(
     }
 
     fun prepareMessageWith(
+        token: String,
         buttonResponse: ButtonResponse,
         channel: Channel? = null,
     ): OnMessageRequest {

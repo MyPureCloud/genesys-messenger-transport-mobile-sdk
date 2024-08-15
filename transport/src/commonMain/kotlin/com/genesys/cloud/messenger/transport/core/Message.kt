@@ -17,6 +17,7 @@ import kotlinx.serialization.Serializable
  *  @property attachments a map of [Attachment] files to the message. Empty by default.
  *  @property events a list of events related to this message. Empty by default.
  *  @property from the [Participant] that sends a message.
+ *  @property authenticated indicates if this message was sent from authenticated user.
  */
 @Serializable
 data class Message(
@@ -33,6 +34,7 @@ data class Message(
     val from: Participant = Participant(
         originatingEntity = Participant.OriginatingEntity.Human
     ),
+    val authenticated: Boolean = false,
 ) {
 
     /**
@@ -71,17 +73,17 @@ data class Message(
         /**
          * Message was constructed but not sent.
          */
-        object Idle : State()
+        data object Idle : State()
 
         /**
          * Message was sent, but there were no confirmation of delivery or failure yet.
          */
-        object Sending : State()
+        data object Sending : State()
 
         /**
          * Message was successfully sent.
          */
-        object Sent : State()
+        data object Sent : State()
 
         /**
          * Message failed to deliver.

@@ -66,7 +66,7 @@ class MCQuickReplyTests : BaseMessagingClientTest() {
             connectSequence()
             mockLogger.i(capture(logSlot))
             mockCustomAttributesStore.getCustomAttributesToSend()
-            mockMessageStore.prepareMessageWith(expectedButtonResponse, null)
+            mockMessageStore.prepareMessageWith(Request.token, expectedButtonResponse, null)
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.quickReplyWith())
         }

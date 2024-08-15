@@ -7,6 +7,7 @@ import android.view.KeyEvent
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.UiObject
 import androidx.test.uiautomator.UiSelector
 import org.awaitility.Awaitility
 import org.awaitility.Awaitility.await
@@ -47,7 +48,9 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         )
         commandBox.click()
         commandBox.clearTextField()
-        commandBox.legacySetText(command)
+        mDevice.executeShellCommand("input text $command")
+        UiObject(UiSelector().className(commandClass)).setText(command)
+
         sleep(3000)
         val sendButton = mDevice.findObject(
             UiSelector().text(sendText)
@@ -63,7 +66,7 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         val commandBox = mDevice.findObject(
             UiSelector()
                 .className(commandClass)
-                .index(2)
+                .index(1)
         )
         return commandBox.getText()
     }
@@ -75,7 +78,7 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         val commandBox = mDevice.findObject(
             UiSelector()
                 .className(commandClass)
-                .index(3)
+                .index(2)
         )
         return commandBox.getText()
     }
@@ -152,7 +155,7 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     fun getFullResponse(): String {
         val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         val responseBox = mDevice.findObject(
-            UiSelector().index(4)
+            UiSelector().index(3)
         )
         return responseBox.getText()
     }
@@ -211,7 +214,7 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         }
         waitForElementWithUIAutomator(signInText)
         typeIndexWithUIAutomator(2, email)
-        typeIndexWithUIAutomator(3, password)
+        typeIndexWithUIAutomator(4, password)
         pressEnterKey()
     }
 
@@ -230,7 +233,8 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         )
         responseBox.click()
         responseBox.clearTextField()
-        responseBox.legacySetText(text)
+        mDevice.executeShellCommand("input text $text")
+        UiObject(UiSelector().index(index)).setText(text)
     }
 
     protected fun pressTab() {

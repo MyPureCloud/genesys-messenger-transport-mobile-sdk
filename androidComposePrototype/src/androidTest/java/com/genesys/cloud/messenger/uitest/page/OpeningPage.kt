@@ -36,7 +36,7 @@ class OpeningPage(activity: Activity) : BasePage(activity) {
         val deploymentIdField = mDevice.findObject(UiSelector().text(title))
         deploymentIdField.click()
         deploymentIdField.clearTextField()
-        deploymentIdField.legacySetText(deploymentId)
+        mDevice.executeShellCommand("input text $deploymentId")
         sleep(2000)
         val regionField = mDevice.findObject(UiSelector().className("android.widget.Button").index(1))
         regionField.click()

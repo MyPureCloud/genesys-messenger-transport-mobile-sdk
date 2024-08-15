@@ -29,6 +29,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.TooManyRequestsErrorMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.toTransportConnectionClosedReason
 import com.genesys.cloud.messenger.transport.shyrka.send.AutoStartRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.ClearConversationRequest
@@ -57,13 +58,13 @@ import kotlin.reflect.KProperty0
 private const val MAX_RECONFIGURE_ATTEMPTS = 3
 
 internal class MessagingClientImpl(
-    vault: Vault,
+    private val vault: Vault,
     private val api: WebMessagingApi,
     private val webSocket: PlatformSocket,
     private val configuration: Configuration,
     private val log: Log,
     private val jwtHandler: JwtHandler,
-    private val token: String,
+    private var token: String,
     private val deploymentConfig: KProperty0<DeploymentConfig?>,
     private val attachmentHandler: AttachmentHandler,
     private val messageStore: MessageStore,
@@ -91,6 +92,7 @@ internal class MessagingClientImpl(
     private var isStartingANewSession = false
     private var reconfigureAttempts = 0
     private var sendingAutostart = false
+    private var clearingConversation = false
 
     override val currentState: State
         get() {
@@ -127,6 +129,9 @@ internal class MessagingClientImpl(
     override val fileAttachmentProfile: FileAttachmentProfile?
         get() = attachmentHandler.fileAttachmentProfile
 
+    override val wasAuthenticated: Boolean
+        get() = vault.wasAuthenticated
+
     @Throws(IllegalStateException::class)
     override fun connect() {
         log.i { LogMessages.CONNECT }
@@ -141,6 +146,15 @@ internal class MessagingClientImpl(
         connectAuthenticated = true
         stateMachine.onConnect()
         webSocket.openSocket(socketListener)
+    }
+
+    @Throws(IllegalStateException::class)
+    override fun stepUpToAuthenticatedSession() {
+        log.i { LogMessages.STEP_UP_TO_AUTHENTICATED_SESSION }
+        stateMachine.checkIfConfigured()
+        if (connectAuthenticated) return
+        connectAuthenticated = true
+        configureSession()
     }
 
     @Throws(IllegalStateException::class)
@@ -172,10 +186,10 @@ internal class MessagingClientImpl(
                 transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
                 return
             }
-            encodeAuthenticatedConfigureSessionRequest(startNew)
+            encodeConfigureAuthenticatedSessionRequest(startNew)
         } else {
             log.i { LogMessages.configureSession(token, startNew) }
-            encodeAnonymousConfigureSessionRequest(startNew)
+            encodeConfigureGuestSessionRequest(startNew)
         }
         webSocket.sendMessage(encodedJson)
     }
@@ -186,7 +200,7 @@ internal class MessagingClientImpl(
         log.i { LogMessages.sendMessage(text, customAttributes) }
         internalCustomAttributesStore.add(customAttributes)
         val channel = prepareCustomAttributesForSending()
-        val request = messageStore.prepareMessage(text, channel)
+        val request = messageStore.prepareMessage(token, text, channel)
         attachmentHandler.onSending()
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         send(encodedJson)
@@ -196,7 +210,7 @@ internal class MessagingClientImpl(
         stateMachine.checkIfConfigured()
         log.i { LogMessages.sendQuickReply(buttonResponse) }
         val channel = prepareCustomAttributesForSending()
-        val request = messageStore.prepareMessageWith(buttonResponse, channel)
+        val request = messageStore.prepareMessageWith(token, buttonResponse, channel)
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         send(encodedJson)
     }
@@ -217,6 +231,7 @@ internal class MessagingClientImpl(
     ): String {
         log.i { LogMessages.attach(fileName) }
         val request = attachmentHandler.prepare(
+            token,
             Platform().randomUUID(),
             byteArray,
             fileName,
@@ -230,7 +245,7 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun detach(attachmentId: String) {
         log.i { LogMessages.detach(attachmentId) }
-        attachmentHandler.detach(attachmentId)?.let {
+        attachmentHandler.detach(token, attachmentId)?.let {
             val encodedJson = WebMessagingJson.json.encodeToString(it)
             send(encodedJson)
         }
@@ -265,7 +280,7 @@ internal class MessagingClientImpl(
             return
         }
         log.i { LogMessages.fetchingHistory(messageStore.nextPage) }
-        jwtHandler.withJwt { jwt ->
+        jwtHandler.withJwt(token) { jwt ->
             api.getMessages(jwt, messageStore.nextPage).also {
                 when (it) {
                     is Result.Success -> {
@@ -366,6 +381,7 @@ internal class MessagingClientImpl(
     }
 
     private fun handleSessionResponse(sessionResponse: SessionResponse) = sessionResponse.run {
+        vault.wasAuthenticated = connectAuthenticated
         attachmentHandler.fileAttachmentProfile = createFileAttachmentProfile(this)
         reconnectionHandler.clear()
         jwtHandler.clear()
@@ -382,6 +398,9 @@ internal class MessagingClientImpl(
             if (newSession && deploymentConfig.isAutostartEnabled()) {
                 sendAutoStart()
             }
+        }
+        if (clearedExistingSession) {
+            eventHandler.onEvent(Event.ExistingAuthSessionCleared)
         }
     }
 
@@ -426,8 +445,19 @@ internal class MessagingClientImpl(
             }
 
             is ErrorCode.WebsocketError -> handleWebSocketError(ErrorCode.WebsocketError)
+            is ErrorCode.CannotDowngradeToUnauthenticated -> {
+                invalidateSessionToken()
+                transitionToStateError(code, message)
+            }
+
             else -> log.w { LogMessages.unhandledErrorCode(code, message) }
         }
+    }
+
+    private fun invalidateSessionToken() {
+        log.i { "${LogMessages.INVALIDATE_SESSION_TOKEN}" }
+        vault.remove(vault.keys.tokenKey)
+        token = vault.token
     }
 
     private fun refreshTokenAndPerform(action: () -> Unit) {
@@ -468,7 +498,7 @@ internal class MessagingClientImpl(
     private fun handleConfigureSessionErrorResponse(code: ErrorCode, message: String?) {
         if (connectAuthenticated && code.isUnauthorized() && reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
             reconfigureAttempts++
-            if (stateMachine.isConnected()) {
+            if (stateMachine.isConnected() || stateMachine.isReadOnly()) {
                 refreshTokenAndPerform { configureSession(isStartingANewSession) }
             } else {
                 refreshTokenAndPerform { connectAuthenticatedSession() }
@@ -511,11 +541,20 @@ internal class MessagingClientImpl(
                 eventHandler.onEvent(it)
             }
         } else {
-            // Autostart is the only Inbound event that should be reported to UI.
-            events.find { it is Event.ConversationAutostart }?.let { autostart ->
-                sendingAutostart = false
-                internalCustomAttributesStore.onSent()
-                eventHandler.onEvent(autostart)
+            events.forEach {
+                when (it) {
+                    is Event.ConversationAutostart -> {
+                        sendingAutostart = false
+                        internalCustomAttributesStore.onSent()
+                        eventHandler.onEvent(it)
+                    }
+
+                    is Event.SignedIn -> eventHandler.onEvent(it)
+                    else -> {
+                        // Do nothing. Autostart and SignedIn are the only Inbound events that should be reported to UI.
+                        log.i { LogMessages.ignoreInboundEvent(it) }
+                    }
+                }
             }
         }
     }
@@ -537,6 +576,7 @@ internal class MessagingClientImpl(
         jwtHandler.clear()
         reconfigureAttempts = 0
         sendingAutostart = false
+        clearingConversation = false
         internalCustomAttributesStore.onSessionClosed()
     }
 
@@ -547,6 +587,7 @@ internal class MessagingClientImpl(
         jwtHandler.clear()
         reconfigureAttempts = 0
         sendingAutostart = false
+        clearingConversation = false
     }
 
     private fun considerForceClose() {
@@ -557,7 +598,7 @@ internal class MessagingClientImpl(
         }
     }
 
-    private fun encodeAnonymousConfigureSessionRequest(startNew: Boolean) =
+    private fun encodeConfigureGuestSessionRequest(startNew: Boolean) =
         WebMessagingJson.json.encodeToString(
             ConfigureSessionRequest(
                 token = token,
@@ -570,7 +611,7 @@ internal class MessagingClientImpl(
             )
         )
 
-    private fun encodeAuthenticatedConfigureSessionRequest(startNew: Boolean) =
+    private fun encodeConfigureAuthenticatedSessionRequest(startNew: Boolean) =
         WebMessagingJson.json.encodeToString(
             ConfigureAuthenticatedSessionRequest(
                 token = token,
@@ -621,6 +662,7 @@ internal class MessagingClientImpl(
                             "${decoded.body.errorMessage}. Retry after ${decoded.body.retryAfter} seconds."
                         )
                     }
+
                     is SessionResponse -> handleSessionResponse(decoded.body)
                     is JwtResponse ->
                         jwtHandler.jwtResponse = decoded.body
@@ -632,6 +674,7 @@ internal class MessagingClientImpl(
                             attachmentHandler.upload(decoded.body)
                         }
                     }
+
                     is UploadSuccessEvent ->
                         attachmentHandler.onUploadSuccess(decoded.body)
 
@@ -673,17 +716,30 @@ internal class MessagingClientImpl(
                     }
 
                     is ConnectionClosedEvent -> {
+                        val reason = decoded.body.reason.toTransportConnectionClosedReason(
+                            clearingConversation
+                        )
+                        if (reason == Event.ConnectionClosed.Reason.UserSignedIn) {
+                            invalidateSessionToken()
+                            vault.wasAuthenticated = false
+                        }
+                        eventHandler.onEvent(Event.ConnectionClosed(reason))
                         disconnect()
-                        eventHandler.onEvent(Event.ConnectionClosed)
                     }
 
                     is LogoutEvent -> {
+                        invalidateSessionToken()
+                        vault.wasAuthenticated = false
                         authHandler.clear()
                         eventHandler.onEvent(Event.Logout)
                         disconnect()
                     }
 
-                    is SessionClearedEvent -> eventHandler.onEvent(Event.ConversationCleared)
+                    is SessionClearedEvent -> {
+                        clearingConversation = true
+                        eventHandler.onEvent(Event.ConversationCleared)
+                    }
+
                     else -> {
                         log.i { LogMessages.unhandledMessage(decoded) }
                     }

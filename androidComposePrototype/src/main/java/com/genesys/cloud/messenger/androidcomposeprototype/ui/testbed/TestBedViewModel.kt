@@ -155,11 +155,18 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "fileAttachmentProfile" -> doFileAttachmentProfile()
             "removeToken" -> doRemoveTokenFromVault()
             "removeAuthRefreshToken" -> doRemoveAuthRefreshTokenFromVault()
+            "stepUp" -> doStepUp()
+            "wasAuthenticated" -> doWasAuthenticated()
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
             }
         }
+    }
+
+    private fun doWasAuthenticated() {
+        onSocketMessageReceived("wasAuthenticated: ${client.wasAuthenticated}")
+        commandWaiting = false
     }
 
     private fun doOktaSignIn(withPKCE: Boolean) {
@@ -201,6 +208,14 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             client.connectAuthenticatedSession()
         } catch (t: Throwable) {
             handleException(t, "connectAuthenticated")
+        }
+    }
+
+    private fun doStepUp() {
+        try {
+            client.stepUpToAuthenticatedSession()
+        } catch (t: Throwable) {
+            handleException(t, "stepUp")
         }
     }
 
@@ -505,10 +520,10 @@ private fun String.toKeyValuePair(): Pair<String, String> {
 }
 
 sealed class AuthState {
-    object NoAuth : AuthState()
+    data object NoAuth : AuthState()
     data class AuthCodeReceived(val authCode: String) : AuthState()
-    object Authorized : AuthState()
-    object LoggedOut : AuthState()
+    data object Authorized : AuthState()
+    data object LoggedOut : AuthState()
     data class Error(
         val errorCode: ErrorCode,
         val message: String? = null,

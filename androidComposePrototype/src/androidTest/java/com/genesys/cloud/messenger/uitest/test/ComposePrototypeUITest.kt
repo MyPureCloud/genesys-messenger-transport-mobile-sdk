@@ -69,6 +69,7 @@ class ComposePrototypeUITest : BaseTests() {
     private val oktaSignInWithPKCEText = "oktaSignInWithPKCE"
     private val oktaLogoutText = "oktaLogout"
     private val authCodeReceivedText = "AuthCodeReceived"
+    private val existingAuthSessionClearedText = "ExistingAuthSessionCleared"
     private val loggedOutText = "LoggedOut"
     private val authorizeText = "authorize"
     private val authorizedText = "Authorized"
@@ -81,6 +82,7 @@ class ComposePrototypeUITest : BaseTests() {
     private val connectionClosedMessage = "Connection Closed Normally"
     private val connectionClosedCode = "1000"
     private val quickReplyCommand = "sendQuickReply"
+    private val stepUpCommand = "stepUp"
     private val quickReplyText = "Carousel"
     private val quickReplyResponse = "Welcome to the Carousel menu."
     private val invalidQuickReplyText = "dummy"
@@ -96,6 +98,13 @@ class ComposePrototypeUITest : BaseTests() {
     private val refreshedText = "Refreshed"
     private val refreshCommandText = "refreshAttachment"
     private val attachmentIdText = "Attachment(id="
+    private val authenticatedMessage = "Session 2 - Authenticated message after step-up."
+    private val connectionClosedText = "Connection Closed Normally"
+    private val authenticatedResponseText = "event.signedin"
+    private val authSessionClearedText = "event.existingAuthSessionCleared"
+    private val helloSession1 = "Session 1 - Authenticated message."
+    private val helloSession2 = "Session 2 - Unauthenticated message."
+    private val helloResumeSession1 = "Session 1 - Attempt to resume after step-up."
 
     fun enterDeploymentInfo(deploymentId: String) {
         opening {
@@ -114,6 +123,14 @@ class ComposePrototypeUITest : BaseTests() {
             verifyPageIsVisible()
             enterCommand(connectCommand)
             waitForConfigured()
+        }
+    }
+
+    fun stepUp() {
+        messenger {
+            verifyPageIsVisible()
+            enterCommand(stepUpCommand)
+            waitForProperResponse(existingAuthSessionClearedText)
         }
     }
 
@@ -306,6 +323,19 @@ class ComposePrototypeUITest : BaseTests() {
     fun verifyResponse(response: String) {
         messenger {
             waitForProperResponse(response)
+        }
+    }
+
+    fun verifyReceivedMessage(expectedMessage: String) {
+        messenger {
+            waitForProperResponse(expectedMessage)
+        }
+    }
+
+    fun disconnectAndWait() {
+        messenger {
+            waitForClosed()
+            pressBackKey()
         }
     }
 
@@ -652,5 +682,19 @@ class ComposePrototypeUITest : BaseTests() {
         verifyResponse(invalidQuickReplyResponse)
         sendDoneAndWaitForResponse(conversationDisconnectText)
         bye()
+    }
+
+    @Test
+    fun testStepUpAuthentication() {
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.authDeploymentId)
+        connect()
+        sendMsg("Unauthenticated message.")
+        clearBrowser()
+        oktaSignInWithPKCE(testConfig.oktaUsername, testConfig.oktaPassword)
+        authorize()
+        stepUp()
+        sendMsg("Authenticated session message after step-up.")
+        oktaLogout()
     }
 }
