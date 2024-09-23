@@ -117,6 +117,15 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
+    fun resubmitDeploymentInfo() {
+        opening {
+            selectView(testBedViewText)
+        }
+        messenger {
+            verifyPageIsVisible()
+        }
+    }
+
     // Send the connect command and wait for connected response
     fun connect(connectCommand: String = connectText) {
         messenger {
@@ -697,4 +706,45 @@ class ComposePrototypeUITest : BaseTests() {
         sendMsg("Authenticated session message after step-up.")
         oktaLogout()
     }
+
+    @Test
+    fun testAuthenticatedSessionsSync() {
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.authDeploymentId)
+        clearBrowser() // Ensure browser is clear before Okta sign-in
+        oktaSignInWithPKCE(testConfig.oktaUsername, testConfig.oktaPassword)
+        authorize()
+        connect(authenticateConnectText)
+
+        // Send message from session 1
+        sendMsg(helloSession1)
+        val conversationInfo1 = apiHelper.answerNewConversation()
+        if (conversationInfo1 == null) {
+            AssertionError("Unable to answer conversation in session 1.")
+        } else {
+            Log.i(TAG, "Session 1: Conversation started successfully.")
+        }
+
+        // Start second authenticated session
+        oktaLogout()
+        clearBrowser()
+        resubmitDeploymentInfo()
+        oktaSignInWithPKCE(testConfig.oktaUsername, testConfig.oktaPassword)
+        authorize()
+        connect(authenticateConnectText)
+
+        // Send message from session 2
+        sendMsg(helloSession2)
+        val conversationInfo2 = apiHelper.answerNewConversation()
+        if (conversationInfo2 == null) {
+            AssertionError("Unable to answer conversation in session 2.")
+        } else {
+            Log.i(TAG, "Session 2: Conversation started successfully.")
+        }
+        // Close conversations
+        if (conversationInfo1 != null) apiHelper.sendConnectOrDisconnect(conversationInfo1)
+        if (conversationInfo2 != null) apiHelper.sendConnectOrDisconnect(conversationInfo2)
+        oktaLogout()
+    }
+
 }
