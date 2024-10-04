@@ -746,5 +746,4 @@ class ComposePrototypeUITest : BaseTests() {
         if (conversationInfo2 != null) apiHelper.sendConnectOrDisconnect(conversationInfo2)
         oktaLogout()
     }
-
 }
