@@ -28,6 +28,7 @@ buildscript {
                 oktaProperties.load(oktaPropertiesFile.newReader())
             } else {
                 logger.warn("okta.properties does not exist in the path and will be ignored.")
+                 throw new GradleException("Okta configuration must be specified in ${rootDir.absolutePath}/okta.properties locally.")
             }
         }
     }
