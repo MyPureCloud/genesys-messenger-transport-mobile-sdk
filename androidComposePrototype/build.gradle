@@ -28,6 +28,7 @@ buildscript {
                 oktaProperties.load(oktaPropertiesFile.newReader())
             } else {
                 logger.warn("okta.properties does not exist in the path and will be ignored.")
+                 throw new GradleException("Okta configuration must be specified in ${rootDir.absolutePath}/okta.properties locally.")
             }
         }
     }
@@ -135,7 +136,14 @@ dependencies {
     androidTestImplementation 'androidx.test:rules:1.5.0'
     androidTestImplementation('com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    configurations.all {
+        resolutionStrategy.dependencySubstitution {
+            substitute(module("org.hamcrest:hamcrest-library:1.3")).using(module("junit:junit:4.13.2"))
+            substitute(module("org.hamcrest:hamcrest-core:1.3")).using(module("junit:junit:4.13.2"))
+        }
+    }
 }
+
 repositories {
     mavenCentral()
 }
