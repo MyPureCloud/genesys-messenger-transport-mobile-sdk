@@ -348,6 +348,7 @@ internal class MessagingClientImpl(
     }
 
     override fun authorize(authCode: String, redirectUri: String, codeVerifier: String?) {
+        invalidateSessionToken()
         authHandler.authorize(authCode, redirectUri, codeVerifier)
     }
 
