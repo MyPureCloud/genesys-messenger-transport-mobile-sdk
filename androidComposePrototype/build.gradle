@@ -135,6 +135,12 @@ dependencies {
     androidTestImplementation 'androidx.test:rules:1.5.0'
     androidTestImplementation('com.fasterxml.jackson.module:jackson-module-kotlin:2.16.1')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    configurations.all {
+        resolutionStrategy.dependencySubstitution {
+            substitute(module("org.hamcrest:hamcrest-library:1.3")).using(module("junit:junit:4.13.2"))
+            substitute(module("org.hamcrest:hamcrest-core:1.3")).using(module("junit:junit:4.13.2"))
+        }
+    }
 }
 repositories {
     mavenCentral()
