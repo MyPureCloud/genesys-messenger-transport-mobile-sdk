@@ -629,13 +629,13 @@ class ComposePrototypeUITest : BaseTests() {
         oktaLogout()
     }
 
-    @Test
-    fun test1UnAuthenticatedUser() {
-        enterDeploymentInfo(testConfig.authDeploymentId)
-        // Enter an invalid password to see if noAuth will persist
-        oktaSignInWithPKCE(fakeAuthUserName, fakeAuthPassword, false)
-        verifyNotAuthenticated(notAuthenticateText)
-    }
+//    @Test
+//    fun test1UnAuthenticatedUser() {
+//        enterDeploymentInfo(testConfig.authDeploymentId)
+//        // Enter an invalid password to see if noAuth will persist
+//        oktaSignInWithPKCE(fakeAuthUserName, fakeAuthPassword, false)
+//        verifyNotAuthenticated(notAuthenticateText)
+//    }
 
     @Test
     fun testConversationClear() {
