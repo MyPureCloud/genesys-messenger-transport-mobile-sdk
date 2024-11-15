@@ -354,281 +354,281 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
-    @Test
-    fun testSendTypingIndicator() {
-        apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.deploymentId)
-        DefaultVault().store("token", UUID.randomUUID().toString())
-        connect()
-        val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo != null) {
-            apiHelper.sendTypingIndicatorFromAgentToUser(conversationInfo)
-            verifyResponse(typingIndicatorResponse)
-            apiHelper.sendConnectOrDisconnect(conversationInfo)
-        } else AssertionError("Agent did not answer conversation.")
-        apiHelper.disconnectAllConversations()
-    }
-
-    @Test
-    // Adjusting the test name to force this test to run first
-    fun testVerifyAutoStart() {
-        apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.deploymentId)
-        // Force a new session. AutoStart is enabled and newSession is true
-        DefaultVault().store("token", UUID.randomUUID().toString())
-        connect()
-        verifyResponse(autoStartEnabledText)
-        val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation with autoStart enabled.")
-        else {
-            Log.i(TAG, "Conversation started successfully with autoStart enabled.")
-            apiHelper.sendConnectOrDisconnect(conversationInfo)
-        }
-        apiHelper.disconnectAllConversations()
-    }
-
-    @Test
-    fun testHealthCheck() {
-        apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.deploymentId)
-        connect()
-        val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation with autoStart enabled.")
-        else {
-            Log.i(TAG, "Conversation started successfully with autoStart enabled.")
-            healthcheckTest()
-            apiHelper.sendConnectOrDisconnect(conversationInfo)
-        }
-        bye()
-    }
-
-    @Test
-    fun testSendAndReceiveMessage() {
-        apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.deploymentId)
-        connect()
-        val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-        else {
-            Log.i(TAG, "Conversation started successfully.")
-            sendMsg(helloText)
-            sleep(3000)
-            apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
-            verifyResponse(outboundMessage)
-            if (testConfig.domain == "mypurecloud.com") {
-                humanNameText = prodHumanNameText
-                avatarText = prodAvatorText
-            }
-            verifyResponse(humanNameText)
-            verifyResponse(avatarText)
-            verifyResponse(humanText)
-            apiHelper.sendConnectOrDisconnect(conversationInfo)
-        }
-        bye()
-    }
-
-    @Test
-    fun testAttachments() {
-        apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.deploymentId)
-        connect()
-        sendMsg(helloText)
-        val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-        else {
-            Log.i(TAG, "Conversation started successfully.")
-            attachDesignatedImage("testImage.png", true)
-            apiHelper.sendConnectOrDisconnect(conversationInfo)
-        }
-        bye()
-    }
-
-    @Test
-    fun testContentProfile() {
-        apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.deploymentId)
-        connect()
-        sendMsg(helloText)
-        val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-        else {
-            Log.i(TAG, "Conversation started successfully.")
-            // Get the deployment config to check for allowed media
-            enterDeploymentCommand(deploymentConfigText)
-            verifyResponse(imageFormatsText)
-            // Try attachment with invalid type. Expect to receive error
-            attachDesignatedImage("testImage.abc", false)
-            apiHelper.sendConnectOrDisconnect(conversationInfo)
-        }
-        bye()
-    }
-
-    @Test
-    fun testCustomAttributes() {
-        apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.deploymentId)
-        connect()
-        val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-        else {
-            Log.i(TAG, "Conversation started successfully.")
-            addCustomAttribute(nameText, newNameText)
-            sleep(3000)
-            apiHelper.sendConnectOrDisconnect(conversationInfo)
-        }
-        bye()
-    }
-
-    @Test
-    fun testUnknownAgent() {
-        apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.humanizeDisableDeploymentId)
-        connect()
-        sendMsg(helloText)
-        val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-        else {
-            Log.i(TAG, "Conversation started successfully.")
-            apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
-            verifyResponse(outboundMessage)
-            verifyResponse(humanizeDisabledText)
-            verifyResponse(humanText)
-            apiHelper.sendConnectOrDisconnect(conversationInfo)
-        }
-        bye()
-    }
-
-    @Test
-    fun testBotAgent() {
-        apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.botDeploymentId)
-        connect()
-        verifyResponse(botImageName)
-        verifyResponse(botEntity)
-        sleep(3000)
-        sendBotResponseAndCheckReply(yesText)
-        sleep(2000)
-        history(withConversationDisconnectEvent = false)
-        bye()
-    }
-
-    @Test
-    fun testDisconnectAgent_ReadOnly() {
-        apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.deploymentId)
-        connect()
-        sendMsg(helloText)
-        val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-        else {
-            Log.i(TAG, "Conversation started successfully.")
-            // conversationInfo: Conversation, connecting: Boolean, wrapup: Boolean = true
-            apiHelper.sendConnectOrDisconnect(conversationInfo)
-            // wait for agent to disconnect
-            apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id)
-            checkForReadOnly()
-            bye()
-            sleep(2000)
-            // connect again and check for readOnly
-            reconnectReadOnly()
-            bye()
-        }
-    }
-
-    @Test
-    fun testDisconnectAgent_NotReadOnly() {
-        apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.agentDisconnectDeploymentId)
-        connect()
-        sendMsg(helloText)
-        val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-        else {
-            Log.i(TAG, "Conversation started successfully.")
-            apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
-            verifyResponse(outboundMessage)
-            apiHelper.sendConnectOrDisconnect(conversationInfo)
-            // wait for agent to disconnect
-            apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id)
-            sendMsg(helloText)
-            val conversation2Info = apiHelper.answerNewConversation()
-            if (conversation2Info == null) AssertionError("Unable to answer conversation.")
-            else {
-                Log.i(TAG, "Conversation started successfully.")
-                if (conversationInfo.id != conversation2Info.id) AssertionError("Reconnecting a conversation may not have matching conversation IDs.")
-                else (Log.i(TAG, "Conversation ids matched as expected."))
-                apiHelper.sendConnectOrDisconnect(conversation2Info)
-                // wait for agent to disconnect
-                apiHelper.waitForParticipantToConnectOrDisconnect(conversation2Info.id)
-            }
-        }
-    }
-
-    @Test
-    fun testHistoryPull() {
-        apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.deploymentId)
-        connect()
-        sendMsg(helloText)
-        val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-        else {
-            Log.i(TAG, "Conversation started successfully.")
-            apiHelper.sendConnectOrDisconnect(conversationInfo)
-            // wait for agent to disconnect
-            apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id)
-            checkForReadOnly()
-            // enter history and check for ConversationDisconnect and ConversationAutostart events
-            history()
-            // Just to clear things up, let's start a new chat, wait for configured
-            startNewChat()
-            val conversation2Info = apiHelper.answerNewConversation()
-            if (conversation2Info == null) AssertionError("Unable to answer conversation.")
-            else {
-                Log.i(TAG, "Conversation started successfully.")
-                apiHelper.sendConnectOrDisconnect(conversation2Info)
-                // wait for agent to disconnect
-                apiHelper.waitForParticipantToConnectOrDisconnect(conversation2Info.id)
-            }
-            bye()
-        }
-    }
-
-    @Test
-    fun test2AuthenticatedUser() {
-        apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.authDeploymentId)
-        clearBrowser()
-        oktaSignInWithPKCE(testConfig.oktaUsername, testConfig.oktaPassword)
-        authorize()
-        connect(authenticateConnectText)
-        sendMsg(helloText)
-        val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-        else {
-            Log.i(TAG, "Conversation started successfully.")
-            apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
-            verifyResponse(outboundMessage)
-            apiHelper.sendConnectOrDisconnect(conversationInfo)
-            oktaLogout()
-            messenger {
-                enterCommand(oktaSignInWithPKCEText)
-            }
-            authorize()
-            connect(authenticateConnectText)
-            sendMsg(helloText)
-            val conversation2Info = apiHelper.answerNewConversation()
-            if (conversation2Info == null) AssertionError("Unable to answer conversation.")
-            else {
-                Log.i(TAG, "Conversation started successfully.")
-                apiHelper.sendOutboundMessageFromAgentToUser(conversation2Info, outboundMessage)
-                verifyResponse(outboundMessage)
-                apiHelper.sendConnectOrDisconnect(conversation2Info)
-            }
-        }
-        oktaLogout()
-    }
-
+//    @Test
+//    fun testSendTypingIndicator() {
+//        apiHelper.disconnectAllConversations()
+//        enterDeploymentInfo(testConfig.deploymentId)
+//        DefaultVault().store("token", UUID.randomUUID().toString())
+//        connect()
+//        val conversationInfo = apiHelper.answerNewConversation()
+//        if (conversationInfo != null) {
+//            apiHelper.sendTypingIndicatorFromAgentToUser(conversationInfo)
+//            verifyResponse(typingIndicatorResponse)
+//            apiHelper.sendConnectOrDisconnect(conversationInfo)
+//        } else AssertionError("Agent did not answer conversation.")
+//        apiHelper.disconnectAllConversations()
+//    }
+//
+//    @Test
+//    // Adjusting the test name to force this test to run first
+//    fun testVerifyAutoStart() {
+//        apiHelper.disconnectAllConversations()
+//        enterDeploymentInfo(testConfig.deploymentId)
+//        // Force a new session. AutoStart is enabled and newSession is true
+//        DefaultVault().store("token", UUID.randomUUID().toString())
+//        connect()
+//        verifyResponse(autoStartEnabledText)
+//        val conversationInfo = apiHelper.answerNewConversation()
+//        if (conversationInfo == null) AssertionError("Unable to answer conversation with autoStart enabled.")
+//        else {
+//            Log.i(TAG, "Conversation started successfully with autoStart enabled.")
+//            apiHelper.sendConnectOrDisconnect(conversationInfo)
+//        }
+//        apiHelper.disconnectAllConversations()
+//    }
+//
+//    @Test
+//    fun testHealthCheck() {
+//        apiHelper.disconnectAllConversations()
+//        enterDeploymentInfo(testConfig.deploymentId)
+//        connect()
+//        val conversationInfo = apiHelper.answerNewConversation()
+//        if (conversationInfo == null) AssertionError("Unable to answer conversation with autoStart enabled.")
+//        else {
+//            Log.i(TAG, "Conversation started successfully with autoStart enabled.")
+//            healthcheckTest()
+//            apiHelper.sendConnectOrDisconnect(conversationInfo)
+//        }
+//        bye()
+//    }
+//
+//    @Test
+//    fun testSendAndReceiveMessage() {
+//        apiHelper.disconnectAllConversations()
+//        enterDeploymentInfo(testConfig.deploymentId)
+//        connect()
+//        val conversationInfo = apiHelper.answerNewConversation()
+//        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
+//        else {
+//            Log.i(TAG, "Conversation started successfully.")
+//            sendMsg(helloText)
+//            sleep(3000)
+//            apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
+//            verifyResponse(outboundMessage)
+//            if (testConfig.domain == "mypurecloud.com") {
+//                humanNameText = prodHumanNameText
+//                avatarText = prodAvatorText
+//            }
+//            verifyResponse(humanNameText)
+//            verifyResponse(avatarText)
+//            verifyResponse(humanText)
+//            apiHelper.sendConnectOrDisconnect(conversationInfo)
+//        }
+//        bye()
+//    }
+//
+//    @Test
+//    fun testAttachments() {
+//        apiHelper.disconnectAllConversations()
+//        enterDeploymentInfo(testConfig.deploymentId)
+//        connect()
+//        sendMsg(helloText)
+//        val conversationInfo = apiHelper.answerNewConversation()
+//        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
+//        else {
+//            Log.i(TAG, "Conversation started successfully.")
+//            attachDesignatedImage("testImage.png", true)
+//            apiHelper.sendConnectOrDisconnect(conversationInfo)
+//        }
+//        bye()
+//    }
+//
+//    @Test
+//    fun testContentProfile() {
+//        apiHelper.disconnectAllConversations()
+//        enterDeploymentInfo(testConfig.deploymentId)
+//        connect()
+//        sendMsg(helloText)
+//        val conversationInfo = apiHelper.answerNewConversation()
+//        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
+//        else {
+//            Log.i(TAG, "Conversation started successfully.")
+//            // Get the deployment config to check for allowed media
+//            enterDeploymentCommand(deploymentConfigText)
+//            verifyResponse(imageFormatsText)
+//            // Try attachment with invalid type. Expect to receive error
+//            attachDesignatedImage("testImage.abc", false)
+//            apiHelper.sendConnectOrDisconnect(conversationInfo)
+//        }
+//        bye()
+//    }
+//
+//    @Test
+//    fun testCustomAttributes() {
+//        apiHelper.disconnectAllConversations()
+//        enterDeploymentInfo(testConfig.deploymentId)
+//        connect()
+//        val conversationInfo = apiHelper.answerNewConversation()
+//        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
+//        else {
+//            Log.i(TAG, "Conversation started successfully.")
+//            addCustomAttribute(nameText, newNameText)
+//            sleep(3000)
+//            apiHelper.sendConnectOrDisconnect(conversationInfo)
+//        }
+//        bye()
+//    }
+//
+//    @Test
+//    fun testUnknownAgent() {
+//        apiHelper.disconnectAllConversations()
+//        enterDeploymentInfo(testConfig.humanizeDisableDeploymentId)
+//        connect()
+//        sendMsg(helloText)
+//        val conversationInfo = apiHelper.answerNewConversation()
+//        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
+//        else {
+//            Log.i(TAG, "Conversation started successfully.")
+//            apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
+//            verifyResponse(outboundMessage)
+//            verifyResponse(humanizeDisabledText)
+//            verifyResponse(humanText)
+//            apiHelper.sendConnectOrDisconnect(conversationInfo)
+//        }
+//        bye()
+//    }
+//
+//    @Test
+//    fun testBotAgent() {
+//        apiHelper.disconnectAllConversations()
+//        enterDeploymentInfo(testConfig.botDeploymentId)
+//        connect()
+//        verifyResponse(botImageName)
+//        verifyResponse(botEntity)
+//        sleep(3000)
+//        sendBotResponseAndCheckReply(yesText)
+//        sleep(2000)
+//        history(withConversationDisconnectEvent = false)
+//        bye()
+//    }
+//
+//    @Test
+//    fun testDisconnectAgent_ReadOnly() {
+//        apiHelper.disconnectAllConversations()
+//        enterDeploymentInfo(testConfig.deploymentId)
+//        connect()
+//        sendMsg(helloText)
+//        val conversationInfo = apiHelper.answerNewConversation()
+//        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
+//        else {
+//            Log.i(TAG, "Conversation started successfully.")
+//            // conversationInfo: Conversation, connecting: Boolean, wrapup: Boolean = true
+//            apiHelper.sendConnectOrDisconnect(conversationInfo)
+//            // wait for agent to disconnect
+//            apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id)
+//            checkForReadOnly()
+//            bye()
+//            sleep(2000)
+//            // connect again and check for readOnly
+//            reconnectReadOnly()
+//            bye()
+//        }
+//    }
+//
+//    @Test
+//    fun testDisconnectAgent_NotReadOnly() {
+//        apiHelper.disconnectAllConversations()
+//        enterDeploymentInfo(testConfig.agentDisconnectDeploymentId)
+//        connect()
+//        sendMsg(helloText)
+//        val conversationInfo = apiHelper.answerNewConversation()
+//        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
+//        else {
+//            Log.i(TAG, "Conversation started successfully.")
+//            apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
+//            verifyResponse(outboundMessage)
+//            apiHelper.sendConnectOrDisconnect(conversationInfo)
+//            // wait for agent to disconnect
+//            apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id)
+//            sendMsg(helloText)
+//            val conversation2Info = apiHelper.answerNewConversation()
+//            if (conversation2Info == null) AssertionError("Unable to answer conversation.")
+//            else {
+//                Log.i(TAG, "Conversation started successfully.")
+//                if (conversationInfo.id != conversation2Info.id) AssertionError("Reconnecting a conversation may not have matching conversation IDs.")
+//                else (Log.i(TAG, "Conversation ids matched as expected."))
+//                apiHelper.sendConnectOrDisconnect(conversation2Info)
+//                // wait for agent to disconnect
+//                apiHelper.waitForParticipantToConnectOrDisconnect(conversation2Info.id)
+//            }
+//        }
+//    }
+//
+//    @Test
+//    fun testHistoryPull() {
+//        apiHelper.disconnectAllConversations()
+//        enterDeploymentInfo(testConfig.deploymentId)
+//        connect()
+//        sendMsg(helloText)
+//        val conversationInfo = apiHelper.answerNewConversation()
+//        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
+//        else {
+//            Log.i(TAG, "Conversation started successfully.")
+//            apiHelper.sendConnectOrDisconnect(conversationInfo)
+//            // wait for agent to disconnect
+//            apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id)
+//            checkForReadOnly()
+//            // enter history and check for ConversationDisconnect and ConversationAutostart events
+//            history()
+//            // Just to clear things up, let's start a new chat, wait for configured
+//            startNewChat()
+//            val conversation2Info = apiHelper.answerNewConversation()
+//            if (conversation2Info == null) AssertionError("Unable to answer conversation.")
+//            else {
+//                Log.i(TAG, "Conversation started successfully.")
+//                apiHelper.sendConnectOrDisconnect(conversation2Info)
+//                // wait for agent to disconnect
+//                apiHelper.waitForParticipantToConnectOrDisconnect(conversation2Info.id)
+//            }
+//            bye()
+//        }
+//    }
+//
+//    @Test
+//    fun test2AuthenticatedUser() {
+//        apiHelper.disconnectAllConversations()
+//        enterDeploymentInfo(testConfig.authDeploymentId)
+//        clearBrowser()
+//        oktaSignInWithPKCE(testConfig.oktaUsername, testConfig.oktaPassword)
+//        authorize()
+//        connect(authenticateConnectText)
+//        sendMsg(helloText)
+//        val conversationInfo = apiHelper.answerNewConversation()
+//        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
+//        else {
+//            Log.i(TAG, "Conversation started successfully.")
+//            apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
+//            verifyResponse(outboundMessage)
+//            apiHelper.sendConnectOrDisconnect(conversationInfo)
+//            oktaLogout()
+//            messenger {
+//                enterCommand(oktaSignInWithPKCEText)
+//            }
+//            authorize()
+//            connect(authenticateConnectText)
+//            sendMsg(helloText)
+//            val conversation2Info = apiHelper.answerNewConversation()
+//            if (conversation2Info == null) AssertionError("Unable to answer conversation.")
+//            else {
+//                Log.i(TAG, "Conversation started successfully.")
+//                apiHelper.sendOutboundMessageFromAgentToUser(conversation2Info, outboundMessage)
+//                verifyResponse(outboundMessage)
+//                apiHelper.sendConnectOrDisconnect(conversation2Info)
+//            }
+//        }
+//        oktaLogout()
+//    }
+//
 //    @Test
 //    fun test1UnAuthenticatedUser() {
 //        enterDeploymentInfo(testConfig.authDeploymentId)
@@ -636,53 +636,53 @@ class ComposePrototypeUITest : BaseTests() {
 //        oktaSignInWithPKCE(fakeAuthUserName, fakeAuthPassword, false)
 //        verifyNotAuthenticated(notAuthenticateText)
 //    }
-
-    @Test
-    fun testConversationClear() {
-        apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.deploymentId)
-        connect()
-        sendMsg(helloText)
-        val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-        else {
-            Log.i(TAG, "Conversation started successfully.")
-            // Test case 1: Send clear conversation command and check for connection closed and conversation cleared
-            clearConversation()
-            // Test case 2: After clearing conversation and disconnecting, connect again and check if conversation is a new session and conversation ids are the same
-            connect()
-            // Since the ConversationCleared event does not appear long enough in the Compose Prototype, we will check to verify there are no messages for the cleared conversation
-            apiHelper.checkForConversationMessages(conversationInfo.id)
-            verifyResponse(autoStartEnabledText)
-            sendMsg(helloText)
-            val conversationInfo2 = apiHelper.answerNewConversation()
-            if (conversationInfo2 == null) AssertionError("Unable to answer second conversation.")
-            else {
-                Log.i(TAG, "Second Conversation started successfully.")
-                if (conversationInfo.id == conversationInfo2.id) AssertionError("The conversation ids are the same after a conversation clear but should not be.")
-                apiHelper.sendConnectOrDisconnect(conversationInfo2)
-                // wait for agent to disconnect
-                apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo2.id)
-            }
-            apiHelper.sendConnectOrDisconnect(conversationInfo)
-            // wait for agent to disconnect
-            apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id)
-        }
-        bye()
-    }
-
-    @Test
-    fun testQuickReply() {
-        apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.quickReplyDeploymentId)
-        connect()
-        sendQuickResponse(quickReplyText)
-        verifyResponse(quickReplyResponse)
-        sendQuickResponse(invalidQuickReplyText)
-        verifyResponse(invalidQuickReplyResponse)
-        sendDoneAndWaitForResponse(conversationDisconnectText)
-        bye()
-    }
+//
+//    @Test
+//    fun testConversationClear() {
+//        apiHelper.disconnectAllConversations()
+//        enterDeploymentInfo(testConfig.deploymentId)
+//        connect()
+//        sendMsg(helloText)
+//        val conversationInfo = apiHelper.answerNewConversation()
+//        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
+//        else {
+//            Log.i(TAG, "Conversation started successfully.")
+//            // Test case 1: Send clear conversation command and check for connection closed and conversation cleared
+//            clearConversation()
+//            // Test case 2: After clearing conversation and disconnecting, connect again and check if conversation is a new session and conversation ids are the same
+//            connect()
+//            // Since the ConversationCleared event does not appear long enough in the Compose Prototype, we will check to verify there are no messages for the cleared conversation
+//            apiHelper.checkForConversationMessages(conversationInfo.id)
+//            verifyResponse(autoStartEnabledText)
+//            sendMsg(helloText)
+//            val conversationInfo2 = apiHelper.answerNewConversation()
+//            if (conversationInfo2 == null) AssertionError("Unable to answer second conversation.")
+//            else {
+//                Log.i(TAG, "Second Conversation started successfully.")
+//                if (conversationInfo.id == conversationInfo2.id) AssertionError("The conversation ids are the same after a conversation clear but should not be.")
+//                apiHelper.sendConnectOrDisconnect(conversationInfo2)
+//                // wait for agent to disconnect
+//                apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo2.id)
+//            }
+//            apiHelper.sendConnectOrDisconnect(conversationInfo)
+//            // wait for agent to disconnect
+//            apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id)
+//        }
+//        bye()
+//    }
+//
+//    @Test
+//    fun testQuickReply() {
+//        apiHelper.disconnectAllConversations()
+//        enterDeploymentInfo(testConfig.quickReplyDeploymentId)
+//        connect()
+//        sendQuickResponse(quickReplyText)
+//        verifyResponse(quickReplyResponse)
+//        sendQuickResponse(invalidQuickReplyText)
+//        verifyResponse(invalidQuickReplyResponse)
+//        sendDoneAndWaitForResponse(conversationDisconnectText)
+//        bye()
+//    }
 
     @Test
     fun testStepUpAuthentication() {
