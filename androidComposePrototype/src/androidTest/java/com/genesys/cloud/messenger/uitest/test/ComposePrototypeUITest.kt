@@ -671,30 +671,30 @@ class ComposePrototypeUITest : BaseTests() {
 //        bye()
 //    }
 //
-//    @Test
-//    fun testQuickReply() {
-//        apiHelper.disconnectAllConversations()
-//        enterDeploymentInfo(testConfig.quickReplyDeploymentId)
-//        connect()
-//        sendQuickResponse(quickReplyText)
-//        verifyResponse(quickReplyResponse)
-//        sendQuickResponse(invalidQuickReplyText)
-//        verifyResponse(invalidQuickReplyResponse)
-//        sendDoneAndWaitForResponse(conversationDisconnectText)
-//        bye()
-//    }
-
     @Test
-    fun testStepUpAuthentication() {
+    fun testQuickReply() {
         apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.authDeploymentId)
+        enterDeploymentInfo(testConfig.quickReplyDeploymentId)
         connect()
-        sendMsg("Unauthenticated message.")
-        clearBrowser()
-        oktaSignInWithPKCE(testConfig.oktaUsername, testConfig.oktaPassword)
-        authorize()
-        stepUp()
-        sendMsg("Authenticated session message after step-up.")
-        oktaLogout()
+        sendQuickResponse(quickReplyText)
+        verifyResponse(quickReplyResponse)
+        sendQuickResponse(invalidQuickReplyText)
+        verifyResponse(invalidQuickReplyResponse)
+        sendDoneAndWaitForResponse(conversationDisconnectText)
+        bye()
     }
+//
+//    @Test
+//    fun testStepUpAuthentication() {
+//        apiHelper.disconnectAllConversations()
+//        enterDeploymentInfo(testConfig.authDeploymentId)
+//        connect()
+//        sendMsg("Unauthenticated message.")
+//        clearBrowser()
+//        oktaSignInWithPKCE(testConfig.oktaUsername, testConfig.oktaPassword)
+//        authorize()
+//        stepUp()
+//        sendMsg("Authenticated session message after step-up.")
+//        oktaLogout()
+//    }
 }
