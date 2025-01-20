@@ -1,0 +1,69 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+!theme bluegray
+!pragma teoz true
+
+
+skinparam backgroundColor #whitesmoke
+title App register flow
+
+participant App
+box TransportSDK #lightcyan
+participant MessengerTransportSDK
+participant PushService
+participant Vault
+
+end box
+
+	App -> MessengerTransportSDK : createPushService()
+	MessengerTransportSDK --> App : PushService
+	App -> PushService : synchronize(deviceToken, notificationProvider)
+	PushService -> PushService : buildPushConfigFromUserData() : PushConfig
+		rnote over PushService
+    	(
+    		token: String, // get from vault
+    		deviceToken: String, // get from app
+    		currentTimestamp: Long, // get from OS
+    		preferredLanguage: String, // get from OS
+    		notificationProvider: Enum, // get from App
+    		deviceType: String, // get from OS
+    	)
+    	end rnote
+
+	PushService -> Vault : getPushConfig() : PushConfig
+	Vault --> PushService : PushConfig
+    PushService -> PushService : compare(storedPushConfig, userPushConfig): Diff
+	PushService -> PushService : determineAction(diff)
+
+    opt #aaff8833 pushDiff == Diff.NoDiff OR pushDiff == Diff.DeviceTokenUnset
+         rnote over PushService
+         Nothing to do. exit synchronize()
+         end rnote
+	else pushDiff == Diff.NoToken
+	    rnote over PushService
+        No session token associated with deviceToken was found
+        - register new deviceToken
+        end rnote
+        PushService -> Vault : setPushConfig(userPushConfig)
+    else pushDiff == Diff.Token
+        rnote over PushService
+        New session token is detected
+        - delete old deviceToken
+        - register new deviceToken
+        end rnote
+        PushService -> Vault : setPushConfig(userPushConfig)
+    else pushDiff == Diff.DeviceToken OR pushDiff == Diff.Language OR pushDiff == Diff.Expired
+        rnote over PushService
+        Some values associated with device token has changed
+        - update existing deviceToken with new values
+        end rnote
+        PushService -> Vault : setPushConfig(userPushConfig)
+    end
+    PushService --> App : Result.Success/Failure
+    rnote over PushService
+    Returns result of synchronize() function to the App
+    end rnote
+@enduml
+
+

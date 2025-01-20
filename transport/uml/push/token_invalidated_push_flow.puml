@@ -1,0 +1,36 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+!theme bluegray
+!pragma teoz true
+
+
+skinparam backgroundColor #whitesmoke
+title Invalidate session token
+
+box TransportSDK #lightcyan
+participant MessagingClient
+participant PushService
+participant Vault
+end box
+box Backend
+participant Shyrka
+end box
+
+		rnote left of MessagingClient
+		Since UI might have custom implementation of Vault and can remove
+		the session token at any time without Transport knowing about that.
+		This use-case is covered from within the session start flow.
+    	end rnote
+
+	Shyrka -> MessagingClient : onMessage(\n ConnectionClosedEvent.Reason.UserSignedIn  OR \n LogoutEvent OR \n ErrorEvent.ErrorCode.CannotDowngradeToUnauthenticated \n)
+    MessagingClient -> MessagingClient: invalidateSessionToken()
+    MessagingClient -> PushService : deleteDeviceToken(token))
+    MessagingClient -> Vault : remove(token)
+    MessagingClient -> Vault : getToken.
+    Vault --> Vault : TokenGenerator.generate() : token
+    Vault -> Vault : store(token)
+    Vault --> MessagingClient : token
+@enduml
+
+

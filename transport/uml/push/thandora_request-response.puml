@@ -1,0 +1,30 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+!theme bluegray
+!pragma teoz true
+
+skinparam backgroundColor #whitesmoke
+
+box UI
+participant App
+end box
+box TransportSDK #lightcyan
+participant PushService
+participant WebMessagingAPI
+end box
+box Backend
+participant Thandora
+end box
+	    opt #aaff8833 Result.Success
+	    Thandora --> WebMessagingAPI
+	    WebMessagingAPI --> PushService: Result.Success
+	    PushService --> App : Result.Success
+	    else #ffaaff33 Result.Failure
+	    Thandora --> WebMessagingAPI: Result.Failure(errorCode)
+	    WebMessagingAPI --> PushService: Result.Failure(errorCode)
+	    PushService --> App: Result.Failure(errorCode)
+	    end
+@enduml
+
+

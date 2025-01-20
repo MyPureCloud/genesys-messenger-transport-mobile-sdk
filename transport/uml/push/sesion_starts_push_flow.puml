@@ -1,0 +1,79 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+!theme bluegray
+!pragma teoz true
+
+
+skinparam backgroundColor #whitesmoke
+title Session Starts
+
+box UI
+participant App
+end box
+box TransportSDK #lightcyan
+participant MessagingClient
+participant PushService
+participant Vault
+end box
+box Backend
+participant Shyrka
+end box
+
+	App -> MessagingClient : connect()
+    MessagingClient -> Shyrka: configureSession
+    Shyrka --> MessagingClient: SessionConfigured
+    MessagingClient -> MessagingClient : synchronizePushNotifications()
+    MessagingClient -> Vault : getPushConfig
+    Vault --> MessagingClient : PushConfig
+        	rnote over MessagingClient
+            Use deviceToken and notificationProvider from Vault.
+            end rnote
+    MessagingClient -> PushService : synchronize(pushConfig.deviceToken, pushConfig.notificationProvider)
+	PushService -> PushService : buildPushConfigFromUserData() : PushConfig
+		rnote over PushService
+    	(
+    		token: String,
+    		deviceToken: String,
+    		currentTimestamp: Long,
+    		preferredLanguage: String,
+    		notificationProvider: Enum,
+    		deviceType: String,
+    	)
+    	end rnote
+	PushService -> Vault : getPushConfig() : PushConfig
+	Vault --> PushService : PushConfig
+    PushService -> PushService : compare(storedPushConfig, userPushConfig): Diff
+	PushService -> PushService : determineAction(diff)
+
+    opt #aaff8833 pushDiff == Diff.NoDiff OR pushDiff == Diff.DeviceTokenUnset
+         rnote over PushService
+         Nothing to do. exit synchronize()
+         end rnote
+	else pushDiff == Diff.NoToken
+	    rnote over PushService
+        No session token associated with deviceToken was found
+        - register new deviceToken
+        end rnote
+        PushService -> Vault : setPushConfig(userPushConfig)
+    else pushDiff == Diff.Token
+        rnote over PushService
+        New session token is detected
+        - delete old deviceToken
+        - register new deviceToken
+        end rnote
+        PushService -> Vault : setPushConfig(userPushConfig)
+    else pushDiff == Diff.DeviceToken OR pushDiff == Diff.Language OR pushDiff == Diff.Expired
+        rnote over PushService
+        Some values associated with device token has changed
+        - update existing deviceToken with new values
+        end rnote
+        PushService -> Vault : setPushConfig(userPushConfig)
+    end
+    PushService --> MessagingClient : Result.Success/Failure
+    rnote over App
+    Should we send an event here? Does MM really needs to know about failure/success?
+    end rnote
+@enduml
+
+
