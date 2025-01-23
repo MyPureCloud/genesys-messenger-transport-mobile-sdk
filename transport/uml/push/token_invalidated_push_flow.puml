@@ -23,7 +23,7 @@ end box
 		This use-case is covered from within the session start flow.
     	end rnote
 
-	Shyrka -> MessagingClient : onMessage(\n ConnectionClosedEvent.Reason.UserSignedIn  OR \n LogoutEvent OR \n ErrorEvent.ErrorCode.CannotDowngradeToUnauthenticated \n)
+	Shyrka -> MessagingClient : onMessage(\n ConnectionClosedEvent.Reason.UserSignedIn  OR \n LogoutEvent OR \n ErrorEvent.ErrorCode.CannotDowngradeToUnauthenticated \n client.authorize \n)
     MessagingClient -> MessagingClient: invalidateSessionToken()
     MessagingClient -> PushService : deleteDeviceToken(token))
     MessagingClient -> Vault : remove(token)
