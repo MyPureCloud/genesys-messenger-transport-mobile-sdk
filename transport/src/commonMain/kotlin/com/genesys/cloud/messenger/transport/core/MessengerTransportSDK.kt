@@ -7,6 +7,8 @@ import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.network.defaultHttpClient
+import com.genesys.cloud.messenger.transport.push.PushService
+import com.genesys.cloud.messenger.transport.push.PushServiceImpl
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.TokenStore
@@ -117,5 +119,14 @@ class MessengerTransportSDK(
         ).fetch().also {
             deploymentConfig = it
         }
+    }
+
+    /**
+     *  Creates and returns an instance of [PushService].
+     *
+     * @return A new [PushService] implementation.
+     */
+    fun createPushService(): PushService {
+        return PushServiceImpl()
     }
 }
