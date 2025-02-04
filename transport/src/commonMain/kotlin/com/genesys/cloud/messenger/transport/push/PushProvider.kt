@@ -6,7 +6,7 @@ package com.genesys.cloud.messenger.transport.push
  * @property APNS Apple Push Notification Service.
  * @property FCM Firebase Cloud Messaging.
  */
-enum class NotificationProvider {
+enum class PushProvider {
     APNS,
     FCM,
 }
