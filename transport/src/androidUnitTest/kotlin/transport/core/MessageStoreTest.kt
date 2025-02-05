@@ -214,6 +214,12 @@ internal class MessageStoreTest {
     }
 
     @Test
+    fun `when update() with Sent attachment state`() {
+        val givenAttachment = attachment().copy(state = Attachment.State.Sent("http://someurl.com"))
+        assertThat(subject.pendingMessage.attachments.containsValue(givenAttachment)).isFalse()
+    }
+
+    @Test
     fun `when update() existing attachment`() {
         val initialAttachment = attachment(state = Attachment.State.Presigning)
         val updatedAttachment = attachment(state = Attachment.State.Uploading)
