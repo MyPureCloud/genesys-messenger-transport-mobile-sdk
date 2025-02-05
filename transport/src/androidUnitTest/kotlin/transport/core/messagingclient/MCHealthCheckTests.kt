@@ -1,21 +1,22 @@
-package com.genesys.cloud.messenger.transport.core.messagingclient
+package transport.core.messagingclient
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.HEALTH_CHECK_COOL_DOWN_MILLISECONDS
+import com.genesys.cloud.messenger.transport.core.messagingclient.BaseMessagingClientTest
 import com.genesys.cloud.messenger.transport.util.Platform
-import com.genesys.cloud.messenger.transport.util.Request
-import com.genesys.cloud.messenger.transport.util.Response
-import com.genesys.cloud.messenger.transport.util.fromClosedToConnecting
-import com.genesys.cloud.messenger.transport.util.fromConnectedToConfigured
-import com.genesys.cloud.messenger.transport.util.fromConnectingToConnected
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
+import transport.util.Request
+import transport.util.Response
+import transport.util.fromClosedToConnecting
+import transport.util.fromConnectedToConfigured
+import transport.util.fromConnectingToConnected
 import kotlin.test.assertFailsWith
 
 class MCHealthCheckTests : BaseMessagingClientTest() {

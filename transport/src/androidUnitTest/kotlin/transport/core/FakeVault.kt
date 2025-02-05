@@ -1,4 +1,4 @@
-package com.genesys.cloud.messenger.transport.core
+package transport.core
 
 import com.genesys.cloud.messenger.transport.util.Vault
 import java.lang.IllegalArgumentException
