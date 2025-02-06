@@ -27,6 +27,7 @@ class VaultTest {
     @Test
     fun `when token is removed and then getToken`() {
         subject.remove(TOKEN_KEY)
+
         val result = subject.token
 
         assertThat(result).isNotEmpty()
@@ -42,6 +43,7 @@ class VaultTest {
     @Test
     fun `when getAuthToken after it was set`() {
         subject.authRefreshToken = AuthTest.JwtToken
+
         val result = subject.authRefreshToken
 
         assertThat(result).isEqualTo(AuthTest.JwtToken)
@@ -50,6 +52,7 @@ class VaultTest {
     @Test
     fun `when authToken is removed and then getAuthToken`() {
         subject.remove(AUTH_REFRESH_TOKEN_KEY)
+
         val result = subject.authRefreshToken
 
         assertThat(result).isEqualTo(NO_REFRESH_TOKEN)
@@ -65,6 +68,7 @@ class VaultTest {
     @Test
     fun `when getWasAuthenticated after it was set`() {
         subject.wasAuthenticated = true
+
         val result = subject.wasAuthenticated
 
         assertThat(result).isTrue()
@@ -73,6 +77,7 @@ class VaultTest {
     @Test
     fun `when wasAuthenticated is removed and then getWasAuthenticated`() {
         subject.remove(WAS_AUTHENTICATED)
+
         val result = subject.wasAuthenticated
 
         assertThat(result).isFalse()
@@ -95,8 +100,8 @@ class VaultTest {
             deviceType = TestValues.DEVICE_TYPE,
             pushProvider = PushProvider.APNS,
         )
-
         subject.pushConfig = givenPushConfig
+
         val result = subject.pushConfig
 
         assertThat(result).isEqualTo(givenPushConfig)
@@ -105,6 +110,7 @@ class VaultTest {
     @Test
     fun `when pushConfig is removed and then getPushConfig`() {
         subject.remove(PUSH_CONFIG_KEY)
+
         val result = subject.pushConfig
 
         assertThat(result).isEqualTo(DEFAULT_PUSH_CONFIG)
