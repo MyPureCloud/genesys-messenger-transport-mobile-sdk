@@ -1,4 +1,4 @@
-package transport.core.messagingclient
+package com.genesys.cloud.messenger.transport.core.messagingclient
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -13,15 +13,14 @@ import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.isClosed
-import com.genesys.cloud.messenger.transport.core.messagingclient.BaseMessagingClientTest
+import com.genesys.cloud.messenger.transport.util.Request
+import com.genesys.cloud.messenger.transport.util.Response
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
-import transport.util.Request
-import transport.util.Response
 import kotlin.test.assertFailsWith
 
 class MCMessageTests : BaseMessagingClientTest() {

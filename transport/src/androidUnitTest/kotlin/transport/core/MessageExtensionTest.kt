@@ -1,4 +1,4 @@
-package transport.core
+package com.genesys.cloud.messenger.transport.core
 
 import assertk.assertThat
 import assertk.assertions.containsExactly
@@ -7,10 +7,6 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
-import com.genesys.cloud.messenger.transport.core.Attachment
-import com.genesys.cloud.messenger.transport.core.ButtonResponse
-import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
-import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.core.Message.Participant
 import com.genesys.cloud.messenger.transport.core.Message.State
@@ -407,8 +403,8 @@ internal class MessageExtensionTest {
         val expectedMessage = Message(
             id = MessageValues.Id,
             state = State.Sent,
-            type = Type.QuickReply.name,
-            messageType = Type.QuickReply,
+            type = Message.Type.QuickReply.name,
+            messageType = Message.Type.QuickReply,
             quickReplies = listOf(expectedButtonResponse)
         )
 
@@ -431,8 +427,8 @@ internal class MessageExtensionTest {
         val expectedMessage = Message(
             id = MessageValues.Id,
             state = State.Sent,
-            type = Type.QuickReply.name,
-            messageType = Type.QuickReply,
+            type = Message.Type.QuickReply.name,
+            messageType = Message.Type.QuickReply,
             quickReplies = listOf(expectedButtonResponse)
         )
 
@@ -458,8 +454,8 @@ internal class MessageExtensionTest {
         val expectedMessage = Message(
             id = MessageValues.Id,
             state = State.Sent,
-            type = Type.QuickReply.name,
-            messageType = Type.QuickReply,
+            type = Message.Type.QuickReply.name,
+            messageType = Message.Type.QuickReply,
             quickReplies = listOf(expectedButtonResponse)
         )
 
@@ -477,8 +473,8 @@ internal class MessageExtensionTest {
         val expectedMessage = Message(
             id = MessageValues.Id,
             state = State.Sent,
-            type = Type.Unknown.name,
-            messageType = Type.Unknown,
+            type = Message.Type.Unknown.name,
+            messageType = Message.Type.Unknown,
         )
 
         val result = givenStructuredMessage.toMessage()

@@ -1,4 +1,4 @@
-package transport.core.messagingclient
+package com.genesys.cloud.messenger.transport.core.messagingclient
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -7,13 +7,12 @@ import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.events.Event
-import com.genesys.cloud.messenger.transport.core.messagingclient.BaseMessagingClientTest
+import com.genesys.cloud.messenger.transport.util.Response
+import com.genesys.cloud.messenger.transport.util.fromConfiguredToError
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
-import transport.util.Response
-import transport.util.fromConfiguredToError
 
 class MCEventHandlingTests : BaseMessagingClientTest() {
 

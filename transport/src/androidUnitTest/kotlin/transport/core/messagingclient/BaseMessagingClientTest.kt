@@ -28,7 +28,13 @@ import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.Request
+import com.genesys.cloud.messenger.transport.util.Response
 import com.genesys.cloud.messenger.transport.util.TOKEN_KEY
+import com.genesys.cloud.messenger.transport.util.fromConnectedToConfigured
+import com.genesys.cloud.messenger.transport.util.fromConnectedToReadOnly
+import com.genesys.cloud.messenger.transport.util.fromConnectingToConnected
+import com.genesys.cloud.messenger.transport.util.fromIdleToConnecting
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import com.genesys.cloud.messenger.transport.utility.AuthTest
@@ -43,12 +49,6 @@ import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.spyk
-import transport.util.Request
-import transport.util.Response
-import transport.util.fromConnectedToConfigured
-import transport.util.fromConnectedToReadOnly
-import transport.util.fromConnectingToConnected
-import transport.util.fromIdleToConnecting
 import kotlin.reflect.KProperty0
 import kotlin.test.AfterTest
 
@@ -268,6 +268,7 @@ open class BaseMessagingClientTest {
 
     protected fun MockKVerificationScope.errorSequence(stateChange: StateChange) {
         mockStateChangedListener(stateChange)
+        mockAttachmentHandler.clearAll()
         mockReconnectionHandler.clear()
         mockJwtHandler.clear()
     }

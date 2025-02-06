@@ -1,11 +1,11 @@
-package transport.core
+package com.genesys.cloud.messenger.transport.core
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import com.genesys.cloud.messenger.transport.core.JwtHandler
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
 import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -20,7 +20,6 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import transport.util.Request
 
 class JwtHandlerTest {
     private val mockWebSocket: PlatformSocket = mockk(relaxed = true)

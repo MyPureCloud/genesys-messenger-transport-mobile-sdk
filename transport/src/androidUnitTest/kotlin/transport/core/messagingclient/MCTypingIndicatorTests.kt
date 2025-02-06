@@ -1,20 +1,19 @@
-package transport.core.messagingclient
+package com.genesys.cloud.messenger.transport.core.messagingclient
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.TYPING_INDICATOR_COOL_DOWN_MILLISECONDS
-import com.genesys.cloud.messenger.transport.core.messagingclient.BaseMessagingClientTest
 import com.genesys.cloud.messenger.transport.core.toCorrectiveAction
 import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.Request
+import com.genesys.cloud.messenger.transport.util.Response
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
-import transport.util.Request
-import transport.util.Response
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 

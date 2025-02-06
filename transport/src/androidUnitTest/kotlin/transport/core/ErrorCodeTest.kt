@@ -1,10 +1,7 @@
-package transport.core
+package com.genesys.cloud.messenger.transport.core
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import com.genesys.cloud.messenger.transport.core.CorrectiveAction
-import com.genesys.cloud.messenger.transport.core.ErrorCode
-import com.genesys.cloud.messenger.transport.core.toCorrectiveAction
 import org.junit.Test
 import kotlin.random.Random
 

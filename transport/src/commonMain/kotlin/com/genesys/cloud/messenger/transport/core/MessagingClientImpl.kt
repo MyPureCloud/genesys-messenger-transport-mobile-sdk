@@ -583,6 +583,7 @@ internal class MessagingClientImpl(
 
     private fun transitionToStateError(errorCode: ErrorCode, errorMessage: String?) {
         stateMachine.onError(errorCode, errorMessage)
+        attachmentHandler.clearAll()
         reconnectionHandler.clear()
         jwtHandler.clear()
         reconfigureAttempts = 0

@@ -1,21 +1,8 @@
-package transport.core
+package com.genesys.cloud.messenger.transport.core
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
-import com.genesys.cloud.messenger.transport.core.StateChange
-import com.genesys.cloud.messenger.transport.core.StateMachineImpl
-import com.genesys.cloud.messenger.transport.core.isClosed
-import com.genesys.cloud.messenger.transport.core.isClosing
-import com.genesys.cloud.messenger.transport.core.isConfigured
-import com.genesys.cloud.messenger.transport.core.isConnected
-import com.genesys.cloud.messenger.transport.core.isConnecting
-import com.genesys.cloud.messenger.transport.core.isError
-import com.genesys.cloud.messenger.transport.core.isIdle
-import com.genesys.cloud.messenger.transport.core.isInactive
-import com.genesys.cloud.messenger.transport.core.isReadOnly
-import com.genesys.cloud.messenger.transport.core.isReconnecting
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag

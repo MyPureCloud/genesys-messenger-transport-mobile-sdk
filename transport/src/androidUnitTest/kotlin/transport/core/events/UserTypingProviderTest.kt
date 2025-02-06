@@ -1,11 +1,10 @@
-package transport.core.events
+package com.genesys.cloud.messenger.transport.core.events
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
-import com.genesys.cloud.messenger.transport.core.events.TYPING_INDICATOR_COOL_DOWN_MILLISECONDS
-import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
 import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.mockk.every
@@ -13,7 +12,6 @@ import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
 import org.junit.Test
-import transport.util.Request
 
 class UserTypingProviderTest {
     private val mockLogger: Log = mockk(relaxed = true)
@@ -69,11 +67,7 @@ class UserTypingProviderTest {
 
         assertThat(firstResult).isEqualTo(expected)
         assertThat(secondResult).isNull()
-        assertThat(logSlot[0].invoke()).isEqualTo(
-            LogMessages.typingIndicatorCoolDown(
-                TYPING_INDICATOR_COOL_DOWN_MILLISECONDS
-            )
-        )
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.typingIndicatorCoolDown(TYPING_INDICATOR_COOL_DOWN_MILLISECONDS))
     }
 
     @Test

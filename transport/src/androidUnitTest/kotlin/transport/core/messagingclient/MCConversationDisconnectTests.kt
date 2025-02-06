@@ -1,4 +1,4 @@
-package transport.core.messagingclient
+package com.genesys.cloud.messenger.transport.core.messagingclient
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -12,23 +12,22 @@ import com.genesys.cloud.messenger.transport.core.isError
 import com.genesys.cloud.messenger.transport.core.isIdle
 import com.genesys.cloud.messenger.transport.core.isReadOnly
 import com.genesys.cloud.messenger.transport.core.isReconnecting
-import com.genesys.cloud.messenger.transport.core.messagingclient.BaseMessagingClientTest
 import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
 import com.genesys.cloud.messenger.transport.shyrka.receive.createConversationsVOForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createMessengerVOForTesting
+import com.genesys.cloud.messenger.transport.util.Request
+import com.genesys.cloud.messenger.transport.util.Response
+import com.genesys.cloud.messenger.transport.util.fromConfiguredToReadOnly
+import com.genesys.cloud.messenger.transport.util.fromConnectedToReadOnly
+import com.genesys.cloud.messenger.transport.util.fromReadOnlyToError
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
-import transport.util.Request
-import transport.util.Response
-import transport.util.fromConfiguredToReadOnly
-import transport.util.fromConnectedToReadOnly
-import transport.util.fromReadOnlyToError
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
@@ -219,11 +218,10 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
             connectToReadOnlySequence()
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
-            errorSequence(fromReadOnlyToError(errorState = expectedErrorState))
-            // mockStateChangedListener(fromReadOnlyToError(errorState = expectedErrorState))
-            // mockAttachmentHandler.clearAll()
-            // mockReconnectionHandler.clear()
-            // mockJwtHandler.clear()
+            mockStateChangedListener(fromReadOnlyToError(errorState = expectedErrorState))
+            mockAttachmentHandler.clearAll()
+            mockReconnectionHandler.clear()
+            mockJwtHandler.clear()
         }
     }
 

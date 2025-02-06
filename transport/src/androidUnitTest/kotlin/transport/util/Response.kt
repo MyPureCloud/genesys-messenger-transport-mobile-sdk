@@ -1,7 +1,6 @@
-package transport.util
+package com.genesys.cloud.messenger.transport.util
 
 import com.genesys.cloud.messenger.transport.core.Message
-import com.genesys.cloud.messenger.transport.util.SIGNED_IN
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import com.genesys.cloud.messenger.transport.utility.TestValues

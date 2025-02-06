@@ -1,11 +1,8 @@
-package transport.util
+package com.genesys.cloud.messenger.transport.util
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEmpty
-import com.genesys.cloud.messenger.transport.util.Platform
-import com.genesys.cloud.messenger.transport.util.TokenGenerator
-import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import org.junit.Test
 import kotlin.test.assertTrue

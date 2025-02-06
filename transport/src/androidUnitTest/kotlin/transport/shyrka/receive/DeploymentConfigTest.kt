@@ -1,4 +1,4 @@
-package transport.shyrka.receive
+package com.genesys.cloud.messenger.transport.shyrka.receive
 
 import assertk.assertThat
 import assertk.assertions.containsExactly
@@ -6,18 +6,8 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
-import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
-import com.genesys.cloud.messenger.transport.shyrka.receive.Auth
-import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
-import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
-import com.genesys.cloud.messenger.transport.shyrka.receive.FileUpload
-import com.genesys.cloud.messenger.transport.shyrka.receive.JourneyEvents
-import com.genesys.cloud.messenger.transport.shyrka.receive.LauncherButton
-import com.genesys.cloud.messenger.transport.shyrka.receive.Messenger
-import com.genesys.cloud.messenger.transport.shyrka.receive.Mode
-import com.genesys.cloud.messenger.transport.shyrka.receive.Styles
-import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
 import com.genesys.cloud.messenger.transport.utility.DeploymentConfigValues
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import org.junit.Test
 

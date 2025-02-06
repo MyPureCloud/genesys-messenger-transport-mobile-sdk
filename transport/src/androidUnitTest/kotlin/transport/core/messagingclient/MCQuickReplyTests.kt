@@ -1,14 +1,13 @@
-package transport.core.messagingclient
+package com.genesys.cloud.messenger.transport.core.messagingclient
 
 import com.genesys.cloud.messenger.transport.core.Message
-import com.genesys.cloud.messenger.transport.core.messagingclient.BaseMessagingClientTest
+import com.genesys.cloud.messenger.transport.util.Request
+import com.genesys.cloud.messenger.transport.util.Response
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
-import transport.util.Request
-import transport.util.Response
 import kotlin.test.assertFailsWith
 
 class MCQuickReplyTests : BaseMessagingClientTest() {

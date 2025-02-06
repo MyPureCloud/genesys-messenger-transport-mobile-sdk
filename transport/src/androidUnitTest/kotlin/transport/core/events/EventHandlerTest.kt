@@ -1,10 +1,9 @@
-package transport.core.events
+package com.genesys.cloud.messenger.transport.core.events
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
-import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.Event.AgentTyping
 import com.genesys.cloud.messenger.transport.core.events.Event.Authorized
 import com.genesys.cloud.messenger.transport.core.events.Event.ConnectionClosed
@@ -16,8 +15,6 @@ import com.genesys.cloud.messenger.transport.core.events.Event.ExistingAuthSessi
 import com.genesys.cloud.messenger.transport.core.events.Event.HealthChecked
 import com.genesys.cloud.messenger.transport.core.events.Event.Logout
 import com.genesys.cloud.messenger.transport.core.events.Event.SignedIn
-import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
-import com.genesys.cloud.messenger.transport.core.events.toTransportEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
