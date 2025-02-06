@@ -207,7 +207,6 @@ internal class MessageStoreTest {
             mockMessageListener.invoke(capture(messageSlot))
         }
 
-        // attachment is not sent yet, so it is part of the pending message
         assertThat(subject.pendingMessage.attachments["given id"]).isEqualTo(givenAttachment)
         assertThat((messageSlot.captured as MessageEvent.AttachmentUpdated).attachment).isEqualTo(
             givenAttachment
@@ -226,7 +225,6 @@ internal class MessageStoreTest {
             mockMessageListener.invoke(capture(messageSlot))
         }
 
-        // sent attachment with "Sent" state should not be part of the pending message
         assertThat(subject.pendingMessage.attachments.containsValue(givenAttachment)).isFalse()
 
         assertThat((messageSlot.captured as MessageEvent.AttachmentUpdated).attachment).isEqualTo(
