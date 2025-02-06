@@ -268,7 +268,6 @@ open class BaseMessagingClientTest {
 
     protected fun MockKVerificationScope.errorSequence(stateChange: StateChange) {
         mockStateChangedListener(stateChange)
-        mockAttachmentHandler.clearAll()
         mockReconnectionHandler.clear()
         mockJwtHandler.clear()
     }

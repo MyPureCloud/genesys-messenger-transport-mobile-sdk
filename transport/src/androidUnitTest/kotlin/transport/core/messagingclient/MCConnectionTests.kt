@@ -126,14 +126,12 @@ class MCConnectionTests : BaseMessagingClientTest() {
             mockStateChangedListener(fromIdleToConnecting)
             mockPlatformSocket.openSocket(any())
             mockMessageStore.invalidateConversationCache()
-            mockStateChangedListener(
+            errorSequence(
                 StateChange(
                     oldState = MessagingClient.State.Connecting,
                     newState = expectedErrorState
                 )
             )
-            mockAttachmentHandler.clearAll()
-            mockReconnectionHandler.clear()
         }
     }
 
