@@ -1,6 +1,10 @@
 package com.genesys.cloud.messenger.transport.util
 
 import com.genesys.cloud.messenger.transport.auth.NO_REFRESH_TOKEN
+import com.genesys.cloud.messenger.transport.push.DEFAULT_PUSH_CONFIG
+import com.genesys.cloud.messenger.transport.push.PushConfig
+import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
+import kotlinx.serialization.encodeToString
 
 /**
  * Abstract class representing a vault that stores and retrieves sensitive data using a provided set of keys.
@@ -41,6 +45,18 @@ abstract class Vault(val keys: Keys) {
         }
 
     /**
+     * Retrieves the PushConfig from the vault or returns [DEFAULT_PUSH_CONFIG] if it doesn't exist.
+     * The PushConfig can also be set to a new value, which will then be stored in the vault.
+     */
+    internal var pushConfig: PushConfig
+        get() = fetch(keys.pushConfigKey)?.let {
+            WebMessagingJson.json.decodeFromString<PushConfig>(it)
+        } ?: DEFAULT_PUSH_CONFIG
+        set(value) {
+            store(keys.pushConfigKey, WebMessagingJson.json.encodeToString(value))
+        }
+
+    /**
      * Stores the value with given key into the storage for later fetching.
      *
      * @param key the key to use for storage.
@@ -67,11 +83,13 @@ abstract class Vault(val keys: Keys) {
      * @param tokenKey the key used to fetch the token value from the Vault.
      * @param authRefreshTokenKey the key used to fetch the auth refresh token value from the Vault.
      * @param wasAuthenticated the key used to fetch the wasAuthenticated boolean value from the Vault.
+     * @param pushConfigKey the key used to fetch the [PushConfig] object from the Vault.
      */
     data class Keys(
         val vaultKey: String,
         val tokenKey: String,
         val authRefreshTokenKey: String,
         val wasAuthenticated: String,
+        val pushConfigKey: String,
     )
 }
