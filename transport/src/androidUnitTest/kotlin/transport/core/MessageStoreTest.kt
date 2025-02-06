@@ -206,7 +206,27 @@ internal class MessageStoreTest {
             mockLogger.i(capture(logSlot))
             mockMessageListener.invoke(capture(messageSlot))
         }
+
         assertThat(subject.pendingMessage.attachments["given id"]).isEqualTo(givenAttachment)
+        assertThat((messageSlot.captured as MessageEvent.AttachmentUpdated).attachment).isEqualTo(
+            givenAttachment
+        )
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.attachmentStateUpdated(givenAttachment))
+    }
+
+    @Test
+    fun `when update() with Sent attachment state`() {
+        val givenAttachment = attachment().copy(state = Attachment.State.Sent("http://someurl.com"))
+
+        subject.updateAttachmentStateWith(givenAttachment)
+
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockMessageListener.invoke(capture(messageSlot))
+        }
+
+        assertThat(subject.pendingMessage.attachments.containsValue(givenAttachment)).isFalse()
+
         assertThat((messageSlot.captured as MessageEvent.AttachmentUpdated).attachment).isEqualTo(
             givenAttachment
         )
