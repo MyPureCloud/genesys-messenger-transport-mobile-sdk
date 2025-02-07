@@ -31,7 +31,8 @@ object TestValues {
     internal val defaultMap = mapOf("A" to "B")
     internal const val DEFAULT_STRING = "any string"
     internal const val DEVICE_TOKEN = "<device_token>"
-    internal const val PUSH_SYNC_TIMESTAMP = 1L
+    internal const val PUSH_SYNC_TIMESTAMP = 10000000L
+    internal val PUSH_PROVIDER = PushProvider.APNS
     internal const val DEVICE_TYPE = "Android"
     internal const val PREFERRED_LANGUAGE = "Eng"
     internal val vaultKeys = Vault.Keys(
@@ -190,6 +191,6 @@ object PushTestValues {
         preferredLanguage = TestValues.PREFERRED_LANGUAGE,
         lastSyncTimestamp = TestValues.PUSH_SYNC_TIMESTAMP,
         deviceType = TestValues.DEVICE_TYPE,
-        pushProvider = PushProvider.APNS,
+        pushProvider = TestValues.PUSH_PROVIDER,
     )
 }

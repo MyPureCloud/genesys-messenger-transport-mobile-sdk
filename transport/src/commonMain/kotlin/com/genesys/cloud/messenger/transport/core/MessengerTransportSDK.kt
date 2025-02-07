@@ -127,6 +127,9 @@ class MessengerTransportSDK(
      * @return A new [PushService] implementation.
      */
     fun createPushService(): PushService {
-        return PushServiceImpl()
+        return PushServiceImpl(
+            vault = vault,
+            log = Log(configuration.logging, LogTag.PUSH_SERVICE)
+        )
     }
 }
