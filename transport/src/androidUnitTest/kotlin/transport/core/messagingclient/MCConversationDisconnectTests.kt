@@ -218,10 +218,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
             connectToReadOnlySequence()
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
-            mockStateChangedListener(fromReadOnlyToError(errorState = expectedErrorState))
-            mockAttachmentHandler.clearAll()
-            mockReconnectionHandler.clear()
-            mockJwtHandler.clear()
+            errorSequence(fromReadOnlyToError(errorState = expectedErrorState))
         }
     }
 
