@@ -1,4 +1,4 @@
-package com.genesys.cloud.messenger.transport.util
+package transport.util
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo

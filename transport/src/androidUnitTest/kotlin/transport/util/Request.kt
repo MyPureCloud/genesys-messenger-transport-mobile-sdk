@@ -1,4 +1,4 @@
-package com.genesys.cloud.messenger.transport.util
+package transport.util
 
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.utility.AuthTest

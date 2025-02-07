@@ -1,4 +1,4 @@
-package com.genesys.cloud.messenger.transport.core.messagingclient
+package transport.core.messagingclient
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -15,17 +15,6 @@ import com.genesys.cloud.messenger.transport.core.isError
 import com.genesys.cloud.messenger.transport.core.isIdle
 import com.genesys.cloud.messenger.transport.core.isReadOnly
 import com.genesys.cloud.messenger.transport.core.isReconnecting
-import com.genesys.cloud.messenger.transport.util.Request
-import com.genesys.cloud.messenger.transport.util.Response
-import com.genesys.cloud.messenger.transport.util.fromConfiguredToError
-import com.genesys.cloud.messenger.transport.util.fromConfiguredToReadOnly
-import com.genesys.cloud.messenger.transport.util.fromConfiguredToReconnecting
-import com.genesys.cloud.messenger.transport.util.fromConnectedToConfigured
-import com.genesys.cloud.messenger.transport.util.fromConnectedToError
-import com.genesys.cloud.messenger.transport.util.fromConnectingToConnected
-import com.genesys.cloud.messenger.transport.util.fromIdleToConnecting
-import com.genesys.cloud.messenger.transport.util.fromReadOnlyToConfigured
-import com.genesys.cloud.messenger.transport.util.fromReconnectingToError
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
@@ -34,6 +23,17 @@ import io.mockk.invoke
 import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
+import transport.util.Request
+import transport.util.Response
+import transport.util.fromConfiguredToError
+import transport.util.fromConfiguredToReadOnly
+import transport.util.fromConfiguredToReconnecting
+import transport.util.fromConnectedToConfigured
+import transport.util.fromConnectedToError
+import transport.util.fromConnectingToConnected
+import transport.util.fromIdleToConnecting
+import transport.util.fromReadOnlyToConfigured
+import transport.util.fromReconnectingToError
 import kotlin.test.assertFailsWith
 
 class MCAuthTests : BaseMessagingClientTest() {
