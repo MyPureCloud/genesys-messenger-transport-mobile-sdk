@@ -2,11 +2,14 @@ package com.genesys.cloud.messenger.transport.utility
 
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.Message
+import com.genesys.cloud.messenger.transport.push.PushConfig
+import com.genesys.cloud.messenger.transport.push.PushProvider
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ButtonResponseContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.QuickReplyContent
 import com.genesys.cloud.messenger.transport.util.AUTH_REFRESH_TOKEN_KEY
+import com.genesys.cloud.messenger.transport.util.PUSH_CONFIG_KEY
 import com.genesys.cloud.messenger.transport.util.TOKEN_KEY
 import com.genesys.cloud.messenger.transport.util.VAULT_KEY
 import com.genesys.cloud.messenger.transport.util.Vault
@@ -24,18 +27,19 @@ object TestValues {
     internal const val SecondaryToken = "<secondary_token>"
     internal const val ReconnectionTimeout = 5000L
     internal const val NoReconnectionAttempts = 0L
-    internal const val VaultKey = "vault_key"
-    internal const val TokenKey = "token_key"
-    internal const val AuthRefreshTokenKey = "auth_refresh_token_key"
-    internal const val WasAuthenticated = "was_authenticated"
     internal const val LogTag = "TestLogTag"
     internal val defaultMap = mapOf("A" to "B")
     internal const val DEFAULT_STRING = "any string"
+    internal const val DEVICE_TOKEN = "<device_token>"
+    internal const val PUSH_SYNC_TIMESTAMP = 1L
+    internal const val DEVICE_TYPE = "Android"
+    internal const val PREFERRED_LANGUAGE = "Eng"
     internal val vaultKeys = Vault.Keys(
         vaultKey = VAULT_KEY,
         tokenKey = TOKEN_KEY,
         authRefreshTokenKey = AUTH_REFRESH_TOKEN_KEY,
         wasAuthenticated = WAS_AUTHENTICATED,
+        pushConfigKey = PUSH_CONFIG_KEY,
     )
 }
 
@@ -176,5 +180,16 @@ object StructuredMessageValues {
         type = type,
         direction = direction,
         content = content,
+    )
+}
+
+object PushTestValues {
+    internal val CONFIG = PushConfig(
+        token = TestValues.Token,
+        deviceToken = TestValues.DEVICE_TOKEN,
+        preferredLanguage = TestValues.PREFERRED_LANGUAGE,
+        lastSyncTimestamp = TestValues.PUSH_SYNC_TIMESTAMP,
+        deviceType = TestValues.DEVICE_TYPE,
+        pushProvider = PushProvider.APNS,
     )
 }
