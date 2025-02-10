@@ -6,10 +6,16 @@ import java.util.UUID
  * Android platform-specific implementations of common utility functions.
  */
 internal actual class Platform {
+
+    /**
+     * The name of the OS currently running on this device.
+     */
+    actual val os: String = "Android"
+
     /**
      * The name of the Android SDK version currently running on this device.
      */
-    actual val platform: String = "Android ${android.os.Build.VERSION.SDK_INT}"
+    actual val platform: String = "$os ${android.os.Build.VERSION.SDK_INT}"
 
     /**
      * Generate a random UUID.
@@ -24,4 +30,8 @@ internal actual class Platform {
      * @return the difference, in milliseconds, between current time and midnight January 1, 1970 UTC.
      */
     actual fun epochMillis(): Long = System.currentTimeMillis()
+
+    actual fun preferredLanguage(): String = "ENG".also {
+        // TODO replace with proper preferred language detection. MTSDK-532
+    }
 }

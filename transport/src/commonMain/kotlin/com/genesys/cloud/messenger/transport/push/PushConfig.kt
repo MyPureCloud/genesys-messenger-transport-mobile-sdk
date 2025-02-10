@@ -4,6 +4,8 @@ import com.genesys.cloud.messenger.transport.util.UNKNOWN
 import com.genesys.cloud.messenger.transport.util.UNKNOWN_LONG
 import kotlinx.serialization.Serializable
 
+internal const val DEVICE_TOKEN_EXPIRATION_IN_SECONDS = 30000
+
 @Serializable
 internal data class PushConfig(
     val token: String,

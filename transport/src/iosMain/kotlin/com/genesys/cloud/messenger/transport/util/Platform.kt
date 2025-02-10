@@ -14,10 +14,15 @@ import platform.posix.timeval
 @OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
 internal actual class Platform {
     /**
+     * The name of the OS currently running on this device.
+     */
+    actual val os: String = UIDevice.currentDevice.systemName()
+
+    /**
      * The device name and system version currently running on this device.
      */
     actual val platform: String =
-        UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
+        os + " " + UIDevice.currentDevice.systemVersion
 
     /**
      * Generate a random UUID.
@@ -35,5 +40,9 @@ internal actual class Platform {
         val timeVal = alloc<timeval>()
         gettimeofday(timeVal.ptr, null)
         (timeVal.tv_sec * 1000) + (timeVal.tv_usec / 1000)
+    }
+
+    actual fun preferredLanguage(): String = "ENG".also {
+        // TODO replace with proper preferred language detection. MTSDK-532
     }
 }

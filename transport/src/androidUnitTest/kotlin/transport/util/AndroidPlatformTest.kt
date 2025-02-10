@@ -57,4 +57,13 @@ class AndroidPlatformTest {
             assertThat(pushConfigKey).isEqualTo(PUSH_CONFIG_KEY)
         }
     }
+
+    @Test
+    fun `test os`() {
+        val expected = "Android"
+
+        val result = subject.os
+
+        assertThat(result).isEqualTo(expected)
+    }
 }
