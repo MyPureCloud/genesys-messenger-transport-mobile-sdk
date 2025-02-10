@@ -18,7 +18,7 @@ internal class PushServiceImpl(
         val storedPushConfig = vault.pushConfig
         val userPushConfig = buildPushConfigFromUserData(deviceToken, pushProvider)
         val diff = pushConfigComparator.compare(userPushConfig, storedPushConfig)
-        // TODO("Not yet implemented. Act on $diff")
+        // TODO("Not yet implemented. MTSDK-528")
     }
 
     private fun buildPushConfigFromUserData(
