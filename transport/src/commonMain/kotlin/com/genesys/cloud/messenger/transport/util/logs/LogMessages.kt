@@ -7,6 +7,7 @@ import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.events.Event
+import com.genesys.cloud.messenger.transport.push.PushConfig
 import com.genesys.cloud.messenger.transport.push.PushProvider
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
 
@@ -111,5 +112,10 @@ internal object LogMessages {
     fun quickReplyPrepareToSend(message: Message) = "Message with quick reply prepared to send: $message"
     fun sendQuickReply(buttonResponse: ButtonResponse) = "sendQuickReply(buttonResponse: $buttonResponse)"
     fun ignoreInboundEvent(event: Event) = "Ignore inbound event: $event."
+    // Push
     fun synchronizingPush(deviceToken: String, pushProvider: PushProvider) = "Synchronizing deviceToken: $deviceToken with $pushProvider."
+    fun deviceTokenIsInSync(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken} with ${pushConfig.pushProvider} is already in sync."
+    fun deviceTokenWasRegistered(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken} with ${pushConfig.pushProvider} was registered."
+    fun deviceTokenWasUpdated(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken} with ${pushConfig.pushProvider} was updated."
+    fun deviceTokenWasDeleted(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken} with ${pushConfig.pushProvider} was deleted."
 }

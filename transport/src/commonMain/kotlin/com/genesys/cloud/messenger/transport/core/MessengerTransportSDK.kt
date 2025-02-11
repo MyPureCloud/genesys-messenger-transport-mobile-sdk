@@ -129,7 +129,8 @@ class MessengerTransportSDK(
     fun createPushService(): PushService {
         return PushServiceImpl(
             vault = vault,
-            log = Log(configuration.logging, LogTag.PUSH_SERVICE)
+            api = WebMessagingApi(configuration),
+            log = Log(configuration.logging, LogTag.PUSH_SERVICE),
         )
     }
 }
