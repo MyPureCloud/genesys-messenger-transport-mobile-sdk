@@ -7,6 +7,7 @@ import com.genesys.cloud.messenger.transport.core.DEFAULT_PAGE_SIZE
 import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Result
+import com.genesys.cloud.messenger.transport.push.PushConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageEntityList
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.send.AuthJwtRequest
@@ -142,6 +143,21 @@ internal class WebMessagingApi(
         Result.Failure(ErrorCode.CancellationError, cancellationException.message)
     } catch (exception: Exception) {
         Result.Failure(ErrorCode.RefreshAuthTokenFailure, exception.message)
+    }
+
+    suspend fun registerDeviceToken(userPushConfig: PushConfig): Result<Empty> {
+        // TODO("Not yet implemented: MTSDK-529")
+        return Result.Success(Empty())
+    }
+
+    suspend fun updateDeviceToken(userPushConfig: PushConfig): Result<Empty> {
+        // TODO("Not yet implemented: MTSDK-533")
+        return Result.Success(Empty())
+    }
+
+    suspend fun deleteDeviceToken(userPushConfig: PushConfig): Result<Empty> {
+        // TODO("Not yet implemented: MTSDK-534")
+        return Result.Success(Empty())
     }
 }
 

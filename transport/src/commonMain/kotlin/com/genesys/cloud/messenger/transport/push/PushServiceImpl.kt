@@ -1,12 +1,18 @@
 package com.genesys.cloud.messenger.transport.push
 
+import com.genesys.cloud.messenger.transport.core.Result
+import com.genesys.cloud.messenger.transport.network.WebMessagingApi
+import com.genesys.cloud.messenger.transport.push.PushConfigComparator.Diff
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 internal class PushServiceImpl(
     private val vault: Vault,
+    private val api: WebMessagingApi,
     private val platform: Platform = Platform(),
     private val pushConfigComparator: PushConfigComparator = PushConfigComparatorImpl(),
     private val log: Log,
@@ -18,7 +24,65 @@ internal class PushServiceImpl(
         val storedPushConfig = vault.pushConfig
         val userPushConfig = buildPushConfigFromUserData(deviceToken, pushProvider)
         val diff = pushConfigComparator.compare(userPushConfig, storedPushConfig)
-        // TODO("Not yet implemented. MTSDK-528")
+        handleDiff(diff, userPushConfig)
+    }
+
+    private suspend fun handleDiff(diff: Diff, userPushConfig: PushConfig) {
+        when (diff) {
+            Diff.NONE -> log.i { LogMessages.deviceTokenIsInSync(userPushConfig) }
+
+            Diff.NO_TOKEN -> register(userPushConfig)
+            Diff.TOKEN -> {
+                coroutineScope {
+                    launch { delete(userPushConfig) }
+                    launch { register(userPushConfig) }
+                }
+            }
+
+            Diff.DEVICE_TOKEN,
+            Diff.LANGUAGE,
+            Diff.EXPIRED,
+            -> update(userPushConfig)
+        }
+    }
+
+    private suspend fun register(userPushConfig: PushConfig) {
+        val result = api.registerDeviceToken(userPushConfig)
+        when (result) {
+            is Result.Success -> {
+                log.i { LogMessages.deviceTokenWasRegistered(userPushConfig) }
+                vault.pushConfig = userPushConfig
+            }
+
+            is Result.Failure -> TODO("Not yet implemented: MTSDK-416")
+        }
+    }
+
+    private suspend fun update(userPushConfig: PushConfig) {
+        val result = api.updateDeviceToken(userPushConfig)
+        when (result) {
+            is Result.Success -> {
+                log.i { LogMessages.deviceTokenWasUpdated(userPushConfig) }
+                vault.pushConfig = userPushConfig
+            }
+
+            is Result.Failure -> TODO("Not yet implemented: MTSDK-416")
+        }
+    }
+
+    private suspend fun delete(
+        userPushConfig: PushConfig,
+        clearStoredPushConfigUponSuccess: Boolean = false,
+    ) {
+        val result = api.deleteDeviceToken(userPushConfig)
+        when (result) {
+            is Result.Success -> {
+                log.i { LogMessages.deviceTokenWasDeleted(userPushConfig) }
+                if (clearStoredPushConfigUponSuccess) vault.remove(vault.keys.pushConfigKey)
+            }
+
+            is Result.Failure -> TODO("Not yet implemented: MTSDK-416")
+        }
     }
 
     private fun buildPushConfigFromUserData(
