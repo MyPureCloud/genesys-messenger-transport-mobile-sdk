@@ -85,6 +85,11 @@ internal class AttachmentHandlerImpl(
     }
 
     override fun detach(token: String, attachmentId: String): DeleteAttachmentRequest? {
+        // Check if the attachment id exists before proceeding
+        if (!processedAttachments.containsKey(attachmentId)) {
+            log.e { LogMessages.invalidAttachmentId(attachmentId) }
+            throw IllegalArgumentException("Detach failed: Invalid attachment ID ($attachmentId)")
+        }
         processedAttachments[attachmentId]?.let {
             log.i { LogMessages.detachingAttachment(attachmentId) }
             it.job?.cancel()
