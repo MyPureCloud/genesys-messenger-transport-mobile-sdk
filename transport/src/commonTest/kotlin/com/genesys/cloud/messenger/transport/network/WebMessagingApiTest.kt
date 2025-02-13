@@ -18,6 +18,7 @@ import com.genesys.cloud.messenger.transport.network.test_engines.refreshTokenEn
 import com.genesys.cloud.messenger.transport.network.test_engines.uploadFileEngine
 import com.genesys.cloud.messenger.transport.network.test_engines.validHeaders
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
+import com.genesys.cloud.messenger.transport.util.Urls
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.DEFAULT_TIMEOUT
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
@@ -322,6 +323,7 @@ private fun buildWebMessagingApiWith(
     engine: HttpClientConfig<MockEngineConfig>.() -> Unit,
 ): WebMessagingApi {
     return WebMessagingApi(
+        urls = Urls(configuration.domain, configuration.deploymentId),
         configuration = configuration,
         client = mockHttpClientWith { engine() }
     )

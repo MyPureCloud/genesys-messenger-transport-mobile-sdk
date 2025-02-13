@@ -12,6 +12,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.MessageEntityList
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.send.AuthJwtRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OAuth
+import com.genesys.cloud.messenger.transport.util.Urls
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.onUpload
@@ -30,6 +31,7 @@ import io.ktor.http.isSuccess
 import kotlin.coroutines.cancellation.CancellationException
 
 internal class WebMessagingApi(
+    private val urls: Urls,
     private val configuration: Configuration,
     private val client: HttpClient = defaultHttpClient(configuration.logging),
 ) {
@@ -43,7 +45,7 @@ internal class WebMessagingApi(
         pageNumber: Int,
         pageSize: Int = DEFAULT_PAGE_SIZE,
     ): Result<MessageEntityList> = try {
-        val response = client.get("${configuration.apiBaseUrl}/api/v2/webmessaging/messages") {
+        val response = client.get("${urls.apiBaseUrl}/api/v2/webmessaging/messages") {
             headerAuthorizationBearer(jwt)
             headerOrigin(configuration.domain)
             parameter("pageNumber", pageNumber)
@@ -98,7 +100,7 @@ internal class WebMessagingApi(
                 codeVerifier = codeVerifier,
             )
         )
-        val response = client.post(configuration.jwtAuthUrl.toString()) {
+        val response = client.post(urls.jwtAuthUrl.toString()) {
             header("content-type", ContentType.Application.Json)
             setBody(requestBody)
         }
@@ -114,7 +116,7 @@ internal class WebMessagingApi(
     }
 
     suspend fun logoutFromAuthenticatedSession(jwt: String): Result<Empty> = try {
-        val response = client.delete(configuration.logoutUrl.toString()) {
+        val response = client.delete(urls.logoutUrl.toString()) {
             headerAuthorizationBearer(jwt)
         }
         if (response.status.isSuccess()) {
@@ -130,7 +132,7 @@ internal class WebMessagingApi(
     }
 
     suspend fun refreshAuthJwt(refreshToken: String): Result<AuthJwt> = try {
-        val response = client.post(configuration.refreshAuthTokenUrl.toString()) {
+        val response = client.post(urls.refreshAuthTokenUrl.toString()) {
             header("content-type", ContentType.Application.Json)
             setBody(RefreshToken(refreshToken))
         }
