@@ -242,7 +242,7 @@ internal class MessagingClientImpl(
         return request.attachmentId
     }
 
-    @Throws(IllegalStateException::class)
+    @Throws(IllegalStateException::class, IllegalArgumentException::class)
     override fun detach(attachmentId: String) {
         log.i { LogMessages.detach(attachmentId) }
         attachmentHandler.detach(token, attachmentId)?.let {
