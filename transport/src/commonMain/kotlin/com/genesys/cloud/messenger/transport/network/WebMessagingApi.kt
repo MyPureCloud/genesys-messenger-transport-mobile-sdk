@@ -25,6 +25,8 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
+import io.ktor.http.defaultForFilePath
 import io.ktor.http.isSuccess
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -67,6 +69,9 @@ internal class WebMessagingApi(
         val response = client.put(presignedUrlResponse.url) {
             presignedUrlResponse.headers.forEach {
                 header(it.key, it.value)
+            }
+            presignedUrlResponse.fileName?.let {
+                contentType(ContentType.defaultForFilePath(it))
             }
             onUpload { bytesSendTotal: Long, contentLength: Long ->
                 progressCallback?.let { it((bytesSendTotal / contentLength.toFloat()) * 100) }

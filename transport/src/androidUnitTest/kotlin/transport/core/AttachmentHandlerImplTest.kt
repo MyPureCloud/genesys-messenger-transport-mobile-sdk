@@ -128,13 +128,14 @@ internal class AttachmentHandlerImplTest {
         val mockUploadProgress: ((Float) -> Unit) = spyk()
         val progressSlot = slot<Float>()
         givenPrepareCalled(uploadProgress = mockUploadProgress)
+        val expectedPresignedUrlResponse = givenPresignedUrlResponse.copy(fileName = AttachmentValues.FileName)
 
         subject.upload(givenPresignedUrlResponse)
 
         coVerify {
             mockLogger.i(capture(logSlot))
             mockAttachmentListener.invoke(capture(attachmentSlot))
-            mockApi.uploadFile(givenPresignedUrlResponse, ByteArray(1), mockUploadProgress)
+            mockApi.uploadFile(expectedPresignedUrlResponse, ByteArray(1), mockUploadProgress)
             mockUploadProgress.invoke(capture(progressSlot))
         }
         assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
