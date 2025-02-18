@@ -44,4 +44,10 @@ internal class Urls(val domain: String, val deploymentId: String) {
             path("api/v2/webdeployments/token/refresh")
         }.build()
     }
+
+    internal val registerDeviceToken: (String, String) -> Url = { deploymentId, token ->
+        URLBuilder("https://api.$domain").apply {
+            path("/api/v2/webmessaging/deployments/$deploymentId/pushdevices/$token")
+        }.build()
+    }
 }

@@ -54,7 +54,7 @@ class UrlsTest {
 
         val result = subject.logoutUrl
 
-        assertThat(result, "jwtAuth config URL").isEqualTo(expected)
+        assertThat(result, "logoutUrl URL").isEqualTo(expected)
     }
 
     @Test
@@ -63,6 +63,16 @@ class UrlsTest {
 
         val result = subject.refreshAuthTokenUrl
 
-        assertThat(result, "jwtAuth config URL").isEqualTo(expected)
+        assertThat(result, "refreshAuthToken URL").isEqualTo(expected)
+    }
+
+    @Test
+    fun `it should get registerDeviceToken`() {
+        val expected =
+            Url("https://api.${TestValues.Domain}/api/v2/webmessaging/deployments/${TestValues.DeploymentId}/pushdevices/${TestValues.Token}")
+
+        val result = subject.registerDeviceToken(TestValues.DeploymentId, TestValues.Token)
+
+        assertThat(result, "registerDeviceToken URL").isEqualTo(expected)
     }
 }

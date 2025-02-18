@@ -8,6 +8,7 @@ import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.push.PushConfig
+import com.genesys.cloud.messenger.transport.push.RegisterDeviceTokenRequestBody
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageEntityList
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.send.AuthJwtRequest
@@ -147,9 +148,25 @@ internal class WebMessagingApi(
         Result.Failure(ErrorCode.RefreshAuthTokenFailure, exception.message)
     }
 
-    suspend fun registerDeviceToken(userPushConfig: PushConfig): Result<Empty> {
-        // TODO("Not yet implemented: MTSDK-529")
-        return Result.Success(Empty())
+    suspend fun registerDeviceToken(userPushConfig: PushConfig): Result<Empty> = try {
+        val url = urls.registerDeviceToken(configuration.deploymentId, userPushConfig.token)
+        val response = client.post(url.toString()) {
+            header("content-type", ContentType.Application.Json)
+            setBody(userPushConfig.toRegisterDeviceTokenRequestBody())
+        }
+
+        if (response.status.isSuccess()) {
+            Result.Success(Empty())
+        } else {
+            TODO("Not yet implemented: MTSDK-416")
+            Result.Failure(ErrorCode.UnexpectedError, "TODO(Not yet implemented: MTSDK-416)")
+        }
+    } catch (cancellationException: CancellationException) {
+        TODO("Not yet implemented: MTSDK-416")
+        Result.Failure(ErrorCode.CancellationError, cancellationException.message)
+    } catch (exception: Exception) {
+        TODO("Not yet implemented: MTSDK-416")
+        Result.Failure(ErrorCode.UnexpectedError, exception.message)
     }
 
     suspend fun updateDeviceToken(userPushConfig: PushConfig): Result<Empty> {
@@ -170,3 +187,13 @@ private fun HttpRequestBuilder.headerAuthorizationBearer(jwt: String) =
 
 private fun HttpRequestBuilder.headerOrigin(origin: String) =
     header(HttpHeaders.Origin, origin)
+
+internal fun PushConfig.toRegisterDeviceTokenRequestBody(): RegisterDeviceTokenRequestBody {
+    checkNotNull(pushProvider)
+    return RegisterDeviceTokenRequestBody(
+        deviceToken = deviceToken,
+        notificationProvider = pushProvider,
+        language = preferredLanguage,
+        deviceType = deviceType,
+    )
+}
