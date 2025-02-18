@@ -620,9 +620,9 @@ class ComposePrototypeUITest : BaseTests() {
             verifyResponse(outboundMessage)
             apiHelper.sendConnectOrDisconnect(conversationInfo)
             oktaLogout()
-            messenger {
-                enterCommand(oktaSignInWithPKCEText)
-            }
+            resubmitDeploymentInfo()
+            clearBrowser()
+            oktaSignInWithPKCE(testConfig.oktaUser2name, testConfig.oktaPassword2)
             authorize()
             connect(authenticateConnectText)
             sendMsg(helloText)
