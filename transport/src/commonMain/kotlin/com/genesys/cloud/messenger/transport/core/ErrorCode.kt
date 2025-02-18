@@ -83,6 +83,7 @@ object ErrorMessage {
     const val FailedToClearConversation = "Failed to clear conversation."
     const val FileSizeIsToSmall = "Attachment size cannot be less than 1 byte"
     const val FileAttachmentIsDisabled = "File attachment is disabled in Deployment Configuration."
+    fun detachFailed(attachmentId: String) = "Detach failed: Invalid attachment ID ($attachmentId)"
     fun fileSizeIsTooBig(maxFileSize: Long?) = "Reduce the attachment size to $maxFileSize KB or less."
     fun fileTypeIsProhibited(fileName: String) = "File type  $fileName is prohibited for upload."
     fun customAttributesSizeError(maxSize: Int) = "Error: Custom attributes exceed allowed max size of $maxSize bytes."

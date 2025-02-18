@@ -84,7 +84,12 @@ internal class AttachmentHandlerImpl(
         }
     }
 
+    @Throws(IllegalArgumentException::class)
     override fun detach(token: String, attachmentId: String): DeleteAttachmentRequest? {
+        if (!processedAttachments.containsKey(attachmentId)) {
+            log.e { LogMessages.invalidAttachmentId(attachmentId) }
+            throw IllegalArgumentException(ErrorMessage.detachFailed(attachmentId))
+        }
         processedAttachments[attachmentId]?.let {
             log.i { LogMessages.detachingAttachment(attachmentId) }
             it.job?.cancel()

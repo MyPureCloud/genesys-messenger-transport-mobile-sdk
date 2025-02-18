@@ -83,6 +83,22 @@ class MCAttachmentTests : BaseMessagingClientTest() {
 
     @Test
     fun `when detach() non existing attachmentId`() {
+        val givenAttachmentId = TestValues.DEFAULT_STRING
+        subject.connect()
+        clearMocks(mockPlatformSocket)
+        every { mockAttachmentHandler.detach(any(), any()) } throws IllegalArgumentException(ErrorMessage.detachFailed(givenAttachmentId))
+
+        val exception = assertFailsWith<IllegalArgumentException> {
+            subject.detach(givenAttachmentId)
+        }
+
+        assertThat(exception.message).isEqualTo(ErrorMessage.detachFailed(givenAttachmentId))
+
+        verify { mockPlatformSocket wasNot Called }
+    }
+
+    @Test
+    fun `when detach() non uploaded attachment`() {
         subject.connect()
         clearMocks(mockPlatformSocket)
         every { mockAttachmentHandler.detach(any(), any()) } returns null

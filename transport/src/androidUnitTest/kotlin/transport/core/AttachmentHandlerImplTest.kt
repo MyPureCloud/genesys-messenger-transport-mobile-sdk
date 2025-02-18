@@ -293,12 +293,14 @@ internal class AttachmentHandlerImplTest {
 
     @Test
     fun `when detach() on not processed attachment`() {
-        val result = subject.detach(TestValues.Token, "not processed attachment id")
+        val givenAttachmentId = TestValues.DEFAULT_STRING
 
-        verify {
-            listOf(mockAttachmentListener) wasNot Called
+        val exception = assertFailsWith<IllegalArgumentException> {
+            subject.detach(TestValues.Token, givenAttachmentId)
         }
-        assertThat(result).isNull()
+        assertThat(exception.message).isEqualTo(ErrorMessage.detachFailed(givenAttachmentId))
+
+        verify { listOf(mockAttachmentListener) wasNot Called }
     }
 
     @Test
