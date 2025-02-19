@@ -68,7 +68,8 @@ class PushServiceImplTest {
         assertThat(logSlot[0].invoke()).isEqualTo(
             LogMessages.synchronizingPush(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
         )
-        assertThat(logSlot[1].invoke()).isEqualTo(
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.pushDiff(Diff.NONE))
+        assertThat(logSlot[2].invoke()).isEqualTo(
             LogMessages.deviceTokenIsInSync(expectedUserConfig)
         )
     }
@@ -92,7 +93,8 @@ class PushServiceImplTest {
         assertThat(logSlot[0].invoke()).isEqualTo(
             LogMessages.synchronizingPush(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
         )
-        assertThat(logSlot[1].invoke()).isEqualTo(
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.pushDiff(Diff.NO_TOKEN))
+        assertThat(logSlot[2].invoke()).isEqualTo(
             LogMessages.deviceTokenWasRegistered(expectedUserConfig)
         )
     }
@@ -118,10 +120,11 @@ class PushServiceImplTest {
         assertThat(logSlot[0].invoke()).isEqualTo(
             LogMessages.synchronizingPush(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
         )
-        assertThat(logSlot[1].invoke()).isEqualTo(
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.pushDiff(Diff.TOKEN))
+        assertThat(logSlot[2].invoke()).isEqualTo(
             LogMessages.deviceTokenWasDeleted(expectedUserConfig)
         )
-        assertThat(logSlot[2].invoke()).isEqualTo(
+        assertThat(logSlot[3].invoke()).isEqualTo(
             LogMessages.deviceTokenWasRegistered(expectedUserConfig)
         )
     }
@@ -145,7 +148,8 @@ class PushServiceImplTest {
         assertThat(logSlot[0].invoke()).isEqualTo(
             LogMessages.synchronizingPush(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
         )
-        assertThat(logSlot[1].invoke()).isEqualTo(
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.pushDiff(Diff.DEVICE_TOKEN))
+        assertThat(logSlot[2].invoke()).isEqualTo(
             LogMessages.deviceTokenWasUpdated(expectedUserConfig)
         )
     }
@@ -169,7 +173,8 @@ class PushServiceImplTest {
         assertThat(logSlot[0].invoke()).isEqualTo(
             LogMessages.synchronizingPush(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
         )
-        assertThat(logSlot[1].invoke()).isEqualTo(
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.pushDiff(Diff.LANGUAGE))
+        assertThat(logSlot[2].invoke()).isEqualTo(
             LogMessages.deviceTokenWasUpdated(expectedUserConfig)
         )
     }
@@ -193,7 +198,8 @@ class PushServiceImplTest {
         assertThat(logSlot[0].invoke()).isEqualTo(
             LogMessages.synchronizingPush(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
         )
-        assertThat(logSlot[1].invoke()).isEqualTo(
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.pushDiff(Diff.EXPIRED))
+        assertThat(logSlot[2].invoke()).isEqualTo(
             LogMessages.deviceTokenWasUpdated(expectedUserConfig)
         )
     }
@@ -206,5 +212,6 @@ class PushServiceImplTest {
         mockPlatform.epochMillis()
         mockPlatform.os
         mockPushConfigComparator.compare(expectedUserConfig, expectedStoredConfig)
+        mockLogger.i(capture(logSlot))
     }
 }

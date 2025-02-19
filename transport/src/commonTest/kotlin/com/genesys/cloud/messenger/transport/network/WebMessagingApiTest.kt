@@ -15,13 +15,16 @@ import com.genesys.cloud.messenger.transport.network.test_engines.historyEngine
 import com.genesys.cloud.messenger.transport.network.test_engines.invalidHeaders
 import com.genesys.cloud.messenger.transport.network.test_engines.logoutEngine
 import com.genesys.cloud.messenger.transport.network.test_engines.refreshTokenEngine
+import com.genesys.cloud.messenger.transport.network.test_engines.registerDeviceTokenEngine
 import com.genesys.cloud.messenger.transport.network.test_engines.uploadFileEngine
 import com.genesys.cloud.messenger.transport.network.test_engines.validHeaders
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
+import com.genesys.cloud.messenger.transport.util.Urls
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.DEFAULT_TIMEOUT
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import com.genesys.cloud.messenger.transport.utility.InvalidValues
+import com.genesys.cloud.messenger.transport.utility.PushTestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.mock.MockEngineConfig
@@ -315,6 +318,16 @@ class WebMessagingApiTest {
 
         assertEquals(expectedResult, result)
     }
+
+    @Test
+    fun `when registerDeviceToken with valid userConfig data`() {
+        subject = buildWebMessagingApiWith { registerDeviceTokenEngine() }
+        val givenUserPushConfig = PushTestValues.CONFIG
+
+        val result = runBlocking { subject.registerDeviceToken(givenUserPushConfig) }
+
+        assertTrue(result is Result.Success<Empty>)
+    }
 }
 
 private fun buildWebMessagingApiWith(
@@ -322,6 +335,7 @@ private fun buildWebMessagingApiWith(
     engine: HttpClientConfig<MockEngineConfig>.() -> Unit,
 ): WebMessagingApi {
     return WebMessagingApi(
+        urls = Urls(configuration.domain, configuration.deploymentId),
         configuration = configuration,
         client = mockHttpClientWith { engine() }
     )

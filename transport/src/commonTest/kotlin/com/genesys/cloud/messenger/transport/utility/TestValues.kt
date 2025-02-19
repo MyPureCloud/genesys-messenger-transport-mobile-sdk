@@ -23,7 +23,7 @@ object TestValues {
     internal const val MaxCustomDataBytes = 100
     internal const val DefaultNumber = 1
     internal const val Timestamp = "2022-08-22T19:24:26.704Z"
-    internal const val Token = "<token>"
+    internal const val Token = "token"
     internal const val SecondaryToken = "<secondary_token>"
     internal const val ReconnectionTimeout = 5000L
     internal const val NoReconnectionAttempts = 0L
@@ -193,4 +193,9 @@ object PushTestValues {
         deviceType = TestValues.DEVICE_TYPE,
         pushProvider = TestValues.PUSH_PROVIDER,
     )
+}
+
+object MockEngineValues {
+    const val NO_CONTENT = "No Content"
+    const val CONTENT_TYPE_JSON = "application/json"
 }
