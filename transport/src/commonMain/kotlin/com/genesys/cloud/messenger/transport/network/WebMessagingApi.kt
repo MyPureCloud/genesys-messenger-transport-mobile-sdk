@@ -46,7 +46,7 @@ internal class WebMessagingApi(
         pageNumber: Int,
         pageSize: Int = DEFAULT_PAGE_SIZE,
     ): Result<MessageEntityList> = try {
-        val response = client.get("${urls.apiBaseUrl}/api/v2/webmessaging/messages") {
+        val response = client.get(urls.history.toString()) {
             headerAuthorizationBearer(jwt)
             headerOrigin(configuration.domain)
             parameter("pageNumber", pageNumber)

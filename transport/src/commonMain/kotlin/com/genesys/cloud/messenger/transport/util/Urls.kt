@@ -5,6 +5,9 @@ import io.ktor.http.URLBuilder
 import io.ktor.http.Url
 import io.ktor.http.path
 
+private const val BASE_WEBDEPLOYMENTS_PATH = "api/v2/webdeployments"
+private const val BASE_WEBMESSAGING_PATH = "api/v2/webmessaging"
+
 internal class Urls(val domain: String, val deploymentId: String) {
 
     internal val webSocketUrl: Url by lazy {
@@ -17,7 +20,7 @@ internal class Urls(val domain: String, val deploymentId: String) {
             .build()
     }
 
-    internal val apiBaseUrl: Url by lazy {
+    private val apiBaseUrl: Url by lazy {
         URLBuilder("https://api.$domain").build()
     }
 
@@ -27,27 +30,24 @@ internal class Urls(val domain: String, val deploymentId: String) {
         }.build()
     }
 
+    internal val history: Url by lazy {
+        URLBuilder(apiBaseUrl).apply { path("$BASE_WEBMESSAGING_PATH/messages") }.build()
+    }
+
     internal val jwtAuthUrl: Url by lazy {
-        URLBuilder("https://api.$domain").apply {
-            path("api/v2/webdeployments/token/oauthcodegrantjwtexchange")
-        }.build()
+        URLBuilder(apiBaseUrl).apply { path("$BASE_WEBDEPLOYMENTS_PATH/token/oauthcodegrantjwtexchange") }.build()
     }
 
     internal val logoutUrl: Url by lazy {
-        URLBuilder("https://api.$domain").apply {
-            path("api/v2/webdeployments/token/revoke")
-        }.build()
+        URLBuilder(apiBaseUrl).apply { path("$BASE_WEBDEPLOYMENTS_PATH/token/revoke") }.build()
     }
 
     internal val refreshAuthTokenUrl: Url by lazy {
-        URLBuilder("https://api.$domain").apply {
-            path("api/v2/webdeployments/token/refresh")
-        }.build()
+        URLBuilder(apiBaseUrl).apply { path("$BASE_WEBDEPLOYMENTS_PATH/token/refresh") }.build()
     }
 
     internal val registerDeviceToken: (String, String) -> Url = { deploymentId, token ->
-        URLBuilder("https://api.$domain").apply {
-            path("/api/v2/webmessaging/deployments/$deploymentId/pushdevices/$token")
-        }.build()
+        URLBuilder(apiBaseUrl).apply { path("$BASE_WEBMESSAGING_PATH/deployments/$deploymentId/pushdevices/$token") }
+            .build()
     }
 }

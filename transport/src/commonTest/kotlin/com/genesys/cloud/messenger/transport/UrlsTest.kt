@@ -22,21 +22,21 @@ class UrlsTest {
     }
 
     @Test
-    fun `it should get apiBaseUrl`() {
-        val expected = Url("https://api.${TestValues.Domain}")
-
-        val result = subject.apiBaseUrl
-
-        assertThat(result, "API Base URL").isEqualTo(expected)
-    }
-
-    @Test
     fun `it should get deploymentConfigUrl`() {
         val expected = Url("https://api-cdn.${TestValues.Domain}/webdeployments/v1/deployments/${TestValues.DeploymentId}/config.json")
 
         val result = subject.deploymentConfigUrl
 
         assertThat(result, "Deployment config URL").isEqualTo(expected)
+    }
+
+    @Test
+    fun `it should get history`() {
+        val expected = Url("https://api.${TestValues.Domain}/api/v2/webmessaging/messages")
+
+        val result = subject.history
+
+        assertThat(result, "history URL").isEqualTo(expected)
     }
 
     @Test
