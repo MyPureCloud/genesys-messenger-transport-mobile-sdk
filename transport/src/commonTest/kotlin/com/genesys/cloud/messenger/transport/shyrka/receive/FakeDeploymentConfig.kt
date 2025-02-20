@@ -53,7 +53,7 @@ fun createConversationsVOForTesting(
     autoStart: AutoStart = AutoStart(),
     conversationDisconnect: ConversationDisconnect = ConversationDisconnect(),
     conversationClear: ConversationClear = ConversationClear(enabled = true),
-    notifications: Notifications = Notifications(enabled = true, notificationContentType = Notifications.NotificationContentType.IncludeMessagesContent),
+    notifications: Notifications = Notifications(enabled = false, notificationContentType = Notifications.NotificationContentType.IncludeMessagesContent),
 ): Conversations = Conversations(
     messagingEndpoint = DeploymentConfigValues.MessagingEndpoint,
     autoStart = autoStart,

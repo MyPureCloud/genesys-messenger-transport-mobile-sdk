@@ -1,5 +1,6 @@
 package com.genesys.cloud.messenger.transport.shyrka.receive
 
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -64,8 +65,8 @@ data class Conversations(
 
     @Serializable
     data class Notifications(
-        val enabled: Boolean = false,
-        val notificationContentType: NotificationContentType = NotificationContentType.ExcludeMessagesContent,
+        @EncodeDefault val enabled: Boolean = false,
+        @EncodeDefault val notificationContentType: NotificationContentType = NotificationContentType.ExcludeMessagesContent,
     ) {
 
         @Serializable

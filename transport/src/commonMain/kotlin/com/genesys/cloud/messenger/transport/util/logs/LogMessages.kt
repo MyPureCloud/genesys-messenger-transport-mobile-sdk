@@ -120,4 +120,5 @@ internal object LogMessages {
     fun deviceTokenWasRegistered(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken} with ${pushConfig.pushProvider} was registered."
     fun deviceTokenWasUpdated(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken} with ${pushConfig.pushProvider} was updated."
     fun deviceTokenWasDeleted(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken} with ${pushConfig.pushProvider} was deleted."
+    const val SYNCHRONIZE_PUSH_SERVICE_ON_SESSION_CONFIGURE = "Synchronizing push service from session configured."
 }
