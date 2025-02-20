@@ -18,9 +18,17 @@ class DeploymentConfigTest {
 
     @Test
     fun `when DeploymentConfig serialized`() {
-        val givenDeploymentConfig = createDeploymentConfigForTesting()
+        val givenDeploymentConfig = createDeploymentConfigForTesting(
+            createMessengerVOForTesting(
+                apps = Apps(
+                    conversations = createConversationsVOForTesting(
+                        notifications = Notifications(enabled = true, Notifications.NotificationContentType.IncludeMessagesContent)
+                    )
+                )
+            )
+        )
         val expectedDeploymentConfigAsJson =
-            """{"id":"id","version":"1","languages":["en-us","zh-cn"],"defaultLanguage":"en-us","apiEndpoint":"api_endpoint","messenger":{"enabled":true,"apps":{"conversations":{"messagingEndpoint":"messaging_endpoint","conversationClear":{"enabled":true},"notifications":{"enabled":false,"notificationContentType":"IncludeMessagesContent"}}},"styles":{"primaryColor":"red"},"launcherButton":{"visibility":"On"},"fileUpload":{"enableAttachments":false,"modes":[{"fileTypes":["png"],"maxFileSizeKB":100}]}},"journeyEvents":{"enabled":false},"status":"Active","auth":{"enabled":true,"allowSessionUpgrade":true}}"""
+            """{"id":"id","version":"1","languages":["en-us","zh-cn"],"defaultLanguage":"en-us","apiEndpoint":"api_endpoint","messenger":{"enabled":true,"apps":{"conversations":{"messagingEndpoint":"messaging_endpoint","conversationClear":{"enabled":true},"notifications":{"enabled":true,"notificationContentType":"IncludeMessagesContent"}}},"styles":{"primaryColor":"red"},"launcherButton":{"visibility":"On"},"fileUpload":{"enableAttachments":false,"modes":[{"fileTypes":["png"],"maxFileSizeKB":100}]}},"journeyEvents":{"enabled":false},"status":"Active","auth":{"enabled":true,"allowSessionUpgrade":true}}"""
 
         val result = WebMessagingJson.json.encodeToString(givenDeploymentConfig)
 

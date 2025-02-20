@@ -65,8 +65,8 @@ data class Conversations(
 
     @Serializable
     data class Notifications(
-        @EncodeDefault val enabled: Boolean = false,
-        @EncodeDefault val notificationContentType: NotificationContentType = NotificationContentType.ExcludeMessagesContent,
+        val enabled: Boolean = false,
+        val notificationContentType: NotificationContentType = NotificationContentType.ExcludeMessagesContent,
     ) {
 
         @Serializable
