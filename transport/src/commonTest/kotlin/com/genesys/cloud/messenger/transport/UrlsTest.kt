@@ -67,11 +67,11 @@ class UrlsTest {
     }
 
     @Test
-    fun `it should get registerDeviceToken`() {
+    fun `it should get deviceTokenUrl`() {
         val expected =
             Url("https://api.${TestValues.Domain}/api/v2/webmessaging/deployments/${TestValues.DeploymentId}/pushdevices/${TestValues.Token}")
 
-        val result = subject.registerDeviceToken(TestValues.DeploymentId, TestValues.Token)
+        val result = subject.deviceTokenUrl(TestValues.DeploymentId, TestValues.Token)
 
         assertThat(result, "registerDeviceToken URL").isEqualTo(expected)
     }

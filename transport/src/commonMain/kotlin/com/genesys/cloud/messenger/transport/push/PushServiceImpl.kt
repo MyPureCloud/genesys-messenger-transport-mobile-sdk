@@ -48,7 +48,7 @@ internal class PushServiceImpl(
     }
 
     private suspend fun register(userPushConfig: PushConfig) {
-        when (api.registerDeviceToken(userPushConfig)) {
+        when (api.performDeviceTokenOperation(userPushConfig, DeviceTokenOperation.Register)) {
             is Result.Success -> {
                 log.i { LogMessages.deviceTokenWasRegistered(userPushConfig) }
                 vault.pushConfig = userPushConfig
@@ -59,7 +59,7 @@ internal class PushServiceImpl(
     }
 
     private suspend fun update(userPushConfig: PushConfig) {
-        val result = api.updateDeviceToken(userPushConfig)
+        val result = api.performDeviceTokenOperation(userPushConfig, DeviceTokenOperation.Update)
         when (result) {
             is Result.Success -> {
                 log.i { LogMessages.deviceTokenWasUpdated(userPushConfig) }

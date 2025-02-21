@@ -14,10 +14,11 @@ import com.genesys.cloud.messenger.transport.network.test_engines.authorizeEngin
 import com.genesys.cloud.messenger.transport.network.test_engines.historyEngine
 import com.genesys.cloud.messenger.transport.network.test_engines.invalidHeaders
 import com.genesys.cloud.messenger.transport.network.test_engines.logoutEngine
+import com.genesys.cloud.messenger.transport.network.test_engines.pushNotificationEngine
 import com.genesys.cloud.messenger.transport.network.test_engines.refreshTokenEngine
-import com.genesys.cloud.messenger.transport.network.test_engines.registerDeviceTokenEngine
 import com.genesys.cloud.messenger.transport.network.test_engines.uploadFileEngine
 import com.genesys.cloud.messenger.transport.network.test_engines.validHeaders
+import com.genesys.cloud.messenger.transport.push.DeviceTokenOperation
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.util.Urls
 import com.genesys.cloud.messenger.transport.utility.AuthTest
@@ -320,11 +321,23 @@ class WebMessagingApiTest {
     }
 
     @Test
-    fun `when registerDeviceToken with valid userConfig data`() {
-        subject = buildWebMessagingApiWith { registerDeviceTokenEngine() }
+    fun `when performDeviceTokenOperation Register with valid userConfig data response status is success`() {
+        subject = buildWebMessagingApiWith { pushNotificationEngine() }
         val givenUserPushConfig = PushTestValues.CONFIG
+        val givenOperation = DeviceTokenOperation.Register
 
-        val result = runBlocking { subject.registerDeviceToken(givenUserPushConfig) }
+        val result = runBlocking { subject.performDeviceTokenOperation(givenUserPushConfig, givenOperation) }
+
+        assertTrue(result is Result.Success<Empty>)
+    }
+
+    @Test
+    fun `when performDeviceTokenOperation Update with valid userConfig data response status is success`() {
+        subject = buildWebMessagingApiWith { pushNotificationEngine() }
+        val givenUserPushConfig = PushTestValues.CONFIG
+        val givenOperation = DeviceTokenOperation.Update
+
+        val result = runBlocking { subject.performDeviceTokenOperation(givenUserPushConfig, givenOperation) }
 
         assertTrue(result is Result.Success<Empty>)
     }
