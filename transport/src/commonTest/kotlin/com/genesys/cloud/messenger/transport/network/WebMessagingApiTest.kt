@@ -321,7 +321,7 @@ class WebMessagingApiTest {
     }
 
     @Test
-    fun `when performDeviceTokenOperation Register with valid userConfig data response status is success`() {
+    fun `when performDeviceTokenOperation Register with valid userConfig data`() {
         subject = buildWebMessagingApiWith { pushNotificationEngine() }
         val givenUserPushConfig = PushTestValues.CONFIG
         val givenOperation = DeviceTokenOperation.Register
@@ -332,7 +332,7 @@ class WebMessagingApiTest {
     }
 
     @Test
-    fun `when performDeviceTokenOperation Update with valid userConfig data response status is success`() {
+    fun `when performDeviceTokenOperation Update with valid userConfig data`() {
         subject = buildWebMessagingApiWith { pushNotificationEngine() }
         val givenUserPushConfig = PushTestValues.CONFIG
         val givenOperation = DeviceTokenOperation.Update
