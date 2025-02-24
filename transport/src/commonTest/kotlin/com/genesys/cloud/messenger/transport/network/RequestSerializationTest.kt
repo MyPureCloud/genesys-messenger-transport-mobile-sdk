@@ -6,7 +6,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
-import com.genesys.cloud.messenger.transport.push.RegisterDeviceTokenRequestBody
+import com.genesys.cloud.messenger.transport.push.DeviceTokenRequestBody
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent.Presence
@@ -465,18 +465,18 @@ class RequestSerializationTest {
     }
 
     @Test
-    fun `validate RegisterDeviceTokenRequestBody serialization`() {
-        val expectedRequest = RegisterDeviceTokenRequestBody(
+    fun `validate DeviceTokenRequestBody serialization`() {
+        val expectedRequest = DeviceTokenRequestBody(
             deviceToken = TestValues.DEVICE_TOKEN,
             notificationProvider = TestValues.PUSH_PROVIDER,
             language = TestValues.PREFERRED_LANGUAGE,
             deviceType = TestValues.DEVICE_TYPE
         )
         val expectedJson =
-            """{"deviceToken":"${TestValues.DEVICE_TOKEN}","notificationProvider":"${TestValues.PUSH_PROVIDER}","language":"${TestValues.PREFERRED_LANGUAGE}","deviceType":"${TestValues.DEVICE_TYPE}"}"""
+            """{"deviceToken":"${TestValues.DEVICE_TOKEN}","language":"${TestValues.PREFERRED_LANGUAGE}","deviceType":"${TestValues.DEVICE_TYPE}","notificationProvider":"${TestValues.PUSH_PROVIDER}"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
-        val decoded = WebMessagingJson.json.decodeFromString<RegisterDeviceTokenRequestBody>(expectedJson)
+        val decoded = WebMessagingJson.json.decodeFromString<DeviceTokenRequestBody>(expectedJson)
 
         assertThat(encodedString, "encoded RegisterDeviceTokenRequestBody").isEqualTo(expectedJson)
         decoded.run {
