@@ -118,4 +118,6 @@ internal object LogMessages {
     fun deviceTokenWasRegistered(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken} with ${pushConfig.pushProvider} was registered."
     fun deviceTokenWasUpdated(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken} with ${pushConfig.pushProvider} was updated."
     fun deviceTokenWasDeleted(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken} with ${pushConfig.pushProvider} was deleted."
+    const val UNREGISTERING_DEVICE = "Unregistering device from push notifications."
+    const val DEVICE_NOT_REGISTERED = "Device is not registered."
 }

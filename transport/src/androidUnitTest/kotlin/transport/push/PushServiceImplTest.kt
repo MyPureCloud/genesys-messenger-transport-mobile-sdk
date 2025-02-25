@@ -33,6 +33,8 @@ class PushServiceImplTest {
         every { pushConfig } returns DEFAULT_PUSH_CONFIG
         every { pushConfig = any() } just Runs
         every { token } returns TestValues.Token
+        every { keys } returns TestValues.vaultKeys
+        every { remove(any()) } just Runs
     }
     private val mockApi: WebMessagingApi = mockk {
         coEvery { registerDeviceToken(any()) } returns Result.Success(Empty())
@@ -198,7 +200,44 @@ class PushServiceImplTest {
         )
     }
 
-    private fun MockKVerificationScope.syncSequence(expectedUserConfig: PushConfig, expectedStoredConfig: PushConfig) {
+    @Test
+    fun `when unregister but device was not registered before`() {
+
+        runBlocking { subject.unregister() }
+
+        coVerifySequence {
+            mockLogger.i(capture(logSlot))
+            mockVault.pushConfig
+            mockLogger.i(capture(logSlot))
+        }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.UNREGISTERING_DEVICE)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.DEVICE_NOT_REGISTERED)
+    }
+
+    @Test
+    fun `when unregister and device is registered`() {
+        every { mockVault.pushConfig } returns PushTestValues.CONFIG
+        val expectedUserConfig = PushTestValues.CONFIG
+
+        runBlocking { subject.unregister() }
+
+        coVerifySequence {
+            mockLogger.i(capture(logSlot))
+            mockVault.pushConfig
+            mockApi.deleteDeviceToken(expectedUserConfig)
+            mockLogger.i(capture(logSlot))
+            mockVault.keys
+            mockVault.remove(TestValues.vaultKeys.pushConfigKey)
+        }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.UNREGISTERING_DEVICE)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.deviceTokenWasDeleted(expectedUserConfig))
+    }
+
+
+    private fun MockKVerificationScope.syncSequence(
+        expectedUserConfig: PushConfig,
+        expectedStoredConfig: PushConfig
+    ) {
         mockLogger.i(capture(logSlot))
         mockVault.pushConfig
         mockVault.token

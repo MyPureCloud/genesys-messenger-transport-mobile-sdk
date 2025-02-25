@@ -33,7 +33,7 @@ object TestValues {
     internal const val DEVICE_TOKEN = "<device_token>"
     internal const val PUSH_SYNC_TIMESTAMP = 10000000L
     internal val PUSH_PROVIDER = PushProvider.APNS
-    internal const val DEVICE_TYPE = "Android"
+    internal const val DEVICE_TYPE = "android"
     internal const val PREFERRED_LANGUAGE = "Eng"
     internal val vaultKeys = Vault.Keys(
         vaultKey = VAULT_KEY,
