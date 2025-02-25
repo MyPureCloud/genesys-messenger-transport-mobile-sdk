@@ -6,6 +6,7 @@ import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.push.DEFAULT_PUSH_CONFIG
+import com.genesys.cloud.messenger.transport.push.DeviceTokenOperation
 import com.genesys.cloud.messenger.transport.push.PushConfig
 import com.genesys.cloud.messenger.transport.push.PushConfigComparator
 import com.genesys.cloud.messenger.transport.push.PushConfigComparator.Diff
@@ -37,8 +38,7 @@ class PushServiceImplTest {
         every { remove(any()) } just Runs
     }
     private val mockApi: WebMessagingApi = mockk {
-        coEvery { registerDeviceToken(any()) } returns Result.Success(Empty())
-        coEvery { updateDeviceToken(any()) } returns Result.Success(Empty())
+        coEvery { performDeviceTokenOperation(any(), any()) } returns Result.Success(Empty())
         coEvery { deleteDeviceToken(any()) } returns Result.Success(Empty())
     }
     private val mockPlatform: Platform = mockk {
@@ -70,7 +70,8 @@ class PushServiceImplTest {
         assertThat(logSlot[0].invoke()).isEqualTo(
             LogMessages.synchronizingPush(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
         )
-        assertThat(logSlot[1].invoke()).isEqualTo(
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.pushDiff(Diff.NONE))
+        assertThat(logSlot[2].invoke()).isEqualTo(
             LogMessages.deviceTokenIsInSync(expectedUserConfig)
         )
     }
@@ -80,6 +81,7 @@ class PushServiceImplTest {
         every { mockPushConfigComparator.compare(any(), any()) } returns Diff.NO_TOKEN
         val expectedUserConfig = PushTestValues.CONFIG
         val expectedStoredConfig = DEFAULT_PUSH_CONFIG
+        val expectedOperation = DeviceTokenOperation.Register
 
         runBlocking {
             subject.synchronize(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
@@ -87,14 +89,15 @@ class PushServiceImplTest {
 
         coVerifySequence {
             syncSequence(expectedUserConfig, expectedStoredConfig)
-            mockApi.registerDeviceToken(expectedUserConfig)
+            mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
             mockLogger.i(capture(logSlot))
             mockVault.pushConfig = expectedUserConfig
         }
         assertThat(logSlot[0].invoke()).isEqualTo(
             LogMessages.synchronizingPush(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
         )
-        assertThat(logSlot[1].invoke()).isEqualTo(
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.pushDiff(Diff.NO_TOKEN))
+        assertThat(logSlot[2].invoke()).isEqualTo(
             LogMessages.deviceTokenWasRegistered(expectedUserConfig)
         )
     }
@@ -104,6 +107,7 @@ class PushServiceImplTest {
         every { mockPushConfigComparator.compare(any(), any()) } returns Diff.TOKEN
         val expectedUserConfig = PushTestValues.CONFIG
         val expectedStoredConfig = DEFAULT_PUSH_CONFIG
+        val expectedOperation = DeviceTokenOperation.Register
 
         runBlocking {
             subject.synchronize(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
@@ -113,17 +117,18 @@ class PushServiceImplTest {
             syncSequence(expectedUserConfig, expectedStoredConfig)
             mockApi.deleteDeviceToken(expectedUserConfig)
             mockLogger.i(capture(logSlot))
-            mockApi.registerDeviceToken(expectedUserConfig)
+            mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
             mockLogger.i(capture(logSlot))
             mockVault.pushConfig = expectedUserConfig
         }
         assertThat(logSlot[0].invoke()).isEqualTo(
             LogMessages.synchronizingPush(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
         )
-        assertThat(logSlot[1].invoke()).isEqualTo(
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.pushDiff(Diff.TOKEN))
+        assertThat(logSlot[2].invoke()).isEqualTo(
             LogMessages.deviceTokenWasDeleted(expectedUserConfig)
         )
-        assertThat(logSlot[2].invoke()).isEqualTo(
+        assertThat(logSlot[3].invoke()).isEqualTo(
             LogMessages.deviceTokenWasRegistered(expectedUserConfig)
         )
     }
@@ -133,6 +138,7 @@ class PushServiceImplTest {
         every { mockPushConfigComparator.compare(any(), any()) } returns Diff.DEVICE_TOKEN
         val expectedUserConfig = PushTestValues.CONFIG
         val expectedStoredConfig = DEFAULT_PUSH_CONFIG
+        val expectedOperation = DeviceTokenOperation.Update
 
         runBlocking {
             subject.synchronize(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
@@ -140,14 +146,15 @@ class PushServiceImplTest {
 
         coVerifySequence {
             syncSequence(expectedUserConfig, expectedStoredConfig)
-            mockApi.updateDeviceToken(expectedUserConfig)
+            mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
             mockLogger.i(capture(logSlot))
             mockVault.pushConfig = expectedUserConfig
         }
         assertThat(logSlot[0].invoke()).isEqualTo(
             LogMessages.synchronizingPush(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
         )
-        assertThat(logSlot[1].invoke()).isEqualTo(
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.pushDiff(Diff.DEVICE_TOKEN))
+        assertThat(logSlot[2].invoke()).isEqualTo(
             LogMessages.deviceTokenWasUpdated(expectedUserConfig)
         )
     }
@@ -157,6 +164,7 @@ class PushServiceImplTest {
         every { mockPushConfigComparator.compare(any(), any()) } returns Diff.LANGUAGE
         val expectedUserConfig = PushTestValues.CONFIG
         val expectedStoredConfig = DEFAULT_PUSH_CONFIG
+        val expectedOperation = DeviceTokenOperation.Update
 
         runBlocking {
             subject.synchronize(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
@@ -164,14 +172,15 @@ class PushServiceImplTest {
 
         coVerifySequence {
             syncSequence(expectedUserConfig, expectedStoredConfig)
-            mockApi.updateDeviceToken(expectedUserConfig)
+            mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
             mockLogger.i(capture(logSlot))
             mockVault.pushConfig = expectedUserConfig
         }
         assertThat(logSlot[0].invoke()).isEqualTo(
             LogMessages.synchronizingPush(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
         )
-        assertThat(logSlot[1].invoke()).isEqualTo(
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.pushDiff(Diff.LANGUAGE))
+        assertThat(logSlot[2].invoke()).isEqualTo(
             LogMessages.deviceTokenWasUpdated(expectedUserConfig)
         )
     }
@@ -181,6 +190,7 @@ class PushServiceImplTest {
         every { mockPushConfigComparator.compare(any(), any()) } returns Diff.EXPIRED
         val expectedUserConfig = PushTestValues.CONFIG
         val expectedStoredConfig = DEFAULT_PUSH_CONFIG
+        val expectedOperation = DeviceTokenOperation.Update
 
         runBlocking {
             subject.synchronize(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
@@ -188,14 +198,15 @@ class PushServiceImplTest {
 
         coVerifySequence {
             syncSequence(expectedUserConfig, expectedStoredConfig)
-            mockApi.updateDeviceToken(expectedUserConfig)
+            mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
             mockLogger.i(capture(logSlot))
             mockVault.pushConfig = expectedUserConfig
         }
         assertThat(logSlot[0].invoke()).isEqualTo(
             LogMessages.synchronizingPush(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
         )
-        assertThat(logSlot[1].invoke()).isEqualTo(
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.pushDiff(Diff.EXPIRED))
+        assertThat(logSlot[2].invoke()).isEqualTo(
             LogMessages.deviceTokenWasUpdated(expectedUserConfig)
         )
     }
@@ -245,5 +256,6 @@ class PushServiceImplTest {
         mockPlatform.epochMillis()
         mockPlatform.os
         mockPushConfigComparator.compare(expectedUserConfig, expectedStoredConfig)
+        mockLogger.i(capture(logSlot))
     }
 }

@@ -7,11 +7,15 @@ import com.genesys.cloud.messenger.transport.core.DEFAULT_PAGE_SIZE
 import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Result
+import com.genesys.cloud.messenger.transport.push.DeviceTokenOperation
+import com.genesys.cloud.messenger.transport.push.DeviceTokenRequestBody
 import com.genesys.cloud.messenger.transport.push.PushConfig
+import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageEntityList
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.send.AuthJwtRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OAuth
+import com.genesys.cloud.messenger.transport.util.Urls
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.onUpload
@@ -22,14 +26,17 @@ import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
+import io.ktor.client.request.request
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.isSuccess
+import kotlinx.serialization.encodeToString
 import kotlin.coroutines.cancellation.CancellationException
 
 internal class WebMessagingApi(
+    private val urls: Urls,
     private val configuration: Configuration,
     private val client: HttpClient = defaultHttpClient(configuration.logging),
 ) {
@@ -43,7 +50,7 @@ internal class WebMessagingApi(
         pageNumber: Int,
         pageSize: Int = DEFAULT_PAGE_SIZE,
     ): Result<MessageEntityList> = try {
-        val response = client.get("${configuration.apiBaseUrl}/api/v2/webmessaging/messages") {
+        val response = client.get(urls.history.toString()) {
             headerAuthorizationBearer(jwt)
             headerOrigin(configuration.domain)
             parameter("pageNumber", pageNumber)
@@ -98,7 +105,7 @@ internal class WebMessagingApi(
                 codeVerifier = codeVerifier,
             )
         )
-        val response = client.post(configuration.jwtAuthUrl.toString()) {
+        val response = client.post(urls.jwtAuthUrl.toString()) {
             header("content-type", ContentType.Application.Json)
             setBody(requestBody)
         }
@@ -114,13 +121,14 @@ internal class WebMessagingApi(
     }
 
     suspend fun logoutFromAuthenticatedSession(jwt: String): Result<Empty> = try {
-        val response = client.delete(configuration.logoutUrl.toString()) {
+        val response = client.delete(urls.logoutUrl.toString()) {
             headerAuthorizationBearer(jwt)
         }
         if (response.status.isSuccess()) {
             Result.Success(Empty())
         } else {
-            val errorCode = if (response.status.isUnauthorized()) ErrorCode.ClientResponseError(401) else ErrorCode.AuthLogoutFailed
+            val errorCode =
+                if (response.status.isUnauthorized()) ErrorCode.ClientResponseError(401) else ErrorCode.AuthLogoutFailed
             Result.Failure(errorCode, response.body<String>())
         }
     } catch (cancellationException: CancellationException) {
@@ -130,7 +138,7 @@ internal class WebMessagingApi(
     }
 
     suspend fun refreshAuthJwt(refreshToken: String): Result<AuthJwt> = try {
-        val response = client.post(configuration.refreshAuthTokenUrl.toString()) {
+        val response = client.post(urls.refreshAuthTokenUrl.toString()) {
             header("content-type", ContentType.Application.Json)
             setBody(RefreshToken(refreshToken))
         }
@@ -145,14 +153,29 @@ internal class WebMessagingApi(
         Result.Failure(ErrorCode.RefreshAuthTokenFailure, exception.message)
     }
 
-    suspend fun registerDeviceToken(userPushConfig: PushConfig): Result<Empty> {
-        // TODO("Not yet implemented: MTSDK-529")
-        return Result.Success(Empty())
-    }
+    suspend fun performDeviceTokenOperation(
+        userPushConfig: PushConfig,
+        operation: DeviceTokenOperation,
+    ): Result<Empty> = try {
+        val url = urls.deviceTokenUrl(configuration.deploymentId, userPushConfig.token)
+        val response = client.request(url) {
+            this.method = operation.httpMethod
+            header("content-type", ContentType.Application.Json)
+            setBody(userPushConfig.toDeviceTokenRequestBody(operation))
+        }
 
-    suspend fun updateDeviceToken(userPushConfig: PushConfig): Result<Empty> {
-        // TODO("Not yet implemented: MTSDK-533")
-        return Result.Success(Empty())
+        if (response.status.isSuccess()) {
+            Result.Success(Empty())
+        } else {
+            TODO("Not yet implemented: MTSDK-416")
+            Result.Failure(ErrorCode.UnexpectedError, "TODO(Not yet implemented: MTSDK-416)")
+        }
+    } catch (cancellationException: CancellationException) {
+        TODO("Not yet implemented: MTSDK-416")
+        Result.Failure(ErrorCode.CancellationError, cancellationException.message)
+    } catch (exception: Exception) {
+        TODO("Not yet implemented: MTSDK-416")
+        Result.Failure(ErrorCode.UnexpectedError, exception.message)
     }
 
     suspend fun deleteDeviceToken(userPushConfig: PushConfig): Result<Empty> {
@@ -168,3 +191,23 @@ private fun HttpRequestBuilder.headerAuthorizationBearer(jwt: String) =
 
 private fun HttpRequestBuilder.headerOrigin(origin: String) =
     header(HttpHeaders.Origin, origin)
+
+internal fun PushConfig.toDeviceTokenRequestBody(operation: DeviceTokenOperation): String {
+    return when (operation) {
+        DeviceTokenOperation.Register -> WebMessagingJson.json.encodeToString(
+            DeviceTokenRequestBody(
+                deviceToken = deviceToken,
+                notificationProvider = pushProvider,
+                language = preferredLanguage,
+                deviceType = deviceType,
+            )
+        )
+
+        DeviceTokenOperation.Update -> WebMessagingJson.json.encodeToString(
+            DeviceTokenRequestBody(
+                deviceToken = deviceToken,
+                language = preferredLanguage,
+            )
+        )
+    }
+}

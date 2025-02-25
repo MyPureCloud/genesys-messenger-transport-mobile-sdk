@@ -25,6 +25,7 @@ internal class PushServiceImpl(
         val storedPushConfig = vault.pushConfig
         val userPushConfig = buildPushConfigFromUserData(deviceToken, pushProvider)
         val diff = pushConfigComparator.compare(userPushConfig, storedPushConfig)
+        log.i { LogMessages.pushDiff(diff) }
         handleDiff(diff, userPushConfig)
     }
 
@@ -59,8 +60,7 @@ internal class PushServiceImpl(
     }
 
     private suspend fun register(userPushConfig: PushConfig) {
-        val result = api.registerDeviceToken(userPushConfig)
-        when (result) {
+        when (api.performDeviceTokenOperation(userPushConfig, DeviceTokenOperation.Register)) {
             is Result.Success -> {
                 log.i { LogMessages.deviceTokenWasRegistered(userPushConfig) }
                 vault.pushConfig = userPushConfig
@@ -71,7 +71,7 @@ internal class PushServiceImpl(
     }
 
     private suspend fun update(userPushConfig: PushConfig) {
-        val result = api.updateDeviceToken(userPushConfig)
+        val result = api.performDeviceTokenOperation(userPushConfig, DeviceTokenOperation.Update)
         when (result) {
             is Result.Success -> {
                 log.i { LogMessages.deviceTokenWasUpdated(userPushConfig) }

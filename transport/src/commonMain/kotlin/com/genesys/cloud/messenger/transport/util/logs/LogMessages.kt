@@ -8,6 +8,7 @@ import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.push.PushConfig
+import com.genesys.cloud.messenger.transport.push.PushConfigComparator
 import com.genesys.cloud.messenger.transport.push.PushProvider
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
 
@@ -114,10 +115,12 @@ internal object LogMessages {
     fun ignoreInboundEvent(event: Event) = "Ignore inbound event: $event."
     // Push
     fun synchronizingPush(deviceToken: String, pushProvider: PushProvider) = "Synchronizing deviceToken: $deviceToken with $pushProvider."
+    fun pushDiff(diff: PushConfigComparator.Diff) = "The diff between user and stored push config is: $diff."
     fun deviceTokenIsInSync(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken} with ${pushConfig.pushProvider} is already in sync."
     fun deviceTokenWasRegistered(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken} with ${pushConfig.pushProvider} was registered."
     fun deviceTokenWasUpdated(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken} with ${pushConfig.pushProvider} was updated."
     fun deviceTokenWasDeleted(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken} with ${pushConfig.pushProvider} was deleted."
+    const val SYNCHRONIZE_PUSH_SERVICE_ON_SESSION_CONFIGURE = "Synchronizing push service from session configured."
     const val UNREGISTERING_DEVICE = "Unregistering device from push notifications."
     const val DEVICE_NOT_REGISTERED = "Device is not registered."
 }
