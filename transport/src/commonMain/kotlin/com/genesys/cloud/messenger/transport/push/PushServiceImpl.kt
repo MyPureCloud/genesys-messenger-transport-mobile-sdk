@@ -4,6 +4,7 @@ import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.push.PushConfigComparator.Diff
 import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.UNKNOWN
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
@@ -26,6 +27,17 @@ internal class PushServiceImpl(
         val diff = pushConfigComparator.compare(userPushConfig, storedPushConfig)
         log.i { LogMessages.pushDiff(diff) }
         handleDiff(diff, userPushConfig)
+    }
+
+    override suspend fun unregister() {
+        log.i { LogMessages.UNREGISTERING_DEVICE }
+        vault.pushConfig.run {
+            if (token == UNKNOWN) {
+                log.i { LogMessages.DEVICE_NOT_REGISTERED }
+                return
+            }
+            delete(this, true)
+        }
     }
 
     private suspend fun handleDiff(diff: Diff, userPushConfig: PushConfig) {
@@ -94,7 +106,7 @@ internal class PushServiceImpl(
             deviceToken = deviceToken,
             preferredLanguage = platform.preferredLanguage(),
             lastSyncTimestamp = platform.epochMillis(),
-            deviceType = platform.os,
+            deviceType = platform.os.lowercase(),
             pushProvider = pushProvider,
         )
     }

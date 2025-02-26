@@ -15,4 +15,12 @@ interface PushService {
      */
     @Throws(Exception::class)
     suspend fun synchronize(deviceToken: String, pushProvider: PushProvider)
+
+    /**
+     * Unregister device from push notifications.
+     *
+     * @throws Exception if unregister fails.
+     */
+    @Throws(Exception::class)
+    suspend fun unregister()
 }

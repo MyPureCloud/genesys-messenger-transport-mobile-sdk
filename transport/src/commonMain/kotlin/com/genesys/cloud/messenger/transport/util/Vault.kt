@@ -45,7 +45,7 @@ abstract class Vault(val keys: Keys) {
         }
 
     /**
-     * Retrieves the PushConfig from the vault or returns [DEFAULT_PUSH_CONFIG] if it doesn't exist.
+     * Retrieves the PushConfig used for registering device from the vault or returns [DEFAULT_PUSH_CONFIG] if it doesn't exist.
      * The PushConfig can also be set to a new value, which will then be stored in the vault.
      */
     internal var pushConfig: PushConfig
