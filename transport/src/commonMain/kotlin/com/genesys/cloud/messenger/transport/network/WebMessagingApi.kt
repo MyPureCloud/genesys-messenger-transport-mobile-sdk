@@ -177,11 +177,6 @@ internal class WebMessagingApi(
         TODO("Not yet implemented: MTSDK-416")
         Result.Failure(ErrorCode.UnexpectedError, exception.message)
     }
-
-    suspend fun deleteDeviceToken(userPushConfig: PushConfig): Result<Empty> {
-        // TODO("Not yet implemented: MTSDK-534")
-        return Result.Success(Empty())
-    }
 }
 
 private fun HttpStatusCode.isUnauthorized(): Boolean = this == HttpStatusCode.Unauthorized
@@ -192,22 +187,22 @@ private fun HttpRequestBuilder.headerAuthorizationBearer(jwt: String) =
 private fun HttpRequestBuilder.headerOrigin(origin: String) =
     header(HttpHeaders.Origin, origin)
 
-internal fun PushConfig.toDeviceTokenRequestBody(operation: DeviceTokenOperation): String {
-    return when (operation) {
-        DeviceTokenOperation.Register -> WebMessagingJson.json.encodeToString(
-            DeviceTokenRequestBody(
-                deviceToken = deviceToken,
-                notificationProvider = pushProvider,
-                language = preferredLanguage,
-                deviceType = deviceType,
-            )
+internal fun PushConfig.toDeviceTokenRequestBody(operation: DeviceTokenOperation): String = when (operation) {
+    DeviceTokenOperation.Register -> WebMessagingJson.json.encodeToString(
+        DeviceTokenRequestBody(
+            deviceToken = deviceToken,
+            notificationProvider = pushProvider,
+            language = preferredLanguage,
+            deviceType = deviceType,
         )
+    )
 
-        DeviceTokenOperation.Update -> WebMessagingJson.json.encodeToString(
-            DeviceTokenRequestBody(
-                deviceToken = deviceToken,
-                language = preferredLanguage,
-            )
+    DeviceTokenOperation.Update -> WebMessagingJson.json.encodeToString(
+        DeviceTokenRequestBody(
+            deviceToken = deviceToken,
+            language = preferredLanguage,
         )
-    }
+    )
+
+    DeviceTokenOperation.Delete -> ""
 }

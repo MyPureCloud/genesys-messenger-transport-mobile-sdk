@@ -426,6 +426,8 @@ internal class MessagingClientImpl(
                 defaultDispatcher.launch {
                     pushService.synchronize(deviceToken, pushProvider)
                 }
+            } else {
+                log.i { LogMessages.NO_DEVICE_TOKEN_OR_PUSH_PROVIDER }
             }
         }
     }

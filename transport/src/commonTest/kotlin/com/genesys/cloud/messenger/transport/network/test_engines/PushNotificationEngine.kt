@@ -28,6 +28,7 @@ internal fun HttpClientConfig<MockEngineConfig>.pushNotificationEngine() {
                     when (request.method) {
                         HttpMethod.Post -> respondToRegisterDeviceToken(request)
                         HttpMethod.Patch -> respondToUpdateDeviceToken(request)
+                        HttpMethod.Delete -> respondToDeleteDeviceToken(request)
                         else -> {
                             TODO("Not yet implemented: MTSDK-416")
                             respondBadRequest()
@@ -57,6 +58,15 @@ private fun MockRequestHandleScope.respondToUpdateDeviceToken(request: HttpReque
     val expectedUpdateRequestBody =
         """{"deviceToken":"${TestValues.DEVICE_TOKEN}","language":"${TestValues.PREFERRED_LANGUAGE}"}"""
     return if ((request.body as TextContent).text == expectedUpdateRequestBody) {
+        respondSuccess()
+    } else {
+        TODO("Not yet implemented: MTSDK-416")
+        respondBadRequest()
+    }
+}
+
+private fun MockRequestHandleScope.respondToDeleteDeviceToken(request: HttpRequestData): HttpResponseData {
+    return if ((request.body as TextContent).text == "") {
         respondSuccess()
     } else {
         TODO("Not yet implemented: MTSDK-416")
