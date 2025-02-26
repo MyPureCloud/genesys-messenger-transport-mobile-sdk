@@ -244,7 +244,6 @@ class PushServiceImplTest {
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.deviceTokenWasDeleted(expectedUserConfig))
     }
 
-
     private fun MockKVerificationScope.syncSequence(
         expectedUserConfig: PushConfig,
         expectedStoredConfig: PushConfig
