@@ -1,4 +1,4 @@
-package com.genesys.cloud.messenger.transport.core.messagingclient
+package transport.core.messagingclient
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -15,8 +15,6 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createFileUploadVOForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createMessengerVOForTesting
-import com.genesys.cloud.messenger.transport.util.Request
-import com.genesys.cloud.messenger.transport.util.Response
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
@@ -31,6 +29,8 @@ import io.mockk.slot
 import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
+import transport.util.Request
+import transport.util.Response
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
@@ -83,6 +83,22 @@ class MCAttachmentTests : BaseMessagingClientTest() {
 
     @Test
     fun `when detach() non existing attachmentId`() {
+        val givenAttachmentId = TestValues.DEFAULT_STRING
+        subject.connect()
+        clearMocks(mockPlatformSocket)
+        every { mockAttachmentHandler.detach(any(), any()) } throws IllegalArgumentException(ErrorMessage.detachFailed(givenAttachmentId))
+
+        val exception = assertFailsWith<IllegalArgumentException> {
+            subject.detach(givenAttachmentId)
+        }
+
+        assertThat(exception.message).isEqualTo(ErrorMessage.detachFailed(givenAttachmentId))
+
+        verify { mockPlatformSocket wasNot Called }
+    }
+
+    @Test
+    fun `when detach() non uploaded attachment`() {
         subject.connect()
         clearMocks(mockPlatformSocket)
         every { mockAttachmentHandler.detach(any(), any()) } returns null

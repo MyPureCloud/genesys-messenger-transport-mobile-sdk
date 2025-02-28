@@ -224,8 +224,9 @@ interface MessagingClient {
      * @param attachmentId the ID of the attachment to remove.
      *
      * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
+     * @throws IllegalArgumentException if the attachment ID is invalid.
      */
-    @Throws(IllegalStateException::class)
+    @Throws(IllegalStateException::class, IllegalArgumentException::class)
     fun detach(attachmentId: String)
 
     /**

@@ -89,7 +89,7 @@ internal class MessageStore(private val log: Log) {
         log.i { LogMessages.attachmentStateUpdated(attachment) }
         val attachments = pendingMessage.attachments.toMutableMap().also {
             it[attachment.id] = attachment
-        }
+        }.filterNot { it.value.state is Attachment.State.Sent }
         pendingMessage = pendingMessage.copy(attachments = attachments)
         publish(MessageEvent.AttachmentUpdated(attachment))
     }
