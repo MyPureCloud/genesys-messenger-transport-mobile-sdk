@@ -86,7 +86,7 @@ internal class PushServiceImpl(
         userPushConfig: PushConfig,
         clearStoredPushConfigUponSuccess: Boolean = false,
     ) {
-        val result = api.deleteDeviceToken(userPushConfig)
+        val result = api.performDeviceTokenOperation(userPushConfig, DeviceTokenOperation.Delete)
         when (result) {
             is Result.Success -> {
                 log.i { LogMessages.deviceTokenWasDeleted(userPushConfig) }

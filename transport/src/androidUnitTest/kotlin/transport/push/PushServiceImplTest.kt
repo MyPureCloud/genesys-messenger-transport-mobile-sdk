@@ -39,7 +39,6 @@ class PushServiceImplTest {
     }
     private val mockApi: WebMessagingApi = mockk {
         coEvery { performDeviceTokenOperation(any(), any()) } returns Result.Success(Empty())
-        coEvery { deleteDeviceToken(any()) } returns Result.Success(Empty())
     }
     private val mockPlatform: Platform = mockk {
         every { preferredLanguage() } returns TestValues.PREFERRED_LANGUAGE
@@ -115,7 +114,7 @@ class PushServiceImplTest {
 
         coVerifySequence {
             syncSequence(expectedUserConfig, expectedStoredConfig)
-            mockApi.deleteDeviceToken(expectedUserConfig)
+            mockApi.performDeviceTokenOperation(expectedUserConfig, DeviceTokenOperation.Delete)
             mockLogger.i(capture(logSlot))
             mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
             mockLogger.i(capture(logSlot))
@@ -235,7 +234,7 @@ class PushServiceImplTest {
         coVerifySequence {
             mockLogger.i(capture(logSlot))
             mockVault.pushConfig
-            mockApi.deleteDeviceToken(expectedUserConfig)
+            mockApi.performDeviceTokenOperation(expectedUserConfig, DeviceTokenOperation.Delete)
             mockLogger.i(capture(logSlot))
             mockVault.keys
             mockVault.remove(TestValues.vaultKeys.pushConfigKey)

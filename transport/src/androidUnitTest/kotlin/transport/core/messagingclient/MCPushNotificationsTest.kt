@@ -79,10 +79,12 @@ class MCPushNotificationsTest : BaseMessagingClientTest() {
             configureSequence(false)
             mockLogger.i(capture(logSlot))
             mockVault.pushConfig
+            mockLogger.i(capture(logSlot))
             mockStateChangedListener(fromConnectedToConfigured)
         }
         coVerify(exactly = 0) { mockPushService.synchronize(any(), any()) }
         assertLogsForPushConfig()
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.NO_DEVICE_TOKEN_OR_PUSH_PROVIDER)
     }
 
     @Test
@@ -108,10 +110,12 @@ class MCPushNotificationsTest : BaseMessagingClientTest() {
             configureSequence(false)
             mockLogger.i(capture(logSlot))
             mockVault.pushConfig
+            mockLogger.i(capture(logSlot))
             mockStateChangedListener(fromConnectedToConfigured)
         }
         coVerify(exactly = 0) { mockPushService.synchronize(any(), any()) }
         assertLogsForPushConfig()
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.NO_DEVICE_TOKEN_OR_PUSH_PROVIDER)
     }
 
     @Test

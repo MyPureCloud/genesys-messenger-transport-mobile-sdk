@@ -341,6 +341,17 @@ class WebMessagingApiTest {
 
         assertTrue(result is Result.Success<Empty>)
     }
+
+    @Test
+    fun `when performDeviceTokenOperation Delete with valid userConfig data`() {
+        subject = buildWebMessagingApiWith { pushNotificationEngine() }
+        val givenUserPushConfig = PushTestValues.CONFIG
+        val givenOperation = DeviceTokenOperation.Delete
+
+        val result = runBlocking { subject.performDeviceTokenOperation(givenUserPushConfig, givenOperation) }
+
+        assertTrue(result is Result.Success<Empty>)
+    }
 }
 
 private fun buildWebMessagingApiWith(

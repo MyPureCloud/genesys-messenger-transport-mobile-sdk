@@ -123,4 +123,5 @@ internal object LogMessages {
     const val SYNCHRONIZE_PUSH_SERVICE_ON_SESSION_CONFIGURE = "Synchronizing push service from session configured."
     const val UNREGISTERING_DEVICE = "Unregistering device from push notifications."
     const val DEVICE_NOT_REGISTERED = "Device is not registered."
+    const val NO_DEVICE_TOKEN_OR_PUSH_PROVIDER = "Skipping push service synchronization: Missing device token or push provider."
 }
