@@ -9,6 +9,10 @@ import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
 import com.genesys.cloud.messenger.transport.shyrka.receive.Auth
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
+import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations.AutoStart
+import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations.ConversationClear
+import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations.ConversationDisconnect
+import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations.Notifications
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.FileUpload
 import com.genesys.cloud.messenger.transport.shyrka.receive.JourneyEvents
@@ -16,11 +20,9 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.LauncherButton
 import com.genesys.cloud.messenger.transport.shyrka.receive.Messenger
 import com.genesys.cloud.messenger.transport.shyrka.receive.Mode
 import com.genesys.cloud.messenger.transport.shyrka.receive.Styles
+import com.genesys.cloud.messenger.transport.shyrka.receive.createConversationsVOForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
-import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations.AutoStart
-import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations.ConversationClear
-import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations.ConversationDisconnect
-import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations.Notifications
+import com.genesys.cloud.messenger.transport.shyrka.receive.createMessengerVOForTesting
 import com.genesys.cloud.messenger.transport.utility.DeploymentConfigValues
 import kotlinx.serialization.encodeToString
 import org.junit.Test

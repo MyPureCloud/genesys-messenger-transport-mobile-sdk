@@ -11,7 +11,6 @@ import com.genesys.cloud.messenger.transport.util.TokenGenerator
 import com.genesys.cloud.messenger.transport.util.VAULT_KEY
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.WAS_AUTHENTICATED
-import com.genesys.cloud.messenger.transport.utility.TestValues
 import org.junit.Test
 import kotlin.test.assertTrue
 

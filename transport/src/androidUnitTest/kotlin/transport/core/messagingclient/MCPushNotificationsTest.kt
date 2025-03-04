@@ -2,16 +2,13 @@ package transport.core.messagingclient
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import com.genesys.cloud.messenger.transport.core.messagingclient.BaseMessagingClientTest
 import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations.Notifications.NotificationContentType
 import com.genesys.cloud.messenger.transport.shyrka.receive.createConversationsVOForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createMessengerVOForTesting
-import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.UNKNOWN
-import com.genesys.cloud.messenger.transport.util.fromConnectedToConfigured
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.PushTestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
@@ -27,6 +24,8 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import transport.util.Request
+import transport.util.fromConnectedToConfigured
 
 class MCPushNotificationsTest : BaseMessagingClientTest() {
 
