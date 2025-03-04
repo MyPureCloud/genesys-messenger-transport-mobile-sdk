@@ -1,4 +1,4 @@
-package com.genesys.cloud.messenger.transport.shyrka.receive
+package transport.shyrka.receive
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -9,6 +9,15 @@ import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.MAX_CUSTOM_DATA_BYTES_UNSET
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
+import com.genesys.cloud.messenger.transport.shyrka.receive.AttachmentDeletedResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
+import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
+import com.genesys.cloud.messenger.transport.shyrka.receive.TooManyRequestsErrorMessage
+import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
+import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
@@ -16,7 +25,6 @@ import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues.createButtonResponseContentForTesting
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues.createQuickReplyContentForTesting
 import com.genesys.cloud.messenger.transport.utility.TestValues
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import org.junit.Test
 

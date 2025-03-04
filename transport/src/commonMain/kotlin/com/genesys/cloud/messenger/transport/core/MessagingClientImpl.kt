@@ -255,7 +255,7 @@ internal class MessagingClientImpl(
         return request.attachmentId
     }
 
-    @Throws(IllegalStateException::class)
+    @Throws(IllegalStateException::class, IllegalArgumentException::class)
     override fun detach(attachmentId: String) {
         log.i { LogMessages.detach(attachmentId) }
         attachmentHandler.detach(token, attachmentId)?.let {
@@ -361,6 +361,7 @@ internal class MessagingClientImpl(
     }
 
     override fun authorize(authCode: String, redirectUri: String, codeVerifier: String?) {
+        invalidateSessionToken()
         authHandler.authorize(authCode, redirectUri, codeVerifier)
     }
 
@@ -610,7 +611,6 @@ internal class MessagingClientImpl(
 
     private fun transitionToStateError(errorCode: ErrorCode, errorMessage: String?) {
         stateMachine.onError(errorCode, errorMessage)
-        attachmentHandler.clearAll()
         reconnectionHandler.clear()
         jwtHandler.clear()
         reconfigureAttempts = 0

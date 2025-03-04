@@ -1,15 +1,20 @@
-package com.genesys.cloud.messenger.transport.auth
+package transport.auth
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isNull
+import com.genesys.cloud.messenger.transport.auth.AuthHandlerImpl
+import com.genesys.cloud.messenger.transport.auth.AuthJwt
+import com.genesys.cloud.messenger.transport.auth.MAX_LOGOUT_ATTEMPTS
+import com.genesys.cloud.messenger.transport.auth.NO_JWT
+import com.genesys.cloud.messenger.transport.auth.NO_REFRESH_TOKEN
+import com.genesys.cloud.messenger.transport.auth.RefreshToken
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
-import com.genesys.cloud.messenger.transport.core.FakeVault
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
@@ -36,6 +41,7 @@ import kotlinx.serialization.encodeToString
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import transport.core.FakeVault
 
 class AuthHandlerTest {
 

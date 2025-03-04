@@ -83,6 +83,7 @@ object ErrorMessage {
     const val FailedToClearConversation = "Failed to clear conversation."
     const val FileSizeIsToSmall = "Attachment size cannot be less than 1 byte"
     const val FileAttachmentIsDisabled = "File attachment is disabled in Deployment Configuration."
+    fun detachFailed(attachmentId: String) = "Detach failed: Invalid attachment ID ($attachmentId)"
     const val INVALID_DEVICE_TOKEN = "DeviceToken can not be empty."
     const val INVALID_PUSH_PROVIDER = "PushProvider can not be null."
     fun fileSizeIsTooBig(maxFileSize: Long?) = "Reduce the attachment size to $maxFileSize KB or less."

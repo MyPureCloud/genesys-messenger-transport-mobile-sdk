@@ -1,4 +1,4 @@
-package com.genesys.cloud.messenger.transport.core
+package transport.core
 
 import assertk.assertThat
 import assertk.assertions.contains
@@ -12,11 +12,17 @@ import assertk.assertions.isNotEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import com.genesys.cloud.messenger.transport.core.Attachment
+import com.genesys.cloud.messenger.transport.core.DEFAULT_PAGE_SIZE
+import com.genesys.cloud.messenger.transport.core.ErrorCode
+import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.Message.Content
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.core.Message.Participant
 import com.genesys.cloud.messenger.transport.core.Message.State
 import com.genesys.cloud.messenger.transport.core.Message.Type
+import com.genesys.cloud.messenger.transport.core.MessageEvent
+import com.genesys.cloud.messenger.transport.core.MessageStore
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
@@ -206,7 +212,27 @@ internal class MessageStoreTest {
             mockLogger.i(capture(logSlot))
             mockMessageListener.invoke(capture(messageSlot))
         }
+
         assertThat(subject.pendingMessage.attachments["given id"]).isEqualTo(givenAttachment)
+        assertThat((messageSlot.captured as MessageEvent.AttachmentUpdated).attachment).isEqualTo(
+            givenAttachment
+        )
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.attachmentStateUpdated(givenAttachment))
+    }
+
+    @Test
+    fun `when update() with Sent attachment state`() {
+        val givenAttachment = attachment().copy(state = Attachment.State.Sent("http://someurl.com"))
+
+        subject.updateAttachmentStateWith(givenAttachment)
+
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockMessageListener.invoke(capture(messageSlot))
+        }
+
+        assertThat(subject.pendingMessage.attachments.containsValue(givenAttachment)).isFalse()
+
         assertThat((messageSlot.captured as MessageEvent.AttachmentUpdated).attachment).isEqualTo(
             givenAttachment
         )
@@ -390,7 +416,7 @@ internal class MessageStoreTest {
             id = "0",
             direction = Direction.Outbound,
             state = State.Sent,
-            messageType = Message.Type.QuickReply,
+            messageType = Type.QuickReply,
             text = "message from bot",
             timeStamp = 0,
             attachments = emptyMap(),
@@ -416,7 +442,7 @@ internal class MessageStoreTest {
             id = "0",
             direction = Direction.Inbound,
             state = State.Sent,
-            messageType = Message.Type.QuickReply,
+            messageType = Type.QuickReply,
             timeStamp = 0,
             attachments = emptyMap(),
             events = emptyList(),

@@ -1,4 +1,4 @@
-package com.genesys.cloud.messenger.transport.core
+package transport.core
 
 import assertk.assertThat
 import assertk.assertions.containsOnly
@@ -7,7 +7,15 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import com.genesys.cloud.messenger.transport.core.Attachment
 import com.genesys.cloud.messenger.transport.core.Attachment.State
+import com.genesys.cloud.messenger.transport.core.AttachmentHandlerImpl
+import com.genesys.cloud.messenger.transport.core.Empty
+import com.genesys.cloud.messenger.transport.core.ErrorCode
+import com.genesys.cloud.messenger.transport.core.ErrorMessage
+import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
+import com.genesys.cloud.messenger.transport.core.ProcessedAttachment
+import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
@@ -120,13 +128,14 @@ internal class AttachmentHandlerImplTest {
         val mockUploadProgress: ((Float) -> Unit) = spyk()
         val progressSlot = slot<Float>()
         givenPrepareCalled(uploadProgress = mockUploadProgress)
+        val expectedPresignedUrlResponse = givenPresignedUrlResponse.copy(fileName = AttachmentValues.FileName)
 
         subject.upload(givenPresignedUrlResponse)
 
         coVerify {
             mockLogger.i(capture(logSlot))
             mockAttachmentListener.invoke(capture(attachmentSlot))
-            mockApi.uploadFile(givenPresignedUrlResponse, ByteArray(1), mockUploadProgress)
+            mockApi.uploadFile(expectedPresignedUrlResponse, ByteArray(1), mockUploadProgress)
             mockUploadProgress.invoke(capture(progressSlot))
         }
         assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
@@ -285,12 +294,14 @@ internal class AttachmentHandlerImplTest {
 
     @Test
     fun `when detach() on not processed attachment`() {
-        val result = subject.detach(TestValues.Token, "not processed attachment id")
+        val givenAttachmentId = TestValues.DEFAULT_STRING
 
-        verify {
-            listOf(mockAttachmentListener) wasNot Called
+        val exception = assertFailsWith<IllegalArgumentException> {
+            subject.detach(TestValues.Token, givenAttachmentId)
         }
-        assertThat(result).isNull()
+        assertThat(exception.message).isEqualTo(ErrorMessage.detachFailed(givenAttachmentId))
+
+        verify { listOf(mockAttachmentListener) wasNot Called }
     }
 
     @Test

@@ -66,7 +66,7 @@ internal class AttachmentHandlerImpl(
             it.attachment = it.attachment.copy(state = Uploading)
                 .also(updateAttachmentStateWith)
             it.job = uploadDispatcher.launch {
-                when (val result = api.uploadFile(presignedUrlResponse, it.byteArray, it.uploadProgress)) {
+                when (val result = api.uploadFile(presignedUrlResponse.copy(fileName = it.attachment.fileName), it.byteArray, it.uploadProgress)) {
                     is Result.Success -> {} // Nothing to do here. We are waiting for UploadSuccess/Failure Event from Shyrka.
                     is Result.Failure -> handleUploadFailure(presignedUrlResponse.attachmentId, result)
                 }
@@ -84,7 +84,12 @@ internal class AttachmentHandlerImpl(
         }
     }
 
+    @Throws(IllegalArgumentException::class)
     override fun detach(token: String, attachmentId: String): DeleteAttachmentRequest? {
+        if (!processedAttachments.containsKey(attachmentId)) {
+            log.e { LogMessages.invalidAttachmentId(attachmentId) }
+            throw IllegalArgumentException(ErrorMessage.detachFailed(attachmentId))
+        }
         processedAttachments[attachmentId]?.let {
             log.i { LogMessages.detachingAttachment(attachmentId) }
             it.job?.cancel()

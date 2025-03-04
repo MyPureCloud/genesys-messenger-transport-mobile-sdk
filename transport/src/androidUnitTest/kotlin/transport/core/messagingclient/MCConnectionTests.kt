@@ -1,4 +1,4 @@
-package com.genesys.cloud.messenger.transport.core.messagingclient
+package transport.core.messagingclient
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -16,13 +16,6 @@ import com.genesys.cloud.messenger.transport.core.isConnected
 import com.genesys.cloud.messenger.transport.core.isConnecting
 import com.genesys.cloud.messenger.transport.core.isError
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
-import com.genesys.cloud.messenger.transport.util.Request
-import com.genesys.cloud.messenger.transport.util.Response
-import com.genesys.cloud.messenger.transport.util.fromConfiguredToError
-import com.genesys.cloud.messenger.transport.util.fromConfiguredToReconnecting
-import com.genesys.cloud.messenger.transport.util.fromConnectedToError
-import com.genesys.cloud.messenger.transport.util.fromIdleToConnecting
-import com.genesys.cloud.messenger.transport.util.fromReconnectingToError
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import io.mockk.every
@@ -31,6 +24,13 @@ import io.mockk.slot
 import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
+import transport.util.Request
+import transport.util.Response
+import transport.util.fromConfiguredToError
+import transport.util.fromConfiguredToReconnecting
+import transport.util.fromConnectedToError
+import transport.util.fromIdleToConnecting
+import transport.util.fromReconnectingToError
 import kotlin.test.assertFailsWith
 
 class MCConnectionTests : BaseMessagingClientTest() {
@@ -125,14 +125,12 @@ class MCConnectionTests : BaseMessagingClientTest() {
             mockStateChangedListener(fromIdleToConnecting)
             mockPlatformSocket.openSocket(any())
             mockMessageStore.invalidateConversationCache()
-            mockStateChangedListener(
+            errorSequence(
                 StateChange(
                     oldState = MessagingClient.State.Connecting,
                     newState = expectedErrorState
                 )
             )
-            mockAttachmentHandler.clearAll()
-            mockReconnectionHandler.clear()
         }
     }
 
