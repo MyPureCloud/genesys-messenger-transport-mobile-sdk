@@ -40,9 +40,9 @@ import com.genesys.cloud.messenger.transport.shyrka.send.GetAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
+import com.genesys.cloud.messenger.transport.util.GuestSessionDurationUseCase
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Vault
-import com.genesys.cloud.messenger.transport.util.extensions.isHealthCheckResponseId
 import com.genesys.cloud.messenger.transport.util.extensions.isOutbound
 import com.genesys.cloud.messenger.transport.util.extensions.isRefreshUrl
 import com.genesys.cloud.messenger.transport.util.extensions.toFileAttachmentProfile
@@ -51,6 +51,8 @@ import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
+import com.soywiz.klock.DateFormat
+import com.soywiz.klock.DateTime
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlin.reflect.KProperty0
@@ -522,10 +524,6 @@ internal class MessagingClientImpl(
     }
 
     private fun Message.handleAsTextMessage() {
-        if (id.isHealthCheckResponseId()) {
-            eventHandler.onEvent(Event.HealthChecked)
-            return
-        }
         messageStore.update(this)
         if (direction == Message.Direction.Inbound) {
             internalCustomAttributesStore.onSent()
@@ -682,7 +680,45 @@ internal class MessagingClientImpl(
                         decoded.body.run {
                             val message = this.toMessage()
                             when (type) {
-                                StructuredMessage.Type.Text -> message.handleAsTextMessage()
+                                StructuredMessage.Type.Text -> {
+                                    log.i { "Guest session check. Message: $this" }
+
+                                    if (this.isEchoResponse()) {
+                                        log.i { "Guest session check: echo response" }
+
+                                        eventHandler.onEvent(Event.HealthChecked)
+                                        // start timer
+
+                                        val expirationDate: Long = metadata["expirationDate"]?.let {
+                                            it.toLongOrNull()
+                                                ?: GuestSessionDurationUseCase.getCurrentTimeInSeconds()
+                                        } ?: GuestSessionDurationUseCase.getCurrentTimeInSeconds()
+                                        val durationSeconds: Long =
+                                            metadata["durationSeconds"]?.let {
+                                                it.toLongOrNull()
+                                                    ?: GuestSessionDurationUseCase.DEFAULT_DURATION
+                                            } ?: GuestSessionDurationUseCase.DEFAULT_DURATION
+                                        log.i {
+                                            "Guest session expirationDate: ${
+                                                DateTime(expirationDate * 1000.0).format(
+                                                    DateFormat.FORMAT1
+                                                )
+                                            } durationSeconds: $durationSeconds"
+                                        }
+
+                                        GuestSessionDurationUseCase(
+                                            duration = /*durationSeconds*/ 10L,
+                                            expiration = /*expirationDate*/ GuestSessionDurationUseCase.getCurrentTimeInSeconds()
+                                        ) {
+                                            // New event to be sent
+                                            eventHandler.onEvent(Event.GuestSessionEnd(durationSeconds)
+                                            )
+                                        }
+                                    } else {
+                                        message.handleAsTextMessage()
+                                    }
+                                }
+
                                 StructuredMessage.Type.Event -> message.handleAsEvent(
                                     metadata["readOnly"].toBoolean()
                                 )
@@ -794,3 +830,7 @@ private fun Map<String, String>.asChannel(): Channel? {
         Channel(Channel.Metadata(this))
     } else null
 }
+
+private fun StructuredMessage.isEchoResponse() = this.text.equals("ping", true)
+        && this.direction.equals("Inbound", true)
+
