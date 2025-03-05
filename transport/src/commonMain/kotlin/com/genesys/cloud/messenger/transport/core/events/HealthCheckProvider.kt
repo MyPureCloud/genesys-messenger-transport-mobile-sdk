@@ -22,7 +22,7 @@ internal class HealthCheckProvider(
         val delta = currentTimestamp - lastSentHealthCheckTimestamp
         return if (delta > HEALTH_CHECK_COOL_DOWN_MILLISECONDS) {
             lastSentHealthCheckTimestamp = currentTimestamp
-            val request = EchoRequest(token = token)
+            val request = EchoRequest(token = token, sessionDuration = true)
             WebMessagingJson.json.encodeToString(request)
         } else {
             log.w { LogMessages.healthCheckCoolDown(HEALTH_CHECK_COOL_DOWN_MILLISECONDS) }

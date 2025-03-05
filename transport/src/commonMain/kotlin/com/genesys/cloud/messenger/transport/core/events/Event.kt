@@ -90,4 +90,9 @@ sealed class Event {
      *  Sent as confirmation when existing authenticated session was cleared on other devices as a result of step-up.
      */
     data object ExistingAuthSessionCleared : Event()
+
+    /**
+     *  Sent when the dialog for the guest session end should be shown
+     */
+    data class GuestSessionEnd(val duration: Long) : Event()
 }
