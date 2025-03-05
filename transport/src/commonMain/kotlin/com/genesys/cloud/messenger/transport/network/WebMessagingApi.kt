@@ -172,14 +172,11 @@ internal class WebMessagingApi(
         if (response.status.isSuccess()) {
             Result.Success(Empty())
         } else {
-            TODO("Not yet implemented: MTSDK-416")
             Result.Failure(ErrorCode.UnexpectedError, "TODO(Not yet implemented: MTSDK-416)")
         }
     } catch (cancellationException: CancellationException) {
-        TODO("Not yet implemented: MTSDK-416")
         Result.Failure(ErrorCode.CancellationError, cancellationException.message)
     } catch (exception: Exception) {
-        TODO("Not yet implemented: MTSDK-416")
         Result.Failure(ErrorCode.UnexpectedError, exception.message)
     }
 }

@@ -66,7 +66,7 @@ internal class PushServiceImpl(
                 vault.pushConfig = userPushConfig
             }
 
-            is Result.Failure -> TODO("Not yet implemented: MTSDK-416")
+            is Result.Failure -> log.e { "TODO(Not yet implemented: MTSDK-416)" }
         }
     }
 
@@ -78,7 +78,7 @@ internal class PushServiceImpl(
                 vault.pushConfig = userPushConfig
             }
 
-            is Result.Failure -> TODO("Not yet implemented: MTSDK-416")
+            is Result.Failure -> log.e { "TODO(Not yet implemented: MTSDK-416)" }
         }
     }
 
@@ -93,7 +93,7 @@ internal class PushServiceImpl(
                 if (clearStoredPushConfigUponSuccess) vault.remove(vault.keys.pushConfigKey)
             }
 
-            is Result.Failure -> TODO("Not yet implemented: MTSDK-416")
+            is Result.Failure -> log.e { "TODO(Not yet implemented: MTSDK-416)" }
         }
     }
 

@@ -30,13 +30,13 @@ internal fun HttpClientConfig<MockEngineConfig>.pushNotificationEngine() {
                         HttpMethod.Patch -> respondToUpdateDeviceToken(request)
                         HttpMethod.Delete -> respondToDeleteDeviceToken(request)
                         else -> {
-                            TODO("Not yet implemented: MTSDK-416")
+                            // TODO("Not yet implemented: MTSDK-416")
                             respondBadRequest()
                         }
                     }
                 }
                 else -> {
-                    TODO("Not yet implemented: MTSDK-416")
+                    // TODO("Not yet implemented: MTSDK-416")
                     respondNotFound()
                 }
             }
@@ -49,7 +49,7 @@ private fun MockRequestHandleScope.respondToRegisterDeviceToken(request: HttpReq
     return if ((request.body as TextContent).text == expectedRegisterRequestBody) {
         respondSuccess()
     } else {
-        TODO("Not yet implemented: MTSDK-416")
+        // TODO("Not yet implemented: MTSDK-416")
         respondBadRequest()
     }
 }
@@ -60,7 +60,7 @@ private fun MockRequestHandleScope.respondToUpdateDeviceToken(request: HttpReque
     return if ((request.body as TextContent).text == expectedUpdateRequestBody) {
         respondSuccess()
     } else {
-        TODO("Not yet implemented: MTSDK-416")
+        // TODO("Not yet implemented: MTSDK-416")
         respondBadRequest()
     }
 }
@@ -69,7 +69,7 @@ private fun MockRequestHandleScope.respondToDeleteDeviceToken(request: HttpReque
     return if ((request.body as TextContent).text == "") {
         respondSuccess()
     } else {
-        TODO("Not yet implemented: MTSDK-416")
+        // TODO("Not yet implemented: MTSDK-416")
         respondBadRequest()
     }
 }
