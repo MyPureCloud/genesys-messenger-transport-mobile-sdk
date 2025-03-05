@@ -53,6 +53,7 @@ object AuthTest {
 object ErrorTest {
     internal const val Message = "This is a generic error message for testing."
     internal const val RetryAfter = 1
+    internal const val Code = 404L
 }
 
 object InvalidValues {
