@@ -89,6 +89,7 @@ object AttachmentValues {
     internal const val PresignedHeaderKey = "x-amz-tagging"
     internal const val PresignedHeaderValue = "abc"
     internal const val FileName = "fileName.png"
+    internal const val TXT_FILE_NAME = "fileName.txt"
     internal const val FileSize = 100
     internal const val FileMD5 = "file_md5"
     internal const val FileType = "png"

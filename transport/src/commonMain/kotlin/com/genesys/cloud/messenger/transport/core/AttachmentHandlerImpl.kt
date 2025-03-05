@@ -54,7 +54,7 @@ internal class AttachmentHandlerImpl(
             token,
             attachmentId = attachmentId,
             fileName = fileName,
-            fileType = ContentType.defaultForFilePath(fileName).toString(),
+            fileType = ContentType.defaultForFilePath(fileName).withoutParameters().toString(),
             fileSize = byteArray.size,
             errorsAsJson = true,
         )

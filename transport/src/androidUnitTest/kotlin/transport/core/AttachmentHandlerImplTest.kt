@@ -121,6 +121,42 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
+    fun `when prepare() txt file`() {
+        val expectedAttachment = Attachment(
+            AttachmentValues.Id,
+            AttachmentValues.TXT_FILE_NAME,
+            null,
+            State.Presigning
+        )
+        val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(AttachmentValues.FileSize))
+        val expectedOnAttachmentRequest = OnAttachmentRequest(
+            token = TestValues.Token,
+            attachmentId = AttachmentValues.Id,
+            fileName = AttachmentValues.TXT_FILE_NAME,
+            fileType = "text/plain",
+            fileSize = AttachmentValues.FileSize,
+            null,
+            true,
+        )
+
+        val onAttachmentRequest =
+            subject.prepare(TestValues.Token, AttachmentValues.Id, ByteArray(AttachmentValues.FileSize), AttachmentValues.TXT_FILE_NAME)
+
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockAttachmentListener.invoke(capture(attachmentSlot))
+        }
+        assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
+        assertThat(processedAttachments).containsOnly(AttachmentValues.Id to expectedProcessedAttachment)
+        assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
+        assertThat(logSlot[0].invoke()).isEqualTo(
+            LogMessages.presigningAttachment(
+                expectedAttachment
+            )
+        )
+    }
+
+    @Test
     fun `when upload() processed attachment`() {
         val expectedProgress = 25f
         val expectedAttachment =
