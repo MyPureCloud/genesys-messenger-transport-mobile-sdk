@@ -12,7 +12,7 @@ internal object Response {
     fun configureSuccess(
         connected: Boolean = true,
         readOnly: Boolean = false,
-        maxCustomDataBytes: Int = TestValues.MaxCustomDataBytes,
+        maxCustomDataBytes: Int = TestValues.MAX_CUSTOM_DATA_BYTES,
         allowedMedia: String = AllowedMedia.empty,
         blockedExtensions: String = AllowedMedia.emptyBlockedExtensions,
         clearedExistingSession: Boolean = false,
@@ -26,7 +26,7 @@ internal object Response {
     fun onMessage(direction: Message.Direction = Message.Direction.Inbound) =
         """{"type":"message","class":"StructuredMessage","code":200,"body":{"text":"Hello world!","direction":"${direction.name}","id":"test_id","channel":{"time":"2022-08-22T19:24:26.704Z","messageId":"message_id"},"type":"Text","metadata":{"customMessageId":"some_custom_message_id"}}}"""
     fun onMessageWithAttachment(direction: Message.Direction = Message.Direction.Outbound) =
-        """{"type":"message","class":"StructuredMessage","code":200,"body":{"direction":"${direction.name}","id":"msg_id","channel":{"time":"some_time","type":"Private"},"type":"Text","text":"Hi","content":[{"attachment":{"id":"attachment_id","filename":"image.png","mediaType":"Image","fileSize":${AttachmentValues.FileSize},"mime":"image/png","url":"https://downloadurl.com"},"contentType":"Attachment"}],"originatingEntity":"Human"}}"""
+        """{"type":"message","class":"StructuredMessage","code":200,"body":{"direction":"${direction.name}","id":"msg_id","channel":{"time":"some_time","type":"Private"},"type":"Text","text":"Hi","content":[{"attachment":{"id":"attachment_id","filename":"image.png","mediaType":"Image","fileSize":${AttachmentValues.FILE_SIZE},"mime":"image/png","url":"https://downloadurl.com"},"contentType":"Attachment"}],"originatingEntity":"Human"}}"""
     const val onMessageWithQuickReplies =
         """{"type":"message","class":"StructuredMessage","code":200,"body":{"direction":"Outbound","id":"msg_id","channel":{"time":"some_time","type":"Private"},"type":"Structured","text":"Hi","content":[{"contentType":"QuickReply","quickReply":{"text":"text_a","payload":"payload_a","action":"action_a"}},{"contentType":"QuickReply","quickReply":{"text":"text_b","payload":"payload_b","action":"action_b"}}],"originatingEntity":"Bot"}}"""
     const val onMessageWithoutQuickReplies =
@@ -40,7 +40,7 @@ internal object Response {
     const val sessionExpired =
         """{"type": "response","class": "string","code": 4006,"body": "session expired error message"}"""
     const val cannotDowngradeToUnauthenticated =
-        """{"type": "response","class": "string","code": 4017,"body": "${ErrorTest.Message}"}"""
+        """{"type": "response","class": "string","code": 4017,"body": "${ErrorTest.MESSAGE}"}"""
     const val sessionExpiredEvent =
         """{"type": "response","class": "SessionExpiredEvent","code": 200,"body": {}}"""
     const val messageTooLong =

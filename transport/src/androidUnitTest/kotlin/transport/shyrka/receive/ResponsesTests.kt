@@ -32,24 +32,24 @@ class ResponsesTests {
 
     @Test
     fun `when AttachmentDeleteResponse serialized`() {
-        val expectedRequest = AttachmentDeletedResponse(AttachmentValues.Id)
-        val expectedJson = """{"attachmentId":"${AttachmentValues.Id}"}"""
+        val expectedRequest = AttachmentDeletedResponse(AttachmentValues.ID)
+        val expectedJson = """{"attachmentId":"${AttachmentValues.ID}"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<AttachmentDeletedResponse>(expectedJson)
 
         assertThat(encodedString, "encoded AttachmentDeletedResponse").isEqualTo(expectedJson)
-        assertThat(decoded.attachmentId).isEqualTo(AttachmentValues.Id)
+        assertThat(decoded.attachmentId).isEqualTo(AttachmentValues.ID)
     }
 
     @Test
     fun `when GenerateUrlError serialized`() {
         val expectedRequest = GenerateUrlError(
-            attachmentId = AttachmentValues.Id,
+            attachmentId = AttachmentValues.ID,
             errorCode = ErrorCode.FileNameInvalid.code,
-            errorMessage = ErrorTest.Message
+            errorMessage = ErrorTest.MESSAGE
         )
-        val expectedJson = """{"attachmentId":"${AttachmentValues.Id}","errorCode":4004,"errorMessage":"${ErrorTest.Message}"}"""
+        val expectedJson = """{"attachmentId":"${AttachmentValues.ID}","errorCode":4004,"errorMessage":"${ErrorTest.MESSAGE}"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<GenerateUrlError>(expectedJson)
@@ -57,15 +57,15 @@ class ResponsesTests {
         assertThat(encodedString, "encoded GenerateUrlError").isEqualTo(expectedJson)
         decoded.run {
             assertThat(this).isEqualTo(expectedRequest)
-            assertThat(attachmentId).isEqualTo(AttachmentValues.Id)
+            assertThat(attachmentId).isEqualTo(AttachmentValues.ID)
             assertThat(errorCode).isEqualTo(ErrorCode.FileNameInvalid.code)
-            assertThat(errorMessage).isEqualTo(ErrorTest.Message)
+            assertThat(errorMessage).isEqualTo(ErrorTest.MESSAGE)
         }
     }
 
     @Test
     fun `when JwtResponse serialized`() {
-        val expectedRequest = JwtResponse(AuthTest.JwtToken, AuthTest.JwtExpiry)
+        val expectedRequest = JwtResponse(AuthTest.JWT_TOKEN, AuthTest.JWT_EXPIRY)
         val expectedJson = """{"jwt":"jwt_Token","exp":100}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
@@ -74,20 +74,20 @@ class ResponsesTests {
         assertThat(encodedString, "encoded JwtResponse").isEqualTo(expectedJson)
         decoded.run {
             assertThat(this).isEqualTo(expectedRequest)
-            assertThat(jwt).isEqualTo(AuthTest.JwtToken)
-            assertThat(exp).isEqualTo(AuthTest.JwtExpiry)
+            assertThat(jwt).isEqualTo(AuthTest.JWT_TOKEN)
+            assertThat(exp).isEqualTo(AuthTest.JWT_EXPIRY)
         }
     }
 
     @Test
     fun `when PresignedUrlResponse serialized`() {
         val expectedRequest = PresignedUrlResponse(
-            attachmentId = AttachmentValues.Id,
-            fileName = AttachmentValues.FileName,
-            headers = mapOf(AttachmentValues.PresignedHeaderKey to AttachmentValues.PresignedHeaderValue),
-            url = AttachmentValues.DownloadUrl,
-            fileSize = AttachmentValues.FileSize,
-            fileType = AttachmentValues.FileType,
+            attachmentId = AttachmentValues.ID,
+            fileName = AttachmentValues.FILE_NAME,
+            headers = mapOf(AttachmentValues.PRESIGNED_HEADER_KEY to AttachmentValues.PRESIGNED_HEADER_VALUE),
+            url = AttachmentValues.DOWNLOAD_URL,
+            fileSize = AttachmentValues.FILE_SIZE,
+            fileType = AttachmentValues.FILE_TYPE,
         )
         val expectedJson = """{"attachmentId":"test_attachment_id","headers":{"x-amz-tagging":"abc"},"url":"https://downloadurl.png","fileName":"fileName.png","fileSize":100,"fileType":"png"}"""
 
@@ -99,8 +99,8 @@ class ResponsesTests {
             assertThat(this).isEqualTo(expectedRequest)
             assertThat(attachmentId).isEqualTo(expectedRequest.attachmentId)
             assertThat(fileName).isEqualTo(expectedRequest.fileName)
-            assertThat(headers[AttachmentValues.PresignedHeaderKey]).isEqualTo(
-                expectedRequest.headers[AttachmentValues.PresignedHeaderKey]
+            assertThat(headers[AttachmentValues.PRESIGNED_HEADER_KEY]).isEqualTo(
+                expectedRequest.headers[AttachmentValues.PRESIGNED_HEADER_KEY]
             )
             assertThat(url).isEqualTo(expectedRequest.url)
             assertThat(fileSize).isEqualTo(expectedRequest.fileSize)
@@ -149,12 +149,12 @@ class ResponsesTests {
     @Test
     fun `validate StructuredMessage_Attachment serialization`() {
         val expectedRequest = StructuredMessage.Content.AttachmentContent(
-            contentType = AttachmentValues.AttachmentContentType,
+            contentType = AttachmentValues.ATTACHMENT_CONTENT_TYPE,
             attachment = StructuredMessage.Content.AttachmentContent.Attachment(
-                id = AttachmentValues.Id,
-                url = AttachmentValues.DownloadUrl,
-                filename = AttachmentValues.FileName,
-                mediaType = AttachmentValues.MediaType,
+                id = AttachmentValues.ID,
+                url = AttachmentValues.DOWNLOAD_URL,
+                filename = AttachmentValues.FILE_NAME,
+                mediaType = AttachmentValues.MEDIA_TYPE,
             )
         )
         val expectedJson =
@@ -165,12 +165,12 @@ class ResponsesTests {
 
         assertThat(encodedString, "encoded StructuredMessage.Content.AttachmentContent").isEqualTo(expectedJson)
         decoded.run {
-            assertThat(contentType).isEqualTo(AttachmentValues.AttachmentContentType)
+            assertThat(contentType).isEqualTo(AttachmentValues.ATTACHMENT_CONTENT_TYPE)
             attachment.run {
-                assertThat(id).isEqualTo(AttachmentValues.Id)
-                assertThat(url).isEqualTo(AttachmentValues.DownloadUrl)
-                assertThat(filename).isEqualTo(AttachmentValues.FileName)
-                assertThat(mediaType).isEqualTo(AttachmentValues.MediaType)
+                assertThat(id).isEqualTo(AttachmentValues.ID)
+                assertThat(url).isEqualTo(AttachmentValues.DOWNLOAD_URL)
+                assertThat(filename).isEqualTo(AttachmentValues.FILE_NAME)
+                assertThat(mediaType).isEqualTo(AttachmentValues.MEDIA_TYPE)
                 assertThat(fileSize).isNull()
                 assertThat(mime).isNull()
                 assertThat(sha256).isNull()
@@ -182,9 +182,9 @@ class ResponsesTests {
     @Test
     fun `validate TooManyRequestsErrorMessage serialization`() {
         val expectedRequest = TooManyRequestsErrorMessage(
-            retryAfter = ErrorTest.RetryAfter,
+            retryAfter = ErrorTest.RETRY_AFTER,
             errorCode = ErrorCode.UnexpectedError.code,
-            errorMessage = ErrorTest.Message
+            errorMessage = ErrorTest.MESSAGE
         )
         val expectedJson =
             """{"retryAfter":1,"errorCode":5000,"errorMessage":"This is a generic error message for testing."}"""
@@ -194,19 +194,19 @@ class ResponsesTests {
 
         assertThat(encodedString, "encoded TooManyRequestsErrorMessage").isEqualTo(expectedJson)
         decoded.run {
-            assertThat(retryAfter).isEqualTo(ErrorTest.RetryAfter)
+            assertThat(retryAfter).isEqualTo(ErrorTest.RETRY_AFTER)
             assertThat(errorCode).isEqualTo(ErrorCode.UnexpectedError.code)
-            assertThat(errorMessage).isEqualTo(ErrorTest.Message)
+            assertThat(errorMessage).isEqualTo(ErrorTest.MESSAGE)
         }
     }
 
     @Test
     fun `validate UploadFailureEvent serialization`() {
         val expectedRequest = UploadFailureEvent(
-            attachmentId = AttachmentValues.Id,
+            attachmentId = AttachmentValues.ID,
             errorCode = ErrorCode.UnexpectedError.code,
-            errorMessage = ErrorTest.Message,
-            timestamp = TestValues.Timestamp
+            errorMessage = ErrorTest.MESSAGE,
+            timestamp = TestValues.TIME_STAMP
         )
         val expectedJson =
             """{"attachmentId":"test_attachment_id","errorCode":5000,"errorMessage":"This is a generic error message for testing.","timestamp":"2022-08-22T19:24:26.704Z"}"""
@@ -216,19 +216,19 @@ class ResponsesTests {
 
         assertThat(encodedString, "encoded UploadFailureEvent").isEqualTo(expectedJson)
         decoded.run {
-            assertThat(attachmentId).isEqualTo(AttachmentValues.Id)
+            assertThat(attachmentId).isEqualTo(AttachmentValues.ID)
             assertThat(errorCode).isEqualTo(ErrorCode.UnexpectedError.code)
-            assertThat(errorMessage).isEqualTo(ErrorTest.Message)
-            assertThat(timestamp).isEqualTo(TestValues.Timestamp)
+            assertThat(errorMessage).isEqualTo(ErrorTest.MESSAGE)
+            assertThat(timestamp).isEqualTo(TestValues.TIME_STAMP)
         }
     }
 
     @Test
     fun `validate UploadSuccessEvent serialization`() {
         val expectedRequest = UploadSuccessEvent(
-            attachmentId = AttachmentValues.Id,
-            downloadUrl = AttachmentValues.DownloadUrl,
-            timestamp = TestValues.Timestamp
+            attachmentId = AttachmentValues.ID,
+            downloadUrl = AttachmentValues.DOWNLOAD_URL,
+            timestamp = TestValues.TIME_STAMP
         )
         val expectedJson =
             """{"attachmentId":"test_attachment_id","downloadUrl":"https://downloadurl.png","timestamp":"2022-08-22T19:24:26.704Z"}"""
@@ -238,9 +238,9 @@ class ResponsesTests {
 
         assertThat(encodedString, "encoded UploadSuccessEvent").isEqualTo(expectedJson)
         decoded.run {
-            assertThat(attachmentId).isEqualTo(AttachmentValues.Id)
-            assertThat(downloadUrl).isEqualTo(AttachmentValues.DownloadUrl)
-            assertThat(timestamp).isEqualTo(TestValues.Timestamp)
+            assertThat(attachmentId).isEqualTo(AttachmentValues.ID)
+            assertThat(downloadUrl).isEqualTo(AttachmentValues.DOWNLOAD_URL)
+            assertThat(timestamp).isEqualTo(TestValues.TIME_STAMP)
         }
     }
 
@@ -256,8 +256,8 @@ class ResponsesTests {
         decoded.run {
             assertThat(this).isEqualTo(expectedRequest)
             assertThat(text).isEqualTo("text_a")
-            assertThat(payload).isEqualTo(QuickReplyTestValues.Payload_A)
-            assertThat(type).isEqualTo(QuickReplyTestValues.QuickReply)
+            assertThat(payload).isEqualTo(QuickReplyTestValues.PAYLOAD_A)
+            assertThat(type).isEqualTo(QuickReplyTestValues.QUICK_REPLY)
         }
     }
 
@@ -272,11 +272,11 @@ class ResponsesTests {
 
         assertThat(encodedString, "encoded StructuredMessage.Content.ButtonResponse").isEqualTo(expectedJson)
         decoded.run {
-            assertThat(contentType).isEqualTo(QuickReplyTestValues.ButtonResponse)
+            assertThat(contentType).isEqualTo(QuickReplyTestValues.BUTTON_RESPONSE)
             buttonResponse.run {
-                assertThat(text).isEqualTo(QuickReplyTestValues.Text_A)
-                assertThat(payload).isEqualTo(QuickReplyTestValues.Payload_A)
-                assertThat(type).isEqualTo(QuickReplyTestValues.QuickReply)
+                assertThat(text).isEqualTo(QuickReplyTestValues.TEXT_A)
+                assertThat(payload).isEqualTo(QuickReplyTestValues.PAYLOAD_A)
+                assertThat(type).isEqualTo(QuickReplyTestValues.QUICK_REPLY)
             }
         }
     }
@@ -292,10 +292,10 @@ class ResponsesTests {
 
         assertThat(encodedString, "encoded StructuredMessage.Content.QuickReply").isEqualTo(expectedJson)
         decoded.run {
-            assertThat(contentType).isEqualTo(QuickReplyTestValues.QuickReply)
+            assertThat(contentType).isEqualTo(QuickReplyTestValues.QUICK_REPLY)
             quickReply.run {
-                assertThat(text).isEqualTo(QuickReplyTestValues.Text_A)
-                assertThat(payload).isEqualTo(QuickReplyTestValues.Payload_A)
+                assertThat(text).isEqualTo(QuickReplyTestValues.TEXT_A)
+                assertThat(payload).isEqualTo(QuickReplyTestValues.PAYLOAD_A)
                 assertThat(action).isEqualTo("action")
             }
         }

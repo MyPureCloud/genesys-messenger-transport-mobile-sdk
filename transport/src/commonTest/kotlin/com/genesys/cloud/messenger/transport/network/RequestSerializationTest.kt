@@ -37,7 +37,6 @@ import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.Journey
 import com.genesys.cloud.messenger.transport.utility.TestValues
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlin.test.Test
 
@@ -51,7 +50,7 @@ class RequestSerializationTest {
         )
         val expectedEvents = listOf(expectedPresenceEvent)
         val expectedMessage = EventMessage(expectedEvents)
-        val expectedRequest = AutoStartRequest(TestValues.Token, null)
+        val expectedRequest = AutoStartRequest(TestValues.TOKEN, null)
         val expectedJson =
             """{"token":"<token>","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Join"}}],"type":"Event"}}"""
 
@@ -61,7 +60,7 @@ class RequestSerializationTest {
         assertThat(encodedString, "encoded AutoStartRequest").isEqualTo(expectedJson)
         decoded.run {
             assertThat(action).isEqualTo(RequestAction.ON_MESSAGE.value)
-            assertThat(token).isEqualTo(TestValues.Token)
+            assertThat(token).isEqualTo(TestValues.TOKEN)
             assertThat(message).isEqualTo(expectedMessage)
             assertThat(message.events).containsExactly(*expectedEvents.toTypedArray())
         }
@@ -92,7 +91,7 @@ class RequestSerializationTest {
         )
         val expectedEvents = listOf(expectedPresenceEvent)
         val expectedMessage = EventMessage(expectedEvents)
-        val expectedRequest = ClearConversationRequest(TestValues.Token)
+        val expectedRequest = ClearConversationRequest(TestValues.TOKEN)
         val expectedJson =
             """{"token":"<token>","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Clear"}}],"type":"Event"}}"""
         val expectedPresenceJson = """{"type":"Clear"}"""
@@ -106,7 +105,7 @@ class RequestSerializationTest {
         assertThat(encodedPresenceString, "encoded Presence").isEqualTo(expectedPresenceJson)
         decoded.run {
             assertThat(action).isEqualTo(RequestAction.ON_MESSAGE.value)
-            assertThat(token).isEqualTo(TestValues.Token)
+            assertThat(token).isEqualTo(TestValues.TOKEN)
             assertThat(message).isEqualTo(expectedMessage)
             assertThat(message.events).containsExactly(*expectedEvents.toTypedArray())
         }
@@ -116,7 +115,7 @@ class RequestSerializationTest {
     @Test
     fun `validate CloseSessionRequest serialization`() {
         val expectedRequest = CloseSessionRequest(
-            token = TestValues.Token,
+            token = TestValues.TOKEN,
             closeAllConnections = true,
         )
         val expectedJson =
@@ -128,17 +127,17 @@ class RequestSerializationTest {
         assertThat(encodedString, "encoded CloseSessionRequest").isEqualTo(expectedJson)
         decoded.run {
             assertThat(action).isEqualTo(RequestAction.CLOSE_SESSION.value)
-            assertThat(token).isEqualTo(TestValues.Token)
+            assertThat(token).isEqualTo(TestValues.TOKEN)
             assertThat(closeAllConnections).isTrue()
         }
     }
 
     @Test
     fun `validate ConfigureAuthenticatedSessionRequest serialization`() {
-        val expectedData = ConfigureAuthenticatedSessionRequest.Data(AuthTest.JwtToken)
+        val expectedData = ConfigureAuthenticatedSessionRequest.Data(AuthTest.JWT_TOKEN)
         val expectedRequest = ConfigureAuthenticatedSessionRequest(
-            token = TestValues.Token,
-            deploymentId = TestValues.DeploymentId,
+            token = TestValues.TOKEN,
+            deploymentId = TestValues.DEPLOYMENT_ID,
             startNew = false,
             data = expectedData
         )
@@ -162,21 +161,21 @@ class RequestSerializationTest {
         assertThat(encodedDataString, "encoded Data").isEqualTo(expectedDataJson)
         decoded.run {
             assertThat(action).isEqualTo(RequestAction.CONFIGURE_AUTHENTICATED_SESSION.value)
-            assertThat(token).isEqualTo(TestValues.Token)
-            assertThat(deploymentId).isEqualTo(TestValues.DeploymentId)
+            assertThat(token).isEqualTo(TestValues.TOKEN)
+            assertThat(deploymentId).isEqualTo(TestValues.DEPLOYMENT_ID)
             assertThat(startNew).isFalse()
             assertThat(journeyContext).isNull()
             assertThat(data).isEqualTo(expectedData)
         }
         assertThat(decodedData).isEqualTo(expectedData)
-        assertThat(decodedData.code).isEqualTo(AuthTest.JwtToken)
+        assertThat(decodedData.code).isEqualTo(AuthTest.JWT_TOKEN)
     }
 
     @Test
     fun `validate ConfigureSessionRequest serialization`() {
         val expectedRequest = ConfigureSessionRequest(
-            token = TestValues.Token,
-            deploymentId = TestValues.DeploymentId,
+            token = TestValues.TOKEN,
+            deploymentId = TestValues.DEPLOYMENT_ID,
             startNew = true,
         )
         val expectedJson =
@@ -188,8 +187,8 @@ class RequestSerializationTest {
         assertThat(encodedString, "encoded ConfigureSessionRequest").isEqualTo(expectedJson)
         decoded.run {
             assertThat(action).isEqualTo(RequestAction.CONFIGURE_SESSION.value)
-            assertThat(token).isEqualTo(TestValues.Token)
-            assertThat(deploymentId).isEqualTo(TestValues.DeploymentId)
+            assertThat(token).isEqualTo(TestValues.TOKEN)
+            assertThat(deploymentId).isEqualTo(TestValues.DEPLOYMENT_ID)
             assertThat(startNew).isTrue()
             assertThat(journeyContext).isNull()
         }
@@ -198,8 +197,8 @@ class RequestSerializationTest {
     @Test
     fun `validate DeleteAttachmentRequest serialization`() {
         val expectedRequest = DeleteAttachmentRequest(
-            token = TestValues.Token,
-            attachmentId = AttachmentValues.Id
+            token = TestValues.TOKEN,
+            attachmentId = AttachmentValues.ID
         )
         val expectedJson =
             """{"token":"<token>","attachmentId":"test_attachment_id","action":"deleteAttachment"}"""
@@ -210,8 +209,8 @@ class RequestSerializationTest {
         assertThat(encodedString, "encoded DeleteAttachmentRequest").isEqualTo(expectedJson)
         decoded.run {
             assertThat(action).isEqualTo(RequestAction.DELETE_ATTACHMENT.value)
-            assertThat(token).isEqualTo(TestValues.Token)
-            assertThat(attachmentId).isEqualTo(AttachmentValues.Id)
+            assertThat(token).isEqualTo(TestValues.TOKEN)
+            assertThat(attachmentId).isEqualTo(AttachmentValues.ID)
         }
     }
 
@@ -219,7 +218,7 @@ class RequestSerializationTest {
     fun `validate EchoRequest serialization`() {
         val expectedTextMessage = TextMessage("ping", mapOf("customMessageId" to HealthCheckID))
         val expectedRequest = EchoRequest(
-            token = TestValues.Token,
+            token = TestValues.TOKEN,
         )
         val expectedJson =
             """{"token":"<token>","action":"echo","message":{"text":"ping","metadata":{"customMessageId":"SGVhbHRoQ2hlY2tNZXNzYWdlSWQ="},"type":"Text"}}"""
@@ -230,7 +229,7 @@ class RequestSerializationTest {
         assertThat(encodedString, "encoded EchoRequest").isEqualTo(expectedJson)
         decoded.run {
             assertThat(action).isEqualTo(RequestAction.ECHO_MESSAGE.value)
-            assertThat(token).isEqualTo(TestValues.Token)
+            assertThat(token).isEqualTo(TestValues.TOKEN)
             assertThat(message).isEqualTo(expectedTextMessage)
             message.run {
                 assertThat(text).isEqualTo(expectedTextMessage.text)
@@ -267,8 +266,8 @@ class RequestSerializationTest {
     @Test
     fun `validate GetAttachmentRequest serialization`() {
         val expectedRequest = GetAttachmentRequest(
-            token = TestValues.Token,
-            attachmentId = AttachmentValues.Id
+            token = TestValues.TOKEN,
+            attachmentId = AttachmentValues.ID
         )
         val expectedJson =
             """{"token":"<token>","attachmentId":"test_attachment_id","action":"getAttachment"}"""
@@ -279,23 +278,23 @@ class RequestSerializationTest {
         assertThat(encodedString, "encoded GetAttachmentRequest").isEqualTo(expectedJson)
         decoded.run {
             assertThat(action).isEqualTo(RequestAction.GET_ATTACHMENT.value)
-            assertThat(token).isEqualTo(TestValues.Token)
-            assertThat(attachmentId).isEqualTo(AttachmentValues.Id)
+            assertThat(token).isEqualTo(TestValues.TOKEN)
+            assertThat(attachmentId).isEqualTo(AttachmentValues.ID)
         }
     }
 
     @Test
     fun `validate JourneyContext serialization`() {
         val expectedJourneyCustomer =
-            JourneyCustomer(id = Journey.CustomerId, idType = Journey.CustomerIdType)
+            JourneyCustomer(id = Journey.CUSTOMER_ID, idType = Journey.CUSTOMER_ID_TYPE)
         val expectedCustomerSession = JourneyCustomerSession(
-            id = Journey.CustomerSessionId,
-            type = Journey.CustomerSessionType
+            id = Journey.CUSTOMER_SESSION_ID,
+            type = Journey.CUSTOMER_SESSION_TYPE
         )
         val expectedJourneyActionMap =
-            JourneyActionMap(id = Journey.ActionMapId, version = Journey.ActionMapVersion)
+            JourneyActionMap(id = Journey.ACTION_MAP_ID, version = Journey.ACTION_MAP_VERSION)
         val expectedTriggeringAction =
-            JourneyAction(id = Journey.ActionId, actionMap = expectedJourneyActionMap)
+            JourneyAction(id = Journey.ACTION_ID, actionMap = expectedJourneyActionMap)
         val expectedJourneyContext = JourneyContext(
             customer = expectedJourneyCustomer,
             customerSession = expectedCustomerSession,
@@ -351,19 +350,19 @@ class RequestSerializationTest {
             expectedJourneyContextJson
         )
         decodedJourneyCustomer.run {
-            assertThat(id).isEqualTo(Journey.CustomerId)
-            assertThat(idType).isEqualTo(Journey.CustomerIdType)
+            assertThat(id).isEqualTo(Journey.CUSTOMER_ID)
+            assertThat(idType).isEqualTo(Journey.CUSTOMER_ID_TYPE)
         }
         decodedJourneyCustomerSession.run {
-            assertThat(id).isEqualTo(Journey.CustomerSessionId)
-            assertThat(type).isEqualTo(Journey.CustomerSessionType)
+            assertThat(id).isEqualTo(Journey.CUSTOMER_SESSION_ID)
+            assertThat(type).isEqualTo(Journey.CUSTOMER_SESSION_TYPE)
         }
         decodedJourneyActionMap.run {
-            assertThat(id).isEqualTo(Journey.ActionMapId)
-            assertThat(version).isEqualTo(Journey.ActionMapVersion)
+            assertThat(id).isEqualTo(Journey.ACTION_MAP_ID)
+            assertThat(version).isEqualTo(Journey.ACTION_MAP_VERSION)
         }
         decodedJourneyAction.run {
-            assertThat(id).isEqualTo(Journey.ActionId)
+            assertThat(id).isEqualTo(Journey.ACTION_ID)
             assertThat(actionMap).isEqualTo(expectedJourneyActionMap)
         }
         decodedJourneyContext.run {
@@ -375,8 +374,8 @@ class RequestSerializationTest {
 
     @Test
     fun `validate JwtRequest serialization`() {
-        val expectedRequest = JwtRequest(token = TestValues.Token)
-        val expectedJson = """{"token":"${TestValues.Token}","action":"getJwt"}"""
+        val expectedRequest = JwtRequest(token = TestValues.TOKEN)
+        val expectedJson = """{"token":"${TestValues.TOKEN}","action":"getJwt"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<JwtRequest>(expectedJson)
@@ -384,56 +383,56 @@ class RequestSerializationTest {
         assertThat(encodedString, "encoded JwtRequest").isEqualTo(expectedJson)
         decoded.run {
             assertThat(action).isEqualTo(RequestAction.GET_JWT.value)
-            assertThat(token).isEqualTo(TestValues.Token)
+            assertThat(token).isEqualTo(TestValues.TOKEN)
         }
     }
 
     @Test
     fun `validate OAuth serialization`() {
         val expectedRequest = OAuth(
-            code = AuthTest.AuthCode,
-            redirectUri = AuthTest.RedirectUri,
-            codeVerifier = AuthTest.CodeVerifier,
+            code = AuthTest.AUTH_CODE,
+            redirectUri = AuthTest.REDIRECT_URI,
+            codeVerifier = AuthTest.CODE_VERIFIER,
         )
         val expectedJson =
-            """{"code":"${AuthTest.AuthCode}","redirectUri":"${AuthTest.RedirectUri}","codeVerifier":"${AuthTest.CodeVerifier}"}"""
+            """{"code":"${AuthTest.AUTH_CODE}","redirectUri":"${AuthTest.REDIRECT_URI}","codeVerifier":"${AuthTest.CODE_VERIFIER}"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<OAuth>(expectedJson)
 
         assertThat(encodedString, "encoded OAuth").isEqualTo(expectedJson)
         decoded.run {
-            assertThat(code).isEqualTo(AuthTest.AuthCode)
-            assertThat(redirectUri).isEqualTo(AuthTest.RedirectUri)
-            assertThat(codeVerifier).isEqualTo(AuthTest.CodeVerifier)
+            assertThat(code).isEqualTo(AuthTest.AUTH_CODE)
+            assertThat(redirectUri).isEqualTo(AuthTest.REDIRECT_URI)
+            assertThat(codeVerifier).isEqualTo(AuthTest.CODE_VERIFIER)
         }
     }
 
     @Test
     fun `validate OnAttachmentRequest serialization`() {
         val expectedRequest = OnAttachmentRequest(
-            token = TestValues.Token,
-            attachmentId = AttachmentValues.Id,
-            fileName = AttachmentValues.FileName,
-            fileType = AttachmentValues.FileType,
-            fileSize = AttachmentValues.FileSize,
-            fileMd5 = AttachmentValues.FileMD5,
+            token = TestValues.TOKEN,
+            attachmentId = AttachmentValues.ID,
+            fileName = AttachmentValues.FILE_NAME,
+            fileType = AttachmentValues.FILE_TYPE,
+            fileSize = AttachmentValues.FILE_SIZE,
+            fileMd5 = AttachmentValues.FILE_MD5,
             errorsAsJson = false,
         )
         val expectedJson =
-            """{"token":"${TestValues.Token}","attachmentId":"${AttachmentValues.Id}","fileName":"${AttachmentValues.FileName}","fileType":"${AttachmentValues.FileType}","fileSize":${AttachmentValues.FileSize},"fileMd5":"${AttachmentValues.FileMD5}","errorsAsJson":false,"action":"onAttachment"}"""
+            """{"token":"${TestValues.TOKEN}","attachmentId":"${AttachmentValues.ID}","fileName":"${AttachmentValues.FILE_NAME}","fileType":"${AttachmentValues.FILE_TYPE}","fileSize":${AttachmentValues.FILE_SIZE},"fileMd5":"${AttachmentValues.FILE_MD5}","errorsAsJson":false,"action":"onAttachment"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<OnAttachmentRequest>(expectedJson)
 
         assertThat(encodedString, "encoded OnAttachmentRequest").isEqualTo(expectedJson)
         decoded.run {
-            assertThat(token).isEqualTo(TestValues.Token)
+            assertThat(token).isEqualTo(TestValues.TOKEN)
             assertThat(action).isEqualTo(RequestAction.ON_ATTACHMENT.value)
-            assertThat(fileName).isEqualTo(AttachmentValues.FileName)
-            assertThat(fileType).isEqualTo(AttachmentValues.FileType)
-            assertThat(fileSize).isEqualTo(AttachmentValues.FileSize)
-            assertThat(fileMd5).isEqualTo(AttachmentValues.FileMD5)
+            assertThat(fileName).isEqualTo(AttachmentValues.FILE_NAME)
+            assertThat(fileType).isEqualTo(AttachmentValues.FILE_TYPE)
+            assertThat(fileSize).isEqualTo(AttachmentValues.FILE_SIZE)
+            assertThat(fileMd5).isEqualTo(AttachmentValues.FILE_MD5)
             assertThat(errorsAsJson).isFalse()
         }
     }
@@ -446,7 +445,7 @@ class RequestSerializationTest {
         )
         val expectedEventList = listOf(expectedEvent)
         val expectedMessage = EventMessage(expectedEventList)
-        val expectedRequest = UserTypingRequest(token = TestValues.Token)
+        val expectedRequest = UserTypingRequest(token = TestValues.TOKEN)
         val expectedJson =
             """{"token":"<token>","action":"onMessage","message":{"events":[{"eventType":"Typing","typing":{"type":"On"}}],"type":"Event"}}"""
 
@@ -455,7 +454,7 @@ class RequestSerializationTest {
 
         assertThat(encodedString, "encoded UserTypingRequest").isEqualTo(expectedJson)
         decoded.run {
-            assertThat(token).isEqualTo(TestValues.Token)
+            assertThat(token).isEqualTo(TestValues.TOKEN)
             assertThat(action).isEqualTo(RequestAction.ON_MESSAGE.value)
             assertThat(message).isEqualTo(expectedMessage)
             message.run {

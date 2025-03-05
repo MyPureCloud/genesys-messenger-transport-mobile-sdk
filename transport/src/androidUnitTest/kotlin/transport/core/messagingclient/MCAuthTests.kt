@@ -40,10 +40,10 @@ class MCAuthTests : BaseMessagingClientTest() {
 
     @Test
     fun `when authorize is called`() {
-        subject.authorize(AuthTest.AuthCode, AuthTest.JwtAuthUrl, AuthTest.CodeVerifier)
+        subject.authorize(AuthTest.AUTH_CODE, AuthTest.JWT_AUTH_URL, AuthTest.CODE_VERIFIER)
 
         verify {
-            mockAuthHandler.authorize(AuthTest.AuthCode, AuthTest.JwtAuthUrl, AuthTest.CodeVerifier)
+            mockAuthHandler.authorize(AuthTest.AUTH_CODE, AuthTest.JWT_AUTH_URL, AuthTest.CODE_VERIFIER)
         }
     }
 
@@ -61,7 +61,7 @@ class MCAuthTests : BaseMessagingClientTest() {
     fun `when connectAuthenticatedSession and AuthHandler has no Jwt and refreshToken was successful`() {
         every { mockAuthHandler.jwt } returns NO_JWT
         every { mockAuthHandler.refreshToken(captureLambda()) } answers {
-            every { mockAuthHandler.jwt } returns AuthTest.JwtToken
+            every { mockAuthHandler.jwt } returns AuthTest.JWT_TOKEN
             lambda<(Result<Empty>) -> Unit>().invoke(Result.Success(Empty()))
         }
 
@@ -84,14 +84,14 @@ class MCAuthTests : BaseMessagingClientTest() {
 
     @Test
     fun `when connectAuthenticatedSession and AuthHandler has no Jwt and refreshToken fails`() {
-        val givenResult = Result.Failure(ErrorCode.AuthFailed, ErrorTest.Message)
+        val givenResult = Result.Failure(ErrorCode.AuthFailed, ErrorTest.MESSAGE)
         every { mockAuthHandler.refreshToken(captureLambda()) } answers {
             lambda<(Result<Empty>) -> Unit>().invoke(givenResult)
         }
         every { mockAuthHandler.jwt } returns NO_JWT
 
         val expectedErrorState =
-            MessagingClient.State.Error(ErrorCode.AuthFailed, ErrorTest.Message)
+            MessagingClient.State.Error(ErrorCode.AuthFailed, ErrorTest.MESSAGE)
 
         subject.connectAuthenticatedSession()
 
@@ -269,7 +269,7 @@ class MCAuthTests : BaseMessagingClientTest() {
             slot.captured.onMessage(Response.configureSuccess(connected = false, readOnly = true))
         }
         every { mockAuthHandler.refreshToken(captureLambda()) } answers {
-            every { mockAuthHandler.jwt } returns AuthTest.JwtToken
+            every { mockAuthHandler.jwt } returns AuthTest.JWT_TOKEN
             lambda<(Result<Empty>) -> Unit>().invoke(Result.Success(Empty()))
         }
         subject.connectAuthenticatedSession()

@@ -17,7 +17,7 @@ class LogMessagesTests {
     // Attachment
     @Test
     fun `when presigningAttachment is called then it logs correctly`() {
-        val givenAttachment = Attachment(id = AttachmentValues.Id, fileName = AttachmentValues.FileName, fileSizeInBytes = AttachmentValues.FileSize)
+        val givenAttachment = Attachment(id = AttachmentValues.ID, fileName = AttachmentValues.FILE_NAME, fileSizeInBytes = AttachmentValues.FILE_SIZE)
         val expectedMessage = "Presigning attachment: $givenAttachment"
 
         val result = LogMessages.presigningAttachment(givenAttachment)
@@ -27,7 +27,7 @@ class LogMessagesTests {
 
     @Test
     fun `when uploadingAttachment is called then it logs correctly`() {
-        val givenAttachment = Attachment(id = AttachmentValues.Id, fileName = AttachmentValues.FileName, fileSizeInBytes = AttachmentValues.FileSize)
+        val givenAttachment = Attachment(id = AttachmentValues.ID, fileName = AttachmentValues.FILE_NAME, fileSizeInBytes = AttachmentValues.FILE_SIZE)
         val expectedMessage = "Uploading attachment: $givenAttachment"
 
         val result = LogMessages.uploadingAttachment(givenAttachment)
@@ -37,7 +37,7 @@ class LogMessagesTests {
 
     @Test
     fun `when attachmentUploaded is called then it logs correctly`() {
-        val givenAttachment = Attachment(id = AttachmentValues.Id, fileName = AttachmentValues.FileName, fileSizeInBytes = AttachmentValues.FileSize)
+        val givenAttachment = Attachment(id = AttachmentValues.ID, fileName = AttachmentValues.FILE_NAME, fileSizeInBytes = AttachmentValues.FILE_SIZE)
         val expectedMessage = "Attachment uploaded: $givenAttachment"
 
         val result = LogMessages.attachmentUploaded(givenAttachment)
@@ -47,8 +47,8 @@ class LogMessagesTests {
 
     @Test
     fun `when detachingAttachment is called then it logs correctly`() {
-        val givenAttachmentId = AttachmentValues.Id
-        val expectedMessage = "Detaching attachment: ${AttachmentValues.Id}"
+        val givenAttachmentId = AttachmentValues.ID
+        val expectedMessage = "Detaching attachment: ${AttachmentValues.ID}"
 
         val result = LogMessages.detachingAttachment(givenAttachmentId)
 
@@ -57,8 +57,8 @@ class LogMessagesTests {
 
     @Test
     fun `when attachmentDetached is called then it logs correctly`() {
-        val givenAttachmentId = AttachmentValues.Id
-        val expectedMessage = "Attachment detached: ${AttachmentValues.Id}"
+        val givenAttachmentId = AttachmentValues.ID
+        val expectedMessage = "Attachment detached: ${AttachmentValues.ID}"
 
         val result = LogMessages.attachmentDetached(givenAttachmentId)
 
@@ -67,8 +67,8 @@ class LogMessagesTests {
 
     @Test
     fun `when sendingAttachment is called then it logs correctly`() {
-        val givenAttachmentId = AttachmentValues.Id
-        val expectedMessage = "Sending attachment: ${AttachmentValues.Id}"
+        val givenAttachmentId = AttachmentValues.ID
+        val expectedMessage = "Sending attachment: ${AttachmentValues.ID}"
 
         val result = LogMessages.sendingAttachment(givenAttachmentId)
 
@@ -77,7 +77,7 @@ class LogMessagesTests {
 
     @Test
     fun `when attachmentSent is called then it logs correctly`() {
-        val givenAttachments = mapOf(AttachmentValues.Id to Attachment(id = AttachmentValues.Id, fileName = AttachmentValues.FileName, fileSizeInBytes = AttachmentValues.FileSize))
+        val givenAttachments = mapOf(AttachmentValues.ID to Attachment(id = AttachmentValues.ID, fileName = AttachmentValues.FILE_NAME, fileSizeInBytes = AttachmentValues.FILE_SIZE))
         val expectedMessage = "Attachments sent: $givenAttachments"
 
         val result = LogMessages.attachmentSent(givenAttachments)
@@ -87,7 +87,7 @@ class LogMessagesTests {
 
     @Test
     fun `when attachmentStateUpdated is called then it logs correctly`() {
-        val givenAttachment = Attachment(id = AttachmentValues.Id, fileName = AttachmentValues.FileName, fileSizeInBytes = AttachmentValues.FileSize)
+        val givenAttachment = Attachment(id = AttachmentValues.ID, fileName = AttachmentValues.FILE_NAME, fileSizeInBytes = AttachmentValues.FILE_SIZE)
         val expectedMessage = "Attachment state updated: $givenAttachment"
 
         val result = LogMessages.attachmentStateUpdated(givenAttachment)
@@ -97,7 +97,7 @@ class LogMessagesTests {
 
     @Test
     fun `when attach is called then it logs correctly`() {
-        val givenFileName = AttachmentValues.FileName
+        val givenFileName = AttachmentValues.FILE_NAME
         val expectedMessage = "attach(fileName = $givenFileName)"
 
         val result = LogMessages.attach(givenFileName)
@@ -107,7 +107,7 @@ class LogMessagesTests {
 
     @Test
     fun `when detach is called then it logs correctly`() {
-        val givenAttachmentId = AttachmentValues.Id
+        val givenAttachmentId = AttachmentValues.ID
         val expectedMessage = "detach(attachmentId = $givenAttachmentId)"
 
         val result = LogMessages.detach(givenAttachmentId)
@@ -117,9 +117,9 @@ class LogMessagesTests {
 
     @Test
     fun `when attachmentError is called then it logs correctly`() {
-        val givenAttachmentId = AttachmentValues.Id
+        val givenAttachmentId = AttachmentValues.ID
         val givenErrorCode = ErrorCode.AttachmentNotFound
-        val givenErrorMessage = ErrorTest.Message
+        val givenErrorMessage = ErrorTest.MESSAGE
         val expectedMessage = "Attachment error with id: $givenAttachmentId. ErrorCode: $givenErrorCode, errorMessage: $givenErrorMessage"
 
         val result = LogMessages.attachmentError(givenAttachmentId, givenErrorCode, givenErrorMessage)
@@ -129,7 +129,7 @@ class LogMessagesTests {
 
     @Test
     fun `when invalidAttachmentId is called then it logs correctly`() {
-        val givenAttachmentId = AttachmentValues.Id
+        val givenAttachmentId = AttachmentValues.ID
         val expectedMessage = "Invalid attachment ID: $givenAttachmentId. Detach failed."
 
         val result = LogMessages.invalidAttachmentId(givenAttachmentId)
@@ -140,7 +140,7 @@ class LogMessagesTests {
     // Authentication
     @Test
     fun `when configureAuthenticatedSession is called then it logs correctly`() {
-        val givenToken = TestValues.Token
+        val givenToken = TestValues.TOKEN
         val givenStartNew = true
         val expectedMessage = "configureAuthenticatedSession(token = $givenToken, startNew: $givenStartNew)"
 
@@ -151,7 +151,7 @@ class LogMessagesTests {
 
     @Test
     fun `when configureSession is called then it logs correctly`() {
-        val givenToken = TestValues.Token
+        val givenToken = TestValues.TOKEN
         val givenStartNew = false
         val expectedMessage = "configureSession (token = $givenToken, startNew: $givenStartNew)"
 
@@ -193,8 +193,8 @@ class LogMessagesTests {
 
     @Test
     fun `when receiveMessageError is called then it logs correctly`() {
-        val givenCode = ErrorTest.Code
-        val givenLocalizedDescription = ErrorTest.Message
+        val givenCode = ErrorTest.CODE_404
+        val givenLocalizedDescription = ErrorTest.MESSAGE
         val expectedMessage = "receiveMessageWithCompletionHandler error [$givenCode] $givenLocalizedDescription"
 
         val result = LogMessages.receiveMessageError(givenCode, givenLocalizedDescription)
@@ -204,7 +204,7 @@ class LogMessagesTests {
 
     @Test
     fun `when fetchingHistory is called then it logs correctly`() {
-        val givenPageIndex = MessageValues.PageNumber
+        val givenPageIndex = MessageValues.PAGE_NUMBER
         val expectedMessage = "fetching history for page index = $givenPageIndex"
 
         val result = LogMessages.fetchingHistory(givenPageIndex)
@@ -235,7 +235,7 @@ class LogMessagesTests {
 
     @Test
     fun `when unhandledMessage is called then it logs correctly`() {
-        val givenDecoded = WebMessagingMessage(type = MessageValues.Type, code = MessageValues.PreIdentifiedMessageCode, body = MessageValues.Text)
+        val givenDecoded = WebMessagingMessage(type = MessageValues.TYPE, code = MessageValues.PRE_IDENTIFIED_MESSAGE_CODE, body = MessageValues.TEXT)
         val expectedMessage = "Unhandled message received from Shyrka: $givenDecoded"
 
         val result = LogMessages.unhandledMessage(givenDecoded)
@@ -245,7 +245,7 @@ class LogMessagesTests {
 
     @Test
     fun `when historyFetchFailed is called then it logs correctly`() {
-        val givenError = Result.Failure(ErrorCode.UnexpectedError, ErrorTest.Message)
+        val givenError = Result.Failure(ErrorCode.UnexpectedError, ErrorTest.MESSAGE)
         val expectedMessage = "History fetch failed with: $givenError"
 
         val result = LogMessages.historyFetchFailed(givenError)

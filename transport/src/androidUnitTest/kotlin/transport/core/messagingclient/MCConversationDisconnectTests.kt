@@ -242,7 +242,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()
-            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
+            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
             mockLogger.i(capture(logSlot))
             verifyCleanUp()
             mockLogger.i(capture(logSlot))
@@ -270,7 +270,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()
-            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
+            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
         }
         verify(exactly = 0) {
             mockMessageStore.invalidateConversationCache()
@@ -292,7 +292,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()
-            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
+            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
             mockStateChangedListener(fromConfiguredToReadOnly())
         }
         verify(exactly = 0) {

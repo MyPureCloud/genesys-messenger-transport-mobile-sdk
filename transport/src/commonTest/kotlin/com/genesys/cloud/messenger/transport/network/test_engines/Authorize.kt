@@ -33,7 +33,7 @@ internal fun HttpClientConfig<MockEngineConfig>.authorizeEngine() {
                             AuthJwtRequest.serializer(),
                             (request.body as TextContent).text
                         )
-                        if (requestBody.deploymentId == TestValues.DeploymentId && requestBody.oauth.code == AuthTest.AuthCode) {
+                        if (requestBody.deploymentId == TestValues.DEPLOYMENT_ID && requestBody.oauth.code == AuthTest.AUTH_CODE) {
                             respond(
                                 status = HttpStatusCode.OK,
                                 headers = headersOf(
@@ -42,17 +42,17 @@ internal fun HttpClientConfig<MockEngineConfig>.authorizeEngine() {
                                 ),
                                 content = Json.encodeToString(
                                     AuthJwt.serializer(),
-                                    AuthJwt(AuthTest.JwtToken, AuthTest.RefreshToken)
+                                    AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN)
                                 )
                             )
                         } else {
                             when (requestBody.deploymentId) {
-                                InvalidValues.CancellationException -> {
-                                    throw CancellationException(ErrorTest.Message)
+                                InvalidValues.CANCELLATION_EXCEPTION -> {
+                                    throw CancellationException(ErrorTest.MESSAGE)
                                 }
 
-                                InvalidValues.UnknownException -> {
-                                    error(ErrorTest.Message)
+                                InvalidValues.UNKNOWN_EXCEPTION -> {
+                                    error(ErrorTest.MESSAGE)
                                 }
                                 else -> {
                                     respondBadRequest()

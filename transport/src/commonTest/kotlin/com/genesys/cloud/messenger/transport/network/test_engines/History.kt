@@ -35,10 +35,10 @@ fun HttpClientConfig<MockEngineConfig>.historyEngine() {
                     )
                 }
                 else -> {
-                    if (request.headers["Authorization"].equals("bearer ${InvalidValues.CancellationException}")) {
-                        throw CancellationException(ErrorTest.Message)
+                    if (request.headers["Authorization"].equals("bearer ${InvalidValues.CANCELLATION_EXCEPTION}")) {
+                        throw CancellationException(ErrorTest.MESSAGE)
                     } else {
-                        error(ErrorTest.Message)
+                        error(ErrorTest.MESSAGE)
                     }
                 }
             }
