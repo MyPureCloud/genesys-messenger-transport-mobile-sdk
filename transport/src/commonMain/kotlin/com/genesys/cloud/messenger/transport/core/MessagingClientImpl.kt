@@ -683,7 +683,7 @@ internal class MessagingClientImpl(
                                 StructuredMessage.Type.Text -> {
                                     log.i { "Guest session check. Message: $this" }
 
-                                    if (this.isEchoResponse()) {
+                                    if (this.isEchoResponse() && isGuestSession()) {
                                         log.i { "Guest session check: echo response" }
 
                                         eventHandler.onEvent(Event.HealthChecked)
@@ -804,6 +804,8 @@ internal class MessagingClientImpl(
         return fileUpload?.enableAttachments?.let { sessionResponse.toFileAttachmentProfile() }
             ?: fileUpload.toFileAttachmentProfile()
     }
+
+    private fun isGuestSession() : Boolean = true // PoC
 }
 
 /**
