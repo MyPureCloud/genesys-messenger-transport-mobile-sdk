@@ -687,7 +687,6 @@ internal class MessagingClientImpl(
                                         log.i { "Guest session check: echo response" }
 
                                         eventHandler.onEvent(Event.HealthChecked)
-                                        // start timer
 
                                         val expirationDate: Long = metadata["expirationDate"]?.let {
                                             it.toLongOrNull()
@@ -706,9 +705,10 @@ internal class MessagingClientImpl(
                                             } durationSeconds: $durationSeconds"
                                         }
 
+                                        // start timer
                                         GuestSessionDurationUseCase(
-                                            duration = /*durationSeconds*/ 10L,
-                                            expiration = /*expirationDate*/ GuestSessionDurationUseCase.getCurrentTimeInSeconds()
+                                            duration = durationSeconds,
+                                            expiration = expirationDate* GuestSessionDurationUseCase.getCurrentTimeInSeconds()
                                         ) {
                                             // New event to be sent
                                             eventHandler.onEvent(Event.GuestSessionEnd(durationSeconds)
