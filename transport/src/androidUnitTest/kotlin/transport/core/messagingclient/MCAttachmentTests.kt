@@ -144,7 +144,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         val expectedAttachment = Attachment(
             "attachment_id",
             "image.png",
-            AttachmentValues.FileSize,
+            AttachmentValues.FILE_SIZE,
             Attachment.State.Sent("https://downloadurl.com")
         )
         val expectedMessage = Message(
@@ -394,7 +394,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         val expectedAttachment = Attachment(
             "attachment_id",
             "image.png",
-            AttachmentValues.FileSize,
+            AttachmentValues.FILE_SIZE,
             Attachment.State.Sent("https://downloadurl.com")
         )
         val expectedMessage = Message(
@@ -426,9 +426,9 @@ class MCAttachmentTests : BaseMessagingClientTest() {
     @Test
     fun `when SocketListener invoke OnMessage with UploadSuccessEvent response`() {
         val expectedEvent = UploadSuccessEvent(
-            attachmentId = AttachmentValues.Id,
-            downloadUrl = AttachmentValues.DownloadUrl,
-            timestamp = TestValues.Timestamp,
+            attachmentId = AttachmentValues.ID,
+            downloadUrl = AttachmentValues.DOWNLOAD_URL,
+            timestamp = TestValues.TIME_STAMP,
         )
 
         subject.connect()
@@ -444,9 +444,9 @@ class MCAttachmentTests : BaseMessagingClientTest() {
     @Test
     fun `when SocketListener invoke OnMessage with PresignedUrlResponse response`() {
         val expectedEvent = PresignedUrlResponse(
-            attachmentId = AttachmentValues.Id,
-            headers = mapOf(AttachmentValues.PresignedHeaderKey to AttachmentValues.PresignedHeaderValue),
-            url = AttachmentValues.DownloadUrl,
+            attachmentId = AttachmentValues.ID,
+            headers = mapOf(AttachmentValues.PRESIGNED_HEADER_KEY to AttachmentValues.PRESIGNED_HEADER_VALUE),
+            url = AttachmentValues.DOWNLOAD_URL,
         )
 
         subject.connect()
@@ -467,7 +467,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockAttachmentHandler.onError(AttachmentValues.Id, ErrorCode.FileTypeInvalid, ErrorTest.Message)
+            mockAttachmentHandler.onError(AttachmentValues.ID, ErrorCode.FileTypeInvalid, ErrorTest.MESSAGE)
         }
     }
 
@@ -479,7 +479,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockAttachmentHandler.onError(AttachmentValues.Id, ErrorCode.FileTypeInvalid, ErrorTest.Message)
+            mockAttachmentHandler.onError(AttachmentValues.ID, ErrorCode.FileTypeInvalid, ErrorTest.MESSAGE)
         }
     }
 }

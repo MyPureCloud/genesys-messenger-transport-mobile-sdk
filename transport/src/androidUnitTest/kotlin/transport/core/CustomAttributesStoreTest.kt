@@ -29,7 +29,7 @@ class CustomAttributesStoreTest {
     private val logSlot = mutableListOf<() -> String>()
     private val mockEventHandler = mockk<EventHandler>(relaxed = true)
     private var subject: CustomAttributesStoreImpl =
-        CustomAttributesStoreImpl(mockLogger, mockEventHandler).also { it.maxCustomDataBytes = TestValues.MaxCustomDataBytes }
+        CustomAttributesStoreImpl(mockLogger, mockEventHandler).also { it.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES }
 
     @Test
     fun `when add a new customAttribute`() {
@@ -252,7 +252,7 @@ class CustomAttributesStoreTest {
 
     @Test
     fun `when maxCustomDataBytes is set`() {
-        val expectedMaxCustomDataBytes = TestValues.MaxCustomDataBytes
+        val expectedMaxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
 
         subject.maxCustomDataBytes = expectedMaxCustomDataBytes
 
@@ -298,7 +298,7 @@ class CustomAttributesStoreTest {
     fun `when maxCustomDataBytes is updated with valid size and ca are already added`() {
         // Given
         subject = CustomAttributesStoreImpl(mockLogger, mockEventHandler)
-        val givenMaxCustomDataBytes = TestValues.MaxCustomDataBytes
+        val givenMaxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
         val givenCustomAttributes = TestValues.defaultMap
         val expectedCustomAttributes = TestValues.defaultMap
         val result = subject.add(givenCustomAttributes)
@@ -317,7 +317,7 @@ class CustomAttributesStoreTest {
     fun `when custom attributes are already added but are bigger than updated maxCustomDataBytes`() {
         // Given
         subject = CustomAttributesStoreImpl(mockLogger, mockEventHandler)
-        val givenMaxCustomDataBytes = TestValues.DefaultNumber
+        val givenMaxCustomDataBytes = TestValues.DEFAULT_NUMBER
         val givenCustomAttributes = TestValues.defaultMap
         val result = subject.add(givenCustomAttributes)
         assertThat(subject.maxCustomDataBytes).isEqualTo(MAX_CUSTOM_DATA_BYTES_UNSET)

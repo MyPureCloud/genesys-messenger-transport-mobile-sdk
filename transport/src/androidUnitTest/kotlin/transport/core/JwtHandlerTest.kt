@@ -50,36 +50,36 @@ class JwtHandlerTest {
     @Test
     fun `when withJwt() and jwtResponse is valid`() = runBlocking {
         val givenExpiry = Platform().epochMillis()
-        val givenJwtResponse = JwtResponse(AuthTest.JwtToken, givenExpiry)
+        val givenJwtResponse = JwtResponse(AuthTest.JWT_TOKEN, givenExpiry)
         subject.jwtResponse = givenJwtResponse
 
         subject.withJwt(Request.token, mockJwtFn)
 
-        coVerify { mockJwtFn(AuthTest.JwtToken) }
+        coVerify { mockJwtFn(AuthTest.JWT_TOKEN) }
         coVerify(exactly = 0) { mockWebSocket.sendMessage(Request.jwt) }
-        assertThat(slot.captured).isEqualTo(AuthTest.JwtToken)
+        assertThat(slot.captured).isEqualTo(AuthTest.JWT_TOKEN)
         subject.jwtResponse.run {
             assertThat(this).isEqualTo(givenJwtResponse)
-            assertThat(jwt).isEqualTo(AuthTest.JwtToken)
+            assertThat(jwt).isEqualTo(AuthTest.JWT_TOKEN)
             assertThat(exp).isEqualTo(givenExpiry)
         }
     }
 
     @Test
     fun `when withJwt() and jwtResponse is invalid`() = runBlocking {
-        val givenJwtResponse = JwtResponse(AuthTest.JwtToken, 0)
+        val givenJwtResponse = JwtResponse(AuthTest.JWT_TOKEN, 0)
         subject.jwtResponse = givenJwtResponse
 
         subject.withJwt(Request.token, mockJwtFn)
 
         coVerify {
-            mockJwtFn(AuthTest.JwtToken)
+            mockJwtFn(AuthTest.JWT_TOKEN)
             mockWebSocket.sendMessage(Request.jwt)
         }
-        assertThat(slot.captured).isEqualTo(AuthTest.JwtToken)
+        assertThat(slot.captured).isEqualTo(AuthTest.JWT_TOKEN)
         subject.jwtResponse.run {
             assertThat(this).isEqualTo(givenJwtResponse)
-            assertThat(jwt).isEqualTo(AuthTest.JwtToken)
+            assertThat(jwt).isEqualTo(AuthTest.JWT_TOKEN)
             assertThat(exp).isEqualTo(0)
         }
     }
@@ -87,7 +87,7 @@ class JwtHandlerTest {
     @Test
     fun `when clear() after jwt was set`() {
         val expectedJwtResponse = JwtResponse()
-        subject.jwtResponse = JwtResponse(AuthTest.JwtToken, Platform().epochMillis())
+        subject.jwtResponse = JwtResponse(AuthTest.JWT_TOKEN, Platform().epochMillis())
 
         subject.clear()
 

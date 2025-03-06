@@ -56,13 +56,13 @@ class MCMessageTests : BaseMessagingClientTest() {
             slot.captured.onMessage(Response.onMessage())
         }
         val expectedMessageRequest =
-            """{"token":"${Request.token}","message":{"text":"${MessageValues.Text}","type":"Text"},"action":"onMessage"}"""
+            """{"token":"${Request.token}","message":{"text":"${MessageValues.TEXT}","type":"Text"},"action":"onMessage"}"""
         val expectedMessage = Message(
             id = "some_custom_message_id",
             state = State.Sent,
             messageType = Type.Text,
             type = "Text",
-            text = MessageValues.Text,
+            text = MessageValues.TEXT,
             timeStamp = 1661196266704,
         )
         subject.connect()
@@ -74,7 +74,7 @@ class MCMessageTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockCustomAttributesStore.add(emptyMap())
             mockCustomAttributesStore.getCustomAttributesToSend()
-            mockMessageStore.prepareMessage(Request.token, MessageValues.Text)
+            mockMessageStore.prepareMessage(Request.token, MessageValues.TEXT)
             mockAttachmentHandler.onSending()
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessageRequest)
@@ -89,7 +89,7 @@ class MCMessageTests : BaseMessagingClientTest() {
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessage(MessageValues.Text))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessage(MessageValues.TEXT))
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WILL_SEND_MESSAGE)
     }
 

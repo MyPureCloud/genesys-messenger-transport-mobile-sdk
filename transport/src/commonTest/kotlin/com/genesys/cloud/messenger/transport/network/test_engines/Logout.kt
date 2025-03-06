@@ -24,20 +24,20 @@ internal fun HttpClientConfig<MockEngineConfig>.logoutEngine() {
                 BASIC_LOGOUT_PATH -> {
                     if (request.method == HttpMethod.Delete) {
                         when (request.headers[HttpHeaders.Authorization]) {
-                            "bearer ${AuthTest.JwtToken}" -> {
+                            "bearer ${AuthTest.JWT_TOKEN}" -> {
                                 respondOk()
                             }
-                            "bearer ${InvalidValues.UnauthorizedJwt}" -> {
+                            "bearer ${InvalidValues.UNAUTHORIZED_JWT}" -> {
                                 respondUnauthorized()
                             }
-                            "bearer ${InvalidValues.InvalidJwt}" -> {
+                            "bearer ${InvalidValues.INVALID_JWT}" -> {
                                 respondBadRequest()
                             }
-                            "bearer ${InvalidValues.CancellationException}" -> {
-                                throw CancellationException(ErrorTest.Message)
+                            "bearer ${InvalidValues.CANCELLATION_EXCEPTION}" -> {
+                                throw CancellationException(ErrorTest.MESSAGE)
                             }
-                            "bearer ${InvalidValues.UnknownException}" -> {
-                                error(ErrorTest.Message)
+                            "bearer ${InvalidValues.UNKNOWN_EXCEPTION}" -> {
+                                error(ErrorTest.MESSAGE)
                             }
                             else -> {
                                 respondBadRequest()
