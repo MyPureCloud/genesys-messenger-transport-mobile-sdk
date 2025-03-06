@@ -123,31 +123,31 @@ internal class AttachmentHandlerImplTest {
     @Test
     fun `when prepare() txt file`() {
         val expectedAttachment = Attachment(
-            AttachmentValues.Id,
+            AttachmentValues.ID,
             AttachmentValues.TXT_FILE_NAME,
             null,
             State.Presigning
         )
-        val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(AttachmentValues.FileSize))
+        val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(AttachmentValues.FILE_SIZE))
         val expectedOnAttachmentRequest = OnAttachmentRequest(
-            token = TestValues.Token,
-            attachmentId = AttachmentValues.Id,
+            token = TestValues.TOKEN,
+            attachmentId = AttachmentValues.ID,
             fileName = AttachmentValues.TXT_FILE_NAME,
             fileType = "text/plain",
-            fileSize = AttachmentValues.FileSize,
+            fileSize = AttachmentValues.FILE_SIZE,
             null,
             true,
         )
 
         val onAttachmentRequest =
-            subject.prepare(TestValues.Token, AttachmentValues.Id, ByteArray(AttachmentValues.FileSize), AttachmentValues.TXT_FILE_NAME)
+            subject.prepare(TestValues.TOKEN, AttachmentValues.ID, ByteArray(AttachmentValues.FILE_SIZE), AttachmentValues.TXT_FILE_NAME)
 
         verify {
             mockLogger.i(capture(logSlot))
             mockAttachmentListener.invoke(capture(attachmentSlot))
         }
         assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
-        assertThat(processedAttachments).containsOnly(AttachmentValues.Id to expectedProcessedAttachment)
+        assertThat(processedAttachments).containsOnly(AttachmentValues.ID to expectedProcessedAttachment)
         assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
         assertThat(logSlot[0].invoke()).isEqualTo(
             LogMessages.presigningAttachment(
