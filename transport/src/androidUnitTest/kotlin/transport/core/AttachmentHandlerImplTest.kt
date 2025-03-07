@@ -156,7 +156,7 @@ internal class AttachmentHandlerImplTest {
         )
     }
 
-    //TODO: FLAKY TEST. DISABLED FOR NOW. MUST BE FIXED BY MTSDK-555
+    // TODO: FLAKY TEST. DISABLED FOR NOW. MUST BE FIXED BY MTSDK-555
 //    @Test
 //    fun `when upload() processed attachment`() {
 //        val expectedProgress = 25f
