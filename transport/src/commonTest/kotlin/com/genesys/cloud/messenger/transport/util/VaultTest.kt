@@ -42,11 +42,11 @@ class VaultTest {
 
     @Test
     fun `when getAuthToken after it was set`() {
-        subject.authRefreshToken = AuthTest.JwtToken
+        subject.authRefreshToken = AuthTest.JWT_TOKEN
 
         val result = subject.authRefreshToken
 
-        assertThat(result).isEqualTo(AuthTest.JwtToken)
+        assertThat(result).isEqualTo(AuthTest.JWT_TOKEN)
     }
 
     @Test
@@ -93,7 +93,7 @@ class VaultTest {
     @Test
     fun `when getPushConfig after it was set`() {
         val givenPushConfig = PushConfig(
-            token = TestValues.Token,
+            token = TestValues.TOKEN,
             deviceToken = TestValues.DEVICE_TOKEN,
             preferredLanguage = TestValues.PREFERRED_LANGUAGE,
             lastSyncTimestamp = TestValues.PUSH_SYNC_TIMESTAMP,

@@ -33,7 +33,7 @@ class PushServiceImplTest {
     private val mockVault: Vault = mockk {
         every { pushConfig } returns DEFAULT_PUSH_CONFIG
         every { pushConfig = any() } just Runs
-        every { token } returns TestValues.Token
+        every { token } returns TestValues.TOKEN
         every { keys } returns TestValues.vaultKeys
         every { remove(any()) } just Runs
     }

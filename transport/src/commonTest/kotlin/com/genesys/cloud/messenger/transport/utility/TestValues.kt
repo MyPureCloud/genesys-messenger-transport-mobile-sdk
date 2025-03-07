@@ -8,12 +8,8 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ButtonResponseContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.QuickReplyContent
-import com.genesys.cloud.messenger.transport.util.AUTH_REFRESH_TOKEN_KEY
 import com.genesys.cloud.messenger.transport.util.PUSH_CONFIG_KEY
-import com.genesys.cloud.messenger.transport.util.TOKEN_KEY
-import com.genesys.cloud.messenger.transport.util.VAULT_KEY
 import com.genesys.cloud.messenger.transport.util.Vault
-import com.genesys.cloud.messenger.transport.util.WAS_AUTHENTICATED
 
 internal const val DEFAULT_TIMEOUT = 10000L
 

@@ -16,7 +16,7 @@ class PushConfigTest {
     @Test
     fun `test PushConfig serialization`() {
         val expectedPushConfigString =
-            """{"token":"${TestValues.Token}","deviceToken":"${TestValues.DEVICE_TOKEN}","preferredLanguage":"${TestValues.PREFERRED_LANGUAGE}","lastSyncTimestamp":${TestValues.PUSH_SYNC_TIMESTAMP},"deviceType":"${TestValues.DEVICE_TYPE}","pushProvider":"${TestValues.PUSH_PROVIDER}"}""".trimIndent()
+            """{"token":"${TestValues.TOKEN}","deviceToken":"${TestValues.DEVICE_TOKEN}","preferredLanguage":"${TestValues.PREFERRED_LANGUAGE}","lastSyncTimestamp":${TestValues.PUSH_SYNC_TIMESTAMP},"deviceType":"${TestValues.DEVICE_TYPE}","pushProvider":"${TestValues.PUSH_PROVIDER}"}""".trimIndent()
 
         val encodedString = WebMessagingJson.json.encodeToString(PushTestValues.CONFIG)
 
@@ -26,7 +26,7 @@ class PushConfigTest {
     @Test
     fun `test PushConfig deserialization`() {
         val givenPushConfigString =
-            """{"token":"${TestValues.Token}","deviceToken":"${TestValues.DEVICE_TOKEN}","preferredLanguage":"${TestValues.PREFERRED_LANGUAGE}","lastSyncTimestamp":${TestValues.PUSH_SYNC_TIMESTAMP},"deviceType":"${TestValues.DEVICE_TYPE}","pushProvider":"${TestValues.PUSH_PROVIDER}"}""".trimIndent()
+            """{"token":"${TestValues.TOKEN}","deviceToken":"${TestValues.DEVICE_TOKEN}","preferredLanguage":"${TestValues.PREFERRED_LANGUAGE}","lastSyncTimestamp":${TestValues.PUSH_SYNC_TIMESTAMP},"deviceType":"${TestValues.DEVICE_TYPE}","pushProvider":"${TestValues.PUSH_PROVIDER}"}""".trimIndent()
 
         val result = WebMessagingJson.json.decodeFromString<PushConfig>(givenPushConfigString)
 

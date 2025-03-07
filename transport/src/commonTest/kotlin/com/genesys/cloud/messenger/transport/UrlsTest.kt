@@ -10,11 +10,11 @@ import kotlin.test.Test
 
 class UrlsTest {
 
-    private val subject = Urls(TestValues.Domain, TestValues.DeploymentId)
+    private val subject = Urls(TestValues.DOMAIN, TestValues.DEPLOYMENT_ID)
 
     @Test
     fun `it should get webSocketUrl`() {
-        val expected = Url("wss://webmessaging.${TestValues.Domain}/v1?deploymentId=${TestValues.DeploymentId}&application=TransportSDK-${MessengerTransportSDK.sdkVersion}")
+        val expected = Url("wss://webmessaging.${TestValues.DOMAIN}/v1?deploymentId=${TestValues.DEPLOYMENT_ID}&application=TransportSDK-${MessengerTransportSDK.sdkVersion}")
 
         val result = subject.webSocketUrl
 
@@ -23,7 +23,7 @@ class UrlsTest {
 
     @Test
     fun `it should get deploymentConfigUrl`() {
-        val expected = Url("https://api-cdn.${TestValues.Domain}/webdeployments/v1/deployments/${TestValues.DeploymentId}/config.json")
+        val expected = Url("https://api-cdn.${TestValues.DOMAIN}/webdeployments/v1/deployments/${TestValues.DEPLOYMENT_ID}/config.json")
 
         val result = subject.deploymentConfigUrl
 
@@ -32,7 +32,7 @@ class UrlsTest {
 
     @Test
     fun `it should get history`() {
-        val expected = Url("https://api.${TestValues.Domain}/api/v2/webmessaging/messages")
+        val expected = Url("https://api.${TestValues.DOMAIN}/api/v2/webmessaging/messages")
 
         val result = subject.history
 
@@ -41,7 +41,7 @@ class UrlsTest {
 
     @Test
     fun `it should get jwtAuthUrl`() {
-        val expected = Url("https://api.${TestValues.Domain}/api/v2/webdeployments/token/oauthcodegrantjwtexchange")
+        val expected = Url("https://api.${TestValues.DOMAIN}/api/v2/webdeployments/token/oauthcodegrantjwtexchange")
 
         val result = subject.jwtAuthUrl
 
@@ -50,7 +50,7 @@ class UrlsTest {
 
     @Test
     fun `it should get logoutUrl`() {
-        val expected = Url("https://api.${TestValues.Domain}/api/v2/webdeployments/token/revoke")
+        val expected = Url("https://api.${TestValues.DOMAIN}/api/v2/webdeployments/token/revoke")
 
         val result = subject.logoutUrl
 
@@ -59,7 +59,7 @@ class UrlsTest {
 
     @Test
     fun `it should get refreshAuthTokenUrl`() {
-        val expected = Url("https://api.${TestValues.Domain}/api/v2/webdeployments/token/refresh")
+        val expected = Url("https://api.${TestValues.DOMAIN}/api/v2/webdeployments/token/refresh")
 
         val result = subject.refreshAuthTokenUrl
 
@@ -69,9 +69,9 @@ class UrlsTest {
     @Test
     fun `it should get deviceTokenUrl`() {
         val expected =
-            Url("https://api.${TestValues.Domain}/api/v2/webmessaging/deployments/${TestValues.DeploymentId}/pushdevices/${TestValues.Token}")
+            Url("https://api.${TestValues.DOMAIN}/api/v2/webmessaging/deployments/${TestValues.DEPLOYMENT_ID}/pushdevices/${TestValues.TOKEN}")
 
-        val result = subject.deviceTokenUrl(TestValues.DeploymentId, TestValues.Token)
+        val result = subject.deviceTokenUrl(TestValues.DEPLOYMENT_ID, TestValues.TOKEN)
 
         assertThat(result, "registerDeviceToken URL").isEqualTo(expected)
     }

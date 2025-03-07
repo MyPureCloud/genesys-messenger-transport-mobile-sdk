@@ -18,7 +18,7 @@ import io.ktor.http.fullPath
 import io.ktor.http.headersOf
 
 private const val BASIC_DEVICE_TOKEN_PATH =
-    "/api/v2/webmessaging/deployments/${TestValues.DeploymentId}/pushdevices/${TestValues.Token}"
+    "/api/v2/webmessaging/deployments/${TestValues.DEPLOYMENT_ID}/pushdevices/${TestValues.TOKEN}"
 
 internal fun HttpClientConfig<MockEngineConfig>.pushNotificationEngine() {
     engine {
