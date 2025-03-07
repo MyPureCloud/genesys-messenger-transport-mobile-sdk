@@ -314,6 +314,6 @@ class StateMachineTest {
     fun `validate default constructor`() {
         val subject = StateMachineImpl()
 
-        assertThat(subject.log.kermit.tag).isEqualTo(LogTag.STATE_MACHINE)
+        assertThat(subject.log.logger.tag).isEqualTo(LogTag.STATE_MACHINE)
     }
 }
