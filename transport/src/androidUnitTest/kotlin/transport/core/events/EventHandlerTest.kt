@@ -263,6 +263,6 @@ class EventHandlerTest {
     fun `validate default constructor`() {
         val subject = EventHandlerImpl()
 
-        assertThat(subject.log.kermit.tag).isEqualTo(LogTag.EVENT_HANDLER)
+        assertThat(subject.log.logger.tag).isEqualTo(LogTag.EVENT_HANDLER)
     }
 }

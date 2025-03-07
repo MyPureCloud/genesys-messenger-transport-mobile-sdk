@@ -1,31 +1,22 @@
 package com.genesys.cloud.messenger.transport.util.logs
 
-import co.touchlab.kermit.Severity
-import io.ktor.client.plugins.logging.Logger
-
 internal class Log(
     private val enableLogs: Boolean,
     tag: String,
-    val kermit: co.touchlab.kermit.Logger = co.touchlab.kermit.Logger.withTag(tag),
+    val logger: Logger = Logger(enableLogs, tag)
 ) {
 
-    init {
-        if (!enableLogs) {
-            co.touchlab.kermit.Logger.setMinSeverity(Severity.Assert)
-        }
-    }
-
-    val ktorLogger: Logger = KermitKtorLogger(
-        co.touchlab.kermit.Logger.withTag(LogTag.API)
+    val ktorLogger: io.ktor.client.plugins.logging.Logger = KtorLogger(
+        Logger(enableLogs, LogTag.API)
     )
 
-    fun i(message: () -> String) = kermit.i(message)
+    fun i(message: () -> String) = logger.i(message)
 
-    fun w(message: () -> String) = kermit.w(message)
+    fun w(message: () -> String) = logger.w(message)
 
-    fun e(message: () -> String) = kermit.e(message)
+    fun e(message: () -> String) = logger.e(message)
 
-    fun e(throwable: Throwable, message: () -> String) = kermit.e(throwable, message)
+    fun e(throwable: Throwable, message: () -> String) = logger.e(throwable, message)
 
     fun withTag(tag: String) = Log(enableLogs, tag)
 }

@@ -123,7 +123,6 @@ kotlin {
                 implementation(Deps.Libs.Ktor.contentNegotiation)
                 implementation(Deps.Libs.Ktor.kotlinxSerialization)
                 implementation(Deps.Libs.klock)
-                api(Deps.Libs.kermit)
             }
         }
         commonTest {
