@@ -9,14 +9,14 @@ import com.genesys.cloud.messenger.transport.utility.DeploymentConfigValues
 fun createDeploymentConfigForTesting(
     messenger: Messenger = createMessengerVOForTesting(),
 ) = DeploymentConfig(
-    id = DeploymentConfigValues.Id,
-    version = DeploymentConfigValues.Version,
+    id = DeploymentConfigValues.ID,
+    version = DeploymentConfigValues.VERSION,
     languages = listOf(
-        DeploymentConfigValues.DefaultLanguage,
-        DeploymentConfigValues.SecondaryLanguage
+        DeploymentConfigValues.DEFAULT_LANGUAGE,
+        DeploymentConfigValues.SECONDARY_LANGUAGE
     ),
-    defaultLanguage = DeploymentConfigValues.DefaultLanguage,
-    apiEndpoint = DeploymentConfigValues.ApiEndPoint,
+    defaultLanguage = DeploymentConfigValues.DEFAULT_LANGUAGE,
+    apiEndpoint = DeploymentConfigValues.API_ENDPOINT,
     messenger = messenger,
     journeyEvents = JourneyEvents(enabled = false),
     status = DeploymentConfigValues.Status,
@@ -32,8 +32,8 @@ fun createMessengerVOForTesting(
 ) = Messenger(
     enabled = true,
     apps = apps,
-    styles = Styles(primaryColor = DeploymentConfigValues.PrimaryColor),
-    launcherButton = LauncherButton(visibility = DeploymentConfigValues.LauncherButtonVisibility),
+    styles = Styles(primaryColor = DeploymentConfigValues.PRIMARY_COLOR),
+    launcherButton = LauncherButton(visibility = DeploymentConfigValues.LAUNCHER_BUTTON_VISIBILITY),
     fileUpload = fileUpload
 )
 
@@ -41,8 +41,8 @@ fun createFileUploadVOForTesting(
     enableAttachments: Boolean? = false,
     modes: List<Mode> = listOf(
         Mode(
-            fileTypes = listOf(DeploymentConfigValues.FileType),
-            maxFileSizeKB = DeploymentConfigValues.MaxFileSize,
+            fileTypes = listOf(DeploymentConfigValues.FILE_TYPE),
+            maxFileSizeKB = DeploymentConfigValues.MAX_FILE_SIZE,
         )
     ),
 ): FileUpload {
@@ -55,7 +55,7 @@ fun createConversationsVOForTesting(
     conversationClear: ConversationClear = ConversationClear(enabled = true),
     notifications: Notifications = Notifications(enabled = false, notificationContentType = Notifications.NotificationContentType.IncludeMessagesContent),
 ): Conversations = Conversations(
-    messagingEndpoint = DeploymentConfigValues.MessagingEndpoint,
+    messagingEndpoint = DeploymentConfigValues.MESSAGING_ENDPOINT,
     autoStart = autoStart,
     conversationDisconnect = conversationDisconnect,
     conversationClear = conversationClear,

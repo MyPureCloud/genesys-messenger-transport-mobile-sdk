@@ -30,7 +30,7 @@ class ReconnectionHandlerTest {
     private val mockReconnectFunction: () -> Unit = spyk()
     private val dispatcher: CoroutineDispatcher = Dispatchers.Unconfined
 
-    private var subject = ReconnectionHandlerImpl(TestValues.ReconnectionTimeout, mockLogger)
+    private var subject = ReconnectionHandlerImpl(TestValues.RECONNECTION_TIMEOUT, mockLogger)
 
     @ExperimentalCoroutinesApi
     @Before
@@ -62,7 +62,7 @@ class ReconnectionHandlerTest {
 
     @Test
     fun `when reconnect() and there is NO reconnection attempts left`() {
-        subject = ReconnectionHandlerImpl(TestValues.NoReconnectionAttempts, mockLogger)
+        subject = ReconnectionHandlerImpl(TestValues.NO_RECONNECTION_ATTEMPTS, mockLogger)
 
         subject.reconnect(mockReconnectFunction)
 

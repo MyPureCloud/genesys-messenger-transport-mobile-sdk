@@ -32,7 +32,7 @@ internal fun HttpClientConfig<MockEngineConfig>.refreshTokenEngine() {
                             RefreshToken.serializer(),
                             (request.body as TextContent).text
                         )
-                        if (requestBody.refreshToken == AuthTest.RefreshToken) {
+                        if (requestBody.refreshToken == AuthTest.REFRESH_TOKEN) {
                             respond(
                                 status = HttpStatusCode.OK,
                                 headers = headersOf(
@@ -41,16 +41,16 @@ internal fun HttpClientConfig<MockEngineConfig>.refreshTokenEngine() {
                                 ),
                                 content = Json.encodeToString(
                                     AuthJwt.serializer(),
-                                    AuthJwt(AuthTest.RefreshedJWTToken, null)
+                                    AuthJwt(AuthTest.REFRESHED_JWT_TOKEN, null)
                                 )
                             )
                         } else {
                             when (requestBody.refreshToken) {
-                                InvalidValues.CancellationException -> {
-                                    throw CancellationException(ErrorTest.Message)
+                                InvalidValues.CANCELLATION_EXCEPTION -> {
+                                    throw CancellationException(ErrorTest.MESSAGE)
                                 }
-                                InvalidValues.UnknownException -> {
-                                    error(ErrorTest.Message)
+                                InvalidValues.UNKNOWN_EXCEPTION -> {
+                                    error(ErrorTest.MESSAGE)
                                 }
                                 else -> {
                                     respondBadRequest()

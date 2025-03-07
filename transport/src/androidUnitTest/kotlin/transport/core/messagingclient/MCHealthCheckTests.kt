@@ -98,7 +98,7 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()
-            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
+            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
             mockStateChangedListener(fromConnectedToConfigured)
             mockLogger.i(capture(logSlot))
             mockLogger.i(capture(logSlot))

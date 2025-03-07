@@ -39,7 +39,7 @@ import io.mockk.verify
 import org.junit.Test
 
 internal class MessageStoreTest {
-    private val givenToken = TestValues.Token
+    private val givenToken = TestValues.TOKEN
     private val messageSlot = slot<MessageEvent>()
     private val mockLogger: Log = mockk(relaxed = true)
     private val logSlot = mutableListOf<() -> String>()
@@ -61,7 +61,7 @@ internal class MessageStoreTest {
             ),
         )
 
-        subject.prepareMessage(TestValues.Token, "test message").run {
+        subject.prepareMessage(TestValues.TOKEN, "test message").run {
             assertThat(token).isEqualTo(expectedOnMessageRequest.token)
             assertThat(message).isEqualTo(expectedOnMessageRequest.message)
             assertThat(time).isNull()
@@ -84,8 +84,8 @@ internal class MessageStoreTest {
     @Test
     fun `when prepareMessage() is called twice`() {
 
-        subject.prepareMessage(TestValues.Token, "message 1")
-        subject.prepareMessage(TestValues.Token, "message 2")
+        subject.prepareMessage(TestValues.TOKEN, "message 1")
+        subject.prepareMessage(TestValues.TOKEN, "message 2")
 
         assertThat(subject.getConversation().size).isEqualTo(2)
     }
@@ -98,7 +98,7 @@ internal class MessageStoreTest {
             )
         )
 
-        subject.prepareMessage(TestValues.Token, "test message").run {
+        subject.prepareMessage(TestValues.TOKEN, "test message").run {
             assertThat(this.message.content).containsOnly(
                 Content(
                     contentType = Content.Type.Attachment,
@@ -113,7 +113,7 @@ internal class MessageStoreTest {
     fun `when prepareMessage() with NOT uploaded attachment`() {
         subject.updateAttachmentStateWith(attachment())
 
-        subject.prepareMessage(TestValues.Token, "test message").run {
+        subject.prepareMessage(TestValues.TOKEN, "test message").run {
             assertThat(message.content).isNotNull()
             assertThat(message.content).isEmpty()
         }
@@ -122,7 +122,7 @@ internal class MessageStoreTest {
     @Test
     fun `when update() inbound message`() {
         val sentMessageId =
-            subject.prepareMessage(TestValues.Token, "test message").message.metadata?.get("customMessageId")
+            subject.prepareMessage(TestValues.TOKEN, "test message").message.metadata?.get("customMessageId")
                 ?: "empty"
         val givenMessage =
             Message(id = sentMessageId, state = State.Sent, text = "test message")
@@ -158,7 +158,7 @@ internal class MessageStoreTest {
     @Test
     fun `when update() inbound and then outbound messages`() {
         val sentMessageId =
-            subject.prepareMessage(TestValues.Token, "test message").message.metadata?.get("customMessageId")
+            subject.prepareMessage(TestValues.TOKEN, "test message").message.metadata?.get("customMessageId")
                 ?: "empty"
         val expectedConversationSize = 2
         val givenMessage =
@@ -340,7 +340,7 @@ internal class MessageStoreTest {
                 state = expectedState,
                 text = testMessage
             )
-        subject.prepareMessage(TestValues.Token, testMessage)
+        subject.prepareMessage(TestValues.TOKEN, testMessage)
         clearMocks(mockMessageListener)
 
         subject.onMessageError(ErrorCode.MessageTooLong, errorMessage)
@@ -358,7 +358,7 @@ internal class MessageStoreTest {
     fun `when messageListener not set`() {
         subject.messageListener = null
 
-        subject.prepareMessage(TestValues.Token, "test message")
+        subject.prepareMessage(TestValues.TOKEN, "test message")
 
         verify { mockMessageListener wasNot Called }
         assertThat(subject.messageListener).isNull()
@@ -392,7 +392,7 @@ internal class MessageStoreTest {
         )
 
         val onMessageRequest =
-            subject.prepareMessage(TestValues.Token, "test message", Channel(Channel.Metadata(mapOf("A" to "B"))))
+            subject.prepareMessage(TestValues.TOKEN, "test message", Channel(Channel.Metadata(mapOf("A" to "B"))))
 
         verify { mockMessageListener.invoke(capture(messageSlot)) }
         onMessageRequest.run {
@@ -487,7 +487,7 @@ internal class MessageStoreTest {
             ),
         )
 
-        subject.prepareMessageWith(TestValues.Token, givenButtonResponse, givenChannel).run {
+        subject.prepareMessageWith(TestValues.TOKEN, givenButtonResponse, givenChannel).run {
             assertThat(token).isEqualTo(expectedOnMessageRequest.token)
             assertThat(message).isEqualTo(expectedOnMessageRequest.message)
             assertThat(message.content).isEqualTo(expectedOnMessageRequest.message.content)
@@ -524,7 +524,7 @@ internal class MessageStoreTest {
             ),
         )
 
-        subject.prepareMessageWith(TestValues.Token, givenButtonResponse).run {
+        subject.prepareMessageWith(TestValues.TOKEN, givenButtonResponse).run {
             assertThat(token).isEqualTo(expectedOnMessageRequest.token)
             assertThat(message).isEqualTo(expectedOnMessageRequest.message)
             assertThat(message.content).isEqualTo(expectedOnMessageRequest.message.content)
@@ -553,7 +553,7 @@ internal class MessageStoreTest {
         )
         subject.updateAttachmentStateWith(givenAttachment)
 
-        val result = subject.prepareMessageWith(TestValues.Token, givenButtonResponse)
+        val result = subject.prepareMessageWith(TestValues.TOKEN, givenButtonResponse)
 
         assertThat(result.message.content).containsOnly(*expectedContent.toTypedArray())
         assertThat(subject.pendingMessage.attachments).isNotEmpty()
@@ -571,7 +571,7 @@ internal class MessageStoreTest {
     private fun attachment(
         id: String = "given id",
         state: Attachment.State = Attachment.State.Presigning,
-    ) = Attachment(id, "file.png", AttachmentValues.FileSize, state)
+    ) = Attachment(id, "file.png", AttachmentValues.FILE_SIZE, state)
 
     private fun messageList(size: Int = 5): List<Message> {
         val messageList = mutableListOf<Message>()

@@ -58,7 +58,7 @@ class EventHandlerTest {
             Authorized,
             Logout,
             ConversationCleared,
-            SignedIn(MessageValues.ParticipantName, MessageValues.ParticipantLastName),
+            SignedIn(MessageValues.PARTICIPANT_NAME, MessageValues.PARTICIPANT_LAST_NAME),
             ExistingAuthSessionCleared,
         )
 
@@ -148,11 +148,11 @@ class EventHandlerTest {
     @Test
     fun `when PresenceEvent SignIn with Participant data toTransportEvent()`() {
         val givenParticipantData = StructuredMessage.Participant(
-            firstName = MessageValues.ParticipantName,
-            lastName = MessageValues.ParticipantLastName,
+            firstName = MessageValues.PARTICIPANT_NAME,
+            lastName = MessageValues.PARTICIPANT_LAST_NAME,
         )
         val expectedEvent =
-            SignedIn(MessageValues.ParticipantName, MessageValues.ParticipantLastName)
+            SignedIn(MessageValues.PARTICIPANT_NAME, MessageValues.PARTICIPANT_LAST_NAME)
 
         val result = PresenceEvent(
             StructuredMessageEvent.Type.Presence,
@@ -181,7 +181,7 @@ class EventHandlerTest {
     @Test
     fun `validate event Error payload`() {
         val expectedErrorCodePayload = ErrorCode.UnexpectedError
-        val expectedErrorMessagePayload = ErrorTest.Message
+        val expectedErrorMessagePayload = ErrorTest.MESSAGE
         val expectedCorrectiveActionPayload = CorrectiveAction.Unknown
         val expectedErrorEvent = Error(
             expectedErrorCodePayload,
@@ -189,7 +189,7 @@ class EventHandlerTest {
             expectedCorrectiveActionPayload
         )
         val givenErrorEvent =
-            Error(ErrorCode.UnexpectedError, ErrorTest.Message, CorrectiveAction.Unknown)
+            Error(ErrorCode.UnexpectedError, ErrorTest.MESSAGE, CorrectiveAction.Unknown)
 
         subject.onEvent(givenErrorEvent)
 
@@ -226,7 +226,7 @@ class EventHandlerTest {
 
     @Test
     fun `validate event SignedIn payload`() {
-        val givenSignedInEvent = SignedIn(MessageValues.ParticipantName, MessageValues.ParticipantLastName)
+        val givenSignedInEvent = SignedIn(MessageValues.PARTICIPANT_NAME, MessageValues.PARTICIPANT_LAST_NAME)
 
         subject.onEvent(givenSignedInEvent)
 
@@ -235,8 +235,8 @@ class EventHandlerTest {
             mockEventListener.invoke(capture(eventSlot))
         }
         (eventSlot[0] as SignedIn).run {
-            assertThat(firstName).isEqualTo(MessageValues.ParticipantName)
-            assertThat(lastName).isEqualTo(MessageValues.ParticipantLastName)
+            assertThat(firstName).isEqualTo(MessageValues.PARTICIPANT_NAME)
+            assertThat(lastName).isEqualTo(MessageValues.PARTICIPANT_LAST_NAME)
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.onEvent(givenSignedInEvent))
     }

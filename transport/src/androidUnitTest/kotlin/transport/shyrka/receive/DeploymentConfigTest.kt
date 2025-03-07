@@ -61,18 +61,18 @@ class DeploymentConfigTest {
             Notifications.NotificationContentType.IncludeMessagesContent
         )
         val expectedConversations = Conversations(
-            messagingEndpoint = DeploymentConfigValues.MessagingEndpoint,
+            messagingEndpoint = DeploymentConfigValues.MESSAGING_ENDPOINT,
             conversationClear = expectedConversationClear,
             notifications = expectedNotifications,
         )
         val expectedApps = Apps(conversations = expectedConversations)
-        val expectedStyles = Styles(primaryColor = DeploymentConfigValues.PrimaryColor)
+        val expectedStyles = Styles(primaryColor = DeploymentConfigValues.PRIMARY_COLOR)
         val expectedMode = Mode(
-            fileTypes = listOf(DeploymentConfigValues.FileType),
-            maxFileSizeKB = DeploymentConfigValues.MaxFileSize
+            fileTypes = listOf(DeploymentConfigValues.FILE_TYPE),
+            maxFileSizeKB = DeploymentConfigValues.MAX_FILE_SIZE
         )
         val expectedLauncherButton =
-            LauncherButton(visibility = DeploymentConfigValues.LauncherButtonVisibility)
+            LauncherButton(visibility = DeploymentConfigValues.LAUNCHER_BUTTON_VISIBILITY)
         val expectedFileUpload = FileUpload(enableAttachments = false, modes = listOf(expectedMode))
         val expectedMessenger = Messenger(
             enabled = true,
@@ -82,17 +82,17 @@ class DeploymentConfigTest {
             fileUpload = expectedFileUpload,
         )
         val expectedLanguages =
-            listOf(DeploymentConfigValues.DefaultLanguage, DeploymentConfigValues.SecondaryLanguage)
+            listOf(DeploymentConfigValues.DEFAULT_LANGUAGE, DeploymentConfigValues.SECONDARY_LANGUAGE)
 
         val result =
             WebMessagingJson.json.decodeFromString<DeploymentConfig>(givenDeploymentConfigAsJson)
 
         assertThat(result).isEqualTo(expectedDeploymentConfig)
         result.run {
-            assertThat(apiEndpoint).isEqualTo(DeploymentConfigValues.ApiEndPoint)
+            assertThat(apiEndpoint).isEqualTo(DeploymentConfigValues.API_ENDPOINT)
             assertThat(auth).isEqualTo(expectedAuth)
-            assertThat(defaultLanguage).isEqualTo(DeploymentConfigValues.DefaultLanguage)
-            assertThat(id).isEqualTo(DeploymentConfigValues.Id)
+            assertThat(defaultLanguage).isEqualTo(DeploymentConfigValues.DEFAULT_LANGUAGE)
+            assertThat(id).isEqualTo(DeploymentConfigValues.ID)
             assertThat(journeyEvents).isEqualTo(expectedJourneyEvents)
             assertThat(journeyEvents.enabled).isFalse()
             assertThat(languages).containsExactly(*expectedLanguages.toTypedArray())
@@ -105,7 +105,7 @@ class DeploymentConfigTest {
                 assertThat(fileUpload).isEqualTo(expectedFileUpload)
             }
             assertThat(status).isEqualTo(DeploymentConfigValues.Status)
-            assertThat(version).isEqualTo(DeploymentConfigValues.Version)
+            assertThat(version).isEqualTo(DeploymentConfigValues.VERSION)
         }
     }
 
@@ -133,7 +133,7 @@ class DeploymentConfigTest {
     @Test
     fun `when Conversations serialized`() {
         val givenConversations = Conversations(
-            messagingEndpoint = DeploymentConfigValues.MessagingEndpoint,
+            messagingEndpoint = DeploymentConfigValues.MESSAGING_ENDPOINT,
             showAgentTypingIndicator = true,
             showUserTypingIndicator = true,
             autoStart = AutoStart(enabled = true),
@@ -168,7 +168,7 @@ class DeploymentConfigTest {
             notificationContentType = Notifications.NotificationContentType.ExcludeMessagesContent
         )
         val expectedConversations = Conversations(
-            messagingEndpoint = DeploymentConfigValues.MessagingEndpoint,
+            messagingEndpoint = DeploymentConfigValues.MESSAGING_ENDPOINT,
             showAgentTypingIndicator = true,
             showUserTypingIndicator = true,
             autoStart = expectedAutoStart,
@@ -181,7 +181,7 @@ class DeploymentConfigTest {
 
         assertThat(result).isEqualTo(expectedConversations)
         result.run {
-            assertThat(messagingEndpoint).isEqualTo(DeploymentConfigValues.MessagingEndpoint)
+            assertThat(messagingEndpoint).isEqualTo(DeploymentConfigValues.MESSAGING_ENDPOINT)
             assertThat(showAgentTypingIndicator).isTrue()
             assertThat(showUserTypingIndicator).isTrue()
             assertThat(autoStart).isEqualTo(expectedAutoStart)
@@ -302,8 +302,8 @@ class DeploymentConfigTest {
     @Test
     fun `when FileUpload serialized`() {
         val givenMode = Mode(
-            fileTypes = listOf(DeploymentConfigValues.FileType),
-            maxFileSizeKB = DeploymentConfigValues.MaxFileSize
+            fileTypes = listOf(DeploymentConfigValues.FILE_TYPE),
+            maxFileSizeKB = DeploymentConfigValues.MAX_FILE_SIZE
         )
         val givenFileUpload = FileUpload(modes = listOf(givenMode))
         val expectedFileUploadAsJson = """{"modes":[{"fileTypes":["png"],"maxFileSizeKB":100}]}"""
@@ -316,12 +316,12 @@ class DeploymentConfigTest {
     @Test
     fun `when FileUpload deserialized`() {
         val givenFileUploadAsJson = """{"modes":[{"fileTypes":["png"],"maxFileSizeKB":100}]}"""
-        val expectedFileType = DeploymentConfigValues.FileType
+        val expectedFileType = DeploymentConfigValues.FILE_TYPE
         val expectedFileTypes = listOf(expectedFileType)
         val expectedModes = listOf(
             Mode(
                 fileTypes = expectedFileTypes,
-                maxFileSizeKB = DeploymentConfigValues.MaxFileSize
+                maxFileSizeKB = DeploymentConfigValues.MAX_FILE_SIZE
             )
         )
         val expectedFileUpload = FileUpload(modes = expectedModes)
@@ -329,8 +329,8 @@ class DeploymentConfigTest {
         val result = WebMessagingJson.json.decodeFromString<FileUpload>(givenFileUploadAsJson)
 
         assertThat(result).isEqualTo(expectedFileUpload)
-        assertThat(result.modes[0].fileTypes[0]).isEqualTo(DeploymentConfigValues.FileType)
-        assertThat(result.modes[0].maxFileSizeKB).isEqualTo(DeploymentConfigValues.MaxFileSize)
+        assertThat(result.modes[0].fileTypes[0]).isEqualTo(DeploymentConfigValues.FILE_TYPE)
+        assertThat(result.modes[0].maxFileSizeKB).isEqualTo(DeploymentConfigValues.MAX_FILE_SIZE)
         assertThat(result.modes).containsExactly(*expectedModes.toTypedArray())
         assertThat(result.modes[0].fileTypes).containsExactly(*expectedFileTypes.toTypedArray())
     }
@@ -358,7 +358,7 @@ class DeploymentConfigTest {
 
     @Test
     fun `when LauncherButton serialized`() {
-        val givenLauncherButton = LauncherButton(DeploymentConfigValues.LauncherButtonVisibility)
+        val givenLauncherButton = LauncherButton(DeploymentConfigValues.LAUNCHER_BUTTON_VISIBILITY)
         val expectedLauncherButtonAsJson = """{"visibility":"On"}"""
 
         val result = WebMessagingJson.json.encodeToString(givenLauncherButton)
@@ -369,19 +369,19 @@ class DeploymentConfigTest {
     @Test
     fun `when LauncherButton deserialized`() {
         val givenLauncherButtonAsJson = """{"visibility":"On"}"""
-        val expectedLauncherButton = LauncherButton(DeploymentConfigValues.LauncherButtonVisibility)
+        val expectedLauncherButton = LauncherButton(DeploymentConfigValues.LAUNCHER_BUTTON_VISIBILITY)
 
         val result =
             WebMessagingJson.json.decodeFromString<LauncherButton>(givenLauncherButtonAsJson)
 
         assertThat(result).isEqualTo(expectedLauncherButton)
-        assertThat(result.visibility).isEqualTo(DeploymentConfigValues.LauncherButtonVisibility)
+        assertThat(result.visibility).isEqualTo(DeploymentConfigValues.LAUNCHER_BUTTON_VISIBILITY)
     }
 
     @Test
     fun `when Mode serialized`() {
-        val givenFileTypes = listOf(DeploymentConfigValues.FileType)
-        val givenMode = Mode(givenFileTypes, DeploymentConfigValues.MaxFileSize)
+        val givenFileTypes = listOf(DeploymentConfigValues.FILE_TYPE)
+        val givenMode = Mode(givenFileTypes, DeploymentConfigValues.MAX_FILE_SIZE)
         val expectedModeAsJson = """{"fileTypes":["png"],"maxFileSizeKB":100}"""
 
         val result = WebMessagingJson.json.encodeToString(givenMode)
@@ -392,9 +392,9 @@ class DeploymentConfigTest {
     @Test
     fun `when Mode deserialized`() {
         val givenModeAsJson = """{"fileTypes":["png"],"maxFileSizeKB":100}"""
-        val expectedFileTypes = listOf(DeploymentConfigValues.FileType)
+        val expectedFileTypes = listOf(DeploymentConfigValues.FILE_TYPE)
         val expectedMode =
-            Mode(listOf(DeploymentConfigValues.FileType), DeploymentConfigValues.MaxFileSize)
+            Mode(listOf(DeploymentConfigValues.FILE_TYPE), DeploymentConfigValues.MAX_FILE_SIZE)
 
         val result = WebMessagingJson.json.decodeFromString<Mode>(givenModeAsJson)
 
@@ -404,13 +404,13 @@ class DeploymentConfigTest {
 
     @Test
     fun `when Styles serialized`() {
-        val expectedRequest = Styles(primaryColor = DeploymentConfigValues.PrimaryColor)
+        val expectedRequest = Styles(primaryColor = DeploymentConfigValues.PRIMARY_COLOR)
         val expectedJson = """{"primaryColor":"red"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<Styles>(expectedJson)
 
         assertThat(encodedString, "encoded Styles").isEqualTo(expectedJson)
-        assertThat(decoded.primaryColor).isEqualTo(DeploymentConfigValues.PrimaryColor)
+        assertThat(decoded.primaryColor).isEqualTo(DeploymentConfigValues.PRIMARY_COLOR)
     }
 }

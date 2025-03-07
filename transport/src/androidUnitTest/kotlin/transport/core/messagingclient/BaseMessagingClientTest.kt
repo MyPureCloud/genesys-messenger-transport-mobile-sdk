@@ -149,7 +149,7 @@ open class BaseMessagingClientTest {
         getCurrentTimestamp = mockTimestampFunction,
     )
     internal val mockAuthHandler: AuthHandler = mockk(relaxed = true) {
-        every { jwt } returns AuthTest.JwtToken
+        every { jwt } returns AuthTest.JWT_TOKEN
         every { refreshToken(captureLambda<(Result<Any>) -> Unit>()) } answers {
             lambda<(Result<Any>) -> Unit>().invoke(Result.Success(Empty()))
         }
@@ -165,7 +165,7 @@ open class BaseMessagingClientTest {
     internal val mockVault: DefaultVault = mockk {
         every { fetch(TOKEN_KEY) } returns testToken
         every { token } returns testToken
-        every { remove(TOKEN_KEY) } answers { testToken = TestValues.SecondaryToken }
+        every { remove(TOKEN_KEY) } answers { testToken = TestValues.SECONDARY_TOKEN }
         every { keys } returns TestValues.vaultKeys
         justRun { wasAuthenticated = any() }
         every { pushConfig } returns DEFAULT_PUSH_CONFIG
@@ -231,7 +231,7 @@ open class BaseMessagingClientTest {
         mockAttachmentHandler.fileAttachmentProfile = any()
         mockReconnectionHandler.clear()
         mockJwtHandler.clear()
-        mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
+        mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
     }
 
     protected fun MockKVerificationScope.connectToReadOnlySequence() {
@@ -241,7 +241,7 @@ open class BaseMessagingClientTest {
         mockAttachmentHandler.fileAttachmentProfile = any()
         mockReconnectionHandler.clear()
         mockJwtHandler.clear()
-        mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
+        mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
         mockStateChangedListener(fromConnectedToReadOnly)
     }
 

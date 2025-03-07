@@ -79,7 +79,7 @@ internal class WebMessagingApi(
                 header(it.key, it.value)
             }
             presignedUrlResponse.fileName?.let {
-                contentType(ContentType.defaultForFilePath(it))
+                contentType(ContentType.defaultForFilePath(it).withoutParameters())
             }
             onUpload { bytesSendTotal: Long, contentLength: Long ->
                 progressCallback?.let { it((bytesSendTotal / contentLength.toFloat()) * 100) }
