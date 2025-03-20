@@ -37,7 +37,7 @@ internal object LogMessages {
     fun messagePreparedToSend(message: Message) = "Message prepared to send: $message"
     fun messageStateUpdated(message: Message) = "Message state updated: $message"
     fun messageHistoryUpdated(messages: List<Message>) = "Message history updated with: $messages."
-    fun receiveMessageError(code: Long, localizedDescription: String) =
+    fun receiveMessageError(code: Int, localizedDescription: String) =
         "receiveMessageWithCompletionHandler error [$code] $localizedDescription"
     const val ON_ERROR = "onError"
     const val ON_MESSAGE_ERROR = "onMessageError"
@@ -121,6 +121,7 @@ internal object LogMessages {
     fun deviceTokenWasRegistered(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken} with ${pushConfig.pushProvider} was registered."
     fun deviceTokenWasUpdated(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken} with ${pushConfig.pushProvider} was updated."
     fun deviceTokenWasDeleted(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken} with ${pushConfig.pushProvider} was deleted."
+    fun failedToSynchronizeDeviceToken(pushConfig: PushConfig, errorCode: ErrorCode) = "Failed to synchronize deviceToken: ${pushConfig.deviceToken} ,pushProvider ${pushConfig.pushProvider} with errorCode: $errorCode."
     const val SYNCHRONIZE_PUSH_SERVICE_ON_SESSION_CONFIGURE = "Synchronizing push service from session configured."
     const val UNREGISTERING_DEVICE = "Unregistering device from push notifications."
     const val DEVICE_NOT_REGISTERED = "Device is not registered."

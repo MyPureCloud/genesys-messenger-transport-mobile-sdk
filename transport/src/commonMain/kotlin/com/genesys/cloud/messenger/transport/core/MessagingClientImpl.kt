@@ -14,6 +14,7 @@ import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
 import com.genesys.cloud.messenger.transport.network.SocketCloseCode
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
+import com.genesys.cloud.messenger.transport.push.DeviceTokenException
 import com.genesys.cloud.messenger.transport.push.PushService
 import com.genesys.cloud.messenger.transport.push.PushServiceImpl
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
@@ -54,6 +55,7 @@ import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -425,7 +427,20 @@ internal class MessagingClientImpl(
         vault.pushConfig.run {
             if (deviceToken != UNKNOWN && pushProvider != null) {
                 defaultDispatcher.launch {
-                    pushService.synchronize(deviceToken, pushProvider)
+                    try {
+                        pushService.synchronize(deviceToken, pushProvider)
+                    } catch (deviceTokenException: DeviceTokenException) {
+                        log.e {
+                            LogMessages.failedToSynchronizeDeviceToken(
+                                this@run,
+                                deviceTokenException.errorCode
+                            )
+                        }
+                    } catch (illegalArgumentException: IllegalArgumentException) {
+                        log.e { LogMessages.NO_DEVICE_TOKEN_OR_PUSH_PROVIDER }
+                    } catch (cancellationException: CancellationException) {
+                        log.w { LogMessages.cancellationExceptionRequestName("pushService.synchronize()") }
+                    }
                 }
             } else {
                 log.i { LogMessages.NO_DEVICE_TOKEN_OR_PUSH_PROVIDER }

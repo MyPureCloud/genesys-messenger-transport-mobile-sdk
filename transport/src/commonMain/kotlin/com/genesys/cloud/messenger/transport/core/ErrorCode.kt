@@ -1,5 +1,6 @@
 package com.genesys.cloud.messenger.transport.core
 
+import com.genesys.cloud.messenger.transport.shyrka.receive.PushErrorResponse
 import io.ktor.http.HttpStatusCode
 
 /**
@@ -32,6 +33,15 @@ sealed class ErrorCode(val code: Int) {
     data object RefreshAuthTokenFailure : ErrorCode(6003)
     data object HistoryFetchFailure : ErrorCode(6004)
     data object ClearConversationFailure : ErrorCode(6005)
+    // Push
+    data object DeviceTokenOperationFailure : ErrorCode(6020)
+    data object DeviceAlreadyRegistered : ErrorCode(6021)
+    data object DeviceNotFound : ErrorCode(6022)
+    data object ContactStitchingError : ErrorCode(6023)
+    data object DeviceRegistrationFailure : ErrorCode(6024)
+    data object DeviceUpdateFailure : ErrorCode(6025)
+    data object DeviceDeleteFailure : ErrorCode(6026)
+
     data class RedirectResponseError(val value: Int) : ErrorCode(value)
     data class ClientResponseError(val value: Int) : ErrorCode(value)
     data class ServerResponseError(val value: Int) : ErrorCode(value)
@@ -63,6 +73,13 @@ sealed class ErrorCode(val code: Int) {
                 6003 -> RefreshAuthTokenFailure
                 6004 -> HistoryFetchFailure
                 6005 -> ClearConversationFailure
+                6020 -> DeviceTokenOperationFailure
+                6021 -> DeviceAlreadyRegistered
+                6022 -> DeviceNotFound
+                6023 -> ContactStitchingError
+                6024 -> DeviceRegistrationFailure
+                6025 -> DeviceUpdateFailure
+                6026 -> DeviceDeleteFailure
                 in 300..399 -> RedirectResponseError(value)
                 in 400..499 -> ClientResponseError(value)
                 in 500..599 -> ServerResponseError(value)
@@ -128,3 +145,16 @@ internal fun ErrorCode.toCorrectiveAction(): CorrectiveAction = when (this.code)
 
 internal fun ErrorCode.isUnauthorized(): Boolean =
     this.code == HttpStatusCode.Unauthorized.value
+
+internal fun PushErrorResponse.toErrorCode(): ErrorCode = when (code) {
+    "device.not.found" -> ErrorCode.DeviceNotFound
+    "device.registration.failure" -> ErrorCode.DeviceRegistrationFailure
+    "device.update.failure" -> ErrorCode.DeviceUpdateFailure
+    "device.delete.failure" -> ErrorCode.DeviceDeleteFailure
+    "device.already.registered" -> ErrorCode.DeviceAlreadyRegistered
+    "contacts.stitching.error" -> ErrorCode.ContactStitchingError
+    "feature.toggle.disabled" -> ErrorCode.FeatureUnavailable
+    "too.many.requests.retry.after" -> ErrorCode.RequestRateTooHigh
+    "required.fields.missing", "update.fields.missing" -> ErrorCode.MissingParameter
+    else -> ErrorCode.DeviceTokenOperationFailure
+}
