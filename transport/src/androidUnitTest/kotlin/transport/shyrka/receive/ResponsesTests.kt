@@ -1,6 +1,7 @@
 package transport.shyrka.receive
 
 import assertk.assertThat
+import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNull
@@ -13,6 +14,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.AttachmentDeletedRes
 import com.genesys.cloud.messenger.transport.shyrka.receive.GenerateUrlError
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.PushErrorResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.SessionResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.TooManyRequestsErrorMessage
@@ -21,6 +23,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
+import com.genesys.cloud.messenger.transport.utility.PushTestValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues.createButtonResponseContentForTesting
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues.createQuickReplyContentForTesting
@@ -298,6 +301,25 @@ class ResponsesTests {
                 assertThat(payload).isEqualTo(QuickReplyTestValues.PAYLOAD_A)
                 assertThat(action).isEqualTo("action")
             }
+        }
+    }
+
+    @Test
+    fun `validate PushErrorResponse serialization`() {
+        val expectedRequest = PushTestValues.pushErrorResponseWith(PushTestValues.PUSH_CODE_DEPLOYMENT_NOT_FOUND)
+        val expectedJson =
+            """{"message":"This is a generic error message for testing.","code":"deployment.not.found","status":404,"contextId":"any string"}"""
+
+        val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
+        val decoded = WebMessagingJson.json.decodeFromString<PushErrorResponse>(expectedJson)
+
+        assertThat(encodedString, "encoded PushErrorResponse").isEqualTo(expectedJson)
+        decoded.run {
+            assertThat(message).isEqualTo(ErrorTest.MESSAGE)
+            assertThat(code).isEqualTo(PushTestValues.PUSH_CODE_DEPLOYMENT_NOT_FOUND)
+            assertThat(status).isEqualTo(ErrorTest.CODE_404)
+            assertThat(contextId).isEqualTo(TestValues.DEFAULT_STRING)
+            assertThat(details).isEmpty()
         }
     }
 }

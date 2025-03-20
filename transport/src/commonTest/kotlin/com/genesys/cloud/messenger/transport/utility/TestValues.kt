@@ -1,10 +1,13 @@
 package com.genesys.cloud.messenger.transport.utility
 
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
+import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Message
+import com.genesys.cloud.messenger.transport.push.DeviceTokenException
 import com.genesys.cloud.messenger.transport.push.PushConfig
 import com.genesys.cloud.messenger.transport.push.PushProvider
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
+import com.genesys.cloud.messenger.transport.shyrka.receive.PushErrorResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ButtonResponseContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.QuickReplyContent
@@ -58,7 +61,7 @@ object AuthTest {
 object ErrorTest {
     internal const val MESSAGE = "This is a generic error message for testing."
     internal const val RETRY_AFTER = 1
-    internal const val CODE_404 = 404L
+    internal const val CODE_404 = 404
 }
 
 object InvalidValues {
@@ -195,6 +198,23 @@ object PushTestValues {
         deviceType = TestValues.DEVICE_TYPE,
         pushProvider = TestValues.PUSH_PROVIDER,
     )
+
+    internal fun pushErrorResponseWith(code: String) = PushErrorResponse(
+        message = ErrorTest.MESSAGE,
+        code = code,
+        status = ErrorTest.CODE_404,
+        contextId = TestValues.DEFAULT_STRING,
+    )
+
+    internal val DEVICE_TOKEN_EXCEPTION = DeviceTokenException(
+        errorCode = ErrorCode.DeviceTokenOperationFailure,
+        message = TestValues.DEFAULT_STRING,
+        cause = null,
+    )
+    const val PUSH_CODE_DEPLOYMENT_NOT_FOUND = "deployment.not.found"
+    const val PUSH_CODE_DEVICE_REGISTRATION_FAILURE = "device.registration.failure"
+    const val PUSH_CODE_DEVICE_UPDATE_FAILURE = "device.update.failure"
+    const val PUSH_CODE_DEVICE_DELETE_FAILURE = "device.delete.failure"
 }
 
 object MockEngineValues {
