@@ -317,7 +317,7 @@ class ResponsesTests {
         decoded.run {
             assertThat(message).isEqualTo(ErrorTest.MESSAGE)
             assertThat(code).isEqualTo(PushTestValues.PUSH_CODE_DEPLOYMENT_NOT_FOUND)
-            assertThat(status).isEqualTo(ErrorTest.CODE_404)
+            assertThat(status).isEqualTo(ErrorTest.CODE_404.toInt())
             assertThat(contextId).isEqualTo(TestValues.DEFAULT_STRING)
             assertThat(details).isEmpty()
         }

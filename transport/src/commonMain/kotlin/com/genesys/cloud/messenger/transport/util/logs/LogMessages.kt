@@ -37,7 +37,7 @@ internal object LogMessages {
     fun messagePreparedToSend(message: Message) = "Message prepared to send: $message"
     fun messageStateUpdated(message: Message) = "Message state updated: $message"
     fun messageHistoryUpdated(messages: List<Message>) = "Message history updated with: $messages."
-    fun receiveMessageError(code: Int, localizedDescription: String) =
+    fun receiveMessageError(code: Long, localizedDescription: String) =
         "receiveMessageWithCompletionHandler error [$code] $localizedDescription"
     const val ON_ERROR = "onError"
     const val ON_MESSAGE_ERROR = "onMessageError"

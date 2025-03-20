@@ -61,7 +61,7 @@ object AuthTest {
 object ErrorTest {
     internal const val MESSAGE = "This is a generic error message for testing."
     internal const val RETRY_AFTER = 1
-    internal const val CODE_404 = 404
+    internal const val CODE_404 = 404L
 }
 
 object InvalidValues {
@@ -202,7 +202,7 @@ object PushTestValues {
     internal fun pushErrorResponseWith(code: String) = PushErrorResponse(
         message = ErrorTest.MESSAGE,
         code = code,
-        status = ErrorTest.CODE_404,
+        status = ErrorTest.CODE_404.toInt(),
         contextId = TestValues.DEFAULT_STRING,
     )
 
