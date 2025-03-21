@@ -1,0 +1,97 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+!theme bluegray
+!pragma teoz true
+
+skinparam backgroundColor #whitesmoke
+title Guest Session Duration
+
+participant App
+box TransportSDK #lightcyan
+participant MessagingClient
+participant SessionDurationUseCase
+participant HealthCheckProvider
+end box
+box BackEnd
+participant Shyrka
+end box
+
+rnote over MessagingClient
+  Applies to sessions:
+  * both Anonymous and Authenticated
+end rnote
+
+rnote over MessagingClient
+  Session expiration timer starts/resets on:
+  * session updates
+  * health check
+end rnote
+
+App -> MessagingClient: Configuration(..., **sessionExpirationNoticeInterval = DEFAULT_INTERVAL**)
+MessagingClient -> SessionDurationUseCase:  updateSessionExpirationNoticeInterval(sessionExpirationNoticeInterval)
+
+App [#999]-> MessagingClient: connect
+MessagingClient [#999]--> Shyrka: configureSession
+Shyrka [#999]--> MessagingClient: SessionConfigured(..., **durationSeconds, expirationDate**)
+
+MessagingClient -> SessionDurationUseCase: scheduleExpiration(durationSeconds, expirationDate)
+SessionDurationUseCase -> MessagingClient: onSessionDurationChange(durationSeconds)
+MessagingClient --> App: eventListener.onEvent(SessionDuration(durationSeconds))
+SessionDurationUseCase -> SessionDurationUseCase: startHealthCheckTimer(expirationDate)
+
+alt startHealthCheckTimer()
+    SessionDurationUseCase -> SessionDurationUseCase: scheduleSessionExpirationNotice(expirationDate)
+    rnote over SessionDurationUseCase
+        Health check schedule
+        * Do health check only when there were no interaction for long time
+        * start timer for calling health check at 5 minutes + 10 seconds before expirationDate
+    end rnote
+    SessionDurationUseCase -> SessionDurationUseCase: onHealthCheckTimerExpired()
+    SessionDurationUseCase --> MessagingClient: startHealthCheck()
+    MessagingClient [#999]--> HealthCheckProvider: encodeRequest()
+    Shyrka [#999]--> MessagingClient: Health check response \n(StructuredMessage(metadata = {**sessionDuration =..., expirationDate=;;;})**)
+    rnote over MessagingClient
+        New values in health check response:
+        * durationSeconds (no supposed to change)
+        * expirationDate
+    end rnote
+    MessagingClient -> SessionDurationUseCase: scheduleExpiration(durationSeconds, expirationDate)
+    alt The new expiration date is fresher
+        SessionDurationUseCase -> SessionDurationUseCase: stopExpirationTimer()
+        SessionDurationUseCase -> SessionDurationUseCase: startExpirationTimer
+        SessionDurationUseCase -> SessionDurationUseCase: startHealthCheckTimer()
+    else Expiration date remains the same
+        rnote over SessionDurationUseCase
+            Timer continues until 5 minutes before expiration date
+        end rnote
+        SessionDurationUseCase -> SessionDurationUseCase: onTimerExpired()
+        SessionDurationUseCase --> MessagingClient: onSessionExpirationNotice()
+        MessagingClient -> App: eventListener.onEvent(SessionExpirationNotice)
+    end
+end
+
+alt Any new message after the timer end starts new timer
+    Shyrka --> MessagingClient: onMessage
+    MessagingClient -> SessionDurationUseCase: checkExpiration()
+    rnote over SessionDurationUseCase
+      Given: session expiration notice is sent but we are before the timeout
+    end rnote
+    SessionDurationUseCase --> MessagingClient: onRemoveExpirationNotice
+    MessagingClient -> App: eventListener.onEvent(RemoveSessionExpirationNotice)
+    rnote over SessionDurationUseCase
+      Run health check
+    end rnote
+    SessionDurationUseCase -> SessionDurationUseCase: startExpirationTimer
+    SessionDurationUseCase -> SessionDurationUseCase: startHealthCheckTimer()
+    rnote over SessionDurationUseCase
+      New timer started
+    end rnote
+end
+
+alt Clear Conversation
+    Shyrka [#999]--> MessagingClient: Clear Conversation
+    MessagingClient [#999]-> MessagingClient: invalidateConversationCache()
+    Me0ssagingClient [#999]--> App: eventListener.onEvent(Event.ConversationCleared)
+end
+@enduml
