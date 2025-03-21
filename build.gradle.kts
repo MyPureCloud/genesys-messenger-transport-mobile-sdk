@@ -25,7 +25,7 @@ plugins {
 }
 
 // CocoaPods requires the podspec to have a `version`.
-val buildVersion = "2.8.2"
+val buildVersion = "2.8.3"
 val snapshot = System.getenv("SNAPSHOT_BUILD") ?: ""
 version = "${buildVersion}${snapshot}"
 group = "cloud.genesys"

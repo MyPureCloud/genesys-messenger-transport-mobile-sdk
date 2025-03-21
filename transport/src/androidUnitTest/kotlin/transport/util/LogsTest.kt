@@ -20,17 +20,17 @@ import org.junit.Test
 
 class LogsTest {
     private val mockKermit: Logger = mockk(relaxed = true) {
-        every { tag } returns TestValues.LogTag
+        every { tag } returns TestValues.LOG_TAG
     }
 
-    internal var subject = Log(true, TestValues.LogTag, mockKermit)
+    internal var subject = Log(true, TestValues.LOG_TAG, mockKermit)
 
     @Test
     fun `when log i and enabledLogs=true`() {
         subject.i { LogMessages.CONNECT }
 
         verify {
-            mockKermit.log(Severity.Info, TestValues.LogTag, null, LogMessages.CONNECT)
+            mockKermit.log(Severity.Info, TestValues.LOG_TAG, null, LogMessages.CONNECT)
         }
     }
 
@@ -39,7 +39,7 @@ class LogsTest {
         subject.w { LogMessages.CONNECT }
 
         verify {
-            mockKermit.log(Severity.Warn, TestValues.LogTag, null, LogMessages.CONNECT)
+            mockKermit.log(Severity.Warn, TestValues.LOG_TAG, null, LogMessages.CONNECT)
         }
     }
 
@@ -48,26 +48,26 @@ class LogsTest {
         subject.e { LogMessages.CONNECT }
 
         verify {
-            mockKermit.log(Severity.Error, TestValues.LogTag, null, LogMessages.CONNECT)
+            mockKermit.log(Severity.Error, TestValues.LOG_TAG, null, LogMessages.CONNECT)
         }
     }
 
     @Test
     fun `when log e with throwable and enabledLogs=true`() {
-        val givenThrowable = Exception(ErrorTest.Message)
+        val givenThrowable = Exception(ErrorTest.MESSAGE)
 
         subject.e(givenThrowable) { LogMessages.CONNECT }
 
         verify {
-            mockKermit.log(Severity.Error, TestValues.LogTag, givenThrowable, LogMessages.CONNECT)
+            mockKermit.log(Severity.Error, TestValues.LOG_TAG, givenThrowable, LogMessages.CONNECT)
         }
     }
 
     @Test
     fun `when enableLogs=false`() {
-        subject = Log(enableLogs = false, TestValues.LogTag)
+        subject = Log(enableLogs = false, TestValues.LOG_TAG)
 
-        assertThat(subject.kermit.tag).isEqualTo(TestValues.LogTag)
+        assertThat(subject.kermit.tag).isEqualTo(TestValues.LOG_TAG)
         assertThat(subject.kermit.config.minSeverity).isEqualTo(Severity.Assert)
     }
 

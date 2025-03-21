@@ -26,7 +26,7 @@ class MessageTest {
     fun `validate default constructor`() {
         val expectedDirection = Direction.Inbound
         val expectedState = State.Idle
-        val expectedType = MessageValues.Type
+        val expectedType = MessageValues.TYPE
         val expectedMessageType = Message.Type.Text
         val expectedParticipant =
             Participant(originatingEntity = Participant.OriginatingEntity.Human)
@@ -56,36 +56,36 @@ class MessageTest {
 
     @Test
     fun `validate custom constructor`() {
-        val expectedId = MessageValues.Id
+        val expectedId = MessageValues.ID
         val expectedDirection = Direction.Outbound
         val expectedState = State.Sending
         val expectedType = "QuickReply"
         val expectedMessageType = Message.Type.QuickReply
-        val expectedText = MessageValues.Text
-        val expectedTimestamp = MessageValues.TimeStamp
-        val expectedAttachments = mapOf(AttachmentValues.Id to Attachment(AttachmentValues.Id))
+        val expectedText = MessageValues.TEXT
+        val expectedTimestamp = MessageValues.TIME_STAMP
+        val expectedAttachments = mapOf(AttachmentValues.ID to Attachment(AttachmentValues.ID))
         val expectedEvents = listOf(Event.ConversationAutostart)
         val expectedQuickReplies = listOf(QuickReplyTestValues.buttonResponse_a)
         val expectedParticipant = Participant(
-            name = MessageValues.ParticipantName,
-            imageUrl = MessageValues.ParticipantImageUrl,
+            name = MessageValues.PARTICIPANT_NAME,
+            imageUrl = MessageValues.PARTICIPANT_IMAGE_URL,
             originatingEntity = Participant.OriginatingEntity.Bot
         )
 
         val message = Message(
-            id = MessageValues.Id,
+            id = MessageValues.ID,
             direction = Direction.Outbound,
             state = State.Sending,
             type = "QuickReply",
             messageType = Message.Type.QuickReply,
-            text = MessageValues.Text,
-            timeStamp = MessageValues.TimeStamp,
-            attachments = mapOf(AttachmentValues.Id to Attachment(AttachmentValues.Id)),
+            text = MessageValues.TEXT,
+            timeStamp = MessageValues.TIME_STAMP,
+            attachments = mapOf(AttachmentValues.ID to Attachment(AttachmentValues.ID)),
             events = listOf(Event.ConversationAutostart),
             quickReplies = listOf(QuickReplyTestValues.buttonResponse_a),
             from = Participant(
-                name = MessageValues.ParticipantName,
-                imageUrl = MessageValues.ParticipantImageUrl,
+                name = MessageValues.PARTICIPANT_NAME,
+                imageUrl = MessageValues.PARTICIPANT_IMAGE_URL,
                 originatingEntity = Participant.OriginatingEntity.Bot,
             ),
             authenticated = true
@@ -110,13 +110,13 @@ class MessageTest {
     @Test
     fun `validate Content with Attachment serialization`() {
         val expectedAttachment = Attachment(
-            id = AttachmentValues.Id,
+            id = AttachmentValues.ID,
             fileName = null,
             state = Attachment.State.Presigning
         )
         val expectedRequest = Message.Content(
             contentType = Message.Content.Type.Attachment,
-            attachment = Attachment(AttachmentValues.Id)
+            attachment = Attachment(AttachmentValues.ID)
         )
         val expectedJson =
             """{"contentType":"Attachment","attachment":{"id":"test_attachment_id"}}"""
@@ -180,8 +180,8 @@ class MessageTest {
     @Test
     fun `validate Participant serialization`() {
         val expectedRequest = Participant(
-            name = MessageValues.ParticipantName,
-            imageUrl = MessageValues.ParticipantImageUrl,
+            name = MessageValues.PARTICIPANT_NAME,
+            imageUrl = MessageValues.PARTICIPANT_IMAGE_URL,
             originatingEntity = Participant.OriginatingEntity.Human
         )
         val expectedJson =
