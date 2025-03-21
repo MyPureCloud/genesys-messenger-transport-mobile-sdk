@@ -86,6 +86,9 @@ pipeline{
         stage("CI Build - iOS Testbed"){
             steps{
                 sh '''
+                        # Fix Ruby dependencies
+                        gem install concurrent-ruby -v 1.3.4  # Version with Logger dependency
+                        gem install activesupport -v 6.1.7.6   # Explicitly install compatible version
                     if [ -e deployment.properties ]; then
                       echo "deployment.properties file already exists"
                     else
