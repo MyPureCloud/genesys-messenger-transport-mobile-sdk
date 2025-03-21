@@ -86,9 +86,6 @@ pipeline{
         stage("CI Build - iOS Testbed"){
             steps{
                 sh '''
-                        # Fix Ruby dependencies
-                        gem install concurrent-ruby -v 1.3.4  # Version with Logger dependency
-                        gem install activesupport -v 6.1.7.6   # Explicitly install compatible version
                     if [ -e deployment.properties ]; then
                       echo "deployment.properties file already exists"
                     else
@@ -114,7 +111,6 @@ pipeline{
                       -Pkotlin.native.cocoapods.archs="arm64" \
                       -Pkotlin.native.cocoapods.configuration=Debug
                     cd iosApp
-                    pod cache clean --all
                     pod install --verbose
                     xcodebuild clean build -verbose -workspace iosApp.xcworkspace -scheme iosApp -configuration Debug CODE_SIGNING_ALLOWED=NO
                 '''
