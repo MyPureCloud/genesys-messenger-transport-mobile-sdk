@@ -1,5 +1,7 @@
 package com.genesys.cloud.messenger.transport.push
 
+import kotlin.coroutines.cancellation.CancellationException
+
 /**
  * Service interface for push notification operations.
  */
@@ -11,16 +13,19 @@ interface PushService {
      * @param deviceToken The device token for push notifications.
      * @param pushProvider The type of notification provider to use.
      *
-     * @throws Exception if synchronization fails.
+     * @throws DeviceTokenException  if synchronization fails due to server or network issues.
+     * @throws IllegalArgumentException if deviceToken or pushProvider is invalid.
+     * @throws CancellationException if the coroutine is cancelled.
      */
-    @Throws(Exception::class)
+    @Throws(DeviceTokenException::class, IllegalArgumentException::class, CancellationException::class)
     suspend fun synchronize(deviceToken: String, pushProvider: PushProvider)
 
     /**
      * Unregister device from push notifications.
      *
-     * @throws Exception if unregister fails.
+     * @throws DeviceTokenException  if synchronization fails due to server or network issues.
+     * @throws CancellationException if the coroutine is cancelled.
      */
-    @Throws(Exception::class)
+    @Throws(DeviceTokenException::class, CancellationException::class)
     suspend fun unregister()
 }

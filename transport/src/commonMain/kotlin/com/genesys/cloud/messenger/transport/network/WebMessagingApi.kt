@@ -7,12 +7,14 @@ import com.genesys.cloud.messenger.transport.core.DEFAULT_PAGE_SIZE
 import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Result
+import com.genesys.cloud.messenger.transport.core.toErrorCode
 import com.genesys.cloud.messenger.transport.push.DeviceTokenOperation
 import com.genesys.cloud.messenger.transport.push.DeviceTokenRequestBody
 import com.genesys.cloud.messenger.transport.push.PushConfig
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageEntityList
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.PushErrorResponse
 import com.genesys.cloud.messenger.transport.shyrka.send.AuthJwtRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OAuth
 import com.genesys.cloud.messenger.transport.util.Urls
@@ -167,20 +169,23 @@ internal class WebMessagingApi(
             this.method = operation.httpMethod
             header("content-type", ContentType.Application.Json)
             setBody(userPushConfig.toDeviceTokenRequestBody(operation))
+            retryOnInternalServerErrors()
         }
 
         if (response.status.isSuccess()) {
             Result.Success(Empty())
         } else {
-            TODO("Not yet implemented: MTSDK-416")
-            Result.Failure(ErrorCode.UnexpectedError, "TODO(Not yet implemented: MTSDK-416)")
+            val errorResponse = WebMessagingJson.json.decodeFromString<PushErrorResponse>(response.body())
+            Result.Failure(errorResponse.toErrorCode(), errorResponse.message)
         }
     } catch (cancellationException: CancellationException) {
-        TODO("Not yet implemented: MTSDK-416")
-        Result.Failure(ErrorCode.CancellationError, cancellationException.message)
+        Result.Failure(
+            ErrorCode.CancellationError,
+            cancellationException.message,
+            cancellationException,
+        )
     } catch (exception: Exception) {
-        TODO("Not yet implemented: MTSDK-416")
-        Result.Failure(ErrorCode.UnexpectedError, exception.message)
+        Result.Failure(ErrorCode.DeviceTokenOperationFailure, exception.message, exception)
     }
 }
 
@@ -192,22 +197,23 @@ private fun HttpRequestBuilder.headerAuthorizationBearer(jwt: String) =
 private fun HttpRequestBuilder.headerOrigin(origin: String) =
     header(HttpHeaders.Origin, origin)
 
-internal fun PushConfig.toDeviceTokenRequestBody(operation: DeviceTokenOperation): String = when (operation) {
-    DeviceTokenOperation.Register -> WebMessagingJson.json.encodeToString(
-        DeviceTokenRequestBody(
-            deviceToken = deviceToken,
-            notificationProvider = pushProvider,
-            language = preferredLanguage,
-            deviceType = deviceType,
+internal fun PushConfig.toDeviceTokenRequestBody(operation: DeviceTokenOperation): String =
+    when (operation) {
+        DeviceTokenOperation.Register -> WebMessagingJson.json.encodeToString(
+            DeviceTokenRequestBody(
+                deviceToken = deviceToken,
+                notificationProvider = pushProvider,
+                language = preferredLanguage,
+                deviceType = deviceType,
+            )
         )
-    )
 
-    DeviceTokenOperation.Update -> WebMessagingJson.json.encodeToString(
-        DeviceTokenRequestBody(
-            deviceToken = deviceToken,
-            language = preferredLanguage,
+        DeviceTokenOperation.Update -> WebMessagingJson.json.encodeToString(
+            DeviceTokenRequestBody(
+                deviceToken = deviceToken,
+                language = preferredLanguage,
+            )
         )
-    )
 
-    DeviceTokenOperation.Delete -> ""
-}
+        DeviceTokenOperation.Delete -> ""
+    }

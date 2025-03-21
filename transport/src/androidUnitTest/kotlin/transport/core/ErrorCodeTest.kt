@@ -5,13 +5,16 @@ import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.toCorrectiveAction
+import com.genesys.cloud.messenger.transport.core.toErrorCode
+import com.genesys.cloud.messenger.transport.utility.PushTestValues.pushErrorResponseWith
+import com.genesys.cloud.messenger.transport.utility.TestValues
 import org.junit.Test
 import kotlin.random.Random
 
 internal class ErrorCodeTest {
 
     @Test
-    fun whenMapFrom() {
+    fun `when ErrorCode mapFrom`() {
         assertThat(ErrorCode.mapFrom(4000)).isEqualTo(ErrorCode.FeatureUnavailable)
         assertThat(ErrorCode.mapFrom(4001)).isEqualTo(ErrorCode.FileTypeInvalid)
         assertThat(ErrorCode.mapFrom(4002)).isEqualTo(ErrorCode.FileSizeInvalid)
@@ -38,6 +41,13 @@ internal class ErrorCodeTest {
         assertThat(ErrorCode.mapFrom(6003)).isEqualTo(ErrorCode.RefreshAuthTokenFailure)
         assertThat(ErrorCode.mapFrom(6004)).isEqualTo(ErrorCode.HistoryFetchFailure)
         assertThat(ErrorCode.mapFrom(6005)).isEqualTo(ErrorCode.ClearConversationFailure)
+        assertThat(ErrorCode.mapFrom(6020)).isEqualTo(ErrorCode.DeviceTokenOperationFailure)
+        assertThat(ErrorCode.mapFrom(6021)).isEqualTo(ErrorCode.DeviceAlreadyRegistered)
+        assertThat(ErrorCode.mapFrom(6022)).isEqualTo(ErrorCode.DeviceNotFound)
+        assertThat(ErrorCode.mapFrom(6023)).isEqualTo(ErrorCode.ContactStitchingError)
+        assertThat(ErrorCode.mapFrom(6024)).isEqualTo(ErrorCode.DeviceRegistrationFailure)
+        assertThat(ErrorCode.mapFrom(6025)).isEqualTo(ErrorCode.DeviceUpdateFailure)
+        assertThat(ErrorCode.mapFrom(6026)).isEqualTo(ErrorCode.DeviceDeleteFailure)
 
         val randomIn300Range = Random.nextInt(300, 400)
         ErrorCode.mapFrom(randomIn300Range).run {
@@ -59,7 +69,7 @@ internal class ErrorCodeTest {
     }
 
     @Test
-    fun whenErrorCodeToCorrectiveAction() {
+    fun `when ErrorCode toCorrectiveAction`() {
         assertThat(ErrorCode.ClientResponseError(400).toCorrectiveAction()).isEqualTo(
             CorrectiveAction.BadRequest
         )
@@ -85,6 +95,35 @@ internal class ErrorCodeTest {
         assertThat(ErrorCode.AuthLogoutFailed.toCorrectiveAction()).isEqualTo(CorrectiveAction.ReAuthenticate)
         assertThat(ErrorCode.CustomAttributeSizeTooLarge.toCorrectiveAction()).isEqualTo(
             CorrectiveAction.CustomAttributeSizeTooLarge
+        )
+    }
+
+    @Test
+    fun `when PushErrorResponse toErrorCode`() {
+        assertThat(pushErrorResponseWith("device.not.found").toErrorCode()).isEqualTo(ErrorCode.DeviceNotFound)
+        assertThat(pushErrorResponseWith("device.registration.failure").toErrorCode()).isEqualTo(
+            ErrorCode.DeviceRegistrationFailure
+        )
+        assertThat(pushErrorResponseWith("device.update.failure").toErrorCode()).isEqualTo(ErrorCode.DeviceUpdateFailure)
+        assertThat(pushErrorResponseWith("device.delete.failure").toErrorCode()).isEqualTo(ErrorCode.DeviceDeleteFailure)
+        assertThat(pushErrorResponseWith("device.already.registered").toErrorCode()).isEqualTo(
+            ErrorCode.DeviceAlreadyRegistered
+        )
+        assertThat(pushErrorResponseWith("contacts.stitching.error").toErrorCode()).isEqualTo(
+            ErrorCode.ContactStitchingError
+        )
+        assertThat(pushErrorResponseWith("feature.toggle.disabled").toErrorCode()).isEqualTo(
+            ErrorCode.FeatureUnavailable
+        )
+        assertThat(pushErrorResponseWith("too.many.requests.retry.after").toErrorCode()).isEqualTo(
+            ErrorCode.RequestRateTooHigh
+        )
+        assertThat(pushErrorResponseWith("required.fields.missing").toErrorCode()).isEqualTo(
+            ErrorCode.MissingParameter
+        )
+        assertThat(pushErrorResponseWith("update.fields.missing").toErrorCode()).isEqualTo(ErrorCode.MissingParameter)
+        assertThat(pushErrorResponseWith(TestValues.DEFAULT_STRING).toErrorCode()).isEqualTo(
+            ErrorCode.DeviceTokenOperationFailure
         )
     }
 

@@ -1,7 +1,11 @@
 package com.genesys.cloud.messenger.transport.push
 
+import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
+import com.genesys.cloud.messenger.transport.push.DeviceTokenOperation.Delete
+import com.genesys.cloud.messenger.transport.push.DeviceTokenOperation.Register
+import com.genesys.cloud.messenger.transport.push.DeviceTokenOperation.Update
 import com.genesys.cloud.messenger.transport.push.PushConfigComparator.Diff
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.UNKNOWN
@@ -10,6 +14,7 @@ import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
 
 internal class PushServiceImpl(
     private val vault: Vault,
@@ -19,7 +24,7 @@ internal class PushServiceImpl(
     private val log: Log,
 ) : PushService {
 
-    @Throws(Exception::class)
+    @Throws(DeviceTokenException::class, IllegalArgumentException::class, CancellationException::class)
     override suspend fun synchronize(deviceToken: String, pushProvider: PushProvider) {
         log.i { LogMessages.synchronizingPush(deviceToken, pushProvider) }
         val storedPushConfig = vault.pushConfig
@@ -29,6 +34,7 @@ internal class PushServiceImpl(
         handleDiff(diff, userPushConfig)
     }
 
+    @Throws(DeviceTokenException::class, CancellationException::class)
     override suspend fun unregister() {
         log.i { LogMessages.UNREGISTERING_DEVICE }
         vault.pushConfig.run {
@@ -40,6 +46,7 @@ internal class PushServiceImpl(
         }
     }
 
+    @Throws(DeviceTokenException::class, CancellationException::class)
     private suspend fun handleDiff(diff: Diff, userPushConfig: PushConfig) {
         when (diff) {
             Diff.NONE -> log.i { LogMessages.deviceTokenIsInSync(userPushConfig) }
@@ -59,42 +66,76 @@ internal class PushServiceImpl(
         }
     }
 
+    @Throws(DeviceTokenException::class, CancellationException::class)
     private suspend fun register(userPushConfig: PushConfig) {
-        when (api.performDeviceTokenOperation(userPushConfig, DeviceTokenOperation.Register)) {
+        when (val result = api.performDeviceTokenOperation(userPushConfig, Register)) {
             is Result.Success -> {
                 log.i { LogMessages.deviceTokenWasRegistered(userPushConfig) }
                 vault.pushConfig = userPushConfig
             }
 
-            is Result.Failure -> TODO("Not yet implemented: MTSDK-416")
+            is Result.Failure -> handleRequestError(result, userPushConfig, Register)
         }
     }
 
+    @Throws(DeviceTokenException::class, CancellationException::class)
     private suspend fun update(userPushConfig: PushConfig) {
-        val result = api.performDeviceTokenOperation(userPushConfig, DeviceTokenOperation.Update)
-        when (result) {
+        when (val result = api.performDeviceTokenOperation(userPushConfig, Update)) {
             is Result.Success -> {
                 log.i { LogMessages.deviceTokenWasUpdated(userPushConfig) }
                 vault.pushConfig = userPushConfig
             }
 
-            is Result.Failure -> TODO("Not yet implemented: MTSDK-416")
+            is Result.Failure -> handleRequestError(result, userPushConfig, Update)
         }
     }
 
+    @Throws(DeviceTokenException::class, CancellationException::class)
     private suspend fun delete(
         userPushConfig: PushConfig,
         clearStoredPushConfigUponSuccess: Boolean = false,
     ) {
-        val result = api.performDeviceTokenOperation(userPushConfig, DeviceTokenOperation.Delete)
-        when (result) {
+        when (val result = api.performDeviceTokenOperation(userPushConfig, Delete)) {
             is Result.Success -> {
                 log.i { LogMessages.deviceTokenWasDeleted(userPushConfig) }
                 if (clearStoredPushConfigUponSuccess) vault.remove(vault.keys.pushConfigKey)
             }
 
-            is Result.Failure -> TODO("Not yet implemented: MTSDK-416")
+            is Result.Failure -> handleRequestError(result, userPushConfig, Delete)
         }
+    }
+
+    @Throws(DeviceTokenException::class, CancellationException::class)
+    private suspend fun handleRequestError(
+        result: Result.Failure,
+        userPushConfig: PushConfig,
+        operation: DeviceTokenOperation,
+    ) {
+        when (result.errorCode) {
+            ErrorCode.CancellationError -> {
+                log.w { LogMessages.cancellationExceptionRequestName("DeviceToken.$operation") }
+                result.run {
+                    throw throwable ?: DeviceTokenException(errorCode, message, throwable)
+                }
+            }
+
+            ErrorCode.DeviceNotFound -> {
+                if (operation == Update) {
+                    log.i { LogMessages.DEVICE_NOT_REGISTERED }
+                    register(userPushConfig)
+                } else {
+                    throwDeviceTokenException(result, userPushConfig)
+                }
+            }
+
+            else -> throwDeviceTokenException(result, userPushConfig)
+        }
+    }
+
+    @Throws(DeviceTokenException::class)
+    private fun throwDeviceTokenException(result: Result.Failure, userPushConfig: PushConfig) {
+        log.e { LogMessages.failedToSynchronizeDeviceToken(userPushConfig, result.errorCode) }
+        throw DeviceTokenException(result.errorCode, result.message, result.throwable)
     }
 
     private fun buildPushConfigFromUserData(

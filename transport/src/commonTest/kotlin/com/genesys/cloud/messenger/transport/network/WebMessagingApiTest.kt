@@ -32,8 +32,10 @@ import io.ktor.client.engine.mock.MockEngineConfig
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class WebMessagingApiTest {
@@ -351,6 +353,64 @@ class WebMessagingApiTest {
         val result = runBlocking { subject.performDeviceTokenOperation(givenUserPushConfig, givenOperation) }
 
         assertTrue(result is Result.Success<Empty>)
+    }
+
+    @Test
+    fun `when performDeviceTokenOperation register result in PushErrorResponse`() {
+        subject = buildWebMessagingApiWith { pushNotificationEngine() }
+        val givenUserPushConfig = PushTestValues.CONFIG.copy(pushProvider = null)
+        val givenOperation = DeviceTokenOperation.Register
+        val expectedResult = Result.Failure(ErrorCode.DeviceRegistrationFailure, ErrorTest.MESSAGE)
+
+        val result = runBlocking { subject.performDeviceTokenOperation(givenUserPushConfig, givenOperation) }
+
+        assertEquals(expectedResult, result)
+    }
+
+    @Test
+    fun `when performDeviceTokenOperation any result in CancellationException`() {
+        val brokenConfigurations = Configuration(
+            deploymentId = InvalidValues.CANCELLATION_EXCEPTION,
+            domain = InvalidValues.CANCELLATION_EXCEPTION,
+            logging = false
+        )
+        subject = buildWebMessagingApiWith(brokenConfigurations) { pushNotificationEngine() }
+        val givenUserPushConfig = PushTestValues.CONFIG.copy(token = InvalidValues.CANCELLATION_EXCEPTION)
+        val givenOperation = DeviceTokenOperation.Register
+        val expectedException = CancellationException(ErrorTest.MESSAGE)
+        val expectedResult = Result.Failure(ErrorCode.CancellationError, ErrorTest.MESSAGE, expectedException)
+
+        val result =
+            runBlocking { subject.performDeviceTokenOperation(givenUserPushConfig, givenOperation) }
+
+        (result as Result.Failure).run {
+            assertEquals(expectedResult.errorCode, errorCode)
+            assertEquals(expectedResult.message, message)
+            assertIs<CancellationException>(throwable)
+        }
+    }
+
+    @Test
+    fun `when performDeviceTokenOperation any result in general Exception`() {
+        val brokenConfigurations = Configuration(
+            deploymentId = InvalidValues.UNKNOWN_EXCEPTION,
+            domain = InvalidValues.UNKNOWN_EXCEPTION,
+            logging = false
+        )
+        subject = buildWebMessagingApiWith(brokenConfigurations) { pushNotificationEngine() }
+        val givenUserPushConfig = PushTestValues.CONFIG.copy(token = InvalidValues.UNKNOWN_EXCEPTION)
+        val givenOperation = DeviceTokenOperation.Register
+        val expectedException = CancellationException(ErrorTest.MESSAGE)
+        val expectedResult = Result.Failure(ErrorCode.DeviceTokenOperationFailure, ErrorTest.MESSAGE, expectedException)
+
+        val result =
+            runBlocking { subject.performDeviceTokenOperation(givenUserPushConfig, givenOperation) }
+
+        (result as Result.Failure).run {
+            assertEquals(expectedResult.errorCode, errorCode)
+            assertEquals(expectedResult.message, message)
+            assertIs<Exception>(throwable)
+        }
     }
 }
 

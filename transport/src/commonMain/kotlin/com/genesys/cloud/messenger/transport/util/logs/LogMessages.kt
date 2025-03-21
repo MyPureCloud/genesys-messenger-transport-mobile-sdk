@@ -121,6 +121,7 @@ internal object LogMessages {
     fun deviceTokenWasRegistered(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken} with ${pushConfig.pushProvider} was registered."
     fun deviceTokenWasUpdated(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken} with ${pushConfig.pushProvider} was updated."
     fun deviceTokenWasDeleted(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken} with ${pushConfig.pushProvider} was deleted."
+    fun failedToSynchronizeDeviceToken(pushConfig: PushConfig, errorCode: ErrorCode) = "Failed to synchronize deviceToken: ${pushConfig.deviceToken} ,pushProvider ${pushConfig.pushProvider} with errorCode: $errorCode."
     const val SYNCHRONIZE_PUSH_SERVICE_ON_SESSION_CONFIGURE = "Synchronizing push service from session configured."
     const val UNREGISTERING_DEVICE = "Unregistering device from push notifications."
     const val DEVICE_NOT_REGISTERED = "Device is not registered."
