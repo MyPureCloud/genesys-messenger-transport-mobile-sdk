@@ -1,0 +1,47 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+!theme bluegray
+!pragma teoz true
+
+skinparam backgroundColor #whitesmoke
+title Guest Session Duration - Error Handling
+
+participant App
+box TransportSDK #lightcyan
+participant MessagingClient
+participant SessionDurationUseCase
+end box
+box BackEnd
+participant Shyrka
+end box
+
+alt Cases when the session end timer should be stopped
+    alt Connection closed
+        Shyrka [#999]--> MessagingClient: onMessage(ConnectionClosedEvent)
+        MessagingClient [#999]-> MessagingClient: cleanUp()
+    else Conversation disconnect
+        Shyrka [#999]--> MessagingClient: onMessage(PresenceEvent.Presence.Type.Disconnect)
+        MessagingClient [#999]-> MessagingClient: cleanUp()
+    else Error state
+        MessagingClient [#999]-> MessagingClient: transitionToStateError(errorCode, errorMessage)
+    end
+    MessagingClient -> SessionDurationUseCase: clear()
+    SessionDurationUseCase -> SessionDurationUseCase: stopHealthCheckTimer()
+    SessionDurationUseCase -> SessionDurationUseCase: stopExpirationTimer()
+    alt expiration dialog is shown
+        rnote over SessionDurationUseCase
+          Given: session expiration notice is sent but we are before the timeout
+        end rnote
+        SessionDurationUseCase --> MessagingClient: onRemoveExpirationNotice()
+        MessagingClient -> App: eventListener.onEvent(RemoveSessionExpirationNotice)
+    end
+    alt Connection closed
+        MessagingClient [#999]--> App: eventListener.onEvent(Event.ConnectionClosed)
+    else Conversation disconnect
+        MessagingClient [#999]--> App: eventListener.onEvent(Event.ConversationDisconnect)
+    else Error state
+        MessagingClient [#999]--> App: eventListener.onEvent(Event.Error)
+    end
+end
+@enduml
