@@ -31,9 +31,9 @@ internal actual class Platform {
     /**
      * Generate a random UUID.
      *
-     * @return a random UUID string.
+     * @return a random UUID string in lower case.
      */
-    actual fun randomUUID(): String = NSUUID().UUIDString()
+    actual fun randomUUID(): String = NSUUID().UUIDString().lowercase()
 
     /**
      * Get the current time in milliseconds.
