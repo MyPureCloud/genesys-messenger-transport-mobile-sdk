@@ -9,6 +9,7 @@ import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
+import com.genesys.cloud.messenger.transport.core.sessionduration.SessionDurationUseCase
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
@@ -138,6 +139,7 @@ internal class MessagingClientImpl(
         log.i { LogMessages.CONNECT }
         connectAuthenticated = false
         stateMachine.onConnect()
+        SessionDurationUseCase.updateSessionExpirationNoticeInterval(configuration.sessionExpirationNoticeInterval)
         webSocket.openSocket(socketListener)
     }
 
