@@ -98,8 +98,8 @@ internal actual class PlatformSocket actual constructor(
     }
 
     actual fun sendMessage(text: String) {
-        log.i { LogMessages.sendMessage(text) }
         val message = NSURLSessionWebSocketMessage(text)
+        message.string?.let { log.i { LogMessages.sendMessage(it) } }
         webSocket?.sendMessage(message) { nsError ->
             if (nsError != null) {
                 handleError(nsError, "Send message error")

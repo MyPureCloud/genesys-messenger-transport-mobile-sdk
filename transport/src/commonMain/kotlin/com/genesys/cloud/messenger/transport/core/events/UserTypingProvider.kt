@@ -18,12 +18,16 @@ internal class UserTypingProvider(
 
     @Throws(Exception::class)
     fun encodeRequest(token: String): String? {
+        return encodeRequest(UserTypingRequest(token = token))
+    }
+
+    @Throws(Exception::class)
+    fun encodeRequest(request: UserTypingRequest): String? {
         return if (showUserTypingEnabled()) {
             val currentTimestamp = getCurrentTimestamp()
             val delta = currentTimestamp - lastSentUserTypingTimestamp
             if (delta > TYPING_INDICATOR_COOL_DOWN_MILLISECONDS) {
                 lastSentUserTypingTimestamp = currentTimestamp
-                val request = UserTypingRequest(token = token)
                 WebMessagingJson.json.encodeToString(request)
             } else {
                 log.w { LogMessages.typingIndicatorCoolDown(TYPING_INDICATOR_COOL_DOWN_MILLISECONDS) }

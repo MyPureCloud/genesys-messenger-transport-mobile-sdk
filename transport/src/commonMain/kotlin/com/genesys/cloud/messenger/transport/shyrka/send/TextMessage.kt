@@ -13,4 +13,8 @@ internal data class TextMessage(
 ) : BaseMessageProtocol {
     @Required
     override val type = BaseMessageProtocol.Type.Text
+
+    override fun toString(): String {
+        return "(metadata=$metadata, content=$content, channel=$channel, type=$type)"
+    }
 }

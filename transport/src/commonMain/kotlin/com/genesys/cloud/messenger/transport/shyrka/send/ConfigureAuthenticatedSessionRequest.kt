@@ -16,4 +16,8 @@ internal data class ConfigureAuthenticatedSessionRequest(
 
     @Serializable
     internal data class Data(val code: String)
+
+    override fun toString(): String {
+        return "(action='$action, startNew=$startNew, journeyContext=$journeyContext, data=$data')"
+    }
 }

@@ -36,10 +36,12 @@ import com.genesys.cloud.messenger.transport.shyrka.send.ClearConversationReques
 import com.genesys.cloud.messenger.transport.shyrka.send.CloseSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureAuthenticatedSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.EchoRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.GetAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
+import com.genesys.cloud.messenger.transport.shyrka.send.UserTypingRequest
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.extensions.isHealthCheckResponseId
@@ -197,12 +199,12 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun sendMessage(text: String, customAttributes: Map<String, String>) {
         stateMachine.checkIfConfigured()
-        log.i { LogMessages.sendMessage(text, customAttributes) }
         internalCustomAttributesStore.add(customAttributes)
         val channel = prepareCustomAttributesForSending()
         val request = messageStore.prepareMessage(token, text, channel)
         attachmentHandler.onSending()
         val encodedJson = WebMessagingJson.json.encodeToString(request)
+        log.i { LogMessages.sendMessage(request.toString(), customAttributes) }
         send(encodedJson)
     }
 
@@ -212,13 +214,16 @@ internal class MessagingClientImpl(
         val channel = prepareCustomAttributesForSending()
         val request = messageStore.prepareMessageWith(token, buttonResponse, channel)
         val encodedJson = WebMessagingJson.json.encodeToString(request)
+        log.i { LogMessages.sendMessage(request.toString()) }
         send(encodedJson)
     }
 
     @Throws(IllegalStateException::class)
     override fun sendHealthCheck() {
-        healthCheckProvider.encodeRequest(token)?.let {
+        val request = EchoRequest(token = token)
+        healthCheckProvider.encodeRequest(request)?.let {
             log.i { LogMessages.SEND_HEALTH_CHECK }
+            log.i { LogMessages.sendMessage(request.toString()) }
             send(it)
         }
     }
@@ -238,6 +243,7 @@ internal class MessagingClientImpl(
             uploadProgress,
         )
         val encodedJson = WebMessagingJson.json.encodeToString(request)
+        log.i { LogMessages.sendMessage(request.toString()) }
         send(encodedJson)
         return request.attachmentId
     }
@@ -246,6 +252,7 @@ internal class MessagingClientImpl(
     override fun detach(attachmentId: String) {
         log.i { LogMessages.detach(attachmentId) }
         attachmentHandler.detach(token, attachmentId)?.let {
+            log.i { LogMessages.sendMessage(it.toString()) }
             val encodedJson = WebMessagingJson.json.encodeToString(it)
             send(encodedJson)
         }
@@ -253,13 +260,13 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun refreshAttachmentUrl(attachmentId: String) {
-        WebMessagingJson.json.encodeToString(
-            GetAttachmentRequest(
-                token = token,
-                attachmentId = attachmentId
-            )
-        ).also {
+        val request = GetAttachmentRequest(
+            token = token,
+            attachmentId = attachmentId
+        )
+        WebMessagingJson.json.encodeToString(request).also {
             log.i { "getAttachmentRequest()" }
+            log.i { LogMessages.sendMessage(request.toString()) }
             send(it)
         }
     }
@@ -328,8 +335,10 @@ internal class MessagingClientImpl(
             )
             return
         }
-        WebMessagingJson.json.encodeToString(ClearConversationRequest(token)).let {
+        val request = ClearConversationRequest(token)
+        WebMessagingJson.json.encodeToString(request).let {
             log.i { LogMessages.SEND_CLEAR_CONVERSATION }
+            log.i { LogMessages.sendMessage(request.toString()) }
             webSocket.sendMessage(it)
         }
     }
@@ -341,8 +350,10 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun indicateTyping() {
-        userTypingProvider.encodeRequest(token)?.let {
+        val request = UserTypingRequest(token = token)
+        userTypingProvider.encodeRequest(request)?.let {
             log.i { LogMessages.INDICATE_TYPING }
+            log.i { LogMessages.sendMessage(request.toString()) }
             send(it)
         }
     }
@@ -356,8 +367,10 @@ internal class MessagingClientImpl(
     private fun sendAutoStart() {
         sendingAutostart = true
         val channel = prepareCustomAttributesForSending()
-        WebMessagingJson.json.encodeToString(AutoStartRequest(token, channel)).let {
+        val request = AutoStartRequest(token, channel)
+        WebMessagingJson.json.encodeToString(request).let {
             log.i { LogMessages.SEND_AUTO_START }
+            log.i { LogMessages.sendMessage(request.toString()) }
             send(it)
         }
     }
@@ -370,13 +383,13 @@ internal class MessagingClientImpl(
      * indicating that new chat should be configured.
      */
     private fun closeAllConnectionsForTheSession() {
-        WebMessagingJson.json.encodeToString(
-            CloseSessionRequest(
-                token = token,
-                closeAllConnections = true
-            )
-        ).also {
+        val request = CloseSessionRequest(
+            token = token,
+            closeAllConnections = true
+        )
+        WebMessagingJson.json.encodeToString(request).also {
             log.i { LogMessages.CLOSE_SESSION }
+            log.i { LogMessages.sendMessage(request.toString()) }
             webSocket.sendMessage(it)
         }
     }
@@ -598,32 +611,34 @@ internal class MessagingClientImpl(
         }
     }
 
-    private fun encodeConfigureGuestSessionRequest(startNew: Boolean) =
-        WebMessagingJson.json.encodeToString(
-            ConfigureSessionRequest(
-                token = token,
-                deploymentId = configuration.deploymentId,
-                startNew = startNew,
-                journeyContext = JourneyContext(
-                    JourneyCustomer(token, "cookie"),
-                    JourneyCustomerSession("", "web")
-                )
+    private fun encodeConfigureGuestSessionRequest(startNew: Boolean): String {
+        val request = ConfigureSessionRequest(
+            token = token,
+            deploymentId = configuration.deploymentId,
+            startNew = startNew,
+            journeyContext = JourneyContext(
+                JourneyCustomer(token, "cookie"),
+                JourneyCustomerSession("", "web")
             )
         )
+        log.i { LogMessages.sendMessage(request.toString()) }
+        return WebMessagingJson.json.encodeToString(request)
+    }
 
-    private fun encodeConfigureAuthenticatedSessionRequest(startNew: Boolean) =
-        WebMessagingJson.json.encodeToString(
-            ConfigureAuthenticatedSessionRequest(
-                token = token,
-                deploymentId = configuration.deploymentId,
-                startNew = startNew,
-                journeyContext = JourneyContext(
-                    JourneyCustomer(token, "cookie"),
-                    JourneyCustomerSession("", "web")
-                ),
-                data = ConfigureAuthenticatedSessionRequest.Data(authHandler.jwt)
-            )
+    private fun encodeConfigureAuthenticatedSessionRequest(startNew: Boolean): String {
+        val request = ConfigureAuthenticatedSessionRequest(
+            token = token,
+            deploymentId = configuration.deploymentId,
+            startNew = startNew,
+            journeyContext = JourneyContext(
+                JourneyCustomer(token, "cookie"),
+                JourneyCustomerSession("", "web")
+            ),
+            data = ConfigureAuthenticatedSessionRequest.Data(authHandler.jwt)
         )
+        log.i { LogMessages.sendMessage(request.toString()) }
+        return WebMessagingJson.json.encodeToString(request)
+    }
 
     private fun prepareCustomAttributesForSending(): Channel? =
         internalCustomAttributesStore.getCustomAttributesToSend().asChannel()?.also {

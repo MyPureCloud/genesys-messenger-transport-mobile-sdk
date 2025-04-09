@@ -10,4 +10,8 @@ internal data class CloseSessionRequest(
 ) : WebMessagingRequest {
     @Required
     override val action: String = RequestAction.CLOSE_SESSION.value
+
+    override fun toString(): String {
+        return "(action='$action', closeAllConnections=$closeAllConnections)"
+    }
 }

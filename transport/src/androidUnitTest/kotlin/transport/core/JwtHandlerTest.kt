@@ -6,6 +6,7 @@ import com.genesys.cloud.messenger.transport.core.JwtHandler
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
 import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -25,8 +26,9 @@ import transport.util.Request
 class JwtHandlerTest {
     private val mockWebSocket: PlatformSocket = mockk(relaxed = true)
     val mockJwtFn: (String) -> Any = mockk(relaxed = true)
+    private val mockLog: Log = mockk(relaxed = true)
 
-    private val subject = JwtHandler(mockWebSocket)
+    private val subject = JwtHandler(mockWebSocket, mockLog)
 
     @ExperimentalCoroutinesApi
     private val threadSurrogate = newSingleThreadContext("main thread")

@@ -7,4 +7,8 @@ import kotlinx.serialization.Serializable
 internal data class JwtRequest(override val token: String) : WebMessagingRequest {
     @Required
     override val action: String = RequestAction.GET_JWT.value
+
+    override fun toString(): String {
+        return "(action='$action')"
+    }
 }

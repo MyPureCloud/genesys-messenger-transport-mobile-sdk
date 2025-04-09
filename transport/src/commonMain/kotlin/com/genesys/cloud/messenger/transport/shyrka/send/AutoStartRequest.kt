@@ -24,4 +24,8 @@ internal data class AutoStartRequest(
         ),
         channel = channel,
     )
+
+    override fun toString(): String {
+        return "(action='$action', channel=$channel, message=$message)"
+    }
 }

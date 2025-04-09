@@ -21,4 +21,8 @@ internal data class UserTypingRequest(
             )
         )
     )
+
+    override fun toString(): String {
+        return "(action='$action', message=$message)"
+    }
 }

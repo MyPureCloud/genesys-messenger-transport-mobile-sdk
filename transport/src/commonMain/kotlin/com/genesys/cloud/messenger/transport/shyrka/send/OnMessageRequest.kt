@@ -10,4 +10,8 @@ internal class OnMessageRequest(
     val time: String? = null,
 ) : WebMessagingRequest {
     @Required override val action: String = RequestAction.ON_MESSAGE.value
+
+    override fun toString(): String {
+        return "(action='$action', message=$message, time=$time)"
+    }
 }

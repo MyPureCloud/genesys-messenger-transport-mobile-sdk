@@ -10,4 +10,8 @@ internal data class GetAttachmentRequest(
 ) : WebMessagingRequest {
     @Required
     override val action: String = RequestAction.GET_ATTACHMENT.value
+
+    override fun toString(): String {
+        return "(action='$action', attachmentId='$attachmentId')"
+    }
 }

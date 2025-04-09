@@ -11,4 +11,8 @@ internal data class ConfigureSessionRequest(
     val journeyContext: JourneyContext? = null,
 ) : WebMessagingRequest {
     @Required override val action: String = RequestAction.CONFIGURE_SESSION.value
+
+    override fun toString(): String {
+        return "(action='$action', journeyContext=$journeyContext, startNew=$startNew)"
+    }
 }

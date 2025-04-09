@@ -11,4 +11,8 @@ internal data class EchoRequest(
 ) : WebMessagingRequest {
     @Required override val action: String = RequestAction.ECHO_MESSAGE.value
     @Required val message: TextMessage = TextMessage("ping", metadata = mapOf("customMessageId" to HealthCheckID))
+
+    override fun toString(): String {
+        return "(action='$action', message=$message)"
+    }
 }

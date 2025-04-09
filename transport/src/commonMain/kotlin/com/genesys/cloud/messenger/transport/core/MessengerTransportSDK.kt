@@ -93,7 +93,7 @@ class MessengerTransportSDK(
             token = token,
             vault = vault,
             configuration = configuration,
-            jwtHandler = JwtHandler(webSocket),
+            jwtHandler = JwtHandler(webSocket, log),
             attachmentHandler = attachmentHandler,
             messageStore = messageStore,
             reconnectionHandler = ReconnectionHandlerImpl(

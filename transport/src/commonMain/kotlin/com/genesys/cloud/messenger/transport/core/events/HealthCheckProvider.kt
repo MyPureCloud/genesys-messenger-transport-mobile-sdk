@@ -18,11 +18,15 @@ internal class HealthCheckProvider(
 
     @Throws(Exception::class)
     fun encodeRequest(token: String): String? {
+        return encodeRequest(EchoRequest(token = token))
+    }
+
+    @Throws(Exception::class)
+    fun encodeRequest(request: EchoRequest): String? {
         val currentTimestamp = getCurrentTimestamp()
         val delta = currentTimestamp - lastSentHealthCheckTimestamp
         return if (delta > HEALTH_CHECK_COOL_DOWN_MILLISECONDS) {
             lastSentHealthCheckTimestamp = currentTimestamp
-            val request = EchoRequest(token = token)
             WebMessagingJson.json.encodeToString(request)
         } else {
             log.w { LogMessages.healthCheckCoolDown(HEALTH_CHECK_COOL_DOWN_MILLISECONDS) }

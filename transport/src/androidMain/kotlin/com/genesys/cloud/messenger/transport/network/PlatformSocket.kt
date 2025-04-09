@@ -71,7 +71,6 @@ internal actual class PlatformSocket actual constructor(
     }
 
     actual fun sendMessage(text: String) {
-        log.i { LogMessages.sendMessage(text) }
         webSocket?.send(text)
     }
 }

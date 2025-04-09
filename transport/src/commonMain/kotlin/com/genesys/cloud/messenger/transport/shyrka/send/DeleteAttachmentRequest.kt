@@ -10,4 +10,8 @@ internal data class DeleteAttachmentRequest(
 ) : WebMessagingRequest {
     @Required
     override val action: String = RequestAction.DELETE_ATTACHMENT.value
+
+    override fun toString(): String {
+        return "(action='$action', attachmentId='$attachmentId')"
+    }
 }
