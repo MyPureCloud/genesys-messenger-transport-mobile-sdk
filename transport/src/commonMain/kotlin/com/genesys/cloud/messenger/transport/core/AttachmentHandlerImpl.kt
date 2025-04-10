@@ -54,7 +54,7 @@ internal class AttachmentHandlerImpl(
             token,
             attachmentId = attachmentId,
             fileName = fileName,
-            fileType = ContentType.defaultForFilePath(fileName).withoutParameters().toString(),
+            fileType = resolveContentType(fileName).toString(),
             fileSize = byteArray.size,
             errorsAsJson = true,
         )
@@ -238,3 +238,9 @@ private fun ProcessedAttachment.takeUploaded(): ProcessedAttachment? =
     this.takeIf { it.attachment.state is Uploaded }
 
 private fun ByteArray.toKB(): Long = size / 1000L
+
+internal fun resolveContentType(fileName: String): ContentType =
+    when {
+        fileName.endsWith(".opus", ignoreCase = true) -> ContentType("audio", "ogg")
+        else -> ContentType.defaultForFilePath(fileName).withoutParameters()
+    }
