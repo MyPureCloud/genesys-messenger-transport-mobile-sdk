@@ -150,9 +150,8 @@ class LogMessagesTests {
 
     @Test
     fun `when configureSession is called then it logs correctly`() {
-        val givenToken = TestValues.TOKEN
         val givenStartNew = false
-        val expectedMessage = "configureSession (token = $givenToken, startNew: $givenStartNew)"
+        val expectedMessage = "configureSession (startNew: $givenStartNew)"
 
         val result = LogMessages.configureSession(givenStartNew)
 
