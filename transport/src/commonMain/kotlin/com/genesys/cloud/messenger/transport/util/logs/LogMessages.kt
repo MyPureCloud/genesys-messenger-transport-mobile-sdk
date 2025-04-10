@@ -26,8 +26,8 @@ internal object LogMessages {
     fun invalidAttachmentId(attachmentId: String) = "Invalid attachment ID: $attachmentId. Detach failed."
     // Authentication
     const val REFRESH_AUTH_TOKEN_SUCCESS = "refreshAuthToken success."
-    fun configureAuthenticatedSession(token: String, startNew: Boolean) =
-        "configureAuthenticatedSession(token = $token, startNew: $startNew)"
+    fun configureAuthenticatedSession(startNew: Boolean) =
+        "configureAuthenticatedSession(startNew: $startNew)"
     fun configureSession(startNew: Boolean = false) =
         "configureSession (startNew: $startNew)"
     // Message

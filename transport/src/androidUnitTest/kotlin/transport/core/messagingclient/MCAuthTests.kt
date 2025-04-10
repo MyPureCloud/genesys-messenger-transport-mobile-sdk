@@ -206,7 +206,7 @@ class MCAuthTests : BaseMessagingClientTest() {
             errorSequence(fromConfiguredToError(expectedErrorState))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT_AUTHENTICATED_SESSION)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(Request.token, false))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(false))
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
     }
 
@@ -246,10 +246,10 @@ class MCAuthTests : BaseMessagingClientTest() {
             errorSequence(fromReconnectingToError(expectedErrorState))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT_AUTHENTICATED_SESSION)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(Request.token, false))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(false))
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.CONNECT_AUTHENTICATED_SESSION)
-        assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(Request.token, false))
+        assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(false))
     }
 
     @Test
@@ -314,7 +314,7 @@ class MCAuthTests : BaseMessagingClientTest() {
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(false))
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.STEP_UP_TO_AUTHENTICATED_SESSION)
-        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(Request.token, false))
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(false))
     }
 
     @Test
@@ -328,7 +328,7 @@ class MCAuthTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT_AUTHENTICATED_SESSION)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(Request.token, false))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(false))
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.STEP_UP_TO_AUTHENTICATED_SESSION)
     }
 

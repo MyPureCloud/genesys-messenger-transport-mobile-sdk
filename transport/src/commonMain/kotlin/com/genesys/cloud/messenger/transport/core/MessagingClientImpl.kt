@@ -178,7 +178,7 @@ internal class MessagingClientImpl(
 
     private fun configureSession(startNew: Boolean = false) {
         val encodedJson = if (connectAuthenticated) {
-            log.i { LogMessages.configureAuthenticatedSession(token, startNew) }
+            log.i { LogMessages.configureAuthenticatedSession(startNew) }
             if (authHandler.jwt == NO_JWT) {
                 if (reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
                     reconfigureAttempts++

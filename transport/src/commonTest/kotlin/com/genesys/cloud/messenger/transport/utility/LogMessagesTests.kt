@@ -140,11 +140,10 @@ class LogMessagesTests {
     // Authentication
     @Test
     fun `when configureAuthenticatedSession is called then it logs correctly`() {
-        val givenToken = TestValues.TOKEN
         val givenStartNew = true
-        val expectedMessage = "configureAuthenticatedSession(token = $givenToken, startNew: $givenStartNew)"
+        val expectedMessage = "configureAuthenticatedSession(startNew: $givenStartNew)"
 
-        val result = LogMessages.configureAuthenticatedSession(givenToken, givenStartNew)
+        val result = LogMessages.configureAuthenticatedSession(givenStartNew)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
