@@ -28,7 +28,6 @@ object SessionDurationUseCase {
                 it.copy(sessionExpirationNoticeInterval = validInterval)
             }
         }
-
     }
 }
 
