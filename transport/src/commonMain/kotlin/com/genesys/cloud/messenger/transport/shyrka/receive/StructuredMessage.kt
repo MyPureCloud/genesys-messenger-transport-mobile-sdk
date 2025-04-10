@@ -125,6 +125,10 @@ internal data class StructuredMessage(
             }
         }
     }
+
+    override fun toString(): String {
+        return "StructuredMessage(id='$id', type=$type, direction='$direction', channel=$channel, content=$content, metadata=$metadata, events=$events, originatingEntity=$originatingEntity)"
+    }
 }
 
 internal fun StructuredMessage.isOutbound(): Boolean = direction == Direction.Outbound.name

@@ -10,4 +10,9 @@ internal data class WebMessagingMessage<T>(
     override val type: String,
     override val code: Int,
     val body: T
-) : WebMessagingMessageProtocol
+) : WebMessagingMessageProtocol {
+
+//    override fun toString(): String {
+//        return "WebMessagingMessage(type='$type', code=$code, body=${body.toString()})"
+//    }
+}

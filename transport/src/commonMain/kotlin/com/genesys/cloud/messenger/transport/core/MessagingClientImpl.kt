@@ -665,9 +665,9 @@ internal class MessagingClientImpl(
         }
 
         override fun onMessage(text: String) {
-            log.i { LogMessages.onMessage(text) }
             try {
                 val decoded = WebMessagingJson.decodeFromString(text)
+                log.i { LogMessages.onMessage("(type='${decoded.type}', code=${decoded.code}, body=${decoded.body})") }
                 when (decoded.body) {
                     is String -> handleError(ErrorCode.mapFrom(decoded.code), decoded.body)
                     is SessionExpiredEvent -> handleError(ErrorCode.SessionHasExpired)
