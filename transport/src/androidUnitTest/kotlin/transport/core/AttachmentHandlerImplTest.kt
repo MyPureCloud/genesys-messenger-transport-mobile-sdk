@@ -16,6 +16,7 @@ import com.genesys.cloud.messenger.transport.core.ErrorMessage
 import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
 import com.genesys.cloud.messenger.transport.core.ProcessedAttachment
 import com.genesys.cloud.messenger.transport.core.Result
+import com.genesys.cloud.messenger.transport.core.resolveContentType
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
@@ -26,6 +27,7 @@ import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
+import io.ktor.http.ContentType
 import io.mockk.Called
 import io.mockk.clearMocks
 import io.mockk.coEvery
@@ -730,6 +732,16 @@ internal class AttachmentHandlerImplTest {
         val attachmentJson = WebMessagingJson.json.encodeToString(givenAttachment)
 
         assertThat(attachmentJson).isEqualTo(expectedAttachmentJson)
+    }
+
+    @Test
+    fun `when file ends with opus then returns audio_ogg`() {
+        val givenFile = "voice.opus"
+        val expectedResult = ContentType("audio", "ogg")
+
+        val result = resolveContentType(givenFile)
+
+        assertThat(expectedResult).isEqualTo(result)
     }
 
     private fun presignedUrlResponse(id: String = AttachmentValues.ID): PresignedUrlResponse =

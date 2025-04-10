@@ -8,13 +8,14 @@ import com.genesys.cloud.messenger.transport.core.Attachment.State.Sending
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Uploaded
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Uploading
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
-import com.genesys.cloud.messenger.transport.network.resolveContentType
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
+import io.ktor.http.ContentType
+import io.ktor.http.defaultForFilePath
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -237,3 +238,9 @@ private fun ProcessedAttachment.takeUploaded(): ProcessedAttachment? =
     this.takeIf { it.attachment.state is Uploaded }
 
 private fun ByteArray.toKB(): Long = size / 1000L
+
+internal fun resolveContentType(fileName: String): ContentType =
+    when {
+        fileName.endsWith(".opus", ignoreCase = true) -> ContentType("audio", "ogg")
+        else -> ContentType.defaultForFilePath(fileName).withoutParameters()
+    }

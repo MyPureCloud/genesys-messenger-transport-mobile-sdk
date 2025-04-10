@@ -7,6 +7,7 @@ import com.genesys.cloud.messenger.transport.core.DEFAULT_PAGE_SIZE
 import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Result
+import com.genesys.cloud.messenger.transport.core.resolveContentType
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageEntityList
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.send.AuthJwtRequest
@@ -26,7 +27,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
-import io.ktor.http.defaultForFilePath
 import io.ktor.http.isSuccess
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -158,11 +158,3 @@ private fun HttpRequestBuilder.headerAuthorizationBearer(jwt: String) =
 
 private fun HttpRequestBuilder.headerOrigin(origin: String) =
     header(HttpHeaders.Origin, origin)
-
-fun resolveContentType(fileName: String): ContentType {
-    val result = when {
-        fileName.endsWith(".opus", ignoreCase = true) -> ContentType("audio", "ogg")
-        else -> ContentType.defaultForFilePath(fileName).withoutParameters()
-    }
-    return result
-}
