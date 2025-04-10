@@ -17,7 +17,6 @@ internal data class OnAttachmentRequest(
     override val action: String = RequestAction.ON_ATTACHMENT.value
 
     override fun toString(): String {
-        return "(action='$action', attachmentId='$attachmentId', fileName='$fileName', " +
-                "fileType='$fileType', fileSize=$fileSize, fileMd5=$fileMd5)"
+        return "(action='$action', attachmentId='$attachmentId', fileName='$fileName', fileType='$fileType', fileSize=$fileSize, fileMd5=$fileMd5)"
     }
 }
