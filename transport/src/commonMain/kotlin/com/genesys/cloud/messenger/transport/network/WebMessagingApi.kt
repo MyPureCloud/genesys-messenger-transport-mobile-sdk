@@ -71,7 +71,8 @@ internal class WebMessagingApi(
                 header(it.key, it.value)
             }
             presignedUrlResponse.fileName?.let {
-                contentType(ContentType.defaultForFilePath(it).withoutParameters())
+                val resolvedType = resolveContentType(it)
+                contentType(resolvedType)
             }
             onUpload { bytesSendTotal: Long, contentLength: Long ->
                 progressCallback?.let { it((bytesSendTotal / contentLength.toFloat()) * 100) }
@@ -157,3 +158,11 @@ private fun HttpRequestBuilder.headerAuthorizationBearer(jwt: String) =
 
 private fun HttpRequestBuilder.headerOrigin(origin: String) =
     header(HttpHeaders.Origin, origin)
+
+fun resolveContentType(fileName: String): ContentType {
+    val result = when {
+        fileName.endsWith(".opus", ignoreCase = true) -> ContentType("audio", "ogg")
+        else -> ContentType.defaultForFilePath(fileName).withoutParameters()
+    }
+    return result
+}

@@ -8,14 +8,13 @@ import com.genesys.cloud.messenger.transport.core.Attachment.State.Sending
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Uploaded
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Uploading
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
+import com.genesys.cloud.messenger.transport.network.resolveContentType
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
-import io.ktor.http.ContentType
-import io.ktor.http.defaultForFilePath
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -54,7 +53,7 @@ internal class AttachmentHandlerImpl(
             token,
             attachmentId = attachmentId,
             fileName = fileName,
-            fileType = ContentType.defaultForFilePath(fileName).withoutParameters().toString(),
+            fileType = resolveContentType(fileName).toString(),
             fileSize = byteArray.size,
             errorsAsJson = true,
         )
