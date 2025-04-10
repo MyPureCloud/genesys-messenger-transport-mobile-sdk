@@ -35,7 +35,7 @@ class MCHistoryTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession())
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.ALL_HISTORY_FETCHED)
     }
 

@@ -18,6 +18,6 @@ internal data class ConfigureAuthenticatedSessionRequest(
     internal data class Data(val code: String)
 
     override fun toString(): String {
-        return "(action='$action, startNew=$startNew, journeyContext=$journeyContext, data=$data')"
+        return "(action='$action, deploymentId=$deploymentId,  startNew=$startNew, journeyContext=$journeyContext, data=$data')"
     }
 }

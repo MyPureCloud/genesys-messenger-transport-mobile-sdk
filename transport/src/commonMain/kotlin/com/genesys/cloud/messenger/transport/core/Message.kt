@@ -140,4 +140,8 @@ data class Message(
             Unknown,
         }
     }
+
+    override fun toString(): String {
+        return "Message(id='$id', direction=$direction, state=$state, messageType=$messageType, type='$type', timeStamp=$timeStamp, attachments=$attachments, events=$events, quickReplies=$quickReplies, from=$from, authenticated=$authenticated)"
+    }
 }

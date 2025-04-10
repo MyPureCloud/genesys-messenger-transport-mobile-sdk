@@ -28,8 +28,8 @@ internal object LogMessages {
     const val REFRESH_AUTH_TOKEN_SUCCESS = "refreshAuthToken success."
     fun configureAuthenticatedSession(token: String, startNew: Boolean) =
         "configureAuthenticatedSession(token = $token, startNew: $startNew)"
-    fun configureSession(token: String, startNew: Boolean = false) =
-        "configureSession (token = $token, startNew: $startNew)"
+    fun configureSession(startNew: Boolean = false) =
+        "configureSession (startNew: $startNew)"
     // Message
     fun messagePreparedToSend(message: Message) = "Message prepared to send: $message"
     fun messageStateUpdated(message: Message) = "Message state updated: $message"

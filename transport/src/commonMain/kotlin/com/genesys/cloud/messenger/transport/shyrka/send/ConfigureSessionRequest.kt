@@ -13,6 +13,6 @@ internal data class ConfigureSessionRequest(
     @Required override val action: String = RequestAction.CONFIGURE_SESSION.value
 
     override fun toString(): String {
-        return "(action='$action', journeyContext=$journeyContext, startNew=$startNew)"
+        return "(action='$action', deploymentId=$deploymentId, journeyContext=$journeyContext, startNew=$startNew)"
     }
 }

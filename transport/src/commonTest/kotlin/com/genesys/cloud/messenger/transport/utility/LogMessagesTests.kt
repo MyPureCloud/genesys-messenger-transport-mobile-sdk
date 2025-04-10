@@ -155,7 +155,7 @@ class LogMessagesTests {
         val givenStartNew = false
         val expectedMessage = "configureSession (token = $givenToken, startNew: $givenStartNew)"
 
-        val result = LogMessages.configureSession(givenToken, givenStartNew)
+        val result = LogMessages.configureSession(givenStartNew)
 
         assertThat(result).isEqualTo(expectedMessage)
     }

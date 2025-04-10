@@ -55,7 +55,7 @@ class MCConnectionTests : BaseMessagingClientTest() {
             connectSequence()
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession())
     }
 
     @Test
@@ -101,7 +101,7 @@ class MCConnectionTests : BaseMessagingClientTest() {
             errorSequence(fromConfiguredToError(expectedErrorState))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession())
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
     }
 
@@ -220,10 +220,10 @@ class MCConnectionTests : BaseMessagingClientTest() {
             errorSequence(fromReconnectingToError(expectedErrorState))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession())
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.configureSession())
     }
 
     @Test
@@ -253,7 +253,7 @@ class MCConnectionTests : BaseMessagingClientTest() {
             mockLogger.w(capture(logSlot))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession())
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
     }
 
@@ -268,7 +268,7 @@ class MCConnectionTests : BaseMessagingClientTest() {
             mockLogger.w(capture(logSlot))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession())
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.unhandledErrorCode(ErrorCode.UnexpectedError, "Request failed."))
     }
 
@@ -300,7 +300,7 @@ class MCConnectionTests : BaseMessagingClientTest() {
             mockEventHandler.onEvent(eq(Event.ExistingAuthSessionCleared))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession())
     }
 
     @Test
@@ -319,7 +319,7 @@ class MCConnectionTests : BaseMessagingClientTest() {
             mockEventHandler.onEvent(eq(Event.ExistingAuthSessionCleared))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession())
     }
 
     @Test

@@ -55,7 +55,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
             mockPlatformSocket.sendMessage(expectedMessage)
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession())
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.attach("test.png"))
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WILL_SEND_MESSAGE)
     }
@@ -77,7 +77,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         }
         assertThat(attachmentIdSlot.captured).isEqualTo(expectedAttachmentId)
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession())
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.detach(expectedAttachmentId))
     }
 

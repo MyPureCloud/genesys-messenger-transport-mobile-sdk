@@ -44,7 +44,7 @@ class MCAutostartTests : BaseMessagingClientTest() {
             mockPlatformSocket.sendMessage(Request.autostart(""))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession())
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.SEND_AUTO_START)
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WILL_SEND_MESSAGE)
     }

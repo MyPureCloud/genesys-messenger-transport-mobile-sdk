@@ -99,7 +99,7 @@ class MCClearConversationTests : BaseMessagingClientTest() {
             mockPlatformSocket.sendMessage(eq(Request.clearConversation))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession())
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.SEND_CLEAR_CONVERSATION)
     }
 
@@ -155,7 +155,7 @@ class MCClearConversationTests : BaseMessagingClientTest() {
             mockEventHandler.onEvent(expectedEvent)
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession())
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.SEND_CLEAR_CONVERSATION)
     }
 

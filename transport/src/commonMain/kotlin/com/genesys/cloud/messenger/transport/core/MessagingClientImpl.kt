@@ -190,7 +190,7 @@ internal class MessagingClientImpl(
             }
             encodeConfigureAuthenticatedSessionRequest(startNew)
         } else {
-            log.i { LogMessages.configureSession(token, startNew) }
+            log.i { LogMessages.configureSession(startNew) }
             encodeConfigureGuestSessionRequest(startNew)
         }
         webSocket.sendMessage(encodedJson)

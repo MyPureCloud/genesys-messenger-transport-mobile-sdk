@@ -194,7 +194,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(false))
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLOSE_SESSION)
     }
 

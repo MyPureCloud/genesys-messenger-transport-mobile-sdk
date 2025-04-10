@@ -142,7 +142,7 @@ class MCAuthTests : BaseMessagingClientTest() {
             disconnectSequence()
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(false))
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.INVALIDATE_SESSION_TOKEN)
     }
 
@@ -312,7 +312,7 @@ class MCAuthTests : BaseMessagingClientTest() {
             configureSequence(shouldConfigureAuth = true)
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(false))
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.STEP_UP_TO_AUTHENTICATED_SESSION)
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(Request.token, false))
     }

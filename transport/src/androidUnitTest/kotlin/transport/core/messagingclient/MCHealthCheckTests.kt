@@ -105,13 +105,13 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
             mockPlatformSocket.sendMessage(expectedMessage)
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(false))
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.SEND_HEALTH_CHECK)
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WILL_SEND_MESSAGE)
         assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.DISCONNECT)
         assertThat(logSlot[5].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
         assertThat(logSlot[6].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[7].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
+        assertThat(logSlot[7].invoke()).isEqualTo(LogMessages.configureSession(false))
         assertThat(logSlot[8].invoke()).isEqualTo(LogMessages.SEND_HEALTH_CHECK)
         assertThat(logSlot[9].invoke()).isEqualTo(LogMessages.WILL_SEND_MESSAGE)
     }
