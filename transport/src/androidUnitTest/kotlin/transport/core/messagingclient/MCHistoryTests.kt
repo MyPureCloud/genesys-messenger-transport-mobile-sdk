@@ -11,7 +11,6 @@ import io.mockk.verify
 import io.mockk.verifySequence
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
-import transport.util.Request
 import transport.util.Response
 import kotlin.test.assertFailsWith
 
