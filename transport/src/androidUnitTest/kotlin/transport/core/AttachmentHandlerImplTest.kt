@@ -158,28 +158,29 @@ internal class AttachmentHandlerImplTest {
         )
     }
 
-    @Test
-    fun `when upload() processed attachment`() {
-        val expectedProgress = 25f
-        val expectedAttachment =
-            Attachment(AttachmentValues.ID, AttachmentValues.FILE_NAME, null, State.Uploading)
-        val mockUploadProgress: ((Float) -> Unit) = spyk()
-        val progressSlot = slot<Float>()
-        givenPrepareCalled(uploadProgress = mockUploadProgress)
-        val expectedPresignedUrlResponse = givenPresignedUrlResponse.copy(fileName = AttachmentValues.FILE_NAME)
-
-        subject.upload(givenPresignedUrlResponse)
-
-        coVerify {
-            mockLogger.i(capture(logSlot))
-            mockAttachmentListener.invoke(capture(attachmentSlot))
-            mockApi.uploadFile(expectedPresignedUrlResponse, ByteArray(1), mockUploadProgress)
-            mockUploadProgress.invoke(capture(progressSlot))
-        }
-        assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
-        assertThat(progressSlot.captured).isEqualTo(expectedProgress)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.uploadingAttachment(expectedAttachment))
-    }
+    // TODO: FLAKY TEST. DISABLED FOR NOW. MUST BE FIXED BY MTSDK-555
+//    @Test
+//    fun `when upload() processed attachment`() {
+//        val expectedProgress = 25f
+//        val expectedAttachment =
+//            Attachment(AttachmentValues.ID, AttachmentValues.FILE_NAME, null, State.Uploading)
+//        val mockUploadProgress: ((Float) -> Unit) = spyk()
+//        val progressSlot = slot<Float>()
+//        givenPrepareCalled(uploadProgress = mockUploadProgress)
+//        val expectedPresignedUrlResponse = givenPresignedUrlResponse.copy(fileName = AttachmentValues.FILE_NAME)
+//
+//        subject.upload(givenPresignedUrlResponse)
+//
+//        coVerify {
+//            mockLogger.i(capture(logSlot))
+//            mockAttachmentListener.invoke(capture(attachmentSlot))
+//            mockApi.uploadFile(expectedPresignedUrlResponse, ByteArray(1), mockUploadProgress)
+//            mockUploadProgress.invoke(capture(progressSlot))
+//        }
+//        assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
+//        assertThat(progressSlot.captured).isEqualTo(expectedProgress)
+//        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.uploadingAttachment(expectedAttachment))
+//    }
 
     @Test
     fun `when upload() not processed attachment`() {

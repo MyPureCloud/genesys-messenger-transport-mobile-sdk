@@ -96,7 +96,7 @@ class HealthCheckProviderTest {
 
         val subject = HealthCheckProvider()
 
-        assertThat(subject.log.kermit.tag).isEqualTo(LogTag.HEALTH_CHECK_PROVIDER)
+        assertThat(subject.log.logger.tag).isEqualTo(LogTag.HEALTH_CHECK_PROVIDER)
         assertTrue { subject.getCurrentTimestamp() in (currentTime - givenAcceptableRangeOffset)..(currentTime + givenAcceptableRangeOffset) }
     }
 }
