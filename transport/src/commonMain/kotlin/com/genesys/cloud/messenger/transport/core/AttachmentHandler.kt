@@ -10,6 +10,7 @@ internal interface AttachmentHandler {
 
     @Throws(IllegalArgumentException::class)
     fun prepare(
+        token: String,
         attachmentId: String,
         byteArray: ByteArray,
         fileName: String,
@@ -18,7 +19,8 @@ internal interface AttachmentHandler {
 
     fun upload(presignedUrlResponse: PresignedUrlResponse)
 
-    fun detach(attachmentId: String): DeleteAttachmentRequest?
+    @Throws(IllegalArgumentException::class)
+    fun detach(token: String, attachmentId: String): DeleteAttachmentRequest?
 
     fun onUploadSuccess(uploadSuccessEvent: UploadSuccessEvent)
 

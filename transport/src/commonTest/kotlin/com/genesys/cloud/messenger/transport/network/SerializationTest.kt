@@ -178,7 +178,8 @@ class SerializationTest {
                         "maxFileSizeKB": 10240
                     }
                 },
-                "blockedExtensions": [".ade"]
+                "blockedExtensions": [".ade"],
+                "clearedExistingSession":false
               }
             }
             """.trimIndent()
@@ -189,14 +190,15 @@ class SerializationTest {
                 connected = true,
                 newSession = true,
                 readOnly = false,
-                maxCustomDataBytes = TestValues.MaxCustomDataBytes,
+                maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES,
                 allowedMedia = AllowedMedia(
                     Inbound(
                         fileTypes = listOf(FileType("*/*"), FileType("video/3gpp")),
                         maxFileSizeKB = 10240,
                     ),
                 ),
-                blockedExtensions = listOf(".ade")
+                blockedExtensions = listOf(".ade"),
+                clearedExistingSession = false,
             )
         )
 

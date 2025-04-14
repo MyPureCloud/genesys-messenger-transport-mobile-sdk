@@ -1,4 +1,4 @@
-package com.genesys.cloud.messenger.transport.util
+package transport.util
 
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.utility.AuthTest
@@ -9,7 +9,7 @@ internal object Request {
     fun configureRequest(startNew: Boolean = false) =
         """{"token":"$token","deploymentId":"deploymentId","startNew":$startNew,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"action":"configureSession"}"""
     fun configureAuthenticatedRequest(startNew: Boolean = false) =
-        """{"token":"$token","deploymentId":"deploymentId","startNew":$startNew,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"data":{"code":"${AuthTest.JwtToken}"},"action":"configureAuthenticatedSession"}"""
+        """{"token":"$token","deploymentId":"deploymentId","startNew":$startNew,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"data":{"code":"${AuthTest.JWT_TOKEN}"},"action":"configureAuthenticatedSession"}"""
     const val userTypingRequest =
         """{"token":"$token","action":"onMessage","message":{"events":[{"eventType":"Typing","typing":{"type":"On"}}],"type":"Event"}}"""
     const val echo =
@@ -20,7 +20,7 @@ internal object Request {
         content: String = """"content":[{"contentType":"ButtonResponse","buttonResponse":{"text":"text_a","payload":"payload_a","type":"QuickReply"}}]""",
         channel: String = ""
     ) = """{"token":"$token","message":{"text":"",$content,$channel"type":"Text"},"action":"onMessage"}"""
-    fun textMessage(text: String = MessageValues.Text) =
+    fun textMessage(text: String = MessageValues.TEXT) =
         """{"token":"$token","message":{"text":"$text","type":"Text"},"action":"onMessage"}"""
     const val closeAllConnections =
         """{"token":"$token","closeAllConnections":true,"action":"closeSession"}"""

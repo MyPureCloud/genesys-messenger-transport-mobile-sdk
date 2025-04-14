@@ -2,7 +2,6 @@ object Deps {
     private const val assertkVersion = "0.25"
     private const val coroutinesVersion = "1.6.0-native-mt"
     private const val junitVersion = "4.13.2"
-    private const val kermitVersion = "1.2.2"
     private const val kotlinxSerializationJsonVersion = "1.6.3"
     private const val ktorVersion = "2.3.8"
     private const val mockWebServerVersion = "4.9.0"
@@ -22,7 +21,6 @@ object Deps {
     object Libs {
         const val junit = "junit:junit:$junitVersion"
         const val mockk = "io.mockk:mockk:$mockkVersion"
-        const val kermit = "co.touchlab:kermit:$kermitVersion"
         const val klock = "com.soywiz.korlibs.klock:klock:$klockVersion"
 
         object Assertk {

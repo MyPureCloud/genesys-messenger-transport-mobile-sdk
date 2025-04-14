@@ -1,4 +1,4 @@
-package com.genesys.cloud.messenger.transport.core.messagingclient
+package transport.core.messagingclient
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -9,13 +9,13 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
 import com.genesys.cloud.messenger.transport.shyrka.receive.createConversationsVOForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createMessengerVOForTesting
-import com.genesys.cloud.messenger.transport.util.Request
-import com.genesys.cloud.messenger.transport.util.Response
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
+import transport.util.Request
+import transport.util.Response
 
 class MCAutostartTests : BaseMessagingClientTest() {
 
@@ -112,14 +112,13 @@ class MCAutostartTests : BaseMessagingClientTest() {
 
     @Test
     fun `when event Presence Join received`() {
-        val givenPresenceJoinEvent = """{"eventType":"Presence","presence":{"type":"Join"}}"""
         val expectedEvent = Event.ConversationAutostart
 
         subject.connect()
         slot.captured.onMessage(
             Response.structuredMessageWithEvents(
                 direction = Message.Direction.Inbound,
-                events = givenPresenceJoinEvent
+                events = Response.StructuredEvent.presenceJoin
             )
         )
 

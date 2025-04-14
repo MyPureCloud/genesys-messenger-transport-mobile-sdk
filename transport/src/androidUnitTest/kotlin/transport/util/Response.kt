@@ -1,7 +1,9 @@
-package com.genesys.cloud.messenger.transport.util
+package transport.util
 
 import com.genesys.cloud.messenger.transport.core.Message
+import com.genesys.cloud.messenger.transport.util.SIGNED_IN
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
+import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -10,21 +12,21 @@ internal object Response {
     fun configureSuccess(
         connected: Boolean = true,
         readOnly: Boolean = false,
-        maxCustomDataBytes: Int = TestValues.MaxCustomDataBytes,
+        maxCustomDataBytes: Int = TestValues.MAX_CUSTOM_DATA_BYTES,
         allowedMedia: String = AllowedMedia.empty,
         blockedExtensions: String = AllowedMedia.emptyBlockedExtensions,
+        clearedExistingSession: Boolean = false,
     ): String =
-        """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":$connected,"newSession":true,"readOnly":$readOnly,"maxCustomDataBytes":$maxCustomDataBytes$allowedMedia$blockedExtensions}}"""
+        """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":$connected,"newSession":true,"readOnly":$readOnly,"maxCustomDataBytes":$maxCustomDataBytes$allowedMedia$blockedExtensions,"clearedExistingSession":$clearedExistingSession}}"""
     const val configureSuccessWithNewSessionFalse =
         """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":false}}"""
     const val webSocketRequestFailed =
         """{"type":"response","class":"string","code":400,"body":"Request failed."}"""
-    const val defaultStructuredEvents =
-        """{"eventType": "Typing","typing": {"type": "Off","duration": 1000}},{"eventType": "Typing","typing": {"type": "On","duration": 5000}}"""
+    const val defaultStructuredEvents = """${StructuredEvent.typingOff},${StructuredEvent.typingOn}"""
     fun onMessage(direction: Message.Direction = Message.Direction.Inbound) =
         """{"type":"message","class":"StructuredMessage","code":200,"body":{"text":"Hello world!","direction":"${direction.name}","id":"test_id","channel":{"time":"2022-08-22T19:24:26.704Z","messageId":"message_id"},"type":"Text","metadata":{"customMessageId":"some_custom_message_id"}}}"""
     fun onMessageWithAttachment(direction: Message.Direction = Message.Direction.Outbound) =
-        """{"type":"message","class":"StructuredMessage","code":200,"body":{"direction":"${direction.name}","id":"msg_id","channel":{"time":"some_time","type":"Private"},"type":"Text","text":"Hi","content":[{"attachment":{"id":"attachment_id","filename":"image.png","mediaType":"Image","fileSize":${AttachmentValues.FileSize},"mime":"image/png","url":"https://downloadurl.com"},"contentType":"Attachment"}],"originatingEntity":"Human"}}"""
+        """{"type":"message","class":"StructuredMessage","code":200,"body":{"direction":"${direction.name}","id":"msg_id","channel":{"time":"some_time","type":"Private"},"type":"Text","text":"Hi","content":[{"attachment":{"id":"attachment_id","filename":"image.png","mediaType":"Image","fileSize":${AttachmentValues.FILE_SIZE},"mime":"image/png","url":"https://downloadurl.com"},"contentType":"Attachment"}],"originatingEntity":"Human"}}"""
     const val onMessageWithQuickReplies =
         """{"type":"message","class":"StructuredMessage","code":200,"body":{"direction":"Outbound","id":"msg_id","channel":{"time":"some_time","type":"Private"},"type":"Structured","text":"Hi","content":[{"contentType":"QuickReply","quickReply":{"text":"text_a","payload":"payload_a","action":"action_a"}},{"contentType":"QuickReply","quickReply":{"text":"text_b","payload":"payload_b","action":"action_b"}}],"originatingEntity":"Bot"}}"""
     const val onMessageWithoutQuickReplies =
@@ -37,6 +39,8 @@ internal object Response {
         """{"type": "response","class": "string","code": 4007,"body": "session not found error message"}"""
     const val sessionExpired =
         """{"type": "response","class": "string","code": 4006,"body": "session expired error message"}"""
+    const val cannotDowngradeToUnauthenticated =
+        """{"type": "response","class": "string","code": 4017,"body": "${ErrorTest.MESSAGE}"}"""
     const val sessionExpiredEvent =
         """{"type": "response","class": "SessionExpiredEvent","code": 200,"body": {}}"""
     const val messageTooLong =
@@ -45,8 +49,10 @@ internal object Response {
         """{"type":"response","class":"TooManyRequestsErrorMessage","code":429,"body":{"retryAfter":3,"errorCode":4029,"errorMessage":"Message rate too high for this session"}}"""
     const val customAttributeSizeTooLarge =
         """{"type":"response","class":"string","code":4013,"body":"Custom Attributes in channel metadata is larger than 2048 bytes"}"""
-    const val connectionClosedEvent =
+    const val connectionClosedEventNoReason =
         """{"type":"message","class":"ConnectionClosedEvent","code":200,"body":{}}"""
+    const val connectionClosedEventReasonSignIn =
+        """{"type":"message","class":"ConnectionClosedEvent","code":200,"body":{"reason":"$SIGNED_IN"}}"""
     const val logoutEvent =
         """{"type":"message","class":"LogoutEvent","code":200,"body":{}}"""
     const val unauthorized =
@@ -101,5 +107,14 @@ internal object Response {
         const val emptyInbound = ""","allowedMedia":{"inbound":{}}"""
         const val listOfFileTypesWithMaxSize = ""","allowedMedia":{"inbound":{"fileTypes":[{"type":"video/mpg"},{"type":"video/3gpp"}],"maxFileSizeKB":10240}}"""
         const val listOfFileTypesWithWildcardAndMaxSize = ""","allowedMedia":{"inbound":{"fileTypes":[{"type":"*/*"},{"type":"video/3gpp"}],"maxFileSizeKB":10240}}"""
+    }
+
+    object StructuredEvent {
+        const val presenceJoin = """{"eventType":"Presence","presence":{"type":"Join"}}"""
+        const val presenceDisconnect = """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
+        const val presenceSignIn = """{"eventType":"Presence","presence":{"type":"SignIn"}}"""
+        const val typingOn = """{"eventType": "Typing","typing": {"type": "On","duration": 5000}}"""
+        const val typingOff = """{"eventType": "Typing","typing": {"type": "Off","duration": 1000}}"""
+        const val unknown = """{"eventType":"Fake","bloop":{"bip":"bop"}}"""
     }
 }

@@ -1,4 +1,4 @@
-package com.genesys.cloud.messenger.transport.core
+package transport.core
 
 import assertk.assertThat
 import assertk.assertions.containsExactly
@@ -7,11 +7,16 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import com.genesys.cloud.messenger.transport.core.Attachment
+import com.genesys.cloud.messenger.transport.core.ButtonResponse
+import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
+import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.core.Message.Participant
 import com.genesys.cloud.messenger.transport.core.Message.State
 import com.genesys.cloud.messenger.transport.core.Message.Type
 import com.genesys.cloud.messenger.transport.core.events.Event
+import com.genesys.cloud.messenger.transport.core.events.Event.ConnectionClosed.Reason
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses.isoTestTimestamp
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
@@ -27,7 +32,9 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.isInbound
 import com.genesys.cloud.messenger.transport.shyrka.receive.isOutbound
+import com.genesys.cloud.messenger.transport.shyrka.receive.toTransportConnectionClosedReason
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
+import com.genesys.cloud.messenger.transport.util.SIGNED_IN
 import com.genesys.cloud.messenger.transport.util.extensions.fromIsoToEpochMilliseconds
 import com.genesys.cloud.messenger.transport.util.extensions.getUploadedAttachments
 import com.genesys.cloud.messenger.transport.util.extensions.isHealthCheckResponseId
@@ -96,6 +103,8 @@ internal class MessageExtensionTest {
                 time = isoTestTimestamp,
                 from = StructuredMessage.Participant(
                     nickname = "Bob",
+                    firstName = MessageValues.PARTICIPANT_NAME,
+                    lastName = MessageValues.PARTICIPANT_LAST_NAME,
                     image = "http://image.png",
                 )
             ),
@@ -118,6 +127,10 @@ internal class MessageExtensionTest {
                 PresenceEvent(
                     eventType = StructuredMessageEvent.Type.Presence,
                     presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Join)
+                ),
+                PresenceEvent(
+                    eventType = StructuredMessageEvent.Type.Presence,
+                    presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.SignIn)
                 )
             )
         )
@@ -136,7 +149,7 @@ internal class MessageExtensionTest {
                         state = Attachment.State.Sent("http://test.com")
                     )
                 ),
-                events = listOf<Event>(Event.ConversationAutostart),
+                events = listOf(Event.ConversationAutostart, Event.SignedIn(MessageValues.PARTICIPANT_NAME, MessageValues.PARTICIPANT_LAST_NAME)),
                 from = Participant(
                     name = "Bob",
                     imageUrl = "http://image.png",
@@ -171,7 +184,7 @@ internal class MessageExtensionTest {
                     "first test attachment id" to Attachment(
                         id = "first test attachment id",
                         fileName = "test.png",
-                        fileSizeInBytes = AttachmentValues.FileSize,
+                        fileSizeInBytes = AttachmentValues.FILE_SIZE,
                         Attachment.State.Uploaded("http://test.com")
                     ),
                     "second test attachment id" to Attachment(
@@ -187,7 +200,7 @@ internal class MessageExtensionTest {
             attachment = Attachment(
                 id = "first test attachment id",
                 fileName = "test.png",
-                fileSizeInBytes = AttachmentValues.FileSize,
+                fileSizeInBytes = AttachmentValues.FILE_SIZE,
                 state = Attachment.State.Uploaded("http://test.com")
             )
         )
@@ -387,15 +400,15 @@ internal class MessageExtensionTest {
             content = listOf(QuickReplyTestValues.createQuickReplyContentForTesting())
         )
         val expectedButtonResponse = ButtonResponse(
-            text = QuickReplyTestValues.Text_A,
-            payload = QuickReplyTestValues.Payload_A,
-            type = QuickReplyTestValues.QuickReply
+            text = QuickReplyTestValues.TEXT_A,
+            payload = QuickReplyTestValues.PAYLOAD_A,
+            type = QuickReplyTestValues.QUICK_REPLY
         )
         val expectedMessage = Message(
-            id = MessageValues.Id,
+            id = MessageValues.ID,
             state = State.Sent,
-            type = Message.Type.QuickReply.name,
-            messageType = Message.Type.QuickReply,
+            type = Type.QuickReply.name,
+            messageType = Type.QuickReply,
             quickReplies = listOf(expectedButtonResponse)
         )
 
@@ -411,15 +424,15 @@ internal class MessageExtensionTest {
             content = listOf(QuickReplyTestValues.createButtonResponseContentForTesting())
         )
         val expectedButtonResponse = ButtonResponse(
-            text = QuickReplyTestValues.Text_A,
-            payload = QuickReplyTestValues.Payload_A,
-            type = QuickReplyTestValues.QuickReply
+            text = QuickReplyTestValues.TEXT_A,
+            payload = QuickReplyTestValues.PAYLOAD_A,
+            type = QuickReplyTestValues.QUICK_REPLY
         )
         val expectedMessage = Message(
-            id = MessageValues.Id,
+            id = MessageValues.ID,
             state = State.Sent,
-            type = Message.Type.QuickReply.name,
-            messageType = Message.Type.QuickReply,
+            type = Type.QuickReply.name,
+            messageType = Type.QuickReply,
             quickReplies = listOf(expectedButtonResponse)
         )
 
@@ -438,15 +451,15 @@ internal class MessageExtensionTest {
             )
         )
         val expectedButtonResponse = ButtonResponse(
-            text = QuickReplyTestValues.Text_A,
-            payload = QuickReplyTestValues.Payload_A,
-            type = QuickReplyTestValues.QuickReply
+            text = QuickReplyTestValues.TEXT_A,
+            payload = QuickReplyTestValues.PAYLOAD_A,
+            type = QuickReplyTestValues.QUICK_REPLY
         )
         val expectedMessage = Message(
-            id = MessageValues.Id,
+            id = MessageValues.ID,
             state = State.Sent,
-            type = Message.Type.QuickReply.name,
-            messageType = Message.Type.QuickReply,
+            type = Type.QuickReply.name,
+            messageType = Type.QuickReply,
             quickReplies = listOf(expectedButtonResponse)
         )
 
@@ -462,10 +475,10 @@ internal class MessageExtensionTest {
         )
 
         val expectedMessage = Message(
-            id = MessageValues.Id,
+            id = MessageValues.ID,
             state = State.Sent,
-            type = Message.Type.Unknown.name,
-            messageType = Message.Type.Unknown,
+            type = Type.Unknown.name,
+            messageType = Type.Unknown,
         )
 
         val result = givenStructuredMessage.toMessage()
@@ -495,10 +508,10 @@ internal class MessageExtensionTest {
         )
         val givenMessageEntityList = MessageEntityList(
             entities = listOf(givenStructuredMessage),
-            pageSize = MessageValues.PageSize,
-            pageNumber = MessageValues.PageNumber,
-            total = MessageValues.Total,
-            pageCount = MessageValues.PageCount,
+            pageSize = MessageValues.PAGE_SIZE,
+            pageNumber = MessageValues.PAGE_NUMBER,
+            total = MessageValues.TOTAL,
+            pageCount = MessageValues.PAGE_COUNT,
         )
 
         val expectedMessageEntityListAsJson =
@@ -520,10 +533,10 @@ internal class MessageExtensionTest {
         )
         val expectedMessageEntityList = MessageEntityList(
             entities = listOf(expectedStructuredMessage),
-            pageSize = MessageValues.PageSize,
-            pageNumber = MessageValues.PageNumber,
-            total = MessageValues.Total,
-            pageCount = MessageValues.PageCount,
+            pageSize = MessageValues.PAGE_SIZE,
+            pageNumber = MessageValues.PAGE_NUMBER,
+            total = MessageValues.TOTAL,
+            pageCount = MessageValues.PAGE_COUNT,
         )
 
         val result =
@@ -542,10 +555,10 @@ internal class MessageExtensionTest {
     @Test
     fun `validate default constructor of MessageEntityList`() {
         val givenMessageEntityList = MessageEntityList(
-            pageSize = MessageValues.PageSize,
-            pageNumber = MessageValues.PageNumber,
-            total = MessageValues.Total,
-            pageCount = MessageValues.PageCount,
+            pageSize = MessageValues.PAGE_SIZE,
+            pageNumber = MessageValues.PAGE_NUMBER,
+            total = MessageValues.TOTAL,
+            pageCount = MessageValues.PAGE_COUNT,
         )
 
         assertThat(givenMessageEntityList.entities).isEmpty()
@@ -554,12 +567,13 @@ internal class MessageExtensionTest {
     @Test
     fun `when PreIdentifiedWebMessagingMessage serialized`() {
         val givenMPreIdentifiedWebMessagingMessage = PreIdentifiedWebMessagingMessage(
-            type = MessageValues.PreIdentifiedMessageType,
-            code = MessageValues.PreIdentifiedMessageCode,
-            className = MessageValues.PreIdentifiedMessageClass,
+            type = MessageValues.PRE_IDENTIFIED_MESSAGE_TYPE,
+            code = MessageValues.PRE_IDENTIFIED_MESSAGE_CODE,
+            className = MessageValues.PRE_IDENTIFIED_MESSAGE_CLASS,
         )
 
-        val expectedPreIdentifiedWebMessagingMessageAsJson = """{"type":"type","code":200,"class":"clazz"}"""
+        val expectedPreIdentifiedWebMessagingMessageAsJson =
+            """{"type":"type","code":200,"class":"clazz"}"""
 
         val result = WebMessagingJson.json.encodeToString(givenMPreIdentifiedWebMessagingMessage)
 
@@ -576,23 +590,23 @@ internal class MessageExtensionTest {
         )
 
         result.run {
-            assertThat(type).isEqualTo(MessageValues.PreIdentifiedMessageType)
-            assertThat(code).isEqualTo(MessageValues.PreIdentifiedMessageCode)
-            assertThat(className).isEqualTo(MessageValues.PreIdentifiedMessageClass)
+            assertThat(type).isEqualTo(MessageValues.PRE_IDENTIFIED_MESSAGE_TYPE)
+            assertThat(code).isEqualTo(MessageValues.PRE_IDENTIFIED_MESSAGE_CODE)
+            assertThat(className).isEqualTo(MessageValues.PRE_IDENTIFIED_MESSAGE_CLASS)
         }
     }
 
     @Test
     fun `when Channel serialized`() {
         val givenChannel = StructuredMessage.Channel(
-            time = TestValues.Timestamp,
-            messageId = MessageValues.Id,
-            type = MessageValues.Type,
+            time = TestValues.TIME_STAMP,
+            messageId = MessageValues.ID,
+            type = MessageValues.TYPE,
             to = StructuredMessage.Participant(
-                firstName = MessageValues.ParticipantName,
-                lastName = MessageValues.ParticipantLastName,
-                nickname = MessageValues.ParticipantNickname,
-                image = MessageValues.ParticipantImageUrl,
+                firstName = MessageValues.PARTICIPANT_NAME,
+                lastName = MessageValues.PARTICIPANT_LAST_NAME,
+                nickname = MessageValues.PARTICIPANT_NICKNAME,
+                image = MessageValues.PARTICIPANT_IMAGE_URL,
             ),
             from = StructuredMessage.Participant(),
         )
@@ -611,19 +625,20 @@ internal class MessageExtensionTest {
         val givenChannelAsJson =
             """{"time":"2022-08-22T19:24:26.704Z","messageId":"test_message_id","type":"Text","to":{"firstName":"participant_name","lastName":"participant_last_name","nickname":"participant_nickname","image":"http://participant.image"},"from":{}}"""
         val expectedChannel = StructuredMessage.Channel(
-            time = TestValues.Timestamp,
-            messageId = MessageValues.Id,
-            type = MessageValues.Type,
+            time = TestValues.TIME_STAMP,
+            messageId = MessageValues.ID,
+            type = MessageValues.TYPE,
             to = StructuredMessage.Participant(
-                firstName = MessageValues.ParticipantName,
-                lastName = MessageValues.ParticipantLastName,
-                nickname = MessageValues.ParticipantNickname,
-                image = MessageValues.ParticipantImageUrl,
+                firstName = MessageValues.PARTICIPANT_NAME,
+                lastName = MessageValues.PARTICIPANT_LAST_NAME,
+                nickname = MessageValues.PARTICIPANT_NICKNAME,
+                image = MessageValues.PARTICIPANT_IMAGE_URL,
             ),
             from = StructuredMessage.Participant(),
         )
 
-        val result = WebMessagingJson.json.decodeFromString<StructuredMessage.Channel>(givenChannelAsJson)
+        val result =
+            WebMessagingJson.json.decodeFromString<StructuredMessage.Channel>(givenChannelAsJson)
 
         result.run {
             assertThat(time).isEqualTo(expectedChannel.time)
@@ -788,5 +803,15 @@ internal class MessageExtensionTest {
         val result = givenPresignedUrlResponse.isRefreshUrl()
 
         assertThat(result).isTrue()
+    }
+
+    @Test
+    fun `when toTransportConnectionClosedReason`() {
+        assertThat(SIGNED_IN.toTransportConnectionClosedReason(false)).isEqualTo(Reason.UserSignedIn)
+        assertThat(SIGNED_IN.toTransportConnectionClosedReason(true)).isEqualTo(Reason.UserSignedIn)
+        assertThat(TestValues.DEFAULT_STRING.toTransportConnectionClosedReason(false)).isEqualTo(Reason.SessionLimitReached)
+        assertThat(TestValues.DEFAULT_STRING.toTransportConnectionClosedReason(true)).isEqualTo(Reason.ConversationCleared)
+        assertThat(null.toTransportConnectionClosedReason(true)).isEqualTo(Reason.ConversationCleared)
+        assertThat(null.toTransportConnectionClosedReason(false)).isEqualTo(Reason.SessionLimitReached)
     }
 }

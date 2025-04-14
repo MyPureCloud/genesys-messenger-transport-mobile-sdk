@@ -1,4 +1,4 @@
-package com.genesys.cloud.messenger.transport.core.messagingclient
+package transport.core.messagingclient
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -15,8 +15,6 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createFileUploadVOForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createMessengerVOForTesting
-import com.genesys.cloud.messenger.transport.util.Request
-import com.genesys.cloud.messenger.transport.util.Response
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
@@ -31,6 +29,8 @@ import io.mockk.slot
 import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
+import transport.util.Request
+import transport.util.Response
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
@@ -50,7 +50,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         verifySequence {
             connectSequence()
             mockLogger.i(capture(logSlot))
-            mockAttachmentHandler.prepare(any(), any(), any())
+            mockAttachmentHandler.prepare(Request.token, any(), any(), any())
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
@@ -72,7 +72,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
 
         verify {
             mockLogger.i(capture(logSlot))
-            mockAttachmentHandler.detach(capture(attachmentIdSlot))
+            mockAttachmentHandler.detach(Request.token, capture(attachmentIdSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
         assertThat(attachmentIdSlot.captured).isEqualTo(expectedAttachmentId)
@@ -83,14 +83,30 @@ class MCAttachmentTests : BaseMessagingClientTest() {
 
     @Test
     fun `when detach() non existing attachmentId`() {
+        val givenAttachmentId = TestValues.DEFAULT_STRING
         subject.connect()
         clearMocks(mockPlatformSocket)
-        every { mockAttachmentHandler.detach(any()) } returns null
+        every { mockAttachmentHandler.detach(any(), any()) } throws IllegalArgumentException(ErrorMessage.detachFailed(givenAttachmentId))
+
+        val exception = assertFailsWith<IllegalArgumentException> {
+            subject.detach(givenAttachmentId)
+        }
+
+        assertThat(exception.message).isEqualTo(ErrorMessage.detachFailed(givenAttachmentId))
+
+        verify { mockPlatformSocket wasNot Called }
+    }
+
+    @Test
+    fun `when detach() non uploaded attachment`() {
+        subject.connect()
+        clearMocks(mockPlatformSocket)
+        every { mockAttachmentHandler.detach(any(), any()) } returns null
 
         subject.detach("88888888-8888-8888-8888-888888888888")
 
         verify {
-            mockAttachmentHandler.detach("88888888-8888-8888-8888-888888888888")
+            mockAttachmentHandler.detach(Request.token, "88888888-8888-8888-8888-888888888888")
             mockPlatformSocket wasNot Called
         }
     }
@@ -128,7 +144,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         val expectedAttachment = Attachment(
             "attachment_id",
             "image.png",
-            AttachmentValues.FileSize,
+            AttachmentValues.FILE_SIZE,
             Attachment.State.Sent("https://downloadurl.com")
         )
         val expectedMessage = Message(
@@ -320,6 +336,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
             mockAttachmentHandler.prepare(
                 any(),
                 any(),
+                any(),
                 any()
             )
         } throws IllegalArgumentException(ErrorMessage.fileSizeIsTooBig(null))
@@ -377,7 +394,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
         val expectedAttachment = Attachment(
             "attachment_id",
             "image.png",
-            AttachmentValues.FileSize,
+            AttachmentValues.FILE_SIZE,
             Attachment.State.Sent("https://downloadurl.com")
         )
         val expectedMessage = Message(
@@ -409,9 +426,9 @@ class MCAttachmentTests : BaseMessagingClientTest() {
     @Test
     fun `when SocketListener invoke OnMessage with UploadSuccessEvent response`() {
         val expectedEvent = UploadSuccessEvent(
-            attachmentId = AttachmentValues.Id,
-            downloadUrl = AttachmentValues.DownloadUrl,
-            timestamp = TestValues.Timestamp,
+            attachmentId = AttachmentValues.ID,
+            downloadUrl = AttachmentValues.DOWNLOAD_URL,
+            timestamp = TestValues.TIME_STAMP,
         )
 
         subject.connect()
@@ -427,9 +444,9 @@ class MCAttachmentTests : BaseMessagingClientTest() {
     @Test
     fun `when SocketListener invoke OnMessage with PresignedUrlResponse response`() {
         val expectedEvent = PresignedUrlResponse(
-            attachmentId = AttachmentValues.Id,
-            headers = mapOf(AttachmentValues.PresignedHeaderKey to AttachmentValues.PresignedHeaderValue),
-            url = AttachmentValues.DownloadUrl,
+            attachmentId = AttachmentValues.ID,
+            headers = mapOf(AttachmentValues.PRESIGNED_HEADER_KEY to AttachmentValues.PRESIGNED_HEADER_VALUE),
+            url = AttachmentValues.DOWNLOAD_URL,
         )
 
         subject.connect()
@@ -450,7 +467,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockAttachmentHandler.onError(AttachmentValues.Id, ErrorCode.FileTypeInvalid, ErrorTest.Message)
+            mockAttachmentHandler.onError(AttachmentValues.ID, ErrorCode.FileTypeInvalid, ErrorTest.MESSAGE)
         }
     }
 
@@ -462,7 +479,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockAttachmentHandler.onError(AttachmentValues.Id, ErrorCode.FileTypeInvalid, ErrorTest.Message)
+            mockAttachmentHandler.onError(AttachmentValues.ID, ErrorCode.FileTypeInvalid, ErrorTest.MESSAGE)
         }
     }
 }

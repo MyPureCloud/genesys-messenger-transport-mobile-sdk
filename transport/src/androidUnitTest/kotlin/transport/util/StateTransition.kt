@@ -1,4 +1,4 @@
-package com.genesys.cloud.messenger.transport.util
+package transport.util
 
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.StateChange
@@ -61,4 +61,10 @@ internal fun fromConfiguredToReconnecting(): StateChange =
     StateChange(
         oldState = MessagingClient.State.Configured(connected = true, newSession = true),
         newState = MessagingClient.State.Reconnecting
+    )
+
+internal val fromReadOnlyToConfigured =
+    StateChange(
+        oldState = MessagingClient.State.ReadOnly,
+        newState = MessagingClient.State.Configured(connected = true, newSession = true)
     )

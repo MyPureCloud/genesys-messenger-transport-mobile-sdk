@@ -1,8 +1,11 @@
-package com.genesys.cloud.messenger.transport.util
+package transport.util
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEmpty
+import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.TokenGenerator
+import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import org.junit.Test
 import kotlin.test.assertTrue
@@ -43,15 +46,17 @@ class AndroidPlatformTest {
     @Test
     fun `test Vault Keys`() {
         val result = Vault.Keys(
-            vaultKey = TestValues.VaultKey,
-            tokenKey = TestValues.TokenKey,
-            authRefreshTokenKey = TestValues.AuthRefreshTokenKey
+            vaultKey = TestValues.VAULT_KEY,
+            tokenKey = TestValues.TOKEN_KEY,
+            authRefreshTokenKey = TestValues.AUTH_REFRESH_TOKEN_KEY,
+            wasAuthenticated = TestValues.WAS_AUTHENTICATED,
         )
 
         result.run {
-            assertThat(vaultKey).isEqualTo(TestValues.VaultKey)
-            assertThat(tokenKey).isEqualTo(TestValues.TokenKey)
-            assertThat(authRefreshTokenKey).isEqualTo(TestValues.AuthRefreshTokenKey)
+            assertThat(vaultKey).isEqualTo(TestValues.VAULT_KEY)
+            assertThat(tokenKey).isEqualTo(TestValues.TOKEN_KEY)
+            assertThat(authRefreshTokenKey).isEqualTo(TestValues.AUTH_REFRESH_TOKEN_KEY)
+            assertThat(wasAuthenticated).isEqualTo(TestValues.WAS_AUTHENTICATED)
         }
     }
 }

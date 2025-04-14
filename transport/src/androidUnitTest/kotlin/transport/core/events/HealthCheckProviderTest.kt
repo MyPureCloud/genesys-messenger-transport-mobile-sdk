@@ -1,10 +1,11 @@
-package com.genesys.cloud.messenger.transport.core.events
+package transport.core.events
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
+import com.genesys.cloud.messenger.transport.core.events.HEALTH_CHECK_COOL_DOWN_MILLISECONDS
+import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.util.Platform
-import com.genesys.cloud.messenger.transport.util.Request
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
@@ -14,6 +15,7 @@ import io.mockk.spyk
 import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
+import transport.util.Request
 import kotlin.test.assertTrue
 
 class HealthCheckProviderTest {
@@ -60,7 +62,11 @@ class HealthCheckProviderTest {
         }
         assertThat(firstResult).isEqualTo(expected)
         assertThat(secondResult).isNull()
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.healthCheckCoolDown(HEALTH_CHECK_COOL_DOWN_MILLISECONDS))
+        assertThat(logSlot[0].invoke()).isEqualTo(
+            LogMessages.healthCheckCoolDown(
+                HEALTH_CHECK_COOL_DOWN_MILLISECONDS
+            )
+        )
     }
 
     @Test
@@ -90,7 +96,7 @@ class HealthCheckProviderTest {
 
         val subject = HealthCheckProvider()
 
-        assertThat(subject.log.kermit.tag).isEqualTo(LogTag.HEALTH_CHECK_PROVIDER)
+        assertThat(subject.log.logger.tag).isEqualTo(LogTag.HEALTH_CHECK_PROVIDER)
         assertTrue { subject.getCurrentTimestamp() in (currentTime - givenAcceptableRangeOffset)..(currentTime + givenAcceptableRangeOffset) }
     }
 }

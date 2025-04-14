@@ -24,7 +24,6 @@ import kotlinx.coroutines.launch
 
 internal class AttachmentHandlerImpl(
     private val api: WebMessagingApi,
-    private val token: String,
     private val log: Log,
     private val updateAttachmentStateWith: (Attachment) -> Unit,
     private val processedAttachments: MutableMap<String, ProcessedAttachment> = mutableMapOf(),
@@ -35,6 +34,7 @@ internal class AttachmentHandlerImpl(
 
     @Throws(IllegalArgumentException::class)
     override fun prepare(
+        token: String,
         attachmentId: String,
         byteArray: ByteArray,
         fileName: String,
@@ -54,7 +54,7 @@ internal class AttachmentHandlerImpl(
             token,
             attachmentId = attachmentId,
             fileName = fileName,
-            fileType = ContentType.defaultForFilePath(fileName).toString(),
+            fileType = resolveContentType(fileName).toString(),
             fileSize = byteArray.size,
             errorsAsJson = true,
         )
@@ -66,7 +66,7 @@ internal class AttachmentHandlerImpl(
             it.attachment = it.attachment.copy(state = Uploading)
                 .also(updateAttachmentStateWith)
             it.job = uploadDispatcher.launch {
-                when (val result = api.uploadFile(presignedUrlResponse, it.byteArray, it.uploadProgress)) {
+                when (val result = api.uploadFile(presignedUrlResponse.copy(fileName = it.attachment.fileName), it.byteArray, it.uploadProgress)) {
                     is Result.Success -> {} // Nothing to do here. We are waiting for UploadSuccess/Failure Event from Shyrka.
                     is Result.Failure -> handleUploadFailure(presignedUrlResponse.attachmentId, result)
                 }
@@ -84,7 +84,12 @@ internal class AttachmentHandlerImpl(
         }
     }
 
-    override fun detach(attachmentId: String): DeleteAttachmentRequest? {
+    @Throws(IllegalArgumentException::class)
+    override fun detach(token: String, attachmentId: String): DeleteAttachmentRequest? {
+        if (!processedAttachments.containsKey(attachmentId)) {
+            log.e { LogMessages.invalidAttachmentId(attachmentId) }
+            throw IllegalArgumentException(ErrorMessage.detachFailed(attachmentId))
+        }
         processedAttachments[attachmentId]?.let {
             log.i { LogMessages.detachingAttachment(attachmentId) }
             it.job?.cancel()
@@ -233,3 +238,9 @@ private fun ProcessedAttachment.takeUploaded(): ProcessedAttachment? =
     this.takeIf { it.attachment.state is Uploaded }
 
 private fun ByteArray.toKB(): Long = size / 1000L
+
+internal fun resolveContentType(fileName: String): ContentType =
+    when {
+        fileName.endsWith(".opus", ignoreCase = true) -> ContentType("audio", "ogg")
+        else -> ContentType.defaultForFilePath(fileName).withoutParameters()
+    }

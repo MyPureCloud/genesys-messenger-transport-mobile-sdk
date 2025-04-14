@@ -1,4 +1,4 @@
-package com.genesys.cloud.messenger.transport.core.messagingclient
+package transport.core.messagingclient
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -13,14 +13,14 @@ import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.isClosed
-import com.genesys.cloud.messenger.transport.util.Request
-import com.genesys.cloud.messenger.transport.util.Response
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
+import transport.util.Request
+import transport.util.Response
 import kotlin.test.assertFailsWith
 
 class MCMessageTests : BaseMessagingClientTest() {
@@ -56,13 +56,13 @@ class MCMessageTests : BaseMessagingClientTest() {
             slot.captured.onMessage(Response.onMessage())
         }
         val expectedMessageRequest =
-            """{"token":"${Request.token}","message":{"text":"${MessageValues.Text}","type":"Text"},"action":"onMessage"}"""
+            """{"token":"${Request.token}","message":{"text":"${MessageValues.TEXT}","type":"Text"},"action":"onMessage"}"""
         val expectedMessage = Message(
             id = "some_custom_message_id",
             state = State.Sent,
             messageType = Type.Text,
             type = "Text",
-            text = MessageValues.Text,
+            text = MessageValues.TEXT,
             timeStamp = 1661196266704,
         )
         subject.connect()
@@ -74,7 +74,7 @@ class MCMessageTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockCustomAttributesStore.add(emptyMap())
             mockCustomAttributesStore.getCustomAttributesToSend()
-            mockMessageStore.prepareMessage(MessageValues.Text)
+            mockMessageStore.prepareMessage(Request.token, MessageValues.TEXT)
             mockAttachmentHandler.onSending()
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessageRequest)
@@ -89,7 +89,7 @@ class MCMessageTests : BaseMessagingClientTest() {
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessage(MessageValues.Text))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessage(MessageValues.TEXT))
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WILL_SEND_MESSAGE)
     }
 

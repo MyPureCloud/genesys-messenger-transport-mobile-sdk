@@ -1,4 +1,4 @@
-package com.genesys.cloud.messenger.transport.core.messagingclient
+package transport.core.messagingclient
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -9,25 +9,28 @@ import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.StateChange
+import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.isClosed
 import com.genesys.cloud.messenger.transport.core.isConfigured
 import com.genesys.cloud.messenger.transport.core.isConnected
 import com.genesys.cloud.messenger.transport.core.isConnecting
 import com.genesys.cloud.messenger.transport.core.isError
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
-import com.genesys.cloud.messenger.transport.util.Request
-import com.genesys.cloud.messenger.transport.util.Response
-import com.genesys.cloud.messenger.transport.util.fromConfiguredToError
-import com.genesys.cloud.messenger.transport.util.fromConfiguredToReconnecting
-import com.genesys.cloud.messenger.transport.util.fromConnectedToError
-import com.genesys.cloud.messenger.transport.util.fromIdleToConnecting
-import com.genesys.cloud.messenger.transport.util.fromReconnectingToError
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
+import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import io.mockk.every
 import io.mockk.invoke
 import io.mockk.slot
+import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
+import transport.util.Request
+import transport.util.Response
+import transport.util.fromConfiguredToError
+import transport.util.fromConfiguredToReconnecting
+import transport.util.fromConnectedToError
+import transport.util.fromIdleToConnecting
+import transport.util.fromReconnectingToError
 import kotlin.test.assertFailsWith
 
 class MCConnectionTests : BaseMessagingClientTest() {
@@ -122,14 +125,12 @@ class MCConnectionTests : BaseMessagingClientTest() {
             mockStateChangedListener(fromIdleToConnecting)
             mockPlatformSocket.openSocket(any())
             mockMessageStore.invalidateConversationCache()
-            mockStateChangedListener(
+            errorSequence(
                 StateChange(
                     oldState = MessagingClient.State.Connecting,
                     newState = expectedErrorState
                 )
             )
-            mockAttachmentHandler.clearAll()
-            mockReconnectionHandler.clear()
         }
     }
 
@@ -280,5 +281,60 @@ class MCConnectionTests : BaseMessagingClientTest() {
 
         assertThat(subject.oldState).isConnecting()
         assertThat(subject.newState).isConnected()
+    }
+
+    @Test
+    fun `when configure response has clearedExistingSession=true`() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.configureSuccess(clearedExistingSession = true))
+        }
+        subject.connect()
+
+        (subject.currentState as MessagingClient.State.Configured).run {
+            assertThat(this).isConfigured(connected = true, newSession = true)
+            assertThat(connected).isTrue()
+            assertThat(newSession).isTrue()
+        }
+        verifySequence {
+            connectSequence()
+            mockEventHandler.onEvent(eq(Event.ExistingAuthSessionCleared))
+        }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+    }
+
+    @Test
+    fun `when configure response has clearedExistingSession=false`() {
+        subject.connect()
+
+        (subject.currentState as MessagingClient.State.Configured).run {
+            assertThat(this).isConfigured(connected = true, newSession = true)
+            assertThat(connected).isTrue()
+            assertThat(newSession).isTrue()
+        }
+        verifySequence {
+            connectSequence()
+        }
+        verify(exactly = 0) {
+            mockEventHandler.onEvent(eq(Event.ExistingAuthSessionCleared))
+        }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+    }
+
+    @Test
+    fun `when unstructured error message with ErrorCode_CannotDowngradeToUnauthenticated is received`() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.cannotDowngradeToUnauthenticated)
+        }
+        subject.connect()
+
+        verifySequence {
+            fromIdleToConnectedSequence()
+            mockLogger.i(capture(logSlot))
+            mockPlatformSocket.sendMessage(Request.configureRequest())
+            invalidateSessionTokenSequence()
+            mockStateChangedListener(fromConnectedToError(MessagingClient.State.Error(ErrorCode.CannotDowngradeToUnauthenticated, ErrorTest.MESSAGE)))
+        }
     }
 }

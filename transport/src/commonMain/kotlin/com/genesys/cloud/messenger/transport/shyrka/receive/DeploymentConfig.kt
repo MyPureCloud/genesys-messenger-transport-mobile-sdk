@@ -85,4 +85,7 @@ data class Mode(
 data class JourneyEvents(val enabled: Boolean)
 
 @Serializable
-data class Auth(val enabled: Boolean)
+data class Auth(
+    val enabled: Boolean,
+    val allowSessionUpgrade: Boolean = false,
+)

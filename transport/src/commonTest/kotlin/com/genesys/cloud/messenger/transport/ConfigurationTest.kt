@@ -14,12 +14,12 @@ class ConfigurationTest {
 
     @Test
     fun `validate default constructor`() {
-        val expectedDeploymentId = TestValues.DeploymentId
+        val expectedDeploymentId = TestValues.DEPLOYMENT_ID
         val expectedReconnectionTimeout = 300L
 
         val configuration = Configuration(
-            deploymentId = TestValues.DeploymentId,
-            domain = TestValues.Domain
+            deploymentId = TestValues.DEPLOYMENT_ID,
+            domain = TestValues.DOMAIN
         )
 
         configuration.run {
@@ -32,12 +32,12 @@ class ConfigurationTest {
 
     @Test
     fun `validate secondary constructor`() {
-        val expectedDeploymentId = TestValues.DeploymentId
+        val expectedDeploymentId = TestValues.DEPLOYMENT_ID
         val expectedReconnectionTimeout = 1L
 
         val configuration = Configuration(
-            deploymentId = TestValues.DeploymentId,
-            domain = TestValues.Domain,
+            deploymentId = TestValues.DEPLOYMENT_ID,
+            domain = TestValues.DOMAIN,
             logging = true,
             reconnectionTimeoutInSeconds = 1L
         )

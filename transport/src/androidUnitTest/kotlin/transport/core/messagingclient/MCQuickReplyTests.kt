@@ -1,13 +1,13 @@
-package com.genesys.cloud.messenger.transport.core.messagingclient
+package transport.core.messagingclient
 
 import com.genesys.cloud.messenger.transport.core.Message
-import com.genesys.cloud.messenger.transport.util.Request
-import com.genesys.cloud.messenger.transport.util.Response
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
+import transport.util.Request
+import transport.util.Response
 import kotlin.test.assertFailsWith
 
 class MCQuickReplyTests : BaseMessagingClientTest() {
@@ -66,7 +66,7 @@ class MCQuickReplyTests : BaseMessagingClientTest() {
             connectSequence()
             mockLogger.i(capture(logSlot))
             mockCustomAttributesStore.getCustomAttributesToSend()
-            mockMessageStore.prepareMessageWith(expectedButtonResponse, null)
+            mockMessageStore.prepareMessageWith(Request.token, expectedButtonResponse, null)
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.quickReplyWith())
         }

@@ -1,4 +1,4 @@
-package com.genesys.cloud.messenger.transport.core.messagingclient
+package transport.core.messagingclient
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -14,8 +14,6 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.createMessengerVOFor
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
-import com.genesys.cloud.messenger.transport.util.Request
-import com.genesys.cloud.messenger.transport.util.Response
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import io.mockk.MockKVerificationScope
@@ -23,6 +21,8 @@ import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
+import transport.util.Request
+import transport.util.Response
 
 class MCCustomAttributesTests : BaseMessagingClientTest() {
 
@@ -40,7 +40,7 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
         val expectedText = "Hello world"
         val expectedCustomAttributes = mapOf("A" to "B")
         val expectedChannel = Channel(Channel.Metadata(expectedCustomAttributes))
-        every { mockMessageStore.prepareMessage(any(), any()) } returns OnMessageRequest(
+        every { mockMessageStore.prepareMessage(any(), any(), any()) } returns OnMessageRequest(
             token = Request.token,
             message = TextMessage(
                 text = "Hello world",
@@ -58,7 +58,7 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
             mockCustomAttributesStore.add(expectedCustomAttributes)
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockCustomAttributesStore.onSending()
-            mockMessageStore.prepareMessage(expectedText, expectedChannel)
+            mockMessageStore.prepareMessage(Request.token, expectedText, expectedChannel)
             mockAttachmentHandler.onSending()
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
@@ -162,7 +162,7 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
         val expectedButtonResponse = QuickReplyTestValues.buttonResponse_a
         val expectedCustomAttributes = mapOf("A" to "B")
         val expectedChannel = Channel(Channel.Metadata(expectedCustomAttributes))
-        every { mockMessageStore.prepareMessageWith(any(), expectedChannel) } returns OnMessageRequest(
+        every { mockMessageStore.prepareMessageWith(Request.token, any(), expectedChannel) } returns OnMessageRequest(
             token = Request.token,
             message = TextMessage(
                 text = "",
@@ -185,7 +185,7 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockCustomAttributesStore.onSending()
-            mockMessageStore.prepareMessageWith(expectedButtonResponse, expectedChannel)
+            mockMessageStore.prepareMessageWith(Request.token, expectedButtonResponse, expectedChannel)
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.quickReplyWith(channel = """"channel":{"metadata":{"customAttributes":{"A":"B"}}},"""))
         }

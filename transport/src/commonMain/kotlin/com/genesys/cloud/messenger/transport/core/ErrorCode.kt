@@ -19,6 +19,7 @@ sealed class ErrorCode(val code: Int) {
     data object AttachmentNotSuccessfullyUploaded : ErrorCode(4010)
     data object MessageTooLong : ErrorCode(4011)
     data object CustomAttributeSizeTooLarge : ErrorCode(4013)
+    data object CannotDowngradeToUnauthenticated : ErrorCode(4017)
     data object MissingParameter : ErrorCode(4020)
     data object RequestRateTooHigh : ErrorCode(4029)
     data object UnexpectedError : ErrorCode(5000)
@@ -53,6 +54,7 @@ sealed class ErrorCode(val code: Int) {
                 4010 -> AttachmentNotSuccessfullyUploaded
                 4011 -> MessageTooLong
                 4013 -> CustomAttributeSizeTooLarge
+                4017 -> CannotDowngradeToUnauthenticated
                 4020 -> MissingParameter
                 4029 -> RequestRateTooHigh
                 6000 -> CancellationError
@@ -81,6 +83,7 @@ object ErrorMessage {
     const val FailedToClearConversation = "Failed to clear conversation."
     const val FileSizeIsToSmall = "Attachment size cannot be less than 1 byte"
     const val FileAttachmentIsDisabled = "File attachment is disabled in Deployment Configuration."
+    fun detachFailed(attachmentId: String) = "Detach failed: Invalid attachment ID ($attachmentId)"
     fun fileSizeIsTooBig(maxFileSize: Long?) = "Reduce the attachment size to $maxFileSize KB or less."
     fun fileTypeIsProhibited(fileName: String) = "File type  $fileName is prohibited for upload."
     fun customAttributesSizeError(maxSize: Int) = "Error: Custom attributes exceed allowed max size of $maxSize bytes."

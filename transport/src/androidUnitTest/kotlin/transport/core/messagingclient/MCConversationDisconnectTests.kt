@@ -1,4 +1,4 @@
-package com.genesys.cloud.messenger.transport.core.messagingclient
+package transport.core.messagingclient
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -17,17 +17,17 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
 import com.genesys.cloud.messenger.transport.shyrka.receive.createConversationsVOForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createMessengerVOForTesting
-import com.genesys.cloud.messenger.transport.util.Request
-import com.genesys.cloud.messenger.transport.util.Response
-import com.genesys.cloud.messenger.transport.util.fromConfiguredToReadOnly
-import com.genesys.cloud.messenger.transport.util.fromConnectedToReadOnly
-import com.genesys.cloud.messenger.transport.util.fromReadOnlyToError
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
+import transport.util.Request
+import transport.util.Response
+import transport.util.fromConfiguredToReadOnly
+import transport.util.fromConnectedToReadOnly
+import transport.util.fromReadOnlyToError
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
@@ -35,12 +35,10 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
 
     @Test
     fun `when event Presence Disconnect received and there is no readOnly field in metadata`() {
-        val givenPresenceDisconnectEvent =
-            """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
         val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
-        slot.captured.onMessage(Response.structuredMessageWithEvents(events = givenPresenceDisconnectEvent))
+        slot.captured.onMessage(Response.structuredMessageWithEvents(events = Response.StructuredEvent.presenceDisconnect))
 
         assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
         verify { mockEventHandler.onEvent(eq(expectedEvent)) }
@@ -52,14 +50,12 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
 
     @Test
     fun `when event Presence Disconnect received and readOnly field in metadata is true`() {
-        val givenPresenceDisconnectEvent =
-            """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
         val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
         slot.captured.onMessage(
             Response.structuredMessageWithEvents(
-                events = givenPresenceDisconnectEvent,
+                events = Response.StructuredEvent.presenceDisconnect,
                 metadata = mapOf("readOnly" to "true")
             )
         )
@@ -74,14 +70,12 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
 
     @Test
     fun `when event Presence Disconnect received and readOnly field in metadata is false`() {
-        val givenPresenceDisconnectEvent =
-            """{"eventType":"Presence","presence":{"type":"Disconnect"}}"""
         val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
         slot.captured.onMessage(
             Response.structuredMessageWithEvents(
-                events = givenPresenceDisconnectEvent,
+                events = Response.StructuredEvent.presenceDisconnect,
                 metadata = mapOf("readOnly" to "false")
             )
         )
@@ -224,10 +218,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
             connectToReadOnlySequence()
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
-            mockStateChangedListener(fromReadOnlyToError(errorState = expectedErrorState))
-            mockAttachmentHandler.clearAll()
-            mockReconnectionHandler.clear()
-            mockJwtHandler.clear()
+            errorSequence(fromReadOnlyToError(errorState = expectedErrorState))
         }
     }
 
@@ -251,7 +242,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()
-            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
+            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
             mockLogger.i(capture(logSlot))
             verifyCleanUp()
             mockLogger.i(capture(logSlot))
@@ -279,7 +270,7 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()
-            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
+            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
         }
         verify(exactly = 0) {
             mockMessageStore.invalidateConversationCache()
@@ -297,10 +288,11 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
         assertThat(subject.currentState).isReadOnly()
         verifySequence {
             connectSequence()
+            mockVault.wasAuthenticated = false
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()
-            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MaxCustomDataBytes
+            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
             mockStateChangedListener(fromConfiguredToReadOnly())
         }
         verify(exactly = 0) {
