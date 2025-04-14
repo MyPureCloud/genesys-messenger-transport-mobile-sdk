@@ -8,6 +8,9 @@ import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
+import com.genesys.cloud.messenger.transport.util.extensions.sanitize
+import com.genesys.cloud.messenger.transport.util.extensions.sanitizeSensitiveData
+import com.genesys.cloud.messenger.transport.util.extensions.sanitizeValues
 
 internal object LogMessages {
     // Attachment
@@ -27,13 +30,16 @@ internal object LogMessages {
     // Authentication
     const val REFRESH_AUTH_TOKEN_SUCCESS = "refreshAuthToken success."
     fun configureAuthenticatedSession(token: String, startNew: Boolean) =
-        "configureAuthenticatedSession(token = $token, startNew: $startNew)"
+        "configureAuthenticatedSession(token = ${token.sanitize()}, startNew: $startNew)"
     fun configureSession(token: String, startNew: Boolean = false) =
-        "configureSession (token = $token, startNew: $startNew)"
+        "configureSession (token = ${token.sanitize()}, startNew: $startNew)"
     // Message
-    fun messagePreparedToSend(message: Message) = "Message prepared to send: $message"
-    fun messageStateUpdated(message: Message) = "Message state updated: $message"
-    fun messageHistoryUpdated(messages: List<Message>) = "Message history updated with: $messages."
+    fun messagePreparedToSend(message: Message) =
+        "Message prepared to send: $message.".sanitizeSensitiveData()
+    fun messageStateUpdated(message: Message) =
+        "Message state updated: $message.".sanitizeSensitiveData()
+    fun messageHistoryUpdated(messages: List<Message>) =
+        "Message history updated with: $messages.".sanitizeSensitiveData()
     fun receiveMessageError(code: Long, localizedDescription: String) =
         "receiveMessageWithCompletionHandler error [$code] $localizedDescription"
     const val ON_ERROR = "onError"
@@ -45,9 +51,9 @@ internal object LogMessages {
     const val SEND_CLEAR_CONVERSATION = "sendClearConversation"
     const val CLEAR_CONVERSATION_HISTORY = "Clear conversation history."
     const val INDICATE_TYPING = "indicateTyping()"
-    fun onMessage(text: String) = "onMessage(text = $text)"
+    fun onMessage(text: String) = "onMessage(text = ${text.sanitizeSensitiveData()})"
     fun sendMessage(text: String, customAttributes: Map<String, String> = emptyMap()) =
-        "sendMessage(text = $text, customAttributes = $customAttributes)"
+        "sendMessage(text = ${text.sanitizeSensitiveData()}, customAttributes = ${customAttributes.sanitizeValues()})"
     fun unhandledMessage(decoded: WebMessagingMessage<*>) = "Unhandled message received from Shyrka: $decoded"
     fun historyFetchFailed(error: Result.Failure) = "History fetch failed with: $error"
     fun onFailure(throwable: Throwable) = "onFailure(message: ${throwable.message})"
@@ -108,7 +114,7 @@ internal object LogMessages {
     const val CANCELLATION_EXCEPTION_GET_MESSAGES =
         "Cancellation exception was thrown, while running getMessages() request."
     // Quick Replies
-    fun quickReplyPrepareToSend(message: Message) = "Message with quick reply prepared to send: $message"
+    fun quickReplyPrepareToSend(message: Message) = "Message with quick reply prepared to send: ${message.toString().sanitizeSensitiveData()}"
     fun sendQuickReply(buttonResponse: ButtonResponse) = "sendQuickReply(buttonResponse: $buttonResponse)"
     fun ignoreInboundEvent(event: Event) = "Ignore inbound event: $event."
 }

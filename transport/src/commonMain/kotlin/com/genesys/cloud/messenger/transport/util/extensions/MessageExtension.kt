@@ -17,6 +17,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.isInbound
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.util.WILD_CARD
 import com.soywiz.klock.DateTime
+import kotlin.math.log
 
 internal fun List<StructuredMessage>.toMessageList(): List<Message> =
     map { it.toMessage() }
@@ -143,4 +144,51 @@ internal fun FileUpload?.toFileAttachmentProfile(): FileAttachmentProfile {
 
 internal fun PresignedUrlResponse.isRefreshUrl(): Boolean {
     return headers.isEmpty() && fileSize != null
+}
+
+/**
+ * Replaces characters with stars (*) except for the last 4 characters
+ */
+internal fun String.sanitize(): String {
+    val lastChars = 4
+    if (this.length <= lastChars) {
+        return this // Nothing to sanitize if length is lastChars or fewer characters
+    }
+
+    return "*".repeat(this.length - lastChars) + this.takeLast(lastChars)
+}
+
+fun String.sanitizeSensitiveData(): String =
+    this.sanitizeToken().sanitizeText().sanitizeCustomAttributes()
+
+internal fun String.sanitizeCustomAttributes(): String {
+    val regex = """("customAttributes":\{)([^{}]*)(\})""".toRegex()
+    return this.replace(regex) {
+        """${it.groupValues[1]}${it.groupValues[2].sanitize()}${it.groupValues[3]}"""
+    }
+}
+
+internal fun String.sanitizeText(): String {
+    var regex = """("text":")([^"]*)(")""".toRegex()
+    var sanitizedInput = this.replace(regex) {
+        """${it.groupValues[1]}${it.groupValues[2].sanitize()}${it.groupValues[3]}"""
+    }
+    regex = """(text=)([^,]*)(, )""".toRegex()
+    sanitizedInput = sanitizedInput.replace(regex) {
+        """${it.groupValues[1]}${it.groupValues[2].sanitize()}${it.groupValues[3]}"""
+    }
+    return sanitizedInput
+}
+
+internal fun String.sanitizeToken(): String {
+    val tokenRegex = """("token":")([a-fA-F0-9-]{36})(")""".toRegex()
+    return this.replace(tokenRegex) {
+        """${it.groupValues[1]}${it.groupValues[2].sanitize()}${it.groupValues[3]}"""
+    }
+}
+
+internal fun Map<String, String>.sanitizeValues(): Map<String, String> {
+    return this.mapValues { (_, value) ->
+        value.sanitize()
+    }
 }
