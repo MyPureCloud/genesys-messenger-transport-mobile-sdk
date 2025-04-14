@@ -860,9 +860,9 @@ internal class MessageExtensionTest {
         assertThat(resul).isEqualTo(expectedText)
     }
 
-    //@Test //this would fail
+    ///@Test //this would fail
     fun `when sanitize text fiel dwith comma and space of toString longer than 4 chars should apply mask`() {
-        val givenText = """bla bla text=Yes I did, my secret is 12345, other:etew"""
+           val givenText = """bla bla text=Yes I did, my secret is 12345, other:etew"""
         val expectedText = """bla bla text=*************************2345, other:etew"""
         val resul = givenText.sanitizeText()
         assertThat(resul).isEqualTo(expectedText)
@@ -900,10 +900,10 @@ internal class MessageExtensionTest {
         assertThat(resul).isEqualTo(expectedText)
     }
 
-    //@Test // this would fail
+    @Test
     fun `when sanitize customAttributes field with apply mask`() {
         val givenText = """bla bla "customAttributes":{metadata:{key:value}} other"""
-        val expectedText = """bla bla "customAttributes":{****************lue}} other"""
+        val expectedText = """bla bla "customAttributes":{***************alue}} other"""
         val resul = givenText.sanitizeCustomAttributes()
         assertThat(resul).isEqualTo(expectedText)
     }

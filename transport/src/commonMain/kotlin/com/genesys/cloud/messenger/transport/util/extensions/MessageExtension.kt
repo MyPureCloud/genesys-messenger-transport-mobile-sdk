@@ -162,7 +162,7 @@ fun String.sanitizeSensitiveData(): String =
     this.sanitizeToken().sanitizeText().sanitizeCustomAttributes()
 
 internal fun String.sanitizeCustomAttributes(): String {
-    val regex = """("customAttributes":\{)([^{}]*)(\})""".toRegex()
+    val regex = """("customAttributes":\{)(.*?)(\})""".toRegex()
     return this.replace(regex) {
         """${it.groupValues[1]}${it.groupValues[2].sanitize()}${it.groupValues[3]}"""
     }
