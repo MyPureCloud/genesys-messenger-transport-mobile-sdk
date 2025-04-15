@@ -37,6 +37,7 @@ import io.mockk.verify
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import kotlinx.serialization.encodeToString
@@ -62,7 +63,7 @@ internal class AttachmentHandlerImplTest {
     private val givenUploadSuccessEvent = uploadSuccessEvent()
 
     @ExperimentalCoroutinesApi
-    private val dispatcher: CoroutineDispatcher = Dispatchers.Unconfined
+    private val dispatcher: CoroutineDispatcher = UnconfinedTestDispatcher()
     private val subject = AttachmentHandlerImpl(
         mockApi,
         mockLogger,
