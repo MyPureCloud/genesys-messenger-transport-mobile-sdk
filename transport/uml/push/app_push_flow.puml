@@ -60,10 +60,12 @@ end box
         end rnote
         PushService -> Vault : setPushConfig(userPushConfig)
     end
-    PushService --> App : Result.Success/Failure
-    rnote over PushService
-    Returns result of synchronize() function to the App
-    end rnote
+        opt #ffaaff33 deviceToken parameter is empty String
+            PushService --> App : throws IllegalArgumentException
+        else Failed to perform deviceToken operation
+            PushService --> App : throws DeviceTokenException
+        else Coroutine was cancelled
+            PushService --> App : throws CancellationException
 @enduml
 
 

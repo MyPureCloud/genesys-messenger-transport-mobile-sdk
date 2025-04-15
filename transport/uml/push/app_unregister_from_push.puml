@@ -24,15 +24,14 @@ end box
 	App -> PushService : unregister(deviceToken)
     PushService -> WebMessagingAPI : deleteDeviceToken(token)
     WebMessagingAPI -> Thandora : DELETE /api/v2/push-notification/devices/{token-id}
-    opt #aaff8833 Result.Success
+    opt #aaff8833 Success
 	    Thandora --> WebMessagingAPI
 	    WebMessagingAPI --> PushService: Result.Success
 	    PushService -> Vault : clearPushConfig()
-	    PushService --> App : Result.Success
-	    else #ffaaff33 Result.Failure
-	    Thandora --> WebMessagingAPI: Result.Failure(errorCode)
-	    WebMessagingAPI --> PushService: Result.Failure(errorCode)
-	    PushService --> App: Result.Failure(errorCode)
+	    else #ffaaff33 Failed to perform unregister operation
+        PushService --> App : throws DeviceTokenException
+        else #ffaaff33 Coroutine was cancelled
+        PushService --> App : throws CancellationException
 	    end
 @enduml
 

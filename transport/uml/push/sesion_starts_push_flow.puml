@@ -70,10 +70,6 @@ end box
         end rnote
         PushService -> Vault : setPushConfig(userPushConfig)
     end
-    PushService --> MessagingClient : Result.Success/Failure
-    rnote over App
-    Should we send an event here? Does MM really needs to know about failure/success?
-    end rnote
 @enduml
 
 
