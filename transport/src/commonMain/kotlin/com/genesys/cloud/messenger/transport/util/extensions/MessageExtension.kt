@@ -17,7 +17,6 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.isInbound
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.util.WILD_CARD
 import com.soywiz.klock.DateTime
-import kotlin.math.log
 
 internal fun List<StructuredMessage>.toMessageList(): List<Message> =
     map { it.toMessage() }
