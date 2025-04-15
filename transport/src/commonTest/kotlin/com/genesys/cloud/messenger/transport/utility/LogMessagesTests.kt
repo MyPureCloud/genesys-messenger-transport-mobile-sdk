@@ -233,7 +233,9 @@ class LogMessagesTests {
     fun `when sendMessage is called then it logs correctly`() {
         val givenText = TestValues.DEFAULT_STRING
         val givenCustomAttributes = TestValues.defaultMap
-        val expectedMessage = "sendMessage(text = $givenText, customAttributes = $givenCustomAttributes)"
+        val expectedCustomAttributes = TestValues.defaultSecureMap
+        val expectedMessage =
+            "sendMessage(text = $givenText, customAttributes = $expectedCustomAttributes)"
 
         val result = LogMessages.sendMessage(givenText, givenCustomAttributes)
 
@@ -486,8 +488,21 @@ class LogMessagesTests {
     @Test
     fun `when addCustomAttribute is called then it logs correctly`() {
         val givenCustomAttributes = TestValues.defaultMap
+        val expectedCustomAttributes = TestValues.defaultSecureMap
         val givenState = "ACTIVE"
-        val expectedMessage = "add: $givenCustomAttributes | state = $givenState"
+        val expectedMessage = "add: $expectedCustomAttributes | state = $givenState"
+
+        val result = LogMessages.addCustomAttribute(givenCustomAttributes, givenState)
+
+        assertThat(result).isEqualTo(expectedMessage)
+    }
+
+    @Test
+    fun `when addCustomAttribute with deep structure is called then it logs correctly`() {
+        val givenCustomAttributes = TestValues.advancedMap
+        val expectedCustomAttributes = TestValues.advancedSecureMap
+        val givenState = "ACTIVE"
+        val expectedMessage = "add: $expectedCustomAttributes | state = $givenState"
 
         val result = LogMessages.addCustomAttribute(givenCustomAttributes, givenState)
 

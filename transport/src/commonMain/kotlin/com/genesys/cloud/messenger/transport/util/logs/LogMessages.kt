@@ -108,7 +108,7 @@ internal object LogMessages {
         "Unhandled WebSocket errorCode. ErrorCode: $errorCode"
     // Custom Attributes
     fun addCustomAttribute(customAttributes: Map<String, String>, state: String) =
-        "add: $customAttributes | state = $state"
+        "add: ${customAttributes.sanitizeValues()} | state = $state"
     const val CUSTOM_ATTRIBUTES_SIZE_EXCEEDED = "Error: Custom attributes size exceeded"
     const val CUSTOM_ATTRIBUTES_EMPTY_OR_SAME = "custom attributes are empty or same."
     const val CANCELLATION_EXCEPTION_GET_MESSAGES =

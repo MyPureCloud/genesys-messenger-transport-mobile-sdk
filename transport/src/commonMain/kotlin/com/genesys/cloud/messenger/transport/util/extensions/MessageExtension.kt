@@ -173,9 +173,9 @@ internal fun String.sanitizeText(): String {
     var sanitizedInput = this.replace(regex) {
         """${it.groupValues[1]}${it.groupValues[2].sanitize()}${it.groupValues[3]}"""
     }
-    regex = """(text=)([^,]*)(, )""".toRegex()
+    regex = """(text=)(.*?)(?=(?:, \w+:)|$|[)])""".toRegex()
     sanitizedInput = sanitizedInput.replace(regex) {
-        """${it.groupValues[1]}${it.groupValues[2].sanitize()}${it.groupValues[3]}"""
+        """${it.groupValues[1]}${it.groupValues[2].sanitize()}"""
     }
     return sanitizedInput
 }

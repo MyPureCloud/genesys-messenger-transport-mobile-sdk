@@ -26,7 +26,10 @@ object TestValues {
     internal const val AUTH_REFRESH_TOKEN_KEY = "auth_refresh_token_key"
     internal const val WAS_AUTHENTICATED = "was_authenticated"
     internal const val LOG_TAG = "TestLogTag"
-    internal val defaultMap = mapOf("A" to "B")
+    internal val defaultMap = mapOf("A" to "BBBBBB")
+    internal val defaultSecureMap = mapOf("A" to "**BBBB")
+    internal val advancedMap = mapOf("metadata" to """{"key":"value"}""")
+    internal val advancedSecureMap = mapOf("metadata" to """***********ue"}""")
     internal const val DEFAULT_STRING = "any string"
     internal val vaultKeys = Vault.Keys(
         vaultKey = com.genesys.cloud.messenger.transport.util.VAULT_KEY,
