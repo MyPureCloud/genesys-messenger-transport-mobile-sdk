@@ -178,7 +178,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "removeAuthRefreshToken" -> doRemoveAuthRefreshTokenFromVault()
             "stepUp" -> doStepUp()
             "wasAuthenticated" -> doWasAuthenticated()
-            "syncPush" -> doSynchronizePush()
+            "syncDeviceToken" -> doSynchronizeDeviceToken()
             "unregPush" -> doUnregisterFromPush()
             else -> {
                 Log.e(TAG, "Invalid command")
@@ -409,7 +409,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private fun doSynchronizePush() {
+    private fun doSynchronizeDeviceToken() {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (!task.isSuccessful) {
                 Log.d(TAG, "Synchronize Push: error")
