@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "318272578688",
+    "project_id": "transport-push",
+    "storage_bucket": "transport-push.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:318272578688:android:e1e6463d17b5974218b265",
+        "android_client_info": {
+          "package_name": "com.genesys.cloud.messenger.androidcomposeprototype"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCDWGRtVTeipmEbU5cGwGc2jhxPmO7MNDQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:318272578688:android:228c978b00f83fb618b265",
+        "android_client_info": {
+          "package_name": "com.genesys.cloud.webmessaging.androidcomposeprototype"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCDWGRtVTeipmEbU5cGwGc2jhxPmO7MNDQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
