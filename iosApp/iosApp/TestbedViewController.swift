@@ -57,6 +57,8 @@ class TestbedViewController: UIViewController {
         case removeAuthRefreshToken
         case stepUp
         case wasAuthenticated
+        case syncDeviceToken
+        case unregPush
 
         var helpDescription: String {
             switch self {
@@ -498,6 +500,10 @@ extension TestbedViewController : UITextFieldDelegate {
                 try messenger.stepUp()
             case (.wasAuthenticated, _):
                 self.info.text = "wasAuthenticated: \(messenger.wasAuthenticated())"
+            case (.syncDeviceToken, _):
+                messenger.synchronizeDeviceToken(deviceToken: "")
+            case (.unregPush, _):
+                messenger.unregisterFromPush()
             default:
                 self.info.text = "Invalid command"
             }

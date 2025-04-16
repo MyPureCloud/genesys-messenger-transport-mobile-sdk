@@ -15,8 +15,8 @@ final class MessengerInteractor {
     let configuration: Configuration
     let messengerTransport: MessengerTransportSDK
     let messagingClient: MessagingClient
+    let pushService: PushService
     let tokenVault: DefaultVault
-    
     let stateChangeSubject = PassthroughSubject<StateChange, Never>()
     let messageEventSubject = PassthroughSubject<MessageEvent, Never>()
     let eventSubject = PassthroughSubject<Event, Never>()
@@ -32,6 +32,7 @@ final class MessengerInteractor {
         self.tokenVault = DefaultVault(keys: Vault.Keys(vaultKey: "com.genesys.cloud.messenger", tokenKey: "token", authRefreshTokenKey: "auth_refresh_token", wasAuthenticated: "wasAuthenticated", pushConfigKey: "push_config"))
         self.messengerTransport = MessengerTransportSDK(configuration: self.configuration, vault: self.tokenVault)
         self.messagingClient = self.messengerTransport.createMessagingClient()
+        self.pushService = self.messengerTransport.createPushService()
         
         messagingClient.stateChangedListener = { [weak self] stateChange in
             print("State Change: \(stateChange)")
@@ -212,5 +213,17 @@ final class MessengerInteractor {
     
     func wasAuthenticated() -> Bool {
         return messagingClient.wasAuthenticated
+    }
+    
+    func synchronizeDeviceToken(deviceToken: String, completion: ((Error?) -> Void)? = nil) {
+        pushService.synchronize(deviceToken: deviceToken, pushProvider: PushProvider.apns) { error in
+            completion?(error)
+        }
+    }
+    
+    func unregisterFromPush(completion: ((Error?) -> Void)? = nil) {
+        pushService.unregister() { error in
+            completion?(error)
+        }
     }
 }
