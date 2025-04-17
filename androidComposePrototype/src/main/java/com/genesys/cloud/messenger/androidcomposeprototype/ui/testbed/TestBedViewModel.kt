@@ -521,12 +521,12 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             is ErrorCode.AuthFailed,
             is ErrorCode.AuthLogoutFailed,
             is ErrorCode.RefreshAuthTokenFailure,
-                -> {
+            -> {
                 authState = AuthState.Error(event.errorCode, event.message, event.correctiveAction)
             }
 
             is ErrorCode.CustomAttributeSizeTooLarge
-                -> {
+            -> {
                 onSocketMessageReceived(event.message ?: "CA size too large")
             }
 
