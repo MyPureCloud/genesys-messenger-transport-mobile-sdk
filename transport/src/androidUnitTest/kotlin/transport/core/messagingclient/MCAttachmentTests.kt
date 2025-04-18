@@ -148,14 +148,14 @@ class MCAttachmentTests : BaseMessagingClientTest() {
             Attachment.State.Sent("https://downloadurl.com")
         )
         val expectedMessage = Message(
-            "msg_id",
-            Direction.Inbound,
-            State.Sent,
-            Type.Text,
-            "Text",
-            "Hi",
-            null,
-            mapOf("attachment_id" to expectedAttachment)
+            id = "msg_id",
+            direction = Direction.Inbound,
+            state = State.Sent,
+            messageType = Type.Text,
+            type = "Text",
+            timeStamp = null,
+            attachments = mapOf("attachment_id" to expectedAttachment),
+            text = "Hi"
         )
 
         subject.connect()
@@ -398,14 +398,13 @@ class MCAttachmentTests : BaseMessagingClientTest() {
             Attachment.State.Sent("https://downloadurl.com")
         )
         val expectedMessage = Message(
-            "msg_id",
-            Direction.Outbound,
-            State.Sent,
-            Type.Text,
-            "Text",
-            "Hi",
-            null,
-            mapOf("attachment_id" to expectedAttachment)
+            id = "msg_id",
+            direction = Direction.Outbound,
+            state = State.Sent,
+            messageType = Type.Text,
+            timeStamp = null,
+            attachments = mapOf("attachment_id" to expectedAttachment),
+            text = "Hi"
         )
 
         subject.connect()

@@ -142,7 +142,9 @@ class LogMessagesTests {
     fun `when configureAuthenticatedSession is called then it logs correctly`() {
         val givenToken = TestValues.TOKEN
         val givenStartNew = true
-        val expectedMessage = "configureAuthenticatedSession(token = $givenToken, startNew: $givenStartNew)"
+        val expectedToken = TestValues.TOKEN_SANITIZED
+        val expectedMessage =
+            "configureAuthenticatedSession(token = $expectedToken, startNew: $givenStartNew)"
 
         val result = LogMessages.configureAuthenticatedSession(givenToken, givenStartNew)
 
@@ -153,7 +155,9 @@ class LogMessagesTests {
     fun `when configureSession is called then it logs correctly`() {
         val givenToken = TestValues.TOKEN
         val givenStartNew = false
-        val expectedMessage = "configureSession (token = $givenToken, startNew: $givenStartNew)"
+        val expectedToken = TestValues.TOKEN_SANITIZED
+        val expectedMessage =
+            "configureSession (token = $expectedToken, startNew: $givenStartNew)"
 
         val result = LogMessages.configureSession(givenToken, givenStartNew)
 
@@ -163,32 +167,35 @@ class LogMessagesTests {
     // Message
     @Test
     fun `when messagePreparedToSend is called then it logs correctly`() {
-        val givenMessage = Message()
-        val expectedMessage = "Message prepared to send: $givenMessage"
+        val givenMessage = Message(text = MessageValues.TEXT)
+        val expectedMessage = givenMessage.copy(text = MessageValues.TEXT_SANITIZED)
+        val expectedMessageText = "Message prepared to send: $expectedMessage."
 
         val result = LogMessages.messagePreparedToSend(givenMessage)
 
-        assertThat(result).isEqualTo(expectedMessage)
+        assertThat(result).isEqualTo(expectedMessageText)
     }
 
     @Test
     fun `when messageStateUpdated is called then it logs correctly`() {
-        val givenMessage = Message()
-        val expectedMessage = "Message state updated: $givenMessage"
+        val givenMessage = Message(text = MessageValues.TEXT)
+        val expectedMessage = givenMessage.copy(text = MessageValues.TEXT_SANITIZED)
+        val expectedMessageText = "Message state updated: $expectedMessage."
 
         val result = LogMessages.messageStateUpdated(givenMessage)
 
-        assertThat(result).isEqualTo(expectedMessage)
+        assertThat(result).isEqualTo(expectedMessageText)
     }
 
     @Test
     fun `when messageHistoryUpdated is called then it logs correctly`() {
-        val givenMessages = listOf(Message())
-        val expectedMessage = "Message history updated with: $givenMessages."
+        val givenMessages = listOf(Message(text = MessageValues.TEXT))
+        val expectedMessages = listOf(givenMessages[0].copy(text = MessageValues.TEXT_SANITIZED))
+        val expectedMessageText = "Message history updated with: $expectedMessages."
 
         val result = LogMessages.messageHistoryUpdated(givenMessages)
 
-        assertThat(result).isEqualTo(expectedMessage)
+        assertThat(result).isEqualTo(expectedMessageText)
     }
 
     @Test
@@ -226,7 +233,9 @@ class LogMessagesTests {
     fun `when sendMessage is called then it logs correctly`() {
         val givenText = TestValues.DEFAULT_STRING
         val givenCustomAttributes = TestValues.defaultMap
-        val expectedMessage = "sendMessage(text = $givenText, customAttributes = $givenCustomAttributes)"
+        val expectedCustomAttributes = TestValues.defaultSecureMap
+        val expectedMessage =
+            "sendMessage(text = $givenText, customAttributes = $expectedCustomAttributes)"
 
         val result = LogMessages.sendMessage(givenText, givenCustomAttributes)
 
@@ -479,8 +488,21 @@ class LogMessagesTests {
     @Test
     fun `when addCustomAttribute is called then it logs correctly`() {
         val givenCustomAttributes = TestValues.defaultMap
+        val expectedCustomAttributes = TestValues.defaultSecureMap
         val givenState = "ACTIVE"
-        val expectedMessage = "add: $givenCustomAttributes | state = $givenState"
+        val expectedMessage = "add: $expectedCustomAttributes | state = $givenState"
+
+        val result = LogMessages.addCustomAttribute(givenCustomAttributes, givenState)
+
+        assertThat(result).isEqualTo(expectedMessage)
+    }
+
+    @Test
+    fun `when addCustomAttribute with deep structure is called then it logs correctly`() {
+        val givenCustomAttributes = TestValues.advancedMap
+        val expectedCustomAttributes = TestValues.advancedSecureMap
+        val givenState = "ACTIVE"
+        val expectedMessage = "add: $expectedCustomAttributes | state = $givenState"
 
         val result = LogMessages.addCustomAttribute(givenCustomAttributes, givenState)
 
@@ -490,12 +512,14 @@ class LogMessagesTests {
     // Quick Replies
     @Test
     fun `when quickReplyPrepareToSend is called then it logs correctly`() {
-        val givenMessage = Message()
-        val expectedMessage = "Message with quick reply prepared to send: $givenMessage"
+        val givenMessage = Message(text = MessageValues.TEXT)
+        val expectedMessage = givenMessage.copy(text = MessageValues.TEXT_SANITIZED)
+        val expectedMessageText =
+            "Message with quick reply prepared to send: $expectedMessage"
 
         val result = LogMessages.quickReplyPrepareToSend(givenMessage)
 
-        assertThat(result).isEqualTo(expectedMessage)
+        assertThat(result).isEqualTo(expectedMessageText)
     }
 
     @Test

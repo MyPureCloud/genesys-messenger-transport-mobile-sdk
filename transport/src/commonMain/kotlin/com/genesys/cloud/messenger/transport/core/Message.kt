@@ -26,7 +26,6 @@ data class Message(
     val state: State = State.Idle,
     val messageType: Type = Type.Text,
     @Deprecated("Use messageType instead.") val type: String = messageType.name,
-    val text: String? = null,
     val timeStamp: Long? = null,
     val attachments: Map<String, Attachment> = emptyMap(),
     val events: List<Event> = emptyList(),
@@ -36,6 +35,7 @@ data class Message(
         originatingEntity = Participant.OriginatingEntity.Human
     ),
     val authenticated: Boolean = false,
+    val text: String? = null,
 ) {
 
     /**
