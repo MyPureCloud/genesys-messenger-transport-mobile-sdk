@@ -105,37 +105,7 @@ pipeline{
                       echo "codeChallenge=${CODE_CHALLENGE}" >> okta.properties
                       echo "codeChallengeMethod=${CODE_CHALLENGE_METHOD}" >> okta.properties
                       echo "codeVerifier=${CODE_VERIFIER}" >> okta.properties
-                    fi
-                    if [ -e iosApp/Okta.plist ]; then
-                      echo "Okta.plist file already exists"
-                    else
-                      echo "creating Okta.plist file based on environment variables"
-                      cat > iosApp/Okta.plist <<EOF
-                      <?xml version="1.0" encoding="UTF-8"?>
-                      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-                      <plist version="1.0">
-                      <dict>
-                      	<key>oktaDomain</key>
-                      	<string>${OKTA_DOMAIN}</string>
-                      	<key>clientId</key>
-                      	<string>${CLIENT_ID}</string>
-                      	<key>scopes</key>
-                      	<string>openid profile offline_access</string>
-                      	<key>signInRedirectURI</key>
-                      	<string>${SIGN_IN_REDIRECT_URI}</string>
-                      	<key>logoutRedirectUri</key>
-                      	<string>${SIGN_OUT_REDIRECT_URI}</string>
-                      	<key>oktaState</key>
-                      	<string>${OKTA_STATE}</string>
-                      	<key>codeChallenge</key>
-                      	<string>${CODE_CHALLENGE}</string>
-                      	<key>codeVerifier</key>
-                      	<string>${CODE_VERIFIER}</string>
-                      	<key>codeChallengeMethod</key>
-                      	<string>${CODE_CHALLENGE_METHOD}</string>
-                      </dict>
-                      </plist>
-                    EOF
+                      envsubst < iosApp/Okta.plist.template > iosApp/Okta.plist
                     fi
                     ./gradlew -p "transport" :transport:syncFramework \
                       -Pkotlin.native.cocoapods.platform=iphoneos\
