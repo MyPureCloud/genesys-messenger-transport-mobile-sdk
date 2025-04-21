@@ -105,7 +105,20 @@ pipeline{
                       echo "codeChallenge=${CODE_CHALLENGE}" >> okta.properties
                       echo "codeChallengeMethod=${CODE_CHALLENGE_METHOD}" >> okta.properties
                       echo "codeVerifier=${CODE_VERIFIER}" >> okta.properties
-                      envsubst < iosApp/Okta.plist.template > iosApp/Okta.plist
+                    fi
+                    if [ -e iosApp/Okta.plist ]; then
+                      echo "Okta.plist file already exists"
+                    else
+                      echo "Creating Okta.plist from template using sed"
+                      sed -e "s|\\${OKTA_DOMAIN}|${OKTA_DOMAIN}|g" \
+                          -e "s|\\${CLIENT_ID}|${CLIENT_ID}|g" \
+                          -e "s|\\${SIGN_IN_REDIRECT_URI}|${SIGN_IN_REDIRECT_URI}|g" \
+                          -e "s|\\${SIGN_OUT_REDIRECT_URI}|${SIGN_OUT_REDIRECT_URI}|g" \
+                          -e "s|\\${OKTA_STATE}|${OKTA_STATE}|g" \
+                          -e "s|\\${CODE_CHALLENGE}|${CODE_CHALLENGE}|g" \
+                          -e "s|\\${CODE_VERIFIER}|${CODE_VERIFIER}|g" \
+                          -e "s|\\${CODE_CHALLENGE_METHOD}|${CODE_CHALLENGE_METHOD}|g" \
+                          iosApp/Okta.plist.template > iosApp/Okta.plist
                     fi
                     ./gradlew -p "transport" :transport:syncFramework \
                       -Pkotlin.native.cocoapods.platform=iphoneos\
