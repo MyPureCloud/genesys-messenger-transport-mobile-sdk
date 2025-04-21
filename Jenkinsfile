@@ -136,7 +136,6 @@ pipeline{
                       </dict>
                       </plist>
                       EOF
-
                     fi
                     ./gradlew -p "transport" :transport:syncFramework \
                       -Pkotlin.native.cocoapods.platform=iphoneos\
