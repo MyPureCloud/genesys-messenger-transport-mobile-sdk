@@ -1,6 +1,5 @@
 package com.genesys.cloud.messenger.transport.shyrka.receive
 
-import com.genesys.cloud.messenger.transport.core.Action
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerialName
@@ -121,12 +120,20 @@ internal data class StructuredMessage(
             @Serializable
             data class Card(
                 val title: String,
-                val description: String? = null,
-                val image: String? = null,
+                val description: String,
+                val image: String,
                 val defaultAction: Action? = null,
                 val actions: List<Action>
             )
         }
+
+        @Serializable
+        data class Action(
+            val type: String,
+            val title: String,
+            val url: String? = null,
+            val payload: String? = null,
+        )
 
         @Serializable
         data class CarouselContent(

@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
 import com.genesys.cloud.messenger.transport.core.Message.Direction
+import com.genesys.cloud.messenger.transport.shyrka.send.BaseMessageProtocol
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
@@ -69,6 +70,7 @@ internal class MessageStore(private val log: Log) {
                 metadata = mapOf("customMessageId" to messageToSend.id),
                 content = content,
                 channel = channel,
+                _type = BaseMessageProtocol.Type.Structured
             )
         )
     }

@@ -24,15 +24,19 @@ internal fun List<StructuredMessage>.toMessageList(): List<Message> =
 
 internal fun StructuredMessage.toMessage(): Message {
     val quickReplies = content.toQuickReplies()
+    val cards = content.toCards()
+    val carousel = content.toCarousel()
+    val cardsAndCarousel = cards + carousel
     return Message(
         id = metadata["customMessageId"] ?: id,
         direction = if (isInbound()) Direction.Inbound else Direction.Outbound,
         state = Message.State.Sent,
-        messageType = type.toMessageType(quickReplies.isNotEmpty()),
+        messageType = type.toMessageType(quickReplies.isNotEmpty(), carousel.isNotEmpty()),
         text = text,
         timeStamp = channel?.time.fromIsoToEpochMilliseconds(),
         attachments = content.filterIsInstance<AttachmentContent>().toAttachments(),
         quickReplies = quickReplies,
+        cards = cardsAndCarousel,
         events = events.mapNotNull { it.toTransportEvent(channel?.from) },
         from = Message.Participant(
             name = channel?.from?.nickname,
@@ -102,11 +106,58 @@ private fun List<StructuredMessage.Content>.toQuickReplies(): List<ButtonRespons
     }
 }
 
-private fun StructuredMessage.Type.toMessageType(hasQuickReplies: Boolean): Message.Type =
+private fun List<StructuredMessage.Content>.toCards(): List<Message.Card> {
+    return this.filterIsInstance<StructuredMessage.Content.CardContent>().map {
+        Message.Card(
+            title = it.card.title.filterNot{it.isWhitespace()},
+            description = it.card.description,
+            imageUrl = it.card.image,
+            actions = it.card.actions.map { action ->
+                Message.Card.Action(
+                    type = action.type,
+                    title = action.title,
+                    url = action.url,
+                    payload = action.payload
+                )
+            }
+        )
+    }
+}
+
+private fun List<StructuredMessage.Content>.toCarousel(): List<Message.Card> {
+    val carousel = this.filterIsInstance<StructuredMessage.Content.CarouselContent>().map {
+        Message.Carousel(
+            cards = it.carousel.cards.map { card ->
+                Message.Card(
+                    title = card.title.filterNot{it.isWhitespace()},
+                    description = card.description,
+                    imageUrl = card.image,
+                    actions = card.actions.map { action ->
+                        Message.Card.Action(
+                            type = action.type,
+                            title = action.title,
+                            url = action.url,
+                            payload = action.payload
+                        )
+                    }
+                )
+            }
+        )
+    }
+    return carousel.flatMap { carousel ->
+        carousel.cards
+    }
+}
+
+private fun StructuredMessage.Type.toMessageType(hasQuickReplies: Boolean, hasCarousel: Boolean): Message.Type =
     when (this) {
         StructuredMessage.Type.Text -> Message.Type.Text
         StructuredMessage.Type.Event -> Message.Type.Event
-        StructuredMessage.Type.Structured -> if (hasQuickReplies) Message.Type.QuickReply else Message.Type.Unknown
+        StructuredMessage.Type.Structured -> {
+            if (hasQuickReplies) Message.Type.QuickReply
+            else if (hasCarousel) Message.Type.Carousel
+            else Message.Type.Unknown
+        }
     }
 
 internal fun String.isHealthCheckResponseId(): Boolean = this == HealthCheckID
