@@ -52,6 +52,15 @@ pipeline{
                 }
             }
         }
+        stage('Get okta.properties') {
+            steps {
+                script {
+                    def lib = library('pipeline-library').com.genesys.jenkins
+                    oktaproperties = lib.Testing.new().getSecretStashSecret('dev', 'us-east-1', 'mobiledx-ios', 'okta-properties')
+                    echo "okta.properties fetched successfully."
+                }
+            }
+        }
         stage("CI Unit Tests"){
             steps{
                 sh './gradlew :transport:test :transport:koverXmlReportDebug :transport:koverXmlReportRelease '
@@ -63,16 +72,6 @@ pipeline{
                 sh './gradlew :transport:checkForAndroidxDependencies'
             }
         }
-        stage('Get okta.properties') {
-            steps {
-                script {
-                    def lib = library('pipeline-library').com.genesys.jenkins
-                    oktaproperties = lib.Testing.new().getSecretStashSecret('dev', 'transportsdk', 'okta-properties')
-                    echo "okta.properties fetched successfully."
-                }
-            }
-        }
-
         stage("CI Build - transport Module debug"){
             steps{
                 sh './gradlew :transport:assembleDebug'
