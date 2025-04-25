@@ -63,13 +63,7 @@ pipeline{
                 sh './gradlew :transport:checkForAndroidxDependencies'
             }
         }
-
         stage('Get okta.properties') {
-            agent {
-                node {
-                    label "dev_mesos_v2"
-                }
-            }
             steps {
                 script {
                     def lib = library('pipeline-library').com.genesys.jenkins
