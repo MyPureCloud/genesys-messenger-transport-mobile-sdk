@@ -130,7 +130,7 @@ internal data class StructuredMessage(
         @Serializable
         data class Action(
             val type: String,
-            val title: String,
+            val text: String,
             val url: String? = null,
             val payload: String? = null,
         )
