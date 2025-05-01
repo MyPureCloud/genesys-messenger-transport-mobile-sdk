@@ -24,6 +24,8 @@ enum class Command(val description: String) {
     SEND("send <msg>"),
     SEND_QUICK_REPLY("sendQuickReply <quickReply>"),
     STEP_UP("stepUp"),
+    SYNCHRONIZE_DEVICE_TOKEN("syncDeviceToken"),
     TYPING("typing"),
+    UNREGISTER_PUSH("unregPush"),
     WAS_AUTHENTICATED("wasAuthenticated"),
 }
