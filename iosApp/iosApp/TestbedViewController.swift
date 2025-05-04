@@ -134,6 +134,14 @@ class TestbedViewController: UIViewController {
         view.font = UIFont.preferredFont(forTextStyle: .body)
         return view
     }()
+    
+    private let pushNotificationsStateView: UILabel = {
+        let view = UILabel()
+        view.numberOfLines = 0
+        view.text = "Push Notifications state:"
+        view.font = UIFont.preferredFont(forTextStyle: .body)
+        return view
+    }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -145,6 +153,7 @@ class TestbedViewController: UIViewController {
         content.addArrangedSubview(instructions)
         content.addArrangedSubview(status)
         content.addArrangedSubview(authStateView)
+        content.addArrangedSubview(pushNotificationsStateView)
         content.addArrangedSubview(info)
 
         view.addSubview(content)
@@ -164,6 +173,9 @@ class TestbedViewController: UIViewController {
             .sink(receiveValue: updateWithEvent)
             .store(in: &cancellables)
             authStateView.text = "Auth State: \(authState)"
+        
+        registerForNotificationsObservers()
+        updatePushNotificationsStateView()
     }
 
     private func signIn() {
@@ -613,5 +625,69 @@ extension TestbedViewController: UIDocumentPickerDelegate {
 
     func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
         self.info.text = "File selection canceled. No attachment selected."
+    }
+}
+
+// MARK: Push Notifications
+extension TestbedViewController {
+    private func updatePushNotificationsStateView(state: String? = nil) {
+        if let state {
+            self.pushNotificationsStateView.text = "Push Notifications state: \(state)"
+            return
+        }
+        
+        UNUserNotificationCenter.current().getNotificationSettings(completionHandler: { permission in
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+
+                if permission.authorizationStatus != .authorized {
+                    self.pushNotificationsStateView.text = "Push Notifications state: Unauthorized"
+                } else {
+                    var stateString = "Push Notifications state: "
+                    stateString = stateString + (self.messenger.isDeploymentRegisteredForPush() ? "Registered" : "Unregistered")
+                    pushNotificationsStateView.text = stateString
+                }
+            }
+        })
+    }
+    
+    private func registerForNotificationsObservers() {
+        NotificationCenter.default.addObserver(self, selector: #selector(handleDeviceToken(_:)), name: Notification.Name.deviceTokenReceived, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleNotificationReceived(_:)), name: Notification.Name.notificationReceived, object: nil)
+    }
+    
+    @objc func handleDeviceToken(_ notification: Notification) {
+        guard let userInfo = notification.userInfo, let deviceToken = userInfo["token"] as? String else {
+            print("Error: no device token")
+            return
+        }
+        
+        let pushService = messenger.createPushService()
+        pushService.synchronize(deviceToken: deviceToken, pushProvider: .apns, completionHandler: { [weak self] error in
+            if let error {
+                print(error.localizedDescription)
+            } else {
+                print("Registration was successful")
+                self?.messenger.updateDeploymentRegisteredForPush(state: true)
+                self?.updatePushNotificationsStateView()
+            }
+        })
+    }
+    
+    private func unregisterPushNotifications() {
+        let pushService = messenger.createPushService()
+        pushService.unregister(completionHandler: { [weak self] error in
+            if let error {
+                print(error.localizedDescription)
+            } else {
+                print("Unregistration was successful")
+                self?.messenger.updateDeploymentRegisteredForPush(state: false)
+                self?.updatePushNotificationsStateView()
+            }
+        })
+    }
+    
+    @objc func handleNotificationReceived(_ notification: Notification) {
+   
     }
 }
