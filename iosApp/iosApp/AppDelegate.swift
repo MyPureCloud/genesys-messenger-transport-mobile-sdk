@@ -37,8 +37,10 @@ func appDelegate() -> AppDelegate {
 //MARK: Push notifications handling
 extension AppDelegate: UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        let apnsToken = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
-        print("Device Token: \(apnsToken)")
+        let token = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
+        print("Device Token: \(token)")
+        
+        NotificationCenter.default.post(name: Notification.Name.deviceTokenReceived, object: nil, userInfo: ["token": token])
     }
     
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: any Error) {
