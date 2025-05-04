@@ -687,7 +687,44 @@ extension TestbedViewController {
         })
     }
     
+    // This will only be triggered after .bye command
     @objc func handleNotificationReceived(_ notification: Notification) {
-   
+        guard let userInfo = notification.userInfo else {
+            print("Error: empty userInfo")
+            return
+        }
+        
+        guard UIApplication.shared.applicationState == .active else {
+            print("App is not in foreground")
+            return
+        }
+        
+        guard let senderID = userInfo["deeplink"] as? String else {
+            print("Sender ID not found")
+            return
+        }
+
+        if senderID == "genesys-messaging" {
+            showNotificationReceivedAlert(userInfo: userInfo)
+        }
+    }
+    
+    private func showNotificationReceivedAlert(userInfo: [AnyHashable: Any]) {
+        if let aps = userInfo["aps"] as? [String: Any],
+           let alert = aps["alert"] as? [String: Any],
+           let title = alert["title"] as? String,
+           let body = alert["body"] as? String {
+            let alertController = UIAlertController(
+                title: title,
+                message: body,
+                preferredStyle: .alert
+            )
+            
+            alertController.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+            
+            self.present(alertController, animated: true)
+        } else {
+            print("Error retrieving UserInfo")
+        }
     }
 }
