@@ -57,6 +57,7 @@ class TestbedViewController: UIViewController {
         case removeAuthRefreshToken
         case stepUp
         case wasAuthenticated
+        case registerPush
 
         var helpDescription: String {
             switch self {
@@ -223,7 +224,7 @@ class TestbedViewController: UIViewController {
             print(displayMessage)
         case let quickReplies as MessageEvent.QuickReplyReceived:
             quickRepliesMap =  Dictionary(uniqueKeysWithValues: quickReplies.message.quickReplies.map { ($0.text, $0) })
-            displayMessage = "QuickReplyReceived: text: <\(quickReplies.message.text)> | quick reply optoins: <\(quickReplies.message.quickReplies)>"
+            displayMessage = "QuickReplyReceived: text: <\(quickReplies.message.text)> | quick reply options: <\(quickReplies.message.quickReplies)>"
         default:
             break
         }
@@ -498,6 +499,23 @@ extension TestbedViewController : UITextFieldDelegate {
                 try messenger.stepUp()
             case (.wasAuthenticated, _):
                 self.info.text = "wasAuthenticated: \(messenger.wasAuthenticated())"
+            case (.registerPush, _):
+                UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { (granted, error) in
+                    DispatchQueue.main.async {
+                        if granted {
+                            guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else {
+                                print("Can't retrieve AppDelegate")
+                                return
+                            }
+                            
+                            print("Register for remote notifications")
+                            UIApplication.shared.registerForRemoteNotifications()
+                        } else {
+                            print("Notifications Disabled")
+                            self.showNotificationSettingsAlert()
+                        }
+                    }
+                }
             default:
                 self.info.text = "Invalid command"
             }
@@ -513,6 +531,26 @@ extension TestbedViewController : UITextFieldDelegate {
     private func updateAuthStateView() {
         authStateView.text = "Auth State: \(authState)"
     }
+    
+    private func showNotificationSettingsAlert() {
+        let alertController = UIAlertController(
+            title: "Notifications Disabled",
+            message: "To receive updates, please enable notifications in settings.",
+            preferredStyle: .alert
+        )
+        
+        alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        alertController.addAction(UIAlertAction(title: "Settings", style: .default) { _ in
+            if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                if UIApplication.shared.canOpenURL(settingsURL) {
+                    UIApplication.shared.open(settingsURL)
+                }
+            }
+        })
+        
+        self.present(alertController, animated: true)
+    }
+
 }
 
 enum AuthState {
