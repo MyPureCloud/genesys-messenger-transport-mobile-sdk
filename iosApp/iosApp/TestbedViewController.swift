@@ -57,7 +57,8 @@ class TestbedViewController: UIViewController {
         case removeAuthRefreshToken
         case stepUp
         case wasAuthenticated
-        case registerPush
+        case synchronizePush
+        case unregisterPush
 
         var helpDescription: String {
             switch self {
@@ -499,11 +500,12 @@ extension TestbedViewController : UITextFieldDelegate {
                 try messenger.stepUp()
             case (.wasAuthenticated, _):
                 self.info.text = "wasAuthenticated: \(messenger.wasAuthenticated())"
-            case (.registerPush, _):
+            case (.synchronizePush, _):
                 UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { (granted, error) in
                     DispatchQueue.main.async {
                         if granted {
-                            guard let appDelegate = UIApplication.shared.delegate as? AppDelegate else {
+                            self.updatePushNotificationsStateView(state: "Authorized, not registered")
+                            guard UIApplication.shared.delegate is AppDelegate else {
                                 print("Can't retrieve AppDelegate")
                                 return
                             }
@@ -516,6 +518,8 @@ extension TestbedViewController : UITextFieldDelegate {
                         }
                     }
                 }
+            case (.unregisterPush, _):
+                unregisterPushNotifications()
             default:
                 self.info.text = "Invalid command"
             }
