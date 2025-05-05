@@ -16,6 +16,7 @@ object Deps {
     const val agp = "8.2.0"
     const val buildKonfig = "0.15.1"
     const val nexusPublish = "1.3.0"
+    const val googleServices = "4.4.2"
 
 
     object Libs {
