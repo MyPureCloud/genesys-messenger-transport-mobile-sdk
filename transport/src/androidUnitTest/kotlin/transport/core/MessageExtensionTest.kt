@@ -41,6 +41,10 @@ import com.genesys.cloud.messenger.transport.util.extensions.isHealthCheckRespon
 import com.genesys.cloud.messenger.transport.util.extensions.isOutbound
 import com.genesys.cloud.messenger.transport.util.extensions.isRefreshUrl
 import com.genesys.cloud.messenger.transport.util.extensions.mapOriginatingEntity
+import com.genesys.cloud.messenger.transport.util.extensions.sanitize
+import com.genesys.cloud.messenger.transport.util.extensions.sanitizeCustomAttributes
+import com.genesys.cloud.messenger.transport.util.extensions.sanitizeText
+import com.genesys.cloud.messenger.transport.util.extensions.sanitizeToken
 import com.genesys.cloud.messenger.transport.util.extensions.toFileAttachmentProfile
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
@@ -149,7 +153,13 @@ internal class MessageExtensionTest {
                         state = Attachment.State.Sent("http://test.com")
                     )
                 ),
-                events = listOf(Event.ConversationAutostart, Event.SignedIn(MessageValues.PARTICIPANT_NAME, MessageValues.PARTICIPANT_LAST_NAME)),
+                events = listOf(
+                    Event.ConversationAutostart,
+                    Event.SignedIn(
+                        MessageValues.PARTICIPANT_NAME,
+                        MessageValues.PARTICIPANT_LAST_NAME
+                    )
+                ),
                 from = Participant(
                     name = "Bob",
                     imageUrl = "http://image.png",
@@ -809,9 +819,143 @@ internal class MessageExtensionTest {
     fun `when toTransportConnectionClosedReason`() {
         assertThat(SIGNED_IN.toTransportConnectionClosedReason(false)).isEqualTo(Reason.UserSignedIn)
         assertThat(SIGNED_IN.toTransportConnectionClosedReason(true)).isEqualTo(Reason.UserSignedIn)
-        assertThat(TestValues.DEFAULT_STRING.toTransportConnectionClosedReason(false)).isEqualTo(Reason.SessionLimitReached)
-        assertThat(TestValues.DEFAULT_STRING.toTransportConnectionClosedReason(true)).isEqualTo(Reason.ConversationCleared)
+        assertThat(TestValues.DEFAULT_STRING.toTransportConnectionClosedReason(false)).isEqualTo(
+            Reason.SessionLimitReached
+        )
+        assertThat(TestValues.DEFAULT_STRING.toTransportConnectionClosedReason(true)).isEqualTo(
+            Reason.ConversationCleared
+        )
         assertThat(null.toTransportConnectionClosedReason(true)).isEqualTo(Reason.ConversationCleared)
         assertThat(null.toTransportConnectionClosedReason(false)).isEqualTo(Reason.SessionLimitReached)
+    }
+
+    @Test
+    fun `when sanitize string up to 4 chars doesn't apply mask`() {
+        val givenText = "aaaa"
+        val expectedText = "aaaa"
+
+        val result = givenText.sanitize()
+
+        assertThat(result).isEqualTo(expectedText)
+    }
+
+    @Test
+    fun `when sanitize string longer than 4 chars apply mask`() {
+        val givenText = "aaaaa"
+        val expectedText = "*aaaa"
+
+        val result = givenText.sanitize().sanitize()
+
+        assertThat(result).isEqualTo(expectedText)
+    }
+
+    @Test
+    fun `when sanitize JSON text field longer than 4 chars should apply mask`() {
+        val givenText = """bla bla "text":"blaaa4aa" other"""
+        val expectedText = """bla bla "text":"****a4aa" other"""
+
+        val result = givenText.sanitizeText()
+
+        assertThat(result).isEqualTo(expectedText)
+    }
+
+    @Test
+    fun `when sanitize JSON text field up to 4 chars doesn't apply mask`() {
+        val givenText = """bla bla "text":"a4aa" other"""
+        val expectedText = """bla bla "text":"a4aa" other"""
+
+        val result = givenText.sanitizeText()
+
+        assertThat(result).isEqualTo(expectedText)
+    }
+
+    @Test
+    fun `when sanitize text field with equation mark longer than 4 chars should apply mask`() {
+        val givenText = """bla bla text=blaaa aa4aa"""
+        val expectedText = """bla bla text=*******a4aa"""
+
+        val result = givenText.sanitizeText()
+
+        assertThat(result).isEqualTo(expectedText)
+    }
+
+    @Test
+    fun `when sanitize text field with equation mark, comma and space of toString longer than 4 chars should apply mask`() {
+        val givenText = """bla bla text=Yes I did, my secret is 12345, other:etew"""
+        val expectedText = """bla bla text=*************************2345, other:etew"""
+
+        val result = givenText.sanitizeText()
+
+        assertThat(result).isEqualTo(expectedText)
+    }
+
+    @Test
+    fun `when sanitize text field of an object's toString longer than 4 chars should apply mask`() {
+        val givenText = """Message(bla=b la=bla text=Yes I did, my secret is 12345)"""
+        val expectedText = """Message(bla=b la=bla text=*************************2345)"""
+
+        val result = givenText.sanitizeText()
+
+        assertThat(result).isEqualTo(expectedText)
+    }
+
+    @Test
+    fun `when sanitize text field of toString up to 4 chars doesn't apply mask`() {
+        val givenText = """bla bla, other=etew text=a4aa"""
+        val expectedText = """bla bla, other=etew text=a4aa"""
+
+        val result = givenText.sanitizeText()
+
+        assertThat(result).isEqualTo(expectedText)
+    }
+
+    @Test
+    fun `when sanitize token longer than 4 chars should apply mask`() {
+        val givenText = """bla bla "token":"aaaaaaaaaabbbbbbbbbb1111111111222222" other"""
+        val expectedText = """bla bla "token":"********************************2222" other"""
+
+        val result = givenText.sanitizeToken()
+
+        assertThat(result).isEqualTo(expectedText)
+    }
+
+    @Test
+    fun `when sanitize token field not matching token format doesn't apply mask`() {
+        val givenText = """bla bla "token":"a4aa" other"""
+        val expectedText = """bla bla "token":"a4aa" other"""
+
+        val result = givenText.sanitizeToken()
+
+        assertThat(result).isEqualTo(expectedText)
+    }
+
+    @Test
+    fun `when sanitize empty customAttributes field doesn't apply mask`() {
+        val givenText = """bla bla "customAttributes":{} other"""
+        val expectedText = """bla bla "customAttributes":{} other"""
+
+        val result = givenText.sanitizeCustomAttributes()
+
+        assertThat(result).isEqualTo(expectedText)
+    }
+
+    @Test
+    fun `when sanitize customAttributes field should apply mask`() {
+        val givenText = """bla bla "customAttributes":{bla4aa:rrr} other"""
+        val expectedText = """bla bla "customAttributes":{******:rrr} other"""
+
+        val result = givenText.sanitizeCustomAttributes()
+
+        assertThat(result).isEqualTo(expectedText)
+    }
+
+    @Test
+    fun `when sanitize customAttributes field with deep structure apply mask`() {
+        val givenText = """bla bla "customAttributes":{metadata:{key:value}} other"""
+        val expectedText = """bla bla "customAttributes":{***************alue}} other"""
+
+        val result = givenText.sanitizeCustomAttributes()
+
+        assertThat(result).isEqualTo(expectedText)
     }
 }

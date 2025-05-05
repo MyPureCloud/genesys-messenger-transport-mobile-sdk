@@ -22,7 +22,8 @@ object TestValues {
     internal const val MAX_CUSTOM_DATA_BYTES = 100
     internal const val DEFAULT_NUMBER = 1
     internal const val TIME_STAMP = "2022-08-22T19:24:26.704Z"
-    internal const val TOKEN = "token"
+    internal const val TOKEN = "<token>"
+    internal const val TOKEN_SANITIZED = "***ken>"
     internal const val SECONDARY_TOKEN = "<secondary_token>"
     internal const val RECONNECTION_TIMEOUT = 5000L
     internal const val NO_RECONNECTION_ATTEMPTS = 0L
@@ -31,7 +32,10 @@ object TestValues {
     internal const val AUTH_REFRESH_TOKEN_KEY = "auth_refresh_token_key"
     internal const val WAS_AUTHENTICATED = "was_authenticated"
     internal const val LOG_TAG = "TestLogTag"
-    internal val defaultMap = mapOf("A" to "B")
+    internal val defaultMap = mapOf("A" to "BBBBBB")
+    internal val defaultSecureMap = mapOf("A" to "**BBBB")
+    internal val advancedMap = mapOf("metadata" to """{"key":"value"}""")
+    internal val advancedSecureMap = mapOf("metadata" to """***********ue"}""")
     internal const val DEFAULT_STRING = "any string"
     internal const val DEVICE_TOKEN = "<device_token>"
     internal const val PUSH_SYNC_TIMESTAMP = 10000000L
@@ -81,6 +85,7 @@ object MessageValues {
     internal const val PARTICIPANT_NICKNAME = "participant_nickname"
     internal const val PARTICIPANT_IMAGE_URL = "http://participant.image"
     internal const val TEXT = "Hello world!"
+    internal const val TEXT_SANITIZED = "********rld!"
     internal const val TYPE = "Text"
     internal const val TIME_STAMP = 1L
     internal const val PAGE_SIZE = 25

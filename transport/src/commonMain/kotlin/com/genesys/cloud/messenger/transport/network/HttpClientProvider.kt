@@ -23,7 +23,7 @@ internal fun defaultHttpClient(logging: Boolean = false): HttpClient = HttpClien
     if (logging) {
         install(Logging) {
             this.logger = Log(logging, LogTag.HTTP_CLIENT).ktorLogger
-            level = LogLevel.ALL
+            level = LogLevel.INFO
         }
     }
     install(ContentNegotiation) {

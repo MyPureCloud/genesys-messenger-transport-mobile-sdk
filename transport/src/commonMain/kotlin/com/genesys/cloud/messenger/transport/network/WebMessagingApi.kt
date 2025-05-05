@@ -12,6 +12,7 @@ import com.genesys.cloud.messenger.transport.push.DeviceTokenOperation
 import com.genesys.cloud.messenger.transport.push.DeviceTokenRequestBody
 import com.genesys.cloud.messenger.transport.push.PushConfig
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
+import com.genesys.cloud.messenger.transport.core.resolveContentType
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageEntityList
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.PushErrorResponse
@@ -34,7 +35,6 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
-import io.ktor.http.defaultForFilePath
 import io.ktor.http.isSuccess
 import kotlinx.serialization.encodeToString
 import kotlin.coroutines.cancellation.CancellationException
@@ -81,7 +81,8 @@ internal class WebMessagingApi(
                 header(it.key, it.value)
             }
             presignedUrlResponse.fileName?.let {
-                contentType(ContentType.defaultForFilePath(it).withoutParameters())
+                val resolvedType = resolveContentType(it)
+                contentType(resolvedType)
             }
             onUpload { bytesSendTotal: Long, contentLength: Long ->
                 progressCallback?.let { it((bytesSendTotal / contentLength.toFloat()) * 100) }

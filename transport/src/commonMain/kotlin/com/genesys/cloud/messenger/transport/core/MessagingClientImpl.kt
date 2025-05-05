@@ -49,6 +49,7 @@ import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.extensions.isHealthCheckResponseId
 import com.genesys.cloud.messenger.transport.util.extensions.isOutbound
 import com.genesys.cloud.messenger.transport.util.extensions.isRefreshUrl
+import com.genesys.cloud.messenger.transport.util.extensions.sanitize
 import com.genesys.cloud.messenger.transport.util.extensions.toFileAttachmentProfile
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
@@ -212,7 +213,7 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun sendMessage(text: String, customAttributes: Map<String, String>) {
         stateMachine.checkIfConfigured()
-        log.i { LogMessages.sendMessage(text, customAttributes) }
+        log.i { LogMessages.sendMessage(text.sanitize(), customAttributes) }
         internalCustomAttributesStore.add(customAttributes)
         val channel = prepareCustomAttributesForSending()
         val request = messageStore.prepareMessage(token, text, channel)
