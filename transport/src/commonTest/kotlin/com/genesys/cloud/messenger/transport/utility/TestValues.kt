@@ -22,8 +22,8 @@ object TestValues {
     internal const val MAX_CUSTOM_DATA_BYTES = 100
     internal const val DEFAULT_NUMBER = 1
     internal const val TIME_STAMP = "2022-08-22T19:24:26.704Z"
-    internal const val TOKEN = "<token>"
-    internal const val TOKEN_SANITIZED = "***ken>"
+    internal const val TOKEN = "token"
+    internal const val TOKEN_SANITIZED = "*oken"
     internal const val SECONDARY_TOKEN = "<secondary_token>"
     internal const val RECONNECTION_TIMEOUT = 5000L
     internal const val NO_RECONNECTION_ATTEMPTS = 0L
