@@ -38,7 +38,6 @@ func appDelegate() -> AppDelegate {
 extension AppDelegate: UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         let token = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
-        print("Device Token: \(token)")
         
         NotificationCenter.default.post(name: Notification.Name.deviceTokenReceived, object: nil, userInfo: ["token": token])
     }
