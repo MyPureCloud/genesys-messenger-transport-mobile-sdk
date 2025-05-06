@@ -213,4 +213,16 @@ final class MessengerInteractor {
     func wasAuthenticated() -> Bool {
         return messagingClient.wasAuthenticated
     }
+    
+    func createPushService() -> PushService {
+        return messengerTransport.createPushService()
+    }
+    
+    func isDeploymentRegisteredForPush() -> Bool {
+        return UserDefaults.isRegisterForPushNotifications(deploymentId: configuration.deploymentId)
+    }
+    
+    func updateDeploymentRegisteredForPush(state: Bool) {
+        UserDefaults.updatePushNotificationsStateFor(deploymentId: configuration.deploymentId, state: state)
+    }
 }
