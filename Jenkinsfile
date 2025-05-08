@@ -53,20 +53,38 @@ pipeline{
             }
         }
         stage('Get okta.properties') {
-           steps {
-               script {
-                   def lib = library('pipeline-library').com.genesys.jenkins
-                   def oktaproperties = lib.Testing.new().getSecretStashSecret(
-                       'dev',
-                       'us-east-1',
-                       'mobiledx-ios',
-                       'okta-properties',
-                       env.WORKSPACE
-                   )
-                   echo "okta.properties retrieved successfully (truncated): ${oktaproperties.take(50)}"
-               }
-           }
-       }
+            steps {
+                script {
+                    def lib = library('pipeline-library').com.genesys.jenkins
+
+                    // Patch get_secret.sh after it's written by the shared lib (before execution)
+                    def patchPythonPath = {
+                        sh '''
+                            if [ -f get_secret.sh ]; then
+                              PYTHON=$(which python3 || echo "/usr/bin/python3")
+                              sed -i '' "s|/usr/local/bin/python3|$PYTHON|" get_secret.sh
+                            fi
+                        '''
+                    }
+
+                    // Pre-patch (just in case the script was already written)
+                    patchPythonPath()
+
+                    def oktaproperties = lib.Testing.new().getSecretStashSecret(
+                        'dev',
+                        'us-east-1',
+                        'mobiledx-ios',
+                        'okta-properties',
+                        env.WORKSPACE
+                    )
+
+                    // Post-patch in case it re-writes the file
+                    patchPythonPath()
+
+                    echo "okta.properties retrieved successfully (truncated): ${oktaproperties.take(50)}"
+                }
+            }
+        }
         stage("CI Unit Tests"){
             steps{
                 sh './gradlew :transport:test :transport:koverXmlReportDebug :transport:koverXmlReportRelease '
