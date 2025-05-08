@@ -57,19 +57,7 @@ pipeline{
                 script {
                     def lib = library('pipeline-library').com.genesys.jenkins
 
-                    // Patch get_secret.sh after it's written by the shared lib (before execution)
-                    def patchPythonPath = {
-                        sh '''
-                            if [ -f get_secret.sh ]; then
-                              PYTHON=$(which python3 || echo "/usr/bin/python3")
-                              sed -i '' "s|/usr/local/bin/python3|$PYTHON|" get_secret.sh
-                            fi
-                        '''
-                    }
-
-                    // Pre-patch (just in case the script was already written)
-                    patchPythonPath()
-
+                    // Call the shared lib (this writes get_secret.sh)
                     def oktaproperties = lib.Testing.new().getSecretStashSecret(
                         'dev',
                         'us-east-1',
@@ -78,8 +66,13 @@ pipeline{
                         env.WORKSPACE
                     )
 
-                    // Post-patch in case it re-writes the file
-                    patchPythonPath()
+                    // NOW patch the script it just wrote
+                    sh '''
+                        if [ -f get_secret.sh ]; then
+                          PYTHON=$(which python3 || echo "/usr/bin/python3")
+                          sed -i '' "s|/usr/local/bin/python3|$PYTHON|" get_secret.sh
+                        fi
+                    '''
 
                     echo "okta.properties retrieved successfully (truncated): ${oktaproperties.take(50)}"
                 }
