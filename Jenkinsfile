@@ -53,16 +53,22 @@ pipeline{
             }
         }
         stage('Get okta.properties') {
-            agent {
-                node {
-                    label "dev_mesos_v2"
-                }
-            }
             steps {
                 script {
-                    def lib = library('pipeline-library').com.genesys.jenkins
-                    oktaproperties = lib.Testing.new().getSecretStashSecret('dev', 'us-east-1', 'mobiledx-ios', 'okta-properties')
-                    echo "okta.properties fetched successfully."
+                    // Pull the shared scripts manually
+                    def gs1 = libraryResource('com/genesys/secretstash/get_secret.sh')
+                    def gs2 = libraryResource('com/genesys/secretstash/get_secret.py')
+                    writeFile(file: 'get_secret.sh', text: gs1)
+                    writeFile(file: 'get_secret.py', text: gs2)
+                    sh 'chmod 755 get_secret.sh'
+
+                    // Call the script using a safe relative path
+                    def oktaproperties = sh(
+                        script: './get_secret.sh --env dev --region us-east-1 --secretgroup "mobiledx-ios" --secretname "okta-properties"',
+                        returnStdout: true
+                    ).trim()
+
+                    echo "okta.properties retrieved: ${oktaproperties.take(50)}..." // Sanity check; don't log full secret
                 }
             }
         }
