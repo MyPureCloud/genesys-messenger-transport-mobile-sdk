@@ -55,20 +55,22 @@ pipeline{
         stage('Get okta.properties') {
             steps {
                 script {
-                    // Pull the shared scripts manually
+                    // Load the secret scripts from the shared library manually
                     def gs1 = libraryResource('com/genesys/secretstash/get_secret.sh')
                     def gs2 = libraryResource('com/genesys/secretstash/get_secret.py')
                     writeFile(file: 'get_secret.sh', text: gs1)
                     writeFile(file: 'get_secret.py', text: gs2)
+
+                    // Make the script executable
                     sh 'chmod 755 get_secret.sh'
 
-                    // Call the script using a safe relative path
+                    // Call it from the current workspace directory (no need for full path)
                     def oktaproperties = sh(
                         script: './get_secret.sh --env dev --region us-east-1 --secretgroup "mobiledx-ios" --secretname "okta-properties"',
                         returnStdout: true
                     ).trim()
 
-                    echo "okta.properties retrieved: ${oktaproperties.take(50)}..." // Sanity check; don't log full secret
+                    echo "okta.properties retrieved successfully (truncated): ${oktaproperties.take(50)}"
                 }
             }
         }
