@@ -9,6 +9,7 @@ build
 local.properties
 !.jenkins/local.properties
 iosApp/iosAppTests/config.json
+androidComposePrototype/google-services.json
 
 # Xcode
 #

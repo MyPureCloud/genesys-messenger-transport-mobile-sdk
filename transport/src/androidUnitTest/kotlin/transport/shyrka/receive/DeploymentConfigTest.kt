@@ -9,6 +9,10 @@ import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
 import com.genesys.cloud.messenger.transport.shyrka.receive.Auth
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
+import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations.AutoStart
+import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations.ConversationClear
+import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations.ConversationDisconnect
+import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations.Notifications
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.FileUpload
 import com.genesys.cloud.messenger.transport.shyrka.receive.JourneyEvents
@@ -16,7 +20,9 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.LauncherButton
 import com.genesys.cloud.messenger.transport.shyrka.receive.Messenger
 import com.genesys.cloud.messenger.transport.shyrka.receive.Mode
 import com.genesys.cloud.messenger.transport.shyrka.receive.Styles
+import com.genesys.cloud.messenger.transport.shyrka.receive.createConversationsVOForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
+import com.genesys.cloud.messenger.transport.shyrka.receive.createMessengerVOForTesting
 import com.genesys.cloud.messenger.transport.utility.DeploymentConfigValues
 import kotlinx.serialization.encodeToString
 import org.junit.Test
@@ -25,9 +31,17 @@ class DeploymentConfigTest {
 
     @Test
     fun `when DeploymentConfig serialized`() {
-        val givenDeploymentConfig = createDeploymentConfigForTesting()
+        val givenDeploymentConfig = createDeploymentConfigForTesting(
+            createMessengerVOForTesting(
+                apps = Apps(
+                    conversations = createConversationsVOForTesting(
+                        notifications = Notifications(enabled = true, Notifications.NotificationContentType.IncludeMessagesContent)
+                    )
+                )
+            )
+        )
         val expectedDeploymentConfigAsJson =
-            """{"id":"id","version":"1","languages":["en-us","zh-cn"],"defaultLanguage":"en-us","apiEndpoint":"api_endpoint","messenger":{"enabled":true,"apps":{"conversations":{"messagingEndpoint":"messaging_endpoint","conversationClear":{"enabled":true}}},"styles":{"primaryColor":"red"},"launcherButton":{"visibility":"On"},"fileUpload":{"enableAttachments":false,"modes":[{"fileTypes":["png"],"maxFileSizeKB":100}]}},"journeyEvents":{"enabled":false},"status":"Active","auth":{"enabled":true,"allowSessionUpgrade":true}}"""
+            """{"id":"id","version":"1","languages":["en-us","zh-cn"],"defaultLanguage":"en-us","apiEndpoint":"api_endpoint","messenger":{"enabled":true,"apps":{"conversations":{"messagingEndpoint":"messaging_endpoint","conversationClear":{"enabled":true},"notifications":{"enabled":true,"notificationContentType":"IncludeMessagesContent"}}},"styles":{"primaryColor":"red"},"launcherButton":{"visibility":"On"},"fileUpload":{"enableAttachments":false,"modes":[{"fileTypes":["png"],"maxFileSizeKB":100}]}},"journeyEvents":{"enabled":false},"status":"Active","auth":{"enabled":true,"allowSessionUpgrade":true}}"""
 
         val result = WebMessagingJson.json.encodeToString(givenDeploymentConfig)
 
@@ -37,14 +51,19 @@ class DeploymentConfigTest {
     @Test
     fun `when DeploymentConfig deserialized`() {
         val givenDeploymentConfigAsJson =
-            """{"id":"id","version":"1","languages":["en-us","zh-cn"],"defaultLanguage":"en-us","apiEndpoint":"api_endpoint","messenger":{"enabled":true,"apps":{"conversations":{"messagingEndpoint":"messaging_endpoint","conversationClear":{"enabled":true}}},"styles":{"primaryColor":"red"},"launcherButton":{"visibility":"On"},"fileUpload":{"enableAttachments":false,"modes":[{"fileTypes":["png"],"maxFileSizeKB":100}]}},"journeyEvents":{"enabled":false},"status":"Active","auth":{"enabled":true,"allowSessionUpgrade":true}}"""
+            """{"id":"id","version":"1","languages":["en-us","zh-cn"],"defaultLanguage":"en-us","apiEndpoint":"api_endpoint","messenger":{"enabled":true,"apps":{"conversations":{"messagingEndpoint":"messaging_endpoint","conversationClear":{"enabled":true},"notifications":{"enabled":false,"notificationContentType":"IncludeMessagesContent"}}},"styles":{"primaryColor":"red"},"launcherButton":{"visibility":"On"},"fileUpload":{"enableAttachments":false,"modes":[{"fileTypes":["png"],"maxFileSizeKB":100}]}},"journeyEvents":{"enabled":false},"status":"Active","auth":{"enabled":true,"allowSessionUpgrade":true}}"""
         val expectedDeploymentConfig = createDeploymentConfigForTesting()
         val expectedAuth = Auth(enabled = true, allowSessionUpgrade = true)
         val expectedJourneyEvents = JourneyEvents(enabled = false)
-        val expectedConversationClear = Conversations.ConversationClear(enabled = true)
+        val expectedConversationClear = ConversationClear(enabled = true)
+        val expectedNotifications = Notifications(
+            enabled = false,
+            Notifications.NotificationContentType.IncludeMessagesContent
+        )
         val expectedConversations = Conversations(
             messagingEndpoint = DeploymentConfigValues.MESSAGING_ENDPOINT,
-            conversationClear = expectedConversationClear
+            conversationClear = expectedConversationClear,
+            notifications = expectedNotifications,
         )
         val expectedApps = Apps(conversations = expectedConversations)
         val expectedStyles = Styles(primaryColor = DeploymentConfigValues.PRIMARY_COLOR)
@@ -117,15 +136,19 @@ class DeploymentConfigTest {
             messagingEndpoint = DeploymentConfigValues.MESSAGING_ENDPOINT,
             showAgentTypingIndicator = true,
             showUserTypingIndicator = true,
-            autoStart = Conversations.AutoStart(enabled = true),
-            conversationDisconnect = Conversations.ConversationDisconnect(
+            autoStart = AutoStart(enabled = true),
+            conversationDisconnect = ConversationDisconnect(
                 enabled = true,
-                Conversations.ConversationDisconnect.Type.ReadOnly
+                ConversationDisconnect.Type.ReadOnly
             ),
-            conversationClear = Conversations.ConversationClear(enabled = true)
+            conversationClear = ConversationClear(enabled = true),
+            notifications = Notifications(
+                enabled = true,
+                notificationContentType = Notifications.NotificationContentType.IncludeMessagesContent
+            )
         )
         val expectedConversationsAsJson =
-            """{"messagingEndpoint":"messaging_endpoint","showAgentTypingIndicator":true,"showUserTypingIndicator":true,"autoStart":{"enabled":true},"conversationDisconnect":{"enabled":true,"type":"ReadOnly"},"conversationClear":{"enabled":true}}"""
+            """{"messagingEndpoint":"messaging_endpoint","showAgentTypingIndicator":true,"showUserTypingIndicator":true,"autoStart":{"enabled":true},"conversationDisconnect":{"enabled":true,"type":"ReadOnly"},"conversationClear":{"enabled":true},"notifications":{"enabled":true,"notificationContentType":"IncludeMessagesContent"}}"""
 
         val result = WebMessagingJson.json.encodeToString(givenConversations)
 
@@ -135,12 +158,14 @@ class DeploymentConfigTest {
     @Test
     fun `when Conversations deserialized`() {
         val givenConversationsAsJson =
-            """{"messagingEndpoint":"messaging_endpoint","showAgentTypingIndicator":true,"showUserTypingIndicator":true,"autoStart":{"enabled":true},"conversationDisconnect":{"enabled":true,"type":"ReadOnly"},"conversationClear":{"enabled":false}}"""
-        val expectedConversationClear = Conversations.ConversationClear(enabled = false)
-        val expectedAutoStart = Conversations.AutoStart(true)
-        val expectedConversationDisconnect = Conversations.ConversationDisconnect(
-            true,
-            Conversations.ConversationDisconnect.Type.ReadOnly
+            """{"messagingEndpoint":"messaging_endpoint","showAgentTypingIndicator":true,"showUserTypingIndicator":true,"autoStart":{"enabled":true},"conversationDisconnect":{"enabled":true,"type":"ReadOnly"},"conversationClear":{"enabled":false},"notifications":{"enabled":false,"notificationContentType":"ExcludeMessagesContent"}}"""
+        val expectedConversationClear = ConversationClear(enabled = false)
+        val expectedAutoStart = AutoStart(true)
+        val expectedConversationDisconnect =
+            ConversationDisconnect(true, ConversationDisconnect.Type.ReadOnly)
+        val expectedNotifications = Notifications(
+            enabled = false,
+            notificationContentType = Notifications.NotificationContentType.ExcludeMessagesContent
         )
         val expectedConversations = Conversations(
             messagingEndpoint = DeploymentConfigValues.MESSAGING_ENDPOINT,
@@ -148,7 +173,8 @@ class DeploymentConfigTest {
             showUserTypingIndicator = true,
             autoStart = expectedAutoStart,
             conversationDisconnect = expectedConversationDisconnect,
-            conversationClear = expectedConversationClear
+            conversationClear = expectedConversationClear,
+            notifications = expectedNotifications,
         )
 
         val result = WebMessagingJson.json.decodeFromString<Conversations>(givenConversationsAsJson)
@@ -162,7 +188,7 @@ class DeploymentConfigTest {
             assertThat(autoStart.enabled).isTrue()
             assertThat(conversationDisconnect).isEqualTo(expectedConversationDisconnect)
             assertThat(conversationDisconnect.enabled).isTrue()
-            assertThat(conversationDisconnect.type).isEqualTo(Conversations.ConversationDisconnect.Type.ReadOnly)
+            assertThat(conversationDisconnect.type).isEqualTo(ConversationDisconnect.Type.ReadOnly)
             assertThat(conversationClear).isEqualTo(expectedConversationClear)
             assertThat(conversationClear.enabled).isFalse()
         }
@@ -170,7 +196,7 @@ class DeploymentConfigTest {
 
     @Test
     fun `when Autostart serialized`() {
-        val givenAutostart = Conversations.AutoStart(enabled = true)
+        val givenAutostart = AutoStart(enabled = true)
         val expectedAutostartAsJson = """{"enabled":true}"""
 
         val result = WebMessagingJson.json.encodeToString(givenAutostart)
@@ -181,10 +207,10 @@ class DeploymentConfigTest {
     @Test
     fun `when Autostart deserialized`() {
         val givenAutostartAsJson = """{"enabled":true}"""
-        val expectedAutostart = Conversations.AutoStart(enabled = true)
+        val expectedAutostart = AutoStart(enabled = true)
 
         val result =
-            WebMessagingJson.json.decodeFromString<Conversations.AutoStart>(givenAutostartAsJson)
+            WebMessagingJson.json.decodeFromString<AutoStart>(givenAutostartAsJson)
 
         assertThat(result).isEqualTo(expectedAutostart)
         assertThat(result.enabled).isTrue()
@@ -192,7 +218,7 @@ class DeploymentConfigTest {
 
     @Test
     fun `when ConversationClear serialized`() {
-        val givenConversationClear = Conversations.ConversationClear(enabled = true)
+        val givenConversationClear = ConversationClear(enabled = true)
         val expectedConversationClearAsJson = """{"enabled":true}"""
 
         val result = WebMessagingJson.json.encodeToString(givenConversationClear)
@@ -203,9 +229,9 @@ class DeploymentConfigTest {
     @Test
     fun `when ConversationClear deserialized`() {
         val givenConversationClearAsJson = """{"enabled":true}"""
-        val expectedConversationClear = Conversations.ConversationClear(enabled = true)
+        val expectedConversationClear = ConversationClear(enabled = true)
 
-        val result = WebMessagingJson.json.decodeFromString<Conversations.ConversationClear>(
+        val result = WebMessagingJson.json.decodeFromString<ConversationClear>(
             givenConversationClearAsJson
         )
 
@@ -215,9 +241,9 @@ class DeploymentConfigTest {
 
     @Test
     fun `when ConversationDisconnect serialized`() {
-        val givenConversationDisconnect = Conversations.ConversationDisconnect(
+        val givenConversationDisconnect = ConversationDisconnect(
             enabled = true,
-            type = Conversations.ConversationDisconnect.Type.ReadOnly
+            type = ConversationDisconnect.Type.ReadOnly
         )
         val expectedConversationDisconnectAsJson = """{"enabled":true,"type":"ReadOnly"}"""
 
@@ -229,18 +255,48 @@ class DeploymentConfigTest {
     @Test
     fun `when ConversationDisconnect deserialized`() {
         val givenConversationDisconnectAsJson = """{"enabled":true,"type":"Send"}"""
-        val expectedConversationDisconnect = Conversations.ConversationDisconnect(
+        val expectedConversationDisconnect = ConversationDisconnect(
             enabled = true,
-            type = Conversations.ConversationDisconnect.Type.Send
+            type = ConversationDisconnect.Type.Send
         )
 
-        val result = WebMessagingJson.json.decodeFromString<Conversations.ConversationDisconnect>(
+        val result = WebMessagingJson.json.decodeFromString<ConversationDisconnect>(
             givenConversationDisconnectAsJson
         )
 
         assertThat(result).isEqualTo(expectedConversationDisconnect)
         assertThat(result.enabled).isTrue()
-        assertThat(result.type).isEqualTo(Conversations.ConversationDisconnect.Type.Send)
+        assertThat(result.type).isEqualTo(ConversationDisconnect.Type.Send)
+    }
+
+    @Test
+    fun `when Notifications serialized`() {
+        val givenNotifications = Notifications(
+            enabled = true,
+            notificationContentType = Notifications.NotificationContentType.IncludeMessagesContent
+        )
+        val expectedNotificationsAsJson =
+            """{"enabled":true,"notificationContentType":"IncludeMessagesContent"}"""
+
+        val result = WebMessagingJson.json.encodeToString(givenNotifications)
+
+        assertThat(result).isEqualTo(expectedNotificationsAsJson)
+    }
+
+    @Test
+    fun `when Notifications deserialized`() {
+        val givenNotificationsAsJson =
+            """{"enabled":false,"notificationContentType":"ExcludeMessagesContent"}"""
+        val expectedNotifications = Notifications(
+            enabled = false,
+            notificationContentType = Notifications.NotificationContentType.ExcludeMessagesContent
+        )
+
+        val result = WebMessagingJson.json.decodeFromString<Notifications>(givenNotificationsAsJson)
+
+        assertThat(result).isEqualTo(expectedNotifications)
+        assertThat(result.enabled).isFalse()
+        assertThat(result.notificationContentType).isEqualTo(Notifications.NotificationContentType.ExcludeMessagesContent)
     }
 
     @Test

@@ -1,0 +1,38 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+!theme bluegray
+!pragma teoz true
+
+
+skinparam backgroundColor #whitesmoke
+title App unregister from push notifications
+
+participant App
+box TransportSDK #lightcyan
+participant MessengerTransportSDK
+participant PushService
+participant WebMessagingAPI
+participant Vault
+end box
+box Backend
+participant Thandora
+end box
+
+	App -> MessengerTransportSDK : createPushService()
+	MessengerTransportSDK --> App : PushService
+	App -> PushService : unregister(deviceToken)
+    PushService -> WebMessagingAPI : deleteDeviceToken(token)
+    WebMessagingAPI -> Thandora : DELETE /api/v2/push-notification/devices/{token-id}
+    opt #aaff8833 Success
+	    Thandora --> WebMessagingAPI
+	    WebMessagingAPI --> PushService: Result.Success
+	    PushService -> Vault : clearPushConfig()
+	    else #ffaaff33 Failed to perform unregister operation
+        PushService --> App : throws DeviceTokenException
+        else #ffaaff33 Coroutine was cancelled
+        PushService --> App : throws CancellationException
+	    end
+@enduml
+
+

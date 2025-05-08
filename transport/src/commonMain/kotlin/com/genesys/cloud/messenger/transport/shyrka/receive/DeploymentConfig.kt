@@ -44,6 +44,7 @@ data class Conversations(
     val autoStart: AutoStart = AutoStart(),
     val conversationDisconnect: ConversationDisconnect = ConversationDisconnect(),
     val conversationClear: ConversationClear = ConversationClear(),
+    val notifications: Notifications = Notifications(),
 ) {
     @Serializable
     data class AutoStart(val enabled: Boolean = false)
@@ -60,6 +61,19 @@ data class Conversations(
 
     @Serializable
     data class ConversationClear(val enabled: Boolean = false)
+
+    @Serializable
+    data class Notifications(
+        val enabled: Boolean = false,
+        val notificationContentType: NotificationContentType = NotificationContentType.ExcludeMessagesContent,
+    ) {
+
+        @Serializable
+        enum class NotificationContentType {
+            IncludeMessagesContent,
+            ExcludeMessagesContent,
+        }
+    }
 }
 
 @Serializable

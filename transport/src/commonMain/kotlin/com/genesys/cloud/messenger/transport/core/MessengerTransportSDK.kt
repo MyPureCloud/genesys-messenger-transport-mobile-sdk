@@ -7,9 +7,12 @@ import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.network.defaultHttpClient
+import com.genesys.cloud.messenger.transport.push.PushService
+import com.genesys.cloud.messenger.transport.push.PushServiceImpl
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.TokenStore
+import com.genesys.cloud.messenger.transport.util.Urls
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
@@ -30,6 +33,7 @@ class MessengerTransportSDK(
     val vault: Vault,
 ) {
     private var deploymentConfig: DeploymentConfig? = null
+    private val urls = Urls(configuration.domain, configuration.deploymentId)
 
     constructor(configuration: Configuration) : this(
         configuration,
@@ -71,10 +75,10 @@ class MessengerTransportSDK(
                 }
             }
         }
-        val api = WebMessagingApi(configuration)
+        val api = WebMessagingApi(urls, configuration)
         val webSocket = PlatformSocket(
             log.withTag(LogTag.WEBSOCKET),
-            configuration.webSocketUrl,
+            urls.webSocketUrl,
             DEFAULT_PING_INTERVAL_IN_SECONDS,
         )
         // Support old TokenStore. If TokenStore not present fallback to the Vault.
@@ -112,10 +116,23 @@ class MessengerTransportSDK(
     @Throws(Exception::class)
     suspend fun fetchDeploymentConfig(): DeploymentConfig {
         return DeploymentConfigUseCase(
-            configuration.deploymentConfigUrl.toString(),
+            urls.deploymentConfigUrl.toString(),
             defaultHttpClient(configuration.logging)
         ).fetch().also {
             deploymentConfig = it
         }
+    }
+
+    /**
+     *  Creates and returns an instance of [PushService].
+     *
+     * @return A new [PushService] implementation.
+     */
+    fun createPushService(): PushService {
+        return PushServiceImpl(
+            vault = vault,
+            api = WebMessagingApi(urls, configuration),
+            log = Log(configuration.logging, LogTag.PUSH_SERVICE),
+        )
     }
 }

@@ -1,0 +1,28 @@
+@startuml
+!theme bluegray
+!pragma teoz true
+
+skinparam backgroundColor #whitesmoke
+
+title Update Device Token Data
+
+box TransportSDK #lightcyan
+participant PushService
+participant WebMessagingAPI
+end box
+box Backend
+participant Thandora
+end box
+
+App -> PushService : synchronize(deviceToken, notificationProvider)
+PushService -> WebMessagingAPI : updateDeviceTokenData(pushConfig)
+WebMessagingAPI -> Thandora : PATCH /api/v2/push-notification/devices/{token-id}
+		rnote right of WebMessagingAPI
+            {
+            "deviceToken": "XXXXXXXXXX",
+            "deploymentId": "7322597b-802a-4159-ru03-n9a5873b5438",
+            "language": "en_US"
+            }
+    	end rnote
+!include thandora_request-response.puml
+@enduml
