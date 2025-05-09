@@ -53,22 +53,22 @@ pipeline{
             }
         }
         stage('Get okta.properties') {
-            agent {
-                label 'dev_mesos_v2' // use the reliable agent for secrets
+          agent { label 'dev_mesos_v2' }
+          environment {
+            CRYPTOGRAPHY_DONT_BUILD_RUST = '1'
+          }
+          steps {
+            script {
+              def lib = library('pipeline-library').com.genesys.jenkins
+              // Write the script file from the shared library
+              writeFile file: 'get_secret.sh', text: libraryResource('com/genesys/jenkins/get_secret.sh')
+              sh 'chmod +x get_secret.sh'
+              // Optional: check file exists
+              sh 'ls -la'
+              // Run the script in the current workspace
+              sh './get_secret.sh --env dev --region us-east-1 --secretgroup mobiledx-ios --secretname okta-properties'
             }
-            steps {
-                script {
-                    def lib = library('pipeline-library').com.genesys.jenkins
-                    def oktaproperties = lib.Testing.new().getSecretStashSecret(
-                        'dev',
-                        'us-east-1',
-                        'mobiledx-ios',
-                        'okta-properties'
-                    )
-                    // Save the result into a properties file in the main workspace
-                    writeFile file: "${env.WORKSPACE}/okta.properties", text: oktaproperties
-                }
-            }
+          }
         }
         stage('Continue build') {
             agent {
