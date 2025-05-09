@@ -10,14 +10,14 @@ void setBuildStatus(String message, String state) {
       contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "ci/jenkins/build-status"],
       errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
       statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
-  ]);
+  ])
 }
 
-pipeline{
-    agent{
+pipeline {
+    agent {
         label "mobile-sdk-dev"
     }
-    options{
+    options {
         parallelsAlwaysFailFast()
     }
     environment {
@@ -36,17 +36,17 @@ pipeline{
             script: 'if [ -z "$HOME" ]; then echo "/Users/$(whoami)"; else echo "$HOME"; fi'
         ).trim()}"""
     }
-    stages{
-        stage("Prepare"){
-            steps{
+    stages {
+        stage("Prepare") {
+            steps {
                 sh 'printenv | sort'
                 setBuildStatus("Preparing", "PENDING")
             }
         }
-        stage("CI Static Analysis"){
-            parallel{
-                stage("Lint"){
-                    steps{
+        stage("CI Static Analysis") {
+            parallel {
+                stage("Lint") {
+                    steps {
                         sh './gradlew lintKotlin'
                     }
                 }
@@ -59,13 +59,10 @@ pipeline{
             steps {
                 script {
                     def lib = library('pipeline-library').com.genesys.jenkins
-                    def oktaproperties = lib.Testing.new().getSecretStashSecret(
-                        'dev',
-                        'us-east-1',
-                        'mobiledx-ios',
-                        'okta-properties'
-                    )
-                    writeFile file: "${env.WORKSPACE}/okta.properties", text: oktaproperties
+                    def getSecretScript = lib.libraryResource('com/genesys/jenkins/get_secret.sh')
+                    writeFile file: "${env.WORKSPACE}/get_secret.sh", text: getSecretScript
+                    sh "chmod +x ${env.WORKSPACE}/get_secret.sh"
+                    sh "${env.WORKSPACE}/get_secret.sh --env dev --region us-east-1 --secretgroup mobiledx-ios --secretname okta-properties"
                 }
             }
         }
@@ -80,8 +77,8 @@ pipeline{
                 }
             }
         }
-        stage("CI Unit Tests"){
-            steps{
+        stage("CI Unit Tests") {
+            steps {
                 sh './gradlew :transport:test :transport:koverXmlReportDebug :transport:koverXmlReportRelease '
                 jacoco classPattern: '**/kotlin-classes/debug,**/kotlin-classes/release', inclusionPattern: '**/*.class', sourcePattern: '**/src/*main/kotlin'
             }
@@ -91,28 +88,28 @@ pipeline{
                 sh './gradlew :transport:checkForAndroidxDependencies'
             }
         }
-        stage("CI Build - transport Module debug"){
-            steps{
+        stage("CI Build - transport Module debug") {
+            steps {
                 sh './gradlew :transport:assembleDebug'
             }
         }
-        stage("CI Build - Android Testbed"){
-            steps{
+        stage("CI Build - Android Testbed") {
+            steps {
                 sh './gradlew :androidComposePrototype:assembleDebug'
             }
         }
-        stage("CI Build - transport Module release"){
-            steps{
+        stage("CI Build - transport Module release") {
+            steps {
                 sh './gradlew :transport:assembleRelease'
             }
         }
-        stage("CI Build - transport POM creation"){
-            steps{
+        stage("CI Build - transport POM creation") {
+            steps {
                 sh './gradlew :transport:generatePomFileForKotlinMultiplatformPublication'
             }
         }
-        stage("CI Build - iOS Testbed"){
-            steps{
+        stage("CI Build - iOS Testbed") {
+            steps {
                 sh '''
                     if [ -e deployment.properties ]; then
                       echo "deployment.properties file already exists"
@@ -151,28 +148,27 @@ pipeline{
                 '''
             }
         }
-        stage("CI Build - iOS XCFramework"){
-            steps{
+        stage("CI Build - iOS XCFramework") {
+            steps {
                 sh './gradlew :transport:assembleMessengerTransportReleaseXCFramework'
             }
         }
-        stage("CI Build - CocoaPods podspec creation for publication"){
-            steps{
+        stage("CI Build - CocoaPods podspec creation for publication") {
+            steps {
                 sh './gradlew :transport:generateGenesysCloudMessengerTransportPodspec'
             }
         }
     }
-    post{
-        success{
+    post {
+        success {
             setBuildStatus("Build complete.", "SUCCESS")
         }
-        failure{
+        failure {
             setBuildStatus("Build complete.", "FAILURE")
             emailext attachLog: false, body: "Build Job: ${BUILD_URL}", recipientProviders: [culprits(), requestor(), brokenBuildSuspects()], subject: "Build failed: ${JOB_NAME}-${BUILD_NUMBER}"
         }
-        always{
+        always {
             archiveArtifacts 'transport/build/reports/tests/testReleaseUnitTest/**/*.html, transport/build/reports/tests/testReleaseUnitTest/**/*.js, transport/build/reports/tests/testReleaseUnitTest/**/*.css'
-
             junit 'transport/build/test-results/testReleaseUnitTest/*.xml'
             cleanWs()
         }
