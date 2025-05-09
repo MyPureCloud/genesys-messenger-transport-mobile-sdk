@@ -55,6 +55,7 @@ pipeline{
         stage('Get okta.properties') {
             environment {
                 CRYPTOGRAPHY_DONT_BUILD_RUST = '1'
+                PYTHON = '/usr/bin/python3'
             }
             steps {
                 script {
