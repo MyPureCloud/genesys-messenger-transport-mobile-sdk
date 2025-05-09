@@ -53,30 +53,19 @@ pipeline{
             }
         }
         stage('Get okta.properties') {
-            steps {
-                script {
-                    def lib = library('pipeline-library').com.genesys.jenkins
-
-                    // Write the files but DON'T run the command yet
-                    def gs1 = libraryResource 'com/genesys/secretstash/get_secret.sh'
-                    def gs2 = libraryResource 'com/genesys/secretstash/get_secret.py'
-                    writeFile(file: 'get_secret.sh', text: gs1)
-                    writeFile(file: 'get_secret.py', text: gs2)
-
-                    // Patch python path
-                    sh '''
-                        chmod 755 get_secret.sh
-                        PYTHON=$(which python3 || echo "/usr/bin/python3")
-                        sed -i '' "s|/usr/local/bin/python3|$PYTHON|" get_secret.sh
-                    '''
-
-                    // Execute script manually
-                    def result = sh(
-                        script: "./get_secret.sh --env dev --region us-east-1 --secretgroup mobiledx-ios --secretname okta-properties",
-                        returnStdout: true
-                    ).trim()
-
-                    echo "okta.properties retrieved (truncated): ${result.take(50)}"
+            node('dev_mesos_v2') {
+                steps {
+                    script {
+                        def lib = library('pipeline-library').com.genesys.jenkins
+                        def oktaproperties = lib.Testing.new().getSecretStashSecret(
+                            'dev',
+                            'us-east-1',
+                            'mobiledx-ios',
+                            'okta-properties',
+                            env.WORKSPACE
+                        )
+                        echo "okta.properties retrieved successfully (truncated): ${oktaproperties.take(50)}"
+                    }
                 }
             }
         }
