@@ -53,19 +53,20 @@ pipeline{
             }
         }
         stage('Get okta.properties') {
-            node('dev_mesos_v2') {
-                steps {
-                    script {
-                        def lib = library('pipeline-library').com.genesys.jenkins
-                        def oktaproperties = lib.Testing.new().getSecretStashSecret(
-                            'dev',
-                            'us-east-1',
-                            'mobiledx-ios',
-                            'okta-properties',
-                            env.WORKSPACE
-                        )
-                        echo "okta.properties retrieved successfully (truncated): ${oktaproperties.take(50)}"
-                    }
+            environment {
+                CRYPTOGRAPHY_DONT_BUILD_RUST = '1'
+            }
+            steps {
+                script {
+                    def lib = library('pipeline-library').com.genesys.jenkins
+                    def oktaproperties = lib.Testing.new().getSecretStashSecret(
+                        'dev',
+                        'us-east-1',
+                        'mobiledx-ios',
+                        'okta-properties',
+                        env.WORKSPACE
+                    )
+                    echo "okta.properties retrieved successfully (truncated): ${oktaproperties.take(50)}"
                 }
             }
         }
