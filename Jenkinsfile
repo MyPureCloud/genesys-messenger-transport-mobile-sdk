@@ -12,7 +12,7 @@ void setBuildStatus(String message, String state) {
       statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
   ])
 }
-
+@Library('pipeline-library@master') _
 pipeline {
     agent {
         label "mobile-sdk-dev"
@@ -58,7 +58,7 @@ pipeline {
             }
             steps {
                 script {
-                    def testing = com.genesys.jenkins.Testing.new()
+                    def testing = Testing.new()
                     def oktaproperties = testing.getSecretStashSecret(
                         'dev',
                         'us-east-1',
