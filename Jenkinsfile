@@ -53,23 +53,17 @@ pipeline{
             }
         }
         stage('Get okta.properties') {
-            environment {
-                CRYPTOGRAPHY_DONT_BUILD_RUST = '1'
-                PYTHON = '/usr/bin/python3'
-            }
-            steps {
-                script {
-                    def lib = library('pipeline-library').com.genesys.jenkins
-                    def oktaproperties = lib.Testing.new().getSecretStashSecret(
-                        'dev',
-                        'us-east-1',
-                        'mobiledx-ios',
-                        'okta-properties',
-                        env.WORKSPACE
-                    )
-                    echo "okta.properties retrieved successfully (truncated): ${oktaproperties.take(50)}"
-                }
-            }
+          agent { label 'dev_mesos_v2' }
+          environment {
+            CRYPTOGRAPHY_DONT_BUILD_RUST = '1'
+          }
+          steps {
+            sh '''
+              sed -i '' 's|/usr/local/bin/python3|/usr/bin/python3|' get_secret.sh
+              chmod +x get_secret.sh
+              ./get_secret.sh --env dev --region us-east-1 --secretgroup mobiledx-ios --secretname okta-properties
+            '''
+          }
         }
         stage("CI Unit Tests"){
             steps{
