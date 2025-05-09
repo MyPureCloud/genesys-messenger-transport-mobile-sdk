@@ -53,17 +53,33 @@ pipeline{
             }
         }
         stage('Get okta.properties') {
-          agent { label 'dev_mesos_v2' }
-          environment {
-            CRYPTOGRAPHY_DONT_BUILD_RUST = '1'
-          }
-          steps {
-            sh '''
-              sed -i '' 's|/usr/local/bin/python3|/usr/bin/python3|' get_secret.sh
-              chmod +x get_secret.sh
-              ./get_secret.sh --env dev --region us-east-1 --secretgroup mobiledx-ios --secretname okta-properties
-            '''
-          }
+            agent {
+                label 'dev_mesos_v2' // use the reliable agent for secrets
+            }
+            steps {
+                script {
+                    def lib = library('pipeline-library').com.genesys.jenkins
+                    def oktaproperties = lib.Testing.new().getSecretStashSecret(
+                        'dev',
+                        'us-east-1',
+                        'mobiledx-ios',
+                        'okta-properties'
+                    )
+                    // Save the result into a properties file in the main workspace
+                    writeFile file: "${env.WORKSPACE}/okta.properties", text: oktaproperties
+                }
+            }
+        }
+        stage('Continue build') {
+            agent {
+                label 'mobile-sdk-dev'
+            }
+            steps {
+                script {
+                    echo "Using okta.properties from previous stage"
+                    sh "cat ${env.WORKSPACE}/okta.properties"
+                }
+            }
         }
         stage("CI Unit Tests"){
             steps{
