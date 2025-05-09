@@ -59,10 +59,13 @@ pipeline {
             steps {
                 script {
                     def lib = library('pipeline-library').com.genesys.jenkins
-                    def getSecretScript = lib.libraryResource('com/genesys/jenkins/get_secret.sh')
-                    writeFile file: "${env.WORKSPACE}/get_secret.sh", text: getSecretScript
-                    sh "chmod +x ${env.WORKSPACE}/get_secret.sh"
-                    sh "${env.WORKSPACE}/get_secret.sh --env dev --region us-east-1 --secretgroup mobiledx-ios --secretname okta-properties"
+                    def oktaproperties = lib.Testing.new().getSecretStashSecret(
+                        'dev',
+                        'us-east-1',
+                        'mobiledx-ios',
+                        'okta-properties'
+                    )
+                    writeFile file: "${env.WORKSPACE}/okta.properties", text: oktaproperties
                 }
             }
         }
