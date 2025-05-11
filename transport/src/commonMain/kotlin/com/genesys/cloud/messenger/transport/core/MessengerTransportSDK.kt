@@ -37,6 +37,7 @@ class MessengerTransportSDK(
          * The SDK version.
          */
         val sdkVersion = BuildKonfig.sdkVersion
+
         /**
          * Creates a vault instance based on the configuration.
          *
