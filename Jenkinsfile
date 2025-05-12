@@ -12,15 +12,19 @@ void setBuildStatus(String message, String state) {
       statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
   ])
 }
+
 @Library('pipeline-library@master') _
 import com.genesys.jenkins.Testing
+
 pipeline {
     agent {
         label "mobile-sdk-dev"
     }
+
     options {
         parallelsAlwaysFailFast()
     }
+
     environment {
         DEPLOYMENT_ID = credentials("messenger-mobile-sdk-deployment-id")
         DEPLOYMENT_DOMAIN = 'inindca.com'
@@ -37,6 +41,7 @@ pipeline {
             script: 'if [ -z "$HOME" ]; then echo "/Users/$(whoami)"; else echo "$HOME"; fi'
         ).trim()}"""
     }
+
     stages {
         stage("Prepare") {
             steps {
@@ -44,6 +49,7 @@ pipeline {
                 setBuildStatus("Preparing", "PENDING")
             }
         }
+
         stage("CI Static Analysis") {
             parallel {
                 stage("Lint") {
@@ -53,34 +59,19 @@ pipeline {
                 }
             }
         }
+
         stage('Get okta.properties') {
-          steps {
-            script {
-              def getSecretScript = libraryResource('com/genesys/secretstash/get_secret.sh')
-
-              // Patch the Python path from /usr/local/bin/python3 to /usr/bin/python3
-              getSecretScript = getSecretScript.replace('/usr/local/bin/python3', '/usr/bin/python3')
-
-              // Write the patched script to the workspace
-              writeFile file: 'get_secret.sh', text: getSecretScript
-
-              // Make the script executable
-              sh 'chmod +x get_secret.sh'
-
-              // Run the script and capture the output
-              def oktaproperties = sh(
-                script: './get_secret.sh --env dev --region us-east-1 --secretgroup transportsdk --secretname okta-properties',
-                returnStdout: true
-              ).trim()
-
-              echo "okta.properties: ${oktaproperties}"
+            steps {
+                script {
+                    def lib = library('pipeline-library').com.genesys.jenkins
+                    def oktaproperties = lib.Testing.new().getSecretStashSecret('dev', 'us-east-1', 'transportsdk', 'okta-properties')
+                    writeFile file: 'okta.properties', text: oktaproperties
+                    echo "okta.properties fetched and written successfully."
+                }
             }
-          }
         }
+
         stage('Continue build') {
-            agent {
-                label 'mobile-sdk-dev'
-            }
             steps {
                 script {
                     echo "Using okta.properties from previous stage"
@@ -88,37 +79,44 @@ pipeline {
                 }
             }
         }
+
         stage("CI Unit Tests") {
             steps {
                 sh './gradlew :transport:test :transport:koverXmlReportDebug :transport:koverXmlReportRelease '
                 jacoco classPattern: '**/kotlin-classes/debug,**/kotlin-classes/release', inclusionPattern: '**/*.class', sourcePattern: '**/src/*main/kotlin'
             }
         }
+
         stage("Dependency validation") {
             steps {
                 sh './gradlew :transport:checkForAndroidxDependencies'
             }
         }
+
         stage("CI Build - transport Module debug") {
             steps {
                 sh './gradlew :transport:assembleDebug'
             }
         }
+
         stage("CI Build - Android Testbed") {
             steps {
                 sh './gradlew :androidComposePrototype:assembleDebug'
             }
         }
+
         stage("CI Build - transport Module release") {
             steps {
                 sh './gradlew :transport:assembleRelease'
             }
         }
+
         stage("CI Build - transport POM creation") {
             steps {
                 sh './gradlew :transport:generatePomFileForKotlinMultiplatformPublication'
             }
         }
+
         stage("CI Build - iOS Testbed") {
             steps {
                 sh '''
@@ -159,17 +157,20 @@ pipeline {
                 '''
             }
         }
+
         stage("CI Build - iOS XCFramework") {
             steps {
                 sh './gradlew :transport:assembleMessengerTransportReleaseXCFramework'
             }
         }
+
         stage("CI Build - CocoaPods podspec creation for publication") {
             steps {
                 sh './gradlew :transport:generateGenesysCloudMessengerTransportPodspec'
             }
         }
     }
+
     post {
         success {
             setBuildStatus("Build complete.", "SUCCESS")
