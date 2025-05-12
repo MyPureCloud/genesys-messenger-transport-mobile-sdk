@@ -58,20 +58,10 @@ pipeline {
         }
 
         stage("Get okta.properties") {
-            agent {
-                label "dev_mesos_v2"
-            }
             steps {
                 script {
-                    def getSecretScript = libraryResource('com/genesys/secretstash/get_secret.sh')
-                    getSecretScript = getSecretScript.replace('/usr/local/bin/python3', '/usr/bin/python3')
-                    def scriptPath = "${env.WORKSPACE}/get_secret.sh"
-                    writeFile file: scriptPath, text: getSecretScript
-                    sh "chmod +x ${scriptPath}"
-                    def oktaproperties = sh(
-                        script: "${scriptPath} --env dev --region us-east-1 --secretgroup transportsdk --secretname okta-properties",
-                        returnStdout: true
-                    ).trim()
+                    def lib = library('pipeline-library').com.genesys.jenkins
+                    def oktaproperties = lib.Testing.new().getSecretStashSecret('dev', 'us-east-1', 'transportsdk', 'okta-properties')
                     writeFile file: "${env.WORKSPACE}/okta.properties", text: oktaproperties
                     echo "okta.properties fetched successfully."
                 }
