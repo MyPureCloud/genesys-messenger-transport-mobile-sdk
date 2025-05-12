@@ -57,22 +57,22 @@ pipeline {
             }
             steps {
                 script {
-                    def testing = library('pipeline-library').com.genesys.jenkins
-                    def oktaproperties = testing.getSecretStashSecret(
-                        'dev',
-                        'us-east-1',
-                        'mobiledx-ios',
-                        'okta-properties'
+                    def oktaproperties = getSecretStashSecret(
+                        env: 'dev',
+                        region: 'us-east-1',
+                        secretGroup: 'mobiledx-ios',
+                        secretName: 'okta-properties'
                     )
-                    // Write okta.properties as expected
+
+                    // Write okta.properties to disk
                     writeFile file: "okta.properties", text: oktaproperties
 
-                    // Also re-write get_secret.sh with proper path on THIS node
+                    // Also write and run the get_secret.sh script if needed
                     def getSecretScript = libraryResource('com/genesys/jenkins/secrets/get_secret.sh')
                     writeFile file: 'get_secret.sh', text: getSecretScript
                     sh 'chmod +x get_secret.sh'
 
-                    // Then call it
+                    // Call the shell script just to mimic expected behavior (optional now)
                     sh './get_secret.sh --env dev --region us-east-1 --secretgroup mobiledx-ios --secretname okta-properties'
                 }
             }
