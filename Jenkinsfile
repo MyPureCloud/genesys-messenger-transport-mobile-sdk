@@ -54,18 +54,24 @@ pipeline {
             }
         }
         stage('Get okta.properties') {
-            steps {
-                script {
-                    def testing = new Testing()
-                    def oktaproperties = testing.getSecretStashSecret(
-                        'dev',
-                        'us-east-1',
-                        'transportsdk',
-                        'okta-properties'
-                    )
-                    echo "okta.properties: ${oktaproperties}"
-                }
+          steps {
+            script {
+              // Write the get_secret.sh script from the shared library resource into the workspace
+              writeFile file: 'get_secret.sh', text: libraryResource('com/genesys/jenkins/secrets/get_secret.sh')
+
+              // Make the script executable and run it
+              sh '''
+                chmod +x get_secret.sh
+                ./get_secret.sh --env dev --region us-east-1 --secretgroup transportsdk --secretname okta-properties
+
+                # Check that the file was created
+                if [ ! -f okta.properties ]; then
+                  echo "ERROR: okta.properties not found after get_secret.sh execution"
+                  exit 1
+                fi
+              '''
             }
+          }
         }
         stage('Continue build') {
             agent {
