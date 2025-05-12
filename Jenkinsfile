@@ -20,11 +20,9 @@ pipeline {
     agent {
         label "mobile-sdk-dev"
     }
-
     options {
         parallelsAlwaysFailFast()
     }
-
     environment {
         DEPLOYMENT_ID = credentials("messenger-mobile-sdk-deployment-id")
         DEPLOYMENT_DOMAIN = 'inindca.com'
@@ -41,7 +39,6 @@ pipeline {
             script: 'if [ -z "$HOME" ]; then echo "/Users/$(whoami)"; else echo "$HOME"; fi'
         ).trim()}"""
     }
-
     stages {
         stage("Prepare") {
             steps {
@@ -60,22 +57,28 @@ pipeline {
             }
         }
 
-        stage('Get okta.properties') {
-          agent {
-            label 'dev_mesos_v2'
-          }
-          steps {
-            script {
-              def lib = library('pipeline-library').com.genesys.jenkins
-              def oktaproperties = lib.Testing.new().getSecretStashSecret('dev', 'us-east-1', 'transportsdk', 'okta-properties')
-              writeFile file: 'okta.properties', text: oktaproperties
-              echo "okta.properties fetched and written successfully on dev_mesos_v2."
+        stage("Get okta.properties") {
+            agent {
+                label "dev_mesos_v2"
             }
-          }
+            steps {
+                script {
+                    def getSecretScript = libraryResource('com/genesys/secretstash/get_secret.sh')
+                    getSecretScript = getSecretScript.replace('/usr/local/bin/python3', '/usr/bin/python3')
+                    def scriptPath = "${env.WORKSPACE}/get_secret.sh"
+                    writeFile file: scriptPath, text: getSecretScript
+                    sh "chmod +x ${scriptPath}"
+                    def oktaproperties = sh(
+                        script: "${scriptPath} --env dev --region us-east-1 --secretgroup transportsdk --secretname okta-properties",
+                        returnStdout: true
+                    ).trim()
+                    writeFile file: "${env.WORKSPACE}/okta.properties", text: oktaproperties
+                    echo "okta.properties fetched successfully."
+                }
+            }
         }
 
-
-        stage('Continue build') {
+        stage("Continue build") {
             steps {
                 script {
                     echo "Using okta.properties from previous stage"
@@ -86,7 +89,7 @@ pipeline {
 
         stage("CI Unit Tests") {
             steps {
-                sh './gradlew :transport:test :transport:koverXmlReportDebug :transport:koverXmlReportRelease '
+                sh './gradlew :transport:test :transport:koverXmlReportDebug :transport:koverXmlReportRelease'
                 jacoco classPattern: '**/kotlin-classes/debug,**/kotlin-classes/release', inclusionPattern: '**/*.class', sourcePattern: '**/src/*main/kotlin'
             }
         }
@@ -152,7 +155,7 @@ pipeline {
                           iosApp/Okta.plist.template > iosApp/Okta.plist
                     fi
                     ./gradlew -p "transport" :transport:syncFramework \
-                      -Pkotlin.native.cocoapods.platform=iphoneos\
+                      -Pkotlin.native.cocoapods.platform=iphoneos \
                       -Pkotlin.native.cocoapods.archs="arm64" \
                       -Pkotlin.native.cocoapods.configuration=Debug
                     cd iosApp
