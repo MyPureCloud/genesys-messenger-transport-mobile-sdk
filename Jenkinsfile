@@ -56,12 +56,23 @@ pipeline {
         stage('Get okta.properties') {
           steps {
             script {
-              writeFile file: 'get_secret.sh', text: libraryResource('com/genesys/secretstash/get_secret.sh')
-              sh 'chmod 755 get_secret.sh'
+              def getSecretScript = libraryResource('com/genesys/secretstash/get_secret.sh')
+
+              // Patch the Python path from /usr/local/bin/python3 to /usr/bin/python3
+              getSecretScript = getSecretScript.replace('/usr/local/bin/python3', '/usr/bin/python3')
+
+              // Write the patched script to the workspace
+              writeFile file: 'get_secret.sh', text: getSecretScript
+
+              // Make the script executable
+              sh 'chmod +x get_secret.sh'
+
+              // Run the script and capture the output
               def oktaproperties = sh(
                 script: './get_secret.sh --env dev --region us-east-1 --secretgroup transportsdk --secretname okta-properties',
                 returnStdout: true
               ).trim()
+
               echo "okta.properties: ${oktaproperties}"
             }
           }
