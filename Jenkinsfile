@@ -60,7 +60,7 @@ pipeline {
                     def oktaproperties = getSecretStashSecret(
                         env: 'dev',
                         region: 'us-east-1',
-                        secretGroup: 'mobiledx-ios',
+                        secretGroup: 'transportsdk',
                         secretName: 'okta-properties'
                     )
 
@@ -73,7 +73,7 @@ pipeline {
                     sh 'chmod +x get_secret.sh'
 
                     // Call the shell script just to mimic expected behavior (optional now)
-                    sh './get_secret.sh --env dev --region us-east-1 --secretgroup mobiledx-ios --secretname okta-properties'
+                    sh './get_secret.sh --env dev --region us-east-1 --secretgroup transportsdk --secretname okta-properties'
                 }
             }
         }
