@@ -54,17 +54,17 @@ pipeline {
             }
         }
         stage('Get okta.properties') {
-            agent {
-                label 'dev_mesos_v2'
+          steps {
+            script {
+              def oktaproperties = testing.getSecretStashSecret(
+                'dev',
+                'us-east-1',
+                'transportsdk',
+                'okta-properties'
+              )
+              echo "okta.properties: ${oktaproperties}"
             }
-            steps {
-                script {
-                    def getSecretScript = libraryResource('com/genesys/secretstash/get_secret.sh')
-                    writeFile file: "${env.WORKSPACE}/get_secret.sh", text: getSecretScript
-                    sh "chmod +x ${env.WORKSPACE}/get_secret.sh"
-                    sh "${env.WORKSPACE}/get_secret.sh --env dev --region us-east-1 --secretgroup transportsdk --secretname okta-properties"
-                }
-            }
+          }
         }
         stage('Continue build') {
             agent {
