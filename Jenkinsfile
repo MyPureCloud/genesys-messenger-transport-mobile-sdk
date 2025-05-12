@@ -59,27 +59,15 @@ pipeline {
             }
             steps {
                 script {
-                    def lib = library('pipeline-library').com.genesys.jenkins
-                    def oktaProperties = lib.Testing.new().getSecretStashSecret(
-                        'dev',
-                        'us-east-1',
-                        'transportsdk',
-                        'okta-properties'
-                    )
-
-                    // Write the secret to a file
-                    writeFile file: "${env.WORKSPACE}/okta.properties", text: oktaProperties
-
-                    // Write the get_secret.sh script to the correct location
+                    // Load the get_secret.sh script from the library
                     def getSecretScript = libraryResource('com/genesys/jenkins/secrets/get_secret.sh')
                     writeFile file: "${env.WORKSPACE}/get_secret.sh", text: getSecretScript
                     sh "chmod +x ${env.WORKSPACE}/get_secret.sh"
 
-                    // Sanity check
-                    echo "Running get_secret.sh from: ${env.WORKSPACE}/get_secret.sh"
+                    // Confirm the script exists
                     sh "ls -l ${env.WORKSPACE}/get_secret.sh"
 
-                    // Execute the script using absolute path
+                    // Execute the script with full path
                     sh "${env.WORKSPACE}/get_secret.sh --env dev --region us-east-1 --secretgroup transportsdk --secretname okta-properties"
                 }
             }
