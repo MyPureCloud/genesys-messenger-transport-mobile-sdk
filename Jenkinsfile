@@ -59,15 +59,9 @@ pipeline {
             }
             steps {
                 script {
-                    // Load the get_secret.sh script from the library
-                    def getSecretScript = libraryResource('com/genesys/jenkins/secrets/get_secret.sh')
+                    def getSecretScript = libraryResource('com/genesys/secretstash/get_secret.sh')
                     writeFile file: "${env.WORKSPACE}/get_secret.sh", text: getSecretScript
                     sh "chmod +x ${env.WORKSPACE}/get_secret.sh"
-
-                    // Confirm the script exists
-                    sh "ls -l ${env.WORKSPACE}/get_secret.sh"
-
-                    // Execute the script with full path
                     sh "${env.WORKSPACE}/get_secret.sh --env dev --region us-east-1 --secretgroup transportsdk --secretname okta-properties"
                 }
             }
