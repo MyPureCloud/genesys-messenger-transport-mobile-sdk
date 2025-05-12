@@ -12,6 +12,8 @@ void setBuildStatus(String message, String state) {
       statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
   ])
 }
+@Library('pipeline-library@master') _
+import com.genesys.jenkins.Testing
 pipeline {
     agent {
         label "mobile-sdk-dev"
@@ -57,23 +59,16 @@ pipeline {
             }
             steps {
                 script {
-                    def oktaproperties = getSecretStashSecret(
-                        env: 'dev',
-                        region: 'us-east-1',
-                        secretGroup: 'mobiledx-ios',
-                        secretName: 'okta-properties'
+                    def testing = new com.genesys.jenkins.Testing()
+                    def oktaProps = testing.getSecretStashSecret(
+                        'dev',
+                        'us-east-1',
+                        'transportsdk',
+                        'okta-properties'
                     )
 
-                    // Write okta.properties to disk
-                    writeFile file: "okta.properties", text: oktaproperties
-
-                    // Also write and run the get_secret.sh script if needed
-                    def getSecretScript = libraryResource('com/genesys/jenkins/secrets/get_secret.sh')
-                    writeFile file: 'get_secret.sh', text: getSecretScript
-                    sh 'chmod +x get_secret.sh'
-
-                    // Call the shell script just to mimic expected behavior (optional now)
-                    sh './get_secret.sh --env dev --region us-east-1 --secretgroup mobiledx-ios --secretname okta-properties'
+                    writeFile file: 'okta.properties', text: oktaProps
+                    echo 'okta.properties fetched and written successfully.'
                 }
             }
         }
@@ -132,7 +127,7 @@ pipeline {
                     if [ -e okta.properties ]; then
                       echo "okta.properties pulled from secrets in earlier stage"
                     else
-                      echo "❌ ERROR: okta.properties is missing"
+                      echo "ERROR: okta.properties is missing"
                       exit 1
                     fi
                     if [ -e iosApp/Okta.plist ]; then
