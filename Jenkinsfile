@@ -54,17 +54,18 @@ pipeline {
             }
         }
         stage('Get okta.properties') {
-          steps {
-            script {
-              def oktaproperties = testing.getSecretStashSecret(
-                'dev',
-                'us-east-1',
-                'transportsdk',
-                'okta-properties'
-              )
-              echo "okta.properties: ${oktaproperties}"
+            steps {
+                script {
+                    def testing = new Testing()
+                    def oktaproperties = testing.getSecretStashSecret(
+                        'dev',
+                        'us-east-1',
+                        'transportsdk',
+                        'okta-properties'
+                    )
+                    echo "okta.properties: ${oktaproperties}"
+                }
             }
-          }
         }
         stage('Continue build') {
             agent {
