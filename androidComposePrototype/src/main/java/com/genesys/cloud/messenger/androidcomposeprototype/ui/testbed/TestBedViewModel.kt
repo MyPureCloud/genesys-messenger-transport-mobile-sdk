@@ -29,6 +29,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 private const val SAVED_ATTACHMENT_FILE_NAME = "test_asset.png"
 
@@ -56,7 +57,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         private set
     var authState: AuthState by mutableStateOf(AuthState.NoAuth)
         private set
-    private var pkceEnabled by mutableStateOf(false)
+    private var pkceEnabled by mutableStateOf(true)
 
     var authCode: String = ""
         set(value) {
@@ -147,6 +148,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "attachSavedImage" -> doAttachSavedImage()
             "detach" -> doDetach(input)
             "deployment" -> doDeployment()
+            Command.IMPLICIT_FLOW_LOGIN.description-> doImplicitOktaSignIn()
             "invalidateConversationCache" -> doInvalidateConversationCache()
             "addAttribute" -> doAddCustomAttributes(input)
             "typing" -> doIndicateTyping()
@@ -176,6 +178,12 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             onSocketMessageReceived("shouldAuthorize is: $result")
             commandWaiting = false
         }
+    }
+
+    private fun doImplicitOktaSignIn() {
+        val url = buildImplicitAuthUrl()
+        Log.d(TAG, "doImplicitOktaSignIn: $url")
+        onOktaSingIn(url)
     }
 
     private fun doWasAuthenticated() {
@@ -523,6 +531,22 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             }
         return builder.build().toString()
     }
+
+    private fun generateNonce(): String = UUID.randomUUID().toString()
+
+    private fun buildImplicitAuthUrl(): String = buildImplicitOktaAuthorizeUrl(generateNonce())
+
+    private fun buildImplicitOktaAuthorizeUrl(nonce: String? = null): String =
+        URLBuilder("https://${BuildConfig.OKTA_DOMAIN}/oauth2/v1/authorize").apply {
+            parameters.append("client_id", BuildConfig.CLIENT_ID)
+            parameters.append("response_type", "id_token")
+            parameters.append("scope", "openid profile email")
+            parameters.append("redirect_uri", BuildConfig.SIGN_IN_REDIRECT_URI)
+            parameters.append("state", BuildConfig.OKTA_STATE)
+            nonce?.let {
+                parameters.append("nonce", nonce)
+            }
+        }.build().toString()
 }
 
 private fun String.toKeyValuePair(): Pair<String, String> {

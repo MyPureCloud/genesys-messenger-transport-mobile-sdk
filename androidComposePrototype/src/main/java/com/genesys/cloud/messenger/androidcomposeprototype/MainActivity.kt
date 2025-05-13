@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.launcher.PrototypeLauncherView
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed.TestBedFragment
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed.TestBedViewModel
+import com.genesys.cloud.messenger.androidcomposeprototype.util.getParam
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -68,8 +69,14 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
     private fun handleOktaRedirect(data: Uri) {
         // If authcode is present.
+        Log.d(TAG, "handleOktaRedirect uri: $data")
         data.getQueryParameter("code")?.let { authCode ->
             viewModel.authCode = authCode
+        } ?: run {
+            data.getParam("id_token")?.let { idToken ->
+                Log.d(TAG, "handleOktaRedirect id token: $idToken")
+                viewModel.authCode = idToken
+            }
         }
         // Otherwise there will be an error.
         data.getQueryParameter("error_description")?.let { error ->
