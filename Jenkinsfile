@@ -55,12 +55,6 @@ pipeline {
         }
 
         stage('Get okta.properties') {
-            agent {
-                node {
-                    label 'dev_mesos_v2'
-                    customWorkspace "jenkins-mtsdk-${currentBuild.number}"
-                }
-            }
             steps {
                 script {
                     def pipelineLibrary = library('pipeline-library').com.genesys.jenkins
