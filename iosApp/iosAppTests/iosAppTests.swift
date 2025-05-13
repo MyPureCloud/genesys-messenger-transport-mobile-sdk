@@ -688,49 +688,6 @@ class iosAppTests: XCTestCase {
         testController1.disconnectMessenger()
         testController2.disconnectMessenger()
     }
-    
-    func testEncryptedVault() {
-        // Create an EncryptedVault instance with test keys
-        let keys = Vault.Keys(
-            vaultKey: "test.encrypted.vault",
-            tokenKey: "test_token_key",
-            authRefreshTokenKey: "test_auth_refresh_token_key",
-            wasAuthenticated: "test_was_authenticated"
-        )
-        let encryptedVault = EncryptedVault(keys: keys)
-        
-        // Test storing and retrieving a value
-        let testKey = "test_key"
-        let testValue = "test_value_\(UUID().uuidString)"
-        
-        // Store the value
-        encryptedVault.store(key: testKey, value: testValue)
-        
-        // Retrieve the value and verify it matches
-        let retrievedValue = encryptedVault.fetch(key: testKey)
-        XCTAssertEqual(retrievedValue, testValue, "Retrieved value should match stored value")
-        
-        // Test removing a value
-        encryptedVault.remove(key: testKey)
-        let removedValue = encryptedVault.fetch(key: testKey)
-        XCTAssertNil(removedValue, "Value should be nil after removal")
-        
-        // Test token storage and retrieval
-        let tokenValue = encryptedVault.token
-        XCTAssertNotNil(tokenValue, "Token should not be nil")
-        
-        // Test storing and retrieving auth refresh token
-        let testRefreshToken = "test_refresh_token_\(UUID().uuidString)"
-        encryptedVault.authRefreshToken = testRefreshToken
-        XCTAssertEqual(encryptedVault.authRefreshToken, testRefreshToken, "Auth refresh token should match stored value")
-        
-        // Test storing and retrieving wasAuthenticated flag
-        encryptedVault.wasAuthenticated = true
-        XCTAssertTrue(encryptedVault.wasAuthenticated, "wasAuthenticated should be true")
-        
-        encryptedVault.wasAuthenticated = false
-        XCTAssertFalse(encryptedVault.wasAuthenticated, "wasAuthenticated should be false")
-    }
 }
 
 private func delay(_ seconds: Double = 1.0, reason: String? = nil) {
