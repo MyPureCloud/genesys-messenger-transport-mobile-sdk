@@ -63,7 +63,9 @@ pipeline {
             }
             steps {
                 script {
-                    def oktaproperties = new Testing().getSecretStashSecret(
+                    def pipelineLibrary = library('pipeline-library').com.genesys.jenkins
+                    def testing = pipelineLibrary.Testing.new()
+                    def oktaproperties = testing.getSecretStashSecret(
                         'dev',
                         'us-east-1',
                         'transportsdk',
