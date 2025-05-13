@@ -59,7 +59,10 @@ pipeline {
 
         stage('Get okta.properties') {
             agent {
-                label 'dev_mesos_v2'
+                node {
+                    label 'dev_mesos_v2'
+                    customWorkspace "jenkins-mtsdk-${currentBuild.number}"
+                }
             }
             steps {
                 script {
