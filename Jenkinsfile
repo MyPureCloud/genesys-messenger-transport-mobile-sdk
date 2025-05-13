@@ -71,7 +71,7 @@ pipeline {
                         env.WORKSPACE
                     )
                     writeFile file: "${env.WORKSPACE}/okta.properties", text: oktaproperties
-                    echo "✅ okta.properties fetched and written successfully."
+                    echo "okta.properties fetched and written successfully."
                 }
             }
         }
