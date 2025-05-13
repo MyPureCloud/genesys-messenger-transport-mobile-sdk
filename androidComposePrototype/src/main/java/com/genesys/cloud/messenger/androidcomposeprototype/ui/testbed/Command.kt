@@ -15,6 +15,7 @@ enum class Command(val description: String) {
     DETACH("detach <attachmentId>"),
     HEALTH_CHECK("healthcheck"),
     HISTORY("history"),
+    IMPLICIT_FLOW_LOGIN("implicitIdToken"),
     INVALIDATE_CONVERSATION_CACHE("invalidateConversationCache"),
     NEW_CHAT("newChat"),
     OKTA_LOGOUT("oktaLogout"),
