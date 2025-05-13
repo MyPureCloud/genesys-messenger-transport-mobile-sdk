@@ -13,9 +13,6 @@ void setBuildStatus(String message, String state) {
   ])
 }
 
-@Library('pipeline-library@master') _
-import com.genesys.jenkins.Testing
-
 pipeline {
     agent {
         label "mobile-sdk-dev"
