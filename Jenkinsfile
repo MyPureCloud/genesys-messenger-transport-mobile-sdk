@@ -59,24 +59,17 @@ pipeline {
 
         stage('Get okta.properties') {
             agent {
-                label 'dev_mesos_v2' // Ensure agent has Python + IAM permissions
+                label 'dev_mesos_v2'
             }
             steps {
                 script {
-                    // Write required shared lib scripts to workspace
-                    def getSecretScriptSh = libraryResource('com/genesys/secretstash/get_secret.sh')
-                    def getSecretScriptPy = libraryResource('com/genesys/secretstash/get_secret.py')
-
-                    writeFile file: "${env.WORKSPACE}/get_secret.sh", text: getSecretScriptSh
-                    writeFile file: "${env.WORKSPACE}/get_secret.py", text: getSecretScriptPy
-                    sh "chmod +x ${env.WORKSPACE}/get_secret.sh"
-
-                    // Use WORKSPACE explicitly to avoid encoding or job name issues
-                    def oktaproperties = sh(
-                        script: "${env.WORKSPACE}/get_secret.sh --env dev --region us-east-1 --secretgroup transportsdk --secretname okta-properties --workspacePath ${env.WORKSPACE}",
-                        returnStdout: true
-                    ).trim()
-
+                    def oktaproperties = com.genesys.jenkins.Testing.getSecretStashSecret(
+                        'dev',
+                        'us-east-1',
+                        'transportsdk',
+                        'okta-properties',
+                        env.WORKSPACE
+                    )
                     writeFile file: "${env.WORKSPACE}/okta.properties", text: oktaproperties
                     echo "✅ okta.properties fetched and written successfully."
                 }
