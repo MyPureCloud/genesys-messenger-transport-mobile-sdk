@@ -3,6 +3,8 @@ def isMainBranch() { env.BRANCH_NAME == 'main' }
 def isReleaseBranch() { env.BRANCH_NAME.startsWith('release/') }
 def isFeatureBranch() { env.BRANCH_NAME.startsWith('feature/') }
 
+def oktaproperties = ''
+
 void setBuildStatus(String message, String state) {
   step([
       $class: "GitHubCommitStatusSetter",
@@ -65,7 +67,7 @@ pipeline {
                 script {
                     def pipelineLibrary = library('pipeline-library').com.genesys.jenkins
                     def testing = pipelineLibrary.Testing.new()
-                    def oktaproperties = testing.getSecretStashSecret(
+                    oktaproperties = testing.getSecretStashSecret(
                         'dev',
                         'us-east-1',
                         'mobiledx-ios',
