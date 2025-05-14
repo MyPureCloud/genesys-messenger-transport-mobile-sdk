@@ -77,6 +77,18 @@ class TestBedViewModel :
             this.authState = authState
         }
 
+    var idToken: String = ""
+        set(value) {
+            field = value
+            val authState = if (value.isNotEmpty()) {
+                onSocketMessageReceived("ID Token: $value")
+                AuthState.IdTokenReceived(value)
+            } else {
+                AuthState.NoAuth
+            }
+            this.authState = authState
+        }
+
     val regions = listOf(
         "inindca.com",
         "inintca.com",
@@ -174,7 +186,6 @@ class TestBedViewModel :
             "attachSavedImage" -> doAttachSavedImage()
             "detach" -> doDetach(input)
             "deployment" -> doDeployment()
-            Command.IMPLICIT_FLOW_LOGIN.description-> doImplicitOktaSignIn()
             "invalidateConversationCache" -> doInvalidateConversationCache()
             "addAttribute" -> doAddCustomAttributes(input)
             "typing" -> doIndicateTyping()
@@ -194,6 +205,8 @@ class TestBedViewModel :
             "shouldAuthorize" -> doShouldAuthorize()
             "syncDeviceToken" -> doSynchronizeDeviceToken()
             "unregPush" -> doUnregisterFromPush()
+            Command.IMPLICIT_FLOW_AUTHORIZE.description-> doAuthorizeImplicit()
+            Command.IMPLICIT_FLOW_LOGIN.description-> doImplicitOktaSignIn()
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
@@ -410,6 +423,14 @@ class TestBedViewModel :
         } catch (t: Throwable) {
             handleException(t, "indicate typing.")
         }
+    }
+
+    private fun doAuthorizeImplicit() {
+        if (idToken.isEmpty()) {
+            onSocketMessageReceived("Please, first obtain id token from login.")
+            return
+        }
+        client.authorizeImplicit(idToken)
     }
 
     private fun doAuthorize() {
@@ -639,7 +660,7 @@ sealed class AuthState {
     data object NoAuth : AuthState()
 
     data class AuthCodeReceived(val authCode: String) : AuthState()
-
+    data class IdTokenReceived(val idToken: String) : AuthState()
     data object Authorized : AuthState()
 
     data object LoggedOut : AuthState()

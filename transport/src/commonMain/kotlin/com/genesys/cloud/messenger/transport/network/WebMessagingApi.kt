@@ -107,8 +107,8 @@ internal class WebMessagingApi(
 
     suspend fun fetchAuthJwt(
         authCode: String,
-        redirectUri: String,
-        codeVerifier: String?,
+        redirectUri: String? = null,
+        codeVerifier: String? = null,
     ): Result<AuthJwt> =
         try {
             val requestBody = AuthJwtRequest(

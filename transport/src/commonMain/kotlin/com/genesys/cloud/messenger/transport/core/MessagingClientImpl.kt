@@ -382,6 +382,11 @@ internal class MessagingClientImpl(
         }
     }
 
+    override fun authorizeImplicit(idToken : String){
+        invalidateSessionToken()
+        authHandler.authorizeImplicit(idToken)
+    }
+
     override fun authorize(
         authCode: String,
         redirectUri: String,

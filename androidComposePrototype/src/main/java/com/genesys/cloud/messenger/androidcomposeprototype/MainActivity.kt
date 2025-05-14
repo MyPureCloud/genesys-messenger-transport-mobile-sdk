@@ -73,14 +73,13 @@ class MainActivity :
     }
 
     private fun handleOktaRedirect(data: Uri) {
-        // If authcode is present.
         Log.d(TAG, "handleOktaRedirect uri: $data")
         data.getQueryParameter("code")?.let { authCode ->
             viewModel.authCode = authCode
         } ?: run {
             data.getParam("id_token")?.let { idToken ->
                 Log.d(TAG, "handleOktaRedirect id token: $idToken")
-                viewModel.authCode = idToken
+                viewModel.idToken = idToken
             }
         }
         // Otherwise there will be an error.
