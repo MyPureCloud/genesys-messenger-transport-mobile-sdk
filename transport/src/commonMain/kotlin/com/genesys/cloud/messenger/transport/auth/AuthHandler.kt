@@ -11,6 +11,8 @@ internal interface AuthHandler {
 
     fun authorize(authCode: String, redirectUri: String, codeVerifier: String?)
 
+    fun authorizeImplicit(idToken: String)
+
     fun logout()
 
     fun refreshToken(callback: (Result<Empty>) -> Unit)
