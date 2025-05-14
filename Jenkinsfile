@@ -25,14 +25,6 @@ pipeline {
     environment {
         DEPLOYMENT_ID = credentials("messenger-mobile-sdk-deployment-id")
         DEPLOYMENT_DOMAIN = 'inindca.com'
-        OKTA_DOMAIN = ''
-        CLIENT_ID = credentials("messenger-mobile-sdk-okta-client-id")
-        SIGN_IN_REDIRECT_URI = ''
-        SIGN_OUT_REDIRECT_URI = ''
-        OKTA_STATE = credentials("messenger-mobile-sdk-okta-state")
-        CODE_CHALLENGE = ''
-        CODE_CHALLENGE_METHOD = ''
-        CODE_VERIFIER = ''
     }
     stages {
         stage("Prepare") {
@@ -78,10 +70,16 @@ pipeline {
         stage("Continue build") {
             steps {
                 script {
-                    echo "Using okta.properties from previous stage"
                     writeFile file: "${env.WORKSPACE}/okta.properties", text: oktaproperties
-                    echo "okta.properties written successfully."
-                    sh "cat ${env.WORKSPACE}/okta.properties"
+                    def props = readProperties file: "${env.WORKSPACE}/okta.properties"
+                    env.OKTA_DOMAIN = props['OKTA_DOMAIN']
+                    env.CLIENT_ID = props['CLIENT_ID']
+                    env.SIGN_IN_REDIRECT_URI = props['SIGN_IN_REDIRECT_URI']
+                    env.SIGN_OUT_REDIRECT_URI = props['SIGN_OUT_REDIRECT_URI']
+                    env.OKTA_STATE = props['OKTA_STATE']
+                    env.CODE_CHALLENGE = props['CODE_CHALLENGE']
+                    env.CODE_CHALLENGE_METHOD = props['CODE_CHALLENGE_METHOD']
+                    env.CODE_VERIFIER = props['CODE_VERIFIER']
                 }
             }
         }
