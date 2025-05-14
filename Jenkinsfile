@@ -33,10 +33,6 @@ pipeline {
         CODE_CHALLENGE = 'Cc6VZuBMOjDa9wKlFZLK-9lLPr_Q5e7mJsnVooFnBWA'
         CODE_CHALLENGE_METHOD = 'S256'
         CODE_VERIFIER = 'BtNSLgCNFlZPEOodtxgIp7c-SlnC0RaLilxRaYuZ7DI'
-        // HOME = """${sh(
-        //     returnStdout: true,
-        //     script: 'if [ -z "$HOME" ]; then echo "/Users/$(whoami)"; else echo "$HOME"; fi'
-        // ).trim()}"""
     }
     stages {
         stage("Prepare") {
