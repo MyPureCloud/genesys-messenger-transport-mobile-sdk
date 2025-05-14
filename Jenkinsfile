@@ -55,6 +55,12 @@ pipeline {
         }
 
         stage('Get okta.properties') {
+            agent {
+                node {
+                    label 'dev_mesos_v2'
+                    customWorkspace "jenkins-mtsdk-${currentBuild.number}"
+                }
+            }
             steps {
                 script {
                     def pipelineLibrary = library('pipeline-library').com.genesys.jenkins
@@ -66,8 +72,7 @@ pipeline {
                         'okta-properties',
                         env.WORKSPACE
                     )
-                    writeFile file: "${env.WORKSPACE}/okta.properties", text: oktaproperties
-                    echo "okta.properties fetched and written successfully."
+                    echo "okta.properties fetched successfully."
                 }
             }
         }
@@ -76,6 +81,8 @@ pipeline {
             steps {
                 script {
                     echo "Using okta.properties from previous stage"
+                    writeFile file: "${env.WORKSPACE}/okta.properties", text: oktaproperties
+                    echo "okta.properties written successfully."
                     sh "cat ${env.WORKSPACE}/okta.properties"
                 }
             }
