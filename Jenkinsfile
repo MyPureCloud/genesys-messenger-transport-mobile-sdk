@@ -25,6 +25,14 @@ pipeline {
     environment {
         DEPLOYMENT_ID = credentials("messenger-mobile-sdk-deployment-id")
         DEPLOYMENT_DOMAIN = 'inindca.com'
+        OKTA_DOMAIN = ''
+        CLIENT_ID = credentials("messenger-mobile-sdk-okta-client-id")
+        SIGN_IN_REDIRECT_URI = ''
+        SIGN_OUT_REDIRECT_URI = ''
+        OKTA_STATE = credentials("messenger-mobile-sdk-okta-state")
+        CODE_CHALLENGE = ''
+        CODE_CHALLENGE_METHOD = ''
+        CODE_VERIFIER = ''
     }
     stages {
         stage("Prepare") {
