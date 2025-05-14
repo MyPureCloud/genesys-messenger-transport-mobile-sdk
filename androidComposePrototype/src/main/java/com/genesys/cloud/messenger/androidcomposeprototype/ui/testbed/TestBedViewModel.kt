@@ -70,6 +70,18 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             this.authState = authState
         }
 
+    var idToken: String = ""
+        set(value) {
+            field = value
+            val authState = if (value.isNotEmpty()) {
+                onSocketMessageReceived("ID Token: $value")
+                AuthState.IdTokenReceived(value)
+            } else {
+                AuthState.NoAuth
+            }
+            this.authState = authState
+        }
+
     val regions = listOf("inindca.com", "inintca.com", "mypurecloud.com", "usw2.pure.cloud", "mypurecloud.jp", "mypurecloud.com.au", "mypurecloud.de", "euw2.pure.cloud", "cac1.pure.cloud", "apne2.pure.cloud", "aps1.pure.cloud", "sae1.pure.cloud", "mec1.pure.cloud", "apne3.pure.cloud", "euc2.pure.cloud")
     private lateinit var onOktaSingIn: (url: String) -> Unit
     private val quickRepliesMap = mutableMapOf<String, ButtonResponse>()
@@ -142,7 +154,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "attachSavedImage" -> doAttachSavedImage()
             "detach" -> doDetach(input)
             "deployment" -> doDeployment()
-            Command.IMPLICIT_FLOW_LOGIN.description-> doImplicitOktaSignIn()
             "invalidateConversationCache" -> doInvalidateConversationCache()
             "addAttribute" -> doAddCustomAttributes(input)
             "typing" -> doIndicateTyping()
@@ -159,6 +170,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "removeAuthRefreshToken" -> doRemoveAuthRefreshTokenFromVault()
             "stepUp" -> doStepUp()
             "wasAuthenticated" -> doWasAuthenticated()
+            Command.IMPLICIT_FLOW_AUTHORIZE.description-> doAuthorizeImplicit()
+            Command.IMPLICIT_FLOW_LOGIN.description-> doImplicitOktaSignIn()
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
@@ -368,6 +381,14 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
+    private fun doAuthorizeImplicit() {
+        if (idToken.isEmpty()) {
+            onSocketMessageReceived("Please, first obtain id token from login.")
+            return
+        }
+        client.authorizeImplicit(idToken)
+    }
+
     private fun doAuthorize() {
         if (authCode.isEmpty()) {
             onSocketMessageReceived("Please, first obtain authCode from login.")
@@ -546,6 +567,7 @@ private fun String.toKeyValuePair(): Pair<String, String> {
 sealed class AuthState {
     data object NoAuth : AuthState()
     data class AuthCodeReceived(val authCode: String) : AuthState()
+    data class IdTokenReceived(val idToken: String) : AuthState()
     data object Authorized : AuthState()
     data object LoggedOut : AuthState()
     data class Error(

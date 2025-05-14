@@ -33,6 +33,8 @@ internal class AuthHandlerImpl(
     override val jwt: String
         get() = authJwt.jwt
 
+
+
     override fun authorize(authCode: String, redirectUri: String, codeVerifier: String?) {
         dispatcher.launch {
             when (val result = api.fetchAuthJwt(authCode, redirectUri, codeVerifier)) {
@@ -46,6 +48,21 @@ internal class AuthHandlerImpl(
                     }
                 }
                 is Result.Failure -> handleRequestError(result, "fetchAuthJwt()")
+            }
+        }
+    }
+
+    override fun authorizeImplicit(authCode: String) {
+        dispatcher.launch {
+            when (val result = api.fetchAuthJwt(authCode)) {
+                is Result.Success -> {
+                    result.value.let {
+                        authJwt = it
+                        vault.authRefreshToken = NO_REFRESH_TOKEN
+                        eventHandler.onEvent(Event.Authorized)
+                    }
+                }
+                is Result.Failure -> handleRequestError(result, "authorizeImplicit()")
             }
         }
     }
