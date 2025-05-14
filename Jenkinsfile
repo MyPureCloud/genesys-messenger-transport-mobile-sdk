@@ -25,14 +25,6 @@ pipeline {
     environment {
         DEPLOYMENT_ID = credentials("messenger-mobile-sdk-deployment-id")
         DEPLOYMENT_DOMAIN = 'inindca.com'
-        OKTA_DOMAIN = 'dev-2518047.okta.com'
-        CLIENT_ID = credentials("messenger-mobile-sdk-okta-client-id")
-        SIGN_IN_REDIRECT_URI = 'com.okta.dev-2518047://oauth2/code'
-        SIGN_OUT_REDIRECT_URI = 'com.okta.dev-2518047:/'
-        OKTA_STATE = credentials("messenger-mobile-sdk-okta-state")
-        CODE_CHALLENGE = 'Cc6VZuBMOjDa9wKlFZLK-9lLPr_Q5e7mJsnVooFnBWA'
-        CODE_CHALLENGE_METHOD = 'S256'
-        CODE_VERIFIER = 'BtNSLgCNFlZPEOodtxgIp7c-SlnC0RaLilxRaYuZ7DI'
     }
     stages {
         stage("Prepare") {
