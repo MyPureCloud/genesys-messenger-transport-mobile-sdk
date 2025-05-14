@@ -34,52 +34,52 @@ pipeline {
             }
         }
 
+        stage('Get okta.properties') {
+                    agent {
+                        node {
+                            label 'dev_mesos_v2'
+                            customWorkspace "jenkins-mtsdk-${currentBuild.number}"
+                        }
+                    }
+                    steps {
+                        script {
+                            def pipelineLibrary = library('pipeline-library').com.genesys.jenkins
+                            def testing = pipelineLibrary.Testing.new()
+                            oktaproperties = testing.getSecretStashSecret(
+                                'dev',
+                                'us-east-1',
+                                'mobiledx-ios',
+                                'okta-properties',
+                                env.WORKSPACE
+                            )
+                            echo "okta.properties fetched successfully."
+                        }
+                    }
+        }
+
+        stage("Continue build") {
+                    steps {
+                        script {
+                            writeFile file: "${env.WORKSPACE}/okta.properties", text: oktaproperties
+                            def props = readProperties file: "${env.WORKSPACE}/okta.properties"
+                            env.OKTA_DOMAIN = props['OKTA_DOMAIN']
+                            env.CLIENT_ID = props['CLIENT_ID']
+                            env.SIGN_IN_REDIRECT_URI = props['SIGN_IN_REDIRECT_URI']
+                            env.SIGN_OUT_REDIRECT_URI = props['SIGN_OUT_REDIRECT_URI']
+                            env.OKTA_STATE = props['OKTA_STATE']
+                            env.CODE_CHALLENGE = props['CODE_CHALLENGE']
+                            env.CODE_CHALLENGE_METHOD = props['CODE_CHALLENGE_METHOD']
+                            env.CODE_VERIFIER = props['CODE_VERIFIER']
+                        }
+                    }
+        }
+
         stage("CI Static Analysis") {
             parallel {
                 stage("Lint") {
                     steps {
                         sh './gradlew lintKotlin'
                     }
-                }
-            }
-        }
-
-        stage('Get okta.properties') {
-            agent {
-                node {
-                    label 'dev_mesos_v2'
-                    customWorkspace "jenkins-mtsdk-${currentBuild.number}"
-                }
-            }
-            steps {
-                script {
-                    def pipelineLibrary = library('pipeline-library').com.genesys.jenkins
-                    def testing = pipelineLibrary.Testing.new()
-                    oktaproperties = testing.getSecretStashSecret(
-                        'dev',
-                        'us-east-1',
-                        'mobiledx-ios',
-                        'okta-properties',
-                        env.WORKSPACE
-                    )
-                    echo "okta.properties fetched successfully."
-                }
-            }
-        }
-
-        stage("Continue build") {
-            steps {
-                script {
-                    writeFile file: "${env.WORKSPACE}/okta.properties", text: oktaproperties
-                    def props = readProperties file: "${env.WORKSPACE}/okta.properties"
-                    env.OKTA_DOMAIN = props['OKTA_DOMAIN']
-                    env.CLIENT_ID = props['CLIENT_ID']
-                    env.SIGN_IN_REDIRECT_URI = props['SIGN_IN_REDIRECT_URI']
-                    env.SIGN_OUT_REDIRECT_URI = props['SIGN_OUT_REDIRECT_URI']
-                    env.OKTA_STATE = props['OKTA_STATE']
-                    env.CODE_CHALLENGE = props['CODE_CHALLENGE']
-                    env.CODE_CHALLENGE_METHOD = props['CODE_CHALLENGE_METHOD']
-                    env.CODE_VERIFIER = props['CODE_VERIFIER']
                 }
             }
         }
