@@ -571,6 +571,7 @@ internal class MessagingClientImpl(
 
     private fun cleanUp() {
         invalidateConversationCache()
+        messageStore.clear()
         userTypingProvider.clear()
         healthCheckProvider.clear()
         attachmentHandler.clearAll()
