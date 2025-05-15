@@ -7,6 +7,8 @@ import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.EncryptedVault
+import com.genesys.cloud.messenger.transport.utility.FakeVault
+import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.After
@@ -73,12 +75,12 @@ class MessengerTransportSDKTest {
             domain = "testDomain",
             encryptedVault = true
         )
-        val customVault = DefaultVault()
+        val customVault = FakeVault(TestValues.vaultKeys)
 
         // When
         val sdk = MessengerTransportSDK(configuration, customVault)
 
         // Then
-        assertThat(sdk.vault).isInstanceOf(DefaultVault::class.java)
+        assertThat(sdk.vault).isInstanceOf(FakeVault::class.java)
     }
 }

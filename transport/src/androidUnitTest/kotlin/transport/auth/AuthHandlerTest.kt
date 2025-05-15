@@ -41,7 +41,7 @@ import kotlinx.serialization.encodeToString
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import transport.core.FakeVault
+import com.genesys.cloud.messenger.transport.utility.FakeVault
 
 class AuthHandlerTest {
 

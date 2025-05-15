@@ -7,7 +7,7 @@ import assertk.assertions.isInstanceOf
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
-import com.genesys.cloud.messenger.transport.utility.MockVault
+import com.genesys.cloud.messenger.transport.utility.FakeVault
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.ktor.http.Url
 import kotlin.test.Test
@@ -157,13 +157,13 @@ class ConfigurationTest {
             domain = TestValues.DOMAIN,
             encryptedVault = true
         )
-        val mockVault = MockVault()
+        val fakeVault = FakeVault(TestValues.vaultKeys)
 
         // When
-        val sdk = MessengerTransportSDK(configuration, mockVault)
+        val sdk = MessengerTransportSDK(configuration, fakeVault)
 
         // Then
-        assertThat(sdk.vault).isEqualTo(mockVault)
-        assertThat(sdk.vault).isInstanceOf(MockVault::class)
+        assertThat(sdk.vault).isEqualTo(fakeVault)
+        assertThat(sdk.vault).isInstanceOf(FakeVault::class)
     }
 }
