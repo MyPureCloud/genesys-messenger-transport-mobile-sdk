@@ -21,17 +21,14 @@ class MessengerTransportSDKTest {
 
     @Before
     fun setUp() {
-        // Set up context mocking
         every { mockContext.applicationContext } returns mockApplicationContext
         
-        // Set the context in the vault companion objects
         DefaultVault.context = mockContext
         EncryptedVault.context = mockContext
     }
 
     @After
     fun tearDown() {
-        // Clear the context references after each test
         DefaultVault.context = null
         EncryptedVault.context = null
     }
@@ -74,9 +71,9 @@ class MessengerTransportSDKTest {
         val configuration = Configuration(
             deploymentId = "testDeploymentId",
             domain = "testDomain",
-            encryptedVault = true // This would normally create an EncryptedVault
+            encryptedVault = true
         )
-        val customVault = DefaultVault() // But we're providing a DefaultVault
+        val customVault = DefaultVault()
 
         // When
         val sdk = MessengerTransportSDK(configuration, customVault)

@@ -155,7 +155,7 @@ class ConfigurationTest {
         val configuration = Configuration(
             deploymentId = TestValues.DEPLOYMENT_ID,
             domain = TestValues.DOMAIN,
-            encryptedVault = true // This would normally create an EncryptedVault
+            encryptedVault = true
         )
         val mockVault = MockVault()
 

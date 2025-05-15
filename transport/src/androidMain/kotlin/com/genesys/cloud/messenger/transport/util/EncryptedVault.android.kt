@@ -6,11 +6,9 @@ import com.genesys.cloud.messenger.transport.core.InternalVault
 import java.lang.ref.WeakReference
 
 /**
- * Android implementation of EncryptedVault that uses Android KeyStore for secure storage.
- * This implementation uses the InternalVault which provides encryption using Android KeyStore
+ * Android implementation of EncryptedVault that uses Android KeyStore
  * for the encryption keys and stores the encrypted data in SharedPreferences.
  *
- * The encryption is performed using AES/GCM/NoPadding with a 256-bit key stored in the KeyStore.
  */
 actual class EncryptedVault actual constructor(keys: Keys) :
     Vault(keys) {

@@ -51,7 +51,6 @@ internal class InternalVault(
                 apply()
             }
         } catch (e: Exception) {
-            // In case of encryption failure, we don't store anything
             e.printStackTrace()
         }
     }
@@ -67,7 +66,6 @@ internal class InternalVault(
         return try {
             decrypt(encryptedData)
         } catch (e: Exception) {
-            // In case of decryption failure, we return null
             e.printStackTrace()
             null
         }
@@ -162,7 +160,6 @@ internal class InternalVault(
             try {
                 getSecretKey()
             } catch (e: Exception) {
-                // If the key is not accessible, we generate a new one
                 generateSecretKey()
             }
         } else {
@@ -210,12 +207,9 @@ internal class InternalVault(
             keyGenerator.init(keyGenParameterSpec)
             return keyGenerator.generateKey()
         } else {
-            // For API level < 23, use a basic AES key generator
             val keyGenerator = KeyGenerator.getInstance("AES")
             keyGenerator.init(256)
             return keyGenerator.generateKey()
         }
     }
 }
-
-

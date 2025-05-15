@@ -29,24 +29,19 @@ class EncryptedVaultTest {
         authRefreshTokenKey = TestValues.AUTH_REFRESH_TOKEN_KEY,
         wasAuthenticated = TestValues.WAS_AUTHENTICATED
     )
-    private val testKey = "test_key"
-    private val testValue = "test_value"
-
+    private val testKey = TestValues.VAULT_KEY
+    private val testValue = TestValues.VAULT_VALUE
     @Before
     fun setUp() {
-        // Clear all mocks before each test
         clearAllMocks()
         
-        // Set up context mocking
         every { mockContext.applicationContext } returns mockApplicationContext
         every { mockContext.getSharedPreferences(any(), any()) } returns mockSharedPreferences
         every { mockSharedPreferences.edit() } returns mockSharedPreferencesEditor
         every { mockSharedPreferencesEditor.apply() } just Runs
-        
-        // Set the context in the EncryptedVault companion object
+
         EncryptedVault.context = mockContext
-        
-        // Mock InternalVault constructor
+
         mockkConstructor(InternalVault::class)
         every { anyConstructed<InternalVault>().store(any(), any()) } just Runs
         every { anyConstructed<InternalVault>().remove(any()) } just Runs
@@ -54,7 +49,6 @@ class EncryptedVaultTest {
 
     @After
     fun tearDown() {
-        // Clear the context reference after each test
         EncryptedVault.context = null
         unmockkAll()
     }
@@ -62,73 +56,70 @@ class EncryptedVaultTest {
 
     @Test(expected = IllegalStateException::class)
     fun `test initialization throws exception when context is null`() {
-        // Given a null context
+        // Given
         EncryptedVault.context = null
         
-        // When creating an EncryptedVault instance, then it should throw IllegalStateException
+        // When
         EncryptedVault(testKeys)
     }
 
     @Test
     fun `test store delegates to InternalVault`() {
-        // Given an EncryptedVault instance
+        // Given
         val encryptedVault = EncryptedVault(testKeys)
         
-        // When storing a key-value pair
+        // When
         encryptedVault.store(testKey, testValue)
         
-        // Then it should delegate to InternalVault
+        // Then
         verify { anyConstructed<InternalVault>().store(testKey, testValue) }
     }
 
     @Test
     fun `test fetch delegates to InternalVault`() {
-        // Given an EncryptedVault instance and a mocked return value
+        // Given
         val encryptedVault = EncryptedVault(testKeys)
         every { anyConstructed<InternalVault>().fetch(testKey) } returns testValue
         
-        // When fetching a value
+        // When
         val result = encryptedVault.fetch(testKey)
         
-        // Then it should delegate to InternalVault and return the expected value
+        // Then
         verify { anyConstructed<InternalVault>().fetch(testKey) }
         assertThat(result).isEqualTo(testValue)
     }
 
     @Test
     fun `test fetch returns null when key doesn't exist`() {
-        // Given an EncryptedVault instance and a mocked null return value
+        // Given
         val encryptedVault = EncryptedVault(testKeys)
         every { anyConstructed<InternalVault>().fetch(testKey) } returns null
         
-        // When fetching a non-existent key
+        // When
         val result = encryptedVault.fetch(testKey)
         
-        // Then it should return null
+        // Then
         assertThat(result).isNull()
     }
 
     @Test
     fun `test remove delegates to InternalVault`() {
-        // Given an EncryptedVault instance
+        // Given
         val encryptedVault = EncryptedVault(testKeys)
         
-        // When removing a key
+        // When
         encryptedVault.remove(testKey)
         
-        // Then it should delegate to InternalVault
+        // Then
         verify { anyConstructed<InternalVault>().remove(testKey) }
     }
 
     @Test
     fun `test context setter uses application context`() {
-        // When setting the context
         EncryptedVault.context = mockContext
         
-        // Then it should store a WeakReference to the application context
+        // Then
         verify { mockContext.applicationContext }
-        
-        // And the context getter should return the application context
         assertThat(EncryptedVault.context).isEqualTo(mockApplicationContext)
     }
 }

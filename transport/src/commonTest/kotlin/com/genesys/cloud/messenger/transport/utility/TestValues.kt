@@ -22,6 +22,7 @@ object TestValues {
     internal const val RECONNECTION_TIMEOUT = 5000L
     internal const val NO_RECONNECTION_ATTEMPTS = 0L
     internal const val VAULT_KEY = "vault_key"
+    internal const val VAULT_VALUE = "vault_value"
     internal const val TOKEN_KEY = "token_key"
     internal const val AUTH_REFRESH_TOKEN_KEY = "auth_refresh_token_key"
     internal const val WAS_AUTHENTICATED = "was_authenticated"
@@ -31,6 +32,11 @@ object TestValues {
     internal val advancedMap = mapOf("metadata" to """{"key":"value"}""")
     internal val advancedSecureMap = mapOf("metadata" to """***********ue"}""")
     internal const val DEFAULT_STRING = "any string"
+    internal val VAULT_IV = byteArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+    internal val VAULT_ENCRYPTED_BYTES = byteArrayOf(20, 21, 22, 23, 24, 25)
+    internal const val VAULT_BASE64 = "base64EncodedString"
+    internal const val VAULT_SEPARATOR = "]"
+    internal const val SERVICE_NAME = "testServiceName"
     internal val vaultKeys = Vault.Keys(
         vaultKey = com.genesys.cloud.messenger.transport.util.VAULT_KEY,
         tokenKey = com.genesys.cloud.messenger.transport.util.TOKEN_KEY,
