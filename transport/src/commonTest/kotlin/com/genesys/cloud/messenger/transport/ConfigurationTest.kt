@@ -151,7 +151,6 @@ class ConfigurationTest {
 
     @Test
     fun `should use custom vault when provided regardless of encryptedVault setting`() {
-        // Given
         val configuration = Configuration(
             deploymentId = TestValues.DEPLOYMENT_ID,
             domain = TestValues.DOMAIN,
@@ -159,10 +158,8 @@ class ConfigurationTest {
         )
         val fakeVault = FakeVault(TestValues.vaultKeys)
 
-        // When
         val sdk = MessengerTransportSDK(configuration, fakeVault)
 
-        // Then
         assertThat(sdk.vault).isEqualTo(fakeVault)
         assertThat(sdk.vault).isInstanceOf(FakeVault::class)
     }

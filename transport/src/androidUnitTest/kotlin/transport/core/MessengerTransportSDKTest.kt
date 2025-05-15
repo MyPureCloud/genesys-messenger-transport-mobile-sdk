@@ -37,39 +37,32 @@ class MessengerTransportSDKTest {
 
     @Test
     fun `should create DefaultVault when encryptedVault is false`() {
-        // Given
         val configuration = Configuration(
             deploymentId = "testDeploymentId",
             domain = "testDomain",
             encryptedVault = false
         )
 
-        // When
         val sdk = MessengerTransportSDK(configuration)
 
-        // Then
         assertThat(sdk.vault).isInstanceOf(DefaultVault::class.java)
     }
 
     @Test
     fun `should create EncryptedVault when encryptedVault is true`() {
-        // Given
         val configuration = Configuration(
             deploymentId = "testDeploymentId",
             domain = "testDomain",
             encryptedVault = true
         )
 
-        // When
         val sdk = MessengerTransportSDK(configuration)
 
-        // Then
         assertThat(sdk.vault).isInstanceOf(EncryptedVault::class.java)
     }
 
     @Test
     fun `should use provided vault regardless of encryptedVault setting`() {
-        // Given
         val configuration = Configuration(
             deploymentId = "testDeploymentId",
             domain = "testDomain",
@@ -77,10 +70,8 @@ class MessengerTransportSDKTest {
         )
         val customVault = FakeVault(TestValues.vaultKeys)
 
-        // When
         val sdk = MessengerTransportSDK(configuration, customVault)
 
-        // Then
         assertThat(sdk.vault).isInstanceOf(FakeVault::class.java)
     }
 }

@@ -56,61 +56,47 @@ class EncryptedVaultTest {
 
     @Test(expected = IllegalStateException::class)
     fun `test initialization throws exception when context is null`() {
-        // Given
         EncryptedVault.context = null
         
-        // When
         EncryptedVault(testKeys)
     }
 
     @Test
     fun `test store delegates to InternalVault`() {
-        // Given
         val encryptedVault = EncryptedVault(testKeys)
         
-        // When
         encryptedVault.store(testKey, testValue)
         
-        // Then
         verify { anyConstructed<InternalVault>().store(testKey, testValue) }
     }
 
     @Test
     fun `test fetch delegates to InternalVault`() {
-        // Given
         val encryptedVault = EncryptedVault(testKeys)
         every { anyConstructed<InternalVault>().fetch(testKey) } returns testValue
         
-        // When
         val result = encryptedVault.fetch(testKey)
         
-        // Then
         verify { anyConstructed<InternalVault>().fetch(testKey) }
         assertThat(result).isEqualTo(testValue)
     }
 
     @Test
     fun `test fetch returns null when key doesn't exist`() {
-        // Given
         val encryptedVault = EncryptedVault(testKeys)
         every { anyConstructed<InternalVault>().fetch(testKey) } returns null
         
-        // When
         val result = encryptedVault.fetch(testKey)
         
-        // Then
         assertThat(result).isNull()
     }
 
     @Test
     fun `test remove delegates to InternalVault`() {
-        // Given
         val encryptedVault = EncryptedVault(testKeys)
         
-        // When
         encryptedVault.remove(testKey)
         
-        // Then
         verify { anyConstructed<InternalVault>().remove(testKey) }
     }
 
@@ -118,7 +104,6 @@ class EncryptedVaultTest {
     fun `test context setter uses application context`() {
         EncryptedVault.context = mockContext
         
-        // Then
         verify { mockContext.applicationContext }
         assertThat(EncryptedVault.context).isEqualTo(mockApplicationContext)
     }

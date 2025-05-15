@@ -70,10 +70,8 @@ class InternalVaultTest {
         every { mockCipher.doFinal(any<ByteArray>()) } returns givenTestEncryptedBytes
         every { Base64.encodeToString(any(), Base64.DEFAULT) } returns testBase64
         
-        // When
         subject.store(testKey, testValue)
 
-        // Then
         verifySequence {
             mockCipher.init(Cipher.ENCRYPT_MODE, mockSecretKey)
             mockCipher.iv
@@ -87,14 +85,11 @@ class InternalVaultTest {
     @Test
     fun `test store handles encryption exceptions gracefully`() {
         val testMockKeyStore = mockk<KeyStore>(relaxed = true)
-        
         every { KeyStore.getInstance(any()) } returns testMockKeyStore
         every { testMockKeyStore.load(null) } throws KeyStoreException("Test exception")
         
-        // When
         subject.store(testKey, testValue)
         
-        // Then
         verify(exactly = 0) { mockSharedPreferencesEditor.putString(any(), any()) }
     }
     
@@ -104,17 +99,14 @@ class InternalVaultTest {
         every { Base64.decode(testBase64, Base64.DEFAULT) } returns givenTestCombined
         every { mockCipher.doFinal(any<ByteArray>()) } returns testValue.toByteArray(Charsets.UTF_8)
 
-        // when
         val result = subject.fetch(testKey)
 
-        // then
         verifySequence {
             mockSharedPreferences.getString(testKey, null)
             Base64.decode(testBase64, Base64.DEFAULT)
             mockCipher.init(Cipher.DECRYPT_MODE, mockSecretKey, any<GCMParameterSpec>())
             mockCipher.doFinal(any<ByteArray>())
         }
-
         assertThat(result).isEqualTo(testValue)
     }
     
@@ -122,10 +114,8 @@ class InternalVaultTest {
     fun `test fetch returns null when key doesn't exist`() {
         every { mockSharedPreferences.getString(testKey, null) } returns null
         
-        // When
         val result = subject.fetch(testKey)
         
-        // Then
         assertThat(result).isNull()
         verify { mockSharedPreferences.getString(testKey, null) }
     }
@@ -135,19 +125,15 @@ class InternalVaultTest {
         every { mockSharedPreferences.getString(testKey, null) } returns testBase64
         every { Base64.decode(testBase64, Base64.DEFAULT) } throws IllegalArgumentException("Invalid base64")
         
-        // When
         val result = subject.fetch(testKey)
         
-        // Then
         assertThat(result).isNull()
     }
     
     @Test
     fun `test remove deletes key from SharedPreferences`() {
-        // When
         subject.remove(testKey)
         
-        // Then
         verify { mockSharedPreferencesEditor.remove(testKey) }
         verify { mockSharedPreferencesEditor.apply() }
     }
@@ -155,29 +141,23 @@ class InternalVaultTest {
     @Test
     fun `test fetch with invalid data format returns null`() {
         val invalidData = byteArrayOf(1, 2, 3, 4, 5)
-        
         every { mockSharedPreferences.getString(testKey, null) } returns testBase64
         every { Base64.decode(testBase64, Base64.DEFAULT) } returns invalidData
         
-        // When
         val result = subject.fetch(testKey)
         
-        // Then
         assertThat(result).isNull()
     }
     
     @Test
     fun `test store with empty value`() {
         val emptyValue = ""
-        
         every { mockCipher.iv } returns givenTestIv
         every { mockCipher.doFinal(any<ByteArray>()) } returns givenTestEncryptedBytes
         every { Base64.encodeToString(any(), Base64.DEFAULT) } returns testBase64
         
-        // When
         subject.store(testKey, emptyValue)
         
-        // Then
         verify { mockCipher.doFinal(emptyValue.toByteArray(Charsets.UTF_8)) }
         verify { mockSharedPreferencesEditor.putString(testKey, testBase64) }
     }
@@ -189,10 +169,8 @@ class InternalVaultTest {
         every { mockCipher.init(Cipher.DECRYPT_MODE, mockSecretKey, any<GCMParameterSpec>()) } throws
             Exception("Cipher initialization failed")
 
-        // When
         val result = subject.fetch(testKey)
 
-        // Then
         assertThat(result).isNull()
     }
 }
