@@ -49,7 +49,7 @@ pipeline {
                                 'dev',
                                 'us-east-1',
                                 'transportsdk',
-                                'okta-properties',
+                                'okta.properties',
                                 env.WORKSPACE
                             )
                             echo "okta.properties fetched successfully."
