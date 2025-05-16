@@ -289,6 +289,7 @@ open class BaseMessagingClientTest {
 
     protected fun verifyCleanUp() {
         mockMessageStore.invalidateConversationCache()
+        mockMessageStore.clear()
         mockAttachmentHandler.clearAll()
         mockReconnectionHandler.clear()
         mockJwtHandler.clear()
