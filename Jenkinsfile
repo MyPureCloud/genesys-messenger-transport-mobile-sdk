@@ -48,7 +48,7 @@ pipeline {
                             oktaproperties = testing.getSecretStashSecret(
                                 'dev',
                                 'us-east-1',
-                                'transportsdk',
+                                'mobiledx-android',
                                 'okta-properties',
                                 env.WORKSPACE
                             )
