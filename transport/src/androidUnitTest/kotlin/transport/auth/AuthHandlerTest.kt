@@ -24,6 +24,7 @@ import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
+import com.genesys.cloud.messenger.transport.utility.FakeVault
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -41,7 +42,6 @@ import kotlinx.serialization.encodeToString
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import com.genesys.cloud.messenger.transport.utility.FakeVault
 
 class AuthHandlerTest {
 

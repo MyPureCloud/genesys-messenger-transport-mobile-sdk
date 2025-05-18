@@ -50,7 +50,6 @@ class MessengerTransportSDK(
                 DefaultVault()
             }
         }
-
     }
 
     constructor(configuration: Configuration) : this(
@@ -71,7 +70,6 @@ class MessengerTransportSDK(
         vault = vault,
         tokenStore = null,
     )
-
 
     /**
      * Creates an instance of [MessagingClient] based on the provided configuration.

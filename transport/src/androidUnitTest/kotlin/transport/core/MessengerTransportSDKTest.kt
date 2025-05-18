@@ -24,7 +24,7 @@ class MessengerTransportSDKTest {
     @Before
     fun setUp() {
         every { mockContext.applicationContext } returns mockApplicationContext
-        
+
         DefaultVault.context = mockContext
         EncryptedVault.context = mockContext
     }

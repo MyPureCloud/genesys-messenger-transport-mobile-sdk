@@ -9,7 +9,14 @@ import com.genesys.cloud.messenger.transport.core.InternalVault
 import com.genesys.cloud.messenger.transport.util.EncryptedVault
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.utility.TestValues
-import io.mockk.*
+import io.mockk.Runs
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.mockkConstructor
+import io.mockk.unmockkAll
+import io.mockk.verify
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -34,7 +41,7 @@ class EncryptedVaultTest {
     @Before
     fun setUp() {
         clearAllMocks()
-        
+
         every { mockContext.applicationContext } returns mockApplicationContext
         every { mockContext.getSharedPreferences(any(), any()) } returns mockSharedPreferences
         every { mockSharedPreferences.edit() } returns mockSharedPreferencesEditor
@@ -53,20 +60,19 @@ class EncryptedVaultTest {
         unmockkAll()
     }
 
-
     @Test(expected = IllegalStateException::class)
     fun `test initialization throws exception when context is null`() {
         EncryptedVault.context = null
-        
+
         EncryptedVault(testKeys)
     }
 
     @Test
     fun `test store delegates to InternalVault`() {
         val encryptedVault = EncryptedVault(testKeys)
-        
+
         encryptedVault.store(testKey, testValue)
-        
+
         verify { anyConstructed<InternalVault>().store(testKey, testValue) }
     }
 
@@ -74,9 +80,9 @@ class EncryptedVaultTest {
     fun `test fetch delegates to InternalVault`() {
         val encryptedVault = EncryptedVault(testKeys)
         every { anyConstructed<InternalVault>().fetch(testKey) } returns testValue
-        
+
         val result = encryptedVault.fetch(testKey)
-        
+
         verify { anyConstructed<InternalVault>().fetch(testKey) }
         assertThat(result).isEqualTo(testValue)
     }
@@ -85,25 +91,25 @@ class EncryptedVaultTest {
     fun `test fetch returns null when key doesn't exist`() {
         val encryptedVault = EncryptedVault(testKeys)
         every { anyConstructed<InternalVault>().fetch(testKey) } returns null
-        
+
         val result = encryptedVault.fetch(testKey)
-        
+
         assertThat(result).isNull()
     }
 
     @Test
     fun `test remove delegates to InternalVault`() {
         val encryptedVault = EncryptedVault(testKeys)
-        
+
         encryptedVault.remove(testKey)
-        
+
         verify { anyConstructed<InternalVault>().remove(testKey) }
     }
 
     @Test
     fun `test context setter uses application context`() {
         EncryptedVault.context = mockContext
-        
+
         verify { mockContext.applicationContext }
         assertThat(EncryptedVault.context).isEqualTo(mockApplicationContext)
     }

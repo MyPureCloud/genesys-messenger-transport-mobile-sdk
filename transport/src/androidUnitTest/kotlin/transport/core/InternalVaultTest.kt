@@ -2,21 +2,29 @@ package transport.core
 
 import android.content.SharedPreferences
 import android.util.Base64
+import assertk.assertThat
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.core.InternalVault
 import com.genesys.cloud.messenger.transport.utility.TestValues
-import io.mockk.*
+import io.mockk.Runs
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
+import io.mockk.verify
+import io.mockk.verifySequence
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import java.security.KeyStore
+import java.security.KeyStoreException
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
-import assertk.assertThat
-import assertk.assertions.isEqualTo
-import assertk.assertions.isNull
-import java.security.KeyStoreException
 
 class InternalVaultTest {
 
@@ -36,11 +44,11 @@ class InternalVaultTest {
         givenTestIv + TestValues.VAULT_SEPARATOR.toByteArray(Charsets.UTF_8) + givenTestEncryptedBytes
 
     private lateinit var subject: InternalVault
-    
+
     @Before
     fun setUp() {
         clearAllMocks()
-        
+
         every { mockSharedPreferences.edit() } returns mockSharedPreferencesEditor
         every { mockSharedPreferencesEditor.putString(any(), any()) } returns mockSharedPreferencesEditor
         every { mockSharedPreferencesEditor.remove(any()) } returns mockSharedPreferencesEditor
@@ -58,18 +66,18 @@ class InternalVaultTest {
 
         subject = InternalVault(TestValues.SERVICE_NAME, mockSharedPreferences)
     }
-    
+
     @After
     fun tearDown() {
         unmockkAll()
     }
-    
+
     @Test
     fun `test store saves encrypted value to SharedPreferences`() {
         every { mockCipher.iv } returns givenTestIv
         every { mockCipher.doFinal(any<ByteArray>()) } returns givenTestEncryptedBytes
         every { Base64.encodeToString(any(), Base64.DEFAULT) } returns testBase64
-        
+
         subject.store(testKey, testValue)
 
         verifySequence {
@@ -81,18 +89,18 @@ class InternalVaultTest {
             mockSharedPreferencesEditor.apply()
         }
     }
-    
+
     @Test
     fun `test store handles encryption exceptions gracefully`() {
         val testMockKeyStore = mockk<KeyStore>(relaxed = true)
         every { KeyStore.getInstance(any()) } returns testMockKeyStore
         every { testMockKeyStore.load(null) } throws KeyStoreException("Test exception")
-        
+
         subject.store(testKey, testValue)
-        
+
         verify(exactly = 0) { mockSharedPreferencesEditor.putString(any(), any()) }
     }
-    
+
     @Test
     fun `test fetch returns decrypted value from SharedPreferences`() {
         every { mockSharedPreferences.getString(testKey, null) } returns testBase64
@@ -109,59 +117,59 @@ class InternalVaultTest {
         }
         assertThat(result).isEqualTo(testValue)
     }
-    
+
     @Test
     fun `test fetch returns null when key doesn't exist`() {
         every { mockSharedPreferences.getString(testKey, null) } returns null
-        
+
         val result = subject.fetch(testKey)
-        
+
         assertThat(result).isNull()
         verify { mockSharedPreferences.getString(testKey, null) }
     }
-    
+
     @Test
     fun `test fetch returns null when decryption fails`() {
         every { mockSharedPreferences.getString(testKey, null) } returns testBase64
         every { Base64.decode(testBase64, Base64.DEFAULT) } throws IllegalArgumentException("Invalid base64")
-        
+
         val result = subject.fetch(testKey)
-        
+
         assertThat(result).isNull()
     }
-    
+
     @Test
     fun `test remove deletes key from SharedPreferences`() {
         subject.remove(testKey)
-        
+
         verify { mockSharedPreferencesEditor.remove(testKey) }
         verify { mockSharedPreferencesEditor.apply() }
     }
-    
+
     @Test
     fun `test fetch with invalid data format returns null`() {
         val invalidData = byteArrayOf(1, 2, 3, 4, 5)
         every { mockSharedPreferences.getString(testKey, null) } returns testBase64
         every { Base64.decode(testBase64, Base64.DEFAULT) } returns invalidData
-        
+
         val result = subject.fetch(testKey)
-        
+
         assertThat(result).isNull()
     }
-    
+
     @Test
     fun `test store with empty value`() {
         val emptyValue = ""
         every { mockCipher.iv } returns givenTestIv
         every { mockCipher.doFinal(any<ByteArray>()) } returns givenTestEncryptedBytes
         every { Base64.encodeToString(any(), Base64.DEFAULT) } returns testBase64
-        
+
         subject.store(testKey, emptyValue)
-        
+
         verify { mockCipher.doFinal(emptyValue.toByteArray(Charsets.UTF_8)) }
         verify { mockSharedPreferencesEditor.putString(testKey, testBase64) }
     }
-    
+
     @Test
     fun `test cipher initialization failure during decryption returns null`() {
         every { mockSharedPreferences.getString(testKey, null) } returns testBase64
