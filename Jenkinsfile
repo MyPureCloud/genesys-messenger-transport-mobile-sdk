@@ -4,6 +4,7 @@ def isReleaseBranch() { env.BRANCH_NAME.startsWith('release/') }
 def isFeatureBranch() { env.BRANCH_NAME.startsWith('feature/') }
 
 def oktaproperties = ''
+def googleservices = ''
 
 void setBuildStatus(String message, String state) {
   step([
@@ -56,8 +57,6 @@ pipeline {
                         }
                     }
         }
-
-        def googleservices = ''
 
         stage('Get google-services.json') {
             agent {
