@@ -48,7 +48,7 @@ pipeline {
                             oktaproperties = testing.getSecretStashSecret(
                                 'dev',
                                 'us-east-1',
-                                'mobiledx-ios',
+                                'transportsdk',
                                 'okta-properties',
                                 env.WORKSPACE
                             )
@@ -57,10 +57,36 @@ pipeline {
                     }
         }
 
+        def googleservices = ''
+
+        stage('Get google-services.json') {
+            agent {
+                node {
+                    label 'dev_mesos_v2'
+                    customWorkspace "jenkins-mtsdk-${currentBuild.number}"
+                }
+            }
+            steps {
+                script {
+                    def pipelineLibrary = library('pipeline-library').com.genesys.jenkins
+                    def testing = pipelineLibrary.Testing.new()
+                    googleservices = testing.getSecretStashSecret(
+                        'dev',
+                        'us-east-1',
+                        'transportsdk',
+                        'google-services-transport',
+                        env.WORKSPACE
+                    )
+                    echo "google-services.json fetched successfully."
+                }
+            }
+        }
+
         stage("Continue build") {
                     steps {
                         script {
                             writeFile file: "${env.WORKSPACE}/okta.properties", text: oktaproperties
+                            writeFile file: "${env.WORKSPACE}/androidComposePrototype/google-services.json", text: googleservices
                             def props = readProperties file: "${env.WORKSPACE}/okta.properties"
                             env.OKTA_DOMAIN = props['OKTA_DOMAIN']
                             env.CLIENT_ID = props['CLIENT_ID']
