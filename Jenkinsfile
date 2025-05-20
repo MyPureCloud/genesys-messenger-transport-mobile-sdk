@@ -34,28 +34,27 @@ pipeline {
                 setBuildStatus("Preparing", "PENDING")
             }
         }
-
         stage('Get okta.properties') {
-                    agent {
-                        node {
-                            label 'dev_mesos_v2'
-                            customWorkspace "jenkins-mtsdk-${currentBuild.number}"
-                        }
-                    }
-                    steps {
-                        script {
-                            def pipelineLibrary = library('pipeline-library').com.genesys.jenkins
-                            def testing = pipelineLibrary.Testing.new()
-                            oktaproperties = testing.getSecretStashSecret(
-                                'dev',
-                                'us-east-1',
-                                'transportsdk',
-                                'okta-properties',
-                                env.WORKSPACE
-                            )
-                            echo "okta.properties fetched successfully."
-                        }
-                    }
+            agent {
+                node {
+                    label 'dev_mesos_v2'
+                    customWorkspace "jenkins-mtsdk-${currentBuild.number}"
+                }
+            }
+            steps {
+                script {
+                    def pipelineLibrary = library('pipeline-library').com.genesys.jenkins
+                    def testing = pipelineLibrary.Testing.new()
+                    oktaproperties = testing.getSecretStashSecret(
+                        'dev',
+                        'us-east-1',
+                        'transportsdk',
+                        'okta.properties',
+                        env.WORKSPACE
+                    )
+                    echo "okta.properties fetched successfully."
+                }
+            }
         }
 
         stage('Get google-services.json') {
