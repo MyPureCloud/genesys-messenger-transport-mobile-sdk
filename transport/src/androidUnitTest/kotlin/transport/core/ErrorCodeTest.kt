@@ -125,6 +125,9 @@ internal class ErrorCodeTest {
         assertThat(pushErrorResponseWith(TestValues.DEFAULT_STRING).toErrorCode()).isEqualTo(
             ErrorCode.DeviceTokenOperationFailure
         )
+        assertThat(pushErrorResponseWith("identity.resolution.disabled").toErrorCode()).isEqualTo(
+            ErrorCode.DeviceRegistrationFailure
+        )
     }
 
     private fun randomCodeExcludingKnown(): Int {

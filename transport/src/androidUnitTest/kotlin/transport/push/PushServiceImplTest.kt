@@ -329,7 +329,7 @@ class PushServiceImplTest {
 
     @Test
     fun `when register() resulted in Failure due to identity resolution error`() {
-        testRegistrationWithError(ErrorCode.IdentityResolutionDisabled)
+        testRegistrationWithError(ErrorCode.DeviceRegistrationFailure)
     }
 
     @Test
