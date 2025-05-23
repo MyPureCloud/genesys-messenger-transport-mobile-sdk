@@ -39,7 +39,8 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
     private fun goToTestBedView() {
         setContentView(R.layout.activity_main)
-        supportFragmentManager.beginTransaction()
+        supportFragmentManager
+            .beginTransaction()
             .replace(R.id.main_container, TestBedFragment())
             .commit()
     }
