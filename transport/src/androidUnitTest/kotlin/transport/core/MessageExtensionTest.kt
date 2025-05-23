@@ -7,6 +7,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import assertk.assertions.size
 import com.genesys.cloud.messenger.transport.core.Attachment
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
@@ -49,6 +50,7 @@ import com.genesys.cloud.messenger.transport.util.extensions.toFileAttachmentPro
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
+import com.genesys.cloud.messenger.transport.utility.CardTestValues
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.StructuredMessageValues
@@ -957,5 +959,41 @@ internal class MessageExtensionTest {
         val result = givenText.sanitizeCustomAttributes()
 
         assertThat(result).isEqualTo(expectedText)
+    }
+
+    @Test
+    fun `when StructuredMessage has CardContent then messageType is Carousel and card is mapped`() {
+        val givenStructuredMessage = CardTestValues.createStructuredMessageWithCardContent()
+
+        val expectedMessageType = Message.Type.Carousel
+        val expectedCardTitle = CardTestValues.title
+        val expectedActionText = CardTestValues.text
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result.messageType).isEqualTo(expectedMessageType)
+        assertThat(result.cards).size().isEqualTo(TestValues.DEFAULT_NUMBER)
+        assertThat(result.cards.first().title).isEqualTo(expectedCardTitle)
+        assertThat(result.cards.first().actions.first().text).isEqualTo(expectedActionText)
+    }
+
+    @Test
+    fun `when StructuredMessage has CarouselContent then messageType is Carousel and cards are mapped`() {
+        val givenTitles = listOf("Card One", "Card Two")
+        val expectedTitles = listOf("CardOne", "CardTwo")
+        val expectedActionText = "Open"
+
+        val givenStructuredMessage = CardTestValues.createStructuredMessageWithCarouselContent(
+            titles = givenTitles,
+            lastCardActionText = expectedActionText
+        )
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result.messageType).isEqualTo(Message.Type.Carousel)
+        assertThat(result.cards).size().isEqualTo(givenTitles.size)
+        assertThat(result.cards[0].title).isEqualTo(expectedTitles[0])
+        assertThat(result.cards[1].title).isEqualTo(expectedTitles[1])
+        assertThat(result.cards[1].actions.first().text).isEqualTo(expectedActionText)
     }
 }
