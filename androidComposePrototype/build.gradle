@@ -101,6 +101,9 @@ android {
         }
     }
     namespace 'com.genesys.cloud.messenger.androidcomposeprototype'
+    lintOptions {
+        checkTestSources false
+    }
 }
 
 dependencies {
