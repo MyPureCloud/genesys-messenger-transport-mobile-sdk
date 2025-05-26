@@ -167,7 +167,6 @@ internal class MessagingClientImpl(
         validateDeploymentConfig()
         connectAuthenticated = false
         stateMachine.onConnect()
-        SessionDurationUseCase.updateSessionExpirationNoticeInterval(configuration.sessionExpirationNoticeInterval)
         webSocket.openSocket(socketListener)
     }
 
@@ -411,6 +410,7 @@ internal class MessagingClientImpl(
             reconnectionHandler.clear()
             jwtHandler.clear()
             internalCustomAttributesStore.maxCustomDataBytes = this.maxCustomDataBytes
+            SessionDurationUseCase.updateSessionExpirationNoticeInterval(configuration.sessionExpirationNoticeInterval)
             synchronizePushService()
             if (readOnly) {
                 stateMachine.onReadOnly()
