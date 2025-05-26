@@ -9,6 +9,7 @@ import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
+import com.genesys.cloud.messenger.transport.core.sessionduration.SessionDurationUseCase
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
@@ -52,7 +53,6 @@ import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.encodeToString
 import kotlin.reflect.KProperty0
 
 private const val MAX_RECONFIGURE_ATTEMPTS = 3
@@ -387,6 +387,7 @@ internal class MessagingClientImpl(
         reconnectionHandler.clear()
         jwtHandler.clear()
         internalCustomAttributesStore.maxCustomDataBytes = this.maxCustomDataBytes
+        SessionDurationUseCase.updateSessionExpirationNoticeInterval(configuration.sessionExpirationNoticeInterval)
         if (readOnly) {
             stateMachine.onReadOnly()
             if (!connected && isStartingANewSession) {
@@ -409,12 +410,12 @@ internal class MessagingClientImpl(
         when (code) {
             is ErrorCode.SessionHasExpired,
             is ErrorCode.SessionNotFound,
-            -> transitionToStateError(code, message)
+                -> transitionToStateError(code, message)
 
             is ErrorCode.MessageTooLong,
             is ErrorCode.RequestRateTooHigh,
             is ErrorCode.CustomAttributeSizeTooLarge,
-            -> {
+                -> {
                 if (code is ErrorCode.CustomAttributeSizeTooLarge) {
                     internalCustomAttributesStore.onError()
                     if (sendingAutostart) {
@@ -437,7 +438,7 @@ internal class MessagingClientImpl(
             is ErrorCode.ClientResponseError,
             is ErrorCode.ServerResponseError,
             is ErrorCode.RedirectResponseError,
-            -> {
+                -> {
                 if (stateMachine.isConnected() || stateMachine.isReconnecting() || isStartingANewSession) {
                     handleConfigureSessionErrorResponse(code, message)
                 } else {
