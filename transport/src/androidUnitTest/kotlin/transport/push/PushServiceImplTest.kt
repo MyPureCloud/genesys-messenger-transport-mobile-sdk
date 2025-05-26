@@ -227,7 +227,11 @@ class PushServiceImplTest {
             mockVault.remove(TestValues.vaultKeys.pushConfigKey)
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.UNREGISTERING_DEVICE)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.deviceTokenWasDeleted(expectedUserConfig))
+        assertThat(logSlot[1].invoke()).isEqualTo(
+            LogMessages.deviceTokenWasDeleted(
+                expectedUserConfig
+            )
+        )
     }
 
     @Test
@@ -291,36 +295,17 @@ class PushServiceImplTest {
 
     @Test
     fun `when register() resulted in Failure due to ErrorCode DeviceNotFound`() {
-        every { mockPushConfigComparator.compare(any(), any()) } returns Diff.NO_TOKEN
-        mockResultFailureWith(DeviceTokenOperation.Register, ErrorCode.DeviceNotFound)
-        val expectedUserConfig = PushTestValues.CONFIG
-        val expectedStoredConfig = DEFAULT_PUSH_CONFIG
-        val expectedOperation = DeviceTokenOperation.Register
-
-        assertFailsWith<DeviceTokenException> {
-            runBlocking {
-                subject.synchronize(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
-            }
-        }
-
-        coVerifySequence {
-            syncSequence(expectedUserConfig, expectedStoredConfig)
-            mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
-            mockLogger.e(capture(logSlot))
-        }
-        assertBaseSynchronizeLogsFor(Diff.NO_TOKEN)
-        assertThat(logSlot[2].invoke()).isEqualTo(
-            LogMessages.failedToSynchronizeDeviceToken(
-                PushTestValues.CONFIG,
-                ErrorCode.DeviceNotFound
-            )
-        )
+        testRegistrationWithError(ErrorCode.DeviceNotFound)
     }
 
     @Test
     fun `when register() resulted in Failure due to any ErrorCode`() {
+        testRegistrationWithError(ErrorCode.DeviceAlreadyRegistered)
+    }
+
+    private fun testRegistrationWithError(errorCode: ErrorCode) {
         every { mockPushConfigComparator.compare(any(), any()) } returns Diff.NO_TOKEN
-        mockResultFailureWith(DeviceTokenOperation.Register, ErrorCode.DeviceAlreadyRegistered)
+        mockResultFailureWith(DeviceTokenOperation.Register, errorCode)
         val expectedUserConfig = PushTestValues.CONFIG
         val expectedStoredConfig = DEFAULT_PUSH_CONFIG
         val expectedOperation = DeviceTokenOperation.Register
@@ -338,11 +323,13 @@ class PushServiceImplTest {
         }
         assertBaseSynchronizeLogsFor(Diff.NO_TOKEN)
         assertThat(logSlot[2].invoke()).isEqualTo(
-            LogMessages.failedToSynchronizeDeviceToken(
-                PushTestValues.CONFIG,
-                ErrorCode.DeviceAlreadyRegistered
-            )
+            LogMessages.failedToSynchronizeDeviceToken(PushTestValues.CONFIG, errorCode)
         )
+    }
+
+    @Test
+    fun `when register() resulted in Failure due to identity resolution error`() {
+        testRegistrationWithError(ErrorCode.DeviceRegistrationFailure)
     }
 
     @Test

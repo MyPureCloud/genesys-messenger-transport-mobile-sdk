@@ -33,6 +33,7 @@ sealed class ErrorCode(val code: Int) {
     data object RefreshAuthTokenFailure : ErrorCode(6003)
     data object HistoryFetchFailure : ErrorCode(6004)
     data object ClearConversationFailure : ErrorCode(6005)
+
     // Push
     data object DeviceTokenOperationFailure : ErrorCode(6020)
     data object DeviceAlreadyRegistered : ErrorCode(6021)
@@ -103,9 +104,12 @@ object ErrorMessage {
     fun detachFailed(attachmentId: String) = "Detach failed: Invalid attachment ID ($attachmentId)"
     const val INVALID_DEVICE_TOKEN = "DeviceToken can not be empty."
     const val INVALID_PUSH_PROVIDER = "PushProvider can not be null."
-    fun fileSizeIsTooBig(maxFileSize: Long?) = "Reduce the attachment size to $maxFileSize KB or less."
+    fun fileSizeIsTooBig(maxFileSize: Long?) =
+        "Reduce the attachment size to $maxFileSize KB or less."
+
     fun fileTypeIsProhibited(fileName: String) = "File type  $fileName is prohibited for upload."
-    fun customAttributesSizeError(maxSize: Int) = "Error: Custom attributes exceed allowed max size of $maxSize bytes."
+    fun customAttributesSizeError(maxSize: Int) =
+        "Error: Custom attributes exceed allowed max size of $maxSize bytes."
 }
 
 sealed class CorrectiveAction(val message: String) {
@@ -139,7 +143,8 @@ internal fun ErrorCode.toCorrectiveAction(): CorrectiveAction = when (this.code)
     ErrorCode.AuthFailed.code,
     ErrorCode.AuthLogoutFailed.code,
     ErrorCode.RefreshAuthTokenFailure.code,
-    -> CorrectiveAction.ReAuthenticate
+        -> CorrectiveAction.ReAuthenticate
+
     else -> CorrectiveAction.Unknown
 }
 
@@ -155,6 +160,7 @@ internal fun PushErrorResponse.toErrorCode(): ErrorCode = when (code) {
     "contacts.stitching.error" -> ErrorCode.ContactStitchingError
     "feature.toggle.disabled" -> ErrorCode.FeatureUnavailable
     "too.many.requests.retry.after" -> ErrorCode.RequestRateTooHigh
+    "identity.resolution.disabled" -> ErrorCode.DeviceRegistrationFailure
     "required.fields.missing", "update.fields.missing" -> ErrorCode.MissingParameter
     else -> ErrorCode.DeviceTokenOperationFailure
 }
