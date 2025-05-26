@@ -16,10 +16,8 @@ actual class EncryptedVault actual constructor(keys: Keys) :
     private val internalVault: InternalVault
 
     init {
-        if (context == null) {
-            throw IllegalStateException("Must set EncryptedVault.context before instantiating.")
-        }
-        sharedPreferences = context!!.getSharedPreferences(keys.vaultKey, Context.MODE_PRIVATE)
+        val currentContext = context ?: throw IllegalStateException("Must set EncryptedVault.context before instantiating.")
+        sharedPreferences = currentContext.getSharedPreferences(keys.vaultKey, Context.MODE_PRIVATE)
         internalVault = InternalVault(keys.vaultKey, sharedPreferences)
     }
 

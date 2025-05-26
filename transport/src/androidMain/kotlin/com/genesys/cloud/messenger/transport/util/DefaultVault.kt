@@ -8,10 +8,8 @@ actual class DefaultVault actual constructor(keys: Keys) : Vault(keys) {
     private val sharedPreferences: SharedPreferences
 
     init {
-        if (context == null) {
-            throw IllegalStateException("Must set DefaultVault.context before instantiating.")
-        }
-        sharedPreferences = context!!.getSharedPreferences(keys.vaultKey, Context.MODE_PRIVATE)
+        val currentContext = context ?: throw IllegalStateException("Must set DefaultVault.context before instantiating.")
+        sharedPreferences = currentContext.getSharedPreferences(keys.vaultKey, Context.MODE_PRIVATE)
     }
 
     override fun store(key: String, value: String) {
