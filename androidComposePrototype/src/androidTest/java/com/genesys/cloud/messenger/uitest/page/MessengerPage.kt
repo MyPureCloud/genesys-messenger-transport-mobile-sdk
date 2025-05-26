@@ -109,12 +109,10 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     fun waitForAuthMsgReceived(messageToBeReceived: String) {
         await().atMost(waitTime, SECONDS)
             .until {
-                (
-                    getAuthStateResponse().contains(
-                        messageToBeReceived,
-                        ignoreCase = true
-                    )
-                    )
+                getAuthStateResponse().contains(
+                    messageToBeReceived,
+                    ignoreCase = true
+                )
             }
     }
 
