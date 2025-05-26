@@ -2,32 +2,35 @@ package com.genesys.cloud.messenger.transport.util
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.genesys.cloud.messenger.transport.core.InternalVault
 import java.lang.ref.WeakReference
 
-actual class DefaultVault actual constructor(keys: Keys) : Vault(keys) {
+/**
+ * Android implementation of EncryptedVault that uses Android KeyStore
+ * for the encryption keys and stores the encrypted data in SharedPreferences.
+ *
+ */
+actual class EncryptedVault actual constructor(keys: Keys) :
+    Vault(keys) {
     private val sharedPreferences: SharedPreferences
+    private val internalVault: InternalVault
 
     init {
-        val currentContext = context ?: throw IllegalStateException("Must set DefaultVault.context before instantiating.")
+        val currentContext = context ?: throw IllegalStateException("Must set EncryptedVault.context before instantiating.")
         sharedPreferences = currentContext.getSharedPreferences(keys.vaultKey, Context.MODE_PRIVATE)
+        internalVault = InternalVault(keys.vaultKey, sharedPreferences)
     }
 
     override fun store(key: String, value: String) {
-        with(sharedPreferences.edit()) {
-            putString(key, value)
-            apply()
-        }
+        internalVault.store(key, value)
     }
 
     override fun fetch(key: String): String? {
-        return sharedPreferences.getString(key, null)
+        return internalVault.fetch(key)
     }
 
     override fun remove(key: String) {
-        with(sharedPreferences.edit()) {
-            remove(key)
-            apply()
-        }
+        internalVault.remove(key)
     }
 
     companion object {
