@@ -53,7 +53,6 @@ import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.encodeToString
 import kotlin.reflect.KProperty0
 
 private const val MAX_RECONFIGURE_ATTEMPTS = 3
@@ -138,7 +137,6 @@ internal class MessagingClientImpl(
         log.i { LogMessages.CONNECT }
         connectAuthenticated = false
         stateMachine.onConnect()
-        SessionDurationUseCase.updateSessionExpirationNoticeInterval(configuration.sessionExpirationNoticeInterval)
         webSocket.openSocket(socketListener)
     }
 
@@ -389,6 +387,7 @@ internal class MessagingClientImpl(
         reconnectionHandler.clear()
         jwtHandler.clear()
         internalCustomAttributesStore.maxCustomDataBytes = this.maxCustomDataBytes
+        SessionDurationUseCase.updateSessionExpirationNoticeInterval(configuration.sessionExpirationNoticeInterval)
         if (readOnly) {
             stateMachine.onReadOnly()
             if (!connected && isStartingANewSession) {
@@ -411,12 +410,12 @@ internal class MessagingClientImpl(
         when (code) {
             is ErrorCode.SessionHasExpired,
             is ErrorCode.SessionNotFound,
-            -> transitionToStateError(code, message)
+                -> transitionToStateError(code, message)
 
             is ErrorCode.MessageTooLong,
             is ErrorCode.RequestRateTooHigh,
             is ErrorCode.CustomAttributeSizeTooLarge,
-            -> {
+                -> {
                 if (code is ErrorCode.CustomAttributeSizeTooLarge) {
                     internalCustomAttributesStore.onError()
                     if (sendingAutostart) {
@@ -439,7 +438,7 @@ internal class MessagingClientImpl(
             is ErrorCode.ClientResponseError,
             is ErrorCode.ServerResponseError,
             is ErrorCode.RedirectResponseError,
-            -> {
+                -> {
                 if (stateMachine.isConnected() || stateMachine.isReconnecting() || isStartingANewSession) {
                     handleConfigureSessionErrorResponse(code, message)
                 } else {
