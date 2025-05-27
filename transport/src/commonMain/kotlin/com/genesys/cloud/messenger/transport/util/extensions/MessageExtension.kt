@@ -105,43 +105,29 @@ private fun List<StructuredMessage.Content>.toQuickReplies(): List<ButtonRespons
     }
 }
 
-private fun List<StructuredMessage.Content>.toCards(): List<Message.Card> {
-    return flatMap { content ->
-        when (content) {
-            is StructuredMessage.Content.CardContent -> listOf(
-                Message.Card(
-                    title = content.card.title.filterNot { it.isWhitespace() },
-                    description = content.card.description,
-                    imageUrl = content.card.image,
-                    actions = content.card.actions.map { action ->
-                        Message.Card.Action(
-                            type = action.type,
-                            title = action.text,
-                            url = action.url,
-                            payload = action.payload
-                        )
-                    }
-                )
+private fun StructuredMessage.Content.CardContent.Card.toMessageCard(): Message.Card =
+    Message.Card(
+        title = title.filterNot { it.isWhitespace() },
+        description = description,
+        imageUrl = image,
+        actions = actions.map {
+            Message.Card.Action(
+                type = it.type,
+                text = it.text,
+                url = it.url,
+                payload = it.payload
             )
-            is StructuredMessage.Content.CarouselContent -> content.carousel.cards.map { card ->
-                Message.Card(
-                    title = card.title.filterNot { it.isWhitespace() },
-                    description = card.description,
-                    imageUrl = card.image,
-                    actions = card.actions.map { action ->
-                        Message.Card.Action(
-                            type = action.type,
-                            title = action.text,
-                            url = action.url,
-                            payload = action.payload
-                        )
-                    }
-                )
-            }
+        }
+    )
+
+private fun List<StructuredMessage.Content>.toCards(): List<Message.Card> =
+    flatMap {
+        when (it) {
+            is StructuredMessage.Content.CardContent -> listOf(it.card.toMessageCard())
+            is StructuredMessage.Content.CarouselContent -> it.carousel.cards.map { card -> card.toMessageCard() }
             else -> emptyList()
         }
     }
-}
 
 private fun StructuredMessage.Type.toMessageType(hasQuickReplies: Boolean, hasCards: Boolean): Message.Type =
     when (this) {
