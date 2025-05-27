@@ -4,8 +4,8 @@ buildscript {
         oktaProperties = new Properties()
         if (System.env.JENKINS_HOME != null) {
             // when executing on jenkins, use environment variable-injected credentials
-            deploymentProperties["deploymentId"] = System.env.DEPLOYMENT_ID
-            deploymentProperties["deploymentDomain"] = System.env.DEPLOYMENT_DOMAIN
+                deploymentProperties["deploymentId"] = System.env.DEPLOYMENT_ID
+                deploymentProperties["deploymentDomain"] = System.env.DEPLOYMENT_DOMAIN
             //Okta variables
             oktaProperties["oktaDomain"] = System.env.OKTA_DOMAIN
             oktaProperties["clientId"] = System.env.CLIENT_ID
@@ -53,8 +53,16 @@ android {
         versionCode 1
         versionName "1.0"
 
-        buildConfigField "String", "DEPLOYMENT_ID", '"' + deploymentProperties["deploymentId"] + '"'
-        buildConfigField "String", "DEPLOYMENT_DOMAIN", '"' + deploymentProperties["deploymentDomain"] + '"'
+        def deploymentId = ""
+        if(deploymentProperties["deploymentId"] != null) {
+            deploymentId = deploymentProperties["deploymentId"]
+        }
+        def deploymentDomain = "inintca.com"
+        if(deploymentProperties["deploymentDomain"] != null) {
+            deploymentDomain = deploymentProperties["deploymentDomain"]
+        }
+        buildConfigField "String", "DEPLOYMENT_ID", '"' + deploymentId + '"'
+        buildConfigField "String", "DEPLOYMENT_DOMAIN", '"' + deploymentDomain + '"'
         // OKTA
         buildConfigField "String", "OKTA_DOMAIN", '"' + oktaProperties["oktaDomain"] + '"'
         buildConfigField "String", "CLIENT_ID", '"' + oktaProperties["clientId"] + '"'

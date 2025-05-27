@@ -17,6 +17,7 @@ data class Configuration(
     val logging: Boolean = false,
     val reconnectionTimeoutInSeconds: Long = 60 * 5,
     val autoRefreshTokenWhenExpired: Boolean = true,
+    val encryptedVault: Boolean = false
 ) {
 
     /**
@@ -38,6 +39,7 @@ data class Configuration(
         logging = logging,
         reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
         autoRefreshTokenWhenExpired = true,
+        encryptedVault = false
     )
 
     internal val webSocketUrl: Url by lazy {

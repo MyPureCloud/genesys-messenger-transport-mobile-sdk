@@ -3,9 +3,11 @@ package com.genesys.cloud.messenger.transport
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isInstanceOf
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
+import com.genesys.cloud.messenger.transport.utility.FakeVault
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.ktor.http.Url
 import kotlin.test.Test
@@ -27,6 +29,7 @@ class ConfigurationTest {
             assertThat(logging).isFalse()
             assertThat(reconnectionTimeoutInSeconds).isEqualTo(expectedReconnectionTimeout)
             assertThat(autoRefreshTokenWhenExpired).isTrue()
+            assertThat(encryptedVault).isFalse()
         }
     }
 
@@ -47,6 +50,24 @@ class ConfigurationTest {
             assertThat(logging).isTrue()
             assertThat(reconnectionTimeoutInSeconds).isEqualTo(expectedReconnectionTimeout)
             assertThat(autoRefreshTokenWhenExpired).isTrue()
+            assertThat(encryptedVault).isFalse()
+        }
+    }
+
+    @Test
+    fun `validate constructor with encryptedVault parameter`() {
+        val configuration = Configuration(
+            deploymentId = TestValues.DEPLOYMENT_ID,
+            domain = TestValues.DOMAIN,
+            encryptedVault = true
+        )
+
+        configuration.run {
+            assertThat(deploymentId).isEqualTo(TestValues.DEPLOYMENT_ID)
+            assertThat(logging).isFalse()
+            assertThat(reconnectionTimeoutInSeconds).isEqualTo(300L)
+            assertThat(autoRefreshTokenWhenExpired).isTrue()
+            assertThat(encryptedVault).isTrue()
         }
     }
 
@@ -126,5 +147,20 @@ class ConfigurationTest {
         val result = configuration.refreshAuthTokenUrl
 
         assertThat(result, "jwtAuth config URL").isEqualTo(expected)
+    }
+
+    @Test
+    fun `should use custom vault when provided regardless of encryptedVault setting`() {
+        val configuration = Configuration(
+            deploymentId = TestValues.DEPLOYMENT_ID,
+            domain = TestValues.DOMAIN,
+            encryptedVault = true
+        )
+        val fakeVault = FakeVault(TestValues.vaultKeys)
+
+        val sdk = MessengerTransportSDK(configuration, fakeVault)
+
+        assertThat(sdk.vault).isEqualTo(fakeVault)
+        assertThat(sdk.vault).isInstanceOf(FakeVault::class)
     }
 }

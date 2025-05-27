@@ -1,7 +1,6 @@
-package transport.core
+package com.genesys.cloud.messenger.transport.utility
 
 import com.genesys.cloud.messenger.transport.util.Vault
-import java.lang.IllegalArgumentException
 
 class FakeVault(keys: Keys) : Vault(keys) {
 

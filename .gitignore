@@ -9,6 +9,7 @@ build
 local.properties
 !.jenkins/local.properties
 iosApp/iosAppTests/config.json
+iosApp/Okta.plist
 
 # Xcode
 #
@@ -107,3 +108,4 @@ iOSInjectionProject/
 secure.properties
 deployment.properties
 okta.properties
+

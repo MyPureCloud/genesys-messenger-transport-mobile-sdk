@@ -118,6 +118,10 @@ internal class MessageStore(private val log: Log) {
         startOfConversation = false
     }
 
+    fun clear() {
+        pendingMessage = Message()
+    }
+
     private fun findAndPublish(message: Message) {
         activeConversation.find { it.id == message.id }?.let {
             activeConversation[it.getIndex()] = message

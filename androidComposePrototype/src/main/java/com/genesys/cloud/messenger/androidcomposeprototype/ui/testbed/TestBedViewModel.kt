@@ -21,6 +21,7 @@ import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.util.DefaultVault
+import com.genesys.cloud.messenger.transport.util.EncryptedVault
 import io.ktor.http.URLBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,9 +50,9 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         private set
     var clientState: State by mutableStateOf(State.Idle)
         private set
-    var deploymentId: String by mutableStateOf("")
+    var deploymentId: String by mutableStateOf(BuildConfig.DEPLOYMENT_ID)
         private set
-    var region: String by mutableStateOf("inintca.com")
+    var region: String by mutableStateOf(BuildConfig.DEPLOYMENT_DOMAIN)
         private set
     var authState: AuthState by mutableStateOf(AuthState.NoAuth)
         private set
@@ -85,10 +86,15 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         val mmsdkConfiguration = Configuration(
             deploymentId = deploymentId.ifEmpty { BuildConfig.DEPLOYMENT_ID },
             domain = region.ifEmpty { BuildConfig.DEPLOYMENT_DOMAIN },
-            logging = true
+            logging = true,
+            encryptedVault = true
         )
 
-        DefaultVault.context = context
+        if (mmsdkConfiguration.encryptedVault) {
+            EncryptedVault.context = context
+        } else {
+            DefaultVault.context = context
+        }
         messengerTransport = MessengerTransportSDK(mmsdkConfiguration)
         client = messengerTransport.createMessagingClient()
         client.customAttributesStore.add(mapOf("sdkVersion" to "Transport SDK: ${MessengerTransportSDK.sdkVersion}"))
