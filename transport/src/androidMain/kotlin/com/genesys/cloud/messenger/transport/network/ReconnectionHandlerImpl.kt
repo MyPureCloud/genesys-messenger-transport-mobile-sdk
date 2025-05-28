@@ -19,10 +19,10 @@ internal actual class ReconnectionHandlerImpl actual constructor(
     private var reconnectJob: Job? = null
     private val dispatcher = CoroutineScope(Dispatchers.Default)
 
-    override val shouldReconnect: Boolean
+    actual override val shouldReconnect: Boolean
         get() = attempts < maxAttempts
 
-    override fun reconnect(reconnectFun: () -> Unit) {
+    actual override fun reconnect(reconnectFun: () -> Unit) {
         if (!shouldReconnect) return
         resetDispatcher()
         reconnectJob = dispatcher.launch {
@@ -33,7 +33,7 @@ internal actual class ReconnectionHandlerImpl actual constructor(
         }
     }
 
-    override fun clear() {
+    actual override fun clear() {
         attempts = 0
         resetDispatcher()
     }

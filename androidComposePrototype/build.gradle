@@ -39,6 +39,7 @@ plugins {
     id 'kotlin-android'
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.32'
     id 'org.jmailen.kotlinter'
+    id 'org.jetbrains.kotlin.plugin.compose' version '2.1.21'
 }
 
 android {
@@ -92,9 +93,6 @@ android {
     buildFeatures {
         compose true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion "1.5.10"
-    }
     sourceSets {
         main {
             assets {
@@ -103,6 +101,9 @@ android {
         }
     }
     namespace 'com.genesys.cloud.messenger.androidcomposeprototype'
+    lintOptions {
+        checkTestSources false
+    }
 }
 
 dependencies {

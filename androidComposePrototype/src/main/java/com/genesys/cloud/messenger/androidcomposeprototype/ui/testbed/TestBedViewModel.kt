@@ -36,7 +36,9 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     override val coroutineContext = Dispatchers.IO + Job()
 
-    private val TAG = TestBedViewModel::class.simpleName
+    companion object {
+        private val TAG = TestBedViewModel::class.simpleName
+    }
 
     private lateinit var messengerTransport: MessengerTransportSDK
     private lateinit var client: MessagingClient

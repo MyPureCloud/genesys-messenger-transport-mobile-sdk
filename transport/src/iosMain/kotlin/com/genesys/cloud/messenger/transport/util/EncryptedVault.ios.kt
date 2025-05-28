@@ -16,7 +16,7 @@ actual class EncryptedVault actual constructor(keys: Keys) :
      * @param key the key to use for storage.
      * @param value the value to store in storage.
      */
-    override fun store(key: String, value: String) {
+    actual override fun store(key: String, value: String) {
         vault.set(key, value)
     }
 
@@ -25,14 +25,14 @@ actual class EncryptedVault actual constructor(keys: Keys) :
      *
      * @return the previous stored value for specified key or null if not in storage.
      */
-    override fun fetch(key: String): String? {
+    actual override fun fetch(key: String): String? {
         return vault.string(key)
     }
 
     /**
      * Removes specified key from the iOS Keychain.
      */
-    override fun remove(key: String) {
+    actual override fun remove(key: String) {
         vault.remove(key)
     }
 }

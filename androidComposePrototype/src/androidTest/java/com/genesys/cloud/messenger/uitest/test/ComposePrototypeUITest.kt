@@ -363,23 +363,8 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
-    @Test
-    fun testSendTypingIndicator() {
-        apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.deploymentId)
-        DefaultVault().store("token", UUID.randomUUID().toString())
-        connect()
-        val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo != null) {
-            apiHelper.sendTypingIndicatorFromAgentToUser(conversationInfo)
-            verifyResponse(typingIndicatorResponse)
-            apiHelper.sendConnectOrDisconnect(conversationInfo)
-        } else AssertionError("Agent did not answer conversation.")
-        apiHelper.disconnectAllConversations()
-    }
-
-    @Test
     // Adjusting the test name to force this test to run first
+    @Test
     fun testVerifyAutoStart() {
         apiHelper.disconnectAllConversations()
         enterDeploymentInfo(testConfig.deploymentId)
@@ -393,6 +378,21 @@ class ComposePrototypeUITest : BaseTests() {
             Log.i(TAG, "Conversation started successfully with autoStart enabled.")
             apiHelper.sendConnectOrDisconnect(conversationInfo)
         }
+        apiHelper.disconnectAllConversations()
+    }
+
+    @Test
+    fun testSendTypingIndicator() {
+        apiHelper.disconnectAllConversations()
+        enterDeploymentInfo(testConfig.deploymentId)
+        DefaultVault().store("token", UUID.randomUUID().toString())
+        connect()
+        val conversationInfo = apiHelper.answerNewConversation()
+        if (conversationInfo != null) {
+            apiHelper.sendTypingIndicatorFromAgentToUser(conversationInfo)
+            verifyResponse(typingIndicatorResponse)
+            apiHelper.sendConnectOrDisconnect(conversationInfo)
+        } else AssertionError("Agent did not answer conversation.")
         apiHelper.disconnectAllConversations()
     }
 

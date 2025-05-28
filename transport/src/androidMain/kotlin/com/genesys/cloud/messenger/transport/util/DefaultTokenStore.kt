@@ -15,14 +15,14 @@ actual class DefaultTokenStore actual constructor(storeKey: String) : TokenStore
         sharedPreferences = context!!.getSharedPreferences(storeKey, Context.MODE_PRIVATE)
     }
 
-    override fun store(token: String) {
+    actual override fun store(token: String) {
         with(sharedPreferences.edit()) {
             putString(TOKEN_KEY, token)
             apply()
         }
     }
 
-    override fun fetch(): String? {
+    actual override fun fetch(): String? {
         return sharedPreferences.getString(TOKEN_KEY, null)
     }
 

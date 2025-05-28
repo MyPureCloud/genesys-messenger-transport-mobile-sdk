@@ -15,17 +15,17 @@ internal actual class ReconnectionHandlerImpl actual constructor(
     private var attempts = AtomicInt(0)
     private var maxAttempts: Int = (reconnectionTimeoutInSeconds / TIMEOUT_INTERVAL).toInt()
 
-    override val shouldReconnect: Boolean
+    actual override val shouldReconnect: Boolean
         get() = attempts.value < maxAttempts
 
-    override fun reconnect(reconnectFun: () -> Unit) {
+    actual override fun reconnect(reconnectFun: () -> Unit) {
         if (!shouldReconnect) return
         log.i { LogMessages.tryingToReconnect(attempts.value, maxAttempts) }
         attempts.value++
         reconnectFun()
     }
 
-    override fun clear() {
+    actual override fun clear() {
         attempts.value = 0
     }
 }
