@@ -7,6 +7,6 @@ data class Card(
     val title: String,
     val description: String? = null,
     val image: String? = null,
-    val defaultResponse: Action? = null,
-    val responses: List<Action> = emptyList(),
+    val defaultAction: Action? = null,
+    val actions: List<Action> = emptyList(),
 )

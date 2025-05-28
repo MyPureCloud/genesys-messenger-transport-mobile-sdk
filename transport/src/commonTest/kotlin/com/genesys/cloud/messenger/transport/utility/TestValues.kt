@@ -1,8 +1,6 @@
 package com.genesys.cloud.messenger.transport.utility
 
-import com.genesys.cloud.messenger.transport.core.Action
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
-import com.genesys.cloud.messenger.transport.core.Card
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
@@ -181,31 +179,121 @@ object StructuredMessageValues {
         id: String = MessageValues.ID,
         type: StructuredMessage.Type = StructuredMessage.Type.Text,
         direction: String = Message.Direction.Inbound.name,
+        text: String? = null,
         content: List<StructuredMessage.Content> = emptyList(),
-    ) = StructuredMessage(
-        id = id,
-        type = type,
-        direction = direction,
-        content = content,
-    )
+    ): StructuredMessage {
+        return StructuredMessage(
+            id = id,
+            type = type,
+            direction = direction,
+            text = text,
+            content = content,
+        )
+    }
 }
 
 object CardTestValues {
     internal const val title = "Title"
     internal const val description = "Description"
-    internal const val image = "Image"
+    internal const val image = "http://image.com/image.png"
     internal const val text = "text_a"
-    internal const val url = "www.test.com"
-    internal const val payload = "text_b"
-    internal val postback = Action.Postback(text = text, payload = payload)
-    internal val link = Action.Link(text = text, url = url)
-    internal val responses: List<Action> = listOf(postback, link)
+    internal const val url = "https://www.test.com"
+    internal const val payload = "{\"key\":\"value\"}"
+    internal const val contentType = "Card"
 
-    internal val card = Card(
+    internal val structuredAction = StructuredMessage.Content.Action(
+        type = "link",
+        text = text,
+        url = url,
+        payload = payload
+    )
+
+    internal val structuredCard = StructuredMessage.Content.CardContent.Card(
         title = title,
         description = description,
         image = image,
-        defaultResponse = postback,
-        responses = responses
+        defaultAction = null,
+        actions = listOf(structuredAction)
+    )
+
+    internal fun createCardContent(
+        card: StructuredMessage.Content.CardContent.Card = structuredCard
+    ): StructuredMessage.Content.CardContent {
+        return StructuredMessage.Content.CardContent(
+            contentType = contentType,
+            card = card
+        )
+    }
+
+    internal fun createCarouselContent(
+        vararg cards: StructuredMessage.Content.CardContent.Card
+    ): StructuredMessage.Content.CarouselContent {
+        return StructuredMessage.Content.CarouselContent(
+            contentType = "Carousel",
+            carousel = StructuredMessage.Content.CarouselContent.Carousel(
+                cards = cards.toList()
+            )
+        )
+    }
+
+    internal fun createStructuredMessageWithCardContent(
+        id: String = "card-id",
+        title: String = CardTestValues.title,
+        actionText: String = text,
+    ): StructuredMessage {
+        val card = structuredCard.copy(
+            title = title,
+            actions = listOf(
+                StructuredMessage.Content.Action(
+                    type = "link",
+                    text = actionText,
+                    url = url,
+                    payload = payload
+                )
+            )
+        )
+
+        return StructuredMessageValues.createStructuredMessageForTesting(
+            id = id,
+            type = StructuredMessage.Type.Structured,
+            text = "Card content test",
+            content = listOf(createCardContent(card))
+        )
+    }
+
+    internal fun createStructuredMessageWithCarouselContent(
+        id: String = "carousel-id",
+        titles: List<String>,
+        lastCardActionText: String = "Open"
+    ): StructuredMessage {
+        val cards = titles.mapIndexed { index, title ->
+            structuredCard.copy(
+                title = title,
+                actions = if (index == titles.lastIndex)
+                    listOf(StructuredMessage.Content.Action(type = "navigate", text = lastCardActionText, url = "http://example.org"))
+                else emptyList()
+            )
+        }
+
+        return StructuredMessageValues.createStructuredMessageForTesting(
+            id = id,
+            type = StructuredMessage.Type.Structured,
+            text = "Carousel content test",
+            content = listOf(createCarouselContent(*cards.toTypedArray()))
+        )
+    }
+
+    internal val action = Message.Card.Action(
+        type = "link",
+        text = text,
+        url = url,
+        payload = payload
+    )
+
+    internal val card = Message.Card(
+        title = title,
+        description = description,
+        imageUrl = image,
+        actions = listOf(action)
     )
 }

@@ -24,15 +24,18 @@ internal fun List<StructuredMessage>.toMessageList(): List<Message> =
 
 internal fun StructuredMessage.toMessage(): Message {
     val quickReplies = content.toQuickReplies()
+    val cards = content.toCards()
+
     return Message(
         id = metadata["customMessageId"] ?: id,
         direction = if (isInbound()) Direction.Inbound else Direction.Outbound,
         state = Message.State.Sent,
-        messageType = type.toMessageType(quickReplies.isNotEmpty()),
+        messageType = type.toMessageType(quickReplies.isNotEmpty(), cards.isNotEmpty()),
         text = text,
         timeStamp = channel?.time.fromIsoToEpochMilliseconds(),
         attachments = content.filterIsInstance<AttachmentContent>().toAttachments(),
         quickReplies = quickReplies,
+        cards = cards,
         events = events.mapNotNull { it.toTransportEvent(channel?.from) },
         from = Message.Participant(
             name = channel?.from?.nickname,
@@ -102,11 +105,41 @@ private fun List<StructuredMessage.Content>.toQuickReplies(): List<ButtonRespons
     }
 }
 
-private fun StructuredMessage.Type.toMessageType(hasQuickReplies: Boolean): Message.Type =
+private fun StructuredMessage.Content.CardContent.Card.toMessageCard(): Message.Card =
+    Message.Card(
+        title = title.filterNot { it.isWhitespace() },
+        description = description,
+        imageUrl = image,
+        actions = actions.map {
+            Message.Card.Action(
+                type = it.type,
+                text = it.text,
+                url = it.url,
+                payload = it.payload
+            )
+        }
+    )
+
+private fun List<StructuredMessage.Content>.toCards(): List<Message.Card> =
+    flatMap {
+        when (it) {
+            is StructuredMessage.Content.CardContent -> listOf(it.card.toMessageCard())
+            is StructuredMessage.Content.CarouselContent -> it.carousel.cards.map { card -> card.toMessageCard() }
+            else -> emptyList()
+        }
+    }
+
+private fun StructuredMessage.Type.toMessageType(hasQuickReplies: Boolean, hasCards: Boolean): Message.Type =
     when (this) {
         StructuredMessage.Type.Text -> Message.Type.Text
         StructuredMessage.Type.Event -> Message.Type.Event
-        StructuredMessage.Type.Structured -> if (hasQuickReplies) Message.Type.QuickReply else Message.Type.Unknown
+        StructuredMessage.Type.Structured -> {
+            when {
+                hasQuickReplies -> Message.Type.QuickReply
+                hasCards -> Message.Type.Carousel
+                else -> Message.Type.Unknown
+            }
+        }
     }
 
 internal fun String.isHealthCheckResponseId(): Boolean = this == HealthCheckID

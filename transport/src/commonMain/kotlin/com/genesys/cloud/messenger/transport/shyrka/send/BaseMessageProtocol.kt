@@ -10,5 +10,6 @@ internal interface BaseMessageProtocol {
     enum class Type {
         Text,
         Event,
+        Structured
     }
 }

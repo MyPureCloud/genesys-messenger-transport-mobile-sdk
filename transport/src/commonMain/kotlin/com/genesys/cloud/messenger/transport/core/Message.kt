@@ -51,6 +51,7 @@ data class Message(
         Text,
         Event,
         QuickReply,
+        Carousel,
         Unknown,
     }
 
@@ -141,4 +142,24 @@ data class Message(
             Unknown,
         }
     }
+    @Serializable
+    data class Card(
+        val title: String,
+        val description: String,
+        val imageUrl: String,
+        val actions: List<Action>
+    ) {
+        @Serializable
+        data class Action(
+            val type: String,
+            val text: String? = null,
+            val url: String? = null,
+            val payload: String? = null,
+        )
+    }
+
+    @Serializable
+    data class Carousel(
+        val cards: List<Card>
+    )
 }
