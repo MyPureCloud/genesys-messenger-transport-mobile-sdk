@@ -16,4 +16,10 @@ expect class DefaultVault(
         authRefreshTokenKey = AUTH_REFRESH_TOKEN_KEY,
         wasAuthenticated = WAS_AUTHENTICATED,
     ),
-) : Vault
+) : Vault {
+    override fun store(key: String, value: String)
+
+    override fun fetch(key: String): String?
+
+    override fun remove(key: String)
+}
