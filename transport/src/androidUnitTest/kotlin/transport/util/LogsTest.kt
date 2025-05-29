@@ -3,53 +3,49 @@ package transport.util
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
-import co.touchlab.kermit.Logger
-import co.touchlab.kermit.Severity
-import com.genesys.cloud.messenger.transport.util.logs.KermitKtorLogger
+import com.genesys.cloud.messenger.transport.util.logs.KtorLogger
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
+import com.genesys.cloud.messenger.transport.util.logs.Logger
 import com.genesys.cloud.messenger.transport.util.logs.okHttpLogger
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.slot
 import io.mockk.verify
 import org.junit.Test
 
 class LogsTest {
-    private val mockKermit: Logger = mockk(relaxed = true) {
+    private val mockLogger: Logger = mockk(relaxed = true) {
         every { tag } returns TestValues.LOG_TAG
     }
+    val logSlot = mutableListOf<() -> String>()
 
-    internal var subject = Log(true, TestValues.LOG_TAG, mockKermit)
+    internal var subject = Log(true, TestValues.LOG_TAG, mockLogger)
 
     @Test
     fun `when log i and enabledLogs=true`() {
         subject.i { LogMessages.CONNECT }
 
-        verify {
-            mockKermit.log(Severity.Info, TestValues.LOG_TAG, null, LogMessages.CONNECT)
-        }
+        verify { mockLogger.i(capture(logSlot)) }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
     }
 
     @Test
     fun `when log w and enabledLogs=true`() {
         subject.w { LogMessages.CONNECT }
 
-        verify {
-            mockKermit.log(Severity.Warn, TestValues.LOG_TAG, null, LogMessages.CONNECT)
-        }
+        verify { mockLogger.w(capture(logSlot)) }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
     }
 
     @Test
     fun `when log e and enabledLogs=true`() {
         subject.e { LogMessages.CONNECT }
 
-        verify {
-            mockKermit.log(Severity.Error, TestValues.LOG_TAG, null, LogMessages.CONNECT)
-        }
+        verify { mockLogger.e(capture(logSlot)) }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
     }
 
     @Test
@@ -58,57 +54,51 @@ class LogsTest {
 
         subject.e(givenThrowable) { LogMessages.CONNECT }
 
-        verify {
-            mockKermit.log(Severity.Error, TestValues.LOG_TAG, givenThrowable, LogMessages.CONNECT)
-        }
+        verify { mockLogger.e(givenThrowable, capture(logSlot)) }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
     }
 
     @Test
     fun `when enableLogs=false`() {
         subject = Log(enableLogs = false, TestValues.LOG_TAG)
 
-        assertThat(subject.kermit.tag).isEqualTo(TestValues.LOG_TAG)
-        assertThat(subject.kermit.config.minSeverity).isEqualTo(Severity.Assert)
+        assertThat(subject.logger.tag).isEqualTo(TestValues.LOG_TAG)
     }
 
     @Test
     fun `when withTag()`() {
         val result = subject.withTag(LogTag.API)
 
-        assertThat(result.kermit.tag).isEqualTo(LogTag.API)
+        assertThat(result.logger.tag).isEqualTo(LogTag.API)
     }
 
     @Test
     fun `when getKtorLogger`() {
         val result = subject.ktorLogger
 
-        assertThat(result).isInstanceOf(KermitKtorLogger::class)
+        assertThat(result).isInstanceOf(KtorLogger::class)
     }
 
     @Test
-    fun `when KermitKtorLogger log`() {
-        val slot = slot<String>()
-        val mockKermit: Logger = mockk(relaxed = true)
-        val kermitKtorLogger = KermitKtorLogger(mockKermit)
+    fun `when KtorLogger log`() {
+        val ktorLogger = KtorLogger(mockLogger)
 
-        kermitKtorLogger.log(LogMessages.CONNECT)
+        ktorLogger.log(LogMessages.CONNECT)
 
         verify {
-            mockKermit.log(Severity.Info, "", null, capture(slot))
+            mockLogger.i(capture(logSlot))
         }
-        assertThat(slot.captured).isEqualTo(LogMessages.CONNECT)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
     }
 
     @Test
     fun `when okHttpLogger log`() {
-        val slot = slot<String>()
-
         val result = subject.okHttpLogger()
         result.log(LogMessages.CONNECT)
 
         verify {
-            mockKermit.i(capture(slot))
+            mockLogger.i(capture(logSlot))
         }
-        assertThat(slot.captured).isEqualTo(LogMessages.CONNECT)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
     }
 }

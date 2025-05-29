@@ -15,6 +15,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
+import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import io.mockk.MockKVerificationScope
 import io.mockk.every
@@ -36,21 +37,21 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
     @Test
     fun `when sendMessage with customAttributes`() {
         val expectedMessage =
-            """{"token":"${Request.token}","message":{"text":"Hello world","channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"action":"onMessage"}"""
-        val expectedText = "Hello world"
+            """{"token":"${Request.token}","message":{"text":"${MessageValues.TEXT}","channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"action":"onMessage"}"""
+        val expectedText = MessageValues.TEXT
         val expectedCustomAttributes = mapOf("A" to "B")
         val expectedChannel = Channel(Channel.Metadata(expectedCustomAttributes))
         every { mockMessageStore.prepareMessage(any(), any(), any()) } returns OnMessageRequest(
             token = Request.token,
             message = TextMessage(
-                text = "Hello world",
+                text = MessageValues.TEXT,
                 channel = expectedChannel,
             ),
         )
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mapOf("A" to "B")
         subject.connect()
 
-        subject.sendMessage(text = "Hello world", customAttributes = mapOf("A" to "B"))
+        subject.sendMessage(text = MessageValues.TEXT, customAttributes = mapOf("A" to "B"))
 
         verifySequence {
             connectSequence()
@@ -63,9 +64,10 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
+        val sanitizedText = MessageValues.TEXT_SANITIZED
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessage(expectedText, expectedCustomAttributes))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessage(sanitizedText, expectedCustomAttributes))
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WILL_SEND_MESSAGE)
     }
 
