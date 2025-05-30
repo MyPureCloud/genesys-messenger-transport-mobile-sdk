@@ -105,10 +105,15 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         val mmsdkConfiguration = Configuration(
             deploymentId = deploymentId.ifEmpty { BuildConfig.DEPLOYMENT_ID },
             domain = region.ifEmpty { BuildConfig.DEPLOYMENT_DOMAIN },
-            logging = true
+            logging = true,
+            encryptedVault = true
         )
 
-        DefaultVault.context = context
+        if (mmsdkConfiguration.encryptedVault) {
+            EncryptedVault.context = context
+        } else {
+            DefaultVault.context = context
+        }
         messengerTransport = MessengerTransportSDK(mmsdkConfiguration)
         client = messengerTransport.createMessagingClient()
         pushService = messengerTransport.createPushService()
