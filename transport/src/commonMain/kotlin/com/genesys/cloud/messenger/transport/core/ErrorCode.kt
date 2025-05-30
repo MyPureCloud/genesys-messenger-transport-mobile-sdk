@@ -143,7 +143,7 @@ internal fun ErrorCode.toCorrectiveAction(): CorrectiveAction = when (this.code)
     ErrorCode.AuthFailed.code,
     ErrorCode.AuthLogoutFailed.code,
     ErrorCode.RefreshAuthTokenFailure.code,
-        -> CorrectiveAction.ReAuthenticate
+    -> CorrectiveAction.ReAuthenticate
 
     else -> CorrectiveAction.Unknown
 }
