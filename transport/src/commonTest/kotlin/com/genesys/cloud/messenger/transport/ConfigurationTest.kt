@@ -3,11 +3,8 @@ package com.genesys.cloud.messenger.transport
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
-import assertk.assertions.isInstanceOf
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.Configuration
-import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
-import com.genesys.cloud.messenger.transport.utility.FakeVault
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlin.test.Test
 

@@ -9,5 +9,6 @@ expect class EncryptedVault(
         tokenKey = TOKEN_KEY,
         authRefreshTokenKey = AUTH_REFRESH_TOKEN_KEY,
         wasAuthenticated = WAS_AUTHENTICATED,
+        pushConfigKey = PUSH_CONFIG_KEY,
     ),
 ) : Vault

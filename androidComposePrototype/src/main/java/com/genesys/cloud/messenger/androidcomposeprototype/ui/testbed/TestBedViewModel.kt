@@ -23,6 +23,7 @@ import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.push.PushProvider
 import com.genesys.cloud.messenger.transport.push.PushService
 import com.genesys.cloud.messenger.transport.util.DefaultVault
+import com.genesys.cloud.messenger.transport.util.EncryptedVault
 import com.google.firebase.messaging.FirebaseMessaging
 import io.ktor.http.URLBuilder
 import kotlinx.coroutines.CoroutineScope
