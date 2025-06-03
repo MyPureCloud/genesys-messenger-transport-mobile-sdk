@@ -14,7 +14,7 @@ class InternalConfigurationFactoryTest {
         val config = InternalConfigurationFactory.create(
             deploymentId = "test-deployment",
             domain = "test.com",
-            applicationType = ApplicationType.TRANSPORT
+            applicationType = ApplicationType.TRANSPORT_SDK
         )
 
         assertEquals(

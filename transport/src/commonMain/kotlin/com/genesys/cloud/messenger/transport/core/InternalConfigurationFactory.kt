@@ -19,7 +19,7 @@ object InternalConfigurationFactory {
     fun create(
         deploymentId: String,
         domain: String,
-        applicationType: ApplicationType = ApplicationType.TRANSPORT,
+        applicationType: ApplicationType = ApplicationType.TRANSPORT_SDK,
         messengerSDKVersion: String? = null,
         logging: Boolean = false,
         reconnectionTimeoutInSeconds: Long = 60 * 5,
@@ -40,7 +40,7 @@ object InternalConfigurationFactory {
         )
 
         config.application = when (applicationType) {
-            ApplicationType.TRANSPORT -> "TransportSDK-${MessengerTransportSDK.sdkVersion}"
+            ApplicationType.TRANSPORT_SDK -> "TransportSDK-${MessengerTransportSDK.sdkVersion}"
             ApplicationType.MESSENGER_SDK -> "MessengerSDK-$messengerSDKVersion/TransportSDK-${MessengerTransportSDK.sdkVersion}"
         }
         return config
