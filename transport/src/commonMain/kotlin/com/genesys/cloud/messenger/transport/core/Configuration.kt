@@ -42,6 +42,8 @@ data class Configuration(
         encryptedVault = false
     )
 
+    internal var application: String = "TransportSDK-${MessengerTransportSDK.sdkVersion}"
+
     internal val webSocketUrl: Url by lazy {
         URLBuilder("wss://webmessaging.$domain")
             .apply {
