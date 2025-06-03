@@ -1,6 +1,10 @@
 package com.genesys.cloud.messenger.transport.core
 
-object ConfigurationFactory {
+/**
+ * Factory for creating [Configuration] instances.
+ * This object is intended for internal usage only.
+ */
+object InternalConfigurationFactory {
     /**
      * @param deploymentId the ID of the Genesys Cloud Messenger deployment.
      * @param domain the regional base domain address for a Genesys Cloud Web Messaging service.
