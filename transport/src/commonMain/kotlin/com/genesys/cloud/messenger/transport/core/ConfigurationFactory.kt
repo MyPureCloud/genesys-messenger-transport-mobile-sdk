@@ -2,8 +2,6 @@ package com.genesys.cloud.messenger.transport.core
 
 object ConfigurationFactory {
     /**
-     * Creates a Configuration instance with the appropriate application parameter format based on SDK type.
-     *
      * @param deploymentId the ID of the Genesys Cloud Messenger deployment.
      * @param domain the regional base domain address for a Genesys Cloud Web Messaging service.
      * @param applicationType the type of SDK being used (Transport or Messenger). Defaults to TRANSPORT.

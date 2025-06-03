@@ -1,8 +1,8 @@
 package com.genesys.cloud.messenger.transport
 
+import com.genesys.cloud.messenger.transport.core.ApplicationType
 import com.genesys.cloud.messenger.transport.core.ConfigurationFactory
 import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
-import com.genesys.cloud.messenger.transport.core.ApplicationType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
