@@ -8,13 +8,12 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.genesys.cloud.messenger.androidcomposeprototype.BuildConfig
-import com.genesys.cloud.messenger.transport.core.ApplicationType
 import com.genesys.cloud.messenger.transport.core.Attachment.State.Detached
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
+import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
-import com.genesys.cloud.messenger.transport.core.InternalConfigurationFactory
 import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessageEvent.AttachmentUpdated
 import com.genesys.cloud.messenger.transport.core.MessagingClient
@@ -84,20 +83,12 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         println("Messenger Transport sdkVersion: ${MessengerTransportSDK.sdkVersion}")
         this.onOktaSingIn = onOktaSignIn
         this.selectFile = selectFile
-        val mmsdkConfiguration = InternalConfigurationFactory.create(
+        val mmsdkConfiguration = Configuration(
             deploymentId = deploymentId.ifEmpty { BuildConfig.DEPLOYMENT_ID },
             domain = region.ifEmpty { BuildConfig.DEPLOYMENT_DOMAIN },
             logging = true,
-            encryptedVault = true,
-            applicationType = ApplicationType.MESSENGER_SDK,
-            applicationVersion = "3.3.3"
+            encryptedVault = true
         )
-//        val mmsdkConfiguration = Configuration(
-//            deploymentId = deploymentId.ifEmpty { BuildConfig.DEPLOYMENT_ID },
-//            domain = region.ifEmpty { BuildConfig.DEPLOYMENT_DOMAIN },
-//            logging = true,
-//            encryptedVault = true
-//        )
 
         if (mmsdkConfiguration.encryptedVault) {
             EncryptedVault.context = context

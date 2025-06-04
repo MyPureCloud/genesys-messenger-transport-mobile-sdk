@@ -38,7 +38,7 @@ object InternalConfigurationFactory {
 
         config.application = when (applicationType) {
             ApplicationType.TRANSPORT_SDK -> "TransportSDK-${MessengerTransportSDK.sdkVersion}"
-            else -> "$applicationType-$applicationVersion/TransportSDK-${MessengerTransportSDK.sdkVersion}"
+            else -> "${applicationType.title}-$applicationVersion/TransportSDK-${MessengerTransportSDK.sdkVersion}"
         }
         return config
     }
