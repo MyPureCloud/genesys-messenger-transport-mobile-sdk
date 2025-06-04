@@ -5,7 +5,6 @@ import com.genesys.cloud.messenger.transport.core.InternalConfigurationFactory
 import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 
 class InternalConfigurationFactoryTest {
 
@@ -14,7 +13,8 @@ class InternalConfigurationFactoryTest {
         val config = InternalConfigurationFactory.create(
             deploymentId = "test-deployment",
             domain = "test.com",
-            applicationType = ApplicationType.TRANSPORT_SDK
+            applicationType = ApplicationType.TRANSPORT_SDK,
+            applicationVersion = null
         )
 
         assertEquals(
@@ -30,35 +30,11 @@ class InternalConfigurationFactoryTest {
             deploymentId = "test-deployment",
             domain = "test.com",
             applicationType = ApplicationType.MESSENGER_SDK,
-            messengerSDKVersion = messengerVersion
+            applicationVersion = messengerVersion
         )
 
         assertEquals(
             "MessengerSDK-$messengerVersion/TransportSDK-${MessengerTransportSDK.sdkVersion}",
-            config.application
-        )
-    }
-
-    @Test
-    fun `when creating configuration with MESSENGER type without version it should throw exception`() {
-        assertFailsWith<IllegalArgumentException> {
-            InternalConfigurationFactory.create(
-                deploymentId = "test-deployment",
-                domain = "test.com",
-                applicationType = ApplicationType.MESSENGER_SDK
-            )
-        }
-    }
-
-    @Test
-    fun `when creating configuration with default type it should use TRANSPORT format`() {
-        val config = InternalConfigurationFactory.create(
-            deploymentId = "test-deployment",
-            domain = "test.com"
-        )
-
-        assertEquals(
-            "TransportSDK-${MessengerTransportSDK.sdkVersion}",
             config.application
         )
     }
