@@ -8,8 +8,8 @@ object InternalConfigurationFactory {
     /**
      * @param deploymentId the ID of the Genesys Cloud Messenger deployment.
      * @param domain the regional base domain address for a Genesys Cloud Web Messaging service.
-     * @param applicationType the type of SDK being used (Transport or Messenger). Defaults to TRANSPORT.
-     * @param applicationVersion the version of the Messenger SDK (required only when sdkType is MESSENGER).
+     * @param applicationType the type of application using the configuration.
+     * @param applicationVersion the version of application using the configuration.
      * @param logging indicates if logging should be enabled.
      * @param reconnectionTimeoutInSeconds period of time during which Transport will try to reconnect.
      * @param autoRefreshTokenWhenExpired indicates if Transport should auto refresh auth token if expired.
