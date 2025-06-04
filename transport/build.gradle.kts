@@ -19,6 +19,21 @@ plugins {
 version = project.rootProject.version
 group = project.rootProject.group
 
+val givenVersion = version.toString()
+var baseVersion = givenVersion // Base part of the version if no RC
+var buildNumber = 1     // RC number (and build number for iOS starting from 1)
+
+println("Root: version: $givenVersion")
+
+val versionRegex = """^(\d+\.\d+\.\d+)(?:-[Rr][Cc](\d+))?$""".toRegex()
+val matchResult = versionRegex.find(givenVersion)
+
+if (matchResult != null) {
+    baseVersion = matchResult.groups[1]?.value ?: givenVersion
+    val buildNumberStr = matchResult.groups[2]?.value
+    buildNumber = buildNumberStr?.toIntOrNull() ?: 1
+}
+
 val iosFrameworkName = "MessengerTransport"
 val iosMinimumOSVersion = "13.0"
 val iosCocoaPodName = "GenesysCloudMessengerTransport"
@@ -187,8 +202,8 @@ tasks {
                         "build/XCFrameworks/${buildVariant.lowercase()}/$iosFrameworkName.xcframework/$arch/$iosFrameworkName.framework"
                     val infoPlistPath = "$xcframeworkPath/Info.plist"
                     val propertiesMap = mapOf(
-                        "CFBundleShortVersionString" to version,
-                        "CFBundleVersion" to version,
+                        "CFBundleShortVersionString" to baseVersion,
+                        "CFBundleVersion" to buildNumber,
                         "MinimumOSVersion" to iosMinimumOSVersion
                     )
                     println("Updating framework metadata at: ${this.project.projectDir}/$infoPlistPath")
@@ -210,7 +225,7 @@ tasks {
         description = "Generates the $podspecFileName file for publication to CocoaPods."
         doLast {
             val content = file("${podspecFileName}_template").readText()
-                .replace(oldValue = "<VERSION>", newValue = version.toString())
+                .replace(oldValue = "<VERSION>", newValue = baseVersion)
                 .replace(
                     oldValue = "<SOURCE_HTTP_URL>",
                     newValue = "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/releases/download/v${version}/MessengerTransport.xcframework.zip"
