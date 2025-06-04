@@ -48,8 +48,8 @@ pipeline {
                             oktaproperties = testing.getSecretStashSecret(
                                 'dev',
                                 'us-east-1',
-                                'transportsdk',
-                                'okta.properties',
+                                'mobiledx-ios',
+                                'okta-properties',
                                 env.WORKSPACE
                             )
                             echo "okta.properties fetched successfully."
