@@ -14,7 +14,7 @@ class InternalConfigurationFactoryTest {
             deploymentId = "test-deployment",
             domain = "test.com",
             applicationType = ApplicationType.TRANSPORT_SDK,
-            applicationVersion = null
+            applicationVersion = "0.0.0"
         )
 
         assertEquals(

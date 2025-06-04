@@ -20,7 +20,7 @@ object InternalConfigurationFactory {
         deploymentId: String,
         domain: String,
         applicationType: ApplicationType,
-        applicationVersion: String?,
+        applicationVersion: String,
         logging: Boolean = false,
         reconnectionTimeoutInSeconds: Long = 60 * 5,
         autoRefreshTokenWhenExpired: Boolean = true,
