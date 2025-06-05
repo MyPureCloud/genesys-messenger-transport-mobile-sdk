@@ -58,6 +58,11 @@ implementation 'cloud.genesys:messenger-transport-mobile-sdk:<version>'
 
 Detailed documentation for Messenger Transport, including how to use the SDK and how to contribute to the project, can be found on the [Wiki](https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/wiki).
 
+## Questions and Support
+
+For help, troubleshooting, or to share feedback about the Messenger Transport SDK, please post in the [Genesys Cloud Community Forum](https://community.genesys.com/home).
+It's the best place to get quick responses from Genesys experts and the developer community.
+
 ## Known Issues
 
 | Issue | Description | Details | Resolution | Affected Version |
