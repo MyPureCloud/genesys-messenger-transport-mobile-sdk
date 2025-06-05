@@ -136,6 +136,8 @@ object QuickReplyTestValues {
     internal const val PAYLOAD_B = "payload_b"
     internal const val QUICK_REPLY = "QuickReply"
     internal const val BUTTON_RESPONSE = "ButtonResponse"
+    val postbackButtonResponse = ButtonResponse(text = "Book Now", type = "Postback", payload = "I want it")
+
 
     internal val buttonResponse_a = ButtonResponse(
         text = TEXT_A,

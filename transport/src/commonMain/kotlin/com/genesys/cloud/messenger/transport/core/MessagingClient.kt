@@ -187,6 +187,15 @@ interface MessagingClient {
     fun sendQuickReply(buttonResponse: ButtonResponse)
 
     /**
+     * Send a postback response when a customer interacts with a Card or Carousel.
+     *
+     * @param buttonResponse the postback button (type = Postback) selected by the user.
+     * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
+     */
+    @Throws(IllegalStateException::class)
+    fun sendPostback(buttonResponse: ButtonResponse)
+
+    /**
      * Perform a health check of the connection by sending an echo message.
      * This command sends a single echo request and should be called a maximum of once every 30 seconds.
      * If called more frequently, this command will be rate limited in order to optimize network traffic.

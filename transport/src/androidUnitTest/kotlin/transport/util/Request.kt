@@ -3,6 +3,7 @@ package transport.util
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.MessageValues
+import com.genesys.cloud.messenger.transport.utility.TestValues
 
 internal object Request {
     const val token = "00000000-0000-0000-0000-000000000000"
@@ -22,6 +23,19 @@ internal object Request {
     ) = """{"token":"$token","message":{"text":"",$content,$channel"type":"Text"},"action":"onMessage"}"""
     fun textMessage(text: String = MessageValues.TEXT) =
         """{"token":"$token","message":{"text":"$text","type":"Text"},"action":"onMessage"}"""
+    private fun postbackContent(text: String, payload: String, type: String): String =
+        """"content":[{"contentType":"ButtonResponse","buttonResponse":{"text":"$text","payload":"$payload","type":"$type"}}]"""
+    fun postbackWith(): String =
+        """{
+        "action": "onMessage",
+        "token": "${TestValues.TOKEN}",
+        "message": {
+            "text": "Book Now",
+            "metadata": { "customMessageId": "msg_id" },
+            "channel": null,
+            "content": []
+        }
+    }"""
     const val closeAllConnections =
         """{"token":"$token","closeAllConnections":true,"action":"closeSession"}"""
     const val clearConversation =

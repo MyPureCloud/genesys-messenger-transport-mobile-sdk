@@ -117,4 +117,6 @@ internal object LogMessages {
     fun quickReplyPrepareToSend(message: Message) = "Message with quick reply prepared to send: ${message.toString().sanitizeSensitiveData()}"
     fun sendQuickReply(buttonResponse: ButtonResponse) = "sendQuickReply(buttonResponse: $buttonResponse)"
     fun ignoreInboundEvent(event: Event) = "Ignore inbound event: $event."
+    fun sendPostback(messageType: Message.Type, buttonResponse: ButtonResponse) =
+        "sendPostback(messageType = $messageType, buttonResponse = $buttonResponse)"
 }

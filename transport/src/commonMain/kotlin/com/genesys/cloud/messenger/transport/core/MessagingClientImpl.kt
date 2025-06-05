@@ -195,6 +195,21 @@ internal class MessagingClientImpl(
         webSocket.sendMessage(encodedJson)
     }
 
+    private fun sendButtonResponse(buttonResponse: ButtonResponse, messageType: Message.Type?) {
+        stateMachine.checkIfConfigured()
+        val messageType = messageType ?: Message.Type.QuickReply
+        log.i { LogMessages.sendPostback(messageType, buttonResponse) }
+
+        val channel = prepareCustomAttributesForSending()
+        val request = messageStore.preparePostbackMessage(token, buttonResponse, channel)
+
+        log.i { "sendButtonResponse(): request = $request" }
+        log.i { "sendButtonResponse(): request.message = ${request.message}" }
+
+        val encodedJson = WebMessagingJson.json.encodeToString(request)
+        send(encodedJson)
+    }
+
     @Throws(IllegalStateException::class)
     override fun sendMessage(text: String, customAttributes: Map<String, String>) {
         stateMachine.checkIfConfigured()
@@ -208,12 +223,11 @@ internal class MessagingClientImpl(
     }
 
     override fun sendQuickReply(buttonResponse: ButtonResponse) {
-        stateMachine.checkIfConfigured()
-        log.i { LogMessages.sendQuickReply(buttonResponse) }
-        val channel = prepareCustomAttributesForSending()
-        val request = messageStore.prepareMessageWith(token, buttonResponse, channel)
-        val encodedJson = WebMessagingJson.json.encodeToString(request)
-        send(encodedJson)
+        sendButtonResponse(buttonResponse, Message.Type.QuickReply)
+    }
+
+    override fun sendPostback(buttonResponse: ButtonResponse) {
+        sendButtonResponse(buttonResponse, Message.Type.Carousel)
     }
 
     @Throws(IllegalStateException::class)

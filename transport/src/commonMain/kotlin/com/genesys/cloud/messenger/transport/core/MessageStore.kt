@@ -21,6 +21,42 @@ internal class MessageStore(private val log: Log) {
     val updateAttachmentStateWith = { attachment: Attachment -> update(attachment) }
     var messageListener: ((MessageEvent) -> Unit)? = null
 
+    fun buildMessageAndRequest(
+        token: String,
+        buttonResponse: ButtonResponse,
+        channel: Channel?,
+        messageType: Message.Type
+    ): OnMessageRequest {
+        val messageToSend = pendingMessage.copy(
+            messageType = messageType,
+            type = messageType.name,
+            state = Message.State.Sending,
+            quickReplies = listOf(buttonResponse),
+        ).also {
+            log.i { LogMessages.quickReplyPrepareToSend(it) }
+            activeConversation.add(it)
+            publish(MessageEvent.MessageInserted(it))
+            pendingMessage = Message(attachments = it.attachments)
+        }
+
+        val messageText = buttonResponse.text
+
+        return OnMessageRequest(
+            token = token,
+            message = TextMessage(
+                text = messageText,
+                metadata = mapOf("customMessageId" to messageToSend.id),
+                content = listOf(
+                    Message.Content(
+                        contentType = Message.Content.Type.ButtonResponse,
+                        buttonResponse = buttonResponse
+                    )
+                ),
+                channel = channel,
+            )
+        )
+    }
+
     fun prepareMessage(token: String, text: String, channel: Channel? = null): OnMessageRequest {
         val messageToSend = pendingMessage.copy(text = text, state = Message.State.Sending).also {
             log.i { LogMessages.messagePreparedToSend(it) }
@@ -44,32 +80,40 @@ internal class MessageStore(private val log: Log) {
         buttonResponse: ButtonResponse,
         channel: Channel? = null,
     ): OnMessageRequest {
-        val type = Message.Type.QuickReply
-        val messageToSend = pendingMessage.copy(
-            messageType = type,
-            type = type.name,
-            state = Message.State.Sending,
-            quickReplies = listOf(buttonResponse),
-        ).also {
-            log.i { LogMessages.quickReplyPrepareToSend(it) }
+        return buildMessageAndRequest(token, buttonResponse, channel, Message.Type.QuickReply)
+    }
+
+    fun preparePostbackMessage(
+        token: String,
+        buttonResponse: ButtonResponse,
+        channel: Channel? = null
+    ): OnMessageRequest {
+        val messageToSend = pendingMessage.copy(state = Message.State.Sending).also {
+            log.i { LogMessages.messagePreparedToSend(it) }
             activeConversation.add(it)
             publish(MessageEvent.MessageInserted(it))
-            pendingMessage = Message(attachments = it.attachments)
+            pendingMessage = Message()
         }
-        val content = listOf(
-            Message.Content(
-                contentType = Message.Content.Type.ButtonResponse,
-                buttonResponse = buttonResponse,
-            )
+
+        val content = messageToSend.getUploadedAttachments()
+        val metadata = mapOf("customMessageId" to messageToSend.id)
+
+        // 🚨 Add validation BEFORE creating the TextMessage
+        val resolvedText = buttonResponse.text.trim()
+        if (resolvedText.isEmpty()) {
+            throw IllegalArgumentException("ButtonResponse.text must not be blank.")
+        }
+
+        val textMessage = TextMessage(
+            text = resolvedText,
+            metadata = metadata,
+            content = content,
+            channel = channel
         )
+
         return OnMessageRequest(
             token = token,
-            message = TextMessage(
-                text = "",
-                metadata = mapOf("customMessageId" to messageToSend.id),
-                content = content,
-                channel = channel,
-            )
+            message = textMessage
         )
     }
 
