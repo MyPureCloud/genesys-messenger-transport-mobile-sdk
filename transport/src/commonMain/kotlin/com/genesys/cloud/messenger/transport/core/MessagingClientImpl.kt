@@ -419,12 +419,12 @@ internal class MessagingClientImpl(
         when (code) {
             is ErrorCode.SessionHasExpired,
             is ErrorCode.SessionNotFound,
-                -> transitionToStateError(code, message)
+            -> transitionToStateError(code, message)
 
             is ErrorCode.MessageTooLong,
             is ErrorCode.RequestRateTooHigh,
             is ErrorCode.CustomAttributeSizeTooLarge,
-                -> {
+            -> {
                 if (code is ErrorCode.CustomAttributeSizeTooLarge) {
                     internalCustomAttributesStore.onError()
                     if (sendingAutostart) {
@@ -447,7 +447,7 @@ internal class MessagingClientImpl(
             is ErrorCode.ClientResponseError,
             is ErrorCode.ServerResponseError,
             is ErrorCode.RedirectResponseError,
-                -> {
+            -> {
                 if (stateMachine.isConnected() || stateMachine.isReconnecting() || isStartingANewSession) {
                     handleConfigureSessionErrorResponse(code, message)
                 } else {

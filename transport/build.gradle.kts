@@ -33,6 +33,8 @@ if (matchResult != null) {
     val buildNumberStr = matchResult.groups[2]?.value
     buildNumber = buildNumberStr?.toIntOrNull() ?: 1
 }
+println("baseVersion: version: $baseVersion")
+println("buildNumber: version: $buildNumber")
 
 
 val iosFrameworkName = "MessengerTransport"
