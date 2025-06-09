@@ -60,7 +60,7 @@ class MCAuthTests : BaseMessagingClientTest() {
     @Test
     fun `when connectAuthenticatedSession and AuthHandler has no Jwt and refreshToken was successful`() {
         every { mockAuthHandler.jwt } returns NO_JWT
-        every { mockAuthHandler.refreshToken(captureLambda()) } answers {
+        every { mockAuthHandler.refreshToken(any(), captureLambda()) } answers {
             every { mockAuthHandler.jwt } returns AuthTest.JWT_TOKEN
             lambda<(Result<Empty>) -> Unit>().invoke(Result.Success(Empty()))
         }
@@ -73,7 +73,7 @@ class MCAuthTests : BaseMessagingClientTest() {
             mockPlatformSocket.openSocket(any())
             mockStateChangedListener(fromConnectingToConnected)
             mockAuthHandler.jwt
-            mockAuthHandler.refreshToken(any())
+            mockAuthHandler.refreshToken(any(), any())
             mockAuthHandler.jwt
             mockAuthHandler.jwt
             mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
@@ -85,7 +85,7 @@ class MCAuthTests : BaseMessagingClientTest() {
     @Test
     fun `when connectAuthenticatedSession and AuthHandler has no Jwt and refreshToken fails`() {
         val givenResult = Result.Failure(ErrorCode.AuthFailed, ErrorTest.MESSAGE)
-        every { mockAuthHandler.refreshToken(captureLambda()) } answers {
+        every { mockAuthHandler.refreshToken(any(), captureLambda()) } answers {
             lambda<(Result<Empty>) -> Unit>().invoke(givenResult)
         }
         every { mockAuthHandler.jwt } returns NO_JWT
@@ -104,7 +104,7 @@ class MCAuthTests : BaseMessagingClientTest() {
             mockPlatformSocket.openSocket(any())
             mockStateChangedListener(fromConnectingToConnected)
             mockAuthHandler.jwt
-            mockAuthHandler.refreshToken(any())
+            mockAuthHandler.refreshToken(any(), any())
             errorSequence(fromConnectedToError(expectedErrorState))
         }
     }
@@ -169,15 +169,15 @@ class MCAuthTests : BaseMessagingClientTest() {
             mockAuthHandler.jwt
             mockAuthHandler.jwt
             mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
-            mockAuthHandler.refreshToken(any())
+            mockAuthHandler.refreshToken(any(), any())
             mockAuthHandler.jwt
             mockAuthHandler.jwt
             mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
-            mockAuthHandler.refreshToken(any())
+            mockAuthHandler.refreshToken(any(), any())
             mockAuthHandler.jwt
             mockAuthHandler.jwt
             mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
-            mockAuthHandler.refreshToken(any())
+            mockAuthHandler.refreshToken(any(), any())
             mockAuthHandler.jwt
             mockAuthHandler.jwt
             mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
@@ -268,7 +268,7 @@ class MCAuthTests : BaseMessagingClientTest() {
         every { mockPlatformSocket.sendMessage(Request.closeAllConnections) } answers {
             slot.captured.onMessage(Response.configureSuccess(connected = false, readOnly = true))
         }
-        every { mockAuthHandler.refreshToken(captureLambda()) } answers {
+        every { mockAuthHandler.refreshToken(any(), captureLambda()) } answers {
             every { mockAuthHandler.jwt } returns AuthTest.JWT_TOKEN
             lambda<(Result<Empty>) -> Unit>().invoke(Result.Success(Empty()))
         }

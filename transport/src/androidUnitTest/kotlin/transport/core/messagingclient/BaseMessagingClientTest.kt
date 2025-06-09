@@ -146,7 +146,7 @@ open class BaseMessagingClientTest {
     )
     internal val mockAuthHandler: AuthHandler = mockk(relaxed = true) {
         every { jwt } returns AuthTest.JWT_TOKEN
-        every { refreshToken(captureLambda<(Result<Any>) -> Unit>()) } answers {
+        every { refreshToken(any(), captureLambda<(Result<Any>) -> Unit>()) } answers {
             lambda<(Result<Any>) -> Unit>().invoke(Result.Success(Empty()))
         }
     }
