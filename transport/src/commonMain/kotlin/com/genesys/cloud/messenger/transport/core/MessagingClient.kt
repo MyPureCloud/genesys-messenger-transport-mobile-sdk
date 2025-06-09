@@ -294,6 +294,8 @@ interface MessagingClient {
     @Throws(IllegalStateException::class)
     fun logoutFromAuthenticatedSession()
 
+    fun shouldAuthorize(callback: (Boolean) -> Unit)
+
     /**
      * Permanently clears the existing conversation history with an agent from all devices that share the same session.
      * This action is allowed in both [State.Configured] and [State.ReadOnly].

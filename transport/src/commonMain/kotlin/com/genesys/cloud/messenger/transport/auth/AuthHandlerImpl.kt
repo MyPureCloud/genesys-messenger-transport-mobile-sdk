@@ -72,8 +72,30 @@ internal class AuthHandlerImpl(
         }
     }
 
-    override fun refreshToken(callback: (Result<Empty>) -> Unit) {
-        if (!autoRefreshTokenWhenExpired || !authJwt.hasRefreshToken()) {
+    override fun refreshToken(forceRefresh : Boolean, callback: (Result<Empty>) -> Unit) {
+        if (forceRefresh) {
+            authJwt.let {
+                if(!authJwt.hasRefreshToken()) {
+                    callback(Result.Failure(ErrorCode.RefreshAuthTokenFailure, null))
+                    return
+                }
+                dispatcher.launch {
+                    when (val result = api.refreshAuthJwt(it.refreshToken!!)) {
+                        is Result.Success -> {
+                            log.i { LogMessages.REFRESH_AUTH_TOKEN_SUCCESS }
+                            authJwt = it.copy(jwt = result.value.jwt, refreshToken = it.refreshToken)
+                            callback(Result.Success(Empty()))
+                        }
+                        is Result.Failure -> {
+                            log.e { LogMessages.couldNotRefreshAuthToken(result.message) }
+                            clear()
+                            callback(result)
+                        }
+                    }
+                }
+            }
+        }
+        else if (!autoRefreshTokenWhenExpired || !authJwt.hasRefreshToken()) {
             val message = if (!autoRefreshTokenWhenExpired) {
                 ErrorMessage.AutoRefreshTokenDisabled
             } else {

@@ -32,7 +32,7 @@
                 <data
                     android:host="oauth2"
                     android:pathPrefix="/code"
-                    android:scheme="com.okta.dev-2518047" />
+                    android:scheme="com.okta.dev-14718840" />
             </intent-filter>
         </activity>
 

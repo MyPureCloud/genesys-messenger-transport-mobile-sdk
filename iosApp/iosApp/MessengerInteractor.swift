@@ -214,4 +214,10 @@ final class MessengerInteractor {
     func wasAuthenticated() -> Bool {
         return messagingClient.wasAuthenticated
     }
+    
+    func shouldAuthorize(completion: @escaping (Bool) -> Void) {
+        messagingClient.shouldAuthorize { shouldAuth in
+            completion(shouldAuth as! Bool)
+        }
+    }
 }

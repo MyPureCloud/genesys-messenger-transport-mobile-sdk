@@ -57,6 +57,7 @@ class TestbedViewController: UIViewController {
         case removeAuthRefreshToken
         case stepUp
         case wasAuthenticated
+        case shouldAuthorize
 
         var helpDescription: String {
             switch self {
@@ -498,6 +499,10 @@ extension TestbedViewController : UITextFieldDelegate {
                 try messenger.stepUp()
             case (.wasAuthenticated, _):
                 self.info.text = "wasAuthenticated: \(messenger.wasAuthenticated())"
+            case (.shouldAuthorize, _):
+                messenger.shouldAuthorize { shouldAuth in
+                        self.info.text = "shouldAuthorize: \(shouldAuth)"
+                }
             default:
                 self.info.text = "Invalid command"
             }

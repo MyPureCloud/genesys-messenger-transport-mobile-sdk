@@ -25,7 +25,7 @@
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.okta.dev-2518047</string>
+				<string>com.okta.dev-14718840</string>
 			</array>
 		</dict>
 	</array>
