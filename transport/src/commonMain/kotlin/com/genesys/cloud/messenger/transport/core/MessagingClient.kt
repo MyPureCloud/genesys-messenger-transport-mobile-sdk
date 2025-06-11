@@ -295,6 +295,13 @@ interface MessagingClient {
     fun logoutFromAuthenticatedSession()
 
     /**
+     * Check if the user needs to be authorized.
+     *
+     * @param callback A callback function that will be called with a boolean indicating whether the user needs to be authorized or not.
+     */
+    fun shouldAuthorize(callback: (Boolean) -> Unit)
+
+    /**
      * Permanently clears the existing conversation history with an agent from all devices that share the same session.
      * This action is allowed in both [State.Configured] and [State.ReadOnly].
      *

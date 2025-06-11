@@ -487,4 +487,7 @@ class AuthHandlerTest {
     private fun authorize() {
         subject.authorize(AuthTest.AUTH_CODE, AuthTest.REDIRECT_URI, AuthTest.CODE_VERIFIER)
     }
+
+
+    //add 3 tests for should authorize
 }

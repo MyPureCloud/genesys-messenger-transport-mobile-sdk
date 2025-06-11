@@ -45,6 +45,7 @@ internal class AuthHandlerImpl(
                         eventHandler.onEvent(Event.Authorized)
                     }
                 }
+
                 is Result.Failure -> handleRequestError(result, "fetchAuthJwt()")
             }
         }
@@ -83,14 +84,32 @@ internal class AuthHandlerImpl(
             callback(Result.Failure(ErrorCode.RefreshAuthTokenFailure, message))
             return
         }
-        authJwt.let {
+        preformTokenRefresh(callback)
+    }
+
+    override fun shouldAuthorize(callback: (Boolean) -> Unit) {
+        if (!authJwt.hasRefreshToken()){
+            callback(true)
+            return
+        }
+        preformTokenRefresh { result ->
+            when (result) {
+                is Result.Success -> callback(false)
+                is Result.Failure -> callback(true)
+            }
+        }
+    }
+
+    private fun preformTokenRefresh(callback: (Result<Empty>) -> Unit) {
+        authJwt.let { jwt ->
             dispatcher.launch {
-                when (val result = api.refreshAuthJwt(it.refreshToken!!)) {
+                when (val result = api.refreshAuthJwt(jwt.refreshToken!!)) {
                     is Result.Success -> {
                         log.i { LogMessages.REFRESH_AUTH_TOKEN_SUCCESS }
-                        authJwt = it.copy(jwt = result.value.jwt, refreshToken = it.refreshToken)
+                        authJwt = jwt.copy(jwt = result.value.jwt, refreshToken = jwt.refreshToken)
                         callback(Result.Success(Empty()))
                     }
+
                     is Result.Failure -> {
                         log.e { LogMessages.couldNotRefreshAuthToken(result.message) }
                         clear()
@@ -119,8 +138,8 @@ internal class AuthHandlerImpl(
 
     private fun eligibleToRefresh(errorCode: ErrorCode): Boolean =
         autoRefreshTokenWhenExpired &&
-            errorCode.isUnauthorized() &&
-            authJwt.hasRefreshToken()
+                errorCode.isUnauthorized() &&
+                authJwt.hasRefreshToken()
 }
 
 private fun AuthJwt.hasRefreshToken(): Boolean =

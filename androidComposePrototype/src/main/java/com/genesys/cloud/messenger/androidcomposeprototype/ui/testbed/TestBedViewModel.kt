@@ -50,9 +50,9 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         private set
     var clientState: State by mutableStateOf(State.Idle)
         private set
-    var deploymentId: String by mutableStateOf(BuildConfig.DEPLOYMENT_ID)
+    var deploymentId: String by mutableStateOf("c13061e6-d538-4c5f-a809-63c3cbd7c5c3")
         private set
-    var region: String by mutableStateOf(BuildConfig.DEPLOYMENT_DOMAIN)
+    var region: String by mutableStateOf("inintca.com")
         private set
     var authState: AuthState by mutableStateOf(AuthState.NoAuth)
         private set
@@ -163,10 +163,18 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "removeAuthRefreshToken" -> doRemoveAuthRefreshTokenFromVault()
             "stepUp" -> doStepUp()
             "wasAuthenticated" -> doWasAuthenticated()
+            "shouldAuthorize" -> doShouldAuthorize()
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
             }
+        }
+    }
+
+    private fun doShouldAuthorize() {
+        client.shouldAuthorize { result ->
+            onSocketMessageReceived("shouldAuthorize is: $result")
+            commandWaiting = false
         }
     }
 
