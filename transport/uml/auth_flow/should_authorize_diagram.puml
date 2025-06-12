@@ -1,0 +1,68 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+!theme bluegray
+!pragma teoz true
+
+skinparam backgroundColor #whitesmoke
+title shouldAuthorize flow
+
+participant App
+participant MessagingClient
+participant AuthHandler
+participant Vault
+participant WebMessagingAPI
+participant "Genesys Cloud Platform API"
+
+rnote over "App"
+Given: MessagingClient initialized.
+Note: shouldAuthorize might have async operation on the background.
+Therefore (callback: Boolean) can be delayed.
+end rnote
+
+App -> MessagingClient : shouldAuthorize(callback: Boolean)
+MessagingClient -> AuthHandler : shouldAuthorize(callback: Boolean)
+AuthHandler -> AuthHandler : hasRefreshToken()
+alt #aaff8833 hasRefreshToken() == true
+    AuthHandler -> WebMessagingAPI : refreshAuthJwt(refreshToken)
+    WebMessagingAPI -> "Genesys Cloud Platform API" : refreshAuthJwt(refreshToken)
+    alt #aaff8833 Success
+    WebMessagingAPI --> AuthHandler : Result.Success(refreshToken)
+    AuthHandler -> AuthHandler : update jwt
+    AuthHandler --> MessagingClient : callback(false)
+    MessagingClient --> App : callback(false)
+    rnote over "App"
+    shouldAuthorize == false.
+    User has valid refresh and jwt tokens.
+    No need to Authorize.
+    end rnote
+    else  #ffaaff33 failure
+    WebMessagingAPI --> AuthHandler : Result.Failure(errorCode, errorMessage)
+    AuthHandler -> AuthHandler : clear refresh and jwt tokens
+    AuthHandler -> Vault : clear authRefreshToken
+    AuthHandler --> MessagingClient : callback(true)
+    MessagingClient --> App : callback(true)
+    rnote over "App"
+    shouldAuthorize == true.
+    Failed to refresh token.
+    Either refreshToken is expired or request failed due to any other reason.
+    User must authorize.
+    end rnote
+    end
+else #ffaaff33 hasRefreshToken() == false
+    AuthHandler --> MessagingClient : callback(true)
+    MessagingClient --> App : callback(true)
+    rnote over "App"
+    shouldAuthorize == true.
+    No refresh token found.
+    User must authorize.
+    end rnote
+end
+
+    rnote over AuthHandler
+    In case of LogoutEvent, authRefreshToken will be removed from vault, making any further shouldAuthorize calls return true.
+    As well as logout request will immediately invalidate both the jwt and the refresh tokens on the backend.
+    end rnote
+
+
+@enduml
