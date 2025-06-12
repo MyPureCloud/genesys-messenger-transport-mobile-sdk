@@ -136,7 +136,7 @@ private fun StructuredMessage.Type.toMessageType(hasQuickReplies: Boolean, hasCa
         StructuredMessage.Type.Structured -> {
             when {
                 hasQuickReplies -> Message.Type.QuickReply
-                hasCards -> Message.Type.Carousel
+                hasCards -> Message.Type.Cards
                 else -> Message.Type.Unknown
             }
         }

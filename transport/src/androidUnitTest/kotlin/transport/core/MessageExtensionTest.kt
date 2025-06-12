@@ -965,7 +965,7 @@ internal class MessageExtensionTest {
     fun `when StructuredMessage has CardContent then messageType is Carousel and card is mapped`() {
         val givenStructuredMessage = CardTestValues.createStructuredMessageWithCardContent()
 
-        val expectedMessageType = Message.Type.Carousel
+        val expectedMessageType = Message.Type.Cards
         val expectedCardTitle = CardTestValues.title
         val expectedActionText = CardTestValues.text
 
@@ -990,7 +990,7 @@ internal class MessageExtensionTest {
 
         val result = givenStructuredMessage.toMessage()
 
-        assertThat(result.messageType).isEqualTo(Message.Type.Carousel)
+        assertThat(result.messageType).isEqualTo(Message.Type.Cards)
         assertThat(result.cards).size().isEqualTo(givenTitles.size)
         assertThat(result.cards[0].title).isEqualTo(expectedTitles[0])
         assertThat(result.cards[1].title).isEqualTo(expectedTitles[1])

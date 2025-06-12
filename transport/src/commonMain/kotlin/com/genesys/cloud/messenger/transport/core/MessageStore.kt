@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.core
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.extensions.getUploadedAttachments
 import com.genesys.cloud.messenger.transport.util.logs.Log
@@ -69,6 +70,43 @@ internal class MessageStore(private val log: Log) {
                 metadata = mapOf("customMessageId" to messageToSend.id),
                 content = content,
                 channel = channel,
+            )
+        )
+    }
+
+    fun preparePostbackMessage(
+        token: String,
+        buttonResponse: ButtonResponse,
+        channel: Channel? = null,
+    ): OnMessageRequest {
+        val type = Message.Type.Cards
+
+        val messageToSend = pendingMessage.copy(
+            messageType = type,
+            type = type.name,
+            state = Message.State.Sending,
+            quickReplies = listOf(buttonResponse),
+        ).also {
+            log.i { LogMessages.quickReplyPrepareToSend(it) }
+            activeConversation.add(it)
+            publish(MessageEvent.MessageInserted(it))
+            pendingMessage = Message(attachments = it.attachments)
+        }
+
+        val content = listOf(
+            Message.Content(
+                contentType = Message.Content.Type.ButtonResponse,
+                buttonResponse = buttonResponse,
+            )
+        )
+
+        return OnMessageRequest(
+            token = token,
+            message = StructuredMessage(
+                text = buttonResponse.text,
+                metadata = mapOf("customMessageId" to messageToSend.id),
+                content = content,
+                channel = channel
             )
         )
     }

@@ -8,6 +8,6 @@ import kotlinx.serialization.Serializable
 internal data class EventMessage(
     val events: List<StructuredMessageEvent>,
     val channel: Channel? = null,
-) : BaseMessageProtocol {
+) : BaseMessageProtocol() {
     @Required override val type = BaseMessageProtocol.Type.Event
 }

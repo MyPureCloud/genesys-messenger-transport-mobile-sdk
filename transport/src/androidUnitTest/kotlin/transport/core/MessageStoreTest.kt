@@ -99,6 +99,7 @@ internal class MessageStoreTest {
         )
 
         subject.prepareMessage(TestValues.TOKEN, "test message").run {
+            this.message as TextMessage
             assertThat(this.message.content).containsOnly(
                 Content(
                     contentType = Content.Type.Attachment,
@@ -114,6 +115,7 @@ internal class MessageStoreTest {
         subject.updateAttachmentStateWith(attachment())
 
         subject.prepareMessage(TestValues.TOKEN, "test message").run {
+            this.message as TextMessage
             assertThat(message.content).isNotNull()
             assertThat(message.content).isEmpty()
         }
@@ -121,9 +123,9 @@ internal class MessageStoreTest {
 
     @Test
     fun `when update() inbound message`() {
-        val sentMessageId =
-            subject.prepareMessage(TestValues.TOKEN, "test message").message.metadata?.get("customMessageId")
-                ?: "empty"
+        val messageRequest = subject.prepareMessage(TestValues.TOKEN, "test message")
+        messageRequest.message as TextMessage
+        val sentMessageId = messageRequest.message.metadata?.get("customMessageId") ?: "empty"
         val givenMessage =
             Message(id = sentMessageId, state = State.Sent, text = "test message")
         clearMocks(mockMessageListener)
@@ -157,9 +159,9 @@ internal class MessageStoreTest {
 
     @Test
     fun `when update() inbound and then outbound messages`() {
-        val sentMessageId =
-            subject.prepareMessage(TestValues.TOKEN, "test message").message.metadata?.get("customMessageId")
-                ?: "empty"
+        val messageRequest = subject.prepareMessage(TestValues.TOKEN, "test message")
+        messageRequest.message as TextMessage
+        val sentMessageId = messageRequest.message.metadata?.get("customMessageId") ?: "empty"
         val expectedConversationSize = 2
         val givenMessage =
             Message(id = sentMessageId, state = State.Sent, text = "test message")
@@ -396,6 +398,8 @@ internal class MessageStoreTest {
 
         verify { mockMessageListener.invoke(capture(messageSlot)) }
         onMessageRequest.run {
+            this.message as TextMessage
+            expectedOnMessageRequest.message as TextMessage
             assertThat(token).isEqualTo(expectedOnMessageRequest.token)
             assertThat(message).isEqualTo(expectedOnMessageRequest.message)
             assertThat(message.channel).isEqualTo(expectedOnMessageRequest.message.channel)
@@ -488,6 +492,8 @@ internal class MessageStoreTest {
         )
 
         subject.prepareMessageWith(TestValues.TOKEN, givenButtonResponse, givenChannel).run {
+            this.message as TextMessage
+            expectedOnMessageRequest.message as TextMessage
             assertThat(token).isEqualTo(expectedOnMessageRequest.token)
             assertThat(message).isEqualTo(expectedOnMessageRequest.message)
             assertThat(message.content).isEqualTo(expectedOnMessageRequest.message.content)
@@ -525,6 +531,8 @@ internal class MessageStoreTest {
         )
 
         subject.prepareMessageWith(TestValues.TOKEN, givenButtonResponse).run {
+            this.message as TextMessage
+            expectedOnMessageRequest.message as TextMessage
             assertThat(token).isEqualTo(expectedOnMessageRequest.token)
             assertThat(message).isEqualTo(expectedOnMessageRequest.message)
             assertThat(message.content).isEqualTo(expectedOnMessageRequest.message.content)
@@ -555,6 +563,7 @@ internal class MessageStoreTest {
 
         val result = subject.prepareMessageWith(TestValues.TOKEN, givenButtonResponse)
 
+        result.message as TextMessage
         assertThat(result.message.content).containsOnly(*expectedContent.toTypedArray())
         assertThat(subject.pendingMessage.attachments).isNotEmpty()
         assertThat(subject.pendingMessage.attachments).contains(givenAttachment.id to givenAttachment)
