@@ -2,9 +2,11 @@ package transport.auth
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.auth.AuthHandlerImpl
 import com.genesys.cloud.messenger.transport.auth.AuthJwt
 import com.genesys.cloud.messenger.transport.auth.MAX_LOGOUT_ATTEMPTS
@@ -490,23 +492,23 @@ class AuthHandlerTest {
 
     @Test
     fun `when shouldAuthorize() and no refresh token available`() {
-        val mockCallback = slot<Boolean>()
+        var callbackResult: Boolean? = null
 
-        subject.shouldAuthorize { result -> mockCallback.captured = result }
+        subject.shouldAuthorize { result -> callbackResult = result }
 
-        assertThat(mockCallback.captured).isEqualTo(true)
+        assertThat(callbackResult!!).isTrue()
         coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
     }
 
     @Test
     fun `when shouldAuthorize() with refresh token and refresh succeeds`() {
         authorize()
-        val mockCallback = slot<Boolean>()
+        var callbackResult: Boolean? = null
 
-        subject.shouldAuthorize { result -> mockCallback.captured = result }
+        subject.shouldAuthorize { result -> callbackResult = result }
 
         coVerify { mockWebMessagingApi.refreshAuthJwt(AuthTest.REFRESH_TOKEN) }
-        assertThat(mockCallback.captured).isEqualTo(false)
+        assertThat(callbackResult!!).isFalse()
         assertThat(subject.jwt).isEqualTo(AuthTest.REFRESHED_JWT_TOKEN)
     }
 
@@ -517,13 +519,13 @@ class AuthHandlerTest {
             ErrorCode.RefreshAuthTokenFailure,
             ErrorTest.MESSAGE
         )
-        val mockCallback = slot<Boolean>()
+        var callbackResult: Boolean? = null
         val expectedAuthJwt = AuthJwt(NO_JWT, NO_REFRESH_TOKEN)
 
-        subject.shouldAuthorize { result -> mockCallback.captured = result }
+        subject.shouldAuthorize { result -> callbackResult = result }
 
         coVerify { mockWebMessagingApi.refreshAuthJwt(AuthTest.REFRESH_TOKEN) }
-        assertThat(mockCallback.captured).isEqualTo(true)
+        assertThat(callbackResult!!).isTrue()
         assertThat(subject.jwt).isEqualTo(expectedAuthJwt.jwt)
         assertThat(fakeVault.authRefreshToken).isEqualTo(expectedAuthJwt.refreshToken)
     }

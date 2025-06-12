@@ -28,7 +28,7 @@ alt #aaff8833 hasRefreshToken() == true
     WebMessagingAPI -> "Genesys Cloud Platform API" : refreshAuthJwt(refreshToken)
     alt #aaff8833 Success
     WebMessagingAPI --> AuthHandler : Result.Success(refreshToken)
-    AuthHandler -> AuthHandler : update refresh and jwt tokens
+    AuthHandler -> AuthHandler : update jwt
     AuthHandler --> MessagingClient : callback(false)
     MessagingClient --> App : callback(false)
     rnote over "App"

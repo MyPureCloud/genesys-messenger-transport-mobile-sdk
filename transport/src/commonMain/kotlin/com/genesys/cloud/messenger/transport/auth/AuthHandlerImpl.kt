@@ -84,7 +84,7 @@ internal class AuthHandlerImpl(
             callback(Result.Failure(ErrorCode.RefreshAuthTokenFailure, message))
             return
         }
-        preformTokenRefresh(callback)
+        performTokenRefresh(callback)
     }
 
     override fun shouldAuthorize(callback: (Boolean) -> Unit) {
@@ -92,7 +92,7 @@ internal class AuthHandlerImpl(
             callback(true)
             return
         }
-        preformTokenRefresh { result ->
+        performTokenRefresh { result ->
             when (result) {
                 is Result.Success -> callback(false)
                 is Result.Failure -> callback(true)
@@ -100,7 +100,7 @@ internal class AuthHandlerImpl(
         }
     }
 
-    private fun preformTokenRefresh(callback: (Result<Empty>) -> Unit) {
+    private fun performTokenRefresh(callback: (Result<Empty>) -> Unit) {
         authJwt.let { jwt ->
             dispatcher.launch {
                 when (val result = api.refreshAuthJwt(jwt.refreshToken!!)) {

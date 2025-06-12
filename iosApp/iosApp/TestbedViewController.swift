@@ -500,9 +500,9 @@ extension TestbedViewController : UITextFieldDelegate {
             case (.wasAuthenticated, _):
                 self.info.text = "wasAuthenticated: \(messenger.wasAuthenticated())"
             case (.shouldAuthorize, _):
-                           messenger.shouldAuthorize { shouldAuth in
-                                   self.info.text = "shouldAuthorize: \(shouldAuth)"
-                           }
+                messenger.shouldAuthorize { shouldAuth in
+                    self.info.text = "shouldAuthorize: \(shouldAuth)"
+                }
             default:
                 self.info.text = "Invalid command"
             }

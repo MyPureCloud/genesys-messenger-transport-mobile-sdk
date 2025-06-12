@@ -297,7 +297,7 @@ interface MessagingClient {
     /**
      * Check if the user needs to be authorized.
      *
-     * @param callback A callback function that will be called with a boolean indicating whether the user needs to be authorized or not.
+     * @param callback A function that receives true if authorization is needed, or false otherwise.
      */
     fun shouldAuthorize(callback: (Boolean) -> Unit)
 
