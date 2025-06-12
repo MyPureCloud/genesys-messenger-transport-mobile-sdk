@@ -88,7 +88,7 @@ internal class AuthHandlerImpl(
     }
 
     override fun shouldAuthorize(callback: (Boolean) -> Unit) {
-        if (!authJwt.hasRefreshToken()){
+        if (!authJwt.hasRefreshToken()) {
             callback(true)
             return
         }
@@ -138,8 +138,8 @@ internal class AuthHandlerImpl(
 
     private fun eligibleToRefresh(errorCode: ErrorCode): Boolean =
         autoRefreshTokenWhenExpired &&
-                errorCode.isUnauthorized() &&
-                authJwt.hasRefreshToken()
+            errorCode.isUnauthorized() &&
+            authJwt.hasRefreshToken()
 }
 
 private fun AuthJwt.hasRefreshToken(): Boolean =

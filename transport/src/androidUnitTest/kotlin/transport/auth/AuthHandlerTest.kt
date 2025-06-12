@@ -488,11 +488,10 @@ class AuthHandlerTest {
         subject.authorize(AuthTest.AUTH_CODE, AuthTest.REDIRECT_URI, AuthTest.CODE_VERIFIER)
     }
 
-
     @Test
     fun `when shouldAuthorize() and no refresh token available`() {
         val mockCallback = slot<Boolean>()
-        
+
         subject.shouldAuthorize { result -> mockCallback.captured = result }
 
         assertThat(mockCallback.captured).isEqualTo(true)
@@ -503,7 +502,7 @@ class AuthHandlerTest {
     fun `when shouldAuthorize() with refresh token and refresh succeeds`() {
         authorize()
         val mockCallback = slot<Boolean>()
-        
+
         subject.shouldAuthorize { result -> mockCallback.captured = result }
 
         coVerify { mockWebMessagingApi.refreshAuthJwt(AuthTest.REFRESH_TOKEN) }
