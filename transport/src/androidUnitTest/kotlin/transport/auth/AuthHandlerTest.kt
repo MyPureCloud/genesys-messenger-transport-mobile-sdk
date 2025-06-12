@@ -489,5 +489,43 @@ class AuthHandlerTest {
     }
 
 
-    //add 3 tests for should authorize
+    @Test
+    fun `when shouldAuthorize() and no refresh token available`() {
+        val mockCallback = slot<Boolean>()
+        
+        subject.shouldAuthorize { result -> mockCallback.captured = result }
+
+        assertThat(mockCallback.captured).isEqualTo(true)
+        coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
+    }
+
+    @Test
+    fun `when shouldAuthorize() with refresh token and refresh succeeds`() {
+        authorize()
+        val mockCallback = slot<Boolean>()
+        
+        subject.shouldAuthorize { result -> mockCallback.captured = result }
+
+        coVerify { mockWebMessagingApi.refreshAuthJwt(AuthTest.REFRESH_TOKEN) }
+        assertThat(mockCallback.captured).isEqualTo(false)
+        assertThat(subject.jwt).isEqualTo(AuthTest.REFRESHED_JWT_TOKEN)
+    }
+
+    @Test
+    fun `when shouldAuthorize() with refresh token but refresh fails`() {
+        authorize()
+        coEvery { mockWebMessagingApi.refreshAuthJwt(any()) } returns Result.Failure(
+            ErrorCode.RefreshAuthTokenFailure,
+            ErrorTest.MESSAGE
+        )
+        val mockCallback = slot<Boolean>()
+        val expectedAuthJwt = AuthJwt(NO_JWT, NO_REFRESH_TOKEN)
+
+        subject.shouldAuthorize { result -> mockCallback.captured = result }
+
+        coVerify { mockWebMessagingApi.refreshAuthJwt(AuthTest.REFRESH_TOKEN) }
+        assertThat(mockCallback.captured).isEqualTo(true)
+        assertThat(subject.jwt).isEqualTo(expectedAuthJwt.jwt)
+        assertThat(fakeVault.authRefreshToken).isEqualTo(expectedAuthJwt.refreshToken)
+    }
 }
