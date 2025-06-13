@@ -10,6 +10,7 @@ import io.ktor.http.path
  * @param logging indicates if logging should be enabled.
  * @param reconnectionTimeoutInSeconds period of time during which Transport will try to reconnect to the web socket in case of connectivity lost.
  * @param autoRefreshTokenWhenExpired indicates if Transport should auto refresh auth token if it was expired.
+ * @param sessionExpirationNoticeInterval the time in seconds when the session expiration notice should be shown before the expiration date
  */
 data class Configuration(
     val deploymentId: String,
@@ -17,6 +18,7 @@ data class Configuration(
     val logging: Boolean = false,
     val reconnectionTimeoutInSeconds: Long = 60 * 5,
     val autoRefreshTokenWhenExpired: Boolean = true,
+    val sessionExpirationNoticeInterval: Long = DEFAULT_INTERVAL,
 ) {
 
     /**
@@ -76,5 +78,9 @@ data class Configuration(
         URLBuilder("https://api.$domain").apply {
             path("api/v2/webdeployments/token/refresh")
         }.build()
+    }
+
+    companion object {
+        internal const val DEFAULT_INTERVAL = 300L
     }
 }
