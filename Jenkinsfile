@@ -193,6 +193,7 @@ pipeline {
                     aut = 'KMM-Transport-SDK'
                     type = 'unit'
                     platform = 'junit'
+                    clusterName = 'Mobile Messenger Transport SDK'
                     teams = 'Digital Mobile SDK'
                 }
             }
