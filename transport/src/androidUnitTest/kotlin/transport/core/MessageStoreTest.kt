@@ -7,6 +7,7 @@ import assertk.assertions.containsOnly
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isNotEqualTo
 import assertk.assertions.isNotNull
@@ -25,10 +26,12 @@ import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessageStore
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
+import com.genesys.cloud.messenger.transport.utility.CardTestValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.Called
@@ -99,8 +102,9 @@ internal class MessageStoreTest {
         )
 
         subject.prepareMessage(TestValues.TOKEN, "test message").run {
-            this.message as TextMessage
-            assertThat(this.message.content).containsOnly(
+            assertThat(message).isInstanceOf(TextMessage::class)
+            val textMessage = message as TextMessage
+            assertThat(textMessage.content).containsOnly(
                 Content(
                     contentType = Content.Type.Attachment,
                     attachment(state = Attachment.State.Uploaded("http://someurl.com"))
@@ -115,17 +119,19 @@ internal class MessageStoreTest {
         subject.updateAttachmentStateWith(attachment())
 
         subject.prepareMessage(TestValues.TOKEN, "test message").run {
-            this.message as TextMessage
-            assertThat(message.content).isNotNull()
-            assertThat(message.content).isEmpty()
+            assertThat(message).isInstanceOf(TextMessage::class)
+            val textMessage = message as TextMessage
+            assertThat(textMessage.content).isNotNull()
+            assertThat(textMessage.content).isEmpty()
         }
     }
 
     @Test
     fun `when update() inbound message`() {
         val messageRequest = subject.prepareMessage(TestValues.TOKEN, "test message")
-        messageRequest.message as TextMessage
-        val sentMessageId = messageRequest.message.metadata?.get("customMessageId") ?: "empty"
+        assertThat(messageRequest.message).isInstanceOf(TextMessage::class)
+        val textMessage = messageRequest.message as TextMessage
+        val sentMessageId = textMessage.metadata?.get("customMessageId") ?: "empty"
         val givenMessage =
             Message(id = sentMessageId, state = State.Sent, text = "test message")
         clearMocks(mockMessageListener)
@@ -160,8 +166,9 @@ internal class MessageStoreTest {
     @Test
     fun `when update() inbound and then outbound messages`() {
         val messageRequest = subject.prepareMessage(TestValues.TOKEN, "test message")
-        messageRequest.message as TextMessage
-        val sentMessageId = messageRequest.message.metadata?.get("customMessageId") ?: "empty"
+        assertThat(messageRequest.message).isInstanceOf(TextMessage::class)
+        val textMessage = messageRequest.message as TextMessage
+        val sentMessageId = textMessage.metadata?.get("customMessageId") ?: "empty"
         val expectedConversationSize = 2
         val givenMessage =
             Message(id = sentMessageId, state = State.Sent, text = "test message")
@@ -398,11 +405,15 @@ internal class MessageStoreTest {
 
         verify { mockMessageListener.invoke(capture(messageSlot)) }
         onMessageRequest.run {
-            this.message as TextMessage
-            expectedOnMessageRequest.message as TextMessage
+            assertThat(message).isInstanceOf(TextMessage::class)
+            val textMessage = message as TextMessage
+
+            assertThat(expectedOnMessageRequest.message).isInstanceOf(TextMessage::class)
+            val expectedTextMessage = expectedOnMessageRequest.message as TextMessage
+
             assertThat(token).isEqualTo(expectedOnMessageRequest.token)
-            assertThat(message).isEqualTo(expectedOnMessageRequest.message)
-            assertThat(message.channel).isEqualTo(expectedOnMessageRequest.message.channel)
+            assertThat(textMessage).isEqualTo(expectedTextMessage)
+            assertThat(textMessage.channel).isEqualTo(expectedTextMessage.channel)
             assertThat(time).isNull()
         }
         subject.run {
@@ -492,12 +503,16 @@ internal class MessageStoreTest {
         )
 
         subject.prepareMessageWith(TestValues.TOKEN, givenButtonResponse, givenChannel).run {
-            this.message as TextMessage
-            expectedOnMessageRequest.message as TextMessage
+            assertThat(message).isInstanceOf(TextMessage::class)
+            val textMessage = message as TextMessage
+
+            assertThat(expectedOnMessageRequest.message).isInstanceOf(TextMessage::class)
+            val expectedTextMessage = expectedOnMessageRequest.message as TextMessage
+
             assertThat(token).isEqualTo(expectedOnMessageRequest.token)
-            assertThat(message).isEqualTo(expectedOnMessageRequest.message)
-            assertThat(message.content).isEqualTo(expectedOnMessageRequest.message.content)
-            assertThat(message.channel).isEqualTo(expectedOnMessageRequest.message.channel)
+            assertThat(textMessage).isEqualTo(expectedTextMessage)
+            assertThat(textMessage.content).isEqualTo(expectedTextMessage.content)
+            assertThat(textMessage.channel).isEqualTo(expectedTextMessage.channel)
             assertThat(time).isNull()
         }
         assertThat(subject.getConversation()[0]).isEqualTo(expectedMessage)
@@ -531,12 +546,16 @@ internal class MessageStoreTest {
         )
 
         subject.prepareMessageWith(TestValues.TOKEN, givenButtonResponse).run {
-            this.message as TextMessage
-            expectedOnMessageRequest.message as TextMessage
+            assertThat(message).isInstanceOf(TextMessage::class)
+            val textMessage = message as TextMessage
+
+            assertThat(expectedOnMessageRequest.message).isInstanceOf(TextMessage::class)
+            val expectedTextMessage = expectedOnMessageRequest.message as TextMessage
+
             assertThat(token).isEqualTo(expectedOnMessageRequest.token)
-            assertThat(message).isEqualTo(expectedOnMessageRequest.message)
-            assertThat(message.content).isEqualTo(expectedOnMessageRequest.message.content)
-            assertThat(message.channel).isNull()
+            assertThat(textMessage).isEqualTo(expectedTextMessage)
+            assertThat(textMessage.content).isEqualTo(expectedTextMessage.content)
+            assertThat(textMessage.channel).isNull()
             assertThat(time).isNull()
         }
         assertThat(subject.getConversation()[0]).isEqualTo(expectedMessage)
@@ -580,6 +599,19 @@ internal class MessageStoreTest {
         subject.clear()
 
         assertThat(subject.pendingMessage.attachments).isEmpty()
+    }
+
+    @Test
+    fun `when preparePostbackMessage is called then returns StructuredMessage with correct metadata`() {
+        val button = CardTestValues.postbackButtonResponse
+        val result = subject.preparePostbackMessage("<token>", button)
+
+        assertThat(result.message).isInstanceOf(StructuredMessage::class.java)
+        val structuredMessage = result.message as StructuredMessage
+
+        assertThat(structuredMessage.text).isEqualTo(CardTestValues.POSTBACK_TEXT)
+        assertThat(structuredMessage.content.first().buttonResponse).isEqualTo(button)
+        assertThat(structuredMessage.metadata?.get("customMessageId")).isNotNull()
     }
 
     private fun outboundMessage(messageId: Int = 0): Message = Message(

@@ -23,6 +23,7 @@ internal object WebMessagingJson {
 
     val json = Json {
         ignoreUnknownKeys = true
+        useAlternativeNames = false
         classDiscriminator = "messageClass"
     }
 

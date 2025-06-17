@@ -136,11 +136,6 @@ object QuickReplyTestValues {
     internal const val PAYLOAD_B = "payload_b"
     internal const val QUICK_REPLY = "QuickReply"
     internal const val BUTTON_RESPONSE = "ButtonResponse"
-    val postbackButtonResponse = ButtonResponse(
-        text = "Book Now",
-        type = "Postback",
-        payload = "I want it"
-    )
 
     internal val buttonResponse_a = ButtonResponse(
         text = TEXT_A,
@@ -205,6 +200,14 @@ object CardTestValues {
     internal const val url = "https://www.test.com"
     internal const val payload = "{\"key\":\"value\"}"
     internal const val contentType = "Card"
+    internal const val POSTBACK_TEXT = "Book Now"
+    internal const val POSTBACK_TYPE = "Postback"
+    internal const val POSTBACK_PAYLOAD = "I want it"
+    val postbackButtonResponse = ButtonResponse(
+        text = POSTBACK_TEXT,
+        type = POSTBACK_TYPE,
+        payload = POSTBACK_PAYLOAD
+    )
 
     internal val structuredAction = StructuredMessage.Content.Action(
         type = "link",

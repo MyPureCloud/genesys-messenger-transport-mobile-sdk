@@ -87,7 +87,7 @@ internal class MessageStore(private val log: Log) {
             state = Message.State.Sending,
             quickReplies = listOf(buttonResponse),
         ).also {
-            log.i { LogMessages.quickReplyPrepareToSend(it) }
+            log.i { LogMessages.postbackPrepareToSend(it) }
             activeConversation.add(it)
             publish(MessageEvent.MessageInserted(it))
             pendingMessage = Message(attachments = it.attachments)
