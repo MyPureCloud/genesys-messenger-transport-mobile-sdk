@@ -5,6 +5,7 @@ def isFeatureBranch() { env.BRANCH_NAME.startsWith('feature/') }
 
 def oktaproperties = ''
 def googleservices = ''
+def pipelineLibrary = library('pipeline-library').com.genesys.jenkins
 
 void setBuildStatus(String message, String state) {
   step([
@@ -44,7 +45,6 @@ pipeline {
             }
             steps {
                 script {
-                    def pipelineLibrary = library('pipeline-library').com.genesys.jenkins
                     def testing = pipelineLibrary.Testing.new()
 
                     oktaproperties = testing.getSecretStashSecret(
@@ -198,6 +198,16 @@ pipeline {
         always {
             archiveArtifacts 'transport/build/reports/tests/testReleaseUnitTest/**/*.html, transport/build/reports/tests/testReleaseUnitTest/**/*.js, transport/build/reports/tests/testReleaseUnitTest/**/*.css'
             junit 'transport/build/test-results/testReleaseUnitTest/*.xml'
+            script {
+                testResultToKnex {
+                    files = 'transport/build/test-results/testReleaseUnitTest/*.xml'
+                    aut = 'KMM-Transport-SDK'
+                    type = 'unit'
+                    platform = 'junit'
+                    clusterName = 'Mobile Messenger Transport SDK'
+                    teams = 'Digital Mobile SDK'
+                }
+            }
             cleanWs()
         }
     }
