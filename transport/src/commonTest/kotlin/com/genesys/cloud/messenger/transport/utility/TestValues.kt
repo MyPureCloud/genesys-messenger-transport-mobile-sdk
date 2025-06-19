@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.utility
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Message
+import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
 import com.genesys.cloud.messenger.transport.push.DeviceTokenException
 import com.genesys.cloud.messenger.transport.push.PushConfig
 import com.genesys.cloud.messenger.transport.push.PushProvider
@@ -55,6 +56,7 @@ object TestValues {
         wasAuthenticated = WAS_AUTHENTICATED,
         pushConfigKey = PUSH_CONFIG_KEY,
     )
+    internal val application = "TransportSDK-${MessengerTransportSDK.sdkVersion}"
 }
 
 object AuthTest {

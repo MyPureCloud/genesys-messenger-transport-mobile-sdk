@@ -1,7 +1,5 @@
 package com.genesys.cloud.messenger.transport.util
 
-import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
-import io.ktor.http.ContentType
 import io.ktor.http.URLBuilder
 import io.ktor.http.Url
 import io.ktor.http.path

@@ -1,9 +1,5 @@
 package com.genesys.cloud.messenger.transport.core
 
-import io.ktor.http.URLBuilder
-import io.ktor.http.Url
-import io.ktor.http.path
-
 /**
  * @param deploymentId the ID of the Genesys Cloud Messenger deployment.
  * @param domain the regional base domain address for a Genesys Cloud Web Messaging service. For example, "mypurecloud.com".
@@ -43,5 +39,4 @@ data class Configuration(
     )
 
     internal var application: String = "TransportSDK-${MessengerTransportSDK.sdkVersion}"
-
 }

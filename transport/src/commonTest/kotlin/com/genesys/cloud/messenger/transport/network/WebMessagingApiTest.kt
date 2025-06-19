@@ -430,7 +430,7 @@ private fun buildWebMessagingApiWith(
     engine: HttpClientConfig<MockEngineConfig>.() -> Unit,
 ): WebMessagingApi {
     return WebMessagingApi(
-        urls = Urls(configuration.domain, configuration.deploymentId),
+        urls = Urls(configuration.domain, configuration.deploymentId, configuration.application),
         configuration = configuration,
         client = mockHttpClientWith { engine() }
     )

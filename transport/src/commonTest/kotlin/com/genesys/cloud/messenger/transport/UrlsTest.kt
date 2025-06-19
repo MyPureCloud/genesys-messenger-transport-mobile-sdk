@@ -10,7 +10,7 @@ import kotlin.test.Test
 
 class UrlsTest {
 
-    private val subject = Urls(TestValues.DOMAIN, TestValues.DEPLOYMENT_ID)
+    private val subject = Urls(TestValues.DOMAIN, TestValues.DEPLOYMENT_ID, TestValues.application)
 
     @Test
     fun `it should get webSocketUrl`() {
