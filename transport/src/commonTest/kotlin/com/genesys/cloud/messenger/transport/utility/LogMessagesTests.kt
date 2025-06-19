@@ -10,6 +10,7 @@ import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.push.PushConfigComparator
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
+import com.genesys.cloud.messenger.transport.util.extensions.sanitize
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import kotlin.test.Test
 
@@ -584,7 +585,7 @@ class LogMessagesTests {
     @Test
     fun `when synchronizingPush is called then it logs correctly`() {
         val expectedMessage =
-            "Synchronizing deviceToken: ${TestValues.DEVICE_TOKEN} with ${TestValues.PUSH_PROVIDER}."
+            "Synchronizing deviceToken: ${TestValues.DEVICE_TOKEN.sanitize()} with ${TestValues.PUSH_PROVIDER}."
 
         val result =
             LogMessages.synchronizingPush(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
@@ -605,7 +606,7 @@ class LogMessagesTests {
     @Test
     fun `when deviceTokenIsInSync is called then it logs correctly`() {
         val expectedMessage =
-            "deviceToken: ${TestValues.DEVICE_TOKEN} with ${TestValues.PUSH_PROVIDER} is already in sync."
+            "deviceToken: ${TestValues.DEVICE_TOKEN.sanitize()} with ${TestValues.PUSH_PROVIDER} is already in sync."
 
         val result = LogMessages.deviceTokenIsInSync(PushTestValues.CONFIG)
 
@@ -615,7 +616,7 @@ class LogMessagesTests {
     @Test
     fun `when deviceTokenWasRegistered is called then it logs correctly`() {
         val expectedMessage =
-            "deviceToken: ${TestValues.DEVICE_TOKEN} with ${TestValues.PUSH_PROVIDER} was registered."
+            "deviceToken: ${TestValues.DEVICE_TOKEN.sanitize()} with ${TestValues.PUSH_PROVIDER} was registered."
 
         val result = LogMessages.deviceTokenWasRegistered(PushTestValues.CONFIG)
 
@@ -625,7 +626,7 @@ class LogMessagesTests {
     @Test
     fun `when deviceTokenWasUpdated is called then it logs correctly`() {
         val expectedMessage =
-            "deviceToken: ${TestValues.DEVICE_TOKEN} with ${TestValues.PUSH_PROVIDER} was updated."
+            "deviceToken: ${TestValues.DEVICE_TOKEN.sanitize()} with ${TestValues.PUSH_PROVIDER} was updated."
 
         val result = LogMessages.deviceTokenWasUpdated(PushTestValues.CONFIG)
 
@@ -635,7 +636,7 @@ class LogMessagesTests {
     @Test
     fun `when deviceTokenWasDeleted is called then it logs correctly`() {
         val expectedMessage =
-            "deviceToken: ${TestValues.DEVICE_TOKEN} with ${TestValues.PUSH_PROVIDER} was deleted."
+            "deviceToken: ${TestValues.DEVICE_TOKEN.sanitize()} with ${TestValues.PUSH_PROVIDER} was deleted."
 
         val result = LogMessages.deviceTokenWasDeleted(PushTestValues.CONFIG)
 
@@ -645,7 +646,7 @@ class LogMessagesTests {
     @Test
     fun `when failedToSynchronizeDeviceToken is called then it logs correctly`() {
         val expectedMessage =
-            "Failed to synchronize deviceToken: ${TestValues.DEVICE_TOKEN} ,pushProvider ${TestValues.PUSH_PROVIDER} with errorCode: ${ErrorCode.DeviceTokenOperationFailure}."
+            "Failed to synchronize deviceToken: ${TestValues.DEVICE_TOKEN.sanitize()} ,pushProvider ${TestValues.PUSH_PROVIDER} with errorCode: ${ErrorCode.DeviceTokenOperationFailure}."
 
         val result = LogMessages.failedToSynchronizeDeviceToken(
             PushTestValues.CONFIG,
