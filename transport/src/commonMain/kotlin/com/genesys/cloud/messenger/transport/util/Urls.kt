@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.util
 
 import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
+import io.ktor.http.ContentType
 import io.ktor.http.URLBuilder
 import io.ktor.http.Url
 import io.ktor.http.path
@@ -8,14 +9,14 @@ import io.ktor.http.path
 private const val BASE_WEBDEPLOYMENTS_PATH = "api/v2/webdeployments"
 private const val BASE_WEBMESSAGING_PATH = "api/v2/webmessaging"
 
-internal class Urls(val domain: String, val deploymentId: String) {
+internal class Urls(val domain: String, val deploymentId: String, val application: String) {
 
     internal val webSocketUrl: Url by lazy {
         URLBuilder("wss://webmessaging.$domain")
             .apply {
                 path("v1")
                 parameters.append("deploymentId", deploymentId)
-                parameters.append("application", "TransportSDK-${MessengerTransportSDK.sdkVersion}")
+                parameters.append("application", application)
             }
             .build()
     }
