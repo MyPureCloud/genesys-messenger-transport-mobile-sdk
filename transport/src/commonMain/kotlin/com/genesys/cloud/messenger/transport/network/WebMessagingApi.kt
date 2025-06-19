@@ -165,7 +165,7 @@ internal class WebMessagingApi(
         userPushConfig: PushConfig,
         operation: DeviceTokenOperation,
     ): Result<Empty> = try {
-        val url = urls.deviceTokenUrl(configuration.deploymentId, userPushConfig.token)
+        val url = urls.deviceTokenUrl(configuration.deploymentId, userPushConfig.token.lowercase())
         val response = client.request(url) {
             this.method = operation.httpMethod
             header("content-type", ContentType.Application.Json)

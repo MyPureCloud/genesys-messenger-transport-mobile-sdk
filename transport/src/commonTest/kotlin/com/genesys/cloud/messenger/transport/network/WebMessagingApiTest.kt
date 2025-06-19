@@ -356,6 +356,17 @@ class WebMessagingApiTest {
     }
 
     @Test
+    fun `when performDeviceTokenOperation Register with uppercase token in userConfig data`() {
+        subject = buildWebMessagingApiWith { pushNotificationEngine() }
+        val givenUserPushConfig = PushTestValues.CONFIG.copy(token = TestValues.TOKEN.uppercase())
+        val givenOperation = DeviceTokenOperation.Delete
+
+        val result = runBlocking { subject.performDeviceTokenOperation(givenUserPushConfig, givenOperation) }
+
+        assertTrue(result is Result.Success<Empty>)
+    }
+
+    @Test
     fun `when performDeviceTokenOperation register result in PushErrorResponse`() {
         subject = buildWebMessagingApiWith { pushNotificationEngine() }
         val givenUserPushConfig = PushTestValues.CONFIG.copy(pushProvider = null)
