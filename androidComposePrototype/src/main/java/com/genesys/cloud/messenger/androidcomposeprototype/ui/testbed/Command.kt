@@ -28,4 +28,5 @@ enum class Command(val description: String) {
     TYPING("typing"),
     UNREGISTER_PUSH("unregPush"),
     WAS_AUTHENTICATED("wasAuthenticated"),
+    SHOULD_AUTHORIZE("shouldAuthorize"),
 }

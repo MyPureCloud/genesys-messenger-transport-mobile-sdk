@@ -15,5 +15,7 @@ internal interface AuthHandler {
 
     fun refreshToken(callback: (Result<Empty>) -> Unit)
 
+    fun shouldAuthorize(callback: (Boolean) -> Unit)
+
     fun clear()
 }

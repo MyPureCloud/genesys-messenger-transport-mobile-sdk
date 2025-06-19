@@ -57,6 +57,7 @@ class TestbedViewController: UIViewController {
         case removeAuthRefreshToken
         case stepUp
         case wasAuthenticated
+        case shouldAuthorize
         case synchronizePush
         case unregisterPush
 
@@ -134,7 +135,7 @@ class TestbedViewController: UIViewController {
         view.font = UIFont.preferredFont(forTextStyle: .body)
         return view
     }()
-    
+
     private let pushNotificationsStateView: UILabel = {
         let view = UILabel()
         view.numberOfLines = 0
@@ -173,7 +174,7 @@ class TestbedViewController: UIViewController {
             .sink(receiveValue: updateWithEvent)
             .store(in: &cancellables)
             authStateView.text = "Auth State: \(authState)"
-        
+
         registerForNotificationsObservers()
         updatePushNotificationsStateView()
     }
@@ -512,6 +513,10 @@ extension TestbedViewController : UITextFieldDelegate {
                 try messenger.stepUp()
             case (.wasAuthenticated, _):
                 self.info.text = "wasAuthenticated: \(messenger.wasAuthenticated())"
+            case (.shouldAuthorize, _):
+                messenger.shouldAuthorize { shouldAuth in
+                    self.info.text = "shouldAuthorize: \(shouldAuth)"
+                }
             case (.synchronizePush, _):
                 UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { (granted, error) in
                     DispatchQueue.main.async {
@@ -521,7 +526,7 @@ extension TestbedViewController : UITextFieldDelegate {
                                 print("Can't retrieve AppDelegate")
                                 return
                             }
-                            
+
                             print("Register for remote notifications")
                             UIApplication.shared.registerForRemoteNotifications()
                         } else {
@@ -547,14 +552,14 @@ extension TestbedViewController : UITextFieldDelegate {
     private func updateAuthStateView() {
         authStateView.text = "Auth State: \(authState)"
     }
-    
+
     private func showNotificationSettingsAlert() {
         let alertController = UIAlertController(
             title: "Notifications Disabled",
             message: "To receive updates, please enable notifications in settings.",
             preferredStyle: .alert
         )
-        
+
         alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
         alertController.addAction(UIAlertAction(title: "Settings", style: .default) { _ in
             if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
@@ -563,7 +568,7 @@ extension TestbedViewController : UITextFieldDelegate {
                 }
             }
         })
-        
+
         self.present(alertController, animated: true)
     }
 
@@ -635,7 +640,7 @@ extension TestbedViewController {
             self.pushNotificationsStateView.text = "Push Notifications state: \(state)"
             return
         }
-        
+
         UNUserNotificationCenter.current().getNotificationSettings(completionHandler: { permission in
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
@@ -650,18 +655,18 @@ extension TestbedViewController {
             }
         })
     }
-    
+
     private func registerForNotificationsObservers() {
         NotificationCenter.default.addObserver(self, selector: #selector(handleDeviceToken(_:)), name: Notification.Name.deviceTokenReceived, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleNotificationReceived(_:)), name: Notification.Name.notificationReceived, object: nil)
     }
-    
+
     @objc func handleDeviceToken(_ notification: Notification) {
         guard let userInfo = notification.userInfo, let deviceToken = userInfo["token"] as? String else {
             print("Error: no device token")
             return
         }
-        
+
         let pushService = messenger.createPushService()
         pushService.synchronize(deviceToken: deviceToken, pushProvider: .apns, completionHandler: { [weak self] error in
             if let error {
@@ -673,7 +678,7 @@ extension TestbedViewController {
             }
         })
     }
-    
+
     private func unregisterPushNotifications() {
         let pushService = messenger.createPushService()
         pushService.unregister(completionHandler: { [weak self] error in
@@ -686,19 +691,19 @@ extension TestbedViewController {
             }
         })
     }
-    
+
     // This will only be triggered after .bye command
     @objc func handleNotificationReceived(_ notification: Notification) {
         guard let userInfo = notification.userInfo else {
             print("Error: empty userInfo")
             return
         }
-        
+
         guard UIApplication.shared.applicationState == .active else {
             print("App is not in foreground")
             return
         }
-        
+
         guard let senderID = userInfo["deeplink"] as? String else {
             print("Sender ID not found")
             return
@@ -708,7 +713,7 @@ extension TestbedViewController {
             showNotificationReceivedAlert(userInfo: userInfo)
         }
     }
-    
+
     private func showNotificationReceivedAlert(userInfo: [AnyHashable: Any]) {
         if let aps = userInfo["aps"] as? [String: Any],
            let alert = aps["alert"] as? [String: Any],
@@ -719,9 +724,9 @@ extension TestbedViewController {
                 message: body,
                 preferredStyle: .alert
             )
-            
+
             alertController.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-            
+
             self.present(alertController, animated: true)
         } else {
             print("Error retrieving UserInfo")

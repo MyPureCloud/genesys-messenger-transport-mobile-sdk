@@ -215,6 +215,12 @@ final class MessengerInteractor {
         return messagingClient.wasAuthenticated
     }
 
+    func shouldAuthorize(completion: @escaping (Bool) -> Void) {
+        messagingClient.shouldAuthorize { shouldAuth in
+            completion(shouldAuth as! Bool)
+        }
+    }
+
     func createPushService() -> PushService {
         return messengerTransport.createPushService()
     }

@@ -184,12 +184,20 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "removeAuthRefreshToken" -> doRemoveAuthRefreshTokenFromVault()
             "stepUp" -> doStepUp()
             "wasAuthenticated" -> doWasAuthenticated()
+            "shouldAuthorize" -> doShouldAuthorize()
             "syncDeviceToken" -> doSynchronizeDeviceToken()
             "unregPush" -> doUnregisterFromPush()
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
             }
+        }
+    }
+
+    private fun doShouldAuthorize() {
+        client.shouldAuthorize { result ->
+            onSocketMessageReceived("shouldAuthorize is: $result")
+            commandWaiting = false
         }
     }
 
