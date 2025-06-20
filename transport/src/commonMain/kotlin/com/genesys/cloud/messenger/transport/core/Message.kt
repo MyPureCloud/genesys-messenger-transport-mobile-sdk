@@ -51,7 +51,7 @@ data class Message(
         Text,
         Event,
         QuickReply,
-        Carousel,
+        Cards,
         Unknown,
     }
 

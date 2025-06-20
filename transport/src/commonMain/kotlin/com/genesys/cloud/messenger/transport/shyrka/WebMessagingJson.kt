@@ -17,7 +17,6 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.UploadFailureEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
 internal object WebMessagingJson {
@@ -25,6 +24,7 @@ internal object WebMessagingJson {
     val json = Json {
         ignoreUnknownKeys = true
         useAlternativeNames = false
+        classDiscriminator = "messageClass"
     }
 
     /**

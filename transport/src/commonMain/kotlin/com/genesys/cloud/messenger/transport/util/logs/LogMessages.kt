@@ -115,6 +115,7 @@ internal object LogMessages {
         "Cancellation exception was thrown, while running getMessages() request."
     // Quick Replies
     fun quickReplyPrepareToSend(message: Message) = "Message with quick reply prepared to send: ${message.toString().sanitizeSensitiveData()}"
+    fun postbackPrepareToSend(message: Message) = "Message with postback prepared to send: ${message.toString().sanitizeSensitiveData()}"
     fun sendQuickReply(buttonResponse: ButtonResponse) = "sendQuickReply(buttonResponse: $buttonResponse)"
     fun ignoreInboundEvent(event: Event) = "Ignore inbound event: $event."
 }

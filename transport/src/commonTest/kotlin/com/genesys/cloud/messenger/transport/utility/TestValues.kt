@@ -200,6 +200,14 @@ object CardTestValues {
     internal const val url = "https://www.test.com"
     internal const val payload = "{\"key\":\"value\"}"
     internal const val contentType = "Card"
+    internal const val POSTBACK_TEXT = "Book Now"
+    internal const val POSTBACK_TYPE = "Postback"
+    internal const val POSTBACK_PAYLOAD = "I want it"
+    val postbackButtonResponse = ButtonResponse(
+        text = POSTBACK_TEXT,
+        type = POSTBACK_TYPE,
+        payload = POSTBACK_PAYLOAD
+    )
 
     internal val structuredAction = StructuredMessage.Content.Action(
         type = "link",
