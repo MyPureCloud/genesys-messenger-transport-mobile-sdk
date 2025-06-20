@@ -600,15 +600,16 @@ internal class MessageStoreTest {
 
         assertThat(subject.pendingMessage.attachments).isEmpty()
     }
-
     @Test
     fun `when preparePostbackMessage is called then returns StructuredMessage with correct metadata`() {
         val button = CardTestValues.postbackButtonResponse
+
         val result = subject.preparePostbackMessage("<token>", button)
 
+        assertThat(result.token).isEqualTo("<token>")
         assertThat(result.message).isInstanceOf(StructuredMessage::class.java)
-        val structuredMessage = result.message as StructuredMessage
 
+        val structuredMessage = result.message as StructuredMessage
         assertThat(structuredMessage.text).isEqualTo(CardTestValues.POSTBACK_TEXT)
         assertThat(structuredMessage.content.first().buttonResponse).isEqualTo(button)
         assertThat(structuredMessage.metadata?.get("customMessageId")).isNotNull()
