@@ -6,6 +6,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent.Presence
@@ -31,13 +32,18 @@ import com.genesys.cloud.messenger.transport.shyrka.send.JwtRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OAuth
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.RequestAction
+import com.genesys.cloud.messenger.transport.shyrka.send.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.shyrka.send.UserTypingRequest
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.AuthTest
+import com.genesys.cloud.messenger.transport.utility.CardTestValues
 import com.genesys.cloud.messenger.transport.utility.Journey
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 
 class RequestSerializationTest {
@@ -461,5 +467,34 @@ class RequestSerializationTest {
                 assertThat(events).containsExactly(*expectedEventList.toTypedArray())
             }
         }
+    }
+
+    @Test
+    fun `StructuredMessage with ButtonResponse serializes correctly`() {
+        val expectedButtonResponse = CardTestValues.postbackButtonResponse
+
+        val structuredMessage = StructuredMessage(
+            text = expectedButtonResponse.text,
+            content = listOf(
+                Message.Content(
+                    contentType = Message.Content.Type.ButtonResponse,
+                    buttonResponse = expectedButtonResponse
+                )
+            ),
+            metadata = mapOf("customMessageId" to "12345")
+        )
+
+        val messageJson = WebMessagingJson.json.encodeToJsonElement(
+            StructuredMessage.serializer(),
+            structuredMessage
+        ).jsonObject
+
+        val text = messageJson["text"]?.jsonPrimitive?.content
+        val content = messageJson["content"]?.jsonArray?.firstOrNull()?.jsonObject
+        val buttonResponse = content?.get("buttonResponse")?.jsonObject
+
+        assertThat(text).isEqualTo(expectedButtonResponse.text)
+        assertThat(buttonResponse?.get("payload")?.jsonPrimitive?.content).isEqualTo(expectedButtonResponse.payload)
+        assertThat(buttonResponse?.get("type")?.jsonPrimitive?.content).isEqualTo(expectedButtonResponse.type)
     }
 }

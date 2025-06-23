@@ -101,7 +101,9 @@ class SerializationTest {
             WebMessagingJson.json.encodeToString(messageWithAttachmentAndCustomAttributesRequest)
 
         assertThat(encodedString, "encoded OnMessageRequest with attachment and custom attributes")
-            .isEqualTo("""{"token":"<token>","message":{"text":"Hello world","metadata":{"id":"aaa-bbb-ccc"},"content":[{"contentType":"Attachment","attachment":{"id":"abcd-1234"}}],"channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"action":"onMessage"}""")
+            .isEqualTo(
+                """{"token":"<token>","message":{"text":"Hello world","metadata":{"id":"aaa-bbb-ccc"},"content":[{"contentType":"Attachment","attachment":{"id":"abcd-1234"}}],"channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"action":"onMessage"}"""
+            )
     }
 
     @Test

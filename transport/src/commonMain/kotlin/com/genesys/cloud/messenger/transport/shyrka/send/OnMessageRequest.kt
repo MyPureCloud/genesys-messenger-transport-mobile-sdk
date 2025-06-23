@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 internal class OnMessageRequest(
     override val token: String,
-    val message: TextMessage,
+    val message: BaseMessageProtocol,
     val time: String? = null,
 ) : WebMessagingRequest {
     @Required override val action: String = RequestAction.ON_MESSAGE.value
