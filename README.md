@@ -53,30 +53,15 @@ We are excited to announce that Transport SDK now supports distribution via Swif
 
 To install Messenger Transport SDK in your app with CocoaPods, follow this guidance.
 
-In your `Package.swift`, configure your target to include the `MessengerTransport` package dependency.
+1. Open your iOS project in Xcode
+If this is your first time using SPM we recommend reading the [official documentation](https://developer.apple.com/documentation/xcode/adding-package-dependencies-to-your-app).
 
-```
-dependencies: [
-  .package(
-    url: "https://github.com/MyPureCloud/mm-genesyscloudmessengertransport-spm",
-    from: "x.y.z"               // use the version you want to integrate
-  )
-],
-targets: [
-  .target(
-    name: "TargetNameInYourXcodeProject",
-    dependencies: ["MessengerTransport"]
-  )
-]
-```
-
-In a Terminal window, navigate to the project directory with your Package.swift file and run the Swift Package Manager resolve command:
-
-```
-$ swift package resolve
-```
-
-Swift Package Manager will download and install the MessengerTransport.xcframework and any necessary dependencies.
+2. Add GenesysCloud dependency to your project
+* Go to File > Add package Dependencies....
+* Copy the package URL and paste it to the Enter Package URL field: https://github.com/MyPureCloud/mm-genesyscloudmessengertransport-spm.git
+* After you see the package show up under name mm-genesyscloudmessengertransport-spm you can change Dependency Rule to match your preferences
+* Click Add Package
+* Xcode will automatically resolve the MessengerTransport package and its dependencies.
 
 The MessengerTransport module may now be imported and used in your project.
 
