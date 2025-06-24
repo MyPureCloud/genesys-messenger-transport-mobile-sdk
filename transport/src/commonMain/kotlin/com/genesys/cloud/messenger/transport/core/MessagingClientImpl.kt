@@ -216,6 +216,15 @@ internal class MessagingClientImpl(
         send(encodedJson)
     }
 
+    override fun sendCardReply(postbackResponse: ButtonResponse) {
+        stateMachine.checkIfConfigured()
+        log.i { LogMessages.sendCardReply(postbackResponse) }
+        val channel = prepareCustomAttributesForSending()
+        val request = messageStore.preparePostbackMessage(token, postbackResponse, channel)
+        val encodedJson = WebMessagingJson.json.encodeToString(request)
+        send(encodedJson)
+    }
+
     @Throws(IllegalStateException::class)
     override fun sendHealthCheck() {
         healthCheckProvider.encodeRequest(token)?.let {

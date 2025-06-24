@@ -118,4 +118,5 @@ internal object LogMessages {
     fun postbackPrepareToSend(message: Message) = "Message with postback prepared to send: ${message.toString().sanitizeSensitiveData()}"
     fun sendQuickReply(buttonResponse: ButtonResponse) = "sendQuickReply(buttonResponse: $buttonResponse)"
     fun ignoreInboundEvent(event: Event) = "Ignore inbound event: $event."
+    fun sendCardReply(postbackResponse: ButtonResponse) = "sendCardReply(postbackResponse: $postbackResponse)"
 }

@@ -203,6 +203,7 @@ object CardTestValues {
     internal const val POSTBACK_TEXT = "Book Now"
     internal const val POSTBACK_TYPE = "Postback"
     internal const val POSTBACK_PAYLOAD = "I want it"
+    internal const val customMessageId = "customMessageId"
     val postbackButtonResponse = ButtonResponse(
         text = POSTBACK_TEXT,
         type = POSTBACK_TYPE,
