@@ -51,7 +51,7 @@ We are excited to announce that Transport SDK now supports distribution via Swif
 
 **Note:** Swift Package Manager support is available starting with Messenger Transport SDK **2.8.5**.
 
-To install Messenger Transport SDK in your app with CocoaPods, follow this guidance.
+To install Messenger Transport SDK in your app with SPM, follow this guidance.
 
 1. Open your iOS project in Xcode
 If this is your first time using SPM we recommend reading the [official documentation](https://developer.apple.com/documentation/xcode/adding-package-dependencies-to-your-app).
