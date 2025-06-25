@@ -46,6 +46,29 @@ The `MessengerTransport` module may now be imported and used in your project.
 import MessengerTransport
 ```
 
+#### Installation with SPM
+We are excited to announce that Transport SDK now supports distribution via Swift Package Manager for iOS!
+
+**Note:** Swift Package Manager support is available starting with Messenger Transport SDK **2.8.5**.
+
+To install Messenger Transport SDK in your app with SPM, follow this guidance.
+
+1. Open your iOS project in Xcode
+If this is your first time using SPM we recommend reading the [official documentation](https://developer.apple.com/documentation/xcode/adding-package-dependencies-to-your-app).
+
+2. Add GenesysCloud dependency to your project
+* Go to File > Add package Dependencies....
+* Copy the package URL and paste it to the Enter Package URL field: https://github.com/MyPureCloud/mm-genesyscloudmessengertransport-spm.git
+* After you see the package show up under name mm-genesyscloudmessengertransport-spm you can change Dependency Rule to match your preferences
+* Click Add Package
+* Xcode will automatically resolve the MessengerTransport package and its dependencies.
+
+The MessengerTransport module may now be imported and used in your project.
+
+```
+import MessengerTransport
+```
+
 ### Install Messenger Transport in Kotlin Multiplatform Mobile Project
 
 Add the following dependency to the `dependencies` section of your library's `build.gradle` file.
