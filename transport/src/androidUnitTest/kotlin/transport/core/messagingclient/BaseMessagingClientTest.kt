@@ -73,6 +73,11 @@ open class BaseMessagingClientTest {
                 ),
             ),
         )
+        every { preparePostbackMessage(any(), any(), any()) } returns OnMessageRequest(
+            token = testToken,
+            message = TextMessage("postback")
+        )
+        every { preparePostbackMessage(any(), any(), any()) } returns Request.expectedPostbackRequest
     }
     internal val mockAttachmentHandler: AttachmentHandler = mockk(relaxed = true) {
         every {

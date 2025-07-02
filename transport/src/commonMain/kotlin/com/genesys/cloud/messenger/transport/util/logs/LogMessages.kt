@@ -8,9 +8,9 @@ import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
-import com.genesys.cloud.messenger.transport.util.sanitize
-import com.genesys.cloud.messenger.transport.util.sanitizeSensitiveData
-import com.genesys.cloud.messenger.transport.util.sanitizeValues
+import com.genesys.cloud.messenger.transport.util.extensions.sanitize
+import com.genesys.cloud.messenger.transport.util.extensions.sanitizeSensitiveData
+import com.genesys.cloud.messenger.transport.util.extensions.sanitizeValues
 
 internal object LogMessages {
     // Attachment

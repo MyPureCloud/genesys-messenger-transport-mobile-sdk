@@ -1,4 +1,4 @@
-package com.genesys.cloud.messenger.transport.util
+package com.genesys.cloud.messenger.transport.util.extensions
 
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
 

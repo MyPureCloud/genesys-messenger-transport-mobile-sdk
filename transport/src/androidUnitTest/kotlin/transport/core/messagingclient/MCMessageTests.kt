@@ -13,8 +13,8 @@ import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.isClosed
+import com.genesys.cloud.messenger.transport.util.extensions.sanitizeText
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
-import com.genesys.cloud.messenger.transport.util.sanitizeText
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import io.mockk.every
 import io.mockk.verify

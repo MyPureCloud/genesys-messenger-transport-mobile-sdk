@@ -9,8 +9,8 @@ import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
+import com.genesys.cloud.messenger.transport.util.extensions.sanitize
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
-import com.genesys.cloud.messenger.transport.util.sanitize
 import kotlin.test.Test
 
 class LogMessagesTests {
