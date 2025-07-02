@@ -15,6 +15,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
+import com.genesys.cloud.messenger.transport.util.sanitizeText
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import io.mockk.MockKVerificationScope
@@ -64,7 +65,7 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
-        val sanitizedText = MessageValues.TEXT_SANITIZED
+        val sanitizedText = MessageValues.TEXT.sanitizeText()
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessage(sanitizedText, expectedCustomAttributes))

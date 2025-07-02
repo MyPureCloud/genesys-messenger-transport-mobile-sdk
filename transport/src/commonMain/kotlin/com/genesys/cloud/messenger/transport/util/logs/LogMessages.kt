@@ -8,9 +8,9 @@ import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
-import com.genesys.cloud.messenger.transport.util.extensions.sanitize
-import com.genesys.cloud.messenger.transport.util.extensions.sanitizeSensitiveData
-import com.genesys.cloud.messenger.transport.util.extensions.sanitizeValues
+import com.genesys.cloud.messenger.transport.util.sanitize
+import com.genesys.cloud.messenger.transport.util.sanitizeSensitiveData
+import com.genesys.cloud.messenger.transport.util.sanitizeValues
 
 internal object LogMessages {
     // Attachment
@@ -116,7 +116,7 @@ internal object LogMessages {
     // Quick Replies
     fun quickReplyPrepareToSend(message: Message) = "Message with quick reply prepared to send: ${message.toString().sanitizeSensitiveData()}"
     fun postbackPrepareToSend(message: Message) = "Message with postback prepared to send: ${message.toString().sanitizeSensitiveData()}"
-    fun sendQuickReply(buttonResponse: ButtonResponse) = "sendQuickReply(buttonResponse: $buttonResponse)"
+    fun sendQuickReply(buttonResponse: ButtonResponse) = "sendQuickReply(buttonResponse: ${buttonResponse.sanitize()})"
     fun ignoreInboundEvent(event: Event) = "Ignore inbound event: $event."
-    fun sendCardReply(postbackResponse: ButtonResponse) = "sendCardReply(postbackResponse: $postbackResponse)"
+    fun sendCardReply(postbackResponse: ButtonResponse) = "sendCardReply(postbackResponse: ${postbackResponse.sanitize()})"
 }

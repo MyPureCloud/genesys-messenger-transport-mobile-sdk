@@ -42,13 +42,13 @@ import com.genesys.cloud.messenger.transport.util.extensions.isHealthCheckRespon
 import com.genesys.cloud.messenger.transport.util.extensions.isOutbound
 import com.genesys.cloud.messenger.transport.util.extensions.isRefreshUrl
 import com.genesys.cloud.messenger.transport.util.extensions.mapOriginatingEntity
-import com.genesys.cloud.messenger.transport.util.extensions.sanitize
-import com.genesys.cloud.messenger.transport.util.extensions.sanitizeCustomAttributes
-import com.genesys.cloud.messenger.transport.util.extensions.sanitizeText
-import com.genesys.cloud.messenger.transport.util.extensions.sanitizeToken
 import com.genesys.cloud.messenger.transport.util.extensions.toFileAttachmentProfile
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
+import com.genesys.cloud.messenger.transport.util.sanitize
+import com.genesys.cloud.messenger.transport.util.sanitizeCustomAttributes
+import com.genesys.cloud.messenger.transport.util.sanitizeText
+import com.genesys.cloud.messenger.transport.util.sanitizeToken
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.CardTestValues
 import com.genesys.cloud.messenger.transport.utility.MessageValues

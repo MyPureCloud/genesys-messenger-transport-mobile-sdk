@@ -17,15 +17,15 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
 
     @Test
     fun `when connect() and then sendCardReply() but no custom attributes`() {
-        val expectedPostbackResponse = CardTestValues.postbackButtonResponse
+        val givenPostbackResponse = CardTestValues.postbackButtonResponse
         val expectedCustomMessageId = CardTestValues.customMessageId
         val expectedMessage = StructuredMessage(
-            text = expectedPostbackResponse.text,
+            text = givenPostbackResponse.text,
             metadata = mapOf("customMessageId" to expectedCustomMessageId),
             content = listOf(
                 Message.Content(
                     contentType = Message.Content.Type.ButtonResponse,
-                    buttonResponse = expectedPostbackResponse
+                    buttonResponse = givenPostbackResponse
                 )
             ),
             channel = null
@@ -37,17 +37,17 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
 
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns emptyMap()
         every {
-            mockMessageStore.preparePostbackMessage(Request.token, expectedPostbackResponse, null)
+            mockMessageStore.preparePostbackMessage(Request.token, givenPostbackResponse, null)
         } returns expectedRequest
 
         subject.connect()
-        subject.sendCardReply(expectedPostbackResponse)
+        subject.sendCardReply(givenPostbackResponse)
 
         verifySequence {
             connectSequence()
             mockLogger.i(capture(logSlot))
             mockCustomAttributesStore.getCustomAttributesToSend()
-            mockMessageStore.preparePostbackMessage(Request.token, expectedPostbackResponse, null)
+            mockMessageStore.preparePostbackMessage(Request.token, givenPostbackResponse, null)
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(WebMessagingJson.json.encodeToString(expectedRequest))
         }
