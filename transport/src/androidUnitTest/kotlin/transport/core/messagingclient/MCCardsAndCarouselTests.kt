@@ -1,10 +1,8 @@
 package transport.core.messagingclient
 
-import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.utility.CardTestValues
 import io.mockk.verify
 import io.mockk.verifySequence
-import kotlinx.serialization.encodeToString
 import org.junit.Test
 import transport.util.Request
 import kotlin.test.assertFailsWith
@@ -14,7 +12,7 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
     @Test
     fun `when connect() and then sendCardReply() but no custom attributes`() {
         val givenPostbackResponse = CardTestValues.postbackButtonResponse
-        val expectedRequest = Request.expectedPostbackRequest
+        val expectedRequest = Request.expectedPostbackRequestJson
 
         subject.connect()
         subject.sendCardReply(givenPostbackResponse)
@@ -25,7 +23,7 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockMessageStore.preparePostbackMessage(Request.token, givenPostbackResponse, null)
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(WebMessagingJson.json.encodeToString(expectedRequest))
+            mockPlatformSocket.sendMessage(expectedRequest)
         }
 
         verify(exactly = 0) {

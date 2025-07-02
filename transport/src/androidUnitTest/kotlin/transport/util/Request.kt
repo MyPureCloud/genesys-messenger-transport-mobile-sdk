@@ -1,10 +1,6 @@
 package transport.util
 
-import com.genesys.cloud.messenger.transport.core.ButtonResponse
-import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
-import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
-import com.genesys.cloud.messenger.transport.shyrka.send.StructuredMessage
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 
@@ -33,22 +29,6 @@ internal object Request {
     const val jwt = """{"token":"00000000-0000-0000-0000-000000000000","action":"getJwt"}"""
     const val refreshAttachmentUrl =
         """{"token":"$token","attachmentId":"88888888-8888-8888-8888-888888888888","action":"getAttachment"}"""
-    val expectedPostbackRequest = OnMessageRequest(
-        token = token,
-        message = StructuredMessage(
-            text = "Postback button text",
-            metadata = mapOf("customMessageId" to "card-123"),
-            content = listOf(
-                Message.Content(
-                    contentType = Message.Content.Type.ButtonResponse,
-                    buttonResponse = ButtonResponse(
-                        text = "Postback button text",
-                        payload = "some_payload_value",
-                        type = "Postback"
-                    )
-                )
-            ),
-            channel = null
-        )
-    )
+    val expectedPostbackRequestJson =
+        """{"token":"$token","message":{"text":"Postback button text","metadata":{"customMessageId":"card-123"},"content":[{"contentType":"ButtonResponse","buttonResponse":{"text":"Postback button text","payload":"some_payload_value","type":"Postback"}}],"type":"Structured"},"action":"onMessage"}"""
 }
