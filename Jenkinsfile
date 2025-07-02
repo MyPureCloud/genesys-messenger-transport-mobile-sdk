@@ -87,15 +87,13 @@ pipeline {
         stage('Run Snyk') {
             steps {
                 script {
-                    dir (currentRepository.repositoryName) {
-                        echo 'Running Snyk Tests'
-                        snykSecurity(
-                            snykInstallation: 'SnykLatestMacos',
-                            snykTokenId: 'SnykMobileDx',
-                            severity: 'high', 
-                            organization: 'digital-mobile-sdk'
-                        )
-                    }
+                    echo 'Running Snyk Tests'
+                    snykSecurity(
+                        snykInstallation: 'SnykLatestMacos',
+                        snykTokenId: 'snyk-global-api-token',
+                        severity: 'high', 
+                        organization: 'digital-mobile-sdk'
+                    )
                 }
             }
         }
