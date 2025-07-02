@@ -84,6 +84,22 @@ pipeline {
             }
         }
 
+        stage('Run Snyk') {
+            steps {
+                script {
+                    dir (currentRepository.repositoryName) {
+                        echo 'Running Snyk Tests'
+                        snykSecurity(
+                            snykInstallation: 'SnykLatestMacos',
+                            snykTokenId: 'SnykMobileDx',
+                            severity: 'high', 
+                            organization: 'digital-mobile-sdk'
+                        )
+                    }
+                }
+            }
+        }
+
         stage("CI Unit Tests") {
             steps {
                 sh './gradlew :transport:test :transport:koverXmlReportDebug :transport:koverXmlReportRelease'
