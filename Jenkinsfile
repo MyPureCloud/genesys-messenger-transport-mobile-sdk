@@ -93,7 +93,7 @@ pipeline {
                         severity: 'high', 
                         organisation: 'digital-mobile-sdk',
                         targetFile: 'build.gradle.kts',
-                        additionalArguments: '--sub-project="transport" --configuration-matching="releaseRuntimeClasspath"'
+                        additionalArguments: '--package-manager=gradle --sub-project="transport" --configuration-matching="releaseRuntimeClasspath"'
                     )
                 }
             }
