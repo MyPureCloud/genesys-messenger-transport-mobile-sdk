@@ -84,6 +84,36 @@ pipeline {
             }
         }
 
+        stage('Run Snyk Android') {
+            steps {
+                script {
+                    snykSecurity(
+                        snykInstallation: 'SnykLatestMacos',
+                        snykTokenId: 'snyk-global-api-token',
+                        severity: 'high', 
+                        organisation: 'digital-mobile-sdk',
+                        targetFile: 'build.gradle.kts',
+                        additionalArguments: '--package-manager=gradle --sub-project="transport" --configuration-matching="releaseRuntimeClasspath"'
+                    )
+                }
+            }
+        }
+
+        stage('Run Snyk iOS') {
+            steps {
+                script {
+                    snykSecurity(
+                        snykInstallation: 'SnykLatestMacos',
+                        snykTokenId: 'snyk-global-api-token',
+                        severity: 'high', 
+                        organisation: 'digital-mobile-sdk',
+                        targetFile: 'iosApp/Podfile.lock',
+                        additionalArguments: '--package-manager=cocoapods'
+                    )
+                }
+            }
+        }
+
         stage("CI Unit Tests") {
             steps {
                 sh './gradlew :transport:test :transport:koverXmlReportDebug :transport:koverXmlReportRelease'
