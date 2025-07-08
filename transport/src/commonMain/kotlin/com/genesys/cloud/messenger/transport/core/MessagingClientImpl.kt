@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.core
 import com.genesys.cloud.messenger.transport.auth.AuthHandler
 import com.genesys.cloud.messenger.transport.auth.AuthHandlerImpl
 import com.genesys.cloud.messenger.transport.auth.NO_JWT
+import com.genesys.cloud.messenger.transport.auth.NO_REFRESH_TOKEN
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
@@ -179,11 +180,17 @@ internal class MessagingClientImpl(
         val encodedJson = if (connectAuthenticated) {
             log.i { LogMessages.configureAuthenticatedSession(token, startNew) }
             if (authHandler.jwt == NO_JWT) {
+                if(vault.authRefreshToken == NO_REFRESH_TOKEN) {
+                    eventHandler.onEvent(Event.AuthorizationRequired)
+                    transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
+                    return
+                }
                 if (reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
                     reconfigureAttempts++
                     refreshTokenAndPerform { configureSession(startNew) }
                     return
                 }
+                eventHandler.onEvent(Event.AuthorizationRequired)
                 transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
                 return
             }
@@ -508,8 +515,13 @@ internal class MessagingClientImpl(
         }
     }
 
-    private fun handleConfigureSessionErrorResponse(code: ErrorCode, message: String?) {
+    private fun handleConfigureSessionErrorResponse(code: ErrorCode, message: String?) {//
         if (connectAuthenticated && code.isUnauthorized() && reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
+            if(!authHandler.hasRefreshToken()) {
+                eventHandler.onEvent(Event.AuthorizationRequired)
+                transitionToStateError(code, message)
+                return
+            }
             reconfigureAttempts++
             if (stateMachine.isConnected() || stateMachine.isReadOnly()) {
                 refreshTokenAndPerform { configureSession(isStartingANewSession) }
@@ -517,6 +529,9 @@ internal class MessagingClientImpl(
                 refreshTokenAndPerform { connectAuthenticatedSession() }
             }
         } else {
+            if(code.isUnauthorized() && connectAuthenticated) {
+                eventHandler.onEvent(Event.AuthorizationRequired)
+            }
             transitionToStateError(code, message)
         }
     }

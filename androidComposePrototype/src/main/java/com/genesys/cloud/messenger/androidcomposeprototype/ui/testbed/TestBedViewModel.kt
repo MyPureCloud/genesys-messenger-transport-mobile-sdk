@@ -177,8 +177,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "stepUp" -> doStepUp()
             "wasAuthenticated" -> doWasAuthenticated()
             "shouldAuthorize" -> doShouldAuthorize()
+            Command.IMPLICIT_FLOW_LOGIN.description-> doImplicitSignIn()
             Command.IMPLICIT_FLOW_AUTHORIZE.description-> doAuthorizeImplicit()
-            Command.IMPLICIT_FLOW_LOGIN.description-> doImplicitOktaSignIn()
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
@@ -193,10 +193,11 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private fun doImplicitOktaSignIn() {
+    private fun doImplicitSignIn() {
         val url = buildImplicitAuthUrl()
         Log.d(TAG, "doImplicitOktaSignIn: $url")
         onOktaSingIn(url)
+        commandWaiting = false
     }
 
     private fun doWasAuthenticated() {

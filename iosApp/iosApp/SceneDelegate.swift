@@ -58,8 +58,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                     if let windowScene = scene as? UIWindowScene,
                        let rootViewController = windowScene.windows.first?.rootViewController as? TestbedViewController {
                         rootViewController.setAuthCode(code)
+                        rootViewController.setIdToken(nil)
                     }
-                }
+                } else if item.name == "id_token", let idToken = item.value {
+                   if let windowScene = scene as? UIWindowScene,
+                      let rootViewController = windowScene.windows.first?.rootViewController as? TestbedViewController {
+                       rootViewController.setIdToken(idToken)
+                       rootViewController.setAuthCode(nil)
+                   }
+               }
                 break
             }
         }
