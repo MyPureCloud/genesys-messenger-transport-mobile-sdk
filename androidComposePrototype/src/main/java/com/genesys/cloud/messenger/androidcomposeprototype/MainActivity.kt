@@ -76,10 +76,12 @@ class MainActivity :
         Log.d(TAG, "handleOktaRedirect uri: $data")
         data.getQueryParameter("code")?.let { authCode ->
             viewModel.authCode = authCode
+            viewModel.idToken = ""
         } ?: run {
             data.getParam("id_token")?.let { idToken ->
                 Log.d(TAG, "handleOktaRedirect id token: $idToken")
                 viewModel.idToken = idToken
+                viewModel.authCode = ""
             }
         }
         // Otherwise there will be an error.

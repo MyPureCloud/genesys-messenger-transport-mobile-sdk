@@ -56,9 +56,9 @@ internal class AuthHandlerImpl(
         }
     }
 
-    override fun authorizeImplicit(authCode: String) {
+    override fun authorizeImplicit(idToken: String) {
         dispatcher.launch {
-            when (val result = api.fetchAuthJwt(authCode)) {
+            when (val result = api.fetchAuthJwt(idToken)) {
                 is Result.Success -> {
                     result.value.let {
                         authJwt = it
@@ -91,6 +91,10 @@ internal class AuthHandlerImpl(
                 }
             }
         }
+    }
+
+    override fun hasRefreshToken(): Boolean {
+        return authJwt.hasRefreshToken()
     }
 
     override fun refreshToken(callback: (Result<Empty>) -> Unit) {

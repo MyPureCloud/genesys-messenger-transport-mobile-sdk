@@ -24,4 +24,6 @@ internal interface AuthHandler {
     fun shouldAuthorize(callback: (Boolean) -> Unit)
 
     fun clear()
+
+    fun hasRefreshToken(): Boolean
 }

@@ -16,6 +16,7 @@ class TestbedViewController: UIViewController {
     private var cancellables = Set<AnyCancellable>()
     private var pkceEnabled = false
     private var authCode: String? = nil
+    private var idToken: String? = nil
     private var authState: AuthState = AuthState.noAuth
     private var quickRepliesMap = [String: ButtonResponse]()
 
@@ -60,6 +61,8 @@ class TestbedViewController: UIViewController {
         case shouldAuthorize
         case synchronizePush
         case unregisterPush
+        case implicitLogin
+        case authorizeImplicit
 
         var helpDescription: String {
             switch self {
@@ -181,6 +184,18 @@ class TestbedViewController: UIViewController {
 
     private func signIn() {
         guard let authUrl = buildOktaAuthorizeUrl() else {
+            authState = AuthState.error(errorCode: ErrorCode.AuthFailed.shared, message: "Failed to build Okta authorize URL.", correctiveAction: CorrectiveAction.ReAuthenticate.shared)
+            updateAuthStateView()
+            return
+        }
+
+        if UIApplication.shared.canOpenURL(authUrl) {
+            UIApplication.shared.open(authUrl)
+        }
+    }
+
+    private func implicitSignIn() {
+        guard let authUrl = buildImplicitAuthorizeUrl() else {
             authState = AuthState.error(errorCode: ErrorCode.AuthFailed.shared, message: "Failed to build Okta authorize URL.", correctiveAction: CorrectiveAction.ReAuthenticate.shared)
             updateAuthStateView()
             return
@@ -395,9 +410,47 @@ class TestbedViewController: UIViewController {
         return URL(string: url.absoluteString)
     }
 
+    private func buildImplicitAuthorizeUrl() -> URL? {
+        guard let plistPath = Bundle.main.path(forResource: "Okta", ofType: "plist"),
+                let plistData = FileManager.default.contents(atPath: plistPath),
+                let plistDictionary = try? PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any],
+                let oktaDomain = plistDictionary["oktaDomain"] as? String,
+                let clientId = plistDictionary["clientId"] as? String,
+                let signInRedirectURI = plistDictionary["signInRedirectURI"] as? String,
+                let scope = plistDictionary["scopes"] as? String,
+                let oktaState = plistDictionary["oktaState"] as? String,
+                let codeChallengeMethod = plistDictionary["codeChallengeMethod"] as? String,
+                let codeChallenge = plistDictionary["codeChallenge"] as? String
+        else {
+            return nil
+        }
+
+        var urlComponents = URLComponents(string: "https://\(oktaDomain)/oauth2/v1/authorize")!
+        urlComponents.queryItems = [
+            URLQueryItem(name: "client_id", value: clientId),
+            URLQueryItem(name: "response_type", value: "code"),
+            URLQueryItem(name: "scope", value: scope),
+            URLQueryItem(name: "redirect_uri", value: signInRedirectURI),
+            URLQueryItem(name: "state", value: oktaState)
+            URLQueryItem(name: "nonce", value: "random nonce")
+        ]
+
+        guard let url = urlComponents.url else {
+            return nil
+        }
+
+        return URL(string: url.absoluteString)
+    }
+
     func setAuthCode(_ authCode: String) {
         self.authCode = authCode
         authState = AuthState.authCodeReceived(authCode: authCode)
+        updateAuthStateView()
+    }
+
+    func setIdToken(_ idToken: String) {
+        self.idToken = idToken
+        authState = AuthState.idTokenReceived(idToken: idToken)
         updateAuthStateView()
     }
 }
@@ -537,6 +590,11 @@ extension TestbedViewController : UITextFieldDelegate {
                 }
             case (.unregisterPush, _):
                 unregisterPushNotifications()
+            case (.implicitLogin, _):
+                pkceEnabled = false
+                implicitSignIn()
+            case (.authorizeImplicit, _):
+                messenger.authorizeImplicit(idToken: self.idToken ?? "")
             default:
                 self.info.text = "Invalid command"
             }
@@ -577,6 +635,7 @@ extension TestbedViewController : UITextFieldDelegate {
 enum AuthState {
     case noAuth
     case authCodeReceived(authCode: String)
+    case idTokenReceived(idToken: String)
     case authorized
     case loggedOut
     case error(errorCode: ErrorCode, message: String?, correctiveAction: CorrectiveAction)

@@ -16,22 +16,36 @@ participant "Genesys Cloud Platform API"
 participant "Shyrka API"
 participant Agent
 
+autonumber
 group Implicit Authorization flow
-    group Option A: Having valid login (not expired)
-        App -> "Auth Server" : **Implicit** authentication request with clientId, scopes, redirectUri etc. ("id_token as "response type))
-        "Auth Server" --> App : Redirect back to App with **idToken** response.
-    else Option B: Login is expired
-        App -> "Auth Server" : **Implicit** authentication request with clientId, scopes, redirectUri etc. ("id_token as "response type))
-        "Auth Server" --> App : 302 Redirect to authentication prompt / login page
-        App -> "Auth Server" : Login and consent.
-        "Auth Server" --> App : Redirect back to App with **idToken** response.
-    end
+    App -> "Auth Server" : **Implicit** authentication request with clientId, scopes, redirectUri etc. ("id_token as "response type))
+    "Auth Server" --> App : 302 Redirect to authentication prompt / login page
+    App -> "Auth Server" : Login and consent.
+    "Auth Server" --> App : Redirect back to App with **idToken** response.
+
     App -> "Transport SDK" : **authorizeImplicit(idToken)**
-    "Transport SDK" -> "Genesys Cloud Platform API" : authCode to jwt exchange.
+    "Transport SDK" -> "Genesys Cloud Platform API" : idToken to jwt exchange.
     "Genesys Cloud Platform API" -> "Auth Server" : Exchange authorization code for tokens using pre-stored clientSecret.
     "Auth Server" --> "Genesys Cloud Platform API" : Return tokens.
-    "Genesys Cloud Platform API" --> "Transport SDK" : Returns Genesys Cloud authentication JWT and RefreshToken
-    "Transport SDK" -> "Transport SDK" : Store JWT/RefreshToken
+    "Genesys Cloud Platform API" --> "Transport SDK" : Returns Genesys Cloud authentication JWT (no refresh token)
+    "Transport SDK" -> "Transport SDK" : Store JWT
     "Transport SDK" -> App : Event.Authorized
+end
+
+autonumber
+group Refresh token (implicit)
+    App -> "Transport SDK" : MessagingClient.configureSession(isNew: Boolean)
+    alt AuthHandler.hasRefreshToken == true
+    "Transport SDK" -> "Transport SDK" : MessagingClient.refreshTokenAndPerform()
+
+        "Transport SDK" -> "Transport SDK" : AuthHandler.refreshToken()
+    else AuthHandler.hasRefreshToken == false
+        "Transport SDK" -> App : Event.AuthorizationRequired
+        App -> "Auth Server" : **Implicit** authentication request with clientId, scopes, redirectUri etc. ("id_token as "response type))
+        "Auth Server" --> App : Redirect back to App with **idToken** response.
+        App -> "Transport SDK" : **authorizeImplicit(idToken)***
+        "Transport SDK" -> App : Event.Authorized
+        App -> "Transport SDK" : MessagingClient.configureAuthenticatedSession()
+    end
 end
 @enduml
