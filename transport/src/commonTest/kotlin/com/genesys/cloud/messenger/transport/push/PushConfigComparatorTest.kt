@@ -99,9 +99,9 @@ class PushConfigComparatorTest {
     }
 
     @Test
-    fun `when storedConfig lastSyncTimestamp exactly as DEVICE_TOKEN_EXPIRATION_IN_SECONDS`() {
+    fun `when storedConfig lastSyncTimestamp exactly as DEVICE_TOKEN_EXPIRATION_IN_MILLISECONDS`() {
         val currentTimestamp = Platform().epochMillis()
-        val givenStoredConfigTimestamp = currentTimestamp - DEVICE_TOKEN_EXPIRATION_IN_SECONDS
+        val givenStoredConfigTimestamp = currentTimestamp - DEVICE_TOKEN_EXPIRATION_IN_MILLISECONDS
         val givenUserConfig = PushTestValues.CONFIG.copy(lastSyncTimestamp = currentTimestamp)
         val givenStoredConfig =
             PushTestValues.CONFIG.copy(lastSyncTimestamp = givenStoredConfigTimestamp)
@@ -112,9 +112,9 @@ class PushConfigComparatorTest {
     }
 
     @Test
-    fun `when storedConfig lastSyncTimestamp higher then DEVICE_TOKEN_EXPIRATION_IN_SECONDS`() {
+    fun `when storedConfig lastSyncTimestamp higher then DEVICE_TOKEN_EXPIRATION_IN_MILLISECONDS`() {
         val currentTimestamp = Platform().epochMillis()
-        val givenStoredConfigTimestamp = currentTimestamp - DEVICE_TOKEN_EXPIRATION_IN_SECONDS - 1
+        val givenStoredConfigTimestamp = currentTimestamp - DEVICE_TOKEN_EXPIRATION_IN_MILLISECONDS - 1
         val givenUserConfig = PushTestValues.CONFIG.copy(lastSyncTimestamp = currentTimestamp)
         val givenStoredConfig =
             PushTestValues.CONFIG.copy(lastSyncTimestamp = givenStoredConfigTimestamp)
@@ -125,9 +125,9 @@ class PushConfigComparatorTest {
     }
 
     @Test
-    fun `when storedConfig lastSyncTimestamp lower then DEVICE_TOKEN_EXPIRATION_IN_SECONDS`() {
+    fun `when storedConfig lastSyncTimestamp lower then DEVICE_TOKEN_EXPIRATION_IN_MILLISECONDS`() {
         val currentTimestamp = Platform().epochMillis()
-        val givenStoredConfigTimestamp = currentTimestamp - DEVICE_TOKEN_EXPIRATION_IN_SECONDS + 1
+        val givenStoredConfigTimestamp = currentTimestamp - DEVICE_TOKEN_EXPIRATION_IN_MILLISECONDS + 1
         val givenUserConfig = PushTestValues.CONFIG.copy(lastSyncTimestamp = currentTimestamp)
         val givenStoredConfig =
             PushTestValues.CONFIG.copy(lastSyncTimestamp = givenStoredConfigTimestamp)

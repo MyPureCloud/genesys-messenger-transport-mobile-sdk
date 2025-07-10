@@ -30,7 +30,7 @@ internal class PushConfigComparatorImpl : PushConfigComparator {
             token != storedConfig.token -> Diff.TOKEN
             deviceToken != storedConfig.deviceToken -> Diff.DEVICE_TOKEN
             preferredLanguage != storedConfig.preferredLanguage -> Diff.LANGUAGE
-            lastSyncTimestamp - storedConfig.lastSyncTimestamp >= DEVICE_TOKEN_EXPIRATION_IN_SECONDS -> Diff.EXPIRED
+            lastSyncTimestamp - storedConfig.lastSyncTimestamp >= DEVICE_TOKEN_EXPIRATION_IN_MILLISECONDS -> Diff.EXPIRED
             else -> Diff.NONE
         }
     }
