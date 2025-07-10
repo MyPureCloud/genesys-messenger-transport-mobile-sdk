@@ -129,6 +129,35 @@ class PushServiceImplTest {
     }
 
     @Test
+    fun `when synchronize and diff is TOKEN but delete operation resulted in Failure due to ErrorCode DeviceNotFound`() {
+        mockResultFailureWith(DeviceTokenOperation.Delete, ErrorCode.DeviceNotFound)
+        every { mockPushConfigComparator.compare(any(), any()) } returns Diff.TOKEN
+        val expectedUserConfig = PushTestValues.CONFIG
+        val expectedStoredConfig = DEFAULT_PUSH_CONFIG
+        val expectedOperation = DeviceTokenOperation.Register
+
+        runBlocking {
+            subject.synchronize(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
+        }
+
+        coVerifySequence {
+            syncSequence(expectedUserConfig, expectedStoredConfig)
+            mockApi.performDeviceTokenOperation(expectedUserConfig, DeviceTokenOperation.Delete)
+            mockLogger.i(capture(logSlot))
+            mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
+            mockLogger.i(capture(logSlot))
+            mockVault.pushConfig = expectedUserConfig
+        }
+        assertBaseSynchronizeLogsFor(Diff.TOKEN)
+        assertThat(logSlot[2].invoke()).isEqualTo(
+            LogMessages.deviceTokenWasDeleted(expectedUserConfig)
+        )
+        assertThat(logSlot[3].invoke()).isEqualTo(
+            LogMessages.deviceTokenWasRegistered(expectedUserConfig)
+        )
+    }
+
+    @Test
     fun `when synchronize and diff is DEVICE_TOKEN`() {
         every { mockPushConfigComparator.compare(any(), any()) } returns Diff.DEVICE_TOKEN
         val expectedUserConfig = PushTestValues.CONFIG
@@ -357,6 +386,30 @@ class PushServiceImplTest {
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.DEVICE_NOT_REGISTERED)
         assertThat(logSlot[3].invoke()).isEqualTo(
             LogMessages.deviceTokenWasRegistered(
+                expectedUserConfig
+            )
+        )
+    }
+
+    @Test
+    fun `when unregister() resulted in Failure due to ErrorCode DeviceNotFound`() {
+        mockResultFailureWith(DeviceTokenOperation.Delete, ErrorCode.DeviceNotFound)
+        every { mockVault.pushConfig } returns PushTestValues.CONFIG
+        val expectedUserConfig = PushTestValues.CONFIG
+
+        runBlocking { subject.unregister() }
+
+        coVerifySequence {
+            mockLogger.i(capture(logSlot))
+            mockVault.pushConfig
+            mockApi.performDeviceTokenOperation(expectedUserConfig, DeviceTokenOperation.Delete)
+            mockLogger.i(capture(logSlot))
+            mockVault.keys
+            mockVault.remove(TestValues.vaultKeys.pushConfigKey)
+        }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.UNREGISTERING_DEVICE)
+        assertThat(logSlot[1].invoke()).isEqualTo(
+            LogMessages.deviceTokenWasDeleted(
                 expectedUserConfig
             )
         )

@@ -96,12 +96,16 @@ internal class PushServiceImpl(
         clearStoredPushConfigUponSuccess: Boolean = false,
     ) {
         when (val result = api.performDeviceTokenOperation(userPushConfig, Delete)) {
-            is Result.Success -> {
-                log.i { LogMessages.deviceTokenWasDeleted(userPushConfig) }
-                if (clearStoredPushConfigUponSuccess) vault.remove(vault.keys.pushConfigKey)
-            }
+            is Result.Success -> handleSuccessForDeleteOperation(
+                userPushConfig,
+                clearStoredPushConfigUponSuccess
+            )
 
-            is Result.Failure -> handleRequestError(result, userPushConfig, Delete)
+            is Result.Failure -> if (result.errorCode == ErrorCode.DeviceNotFound) {
+                handleSuccessForDeleteOperation(userPushConfig, clearStoredPushConfigUponSuccess)
+            } else {
+                handleRequestError(result, userPushConfig, Delete)
+            }
         }
     }
 
@@ -150,5 +154,13 @@ internal class PushServiceImpl(
             deviceType = platform.os.lowercase(),
             pushProvider = pushProvider,
         )
+    }
+
+    private fun handleSuccessForDeleteOperation(
+        userPushConfig: PushConfig,
+        clearStoredPushConfigUponSuccess: Boolean
+    ) {
+        log.i { LogMessages.deviceTokenWasDeleted(userPushConfig) }
+        if (clearStoredPushConfigUponSuccess) vault.remove(vault.keys.pushConfigKey)
     }
 }
