@@ -9,6 +9,7 @@ import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
+import com.genesys.cloud.messenger.transport.util.extensions.sanitize
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import kotlin.test.Test
 
@@ -525,7 +526,7 @@ class LogMessagesTests {
     @Test
     fun `when sendQuickReply is called then it logs correctly`() {
         val givenButtonResponse = QuickReplyTestValues.buttonResponse_a
-        val expectedMessage = "sendQuickReply(buttonResponse: $givenButtonResponse)"
+        val expectedMessage = "sendQuickReply(buttonResponse: ${givenButtonResponse.sanitize()})"
 
         val result = LogMessages.sendQuickReply(givenButtonResponse)
 

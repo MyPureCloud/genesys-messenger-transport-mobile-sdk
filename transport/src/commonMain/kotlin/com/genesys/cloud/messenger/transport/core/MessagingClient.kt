@@ -187,6 +187,15 @@ interface MessagingClient {
     fun sendQuickReply(buttonResponse: ButtonResponse)
 
     /**
+     * Send a card reply to the Agent/Bot.
+     *
+     * @param postbackResponse the card button the user clicked.
+     * @throws IllegalStateException If the client is not connected.
+     */
+    @Throws(IllegalStateException::class)
+    fun sendCardReply(postbackResponse: ButtonResponse)
+
+    /**
      * Perform a health check of the connection by sending an echo message.
      * This command sends a single echo request and should be called a maximum of once every 30 seconds.
      * If called more frequently, this command will be rate limited in order to optimize network traffic.

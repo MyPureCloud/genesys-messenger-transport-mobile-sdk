@@ -67,7 +67,7 @@ class MCMessageTests : BaseMessagingClientTest() {
         )
         subject.connect()
 
-        subject.sendMessage("Hello world!")
+        subject.sendMessage(MessageValues.TEXT)
 
         verifySequence {
             connectSequence()
@@ -87,9 +87,10 @@ class MCMessageTests : BaseMessagingClientTest() {
             mockCustomAttributesStore.onSending()
             mockEventHandler.onEvent(Event.HealthChecked)
         }
+
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessage(MessageValues.TEXT_SANITIZED))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessage(MessageValues.TEXT))
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WILL_SEND_MESSAGE)
     }
 
