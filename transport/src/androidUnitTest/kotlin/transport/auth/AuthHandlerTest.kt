@@ -2,9 +2,11 @@ package transport.auth
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.auth.AuthHandlerImpl
 import com.genesys.cloud.messenger.transport.auth.AuthJwt
 import com.genesys.cloud.messenger.transport.auth.MAX_LOGOUT_ATTEMPTS
@@ -486,5 +488,45 @@ class AuthHandlerTest {
 
     private fun authorize() {
         subject.authorize(AuthTest.AUTH_CODE, AuthTest.REDIRECT_URI, AuthTest.CODE_VERIFIER)
+    }
+
+    @Test
+    fun `when shouldAuthorize() and no refresh token available`() {
+        var callbackResult: Boolean? = null
+
+        subject.shouldAuthorize { result -> callbackResult = result }
+
+        assertThat(callbackResult!!).isTrue()
+        coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
+    }
+
+    @Test
+    fun `when shouldAuthorize() with refresh token and refresh succeeds`() {
+        authorize()
+        var callbackResult: Boolean? = null
+
+        subject.shouldAuthorize { result -> callbackResult = result }
+
+        coVerify { mockWebMessagingApi.refreshAuthJwt(AuthTest.REFRESH_TOKEN) }
+        assertThat(callbackResult!!).isFalse()
+        assertThat(subject.jwt).isEqualTo(AuthTest.REFRESHED_JWT_TOKEN)
+    }
+
+    @Test
+    fun `when shouldAuthorize() with refresh token but refresh fails`() {
+        authorize()
+        coEvery { mockWebMessagingApi.refreshAuthJwt(any()) } returns Result.Failure(
+            ErrorCode.RefreshAuthTokenFailure,
+            ErrorTest.MESSAGE
+        )
+        var callbackResult: Boolean? = null
+        val expectedAuthJwt = AuthJwt(NO_JWT, NO_REFRESH_TOKEN)
+
+        subject.shouldAuthorize { result -> callbackResult = result }
+
+        coVerify { mockWebMessagingApi.refreshAuthJwt(AuthTest.REFRESH_TOKEN) }
+        assertThat(callbackResult!!).isTrue()
+        assertThat(subject.jwt).isEqualTo(expectedAuthJwt.jwt)
+        assertThat(fakeVault.authRefreshToken).isEqualTo(expectedAuthJwt.refreshToken)
     }
 }

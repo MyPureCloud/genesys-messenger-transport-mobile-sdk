@@ -26,4 +26,5 @@ enum class Command(val description: String) {
     STEP_UP("stepUp"),
     TYPING("typing"),
     WAS_AUTHENTICATED("wasAuthenticated"),
+    SHOULD_AUTHORIZE("shouldAuthorize"),
 }

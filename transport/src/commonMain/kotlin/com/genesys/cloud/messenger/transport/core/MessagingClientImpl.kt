@@ -324,6 +324,10 @@ internal class MessagingClientImpl(
         authHandler.logout()
     }
 
+    override fun shouldAuthorize(callback: (Boolean) -> Unit) {
+        authHandler.shouldAuthorize(callback)
+    }
+
     @Throws(IllegalStateException::class)
     override fun clearConversation() {
         stateMachine.checkIfConfiguredOrReadOnly()
