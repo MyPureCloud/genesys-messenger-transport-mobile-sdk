@@ -13,7 +13,6 @@ import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.isClosed
-import com.genesys.cloud.messenger.transport.util.extensions.sanitizeText
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import io.mockk.every
@@ -68,7 +67,7 @@ class MCMessageTests : BaseMessagingClientTest() {
         )
         subject.connect()
 
-        subject.sendMessage("Hello world!")
+        subject.sendMessage(MessageValues.TEXT)
 
         verifySequence {
             connectSequence()
@@ -88,10 +87,10 @@ class MCMessageTests : BaseMessagingClientTest() {
             mockCustomAttributesStore.onSending()
             mockEventHandler.onEvent(Event.HealthChecked)
         }
-        val sanitizedText = MessageValues.TEXT.sanitizeText()
+
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessage(sanitizedText))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessage(MessageValues.TEXT))
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WILL_SEND_MESSAGE)
     }
 
