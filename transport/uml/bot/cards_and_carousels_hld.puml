@@ -40,17 +40,17 @@ MessageStore -> App: messageListener(CardsReceived(Message(type:Type.Cards, cont
 App -> App: Display cards in UI
 
 alt #aaff8833 user selects cards option with "Postback"
-App -> MessagingClient: doSendCardReply(postbackResponse: PostbackResponse)
-MessagingClient -> MessageStore: sendCardReply(postbackResponse: PostbackResponse)
+App -> MessagingClient: sendCardReply(postbackResponse: ButtonResponse)
+MessagingClient -> MessageStore: sendCardReply(postbackResponse: ButtonResponse)
 MessageStore -> MessageStore: add message to Conversation
-MessageStore --> MessagingClient: OnMessageRequest(text="",content="PostbackResponse(text=text,payload=payload,type="Button")))
-MessageStore -> App: messageListener(MessageInserted(Message(Type.Cards,PostbackResponse("Button"), State.Sending))
+MessageStore --> MessagingClient: OnMessageRequest(text="",content="ButtonResponse(text=text,payload=payload,type="Button")))
+MessageStore -> App: messageListener(MessageInserted(Message(Type.Cards,ButtonResponse("Button"), State.Sending))
 MessagingClient -> Shyrka: send(OnMessageRequest)
 alt #aaff8833 response (Success)
 Shyrka -> MessagingClient: response 200 to OnMessageRequest
 MessagingClient -> MessageStore: update(Message)
 MessageStore -> MessageStore: update message state in Conversation(Message)
-MessageStore -> App: messageListener(MessageUpdated(Message(Type.Cards, PostbackResponse("Button"), State.Sent))
+MessageStore -> App: messageListener(MessageUpdated(Message(Type.Cards, ButtonResponse("Button"), State.Sent))
 else #ffaaff33 Failure (MessageTooLong,RequestRateTooHigh,CustomAttributeSizeTooLarge)
 MessagingClient -> MessageStore: updateMessageState(Message(State.Error))
 MessageStore -> App: messageListener(MessageUpdated(Message(Type.Cards,State.Error)))
