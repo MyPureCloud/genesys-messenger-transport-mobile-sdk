@@ -31,7 +31,7 @@ internal class PushServiceImpl(
         val userPushConfig = buildPushConfigFromUserData(deviceToken, pushProvider)
         val diff = pushConfigComparator.compare(userPushConfig, storedPushConfig)
         log.i { LogMessages.pushDiff(diff) }
-        handleDiff(diff, userPushConfig)
+        handleDiff(diff, userPushConfig, storedPushConfig)
     }
 
     @Throws(DeviceTokenException::class, CancellationException::class)
@@ -47,14 +47,18 @@ internal class PushServiceImpl(
     }
 
     @Throws(DeviceTokenException::class, CancellationException::class)
-    private suspend fun handleDiff(diff: Diff, userPushConfig: PushConfig) {
+    private suspend fun handleDiff(
+        diff: Diff,
+        userPushConfig: PushConfig,
+        storedPushConfig: PushConfig
+    ) {
         when (diff) {
             Diff.NONE -> log.i { LogMessages.deviceTokenIsInSync(userPushConfig) }
 
             Diff.NO_TOKEN -> register(userPushConfig)
             Diff.TOKEN -> {
                 coroutineScope {
-                    launch { delete(userPushConfig) }
+                    launch { delete(storedPushConfig) }
                     launch { register(userPushConfig) }
                 }
             }
@@ -92,19 +96,16 @@ internal class PushServiceImpl(
 
     @Throws(DeviceTokenException::class, CancellationException::class)
     private suspend fun delete(
-        userPushConfig: PushConfig,
+        pushConfig: PushConfig,
         clearStoredPushConfigUponSuccess: Boolean = false,
     ) {
-        when (val result = api.performDeviceTokenOperation(userPushConfig, Delete)) {
-            is Result.Success -> handleSuccessForDeleteOperation(
-                userPushConfig,
-                clearStoredPushConfigUponSuccess
-            )
+        when (val result = api.performDeviceTokenOperation(pushConfig, Delete)) {
+            is Result.Success -> handleSuccessForDeleteOperation(pushConfig, clearStoredPushConfigUponSuccess)
 
             is Result.Failure -> if (result.errorCode == ErrorCode.DeviceNotFound) {
-                handleSuccessForDeleteOperation(userPushConfig, clearStoredPushConfigUponSuccess)
+                handleSuccessForDeleteOperation(pushConfig, clearStoredPushConfigUponSuccess)
             } else {
-                handleRequestError(result, userPushConfig, Delete)
+                handleRequestError(result, pushConfig, Delete)
             }
         }
     }
@@ -157,10 +158,10 @@ internal class PushServiceImpl(
     }
 
     private fun handleSuccessForDeleteOperation(
-        userPushConfig: PushConfig,
+        pushConfig: PushConfig,
         clearStoredPushConfigUponSuccess: Boolean
     ) {
-        log.i { LogMessages.deviceTokenWasDeleted(userPushConfig) }
+        log.i { LogMessages.deviceTokenWasDeleted(pushConfig) }
         if (clearStoredPushConfigUponSuccess) vault.remove(vault.keys.pushConfigKey)
     }
 }
