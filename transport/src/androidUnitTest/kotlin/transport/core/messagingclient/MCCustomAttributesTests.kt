@@ -13,9 +13,11 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConf
 import com.genesys.cloud.messenger.transport.shyrka.receive.createMessengerVOForTesting
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.extensions.sanitizeText
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
+import com.genesys.cloud.messenger.transport.utility.CardTestValues
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import io.mockk.MockKVerificationScope
@@ -191,6 +193,50 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
             mockMessageStore.prepareMessageWith(Request.token, expectedButtonResponse, expectedChannel)
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.quickReplyWith(channel = """"channel":{"metadata":{"customAttributes":{"A":"B"}}},"""))
+        }
+    }
+
+    @Test
+    fun `when sendCardReply with customAttributes`() {
+        val expectedButtonResponse = CardTestValues.postbackButtonResponse
+        val expectedCustomAttributes = mapOf("A" to "B")
+        val expectedChannel = Channel(Channel.Metadata(expectedCustomAttributes))
+        val expectedRequest =
+            """{"token":"${Request.token}","message":{"text":"${expectedButtonResponse.text}","metadata":{"customMessageId":"card-123"},"content":[{"contentType":"ButtonResponse","buttonResponse":{"text":"${expectedButtonResponse.text}","payload":"${expectedButtonResponse.payload}","type":"${expectedButtonResponse.type}"}}],"channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Structured"},"action":"onMessage"}"""
+        every {
+            mockMessageStore.preparePostbackMessage(
+                Request.token,
+                expectedButtonResponse,
+                expectedChannel
+            )
+        } returns OnMessageRequest(
+            token = Request.token,
+            message = StructuredMessage(
+                text = expectedButtonResponse.text,
+                metadata = mapOf("customMessageId" to "card-123"),
+                content = listOf(
+                    Message.Content(
+                        contentType = Message.Content.Type.ButtonResponse,
+                        buttonResponse = expectedButtonResponse
+                    )
+                ),
+                channel = expectedChannel
+            )
+        )
+
+        every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mapOf("A" to "B")
+        subject.connect()
+
+        subject.sendCardReply(expectedButtonResponse)
+
+        verifySequence {
+            connectSequence()
+            mockLogger.i(any())
+            mockCustomAttributesStore.getCustomAttributesToSend()
+            mockCustomAttributesStore.onSending()
+            mockMessageStore.preparePostbackMessage(Request.token, expectedButtonResponse, expectedChannel)
+            mockLogger.i(any())
+            mockPlatformSocket.sendMessage(expectedRequest)
         }
     }
 

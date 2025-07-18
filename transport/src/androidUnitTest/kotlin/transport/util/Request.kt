@@ -2,7 +2,9 @@ package transport.util
 
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.utility.AuthTest
+import com.genesys.cloud.messenger.transport.utility.CardTestValues
 import com.genesys.cloud.messenger.transport.utility.MessageValues
+import com.genesys.cloud.messenger.transport.utility.TestValues
 
 internal object Request {
     const val token = "00000000-0000-0000-0000-000000000000"
@@ -31,4 +33,5 @@ internal object Request {
         """{"token":"$token","attachmentId":"88888888-8888-8888-8888-888888888888","action":"getAttachment"}"""
     val expectedPostbackRequestJson =
         """{"token":"$token","message":{"text":"Postback button text","metadata":{"customMessageId":"card-123"},"content":[{"contentType":"ButtonResponse","buttonResponse":{"text":"Postback button text","payload":"some_payload_value","type":"Postback"}}],"type":"Structured"},"action":"onMessage"}"""
+    fun cardReplyWith(channel: String): String = """{"token":"${TestValues.TOKEN}","message":{"text":"${CardTestValues.POSTBACK_TEXT}","metadata":{"customMessageId":"${MessageValues.ID}"},"content":[{"contentType":"ButtonResponse","buttonResponse":{"text":"${CardTestValues.POSTBACK_TEXT}","payload":"${CardTestValues.POSTBACK_PAYLOAD}","type":"${CardTestValues.POSTBACK_TYPE}"}}],$channel"type":"Structured"},"action":"onMessage"}"""
 }
