@@ -42,6 +42,7 @@ sealed class ErrorCode(val code: Int) {
     data object DeviceRegistrationFailure : ErrorCode(6024)
     data object DeviceUpdateFailure : ErrorCode(6025)
     data object DeviceDeleteFailure : ErrorCode(6026)
+    data object DeploymentIdMismatch : ErrorCode(6027)
 
     data class RedirectResponseError(val value: Int) : ErrorCode(value)
     data class ClientResponseError(val value: Int) : ErrorCode(value)
@@ -81,6 +82,7 @@ sealed class ErrorCode(val code: Int) {
                 6024 -> DeviceRegistrationFailure
                 6025 -> DeviceUpdateFailure
                 6026 -> DeviceDeleteFailure
+                6027 -> DeploymentIdMismatch
                 in 300..399 -> RedirectResponseError(value)
                 in 400..499 -> ClientResponseError(value)
                 in 500..599 -> ServerResponseError(value)
@@ -161,6 +163,7 @@ internal fun PushErrorResponse.toErrorCode(): ErrorCode = when (code) {
     "feature.toggle.disabled" -> ErrorCode.FeatureUnavailable
     "too.many.requests.retry.after" -> ErrorCode.RequestRateTooHigh
     "identity.resolution.disabled" -> ErrorCode.DeviceRegistrationFailure
+    "deployment.id.mismatch" -> ErrorCode.DeploymentIdMismatch
     "required.fields.missing", "update.fields.missing" -> ErrorCode.MissingParameter
     else -> ErrorCode.DeviceTokenOperationFailure
 }

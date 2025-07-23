@@ -48,6 +48,7 @@ internal class ErrorCodeTest {
         assertThat(ErrorCode.mapFrom(6024)).isEqualTo(ErrorCode.DeviceRegistrationFailure)
         assertThat(ErrorCode.mapFrom(6025)).isEqualTo(ErrorCode.DeviceUpdateFailure)
         assertThat(ErrorCode.mapFrom(6026)).isEqualTo(ErrorCode.DeviceDeleteFailure)
+        assertThat(ErrorCode.mapFrom(6027)).isEqualTo(ErrorCode.DeploymentIdMismatch)
 
         val randomIn300Range = Random.nextInt(300, 400)
         ErrorCode.mapFrom(randomIn300Range).run {
@@ -127,6 +128,9 @@ internal class ErrorCodeTest {
         )
         assertThat(pushErrorResponseWith("identity.resolution.disabled").toErrorCode()).isEqualTo(
             ErrorCode.DeviceRegistrationFailure
+        )
+        assertThat(pushErrorResponseWith("deployment.id.mismatch").toErrorCode()).isEqualTo(
+            ErrorCode.DeploymentIdMismatch
         )
     }
 
