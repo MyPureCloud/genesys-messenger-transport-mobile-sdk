@@ -126,7 +126,7 @@ class DeploymentConfigTest {
             ),
             conversationClear = Conversations.ConversationClear(enabled = true),
             markdown = Conversations.Markdown(enabled = false),
-            )
+        )
         val expectedConversationsAsJson =
             """{"messagingEndpoint":"messaging_endpoint","showAgentTypingIndicator":true,"showUserTypingIndicator":true,"autoStart":{"enabled":true},"conversationDisconnect":{"enabled":true,"type":"ReadOnly"},"conversationClear":{"enabled":true},"markdown":{"enabled":false}}"""
 
