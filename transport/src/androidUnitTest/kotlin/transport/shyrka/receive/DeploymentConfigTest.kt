@@ -125,10 +125,10 @@ class DeploymentConfigTest {
                 Conversations.ConversationDisconnect.Type.ReadOnly
             ),
             conversationClear = Conversations.ConversationClear(enabled = true),
-            markdown = Conversations.Markdown(enabled = false),
+            markdown = Conversations.Markdown(enabled = true),
         )
         val expectedConversationsAsJson =
-            """{"messagingEndpoint":"messaging_endpoint","showAgentTypingIndicator":true,"showUserTypingIndicator":true,"autoStart":{"enabled":true},"conversationDisconnect":{"enabled":true,"type":"ReadOnly"},"conversationClear":{"enabled":true},"markdown":{"enabled":false}}"""
+            """{"messagingEndpoint":"messaging_endpoint","showAgentTypingIndicator":true,"showUserTypingIndicator":true,"autoStart":{"enabled":true},"conversationDisconnect":{"enabled":true,"type":"ReadOnly"},"conversationClear":{"enabled":true},"markdown":{"enabled":true}}"""
 
         val result = WebMessagingJson.json.encodeToString(givenConversations)
 
