@@ -38,13 +38,17 @@ MessagingClient -> MessageStore: update(Message)
 MessageStore -> MessageStore: add message to Conversation
 MessageStore -> App: messageListener(CardsReceived(Message(type:Type.Cards, content: List<Card(title, description, image), Action(type, text, url?, payload?>)))
 App -> App: Display cards in UI
-
 alt #aaff8833 user selects cards option with "Postback"
+App -> App: User taps a Card Action (type = "Postback")
+rnote over App
+  The SDK exposes the Card and its Actions.
+  App constructs a ButtonResponse using the selected Action.
+end rnote
 App -> MessagingClient: sendCardReply(postbackResponse: ButtonResponse)
 MessagingClient -> MessageStore: sendCardReply(postbackResponse: ButtonResponse)
 MessageStore -> MessageStore: add message to Conversation
-MessageStore --> MessagingClient: OnMessageRequest(text="",content="ButtonResponse(text=text,payload=payload,type="Button")))
-MessageStore -> App: messageListener(MessageInserted(Message(Type.Cards,ButtonResponse("Button"), State.Sending))
+MessageStore --> MessagingClient: OnMessageRequest(text=ButtonResponse.text,\n  content=ButtonResponse(text, payload, type="Button"))
+MessageStore -> App: messageListener(MessageInserted(\n  Message(Type.Cards, ButtonResponse("Button"), State.Sending)))
 MessagingClient -> Shyrka: send(OnMessageRequest)
 alt #aaff8833 response (Success)
 Shyrka -> MessagingClient: response 200 to OnMessageRequest
