@@ -45,7 +45,7 @@ data class Conversations(
     val conversationDisconnect: ConversationDisconnect = ConversationDisconnect(),
     val conversationClear: ConversationClear = ConversationClear(),
     val markdown: Markdown = Markdown(),
-    ) {
+) {
     @Serializable
     data class AutoStart(val enabled: Boolean = false)
 
