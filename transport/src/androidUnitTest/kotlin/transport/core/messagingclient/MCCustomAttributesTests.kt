@@ -40,7 +40,7 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
     @Test
     fun `when sendMessage with customAttributes`() {
         val expectedMessage =
-            """{"token":"${Request.token}","message":{"text":"${MessageValues.TEXT}","channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"action":"onMessage"}"""
+            """{"token":"${Request.token}","message":{"text":"${MessageValues.TEXT.sanitizeText()}","channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"action":"onMessage"}"""
         val expectedText = MessageValues.TEXT
         val expectedCustomAttributes = mapOf("A" to "B")
         val expectedChannel = Channel(Channel.Metadata(expectedCustomAttributes))
@@ -227,7 +227,7 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mapOf("A" to "B")
         subject.connect()
 
-        subject.sendCardReply(expectedButtonResponse)
+        subject.sendCardReply(CardTestValues.postbackButtonResponse)
 
         verifySequence {
             connectSequence()

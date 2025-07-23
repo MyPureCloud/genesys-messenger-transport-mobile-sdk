@@ -133,11 +133,6 @@ open class BaseMessagingClientTest {
         every { sendMessage(Request.configureAuthenticatedRequest()) } answers {
             slot.captured.onMessage(Response.configureSuccess())
         }
-        every {
-            sendMessage(Request.cardReplyWith(channel = """ "channel":{"metadata":{"customAttributes":{"A":"BBBBBB"}}},"""))
-        } answers {
-            slot.captured.onMessage("")
-        }
     }
 
     private val mockWebMessagingApi: WebMessagingApi = mockk {
