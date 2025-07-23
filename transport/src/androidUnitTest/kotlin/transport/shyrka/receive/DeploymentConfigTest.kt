@@ -42,9 +42,11 @@ class DeploymentConfigTest {
         val expectedAuth = Auth(enabled = true, allowSessionUpgrade = true)
         val expectedJourneyEvents = JourneyEvents(enabled = false)
         val expectedConversationClear = Conversations.ConversationClear(enabled = true)
+        val expectedMarkdown = Conversations.Markdown(false)
         val expectedConversations = Conversations(
             messagingEndpoint = DeploymentConfigValues.MESSAGING_ENDPOINT,
-            conversationClear = expectedConversationClear
+            conversationClear = expectedConversationClear,
+            markdown = expectedMarkdown
         )
         val expectedApps = Apps(conversations = expectedConversations)
         val expectedStyles = Styles(primaryColor = DeploymentConfigValues.PRIMARY_COLOR)
@@ -122,10 +124,11 @@ class DeploymentConfigTest {
                 enabled = true,
                 Conversations.ConversationDisconnect.Type.ReadOnly
             ),
-            conversationClear = Conversations.ConversationClear(enabled = true)
-        )
+            conversationClear = Conversations.ConversationClear(enabled = true),
+            markdown = Conversations.Markdown(enabled = false),
+            )
         val expectedConversationsAsJson =
-            """{"messagingEndpoint":"messaging_endpoint","showAgentTypingIndicator":true,"showUserTypingIndicator":true,"autoStart":{"enabled":true},"conversationDisconnect":{"enabled":true,"type":"ReadOnly"},"conversationClear":{"enabled":true}}"""
+            """{"messagingEndpoint":"messaging_endpoint","showAgentTypingIndicator":true,"showUserTypingIndicator":true,"autoStart":{"enabled":true},"conversationDisconnect":{"enabled":true,"type":"ReadOnly"},"conversationClear":{"enabled":true},"markdown":{"enabled":false}}"""
 
         val result = WebMessagingJson.json.encodeToString(givenConversations)
 
@@ -135,20 +138,22 @@ class DeploymentConfigTest {
     @Test
     fun `when Conversations deserialized`() {
         val givenConversationsAsJson =
-            """{"messagingEndpoint":"messaging_endpoint","showAgentTypingIndicator":true,"showUserTypingIndicator":true,"autoStart":{"enabled":true},"conversationDisconnect":{"enabled":true,"type":"ReadOnly"},"conversationClear":{"enabled":false}}"""
+            """{"messagingEndpoint":"messaging_endpoint","showAgentTypingIndicator":true,"showUserTypingIndicator":true,"autoStart":{"enabled":true},"markdown":{"enabled":false},"conversationDisconnect":{"enabled":true,"type":"ReadOnly"},"conversationClear":{"enabled":false}}"""
         val expectedConversationClear = Conversations.ConversationClear(enabled = false)
         val expectedAutoStart = Conversations.AutoStart(true)
         val expectedConversationDisconnect = Conversations.ConversationDisconnect(
             true,
             Conversations.ConversationDisconnect.Type.ReadOnly
         )
+        val expectedMarkdown = Conversations.Markdown(false)
         val expectedConversations = Conversations(
             messagingEndpoint = DeploymentConfigValues.MESSAGING_ENDPOINT,
             showAgentTypingIndicator = true,
             showUserTypingIndicator = true,
             autoStart = expectedAutoStart,
             conversationDisconnect = expectedConversationDisconnect,
-            conversationClear = expectedConversationClear
+            conversationClear = expectedConversationClear,
+            markdown = expectedMarkdown
         )
 
         val result = WebMessagingJson.json.decodeFromString<Conversations>(givenConversationsAsJson)
@@ -210,6 +215,28 @@ class DeploymentConfigTest {
         )
 
         assertThat(result).isEqualTo(expectedConversationClear)
+        assertThat(result.enabled).isTrue()
+    }
+    @Test
+    fun `when Markdown serialized`() {
+        val givenMarkdown = Conversations.Markdown(enabled = true)
+        val expectedMarkdownAsJson = """{"enabled":true}"""
+
+        val result = WebMessagingJson.json.encodeToString(givenMarkdown)
+
+        assertThat(result).isEqualTo(expectedMarkdownAsJson)
+    }
+
+    @Test
+    fun `when Markdown deserialized`() {
+        val givenMarkdownAsJson = """{"enabled":true}"""
+        val expectedMarkdown = Conversations.Markdown(enabled = true)
+
+        val result = WebMessagingJson.json.decodeFromString<Conversations.Markdown>(
+            givenMarkdownAsJson
+        )
+
+        assertThat(result).isEqualTo(expectedMarkdown)
         assertThat(result.enabled).isTrue()
     }
 
