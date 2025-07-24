@@ -3,6 +3,7 @@ package transport.core
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
+import com.genesys.cloud.messenger.transport.core.DEPLOYMENT_ID_MISMATCH_ERROR_MESSAGE
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.toCorrectiveAction
 import com.genesys.cloud.messenger.transport.core.toErrorCode
@@ -129,7 +130,15 @@ internal class ErrorCodeTest {
         assertThat(pushErrorResponseWith("identity.resolution.disabled").toErrorCode()).isEqualTo(
             ErrorCode.DeviceRegistrationFailure
         )
-        assertThat(pushErrorResponseWith("deployment.id.mismatch").toErrorCode()).isEqualTo(
+        assertThat(pushErrorResponseWith("invalid.path.parameter").toErrorCode()).isEqualTo(
+            ErrorCode.DeviceTokenOperationFailure
+        )
+        assertThat(
+            pushErrorResponseWith(
+                code = "invalid.path.parameter",
+                message = DEPLOYMENT_ID_MISMATCH_ERROR_MESSAGE
+            ).toErrorCode()
+        ).isEqualTo(
             ErrorCode.DeploymentIdMismatch
         )
     }

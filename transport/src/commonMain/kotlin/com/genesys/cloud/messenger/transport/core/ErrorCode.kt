@@ -3,6 +3,9 @@ package com.genesys.cloud.messenger.transport.core
 import com.genesys.cloud.messenger.transport.shyrka.receive.PushErrorResponse
 import io.ktor.http.HttpStatusCode
 
+internal const val DEPLOYMENT_ID_MISMATCH_ERROR_MESSAGE =
+    "Deployment Id in the request does not match the expected deployment Id for the given TokenId"
+
 /**
  * List of all error codes used to report transport errors.
  */
@@ -163,7 +166,12 @@ internal fun PushErrorResponse.toErrorCode(): ErrorCode = when (code) {
     "feature.toggle.disabled" -> ErrorCode.FeatureUnavailable
     "too.many.requests.retry.after" -> ErrorCode.RequestRateTooHigh
     "identity.resolution.disabled" -> ErrorCode.DeviceRegistrationFailure
-    "deployment.id.mismatch" -> ErrorCode.DeploymentIdMismatch
     "required.fields.missing", "update.fields.missing" -> ErrorCode.MissingParameter
+    "invalid.path.parameter" -> if (message == DEPLOYMENT_ID_MISMATCH_ERROR_MESSAGE) {
+        ErrorCode.DeploymentIdMismatch
+    } else {
+        ErrorCode.DeviceTokenOperationFailure
+    }
+
     else -> ErrorCode.DeviceTokenOperationFailure
 }
