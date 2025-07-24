@@ -4,6 +4,7 @@ def isReleaseBranch() { env.BRANCH_NAME.startsWith('release/') }
 def isFeatureBranch() { env.BRANCH_NAME.startsWith('feature/') }
 
 def oktaproperties = ''
+def pipelineLibrary = library('pipeline-library').com.genesys.jenkins
 
 void setBuildStatus(String message, String state) {
   step([
@@ -43,7 +44,6 @@ pipeline {
                     }
                     steps {
                         script {
-                            def pipelineLibrary = library('pipeline-library').com.genesys.jenkins
                             def testing = pipelineLibrary.Testing.new()
                             oktaproperties = testing.getSecretStashSecret(
                                 'dev',
@@ -80,6 +80,36 @@ pipeline {
                     steps {
                         sh './gradlew lintKotlin'
                     }
+                }
+            }
+        }
+
+        stage('Run Snyk Android') {
+            steps {
+                script {
+                    snykSecurity(
+                        snykInstallation: 'SnykLatestMacos',
+                        snykTokenId: 'snyk-global-api-token',
+                        severity: 'high', 
+                        organisation: 'digital-mobile-sdk',
+                        targetFile: 'build.gradle.kts',
+                        additionalArguments: '--package-manager=gradle --sub-project="transport" --configuration-matching="releaseRuntimeClasspath"'
+                    )
+                }
+            }
+        }
+
+        stage('Run Snyk iOS') {
+            steps {
+                script {
+                    snykSecurity(
+                        snykInstallation: 'SnykLatestMacos',
+                        snykTokenId: 'snyk-global-api-token',
+                        severity: 'high', 
+                        organisation: 'digital-mobile-sdk',
+                        targetFile: 'iosApp/Podfile.lock',
+                        additionalArguments: '--package-manager=cocoapods'
+                    )
                 }
             }
         }
@@ -186,6 +216,16 @@ pipeline {
         always {
             archiveArtifacts 'transport/build/reports/tests/testReleaseUnitTest/**/*.html, transport/build/reports/tests/testReleaseUnitTest/**/*.js, transport/build/reports/tests/testReleaseUnitTest/**/*.css'
             junit 'transport/build/test-results/testReleaseUnitTest/*.xml'
+            script {
+                testResultToKnex {
+                    files = 'transport/build/test-results/testReleaseUnitTest/*.xml'
+                    aut = 'KMM-Transport-SDK'
+                    type = 'unit'
+                    platform = 'junit'
+                    clusterName = 'Mobile Messenger Transport SDK'
+                    teams = 'Digital Mobile SDK'
+                }
+            }
             cleanWs()
         }
     }
