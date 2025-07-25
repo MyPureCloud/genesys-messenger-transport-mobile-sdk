@@ -3,6 +3,9 @@ package com.genesys.cloud.messenger.transport.core
 import com.genesys.cloud.messenger.transport.shyrka.receive.PushErrorResponse
 import io.ktor.http.HttpStatusCode
 
+internal const val DEPLOYMENT_ID_MISMATCH_ERROR_MESSAGE =
+    "Deployment Id in the request does not match the expected deployment Id for the given TokenId"
+
 /**
  * List of all error codes used to report transport errors.
  */
@@ -42,6 +45,7 @@ sealed class ErrorCode(val code: Int) {
     data object DeviceRegistrationFailure : ErrorCode(6024)
     data object DeviceUpdateFailure : ErrorCode(6025)
     data object DeviceDeleteFailure : ErrorCode(6026)
+    data object DeploymentIdMismatch : ErrorCode(6027) // ErrorCode needed to support proper QA automation. Not expected to happen in production.
 
     data class RedirectResponseError(val value: Int) : ErrorCode(value)
     data class ClientResponseError(val value: Int) : ErrorCode(value)
@@ -81,6 +85,7 @@ sealed class ErrorCode(val code: Int) {
                 6024 -> DeviceRegistrationFailure
                 6025 -> DeviceUpdateFailure
                 6026 -> DeviceDeleteFailure
+                6027 -> DeploymentIdMismatch
                 in 300..399 -> RedirectResponseError(value)
                 in 400..499 -> ClientResponseError(value)
                 in 500..599 -> ServerResponseError(value)
@@ -162,5 +167,11 @@ internal fun PushErrorResponse.toErrorCode(): ErrorCode = when (code) {
     "too.many.requests.retry.after" -> ErrorCode.RequestRateTooHigh
     "identity.resolution.disabled" -> ErrorCode.DeviceRegistrationFailure
     "required.fields.missing", "update.fields.missing" -> ErrorCode.MissingParameter
+    "invalid.path.parameter" -> if (message == DEPLOYMENT_ID_MISMATCH_ERROR_MESSAGE) {
+        ErrorCode.DeploymentIdMismatch
+    } else {
+        ErrorCode.DeviceTokenOperationFailure
+    }
+
     else -> ErrorCode.DeviceTokenOperationFailure
 }

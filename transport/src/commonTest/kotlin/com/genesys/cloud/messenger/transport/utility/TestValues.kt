@@ -212,8 +212,8 @@ object PushTestValues {
         pushProvider = TestValues.PUSH_PROVIDER,
     )
 
-    internal fun pushErrorResponseWith(code: String) = PushErrorResponse(
-        message = ErrorTest.MESSAGE,
+    internal fun pushErrorResponseWith(code: String, message: String = ErrorTest.MESSAGE) = PushErrorResponse(
+        message = message,
         code = code,
         status = ErrorTest.CODE_404.toInt(),
         contextId = TestValues.DEFAULT_STRING,
