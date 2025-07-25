@@ -18,8 +18,8 @@ data class Configuration(
     val logging: Boolean = false,
     val reconnectionTimeoutInSeconds: Long = 60 * 5,
     val autoRefreshTokenWhenExpired: Boolean = true,
-    val encryptedVault: Boolean = false
-    val sessionExpirationNoticeInterval: Long = DEFAULT_INTERVAL,
+    val encryptedVault: Boolean = false,
+    val sessionExpirationNoticeInterval: Long = DEFAULT_INTERVAL
 ) {
 
     /**
