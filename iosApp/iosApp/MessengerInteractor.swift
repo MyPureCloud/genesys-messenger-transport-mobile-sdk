@@ -29,7 +29,8 @@ final class MessengerInteractor {
                                            logging: true,
                                            reconnectionTimeoutInSeconds: reconnectTimeout,
                                            autoRefreshTokenWhenExpired: true,
-                                           encryptedVault: true)
+                                           encryptedVault: true
+                                           sessionExpirationNoticeInterval: 60 * 5)
         self.tokenVault = DefaultVault(keys: Vault.Keys(vaultKey: "com.genesys.cloud.messenger", tokenKey: "token", authRefreshTokenKey: "auth_refresh_token", wasAuthenticated: "wasAuthenticated", pushConfigKey: "pushConfig"))
         self.messengerTransport = MessengerTransportSDK(configuration: self.configuration, vault: self.tokenVault)
         self.messagingClient = self.messengerTransport.createMessagingClient()
@@ -46,7 +47,7 @@ final class MessengerInteractor {
             print("Event: \(event)")
             self?.eventSubject.send(event)
         }
-        
+
         self.fetchDeployment(completion: { _, _ in })
     }
 
