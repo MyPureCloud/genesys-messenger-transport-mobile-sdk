@@ -61,6 +61,9 @@ object TestWebMessagingApiResponses {
                     ),
                     conversationClear = Conversations.ConversationClear(
                         enabled = true
+                    ),
+                    markdown = Conversations.Markdown(
+                        enabled = false
                     )
                 )
             ),
@@ -80,7 +83,7 @@ object TestWebMessagingApiResponses {
         auth = Auth(
             enabled = true,
             allowSessionUpgrade = true,
-        )
+        ),
     )
 
     private fun buildEntities(): List<StructuredMessage> =
