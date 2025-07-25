@@ -45,7 +45,7 @@ sealed class ErrorCode(val code: Int) {
     data object DeviceRegistrationFailure : ErrorCode(6024)
     data object DeviceUpdateFailure : ErrorCode(6025)
     data object DeviceDeleteFailure : ErrorCode(6026)
-    data object DeploymentIdMismatch : ErrorCode(6027)
+    data object DeploymentIdMismatch : ErrorCode(6027) // ErrorCode needed to support proper QA automation. Not expected to happen in production.
 
     data class RedirectResponseError(val value: Int) : ErrorCode(value)
     data class ClientResponseError(val value: Int) : ErrorCode(value)
