@@ -48,6 +48,17 @@ class MCAuthTests : BaseMessagingClientTest() {
     }
 
     @Test
+    fun `when shouldAuthorize is called`() {
+        subject.shouldAuthorize(
+            callback = { true }
+        )
+
+        verify {
+            mockAuthHandler.shouldAuthorize(any())
+        }
+    }
+
+    @Test
     fun `when connectAuthenticatedSession`() {
         subject.connectAuthenticatedSession()
 

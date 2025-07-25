@@ -17,6 +17,7 @@ data class Configuration(
     val logging: Boolean = false,
     val reconnectionTimeoutInSeconds: Long = 60 * 5,
     val autoRefreshTokenWhenExpired: Boolean = true,
+    val encryptedVault: Boolean = false
 ) {
 
     /**
@@ -38,14 +39,17 @@ data class Configuration(
         logging = logging,
         reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
         autoRefreshTokenWhenExpired = true,
+        encryptedVault = false
     )
+
+    internal var application: String = "TransportSDK-${MessengerTransportSDK.sdkVersion}"
 
     internal val webSocketUrl: Url by lazy {
         URLBuilder("wss://webmessaging.$domain")
             .apply {
                 path("v1")
                 parameters.append("deploymentId", deploymentId)
-                parameters.append("application", "TransportSDK-${MessengerTransportSDK.sdkVersion}")
+                parameters.append("application", application)
             }
             .build()
     }

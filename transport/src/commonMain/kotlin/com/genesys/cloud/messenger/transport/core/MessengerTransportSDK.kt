@@ -9,6 +9,7 @@ import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.network.defaultHttpClient
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.util.DefaultVault
+import com.genesys.cloud.messenger.transport.util.EncryptedVault
 import com.genesys.cloud.messenger.transport.util.TokenStore
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.logs.Log
@@ -31,10 +32,30 @@ class MessengerTransportSDK(
 ) {
     private var deploymentConfig: DeploymentConfig? = null
 
+    companion object {
+        /**
+         * The SDK version.
+         */
+        val sdkVersion = BuildKonfig.sdkVersion
+
+        /**
+         * Creates a vault instance based on the configuration.
+         *
+         * @return A vault instance based on the configuration's encryptedVault property.
+         */
+        private fun getVault(configuration: Configuration): Vault {
+            return if (configuration.encryptedVault) {
+                EncryptedVault()
+            } else {
+                DefaultVault()
+            }
+        }
+    }
+
     constructor(configuration: Configuration) : this(
         configuration,
         null,
-        DefaultVault(),
+        getVault(configuration),
     )
 
     @Deprecated("Use Vault instead.")
@@ -49,13 +70,6 @@ class MessengerTransportSDK(
         vault = vault,
         tokenStore = null,
     )
-
-    companion object {
-        /**
-         * The SDK version.
-         */
-        val sdkVersion = BuildKonfig.sdkVersion
-    }
 
     /**
      * Creates an instance of [MessagingClient] based on the provided configuration.
