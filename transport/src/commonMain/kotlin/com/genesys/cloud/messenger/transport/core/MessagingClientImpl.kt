@@ -577,6 +577,7 @@ internal class MessagingClientImpl(
     private fun Message.handleAsStructuredMessage() {
         when (messageType) {
             Message.Type.QuickReply -> messageStore.update(this)
+            Message.Type.Cards -> messageStore.update(this)
             Message.Type.Unknown -> log.w { LogMessages.unsupportedMessageType(messageType) }
             else -> log.w { "Should not happen." }
         }

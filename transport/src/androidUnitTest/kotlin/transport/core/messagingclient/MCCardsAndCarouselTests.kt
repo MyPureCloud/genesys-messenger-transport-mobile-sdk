@@ -10,6 +10,7 @@ import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
 import transport.util.Request
+import transport.util.Response
 import kotlin.test.assertFailsWith
 
 class MCCardsAndCarouselTests : BaseMessagingClientTest() {
@@ -85,6 +86,42 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
             mockMessageStore.preparePostbackMessage(Request.token, expectedButtonResponse, expectedChannel)
             mockLogger.i(any())
             mockPlatformSocket.sendMessage(expectedRequest)
+        }
+    }
+
+    @Test
+    fun `when SocketListener invoke onMessage with Structured message that contains Postback card reply`() {
+        val expectedCard = Message.Card(
+            title = "Title",
+            description = "Description",
+            imageUrl = "http://image.com/image.png",
+            actions = listOf(
+                Message.Card.Action(
+                    type = "Postback",
+                    text = "Select this option",
+                    url = null,
+                    payload = "postback_payload"
+                )
+            )
+        )
+
+        val expectedMessage = Message(
+            id = "msg_id",
+            direction = Message.Direction.Outbound,
+            state = Message.State.Sent,
+            messageType = Message.Type.Cards,
+            text = "You selected this card option",
+            cards = listOf(expectedCard),
+            from = Message.Participant(originatingEntity = Message.Participant.OriginatingEntity.Bot),
+        )
+
+        subject.connect()
+
+        slot.captured.onMessage(Response.onMessageWithPostbackCardReply)
+
+        verifySequence {
+            connectSequence()
+            mockMessageStore.update(expectedMessage)
         }
     }
 }
