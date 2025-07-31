@@ -605,40 +605,39 @@ internal class MessageStoreTest {
 
     @Test
     fun `when preparePostbackMessage is called then returns StructuredMessage with correct metadata`() {
-        val expectedToken = TestValues.TOKEN
-        val expectedButton = CardTestValues.postbackButtonResponse
+        val givenToken = TestValues.TOKEN
+        val givenButton = CardTestValues.postbackButtonResponse
 
-        val result = subject.preparePostbackMessage(expectedToken, expectedButton)
+        val result = subject.preparePostbackMessage(givenToken, givenButton)
 
-        assertThat(result.token).isEqualTo(expectedToken)
+        assertThat(result.token).isEqualTo(givenToken)
         assertThat(result.message).isInstanceOf(StructuredMessage::class.java)
         assertThat(result.action).isEqualTo("onMessage")
 
         val structuredMessage = result.message as StructuredMessage
         assertThat(structuredMessage.text).isEqualTo(CardTestValues.POSTBACK_TEXT)
-        assertThat(structuredMessage.content.first().buttonResponse).isEqualTo(expectedButton)
+        assertThat(structuredMessage.content.first().buttonResponse).isEqualTo(givenButton)
         assertThat(structuredMessage.metadata?.get("customMessageId")).isNotNull()
     }
 
     @Test
     fun `when update called with card message, then CardMessageReceived is published`() {
-        val expectedCard = CardTestValues.cardWithPostbackAction
-        val expectedMessage = Message(
+        val givenCard = CardTestValues.cardWithPostbackAction
+        val givenMessage = Message(
             id = "msg_id",
             direction = Message.Direction.Outbound,
             state = State.Sent,
             messageType = Message.Type.Cards,
             text = "You selected this card option",
-            cards = listOf(expectedCard),
+            cards = listOf(givenCard),
             from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
         )
 
-        subject.update(expectedMessage)
+        subject.update(givenMessage)
 
-        val slot = slot<MessageEvent>()
-        verify { mockMessageListener.invoke(capture(slot)) }
-        assertTrue(slot.captured is MessageEvent.CardMessageReceived)
-        assertEquals(expectedMessage, (slot.captured as MessageEvent.CardMessageReceived).message)
+        verify { mockMessageListener.invoke(capture(messageSlot)) }
+        assertTrue(messageSlot.captured is MessageEvent.CardMessageReceived)
+        assertEquals(givenMessage, (messageSlot.captured as MessageEvent.CardMessageReceived).message)
     }
 
     private fun outboundMessage(messageId: Int = 0): Message = Message(
