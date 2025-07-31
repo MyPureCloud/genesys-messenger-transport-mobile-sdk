@@ -39,8 +39,6 @@ import io.mockk.clearMocks
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
-import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertTrue
 import org.junit.Test
 
 internal class MessageStoreTest {
@@ -608,6 +606,9 @@ internal class MessageStoreTest {
         val givenToken = TestValues.TOKEN
         val givenButton = CardTestValues.postbackButtonResponse
 
+        val expectedText = CardTestValues.postbackButtonResponse.text
+        val expectedButton = CardTestValues.postbackButtonResponse
+
         val result = subject.preparePostbackMessage(givenToken, givenButton)
 
         assertThat(result.token).isEqualTo(givenToken)
@@ -615,8 +616,8 @@ internal class MessageStoreTest {
         assertThat(result.action).isEqualTo("onMessage")
 
         val structuredMessage = result.message as StructuredMessage
-        assertThat(structuredMessage.text).isEqualTo(CardTestValues.POSTBACK_TEXT)
-        assertThat(structuredMessage.content.first().buttonResponse).isEqualTo(givenButton)
+        assertThat(structuredMessage.text).isEqualTo(expectedText)
+        assertThat(structuredMessage.content.first().buttonResponse).isEqualTo(expectedButton)
         assertThat(structuredMessage.metadata?.get("customMessageId")).isNotNull()
     }
 
@@ -633,11 +634,15 @@ internal class MessageStoreTest {
             from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
         )
 
+        val expectedMessage = givenMessage
+
         subject.update(givenMessage)
 
         verify { mockMessageListener.invoke(capture(messageSlot)) }
-        assertTrue(messageSlot.captured is MessageEvent.CardMessageReceived)
-        assertEquals(givenMessage, (messageSlot.captured as MessageEvent.CardMessageReceived).message)
+
+        val actualEvent = messageSlot.captured
+        assertThat(actualEvent).isInstanceOf(MessageEvent.CardMessageReceived::class.java)
+        assertThat((actualEvent as MessageEvent.CardMessageReceived).message).isEqualTo(expectedMessage)
     }
 
     private fun outboundMessage(messageId: Int = 0): Message = Message(
