@@ -19,6 +19,7 @@ actual class EncryptedVault actual constructor(keys: Keys) :
         val currentContext = context ?: throw IllegalStateException("Must set EncryptedVault.context before instantiating.")
         sharedPreferences = currentContext.getSharedPreferences(keys.vaultKey, Context.MODE_PRIVATE)
         internalVault = InternalVault(keys.vaultKey, sharedPreferences)
+        migrateFromDefaultVault()
     }
 
     override fun store(key: String, value: String) {
@@ -31,6 +32,20 @@ actual class EncryptedVault actual constructor(keys: Keys) :
 
     override fun remove(key: String) {
         internalVault.remove(key)
+    }
+
+    private fun migrateFromDefaultVault() {
+        val currentContext = context ?: return
+        val defaultPrefs = currentContext.getSharedPreferences(VAULT_KEY, Context.MODE_PRIVATE)
+
+        if (defaultPrefs.all.isNotEmpty()) {
+            defaultPrefs.getString(keys.tokenKey, null)?.let { store(keys.tokenKey, it) }
+            defaultPrefs.getString(keys.authRefreshTokenKey, null)
+                ?.let { store(keys.authRefreshTokenKey, it) }
+            defaultPrefs.getString(keys.wasAuthenticated, null)
+                ?.let { store(keys.wasAuthenticated, it) }
+            defaultPrefs.edit().clear().apply()
+        }
     }
 
     companion object {
