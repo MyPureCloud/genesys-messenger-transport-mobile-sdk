@@ -39,6 +39,8 @@ import io.mockk.clearMocks
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertTrue
 import org.junit.Test
 
 internal class MessageStoreTest {
@@ -616,6 +618,27 @@ internal class MessageStoreTest {
         assertThat(structuredMessage.text).isEqualTo(CardTestValues.POSTBACK_TEXT)
         assertThat(structuredMessage.content.first().buttonResponse).isEqualTo(expectedButton)
         assertThat(structuredMessage.metadata?.get("customMessageId")).isNotNull()
+    }
+
+    @Test
+    fun `when update called with card message, then CardMessageReceived is published`() {
+        val expectedCard = CardTestValues.cardWithPostbackAction
+        val expectedMessage = Message(
+            id = "msg_id",
+            direction = Message.Direction.Outbound,
+            state = State.Sent,
+            messageType = Message.Type.Cards,
+            text = "You selected this card option",
+            cards = listOf(expectedCard),
+            from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
+        )
+
+        subject.update(expectedMessage)
+
+        val slot = slot<MessageEvent>()
+        verify { mockMessageListener.invoke(capture(slot)) }
+        assertTrue(slot.captured is MessageEvent.CardMessageReceived)
+        assertEquals(expectedMessage, (slot.captured as MessageEvent.CardMessageReceived).message)
     }
 
     private fun outboundMessage(messageId: Int = 0): Message = Message(

@@ -191,10 +191,10 @@ internal class MessageStore(private val log: Log) {
 }
 
 private fun Message.toMessageEvent(): MessageEvent =
-    if (messageType == Message.Type.QuickReply) {
-        MessageEvent.QuickReplyReceived(this)
-    } else {
-        MessageEvent.MessageInserted(this)
+    when (messageType) {
+        Message.Type.QuickReply -> MessageEvent.QuickReplyReceived(this)
+        Message.Type.Cards -> MessageEvent.CardMessageReceived(this)
+        else -> MessageEvent.MessageInserted(this)
     }
 
 /**
@@ -243,4 +243,13 @@ sealed class MessageEvent {
      * @property message is the [Message] object with all the details.
      */
     class QuickReplyReceived(val message: Message) : MessageEvent()
+
+    /**
+     * Dispatched when a card or carousel message was sent by the Bot.
+     * Card messages may include one or more cards, with each card containing title, description, image, and actions.
+     * To access the card data, refer to [Message.cards].
+     *
+     * @property message is the [Message] object with all the card details.
+     */
+    class CardMessageReceived(val message: Message) : MessageEvent()
 }

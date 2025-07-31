@@ -44,6 +44,7 @@ data class Message(
      * @property Text when message is a text.
      * @property Event when message is an event.
      * @property QuickReply when message is a quick reply.
+     * @property Cards when message contains rich content in the form of one or more cards.
      * @property Unknown when system could not recognize the message type.
      */
     @Serializable

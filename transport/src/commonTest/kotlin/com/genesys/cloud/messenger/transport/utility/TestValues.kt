@@ -204,6 +204,18 @@ object CardTestValues {
     internal const val POSTBACK_TYPE = "Postback"
     internal const val POSTBACK_PAYLOAD = "I want it"
     internal const val customMessageId = "customMessageId"
+    val cardWithPostbackAction = Message.Card(
+        title = "Title",
+        description = "Description",
+        imageUrl = "http://image.com/image.png",
+        actions = listOf(
+            Message.Card.Action(
+                type = "Postback",
+                text = "Select this option",
+                payload = "postback_payload"
+            )
+        )
+    )
     val postbackButtonResponse = ButtonResponse(
         text = POSTBACK_TEXT,
         type = POSTBACK_TYPE,
