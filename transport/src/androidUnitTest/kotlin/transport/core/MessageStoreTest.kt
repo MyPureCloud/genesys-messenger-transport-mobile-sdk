@@ -603,19 +603,43 @@ internal class MessageStoreTest {
 
     @Test
     fun `when preparePostbackMessage is called then returns StructuredMessage with correct metadata`() {
+        val givenButton = CardTestValues.postbackButtonResponse
+
         val expectedToken = TestValues.TOKEN
         val expectedButton = CardTestValues.postbackButtonResponse
 
-        val result = subject.preparePostbackMessage(expectedToken, expectedButton)
+        val result = subject.preparePostbackMessage(givenToken, givenButton)
 
         assertThat(result.token).isEqualTo(expectedToken)
         assertThat(result.message).isInstanceOf(StructuredMessage::class.java)
         assertThat(result.action).isEqualTo("onMessage")
 
         val structuredMessage = result.message as StructuredMessage
-        assertThat(structuredMessage.text).isEqualTo(CardTestValues.POSTBACK_TEXT)
+        assertThat(structuredMessage.text).isEqualTo(expectedButton.text)
         assertThat(structuredMessage.content.first().buttonResponse).isEqualTo(expectedButton)
         assertThat(structuredMessage.metadata?.get("customMessageId")).isNotNull()
+    }
+
+    @Test
+    fun `when update called with card message, then CardMessageReceived is published`() {
+        val givenCard = CardTestValues.cardWithPostbackAction
+        val givenMessage = Message(
+            id = "msg_id",
+            direction = Message.Direction.Outbound,
+            state = State.Sent,
+            messageType = Message.Type.Cards,
+            text = "You selected this card option",
+            cards = listOf(givenCard),
+            from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
+        )
+
+        subject.update(givenMessage)
+
+        verify { mockMessageListener.invoke(capture(messageSlot)) }
+
+        val actualEvent = messageSlot.captured
+        assertThat(actualEvent).isInstanceOf(MessageEvent.CardMessageReceived::class.java)
+        assertThat((actualEvent as MessageEvent.CardMessageReceived).message).isEqualTo(givenMessage)
     }
 
     private fun outboundMessage(messageId: Int = 0): Message = Message(
