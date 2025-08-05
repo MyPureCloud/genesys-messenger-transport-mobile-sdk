@@ -49,9 +49,11 @@ fun createConversationsVOForTesting(
     autoStart: Conversations.AutoStart = Conversations.AutoStart(),
     conversationDisconnect: Conversations.ConversationDisconnect = Conversations.ConversationDisconnect(),
     conversationClear: Conversations.ConversationClear = Conversations.ConversationClear(enabled = true),
+    markdown: Conversations.Markdown = Conversations.Markdown(enabled = false),
 ): Conversations = Conversations(
     messagingEndpoint = DeploymentConfigValues.MESSAGING_ENDPOINT,
     autoStart = autoStart,
     conversationDisconnect = conversationDisconnect,
     conversationClear = conversationClear,
+    markdown = markdown,
 )
