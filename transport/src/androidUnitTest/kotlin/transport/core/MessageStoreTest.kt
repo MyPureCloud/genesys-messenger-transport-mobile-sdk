@@ -642,6 +642,80 @@ internal class MessageStoreTest {
         assertThat((actualEvent as MessageEvent.CardMessageReceived).message).isEqualTo(givenMessage)
     }
 
+    @Test
+    fun `when updateMessageHistory is called with card selections then history is merged`() {
+        val givenMessage = Message(
+            id = "history-card-1",
+            direction = Direction.Inbound,
+            state = State.Sent,
+            messageType = Type.Cards,
+            text = CardTestValues.postbackButtonResponse.text,
+            quickReplies = listOf(CardTestValues.postbackButtonResponse),
+            timeStamp = 123L
+        )
+        val givenHistory = listOf(givenMessage)
+
+        clearMocks(mockLogger, mockMessageListener)
+
+        subject.updateMessageHistory(givenHistory, total = givenHistory.size)
+
+        val expectedStartOfConversation = true
+        val expectedNextPage = 1
+        assertThat(subject.startOfConversation).isEqualTo(expectedStartOfConversation)
+        assertThat(subject.nextPage).isEqualTo(expectedNextPage)
+
+        val expectedConversation = givenHistory
+        val actualConversation = subject.getConversation()
+        assertThat(actualConversation).containsExactly(*expectedConversation.toTypedArray())
+
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockMessageListener.invoke(capture(messageSlot))
+        }
+        val actualEvent = messageSlot.captured as MessageEvent.HistoryFetched
+        assertThat(actualEvent.messages).isEqualTo(expectedConversation)
+        assertThat(actualEvent.startOfConversation).isEqualTo(expectedStartOfConversation)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.messageHistoryUpdated(expectedConversation))
+    }
+
+    @Test
+    fun `when updateMessageHistory contains mixed messages then history ordering is preserved`() {
+        val givenExistingMessage = Message(
+            id = "1",
+            direction = Direction.Inbound,
+            state = State.Sent,
+            messageType = Type.Text,
+            text = "Hello",
+            timeStamp = 100L
+        )
+        subject.update(givenExistingMessage)
+
+        val givenCardSelection = Message(
+            id = "history-card-1",
+            direction = Direction.Inbound,
+            state = State.Sent,
+            messageType = Type.Cards,
+            text = CardTestValues.postbackButtonResponse.text,
+            quickReplies = listOf(CardTestValues.postbackButtonResponse),
+            timeStamp = 200L
+        )
+        val givenHistory = listOf(givenCardSelection)
+
+        clearMocks(mockLogger, mockMessageListener)
+
+        val expectedConversation = listOf(givenCardSelection, givenExistingMessage)
+        val expectedFetchedMessages = listOf(givenCardSelection)
+
+        subject.updateMessageHistory(givenHistory, total = 2)
+
+        val actualConversation = subject.getConversation()
+        assertThat(actualConversation).isEqualTo(expectedConversation)
+
+        verify { mockMessageListener.invoke(capture(messageSlot)) }
+        val actualFetchedEvent = messageSlot.captured as MessageEvent.HistoryFetched
+        assertThat(actualFetchedEvent.messages).isEqualTo(expectedFetchedMessages)
+    }
+
     private fun outboundMessage(messageId: Int = 0): Message = Message(
         id = "$messageId",
         direction = Direction.Outbound,
