@@ -678,6 +678,44 @@ internal class MessageStoreTest {
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.messageHistoryUpdated(expectedConversation))
     }
 
+    @Test
+    fun `when updateMessageHistory contains mixed messages then history ordering is preserved`() {
+        val givenExistingMessage = Message(
+            id = "1",
+            direction = Direction.Inbound,
+            state = State.Sent,
+            messageType = Type.Text,
+            text = "Hello",
+            timeStamp = 100L
+        )
+        subject.update(givenExistingMessage)
+
+        val givenCardSelection = Message(
+            id = "history-card-1",
+            direction = Direction.Inbound,
+            state = State.Sent,
+            messageType = Type.Cards,
+            text = CardTestValues.postbackButtonResponse.text,
+            quickReplies = listOf(CardTestValues.postbackButtonResponse),
+            timeStamp = 200L
+        )
+        val givenHistory = listOf(givenCardSelection)
+
+        clearMocks(mockLogger, mockMessageListener)
+
+        val expectedConversation = listOf(givenCardSelection, givenExistingMessage)
+        val expectedFetchedMessages = listOf(givenCardSelection)
+
+        subject.updateMessageHistory(givenHistory, total = 2)
+
+        val actualConversation = subject.getConversation()
+        assertThat(actualConversation).isEqualTo(expectedConversation)
+
+        verify { mockMessageListener.invoke(capture(messageSlot)) }
+        val actualFetchedEvent = messageSlot.captured as MessageEvent.HistoryFetched
+        assertThat(actualFetchedEvent.messages).isEqualTo(expectedFetchedMessages)
+    }
+
     private fun outboundMessage(messageId: Int = 0): Message = Message(
         id = "$messageId",
         direction = Direction.Outbound,
