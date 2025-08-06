@@ -58,8 +58,10 @@ internal class PushServiceImpl(
             Diff.NO_TOKEN -> register(userPushConfig)
             Diff.TOKEN -> {
                 coroutineScope {
-                    launch { delete(storedPushConfig)
-                     register(userPushConfig) }
+                    launch {
+                        delete(storedPushConfig)
+                        register(userPushConfig)
+                    }
                 }
             }
 
