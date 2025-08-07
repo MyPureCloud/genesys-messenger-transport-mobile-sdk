@@ -113,17 +113,12 @@ class PushServiceImplTest {
 
         coVerifySequence {
             syncSequence(expectedUserConfig, expectedStoredConfig)
-            mockApi.performDeviceTokenOperation(expectedStoredConfig, DeviceTokenOperation.Delete)
-            mockLogger.i(capture(logSlot))
             mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
             mockLogger.i(capture(logSlot))
             mockVault.pushConfig = expectedUserConfig
         }
         assertBaseSynchronizeLogsFor(Diff.TOKEN)
         assertThat(logSlot[2].invoke()).isEqualTo(
-            LogMessages.deviceTokenWasDeleted(expectedStoredConfig)
-        )
-        assertThat(logSlot[3].invoke()).isEqualTo(
             LogMessages.deviceTokenWasRegistered(expectedUserConfig)
         )
     }
@@ -142,17 +137,12 @@ class PushServiceImplTest {
 
         coVerifySequence {
             syncSequence(expectedUserConfig, expectedStoredConfig)
-            mockApi.performDeviceTokenOperation(expectedStoredConfig, DeviceTokenOperation.Delete)
-            mockLogger.i(capture(logSlot))
             mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
             mockLogger.i(capture(logSlot))
             mockVault.pushConfig = expectedUserConfig
         }
         assertBaseSynchronizeLogsFor(Diff.TOKEN)
         assertThat(logSlot[2].invoke()).isEqualTo(
-            LogMessages.deviceTokenWasDeleted(expectedStoredConfig)
-        )
-        assertThat(logSlot[3].invoke()).isEqualTo(
             LogMessages.deviceTokenWasRegistered(expectedUserConfig)
         )
     }
