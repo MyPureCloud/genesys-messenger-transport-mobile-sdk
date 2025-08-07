@@ -124,4 +124,23 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
             mockMessageStore.update(expectedMessage)
         }
     }
+
+    @Test
+    fun `when error response received after sendCardReply then onMessageError is called`() {
+        val givenButtonResponse = CardTestValues.postbackButtonResponse
+        val expectedRequestJson = Request.expectedPostbackRequestJson
+
+        every {
+            mockPlatformSocket.sendMessage(expectedRequestJson)
+        } answers {
+            slot.captured.onMessage(Response.tooManyRequests)
+        }
+
+        subject.connect()
+        subject.sendCardReply(givenButtonResponse)
+
+        verify {
+            mockMessageStore.onMessageError(any(), any())
+        }
+    }
 }
