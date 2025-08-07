@@ -39,11 +39,11 @@ actual class EncryptedVault actual constructor(keys: Keys) :
         val defaultPrefs = currentContext.getSharedPreferences(VAULT_KEY, Context.MODE_PRIVATE)
 
         if (defaultPrefs.all.isNotEmpty()) {
-            defaultPrefs.getString(keys.tokenKey, null)?.let { store(keys.tokenKey, it) }
-            defaultPrefs.getString(keys.authRefreshTokenKey, null)
-                ?.let { store(keys.authRefreshTokenKey, it) }
-            defaultPrefs.getString(keys.wasAuthenticated, null)
-                ?.let { store(keys.wasAuthenticated, it) }
+            defaultPrefs.all.forEach { (key, value) ->
+                if (value is String) {
+                    store(key, value)
+                }
+            }
             defaultPrefs.edit().clear().apply()
         }
     }
