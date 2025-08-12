@@ -7,6 +7,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.core.InternalVault
 import com.genesys.cloud.messenger.transport.util.EncryptedVault
+import com.genesys.cloud.messenger.transport.util.VAULT_KEY
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.Runs
@@ -43,7 +44,7 @@ class EncryptedVaultTest {
         clearAllMocks()
 
         every { mockContext.applicationContext } returns mockApplicationContext
-        every { mockContext.getSharedPreferences(any(), any()) } returns mockSharedPreferences
+        every { mockApplicationContext.getSharedPreferences(any(), any()) } returns mockSharedPreferences
         every { mockSharedPreferences.edit() } returns mockSharedPreferencesEditor
         every { mockSharedPreferencesEditor.apply() } just Runs
 
@@ -112,5 +113,46 @@ class EncryptedVaultTest {
 
         verify { mockContext.applicationContext }
         assertThat(EncryptedVault.context).isEqualTo(mockApplicationContext)
+    }
+
+    @Test
+    fun `test migration from default vault executes as expected`() {
+        val mockDefaultPrefs = mockk<SharedPreferences>(relaxed = true)
+        val mockDefaultEditor = mockk<SharedPreferences.Editor>(relaxed = true)
+
+        every { mockApplicationContext.getSharedPreferences(VAULT_KEY, any()) } returns mockDefaultPrefs
+        every { mockApplicationContext.getSharedPreferences(testKeys.vaultKey, any()) } returns mockSharedPreferences
+        every { mockDefaultPrefs.all } returns TestValues.migrationTestData
+        every { mockDefaultPrefs.edit() } returns mockDefaultEditor
+        every { mockDefaultEditor.clear() } returns mockDefaultEditor
+        every { mockDefaultEditor.apply() } just Runs
+
+        EncryptedVault(testKeys)
+
+        // Verify only string values were migrated
+        verify { anyConstructed<InternalVault>().store(TestValues.TOKEN_KEY, TestValues.TOKEN) }
+        verify { anyConstructed<InternalVault>().store(TestValues.AUTH_REFRESH_TOKEN_KEY, TestValues.SECONDARY_TOKEN) }
+        verify { anyConstructed<InternalVault>().store(TestValues.WAS_AUTHENTICATED, TestValues.TRUE_STRING) }
+        verify { anyConstructed<InternalVault>().store(TestValues.CUSTOM_KEY, TestValues.DEFAULT_STRING) }
+        verify(exactly = 0) { anyConstructed<InternalVault>().store(TestValues.INT_KEY, any()) }
+        verify(exactly = 0) { anyConstructed<InternalVault>().store(TestValues.BOOLEAN_KEY, any()) }
+
+        // Verify default vault was cleared
+        verify { mockDefaultEditor.clear() }
+        verify { mockDefaultEditor.apply() }
+    }
+
+    @Test
+    fun `test migration skips when default vault is empty`() {
+        val mockDefaultPrefs = mockk<SharedPreferences>(relaxed = true)
+
+        every { mockApplicationContext.getSharedPreferences(VAULT_KEY, any()) } returns mockDefaultPrefs
+        every { mockApplicationContext.getSharedPreferences(testKeys.vaultKey, any()) } returns mockSharedPreferences
+        every { mockDefaultPrefs.all } returns emptyMap()
+
+        EncryptedVault(testKeys)
+
+        verify(exactly = 0) { anyConstructed<InternalVault>().store(any(), any()) }
+        verify(exactly = 0) { mockDefaultPrefs.edit() }
     }
 }
