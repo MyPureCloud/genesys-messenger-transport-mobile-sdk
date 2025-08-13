@@ -148,7 +148,8 @@ data class Message(
         val title: String,
         val description: String,
         val imageUrl: String,
-        val actions: List<Action>
+        val actions: List<Action>,
+        val defaultAction: Action? = null,
     ) {
         @Serializable
         data class Action(

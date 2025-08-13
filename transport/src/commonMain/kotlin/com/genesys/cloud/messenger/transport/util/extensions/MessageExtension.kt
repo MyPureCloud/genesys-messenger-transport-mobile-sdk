@@ -105,19 +105,48 @@ private fun List<StructuredMessage.Content>.toQuickReplies(): List<ButtonRespons
     }
 }
 
+private fun StructuredMessage.Content.Action.toMessageCardAction(): Message.Card.Action =
+    when (type.lowercase()) {
+        "link" -> Message.Card.Action(
+            type = "Link",
+            text = text,
+            url = url,
+            payload = null
+        )
+        "postback", "button" -> Message.Card.Action(
+            type = "Postback",
+            text = text,
+            url = null,
+            payload = payload
+        )
+        else -> Message.Card.Action(
+            type = type,
+            text = text,
+            url = url,
+            payload = payload
+        )
+    }
+
+private fun StructuredMessage.Content.Action.toMessageCardDefaultActionOrNull(): Message.Card.Action? {
+    val isLink = type.equals("Link", ignoreCase = true)
+    val hasUrl = !url.isNullOrBlank()
+    return if (isLink && hasUrl) {
+        Message.Card.Action(
+            type = "Link",
+            text = text,
+            url = url,
+            payload = null
+        )
+    } else null
+}
+
 private fun StructuredMessage.Content.CardContent.Card.toMessageCard(): Message.Card =
     Message.Card(
         title = title.filterNot { it.isWhitespace() },
         description = description,
         imageUrl = image,
-        actions = actions.map {
-            Message.Card.Action(
-                type = it.type,
-                text = it.text,
-                url = it.url,
-                payload = it.payload
-            )
-        }
+        actions = actions.map { it.toMessageCardAction() },
+        defaultAction = defaultAction?.toMessageCardDefaultActionOrNull()
     )
 
 private fun List<StructuredMessage.Content>.toCards(): List<Message.Card> =
@@ -177,3 +206,12 @@ internal fun FileUpload?.toFileAttachmentProfile(): FileAttachmentProfile {
 internal fun PresignedUrlResponse.isRefreshUrl(): Boolean {
     return headers.isEmpty() && fileSize != null
 }
+
+fun Message.Card.Action.isLink(): Boolean =
+    type.equals("Link", ignoreCase = true) && !url.isNullOrBlank()
+
+fun Message.Card.Action.isPostback(): Boolean =
+    type.equals("Postback", true) || type.equals("Button", true)
+
+fun Message.Card.Action.toButtonResponseOrNull(): ButtonResponse? =
+    if (isPostback()) ButtonResponse(text = text.orEmpty(), payload = payload.orEmpty(), type = "Postback") else null
