@@ -106,6 +106,7 @@ internal class WebMessagingApi(
         val response = client.post(configuration.jwtAuthUrl.toString()) {
             header("content-type", ContentType.Application.Json)
             setBody(requestBody)
+            retryOnServerErrors()
         }
         if (response.status.isSuccess()) {
             Result.Success(response.body())
