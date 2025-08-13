@@ -222,4 +222,32 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
 
         assertNull(actualButtonResponse)
     }
+
+    @Test
+    fun `card with no image maps imageUrl to null`() {
+        val givenCard = ReceiveStructuredMessage.Content.CardContent.Card(
+            title = "No image card",
+            description = "Desc",
+            image = null,
+            defaultAction = null,
+            actions = emptyList()
+        )
+        val givenStructuredMessage: ReceiveStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                id = "card-no-image",
+                type = ReceiveStructuredMessage.Type.Structured,
+                direction = Message.Direction.Outbound.name,
+                content = listOf(
+                    ReceiveStructuredMessage.Content.CardContent(
+                        contentType = "Card",
+                        card = givenCard
+                    )
+                )
+            )
+
+        val message: Message = givenStructuredMessage.toMessage()
+        val card = message.cards.single()
+
+        assertNull(card.imageUrl)
+    }
 }

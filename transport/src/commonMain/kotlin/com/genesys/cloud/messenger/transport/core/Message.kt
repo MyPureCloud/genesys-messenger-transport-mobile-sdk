@@ -147,7 +147,7 @@ data class Message(
     data class Card(
         val title: String,
         val description: String,
-        val imageUrl: String,
+        val imageUrl: String? = null,
         val actions: List<Action>,
         val defaultAction: Action? = null,
     ) {
