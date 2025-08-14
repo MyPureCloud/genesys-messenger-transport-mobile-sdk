@@ -159,9 +159,4 @@ data class Message(
             val payload: String? = null,
         )
     }
-
-    @Serializable
-    data class Carousel(
-        val cards: List<Card>
-    )
 }

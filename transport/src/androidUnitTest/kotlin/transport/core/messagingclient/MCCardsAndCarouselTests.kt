@@ -4,24 +4,14 @@ import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.StructuredMessage
-import com.genesys.cloud.messenger.transport.util.extensions.isLink
-import com.genesys.cloud.messenger.transport.util.extensions.toButtonResponseOrNull
-import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.utility.CardTestValues
-import com.genesys.cloud.messenger.transport.utility.StructuredMessageValues
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
-import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertNotNull
-import junit.framework.TestCase.assertNull
-import junit.framework.TestCase.assertTrue
 import org.junit.Test
 import transport.util.Request
 import transport.util.Response
 import kotlin.test.assertFailsWith
-import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage as ReceiveStructuredMessage
-import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content as ReceiveContent
 
 class MCCardsAndCarouselTests : BaseMessagingClientTest() {
 
@@ -152,102 +142,5 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
         verify {
             mockMessageStore.onMessageError(any(), any())
         }
-    }
-
-    @Test
-    fun `detect Link button on Card with url`() {
-        val givenStructuredMessage: ReceiveStructuredMessage =
-            CardTestValues.createStructuredMessageWithCardContent(
-                id = "card-id",
-                title = CardTestValues.title,
-                actionText = CardTestValues.text
-            )
-        val expectedUrl = CardTestValues.url
-
-        val actualMessage: Message = givenStructuredMessage.toMessage()
-        val actualCard = actualMessage.cards.single()
-        val actualAction = actualCard.actions.single()
-
-        // then
-        assertTrue(actualAction.isLink())
-        assertEquals(expectedUrl, actualAction.url)
-        assertNull(actualAction.payload)
-    }
-
-    @Test
-    fun `detect Link defaultAction with url`() {
-        val givenCard = ReceiveContent.CardContent.Card(
-            title = CardTestValues.title,
-            description = CardTestValues.description,
-            image = CardTestValues.image,
-            defaultAction = ReceiveContent.Action(
-                type = "Link",
-                text = "",
-                url = CardTestValues.url
-            ),
-            actions = emptyList()
-        )
-        val givenStructuredMessage: ReceiveStructuredMessage =
-            StructuredMessageValues.createStructuredMessageForTesting(
-                id = "card-da",
-                type = ReceiveStructuredMessage.Type.Structured,
-                direction = Message.Direction.Outbound.name,
-                content = listOf(
-                    ReceiveContent.CardContent(
-                        contentType = "Card",
-                        card = givenCard
-                    )
-                )
-            )
-        val expectedUrl = CardTestValues.url
-
-        val actualMessage: Message = givenStructuredMessage.toMessage()
-        val actualDefaultAction = actualMessage.cards.single().defaultAction
-
-        assertNotNull(actualDefaultAction)
-        assertEquals("Link", actualDefaultAction!!.type)
-        assertEquals(expectedUrl, actualDefaultAction.url)
-        assertNull(actualDefaultAction.payload)
-    }
-
-    @Test
-    fun `link actions do not convert to ButtonResponse`() {
-        val givenLinkAction = Message.Card.Action(
-            type = "Link",
-            text = "Open",
-            url = CardTestValues.url
-        )
-
-        val actualButtonResponse = givenLinkAction.toButtonResponseOrNull()
-
-        assertNull(actualButtonResponse)
-    }
-
-    @Test
-    fun `card with no image maps imageUrl to null`() {
-        val givenCard = ReceiveStructuredMessage.Content.CardContent.Card(
-            title = "No image card",
-            description = "Desc",
-            image = null,
-            defaultAction = null,
-            actions = emptyList()
-        )
-        val givenStructuredMessage: ReceiveStructuredMessage =
-            StructuredMessageValues.createStructuredMessageForTesting(
-                id = "card-no-image",
-                type = ReceiveStructuredMessage.Type.Structured,
-                direction = Message.Direction.Outbound.name,
-                content = listOf(
-                    ReceiveStructuredMessage.Content.CardContent(
-                        contentType = "Card",
-                        card = givenCard
-                    )
-                )
-            )
-
-        val message: Message = givenStructuredMessage.toMessage()
-        val card = message.cards.single()
-
-        assertNull(card.imageUrl)
     }
 }

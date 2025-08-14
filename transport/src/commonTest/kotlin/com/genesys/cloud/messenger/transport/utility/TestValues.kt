@@ -204,6 +204,8 @@ object CardTestValues {
     internal const val POSTBACK_TYPE = "Postback"
     internal const val POSTBACK_PAYLOAD = "I want it"
     internal const val customMessageId = "customMessageId"
+    internal const val LINK_TYPE = "Link"
+
     val cardWithPostbackAction = Message.Card(
         title = "Title",
         description = "Description",
@@ -301,6 +303,40 @@ object CardTestValues {
             type = StructuredMessage.Type.Structured,
             text = "Carousel content test",
             content = listOf(createCarouselContent(*cards.toTypedArray()))
+        )
+    }
+
+    internal fun createStructuredMessageWithCarouselDefaultActionLinks(
+        id: String = "carousel-da",
+        cardCount: Int = 2,
+        linkUrl: String = url
+    ): StructuredMessage {
+        val cards = (1..cardCount).map {
+            StructuredMessage.Content.CardContent.Card(
+                title = title,
+                description = description,
+                image = image,
+                defaultAction = StructuredMessage.Content.Action(
+                    type = LINK_TYPE,
+                    text = "",
+                    url = linkUrl
+                ),
+                actions = listOf(
+                    StructuredMessage.Content.Action(type = LINK_TYPE, text = text, url = linkUrl),
+                    StructuredMessage.Content.Action(type = POSTBACK_TYPE, text = POSTBACK_TEXT, payload = POSTBACK_PAYLOAD)
+                )
+            )
+        }
+        return StructuredMessageValues.createStructuredMessageForTesting(
+            id = id,
+            type = StructuredMessage.Type.Structured,
+            direction = com.genesys.cloud.messenger.transport.core.Message.Direction.Outbound.name,
+            content = listOf(
+                StructuredMessage.Content.CarouselContent(
+                    contentType = "Carousel",
+                    carousel = StructuredMessage.Content.CarouselContent.Carousel(cards)
+                )
+            )
         )
     }
 

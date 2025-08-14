@@ -5,6 +5,7 @@ import assertk.assertions.containsExactly
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import assertk.assertions.size
@@ -995,5 +996,78 @@ internal class MessageExtensionTest {
         assertThat(result.cards[0].title).isEqualTo(expectedTitles[0])
         assertThat(result.cards[1].title).isEqualTo(expectedTitles[1])
         assertThat(result.cards[1].actions.first().text).isEqualTo(expectedActionText)
+    }
+
+    @Test
+    fun `when flattening carousel then keep link defaultAction on each card`() {
+        val givenStructuredMessage: StructuredMessage =
+            CardTestValues.createStructuredMessageWithCarouselDefaultActionLinks(cardCount = 2)
+        val expectedUrl = CardTestValues.url
+        val expectedCards = 2
+
+        val message: Message = givenStructuredMessage.toMessage()
+        val cards = message.cards
+
+        assertThat(message.messageType).isEqualTo(Message.Type.Cards)
+        assertThat(cards.size).isEqualTo(expectedCards)
+        cards.forEach { card ->
+            val defaultAction = card.defaultAction
+            assertThat(defaultAction).isNotNull()
+            assertThat(defaultAction?.type).isEqualTo(CardTestValues.LINK_TYPE)
+            assertThat(defaultAction?.url).isEqualTo(expectedUrl)
+            assertThat(defaultAction?.payload).isNull()
+        }
+    }
+
+    @Test
+    fun `when mapping carousel actions then link has url and postback has payload`() {
+        val givenCard = StructuredMessage.Content.CardContent.Card(
+            title = CardTestValues.title,
+            description = CardTestValues.description,
+            image = CardTestValues.image,
+            defaultAction = StructuredMessage.Content.Action(
+                type = CardTestValues.LINK_TYPE,
+                text = "",
+                url = CardTestValues.url
+            ),
+            actions = listOf(
+                StructuredMessage.Content.Action(
+                    type = CardTestValues.LINK_TYPE,
+                    text = CardTestValues.text,
+                    url = CardTestValues.url,
+                    payload = CardTestValues.payload
+                ),
+                StructuredMessage.Content.Action(
+                    type = CardTestValues.POSTBACK_TYPE,
+                    text = CardTestValues.POSTBACK_TEXT,
+                    payload = CardTestValues.POSTBACK_PAYLOAD,
+                    url = CardTestValues.url
+                )
+            )
+        )
+        val givenStructuredMessage: StructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                direction = Message.Direction.Outbound.name,
+                content = listOf(
+                    StructuredMessage.Content.CarouselContent(
+                        contentType = "Carousel",
+                        carousel = StructuredMessage.Content.CarouselContent.Carousel(listOf(givenCard))
+                    )
+                )
+            )
+        val expectedUrl = CardTestValues.url
+        val expectedPayload = CardTestValues.POSTBACK_PAYLOAD
+
+        val message = givenStructuredMessage.toMessage()
+        val card = message.cards.single()
+        val linkAction = card.actions.first { it.type == CardTestValues.LINK_TYPE }
+        val postbackAction = card.actions.first { it.type == CardTestValues.POSTBACK_TYPE }
+
+        assertThat(linkAction.url).isEqualTo(expectedUrl)
+        assertThat(linkAction.payload).isNull()
+
+        assertThat(postbackAction.payload).isEqualTo(expectedPayload)
+        assertThat(postbackAction.url).isNull()
     }
 }
