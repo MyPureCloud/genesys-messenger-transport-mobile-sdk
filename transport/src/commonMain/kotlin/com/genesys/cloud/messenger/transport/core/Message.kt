@@ -147,8 +147,9 @@ data class Message(
     data class Card(
         val title: String,
         val description: String,
-        val imageUrl: String,
-        val actions: List<Action>
+        val imageUrl: String? = null,
+        val actions: List<Action>,
+        val defaultAction: Action? = null,
     ) {
         @Serializable
         data class Action(
@@ -158,9 +159,4 @@ data class Message(
             val payload: String? = null,
         )
     }
-
-    @Serializable
-    data class Carousel(
-        val cards: List<Card>
-    )
 }

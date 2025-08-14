@@ -14,7 +14,7 @@ sealed class Action(
 ) {
     enum class Type {
         Link,
-        @SerialName("Button")
+        @SerialName("Postback")
         Postback
     }
 
@@ -26,7 +26,7 @@ sealed class Action(
      */
     @Serializable
     data class Link(
-        val text: String,
+        val text: String? = null,
         val url: String,
     ) : Action(type = Type.Link)
 
