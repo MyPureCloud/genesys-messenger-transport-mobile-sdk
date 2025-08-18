@@ -16,8 +16,15 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 
 private const val TIMEOUT_IN_MS = 30000L
-private const val MAX_RETRIES_ON_INTERNAL_SERVER_ERRORS = 3
+private const val MAX_RETRIES_ON_SERVER_ERRORS = 3
 private const val DELAY_BETWEEN_RETRIES_IN_MILLISECONDS = 5000L
+private val RETRYABLE_STATUS_CODES = setOf(
+    HttpStatusCode.InternalServerError,
+    HttpStatusCode.BadGateway,
+    HttpStatusCode.ServiceUnavailable,
+    HttpStatusCode.GatewayTimeout,
+)
+private const val MAX_RETRIES_ON_INTERNAL_SERVER_ERRORS = 3
 
 internal fun defaultHttpClient(logging: Boolean = false): HttpClient = HttpClient {
     if (logging) {
@@ -37,12 +44,10 @@ internal fun defaultHttpClient(logging: Boolean = false): HttpClient = HttpClien
     install(HttpRequestRetry)
 }
 
-internal fun HttpRequestBuilder.retryOnInternalServerErrors() {
+internal fun HttpRequestBuilder.retryOnServerErrors() {
     retry {
-        maxRetries = MAX_RETRIES_ON_INTERNAL_SERVER_ERRORS
+        maxRetries = MAX_RETRIES_ON_SERVER_ERRORS
         constantDelay(DELAY_BETWEEN_RETRIES_IN_MILLISECONDS)
-        retryIf { _, response ->
-            response.status == HttpStatusCode.InternalServerError
-        }
+        retryIf { _, response -> response.status in RETRYABLE_STATUS_CODES }
     }
 }
