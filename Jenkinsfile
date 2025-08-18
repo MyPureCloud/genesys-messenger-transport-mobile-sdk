@@ -4,6 +4,7 @@ def isReleaseBranch() { env.BRANCH_NAME.startsWith('release/') }
 def isFeatureBranch() { env.BRANCH_NAME.startsWith('feature/') }
 
 def oktaproperties = ''
+def googleservices = ''
 def pipelineLibrary = library('pipeline-library').com.genesys.jenkins
 
 void setBuildStatus(String message, String state) {
@@ -35,32 +36,43 @@ pipeline {
             }
         }
 
-        stage('Get okta.properties') {
-                    agent {
-                        node {
-                            label 'dev_mesos_v2'
-                            customWorkspace "jenkins-mtsdk-${currentBuild.number}"
-                        }
-                    }
-                    steps {
-                        script {
-                            def testing = pipelineLibrary.Testing.new()
-                            oktaproperties = testing.getSecretStashSecret(
-                                'dev',
-                                'us-east-1',
-                                'mobiledx-ios',
-                                'okta-properties',
-                                env.WORKSPACE
-                            )
-                            echo "okta.properties fetched successfully."
-                        }
-                    }
+        stage('Get secrets from secretstash') {
+            agent {
+                node {
+                    label 'dev_mesos_v2'
+                    customWorkspace "jenkins-mtsdk-${currentBuild.number}"
+                }
+            }
+            steps {
+                script {
+                    def testing = pipelineLibrary.Testing.new()
+
+                    oktaproperties = testing.getSecretStashSecret(
+                        'dev',
+                        'us-east-1',
+                        'transportsdk',
+                        'okta.properties',
+                        env.WORKSPACE
+                    )
+                    echo "okta.properties fetched successfully."
+
+                    googleservices = testing.getSecretStashSecret(
+                        'dev',
+                        'us-east-1',
+                        'transportsdk',
+                        'google-services-transport',
+                        env.WORKSPACE
+                    )
+                    echo "google-services.json fetched successfully."
+                }
+            }
         }
 
         stage("Continue build") {
                     steps {
                         script {
                             writeFile file: "${env.WORKSPACE}/okta.properties", text: oktaproperties
+                            writeFile file: "${env.WORKSPACE}/androidComposePrototype/google-services.json", text: googleservices
                             def props = readProperties file: "${env.WORKSPACE}/okta.properties"
                             env.OKTA_DOMAIN = props['OKTA_DOMAIN']
                             env.CLIENT_ID = props['CLIENT_ID']

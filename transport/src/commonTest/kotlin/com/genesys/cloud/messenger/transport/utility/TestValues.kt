@@ -1,11 +1,18 @@
 package com.genesys.cloud.messenger.transport.utility
 
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
+import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Message
+import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
+import com.genesys.cloud.messenger.transport.push.DeviceTokenException
+import com.genesys.cloud.messenger.transport.push.PushConfig
+import com.genesys.cloud.messenger.transport.push.PushProvider
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
+import com.genesys.cloud.messenger.transport.shyrka.receive.PushErrorResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ButtonResponseContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.QuickReplyContent
+import com.genesys.cloud.messenger.transport.util.PUSH_CONFIG_KEY
 import com.genesys.cloud.messenger.transport.util.Vault
 
 internal const val DEFAULT_TIMEOUT = 10000L
@@ -16,8 +23,8 @@ object TestValues {
     internal const val MAX_CUSTOM_DATA_BYTES = 100
     internal const val DEFAULT_NUMBER = 1
     internal const val TIME_STAMP = "2022-08-22T19:24:26.704Z"
-    internal const val TOKEN = "<token>"
-    internal const val TOKEN_SANITIZED = "***ken>"
+    internal const val TOKEN = "token"
+    internal const val TOKEN_SANITIZED = "*oken"
     internal const val SECONDARY_TOKEN = "<secondary_token>"
     internal const val RECONNECTION_TIMEOUT = 5000L
     internal const val NO_RECONNECTION_ATTEMPTS = 0L
@@ -37,12 +44,19 @@ object TestValues {
     internal const val VAULT_BASE64 = "base64EncodedString"
     internal const val VAULT_SEPARATOR = "]"
     internal const val SERVICE_NAME = "testServiceName"
+    internal const val DEVICE_TOKEN = "<device_token>"
+    internal const val PUSH_SYNC_TIMESTAMP = 10000000L
+    internal val PUSH_PROVIDER = PushProvider.APNS
+    internal const val DEVICE_TYPE = "android"
+    internal const val PREFERRED_LANGUAGE = "Eng"
     internal val vaultKeys = Vault.Keys(
-        vaultKey = com.genesys.cloud.messenger.transport.util.VAULT_KEY,
-        tokenKey = com.genesys.cloud.messenger.transport.util.TOKEN_KEY,
-        authRefreshTokenKey = com.genesys.cloud.messenger.transport.util.AUTH_REFRESH_TOKEN_KEY,
-        wasAuthenticated = com.genesys.cloud.messenger.transport.util.WAS_AUTHENTICATED,
+        vaultKey = VAULT_KEY,
+        tokenKey = TOKEN_KEY,
+        authRefreshTokenKey = AUTH_REFRESH_TOKEN_KEY,
+        wasAuthenticated = WAS_AUTHENTICATED,
+        pushConfigKey = PUSH_CONFIG_KEY,
     )
+    internal val application = "TransportSDK-${MessengerTransportSDK.sdkVersion}"
 }
 
 object AuthTest {
@@ -353,4 +367,37 @@ object CardTestValues {
         imageUrl = image,
         actions = listOf(action)
     )
+}
+
+object PushTestValues {
+    internal val CONFIG = PushConfig(
+        token = TestValues.TOKEN,
+        deviceToken = TestValues.DEVICE_TOKEN,
+        preferredLanguage = TestValues.PREFERRED_LANGUAGE,
+        lastSyncTimestamp = TestValues.PUSH_SYNC_TIMESTAMP,
+        deviceType = TestValues.DEVICE_TYPE,
+        pushProvider = TestValues.PUSH_PROVIDER,
+    )
+
+    internal fun pushErrorResponseWith(code: String, message: String = ErrorTest.MESSAGE) = PushErrorResponse(
+        message = message,
+        code = code,
+        status = ErrorTest.CODE_404.toInt(),
+        contextId = TestValues.DEFAULT_STRING,
+    )
+
+    internal val DEVICE_TOKEN_EXCEPTION = DeviceTokenException(
+        errorCode = ErrorCode.DeviceTokenOperationFailure,
+        message = TestValues.DEFAULT_STRING,
+        cause = null,
+    )
+    const val PUSH_CODE_DEPLOYMENT_NOT_FOUND = "deployment.not.found"
+    const val PUSH_CODE_DEVICE_REGISTRATION_FAILURE = "device.registration.failure"
+    const val PUSH_CODE_DEVICE_UPDATE_FAILURE = "device.update.failure"
+    const val PUSH_CODE_DEVICE_DELETE_FAILURE = "device.delete.failure"
+}
+
+object MockEngineValues {
+    const val NO_CONTENT = "No Content"
+    const val CONTENT_TYPE_JSON = "application/json"
 }

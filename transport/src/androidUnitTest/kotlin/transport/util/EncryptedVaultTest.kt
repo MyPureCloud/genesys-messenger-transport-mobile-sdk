@@ -7,7 +7,6 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.core.InternalVault
 import com.genesys.cloud.messenger.transport.util.EncryptedVault
-import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.Runs
 import io.mockk.clearAllMocks
@@ -29,13 +28,6 @@ class EncryptedVaultTest {
     private val mockSharedPreferences = mockk<SharedPreferences>(relaxed = true)
     private val mockSharedPreferencesEditor = mockk<SharedPreferences.Editor>(relaxed = true)
 
-    // Test data
-    private val testKeys = Vault.Keys(
-        vaultKey = TestValues.VAULT_KEY,
-        tokenKey = TestValues.TOKEN_KEY,
-        authRefreshTokenKey = TestValues.AUTH_REFRESH_TOKEN_KEY,
-        wasAuthenticated = TestValues.WAS_AUTHENTICATED
-    )
     private val testKey = TestValues.VAULT_KEY
     private val testValue = TestValues.VAULT_VALUE
     @Before
@@ -64,12 +56,12 @@ class EncryptedVaultTest {
     fun `test initialization throws exception when context is null`() {
         EncryptedVault.context = null
 
-        EncryptedVault(testKeys)
+        EncryptedVault(TestValues.vaultKeys)
     }
 
     @Test
     fun `test store delegates to InternalVault`() {
-        val encryptedVault = EncryptedVault(testKeys)
+        val encryptedVault = EncryptedVault(TestValues.vaultKeys)
 
         encryptedVault.store(testKey, testValue)
 
@@ -78,7 +70,7 @@ class EncryptedVaultTest {
 
     @Test
     fun `test fetch delegates to InternalVault`() {
-        val encryptedVault = EncryptedVault(testKeys)
+        val encryptedVault = EncryptedVault(TestValues.vaultKeys)
         every { anyConstructed<InternalVault>().fetch(testKey) } returns testValue
 
         val result = encryptedVault.fetch(testKey)
@@ -89,7 +81,7 @@ class EncryptedVaultTest {
 
     @Test
     fun `test fetch returns null when key doesn't exist`() {
-        val encryptedVault = EncryptedVault(testKeys)
+        val encryptedVault = EncryptedVault(TestValues.vaultKeys)
         every { anyConstructed<InternalVault>().fetch(testKey) } returns null
 
         val result = encryptedVault.fetch(testKey)
@@ -99,7 +91,7 @@ class EncryptedVaultTest {
 
     @Test
     fun `test remove delegates to InternalVault`() {
-        val encryptedVault = EncryptedVault(testKeys)
+        val encryptedVault = EncryptedVault(TestValues.vaultKeys)
 
         encryptedVault.remove(testKey)
 

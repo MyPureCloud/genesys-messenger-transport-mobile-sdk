@@ -21,6 +21,8 @@ import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
 import com.genesys.cloud.messenger.transport.network.TestWebMessagingApiResponses
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
+import com.genesys.cloud.messenger.transport.push.DEFAULT_PUSH_CONFIG
+import com.genesys.cloud.messenger.transport.push.PushService
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
@@ -30,17 +32,19 @@ import com.genesys.cloud.messenger.transport.shyrka.send.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.Platform
-import com.genesys.cloud.messenger.transport.util.TOKEN_KEY
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
+import com.genesys.cloud.messenger.transport.utility.TestValues.TOKEN_KEY
 import io.mockk.MockKVerificationScope
+import io.mockk.Runs
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.invoke
+import io.mockk.just
 import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.slot
@@ -184,11 +188,15 @@ open class BaseMessagingClientTest {
         every { remove(TOKEN_KEY) } answers { testToken = TestValues.SECONDARY_TOKEN }
         every { keys } returns TestValues.vaultKeys
         justRun { wasAuthenticated = any() }
+        every { pushConfig } returns DEFAULT_PUSH_CONFIG
     }
     internal val mockJwtHandler: JwtHandler = mockk(relaxed = true)
 
     internal val mockLogger: Log = mockk(relaxed = true)
     internal val logSlot = mutableListOf<() -> String>()
+    internal val mockPushService: PushService = mockk {
+        coEvery { synchronize(any(), any()) } just Runs
+    }
 
     internal val subject = MessagingClientImpl(
         log = mockLogger,
@@ -207,6 +215,7 @@ open class BaseMessagingClientTest {
         deploymentConfig = mockDeploymentConfig,
         authHandler = mockAuthHandler,
         internalCustomAttributesStore = mockCustomAttributesStore,
+        pushService = mockPushService,
     ).also {
         it.stateChangedListener = mockStateChangedListener
     }
@@ -286,8 +295,8 @@ open class BaseMessagingClientTest {
         mockPlatformSocket.sendMessage(configureRequest)
     }
 
-    protected fun MockKVerificationScope.errorSequence(stateChange: StateChange) {
-        mockStateChangedListener(stateChange)
+    protected fun errorSequence(stateChange: StateChange) {
+        this.mockStateChangedListener(stateChange)
         mockReconnectionHandler.clear()
         mockJwtHandler.clear()
     }

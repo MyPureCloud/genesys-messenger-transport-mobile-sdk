@@ -10,6 +10,7 @@ buildscript {
         classpath("com.android.tools.build:gradle:${Deps.agp}")
         classpath("org.jmailen.gradle:kotlinter-gradle:3.4.0")
         classpath("com.codingfeline.buildkonfig:buildkonfig-gradle-plugin:${Deps.buildKonfig}")
+        classpath("com.google.gms:google-services:${Deps.googleServices}")
     }
 }
 
