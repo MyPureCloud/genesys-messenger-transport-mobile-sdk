@@ -82,7 +82,8 @@ internal class MessagingClientImpl(
         eventHandler,
         api,
         vault,
-        log.withTag(LogTag.AUTH_HANDLER)
+        log.withTag(LogTag.AUTH_HANDLER),
+        deploymentConfig
     ),
     private val internalCustomAttributesStore: CustomAttributesStoreImpl = CustomAttributesStoreImpl(
         log.withTag(LogTag.CUSTOM_ATTRIBUTES_STORE),
