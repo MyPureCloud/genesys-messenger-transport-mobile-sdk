@@ -83,7 +83,7 @@ internal class MessagingClientImpl(
         api,
         vault,
         log.withTag(LogTag.AUTH_HANDLER),
-        deploymentConfig
+        isAuthEnabled = { deploymentConfig.isAuthEnabled() }
     ),
     private val internalCustomAttributesStore: CustomAttributesStoreImpl = CustomAttributesStoreImpl(
         log.withTag(LogTag.CUSTOM_ATTRIBUTES_STORE),
@@ -793,6 +793,8 @@ private fun KProperty0<DeploymentConfig?>.isShowUserTypingEnabled(): Boolean =
 
 private fun KProperty0<DeploymentConfig?>.isClearConversationEnabled(): Boolean =
     this.get()?.messenger?.apps?.conversations?.conversationClear?.enabled == true
+
+private fun KProperty0<DeploymentConfig?>.isAuthEnabled(): Boolean = this.get()?.auth?.enabled == true
 
 private fun Map<String, String>.asChannel(): Channel? {
     return if (this.isNotEmpty()) {

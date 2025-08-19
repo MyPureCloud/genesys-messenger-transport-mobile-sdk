@@ -74,6 +74,7 @@ class MessengerTransportSDK(
     /**
      * Creates an instance of [MessagingClient] based on the provided configuration.
      */
+    @Deprecated("Use createSafeMessagingClient()")
     fun createMessagingClient(): MessagingClient {
         val log = Log(configuration.logging, LogTag.MESSAGING_CLIENT)
         if (deploymentConfig == null) {
@@ -116,6 +117,12 @@ class MessengerTransportSDK(
             ),
             deploymentConfig = this::deploymentConfig,
         )
+    }
+
+    @Throws(IllegalStateException::class)
+    fun createSafeMessagingClient(): MessagingClient {
+        if (deploymentConfig == null) throw IllegalStateException("Fetch Deployment Config before creating messaging client")
+        return createMessagingClient()
     }
 
     /**

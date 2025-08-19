@@ -9,7 +9,6 @@ import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.isUnauthorized
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
-import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
@@ -17,7 +16,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlin.reflect.KProperty0
 
 internal const val MAX_LOGOUT_ATTEMPTS = 3
 
@@ -27,7 +25,7 @@ internal class AuthHandlerImpl(
     private val api: WebMessagingApi,
     private val vault: Vault,
     private val log: Log,
-    private val deploymentConfig: KProperty0<DeploymentConfig?>,
+    private val isAuthEnabled: () -> Boolean,
     private val dispatcher: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
 ) : AuthHandler {
     private var logoutAttempts = 0
@@ -91,7 +89,7 @@ internal class AuthHandlerImpl(
     }
 
     override fun shouldAuthorize(callback: (Boolean) -> Unit) {
-        if (deploymentConfig.get()?.auth?.enabled == false) {
+        if (!isAuthEnabled()) {
             callback(false)
             return
         }
