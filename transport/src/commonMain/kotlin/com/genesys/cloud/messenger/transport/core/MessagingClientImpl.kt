@@ -14,6 +14,9 @@ import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
 import com.genesys.cloud.messenger.transport.network.SocketCloseCode
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
+import com.genesys.cloud.messenger.transport.push.DeviceTokenException
+import com.genesys.cloud.messenger.transport.push.PushService
+import com.genesys.cloud.messenger.transport.push.PushServiceImpl
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.AttachmentDeletedResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosedEvent
@@ -41,6 +44,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.UNKNOWN
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.extensions.isHealthCheckResponseId
 import com.genesys.cloud.messenger.transport.util.extensions.isOutbound
@@ -52,6 +56,11 @@ import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlin.reflect.KProperty0
@@ -88,6 +97,12 @@ internal class MessagingClientImpl(
         log.withTag(LogTag.CUSTOM_ATTRIBUTES_STORE),
         eventHandler
     ),
+    private val pushService: PushService = PushServiceImpl(
+        vault = vault,
+        api = api,
+        log = log.withTag(LogTag.PUSH_SERVICE),
+    ),
+    private val defaultDispatcher: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
 ) : MessagingClient {
     private var connectAuthenticated = false
     private var isStartingANewSession = false
@@ -401,6 +416,7 @@ internal class MessagingClientImpl(
         reconnectionHandler.clear()
         jwtHandler.clear()
         internalCustomAttributesStore.maxCustomDataBytes = this.maxCustomDataBytes
+        synchronizePushService()
         if (readOnly) {
             stateMachine.onReadOnly()
             if (!connected && isStartingANewSession) {
@@ -416,6 +432,33 @@ internal class MessagingClientImpl(
         }
         if (clearedExistingSession) {
             eventHandler.onEvent(Event.ExistingAuthSessionCleared)
+        }
+    }
+
+    private fun synchronizePushService() {
+        if (!deploymentConfig.isPushServiceEnabled()) return
+        log.i { LogMessages.SYNCHRONIZE_PUSH_SERVICE_ON_SESSION_CONFIGURE }
+        vault.pushConfig.run {
+            if (deviceToken != UNKNOWN && pushProvider != null) {
+                defaultDispatcher.launch {
+                    try {
+                        pushService.synchronize(deviceToken, pushProvider)
+                    } catch (deviceTokenException: DeviceTokenException) {
+                        log.e {
+                            LogMessages.failedToSynchronizeDeviceToken(
+                                this@run,
+                                deviceTokenException.errorCode
+                            )
+                        }
+                    } catch (illegalArgumentException: IllegalArgumentException) {
+                        log.e { LogMessages.NO_DEVICE_TOKEN_OR_PUSH_PROVIDER }
+                    } catch (cancellationException: CancellationException) {
+                        log.w { LogMessages.cancellationExceptionRequestName("pushService.synchronize()") }
+                    }
+                }
+            } else {
+                log.i { LogMessages.NO_DEVICE_TOKEN_OR_PUSH_PROVIDER }
+            }
         }
     }
 
@@ -470,7 +513,7 @@ internal class MessagingClientImpl(
     }
 
     private fun invalidateSessionToken() {
-        log.i { "${LogMessages.INVALIDATE_SESSION_TOKEN}" }
+        log.i { LogMessages.INVALIDATE_SESSION_TOKEN }
         vault.remove(vault.keys.tokenKey)
         token = vault.token
     }
@@ -804,6 +847,9 @@ private fun KProperty0<DeploymentConfig?>.isShowUserTypingEnabled(): Boolean =
 
 private fun KProperty0<DeploymentConfig?>.isClearConversationEnabled(): Boolean =
     this.get()?.messenger?.apps?.conversations?.conversationClear?.enabled == true
+
+private fun KProperty0<DeploymentConfig?>.isPushServiceEnabled(): Boolean =
+    this.get()?.messenger?.apps?.conversations?.notifications?.enabled == true
 
 private fun Map<String, String>.asChannel(): Channel? {
     return if (this.isNotEmpty()) {

@@ -39,6 +39,7 @@ plugins {
     id 'kotlin-android'
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.32'
     id 'org.jmailen.kotlinter'
+    id 'com.google.gms.google-services'
 }
 
 android {
@@ -134,6 +135,7 @@ dependencies {
     implementation "androidx.activity:activity-compose:$activity_compose_version"
     // Chrome Custom Tabs
     implementation 'androidx.browser:browser:1.8.0'
+    implementation 'com.google.firebase:firebase-messaging:24.1.1'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

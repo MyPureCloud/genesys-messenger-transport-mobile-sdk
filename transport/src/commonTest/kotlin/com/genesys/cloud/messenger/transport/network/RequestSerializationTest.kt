@@ -6,6 +6,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import com.genesys.cloud.messenger.transport.push.DeviceTokenRequestBody
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
@@ -58,7 +59,7 @@ class RequestSerializationTest {
         val expectedMessage = EventMessage(expectedEvents)
         val expectedRequest = AutoStartRequest(TestValues.TOKEN, null)
         val expectedJson =
-            """{"token":"<token>","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Join"}}],"type":"Event"}}"""
+            """{"token":"token","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Join"}}],"type":"Event"}}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<AutoStartRequest>(expectedJson)
@@ -99,7 +100,7 @@ class RequestSerializationTest {
         val expectedMessage = EventMessage(expectedEvents)
         val expectedRequest = ClearConversationRequest(TestValues.TOKEN)
         val expectedJson =
-            """{"token":"<token>","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Clear"}}],"type":"Event"}}"""
+            """{"token":"token","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Clear"}}],"type":"Event"}}"""
         val expectedPresenceJson = """{"type":"Clear"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
@@ -125,7 +126,7 @@ class RequestSerializationTest {
             closeAllConnections = true,
         )
         val expectedJson =
-            """{"token":"<token>","closeAllConnections":true,"action":"closeSession"}"""
+            """{"token":"token","closeAllConnections":true,"action":"closeSession"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<CloseSessionRequest>(expectedJson)
@@ -148,7 +149,7 @@ class RequestSerializationTest {
             data = expectedData
         )
         val expectedJson =
-            """{"token":"<token>","deploymentId":"deploymentId","startNew":false,"data":{"code":"jwt_Token"},"action":"configureAuthenticatedSession"}"""
+            """{"token":"token","deploymentId":"deploymentId","startNew":false,"data":{"code":"jwt_Token"},"action":"configureAuthenticatedSession"}"""
         val expectedDataJson = """{"code":"jwt_Token"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
@@ -185,7 +186,7 @@ class RequestSerializationTest {
             startNew = true,
         )
         val expectedJson =
-            """{"token":"<token>","deploymentId":"deploymentId","startNew":true,"action":"configureSession"}"""
+            """{"token":"token","deploymentId":"deploymentId","startNew":true,"action":"configureSession"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<ConfigureSessionRequest>(expectedJson)
@@ -207,7 +208,7 @@ class RequestSerializationTest {
             attachmentId = AttachmentValues.ID
         )
         val expectedJson =
-            """{"token":"<token>","attachmentId":"test_attachment_id","action":"deleteAttachment"}"""
+            """{"token":"token","attachmentId":"test_attachment_id","action":"deleteAttachment"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<DeleteAttachmentRequest>(expectedJson)
@@ -227,7 +228,7 @@ class RequestSerializationTest {
             token = TestValues.TOKEN,
         )
         val expectedJson =
-            """{"token":"<token>","action":"echo","message":{"text":"ping","metadata":{"customMessageId":"SGVhbHRoQ2hlY2tNZXNzYWdlSWQ="},"type":"Text"}}"""
+            """{"token":"token","action":"echo","message":{"text":"ping","metadata":{"customMessageId":"SGVhbHRoQ2hlY2tNZXNzYWdlSWQ="},"type":"Text"}}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<EchoRequest>(expectedJson)
@@ -276,7 +277,7 @@ class RequestSerializationTest {
             attachmentId = AttachmentValues.ID
         )
         val expectedJson =
-            """{"token":"<token>","attachmentId":"test_attachment_id","action":"getAttachment"}"""
+            """{"token":"token","attachmentId":"test_attachment_id","action":"getAttachment"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<GetAttachmentRequest>(expectedJson)
@@ -453,7 +454,7 @@ class RequestSerializationTest {
         val expectedMessage = EventMessage(expectedEventList)
         val expectedRequest = UserTypingRequest(token = TestValues.TOKEN)
         val expectedJson =
-            """{"token":"<token>","action":"onMessage","message":{"events":[{"eventType":"Typing","typing":{"type":"On"}}],"type":"Event"}}"""
+            """{"token":"token","action":"onMessage","message":{"events":[{"eventType":"Typing","typing":{"type":"On"}}],"type":"Event"}}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<UserTypingRequest>(expectedJson)
@@ -466,6 +467,29 @@ class RequestSerializationTest {
             message.run {
                 assertThat(events).containsExactly(*expectedEventList.toTypedArray())
             }
+        }
+    }
+
+    @Test
+    fun `validate DeviceTokenRequestBody serialization`() {
+        val expectedRequest = DeviceTokenRequestBody(
+            deviceToken = TestValues.DEVICE_TOKEN,
+            notificationProvider = TestValues.PUSH_PROVIDER,
+            language = TestValues.PREFERRED_LANGUAGE,
+            deviceType = TestValues.DEVICE_TYPE
+        )
+        val expectedJson =
+            """{"deviceToken":"${TestValues.DEVICE_TOKEN}","language":"${TestValues.PREFERRED_LANGUAGE}","deviceType":"${TestValues.DEVICE_TYPE}","notificationProvider":"${TestValues.PUSH_PROVIDER}"}"""
+
+        val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
+        val decoded = WebMessagingJson.json.decodeFromString<DeviceTokenRequestBody>(expectedJson)
+
+        assertThat(encodedString, "encoded RegisterDeviceTokenRequestBody").isEqualTo(expectedJson)
+        decoded.run {
+            assertThat(deviceToken).isEqualTo(TestValues.DEVICE_TOKEN)
+            assertThat(notificationProvider).isEqualTo(TestValues.PUSH_PROVIDER)
+            assertThat(language).isEqualTo(TestValues.PREFERRED_LANGUAGE)
+            assertThat(deviceType).isEqualTo(TestValues.DEVICE_TYPE)
         }
     }
 

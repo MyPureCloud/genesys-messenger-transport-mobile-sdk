@@ -7,6 +7,9 @@ import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.events.Event
+import com.genesys.cloud.messenger.transport.push.PushConfig
+import com.genesys.cloud.messenger.transport.push.PushConfigComparator
+import com.genesys.cloud.messenger.transport.push.PushProvider
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
 import com.genesys.cloud.messenger.transport.util.extensions.sanitize
 import com.genesys.cloud.messenger.transport.util.extensions.sanitizeSensitiveData
@@ -119,4 +122,16 @@ internal object LogMessages {
     fun sendQuickReply(buttonResponse: ButtonResponse) = "sendQuickReply(buttonResponse: ${buttonResponse.sanitize()})"
     fun ignoreInboundEvent(event: Event) = "Ignore inbound event: $event."
     fun sendCardReply(postbackResponse: ButtonResponse) = "sendCardReply(postbackResponse: ${postbackResponse.sanitize()})"
+    // Push
+    fun synchronizingPush(deviceToken: String, pushProvider: PushProvider) = "Synchronizing deviceToken: ${deviceToken.sanitize()} with $pushProvider."
+    fun pushDiff(diff: PushConfigComparator.Diff) = "The diff between user and stored push config is: $diff."
+    fun deviceTokenIsInSync(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken.sanitize()} with ${pushConfig.pushProvider} is already in sync."
+    fun deviceTokenWasRegistered(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken.sanitize()} with ${pushConfig.pushProvider} was registered."
+    fun deviceTokenWasUpdated(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken.sanitize()} with ${pushConfig.pushProvider} was updated."
+    fun deviceTokenWasDeleted(pushConfig: PushConfig) = "deviceToken: ${pushConfig.deviceToken.sanitize()} with ${pushConfig.pushProvider} was deleted."
+    fun failedToSynchronizeDeviceToken(pushConfig: PushConfig, errorCode: ErrorCode) = "Failed to synchronize deviceToken: ${pushConfig.deviceToken.sanitize()} ,pushProvider ${pushConfig.pushProvider} with errorCode: $errorCode."
+    const val SYNCHRONIZE_PUSH_SERVICE_ON_SESSION_CONFIGURE = "Synchronizing push service from session configured."
+    const val UNREGISTERING_DEVICE = "Unregistering device from push notifications."
+    const val DEVICE_NOT_REGISTERED = "Device is not registered."
+    const val NO_DEVICE_TOKEN_OR_PUSH_PROVIDER = "Skipping push service synchronization: Missing device token or push provider."
 }
