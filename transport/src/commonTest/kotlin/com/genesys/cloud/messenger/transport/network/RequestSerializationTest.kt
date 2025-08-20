@@ -38,8 +38,10 @@ import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.Journey
 import com.genesys.cloud.messenger.transport.utility.TestValues
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
 
 class RequestSerializationTest {
 
@@ -81,6 +83,20 @@ class RequestSerializationTest {
             assertThat(this).isEqualTo(expectedRequest)
             assertThat(metadata).isEqualTo(expectedMetadata)
             assertThat(metadata.customAttributes["A"]).isEqualTo("B")
+        }
+    }
+
+    @Test
+    fun `validate negative path for Channel serialization`() {
+        //Empty map
+        val empty = Channel.Metadata(emptyMap())
+        val json = """{"metadata":{"customAttributes":{}}}"""
+        assertThat(WebMessagingJson.json.encodeToString(Channel(empty))).isEqualTo(json)
+        assertThat(WebMessagingJson.json.decodeFromString<Channel>(json)).isEqualTo(Channel(empty))
+
+        // missing fields
+        assertFailsWith<SerializationException> {
+            WebMessagingJson.json.decodeFromString<Channel>("""{"metadata":{}}""")
         }
     }
 
