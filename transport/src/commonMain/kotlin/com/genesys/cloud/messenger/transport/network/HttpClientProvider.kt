@@ -5,10 +5,14 @@ import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpCallValidator
+import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.plugins.retry
+import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 
 private const val TIMEOUT_IN_MS = 30000L

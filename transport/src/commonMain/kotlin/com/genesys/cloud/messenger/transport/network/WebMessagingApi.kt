@@ -171,7 +171,7 @@ internal class WebMessagingApi(
             this.method = operation.httpMethod
             header("content-type", ContentType.Application.Json)
             setBody(userPushConfig.toDeviceTokenRequestBody(operation))
-            retryOnInternalServerErrors()
+            retryOnServerErrors()
         }
 
         if (response.status.isSuccess()) {

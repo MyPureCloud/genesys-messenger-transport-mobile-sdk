@@ -35,7 +35,8 @@ class EncryptedVaultTest {
         vaultKey = TestValues.VAULT_KEY,
         tokenKey = TestValues.TOKEN_KEY,
         authRefreshTokenKey = TestValues.AUTH_REFRESH_TOKEN_KEY,
-        wasAuthenticated = TestValues.WAS_AUTHENTICATED
+        wasAuthenticated = TestValues.WAS_AUTHENTICATED,
+        pushConfigKey = TestValues.PUSH_CONFIG_KEY
     )
     private val testKey = TestValues.VAULT_KEY
     private val testValue = TestValues.VAULT_VALUE
