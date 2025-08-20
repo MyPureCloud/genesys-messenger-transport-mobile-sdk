@@ -10,6 +10,7 @@ local.properties
 !.jenkins/local.properties
 iosApp/iosAppTests/config.json
 iosApp/Okta.plist
+androidComposePrototype/google-services.json
 
 # Xcode
 #

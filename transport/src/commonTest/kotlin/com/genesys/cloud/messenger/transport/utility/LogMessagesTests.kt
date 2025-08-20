@@ -8,7 +8,9 @@ import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.events.Event
+import com.genesys.cloud.messenger.transport.push.PushConfigComparator
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
+import com.genesys.cloud.messenger.transport.util.extensions.sanitize
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import kotlin.test.Test
 
@@ -17,7 +19,11 @@ class LogMessagesTests {
     // Attachment
     @Test
     fun `when presigningAttachment is called then it logs correctly`() {
-        val givenAttachment = Attachment(id = AttachmentValues.ID, fileName = AttachmentValues.FILE_NAME, fileSizeInBytes = AttachmentValues.FILE_SIZE)
+        val givenAttachment = Attachment(
+            id = AttachmentValues.ID,
+            fileName = AttachmentValues.FILE_NAME,
+            fileSizeInBytes = AttachmentValues.FILE_SIZE
+        )
         val expectedMessage = "Presigning attachment: $givenAttachment"
 
         val result = LogMessages.presigningAttachment(givenAttachment)
@@ -27,7 +33,11 @@ class LogMessagesTests {
 
     @Test
     fun `when uploadingAttachment is called then it logs correctly`() {
-        val givenAttachment = Attachment(id = AttachmentValues.ID, fileName = AttachmentValues.FILE_NAME, fileSizeInBytes = AttachmentValues.FILE_SIZE)
+        val givenAttachment = Attachment(
+            id = AttachmentValues.ID,
+            fileName = AttachmentValues.FILE_NAME,
+            fileSizeInBytes = AttachmentValues.FILE_SIZE
+        )
         val expectedMessage = "Uploading attachment: $givenAttachment"
 
         val result = LogMessages.uploadingAttachment(givenAttachment)
@@ -37,7 +47,11 @@ class LogMessagesTests {
 
     @Test
     fun `when attachmentUploaded is called then it logs correctly`() {
-        val givenAttachment = Attachment(id = AttachmentValues.ID, fileName = AttachmentValues.FILE_NAME, fileSizeInBytes = AttachmentValues.FILE_SIZE)
+        val givenAttachment = Attachment(
+            id = AttachmentValues.ID,
+            fileName = AttachmentValues.FILE_NAME,
+            fileSizeInBytes = AttachmentValues.FILE_SIZE
+        )
         val expectedMessage = "Attachment uploaded: $givenAttachment"
 
         val result = LogMessages.attachmentUploaded(givenAttachment)
@@ -77,7 +91,13 @@ class LogMessagesTests {
 
     @Test
     fun `when attachmentSent is called then it logs correctly`() {
-        val givenAttachments = mapOf(AttachmentValues.ID to Attachment(id = AttachmentValues.ID, fileName = AttachmentValues.FILE_NAME, fileSizeInBytes = AttachmentValues.FILE_SIZE))
+        val givenAttachments = mapOf(
+            AttachmentValues.ID to Attachment(
+                id = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                fileSizeInBytes = AttachmentValues.FILE_SIZE
+            )
+        )
         val expectedMessage = "Attachments sent: $givenAttachments"
 
         val result = LogMessages.attachmentSent(givenAttachments)
@@ -87,7 +107,11 @@ class LogMessagesTests {
 
     @Test
     fun `when attachmentStateUpdated is called then it logs correctly`() {
-        val givenAttachment = Attachment(id = AttachmentValues.ID, fileName = AttachmentValues.FILE_NAME, fileSizeInBytes = AttachmentValues.FILE_SIZE)
+        val givenAttachment = Attachment(
+            id = AttachmentValues.ID,
+            fileName = AttachmentValues.FILE_NAME,
+            fileSizeInBytes = AttachmentValues.FILE_SIZE
+        )
         val expectedMessage = "Attachment state updated: $givenAttachment"
 
         val result = LogMessages.attachmentStateUpdated(givenAttachment)
@@ -120,9 +144,11 @@ class LogMessagesTests {
         val givenAttachmentId = AttachmentValues.ID
         val givenErrorCode = ErrorCode.AttachmentNotFound
         val givenErrorMessage = ErrorTest.MESSAGE
-        val expectedMessage = "Attachment error with id: $givenAttachmentId. ErrorCode: $givenErrorCode, errorMessage: $givenErrorMessage"
+        val expectedMessage =
+            "Attachment error with id: $givenAttachmentId. ErrorCode: $givenErrorCode, errorMessage: $givenErrorMessage"
 
-        val result = LogMessages.attachmentError(givenAttachmentId, givenErrorCode, givenErrorMessage)
+        val result =
+            LogMessages.attachmentError(givenAttachmentId, givenErrorCode, givenErrorMessage)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
@@ -202,7 +228,8 @@ class LogMessagesTests {
     fun `when receiveMessageError is called then it logs correctly`() {
         val givenCode = ErrorTest.CODE_404
         val givenLocalizedDescription = ErrorTest.MESSAGE
-        val expectedMessage = "receiveMessageWithCompletionHandler error [$givenCode] $givenLocalizedDescription"
+        val expectedMessage =
+            "receiveMessageWithCompletionHandler error [$givenCode] $givenLocalizedDescription"
 
         val result = LogMessages.receiveMessageError(givenCode, givenLocalizedDescription)
 
@@ -244,7 +271,11 @@ class LogMessagesTests {
 
     @Test
     fun `when unhandledMessage is called then it logs correctly`() {
-        val givenDecoded = WebMessagingMessage(type = MessageValues.TYPE, code = MessageValues.PRE_IDENTIFIED_MESSAGE_CODE, body = MessageValues.TEXT)
+        val givenDecoded = WebMessagingMessage(
+            type = MessageValues.TYPE,
+            code = MessageValues.PRE_IDENTIFIED_MESSAGE_CODE,
+            body = MessageValues.TEXT
+        )
         val expectedMessage = "Unhandled message received from Shyrka: $givenDecoded"
 
         val result = LogMessages.unhandledMessage(givenDecoded)
@@ -285,7 +316,8 @@ class LogMessagesTests {
     @Test
     fun `when typingIndicatorCoolDown is called then it logs correctly`() {
         val givenMilliseconds = 5000L
-        val expectedMessage = "Typing event can be sent only once every $givenMilliseconds milliseconds."
+        val expectedMessage =
+            "Typing event can be sent only once every $givenMilliseconds milliseconds."
 
         val result = LogMessages.typingIndicatorCoolDown(givenMilliseconds)
 
@@ -329,7 +361,8 @@ class LogMessagesTests {
     fun `when stateChanged is called then it logs correctly`() {
         val givenOldState = MessagingClient.State.Connecting
         val givenNewState = MessagingClient.State.Connected
-        val expectedMessage = "State changed from: ${givenOldState::class.simpleName}, to: ${givenNewState::class.simpleName}"
+        val expectedMessage =
+            "State changed from: ${givenOldState::class.simpleName}, to: ${givenNewState::class.simpleName}"
 
         val result = LogMessages.stateChanged(givenOldState, givenNewState)
 
@@ -361,7 +394,8 @@ class LogMessagesTests {
         val givenCode = 1006L
         val givenReason = "Abnormal closure"
         val givenActive = false
-        val expectedMessage = "Socket did close (code: $givenCode, reason: $givenReason). Active: $givenActive."
+        val expectedMessage =
+            "Socket did close (code: $givenCode, reason: $givenReason). Active: $givenActive."
 
         val result = LogMessages.socketDidClose(givenCode, givenReason, givenActive)
 
@@ -392,7 +426,8 @@ class LogMessagesTests {
     @Test
     fun `when healthCheckCoolDown is called then it logs correctly`() {
         val givenMilliseconds = 3000L
-        val expectedMessage = "Health check can be sent only once every $givenMilliseconds milliseconds."
+        val expectedMessage =
+            "Health check can be sent only once every $givenMilliseconds milliseconds."
 
         val result = LogMessages.healthCheckCoolDown(givenMilliseconds)
 
@@ -414,7 +449,8 @@ class LogMessagesTests {
     fun `when tryingToReconnect is called then it logs correctly`() {
         val givenAttempts = 2
         val givenMaxAttempts = 5
-        val expectedMessage = "Trying to reconnect. Attempt number: $givenAttempts out of $givenMaxAttempts"
+        val expectedMessage =
+            "Trying to reconnect. Attempt number: $givenAttempts out of $givenMaxAttempts"
 
         val result = LogMessages.tryingToReconnect(givenAttempts, givenMaxAttempts)
 
@@ -424,7 +460,8 @@ class LogMessagesTests {
     @Test
     fun `when cancellationExceptionRequestName is called then it logs correctly`() {
         val givenRequestName = "Reconnect"
-        val expectedMessage = "Cancellation exception was thrown, while running $givenRequestName request."
+        val expectedMessage =
+            "Cancellation exception was thrown, while running $givenRequestName request."
 
         val result = LogMessages.cancellationExceptionRequestName(givenRequestName)
 
@@ -445,7 +482,8 @@ class LogMessagesTests {
     fun `when unhandledErrorCode is called then it logs correctly`() {
         val givenErrorCode = ErrorCode.FeatureUnavailable
         val givenMessage = "Feature not supported"
-        val expectedMessage = "Unhandled ErrorCode: $givenErrorCode with optional message: $givenMessage"
+        val expectedMessage =
+            "Unhandled ErrorCode: $givenErrorCode with optional message: $givenMessage"
 
         val result = LogMessages.unhandledErrorCode(givenErrorCode, givenMessage)
 
@@ -477,7 +515,8 @@ class LogMessagesTests {
         val givenRequestName = "SendMessage"
         val givenErrorCode = ErrorCode.AuthFailed
         val givenMessage = "Connection timeout"
-        val expectedMessage = "$givenRequestName responded with error: $givenErrorCode, and message: $givenMessage"
+        val expectedMessage =
+            "$givenRequestName responded with error: $givenErrorCode, and message: $givenMessage"
 
         val result = LogMessages.requestError(givenRequestName, givenErrorCode, givenMessage)
 
@@ -538,6 +577,81 @@ class LogMessagesTests {
         val expectedMessage = "Ignore inbound event: $givenEvent."
 
         val result = LogMessages.ignoreInboundEvent(givenEvent)
+
+        assertThat(result).isEqualTo(expectedMessage)
+    }
+
+    // Push Notifications
+    @Test
+    fun `when synchronizingPush is called then it logs correctly`() {
+        val expectedMessage =
+            "Synchronizing deviceToken: ${TestValues.DEVICE_TOKEN.sanitize()} with ${TestValues.PUSH_PROVIDER}."
+
+        val result =
+            LogMessages.synchronizingPush(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
+
+        assertThat(result).isEqualTo(expectedMessage)
+    }
+
+    @Test
+    fun `when pushDiff is called then it logs correctly`() {
+        val expectedMessage =
+            "The diff between user and stored push config is: ${PushConfigComparator.Diff.TOKEN}."
+
+        val result = LogMessages.pushDiff(PushConfigComparator.Diff.TOKEN)
+
+        assertThat(result).isEqualTo(expectedMessage)
+    }
+
+    @Test
+    fun `when deviceTokenIsInSync is called then it logs correctly`() {
+        val expectedMessage =
+            "deviceToken: ${TestValues.DEVICE_TOKEN.sanitize()} with ${TestValues.PUSH_PROVIDER} is already in sync."
+
+        val result = LogMessages.deviceTokenIsInSync(PushTestValues.CONFIG)
+
+        assertThat(result).isEqualTo(expectedMessage)
+    }
+
+    @Test
+    fun `when deviceTokenWasRegistered is called then it logs correctly`() {
+        val expectedMessage =
+            "deviceToken: ${TestValues.DEVICE_TOKEN.sanitize()} with ${TestValues.PUSH_PROVIDER} was registered."
+
+        val result = LogMessages.deviceTokenWasRegistered(PushTestValues.CONFIG)
+
+        assertThat(result).isEqualTo(expectedMessage)
+    }
+
+    @Test
+    fun `when deviceTokenWasUpdated is called then it logs correctly`() {
+        val expectedMessage =
+            "deviceToken: ${TestValues.DEVICE_TOKEN.sanitize()} with ${TestValues.PUSH_PROVIDER} was updated."
+
+        val result = LogMessages.deviceTokenWasUpdated(PushTestValues.CONFIG)
+
+        assertThat(result).isEqualTo(expectedMessage)
+    }
+
+    @Test
+    fun `when deviceTokenWasDeleted is called then it logs correctly`() {
+        val expectedMessage =
+            "deviceToken: ${TestValues.DEVICE_TOKEN.sanitize()} with ${TestValues.PUSH_PROVIDER} was deleted."
+
+        val result = LogMessages.deviceTokenWasDeleted(PushTestValues.CONFIG)
+
+        assertThat(result).isEqualTo(expectedMessage)
+    }
+
+    @Test
+    fun `when failedToSynchronizeDeviceToken is called then it logs correctly`() {
+        val expectedMessage =
+            "Failed to synchronize deviceToken: ${TestValues.DEVICE_TOKEN.sanitize()} ,pushProvider ${TestValues.PUSH_PROVIDER} with errorCode: ${ErrorCode.DeviceTokenOperationFailure}."
+
+        val result = LogMessages.failedToSynchronizeDeviceToken(
+            PushTestValues.CONFIG,
+            ErrorCode.DeviceTokenOperationFailure
+        )
 
         assertThat(result).isEqualTo(expectedMessage)
     }

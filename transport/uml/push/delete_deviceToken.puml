@@ -1,0 +1,21 @@
+@startuml
+!theme bluegray
+!pragma teoz true
+
+skinparam backgroundColor #whitesmoke
+
+title Delete Device Token
+
+box TransportSDK #lightcyan
+participant PushService
+participant WebMessagingAPI
+end box
+box Backend
+participant Thandora
+end box
+
+App -> PushService : synchronize(deviceToken, notificationProvider)
+PushService -> WebMessagingAPI : deleteDeviceToken(token)
+WebMessagingAPI -> Thandora : DELETE /api/v2/push-notification/devices/{token-id}
+!include thandora_request-response.puml
+@enduml
