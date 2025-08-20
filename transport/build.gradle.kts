@@ -294,5 +294,12 @@ signing {
 }
 
 kover {
+    koverReport {
+        filters {
+            excludes {
+                classes("*\$*serializer*")
+            }
+        }
+    }
     useJacoco()
 }
