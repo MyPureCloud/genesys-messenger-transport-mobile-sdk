@@ -88,7 +88,7 @@ class RequestSerializationTest {
 
     @Test
     fun `validate negative path for Channel serialization`() {
-        //Empty map
+        // Empty map
         val empty = Channel.Metadata(emptyMap())
         val json = """{"metadata":{"customAttributes":{}}}"""
         assertThat(WebMessagingJson.json.encodeToString(Channel(empty))).isEqualTo(json)
