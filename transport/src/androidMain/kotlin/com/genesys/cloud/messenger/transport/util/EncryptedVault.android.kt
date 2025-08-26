@@ -10,13 +10,13 @@ import java.lang.ref.WeakReference
  * for the encryption keys and stores the encrypted data in SharedPreferences.
  *
  */
-actual class EncryptedVault actual constructor(keys: Keys) :
-    Vault(keys) {
+actual class EncryptedVault actual constructor(keys: Keys) : Vault(keys) {
     private val sharedPreferences: SharedPreferences
     private val internalVault: InternalVault
 
     init {
-        val currentContext = context ?: throw IllegalStateException("Must set EncryptedVault.context before instantiating.")
+        val currentContext = context
+            ?: throw IllegalStateException("Must set EncryptedVault.context before instantiating.")
         sharedPreferences = currentContext.getSharedPreferences(keys.vaultKey, Context.MODE_PRIVATE)
         internalVault = InternalVault(keys.vaultKey, sharedPreferences)
         migrateFromDefaultVault()

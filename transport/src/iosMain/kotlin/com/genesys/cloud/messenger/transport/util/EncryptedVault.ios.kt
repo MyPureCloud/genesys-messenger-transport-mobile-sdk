@@ -5,8 +5,7 @@ import com.genesys.cloud.messenger.transport.core.InternalVault
 /**
  * iOS implementation of EncryptedVault that wraps the iOS default vault (Keychain).
  */
-actual class EncryptedVault actual constructor(keys: Keys) :
-    Vault(keys) {
+actual class EncryptedVault actual constructor(keys: Keys) : Vault(keys) {
 
     private val vault = InternalVault(keys.vaultKey)
 
