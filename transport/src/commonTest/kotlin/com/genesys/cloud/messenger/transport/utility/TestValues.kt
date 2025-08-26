@@ -211,7 +211,7 @@ object CardTestValues {
         description = "Description",
         imageUrl = "http://image.com/image.png",
         actions = listOf(
-            Message.Card.Action(
+            ButtonResponse(
                 type = "Postback",
                 text = "Select this option",
                 payload = "postback_payload"
@@ -340,10 +340,9 @@ object CardTestValues {
         )
     }
 
-    internal val action = Message.Card.Action(
+    internal val action = ButtonResponse(
         type = "link",
         text = text,
-        url = url,
         payload = payload
     )
 

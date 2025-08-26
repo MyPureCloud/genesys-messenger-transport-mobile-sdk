@@ -105,32 +105,29 @@ private fun List<StructuredMessage.Content>.toQuickReplies(): List<ButtonRespons
     }
 }
 
-private fun StructuredMessage.Content.Action.toMessageCardAction(): Message.Card.Action =
+private fun StructuredMessage.Content.Action.toMessageCardAction(): ButtonResponse =
     when {
-        type.equals("Link", ignoreCase = true) -> Message.Card.Action(
+        type.equals("Link", ignoreCase = true) -> ButtonResponse(
             type = "Link",
-            text = text,
-            url = url,
-            payload = null
+            text = text!!,
+            payload = url!!
         )
         type.equals("Postback", ignoreCase = true) ||
-            type.equals("Button", ignoreCase = true) -> Message.Card.Action(
+            type.equals("Button", ignoreCase = true) -> ButtonResponse(
             type = "Postback",
-            text = text,
-            url = null,
-            payload = payload
+            text = text!!,
+            payload = payload!!
         )
-        else -> Message.Card.Action(
+        else -> ButtonResponse(
             type = type,
-            text = text,
-            url = url,
-            payload = payload
+            text = text ?: "",
+            payload = payload ?: ""
         )
     }
 
-private fun StructuredMessage.Content.Action.mapDefaultActionIfLink(): Message.Card.Action? =
+private fun StructuredMessage.Content.Action.mapDefaultActionIfLink(): ButtonResponse? =
     if (type.equals("Link", ignoreCase = true) && !url.isNullOrBlank())
-        Message.Card.Action(type = "Link", text = text, url = url, payload = null)
+        ButtonResponse(type = "Link", text = text!!, payload = url)
     else
         null
 

@@ -1014,8 +1014,7 @@ internal class MessageExtensionTest {
             val defaultAction = card.defaultAction
             assertThat(defaultAction).isNotNull()
             assertThat(defaultAction?.type).isEqualTo(CardTestValues.LINK_TYPE)
-            assertThat(defaultAction?.url).isEqualTo(expectedUrl)
-            assertThat(defaultAction?.payload).isNull()
+            assertThat(defaultAction?.payload).isEqualTo(expectedUrl)
         }
     }
 
@@ -1064,10 +1063,8 @@ internal class MessageExtensionTest {
         val linkAction = card.actions.first { it.type == CardTestValues.LINK_TYPE }
         val postbackAction = card.actions.first { it.type == CardTestValues.POSTBACK_TYPE }
 
-        assertThat(linkAction.url).isEqualTo(expectedUrl)
-        assertThat(linkAction.payload).isNull()
+        assertThat(linkAction.payload).isEqualTo(expectedUrl)
 
         assertThat(postbackAction.payload).isEqualTo(expectedPayload)
-        assertThat(postbackAction.url).isNull()
     }
 }
