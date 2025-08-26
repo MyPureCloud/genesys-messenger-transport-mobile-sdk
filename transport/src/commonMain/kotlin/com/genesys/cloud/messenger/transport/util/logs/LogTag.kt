@@ -14,4 +14,5 @@ internal object LogTag {
     const val HEALTH_CHECK_PROVIDER = "MMSDKHealthCheckProvider"
     const val AUTH_HANDLER = "MMSDKAuthHandler"
     const val CUSTOM_ATTRIBUTES_STORE = "MMSDKCustomAttributesStore"
+    const val PUSH_SERVICE = "MMSDKPushService"
 }

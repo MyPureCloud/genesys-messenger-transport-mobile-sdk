@@ -1,0 +1,29 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+!theme bluegray
+!pragma teoz true
+
+skinparam backgroundColor #whitesmoke
+
+box UI
+participant App
+end box
+box TransportSDK #lightcyan
+participant PushService
+participant WebMessagingAPI
+end box
+box Backend
+participant Thandora
+end box
+	    opt #aaff8833 Success
+	    Thandora --> WebMessagingAPI
+	    WebMessagingAPI --> PushService: Result.Success
+	    else #ffaaff33 Failed to perform operation
+        PushService --> App : throws DeviceTokenException
+        else #ffaaff33 Coroutine was cancelled
+        PushService --> App : throws CancellationException
+	    end
+@enduml
+
+
