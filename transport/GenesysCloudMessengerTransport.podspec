@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name                   = 'GenesysCloudMessengerTransport'
-  s.version                = '2.9.2-rc2'
+  s.version                = '2.9.3-rc1'
   s.summary                = 'Genesys Cloud Messenger Transport SDK'
 
   s.description            = <<-DESC

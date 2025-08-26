@@ -9,7 +9,7 @@ EXTERNAL SOURCES:
     :path: "../transport"
 
 SPEC CHECKSUMS:
-  transport: a5b142a96987a6cedba2d395f695efcc000d0d48
+  transport: ea446827751ef76c782c5508eac18ff9170a3785
 
 PODFILE CHECKSUM: 10743e43aeaf72bb49673a0e57360c028906ace5
 
