@@ -1014,8 +1014,7 @@ internal class MessageExtensionTest {
             val defaultAction = card.defaultAction
             assertThat(defaultAction).isNotNull()
             assertThat(defaultAction?.type).isEqualTo(CardTestValues.LINK_TYPE)
-            assertThat(defaultAction?.url).isEqualTo(expectedUrl)
-            assertThat(defaultAction?.payload).isNull()
+            assertThat(defaultAction?.payload).isEqualTo(expectedUrl)
         }
     }
 
@@ -1035,13 +1034,11 @@ internal class MessageExtensionTest {
                     type = CardTestValues.LINK_TYPE,
                     text = CardTestValues.text,
                     url = CardTestValues.url,
-                    payload = CardTestValues.payload
                 ),
                 StructuredMessage.Content.Action(
                     type = CardTestValues.POSTBACK_TYPE,
                     text = CardTestValues.POSTBACK_TEXT,
                     payload = CardTestValues.POSTBACK_PAYLOAD,
-                    url = CardTestValues.url
                 )
             )
         )
@@ -1062,12 +1059,10 @@ internal class MessageExtensionTest {
         val message = givenStructuredMessage.toMessage()
         val card = message.cards.single()
         val linkAction = card.actions.first { it.type == CardTestValues.LINK_TYPE }
-        val postbackAction = card.actions.first { it.type == CardTestValues.POSTBACK_TYPE }
+        val postbackAction = card.actions.first { it.type == QuickReplyTestValues.QUICK_REPLY }
 
-        assertThat(linkAction.url).isEqualTo(expectedUrl)
-        assertThat(linkAction.payload).isNull()
+        assertThat(linkAction.payload).isEqualTo(expectedUrl)
 
         assertThat(postbackAction.payload).isEqualTo(expectedPayload)
-        assertThat(postbackAction.url).isNull()
     }
 }

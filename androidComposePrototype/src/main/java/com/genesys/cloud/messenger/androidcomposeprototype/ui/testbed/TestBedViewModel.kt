@@ -71,17 +71,18 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
 
     val regions = listOf("inindca.com", "inintca.com", "mypurecloud.com", "usw2.pure.cloud", "mypurecloud.jp", "mypurecloud.com.au", "mypurecloud.de", "euw2.pure.cloud", "cac1.pure.cloud", "apne2.pure.cloud", "aps1.pure.cloud", "sae1.pure.cloud", "mec1.pure.cloud", "apne3.pure.cloud", "euc2.pure.cloud")
-    private lateinit var onOktaSingIn: (url: String) -> Unit
+    private lateinit var onOpenUrl: (url: String) -> Unit
     private val quickRepliesMap = mutableMapOf<String, ButtonResponse>()
+    private val cardActionsMap = mutableMapOf<String, ButtonResponse>()
     private lateinit var selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit
 
     fun init(
         context: Context,
         selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit,
-        onOktaSignIn: (url: String) -> Unit,
+        onOpenUrl: (url: String) -> Unit,
     ) {
         println("Messenger Transport sdkVersion: ${MessengerTransportSDK.sdkVersion}")
-        this.onOktaSingIn = onOktaSignIn
+        this.onOpenUrl = onOpenUrl
         this.selectFile = selectFile
         val mmsdkConfiguration = Configuration(
             deploymentId = deploymentId.ifEmpty { BuildConfig.DEPLOYMENT_ID },
@@ -141,6 +142,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "bye" -> doDisconnect()
             "send" -> doSendMessage(input)
             "sendQuickReply" -> doSendQuickReply(input)
+            "sendAction" -> doSendAction(input)
+            "listActions" -> doListActions()
             "history" -> fetchNextPage()
             "healthCheck" -> doSendHealthCheck()
             "attach" -> doAttach()
@@ -185,7 +188,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private fun doOktaSignIn(withPKCE: Boolean) {
         pkceEnabled = withPKCE
-        onOktaSingIn(buildOktaAuthorizeUrl())
+        onOpenUrl(buildOktaAuthorizeUrl())
         commandWaiting = false
     }
 
@@ -266,6 +269,26 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
                 handleException(t, "send quickReply")
             }
         } ?: onSocketMessageReceived("Selected quickReply option: $quickReply does not exist.")
+    }
+
+    private fun doSendAction(action: String) {
+        cardActionsMap[action]?.let { buttonResponse ->
+            try {
+                if (buttonResponse.type == "Link") {
+                    onOpenUrl(buttonResponse.payload)
+                    commandWaiting = false
+                } else {
+                    client.sendCardReply(buttonResponse)
+                }
+            } catch (t: Throwable) {
+                handleException(t, "send card action")
+            }
+        } ?: onSocketMessageReceived("Selected card action: $action does not exist.")
+    }
+
+    private fun doListActions() {
+        onSocketMessageReceived("Available card actions: ${cardActionsMap.keys}")
+        commandWaiting = false
     }
 
     private fun fetchNextPage() {
@@ -453,6 +476,17 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
                 quickRepliesMap.clear()
                 quickRepliesMap.putAll(quickReplies.associateBy { it.text })
                 "QuickReplyReceived: text: $text | quick reply options: $quickReplies"
+            }
+
+            is MessageEvent.CardMessageReceived -> event.message.run {
+                val tempActionsMap = mutableMapOf<String, ButtonResponse>()
+                cards.forEach { card ->
+                    card.actions.forEach { action ->
+                        tempActionsMap.put(action.text, action)
+                        cardActionsMap[action.text] = action
+                    }
+                }
+                "CardMessageReceived with actions: $tempActionsMap"
             }
 
             else -> event.toString()

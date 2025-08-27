@@ -148,15 +148,7 @@ data class Message(
         val title: String,
         val description: String,
         val imageUrl: String? = null,
-        val actions: List<Action>,
-        val defaultAction: Action? = null,
-    ) {
-        @Serializable
-        data class Action(
-            val type: String,
-            val text: String? = null,
-            val url: String? = null,
-            val payload: String? = null,
-        )
-    }
+        val actions: List<ButtonResponse>,
+        val defaultAction: ButtonResponse? = null,
+    )
 }

@@ -1,5 +1,6 @@
 package transport.core.messagingclient
 
+import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
@@ -96,10 +97,9 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
             description = "Description",
             imageUrl = "http://image.com/image.png",
             actions = listOf(
-                Message.Card.Action(
-                    type = "Postback",
+                ButtonResponse(
+                    type = "QuickReply",
                     text = "Select this option",
-                    url = null,
                     payload = "postback_payload"
                 )
             )
