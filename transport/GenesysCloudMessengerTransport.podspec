@@ -33,7 +33,7 @@ SOFTWARE.
                                LICENSE
                              }
   s.author                 = 'Genesys Cloud Services, Inc.'
-  s.source                 = { :http => 'https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/releases/download/v2.9.2-rc2/MessengerTransport.xcframework.zip' }
+  s.source                 = { :http => 'https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/releases/download/v2.9.3-rc1/MessengerTransport.xcframework.zip' }
 
   s.ios.deployment_target  = '13.0'
 
