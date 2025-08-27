@@ -201,7 +201,7 @@ object CardTestValues {
     internal const val payload = "{\"key\":\"value\"}"
     internal const val contentType = "Card"
     internal const val POSTBACK_TEXT = "Book Now"
-    internal const val POSTBACK_TYPE = "QuickReply"
+    internal const val POSTBACK_TYPE = "Postback"
     internal const val POSTBACK_PAYLOAD = "I want it"
     internal const val customMessageId = "customMessageId"
     internal const val LINK_TYPE = "Link"
@@ -220,7 +220,7 @@ object CardTestValues {
     )
     val postbackButtonResponse = ButtonResponse(
         text = POSTBACK_TEXT,
-        type = POSTBACK_TYPE,
+        type = QuickReplyTestValues.QUICK_REPLY,
         payload = POSTBACK_PAYLOAD
     )
 
@@ -293,7 +293,7 @@ object CardTestValues {
             structuredCard.copy(
                 title = title,
                 actions = if (index == titles.lastIndex)
-                    listOf(StructuredMessage.Content.Action(type = "navigate", text = lastCardActionText, url = "http://example.org"))
+                    listOf(StructuredMessage.Content.Action(type = "Link", text = lastCardActionText, url = "http://example.org"))
                 else emptyList()
             )
         }
