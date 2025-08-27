@@ -201,7 +201,7 @@ object CardTestValues {
     internal const val payload = "{\"key\":\"value\"}"
     internal const val contentType = "Card"
     internal const val POSTBACK_TEXT = "Book Now"
-    internal const val POSTBACK_TYPE = "Postback"
+    internal const val POSTBACK_TYPE = "QuickReply"
     internal const val POSTBACK_PAYLOAD = "I want it"
     internal const val customMessageId = "customMessageId"
     internal const val LINK_TYPE = "Link"

@@ -98,7 +98,7 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
             imageUrl = "http://image.com/image.png",
             actions = listOf(
                 ButtonResponse(
-                    type = "Postback",
+                    type = "QuickReply",
                     text = "Select this option",
                     payload = "postback_payload"
                 )
