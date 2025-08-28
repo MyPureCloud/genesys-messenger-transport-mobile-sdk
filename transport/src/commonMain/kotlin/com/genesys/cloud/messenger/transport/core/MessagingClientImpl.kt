@@ -148,17 +148,29 @@ internal class MessagingClientImpl(
     override val wasAuthenticated: Boolean
         get() = vault.wasAuthenticated
 
-    @Throws(IllegalStateException::class)
+    @Throws(IllegalStateException::class, TransportSDKException::class)
     override fun connect() {
         log.i { LogMessages.CONNECT }
+        if (deploymentConfig.get() == null) {
+            throw TransportSDKException(
+                ErrorCode.MissingDeploymentConfig,
+                ErrorMessage.MissingDeploymentConfig
+            )
+        }
         connectAuthenticated = false
         stateMachine.onConnect()
         webSocket.openSocket(socketListener)
     }
 
-    @Throws(IllegalStateException::class)
+    @Throws(IllegalStateException::class, TransportSDKException::class)
     override fun connectAuthenticatedSession() {
         log.i { LogMessages.CONNECT_AUTHENTICATED_SESSION }
+        if (deploymentConfig.get() == null) {
+            throw TransportSDKException(
+                ErrorCode.MissingDeploymentConfig,
+                ErrorMessage.MissingDeploymentConfig
+            )
+        }
         connectAuthenticated = true
         stateMachine.onConnect()
         webSocket.openSocket(socketListener)
