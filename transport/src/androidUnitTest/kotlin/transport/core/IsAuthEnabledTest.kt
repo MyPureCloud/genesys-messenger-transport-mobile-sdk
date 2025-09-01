@@ -102,7 +102,6 @@ class IsAuthEnabledTest {
 
     @Test
     fun `when deployment config is null and fetch succeeds with auth enabled true`() = runTest {
-        // Given
         every { mockDeploymentConfigProperty.get() } returns null
 
         mockkConstructor(DeploymentConfigUseCase::class)
