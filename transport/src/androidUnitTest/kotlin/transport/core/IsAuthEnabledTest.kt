@@ -6,7 +6,6 @@ import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.isAuthEnabled
 import com.genesys.cloud.messenger.transport.network.DeploymentConfigUseCase
-import com.genesys.cloud.messenger.transport.network.defaultHttpClient
 import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
 import com.genesys.cloud.messenger.transport.shyrka.receive.Auth
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
@@ -20,7 +19,6 @@ import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
-import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.unmockkConstructor
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -43,13 +41,13 @@ class IsAuthEnabledTest {
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
-        
+
         testConfiguration = Configuration(
             deploymentId = "test-deployment-id",
             domain = "test.domain.com",
             logging = false
         )
-        
+
         val messenger = Messenger(
             enabled = true,
             apps = Apps(
@@ -61,7 +59,7 @@ class IsAuthEnabledTest {
             launcherButton = LauncherButton(visibility = "On"),
             fileUpload = FileUpload()
         )
-        
+
         authEnabledConfig = DeploymentConfig(
             id = "test-id",
             version = "1.0",
@@ -73,7 +71,7 @@ class IsAuthEnabledTest {
             status = DeploymentConfig.Status.Active,
             auth = Auth(enabled = true, allowSessionUpgrade = false)
         )
-        
+
         authDisabledConfig = authEnabledConfig.copy(
             auth = Auth(enabled = false, allowSessionUpgrade = false)
         )
@@ -106,7 +104,7 @@ class IsAuthEnabledTest {
     fun `when deployment config is null and fetch succeeds with auth enabled true`() = runTest {
         // Given
         every { mockDeploymentConfigProperty.get() } returns null
-        
+
         mockkConstructor(DeploymentConfigUseCase::class)
         coEvery { anyConstructed<DeploymentConfigUseCase>().fetch() } returns authEnabledConfig
 
@@ -118,7 +116,7 @@ class IsAuthEnabledTest {
     @Test
     fun `when deployment config is null and fetch succeeds with auth enabled false`() = runTest {
         every { mockDeploymentConfigProperty.get() } returns null
-        
+
         mockkConstructor(DeploymentConfigUseCase::class)
         coEvery { anyConstructed<DeploymentConfigUseCase>().fetch() } returns authDisabledConfig
 
@@ -130,7 +128,7 @@ class IsAuthEnabledTest {
     @Test
     fun `when deployment config is null and fetch throws exception`() = runTest {
         every { mockDeploymentConfigProperty.get() } returns null
-        
+
         mockkConstructor(DeploymentConfigUseCase::class)
         coEvery { anyConstructed<DeploymentConfigUseCase>().fetch() } throws RuntimeException("Network error")
 
