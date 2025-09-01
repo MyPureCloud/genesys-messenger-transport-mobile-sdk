@@ -22,7 +22,6 @@ import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
-import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AuthTest
@@ -32,7 +31,6 @@ import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
 import io.mockk.slot
@@ -46,7 +44,6 @@ import kotlinx.serialization.encodeToString
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import kotlin.reflect.KProperty0
 
 class AuthHandlerTest {
 
@@ -482,7 +479,7 @@ class AuthHandlerTest {
 
     private fun buildAuthHandler(
         givenAutoRefreshTokenWhenExpired: Boolean = true,
-        deploymentConfig: KProperty0<DeploymentConfig?> = mockk { every { get() } returns null }
+        isAuthEnabled: suspend () -> Boolean = { true }
     ): AuthHandlerImpl {
         return AuthHandlerImpl(
             autoRefreshTokenWhenExpired = givenAutoRefreshTokenWhenExpired,
@@ -490,7 +487,7 @@ class AuthHandlerTest {
             api = mockWebMessagingApi,
             vault = fakeVault,
             log = mockLogger,
-            deploymentConfig = deploymentConfig
+            isAuthEnabled = isAuthEnabled
         )
     }
 
@@ -540,14 +537,7 @@ class AuthHandlerTest {
 
     @Test
     fun `when shouldAuthorize() and auth is disabled in deployment config`() {
-        val deploymentConfigWithAuthDisabled = mockk<KProperty0<DeploymentConfig?>> {
-            every { get() } returns mockk {
-                every { auth } returns mockk {
-                    every { enabled } returns false
-                }
-            }
-        }
-        subject = buildAuthHandler(deploymentConfig = deploymentConfigWithAuthDisabled)
+        subject = buildAuthHandler(isAuthEnabled = { false })
         var callbackResult: Boolean? = null
 
         subject.shouldAuthorize { result -> callbackResult = result }
@@ -558,14 +548,7 @@ class AuthHandlerTest {
 
     @Test
     fun `when shouldAuthorize() and auth is enabled in deployment config`() {
-        val deploymentConfigWithAuthEnabled = mockk<KProperty0<DeploymentConfig?>> {
-            every { get() } returns mockk {
-                every { auth } returns mockk {
-                    every { enabled } returns true
-                }
-            }
-        }
-        subject = buildAuthHandler(deploymentConfig = deploymentConfigWithAuthEnabled)
+        subject = buildAuthHandler(isAuthEnabled = { true })
         var callbackResult: Boolean? = null
 
         subject.shouldAuthorize { result -> callbackResult = result }

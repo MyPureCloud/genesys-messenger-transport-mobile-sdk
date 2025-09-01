@@ -9,11 +9,13 @@ import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
+import com.genesys.cloud.messenger.transport.network.DeploymentConfigUseCase
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
 import com.genesys.cloud.messenger.transport.network.SocketCloseCode
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
+import com.genesys.cloud.messenger.transport.network.defaultHttpClient
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.AttachmentDeletedResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosedEvent
@@ -83,7 +85,7 @@ internal class MessagingClientImpl(
         api,
         vault,
         log.withTag(LogTag.AUTH_HANDLER),
-        isAuthEnabled = { deploymentConfig.isAuthEnabled() }
+        isAuthEnabled = { deploymentConfig.isAuthEnabled(configuration) }
     ),
     private val internalCustomAttributesStore: CustomAttributesStoreImpl = CustomAttributesStoreImpl(
         log.withTag(LogTag.CUSTOM_ATTRIBUTES_STORE),
@@ -794,7 +796,19 @@ private fun KProperty0<DeploymentConfig?>.isShowUserTypingEnabled(): Boolean =
 private fun KProperty0<DeploymentConfig?>.isClearConversationEnabled(): Boolean =
     this.get()?.messenger?.apps?.conversations?.conversationClear?.enabled == true
 
-private fun KProperty0<DeploymentConfig?>.isAuthEnabled(): Boolean = this.get()?.auth?.enabled == true
+internal suspend fun KProperty0<DeploymentConfig?>.isAuthEnabled(configuration: Configuration): Boolean {
+    val config = this.get()
+    return config?.auth?.enabled
+        ?: try {
+            val fetchedConfig = DeploymentConfigUseCase(
+                configuration.deploymentConfigUrl.toString(),
+                defaultHttpClient(configuration.logging)
+            ).fetch()
+            fetchedConfig.auth.enabled == true
+        } catch (e: Exception) {
+            false
+        }
+}
 
 private fun Map<String, String>.asChannel(): Channel? {
     return if (this.isNotEmpty()) {
