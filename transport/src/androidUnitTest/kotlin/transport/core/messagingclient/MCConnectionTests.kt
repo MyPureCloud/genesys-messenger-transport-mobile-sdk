@@ -340,24 +340,26 @@ class MCConnectionTests : BaseMessagingClientTest() {
     }
 
     @Test
-    fun `when connect is called without deployment config should throw IllegalStateException`() {
+    fun `when connect called without deployment config`() {
         every { mockDeploymentConfig.get() } returns null
 
         val exception = assertFailsWith<TransportSDKException> {
             subject.connect()
         }
 
+        assertThat(exception.errorCode).isEqualTo(ErrorCode.MissingDeploymentConfig)
         assertThat(exception.message).isEqualTo(ErrorMessage.MissingDeploymentConfig)
     }
 
     @Test
-    fun `when connectAuthenticatedSession is called without deployment config should throw IllegalStateException`() {
+    fun `when connectAuthenticatedSession called without deployment config`() {
         every { mockDeploymentConfig.get() } returns null
 
         val exception = assertFailsWith<TransportSDKException> {
             subject.connectAuthenticatedSession()
         }
 
+        assertThat(exception.errorCode).isEqualTo(ErrorCode.MissingDeploymentConfig)
         assertThat(exception.message).isEqualTo(ErrorMessage.MissingDeploymentConfig)
     }
 }
