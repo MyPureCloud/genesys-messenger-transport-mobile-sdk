@@ -151,12 +151,7 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class, TransportSDKException::class)
     override fun connect() {
         log.i { LogMessages.CONNECT }
-        if (deploymentConfig.get() == null) {
-            throw TransportSDKException(
-                ErrorCode.MissingDeploymentConfig,
-                ErrorMessage.MissingDeploymentConfig
-            )
-        }
+        validateDeploymentConfig()
         connectAuthenticated = false
         stateMachine.onConnect()
         webSocket.openSocket(socketListener)
@@ -165,15 +160,20 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class, TransportSDKException::class)
     override fun connectAuthenticatedSession() {
         log.i { LogMessages.CONNECT_AUTHENTICATED_SESSION }
+        validateDeploymentConfig()
+        connectAuthenticated = true
+        stateMachine.onConnect()
+        webSocket.openSocket(socketListener)
+    }
+
+    @Throws(TransportSDKException::class)
+    private fun validateDeploymentConfig() {
         if (deploymentConfig.get() == null) {
             throw TransportSDKException(
                 ErrorCode.MissingDeploymentConfig,
                 ErrorMessage.MissingDeploymentConfig
             )
         }
-        connectAuthenticated = true
-        stateMachine.onConnect()
-        webSocket.openSocket(socketListener)
     }
 
     @Throws(IllegalStateException::class)
