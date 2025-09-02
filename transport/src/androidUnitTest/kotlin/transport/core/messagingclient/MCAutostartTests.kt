@@ -19,6 +19,7 @@ import io.mockk.verifySequence
 import org.junit.Test
 import transport.util.Request
 import transport.util.Response
+import kotlin.test.assertFailsWith
 
 class MCAutostartTests : BaseMessagingClientTest() {
 
@@ -104,7 +105,7 @@ class MCAutostartTests : BaseMessagingClientTest() {
     fun `when new session and deploymentConfig not set`() {
         every { mockDeploymentConfig.get() } returns null
 
-        val exception = kotlin.test.assertFailsWith<TransportSDKException> {
+        val exception = assertFailsWith<TransportSDKException> {
             subject.connect()
         }
 
