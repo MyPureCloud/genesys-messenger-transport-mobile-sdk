@@ -132,6 +132,11 @@ internal class PushServiceImpl(
                 }
             }
 
+            ErrorCode.DeviceAlreadyRegistered -> {
+                log.i { LogMessages.DEVICE_ALREADY_REGISTERED }
+                update(userPushConfig)
+            }
+
             else -> throwDeviceTokenException(result, userPushConfig)
         }
     }
