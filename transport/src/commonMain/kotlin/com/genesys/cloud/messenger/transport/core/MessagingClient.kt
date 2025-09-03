@@ -134,8 +134,9 @@ interface MessagingClient {
      * deploymentId configured on this MessagingClient instance.
      *
      * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
+     * @throws TransportSDKException If the deployment config is null.
      */
-    @Throws(IllegalStateException::class)
+    @Throws(IllegalStateException::class, TransportSDKException::class)
     fun connect()
 
     /**
@@ -144,8 +145,9 @@ interface MessagingClient {
      * When called on a session that was previously configured as anonymous/guest, it will perform a Step-Up.
      *
      * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
+     * @throws TransportSDKException If the deployment config is null.
      */
-    @Throws(IllegalStateException::class)
+    @Throws(IllegalStateException::class, TransportSDKException::class)
     fun connectAuthenticatedSession()
 
     /**

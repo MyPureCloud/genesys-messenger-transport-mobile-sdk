@@ -50,6 +50,7 @@ internal class ErrorCodeTest {
         assertThat(ErrorCode.mapFrom(6025)).isEqualTo(ErrorCode.DeviceUpdateFailure)
         assertThat(ErrorCode.mapFrom(6026)).isEqualTo(ErrorCode.DeviceDeleteFailure)
         assertThat(ErrorCode.mapFrom(6027)).isEqualTo(ErrorCode.DeploymentIdMismatch)
+        assertThat(ErrorCode.mapFrom(6006)).isEqualTo(ErrorCode.MissingDeploymentConfig)
 
         val randomIn300Range = Random.nextInt(300, 400)
         ErrorCode.mapFrom(randomIn300Range).run {
