@@ -321,6 +321,7 @@ class PushServiceImplTest {
             syncSequence(expectedUserConfig, expectedStoredConfig)
             mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation1)
             mockLogger.i(capture(logSlot))
+            mockVault.pushConfig = expectedUserConfig
             mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation2)
             mockLogger.i(capture(logSlot))
             mockVault.pushConfig = expectedUserConfig
