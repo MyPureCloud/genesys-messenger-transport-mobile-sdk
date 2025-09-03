@@ -84,8 +84,10 @@ internal class WebMessagingApi(
                 val resolvedType = resolveContentType(it)
                 contentType(resolvedType)
             }
-            onUpload { bytesSendTotal: Long, contentLength: Long ->
-                progressCallback?.let { it((bytesSendTotal / contentLength.toFloat()) * 100) }
+            onUpload { bytesSendTotal: Long, contentLength: Long? ->
+                progressCallback?.let {
+                    it((bytesSendTotal / (contentLength ?: bytesSendTotal).toFloat()) * 100)
+                }
             }
             setBody(byteArray)
         }
