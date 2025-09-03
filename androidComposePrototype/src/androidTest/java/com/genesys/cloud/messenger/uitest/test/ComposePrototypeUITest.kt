@@ -378,8 +378,8 @@ class ComposePrototypeUITest : BaseTests() {
         apiHelper.disconnectAllConversations()
     }
 
-    @Test
     // Adjusting the test name to force this test to run first
+    @Test
     fun testVerifyAutoStart() {
         apiHelper.disconnectAllConversations()
         enterDeploymentInfo(testConfig.deploymentId)

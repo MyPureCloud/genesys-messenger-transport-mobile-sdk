@@ -37,20 +37,20 @@ buildscript {
 plugins {
     id 'com.android.application'
     id 'kotlin-android'
-    id 'org.jetbrains.kotlin.plugin.serialization' version '1.4.32'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.1.21'
     id 'org.jmailen.kotlinter'
     id 'com.google.gms.google-services'
+    id 'org.jetbrains.kotlin.plugin.compose' version '2.1.21'
 }
 
 android {
-    compileSdkVersion 34
-    buildToolsVersion "34.0.0"
 
     android.buildFeatures.buildConfig true
     defaultConfig {
         applicationId "com.genesys.cloud.webmessaging.androidcomposeprototype"
         minSdkVersion 21
-        targetSdkVersion 33
+        compileSdk 34
+        targetSdkVersion 34
         versionCode 1
         versionName "1.0"
 
@@ -93,9 +93,6 @@ android {
     buildFeatures {
         compose true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion "1.5.10"
-    }
     sourceSets {
         main {
             assets {
@@ -110,7 +107,6 @@ dependencies {
     ext.fragment_version = '1.6.2'
     ext.activity_compose_version = '1.8.2'
     ext.lifecycle_viewmodel_compose_version = '2.7.0'
-    ext.compose_version = '1.6.3'
 
     implementation(project(':transport'))
 
@@ -122,13 +118,15 @@ dependencies {
     implementation "androidx.fragment:fragment-ktx:$fragment_version"
 
     // Compose
-    implementation "androidx.compose.ui:ui:$compose_version"
+    implementation platform('androidx.compose:compose-bom:2025.03.01') // Replace with the latest BOM version
+    implementation 'androidx.compose.ui:ui'
     // Material Design
-    implementation "androidx.compose.material:material:$compose_version"
+    implementation 'androidx.compose.material:material'
+    implementation 'androidx.compose.material:material-icons-core-android'
     // Tooling support
-    implementation "androidx.compose.ui:ui-tooling:$compose_version"
+    implementation 'androidx.compose.ui:ui-tooling'
     // Foundation
-    implementation "androidx.compose.foundation:foundation:$compose_version"
+    implementation 'androidx.compose.foundation:foundation'
     // Integration with ViewModels
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycle_viewmodel_compose_version"
     // Integration with activities

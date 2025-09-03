@@ -110,3 +110,5 @@ secure.properties
 deployment.properties
 okta.properties
 
+# Kotlin 2.0
+.kotlin/
