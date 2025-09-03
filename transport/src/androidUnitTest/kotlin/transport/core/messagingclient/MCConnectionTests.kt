@@ -340,7 +340,7 @@ class MCConnectionTests : BaseMessagingClientTest() {
     }
 
     @Test
-    fun `when connect called without deployment config`() {
+    fun `when connect is called without deployment config`() {
         every { mockDeploymentConfig.get() } returns null
 
         val exception = assertFailsWith<TransportSDKException> {
@@ -352,7 +352,7 @@ class MCConnectionTests : BaseMessagingClientTest() {
     }
 
     @Test
-    fun `when connectAuthenticatedSession called without deployment config`() {
+    fun `when connectAuthenticatedSession is called without deployment config`() {
         every { mockDeploymentConfig.get() } returns null
 
         val exception = assertFailsWith<TransportSDKException> {
