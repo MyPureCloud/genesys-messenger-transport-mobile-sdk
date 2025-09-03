@@ -80,6 +80,6 @@ object Deps {
         const val compileSdk = 34
         const val minSdk = 21
         const val targetSdk = 33
-        const val jvmTarget = "1.8"
+        const val jvmTarget = "17"
     }
 }
