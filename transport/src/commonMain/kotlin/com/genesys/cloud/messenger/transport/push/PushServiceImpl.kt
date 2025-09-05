@@ -77,7 +77,10 @@ internal class PushServiceImpl(
                 vault.pushConfig = userPushConfig
             }
 
-            is Result.Failure -> handleRequestError(result, userPushConfig, Register)
+            is Result.Failure -> {
+                handleRequestError(result, userPushConfig, Register)
+                // unreachable, but ensures probe is hit
+            }
         }
     }
 
