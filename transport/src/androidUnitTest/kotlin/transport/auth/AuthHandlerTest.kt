@@ -5,6 +5,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEmpty
+import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.auth.AuthHandlerImpl
@@ -542,13 +543,12 @@ class AuthHandlerTest {
 
         subject.shouldAuthorize { result -> callbackResult = result }
 
-        assertThat(callbackResult!!).isFalse()
+        assertThat(callbackResult).isNotNull().isFalse()
         coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
     }
 
     @Test
     fun `when shouldAuthorize() and auth is enabled in deployment config`() {
-        subject = buildAuthHandler(isAuthEnabled = { true })
         var callbackResult: Boolean? = null
 
         subject.shouldAuthorize { result -> callbackResult = result }
