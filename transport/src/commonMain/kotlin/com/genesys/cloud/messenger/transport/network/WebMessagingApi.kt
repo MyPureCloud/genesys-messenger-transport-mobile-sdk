@@ -8,6 +8,7 @@ import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.resolveContentType
+import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageEntityList
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.send.AuthJwtRequest
@@ -149,6 +150,19 @@ internal class WebMessagingApi(
         Result.Failure(ErrorCode.CancellationError, cancellationException.message)
     } catch (exception: Exception) {
         Result.Failure(ErrorCode.RefreshAuthTokenFailure, exception.message)
+    }
+
+    suspend fun fetchDeploymentConfig(): Result<DeploymentConfig> = try {
+        val response = client.get(configuration.deploymentConfigUrl.toString())
+        if (response.status.isSuccess()) {
+            Result.Success(response.body())
+        } else {
+            Result.Failure(ErrorCode.DeploymentConfigFetchFailed, response.body<String>())
+        }
+    } catch (cancellationException: CancellationException) {
+        Result.Failure(ErrorCode.CancellationError, cancellationException.message)
+    } catch (e: Exception) {
+        Result.Failure(ErrorCode.UnexpectedError, e.message)
     }
 }
 

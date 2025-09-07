@@ -38,6 +38,7 @@ internal class ErrorCodeTest {
         assertThat(ErrorCode.mapFrom(6003)).isEqualTo(ErrorCode.RefreshAuthTokenFailure)
         assertThat(ErrorCode.mapFrom(6004)).isEqualTo(ErrorCode.HistoryFetchFailure)
         assertThat(ErrorCode.mapFrom(6005)).isEqualTo(ErrorCode.ClearConversationFailure)
+        assertThat(ErrorCode.mapFrom(6006)).isEqualTo(ErrorCode.DeploymentConfigFetchFailed)
 
         val randomIn300Range = Random.nextInt(300, 400)
         ErrorCode.mapFrom(randomIn300Range).run {
