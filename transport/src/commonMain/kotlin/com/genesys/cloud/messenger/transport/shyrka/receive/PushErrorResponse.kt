@@ -7,6 +7,6 @@ internal data class PushErrorResponse(
     val message: String,
     val code: String,
     val status: Int,
-    val contextId: String,
+    val contextId: String? = null,
     val details: List<String> = emptyList(),
 )
