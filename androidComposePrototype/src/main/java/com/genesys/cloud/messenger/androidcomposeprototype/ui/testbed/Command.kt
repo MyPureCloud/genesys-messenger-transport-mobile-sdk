@@ -29,4 +29,6 @@ enum class Command(val description: String) {
     UNREGISTER_PUSH("unregPush"),
     WAS_AUTHENTICATED("wasAuthenticated"),
     SHOULD_AUTHORIZE("shouldAuthorize"),
+    SEND_ACTION("sendAction <action>"),
+    ACTION_LIST("listActions")
 }

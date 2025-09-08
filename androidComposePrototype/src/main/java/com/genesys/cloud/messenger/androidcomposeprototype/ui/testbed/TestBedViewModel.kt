@@ -20,11 +20,8 @@ import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
 import com.genesys.cloud.messenger.transport.core.events.Event
-import com.genesys.cloud.messenger.transport.push.PushProvider
-import com.genesys.cloud.messenger.transport.push.PushService
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.EncryptedVault
-import com.google.firebase.messaging.FirebaseMessaging
 import io.ktor.http.URLBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,7 +40,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private lateinit var messengerTransport: MessengerTransportSDK
     private lateinit var client: MessagingClient
-    private lateinit var pushService: PushService
     private val attachedIds = mutableListOf<String>()
 
     var command: String by mutableStateOf("")
@@ -74,34 +70,19 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             this.authState = authState
         }
 
-    val regions = listOf(
-        "inindca.com",
-        "inintca.com",
-        "mypurecloud.com",
-        "usw2.pure.cloud",
-        "mypurecloud.jp",
-        "mypurecloud.com.au",
-        "mypurecloud.de",
-        "euw2.pure.cloud",
-        "cac1.pure.cloud",
-        "apne2.pure.cloud",
-        "aps1.pure.cloud",
-        "sae1.pure.cloud",
-        "mec1.pure.cloud",
-        "apne3.pure.cloud",
-        "euc2.pure.cloud"
-    )
-    private lateinit var onOktaSingIn: (url: String) -> Unit
+    val regions = listOf("inindca.com", "inintca.com", "mypurecloud.com", "usw2.pure.cloud", "mypurecloud.jp", "mypurecloud.com.au", "mypurecloud.de", "euw2.pure.cloud", "cac1.pure.cloud", "apne2.pure.cloud", "aps1.pure.cloud", "sae1.pure.cloud", "mec1.pure.cloud", "apne3.pure.cloud", "euc2.pure.cloud")
+    private lateinit var onOpenUrl: (url: String) -> Unit
     private val quickRepliesMap = mutableMapOf<String, ButtonResponse>()
+    private val cardActionsMap = mutableMapOf<String, ButtonResponse>()
     private lateinit var selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit
 
     fun init(
         context: Context,
         selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit,
-        onOktaSignIn: (url: String) -> Unit,
+        onOpenUrl: (url: String) -> Unit,
     ) {
         println("Messenger Transport sdkVersion: ${MessengerTransportSDK.sdkVersion}")
-        this.onOktaSingIn = onOktaSignIn
+        this.onOpenUrl = onOpenUrl
         this.selectFile = selectFile
         val mmsdkConfiguration = Configuration(
             deploymentId = deploymentId.ifEmpty { BuildConfig.DEPLOYMENT_ID },
@@ -117,7 +98,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
         messengerTransport = MessengerTransportSDK(mmsdkConfiguration)
         client = messengerTransport.createMessagingClient()
-        pushService = messengerTransport.createPushService()
         client.customAttributesStore.add(mapOf("sdkVersion" to "Transport SDK: ${MessengerTransportSDK.sdkVersion}"))
         with(client) {
             stateChangedListener = {
@@ -162,6 +142,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "bye" -> doDisconnect()
             "send" -> doSendMessage(input)
             "sendQuickReply" -> doSendQuickReply(input)
+            "sendAction" -> doSendAction(input)
+            "listActions" -> doListActions()
             "history" -> fetchNextPage()
             "healthCheck" -> doSendHealthCheck()
             "attach" -> doAttach()
@@ -185,8 +167,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "stepUp" -> doStepUp()
             "wasAuthenticated" -> doWasAuthenticated()
             "shouldAuthorize" -> doShouldAuthorize()
-            "syncDeviceToken" -> doSynchronizeDeviceToken()
-            "unregPush" -> doUnregisterFromPush()
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
@@ -208,7 +188,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private fun doOktaSignIn(withPKCE: Boolean) {
         pkceEnabled = withPKCE
-        onOktaSingIn(buildOktaAuthorizeUrl())
+        onOpenUrl(buildOktaAuthorizeUrl())
         commandWaiting = false
     }
 
@@ -289,6 +269,26 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
                 handleException(t, "send quickReply")
             }
         } ?: onSocketMessageReceived("Selected quickReply option: $quickReply does not exist.")
+    }
+
+    private fun doSendAction(action: String) {
+        cardActionsMap[action]?.let { buttonResponse ->
+            try {
+                if (buttonResponse.type == "Link") {
+                    onOpenUrl(buttonResponse.payload)
+                    commandWaiting = false
+                } else {
+                    client.sendCardReply(buttonResponse)
+                }
+            } catch (t: Throwable) {
+                handleException(t, "send card action")
+            }
+        } ?: onSocketMessageReceived("Selected card action: $action does not exist.")
+    }
+
+    private fun doListActions() {
+        onSocketMessageReceived("Available card actions: ${cardActionsMap.keys}")
+        commandWaiting = false
     }
 
     private fun fetchNextPage() {
@@ -423,49 +423,12 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private fun doSynchronizeDeviceToken() {
-        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-            if (!task.isSuccessful) {
-                Log.d(TAG, "Synchronize Push: error")
-                onSocketMessageReceived("Failed to retrieve deviceToken")
-            } else {
-                viewModelScope.launch {
-                    try {
-                        Log.d(TAG, "Synchronize Push with device token: ${task.result}")
-                        pushService.synchronize(task.result, PushProvider.FCM)
-                        clearCommand()
-                    } catch (t: Throwable) {
-                        Log.d(TAG, "Synchronize Push: error")
-                        withContext(Dispatchers.Main) {
-                            handleException(t, "Synchronize push")
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private fun doUnregisterFromPush() {
-        viewModelScope.launch {
-            try {
-                pushService.unregister()
-                clearCommand()
-            } catch (t: Throwable) {
-                Log.d(TAG, "UnregisterFromPush: error")
-                withContext(Dispatchers.Main) {
-                    handleException(t, "unregister from push")
-                }
-            }
-        }
-    }
-
     private fun onClientStateChanged(oldState: State, newState: State) {
         Log.v(TAG, "onClientStateChanged(oldState = $oldState, newState = $newState)")
         clientState = newState
         val statePayloadMessage = when (newState) {
             is State.Configured ->
                 "connected: ${newState.connected}," + " newSession: ${newState.newSession}," + " wasReconnecting: ${oldState is State.Reconnecting}"
-
             is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Closed -> "code: ${newState.code}, reason: ${newState.reason}"
             is State.Error -> "code: ${newState.code}, message: ${newState.message}"
@@ -515,6 +478,17 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
                 "QuickReplyReceived: text: $text | quick reply options: $quickReplies"
             }
 
+            is MessageEvent.CardMessageReceived -> event.message.run {
+                val tempActionsMap = mutableMapOf<String, ButtonResponse>()
+                cards.forEach { card ->
+                    card.actions.forEach { action ->
+                        tempActionsMap.put(action.text, action)
+                        cardActionsMap[action.text] = action
+                    }
+                }
+                "CardMessageReceived with actions: $tempActionsMap"
+            }
+
             else -> event.toString()
         }
         onSocketMessageReceived(eventMessage)
@@ -538,12 +512,10 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             -> {
                 authState = AuthState.Error(event.errorCode, event.message, event.correctiveAction)
             }
-
             is ErrorCode.CustomAttributeSizeTooLarge
             -> {
                 onSocketMessageReceived(event.message ?: "CA size too large")
             }
-
             else -> {
                 println("Handle Event.Error here.")
             }

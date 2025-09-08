@@ -225,7 +225,7 @@ object CardTestValues {
         description = "Description",
         imageUrl = "http://image.com/image.png",
         actions = listOf(
-            Message.Card.Action(
+            ButtonResponse(
                 type = "Postback",
                 text = "Select this option",
                 payload = "postback_payload"
@@ -234,7 +234,7 @@ object CardTestValues {
     )
     val postbackButtonResponse = ButtonResponse(
         text = POSTBACK_TEXT,
-        type = POSTBACK_TYPE,
+        type = QuickReplyTestValues.QUICK_REPLY,
         payload = POSTBACK_PAYLOAD
     )
 
@@ -307,7 +307,7 @@ object CardTestValues {
             structuredCard.copy(
                 title = title,
                 actions = if (index == titles.lastIndex)
-                    listOf(StructuredMessage.Content.Action(type = "navigate", text = lastCardActionText, url = "http://example.org"))
+                    listOf(StructuredMessage.Content.Action(type = "Link", text = lastCardActionText, url = "http://example.org"))
                 else emptyList()
             )
         }
@@ -354,10 +354,9 @@ object CardTestValues {
         )
     }
 
-    internal val action = Message.Card.Action(
+    internal val action = ButtonResponse(
         type = "link",
         text = text,
-        url = url,
         payload = payload
     )
 

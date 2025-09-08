@@ -105,32 +105,25 @@ private fun List<StructuredMessage.Content>.toQuickReplies(): List<ButtonRespons
     }
 }
 
-private fun StructuredMessage.Content.Action.toMessageCardAction(): Message.Card.Action =
+private fun StructuredMessage.Content.Action.toMessageCardAction(): ButtonResponse? =
     when {
-        type.equals("Link", ignoreCase = true) -> Message.Card.Action(
+        type.equals("Link", ignoreCase = true) -> ButtonResponse(
             type = "Link",
             text = text,
-            url = url,
-            payload = null
+            payload = url!!
         )
         type.equals("Postback", ignoreCase = true) ||
-            type.equals("Button", ignoreCase = true) -> Message.Card.Action(
-            type = "Postback",
+            type.equals("Button", ignoreCase = true) -> ButtonResponse(
+            type = "QuickReply",
             text = text,
-            url = null,
-            payload = payload
+            payload = payload!!
         )
-        else -> Message.Card.Action(
-            type = type,
-            text = text,
-            url = url,
-            payload = payload
-        )
+        else -> null
     }
 
-private fun StructuredMessage.Content.Action.mapDefaultActionIfLink(): Message.Card.Action? =
+private fun StructuredMessage.Content.Action.mapDefaultActionIfLink(): ButtonResponse? =
     if (type.equals("Link", ignoreCase = true) && !url.isNullOrBlank())
-        Message.Card.Action(type = "Link", text = text, url = url, payload = null)
+        ButtonResponse(type = "Link", text = text, payload = url)
     else
         null
 
@@ -139,7 +132,7 @@ private fun StructuredMessage.Content.CardContent.Card.toMessageCard(): Message.
         title = title.filterNot { it.isWhitespace() },
         description = description,
         imageUrl = image,
-        actions = actions.map { it.toMessageCardAction() },
+        actions = actions.mapNotNull { it.toMessageCardAction() },
         defaultAction = defaultAction?.mapDefaultActionIfLink()
     )
 
