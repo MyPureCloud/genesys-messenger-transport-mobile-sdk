@@ -134,6 +134,7 @@ internal class PushServiceImpl(
 
             ErrorCode.DeviceAlreadyRegistered -> {
                 log.i { LogMessages.DEVICE_ALREADY_REGISTERED }
+                vault.pushConfig = userPushConfig
                 update(userPushConfig)
             }
 
