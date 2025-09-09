@@ -287,7 +287,7 @@ class StateMachineTest {
     }
 
     @Test
-    fun `verify full state transition cycle`() {
+    fun `validate full state transition cycle`() {
         subject.onConnect()
         assertThat(subject.currentState).isConnecting()
         subject.onConnectionOpened()
