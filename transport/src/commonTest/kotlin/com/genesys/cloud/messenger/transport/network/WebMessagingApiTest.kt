@@ -366,7 +366,7 @@ class WebMessagingApiTest {
             logging = false
         )
         subject = buildWebMessagingApiWith(brokenConfiguration) { deploymentConfigEngine() }
-        val expectedResult = Result.Failure(ErrorCode.UnexpectedError, ErrorTest.MESSAGE)
+        val expectedResult = Result.Failure(ErrorCode.DeploymentConfigFetchFailed, ErrorTest.MESSAGE)
 
         val result = runBlocking { subject.fetchDeploymentConfig() }
 

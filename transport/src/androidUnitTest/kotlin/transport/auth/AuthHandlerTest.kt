@@ -5,7 +5,6 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEmpty
-import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.auth.AuthHandlerImpl
@@ -40,11 +39,13 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.serialization.encodeToString
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import kotlin.test.assertFalse
 
 class AuthHandlerTest {
 
@@ -537,14 +538,13 @@ class AuthHandlerTest {
     }
 
     @Test
-    fun `when shouldAuthorize() and auth is disabled in deployment config`() {
+    fun `when shouldAuthorize() and auth is disabled in deployment config`() = runTest {
         subject = buildAuthHandler(isAuthEnabled = { false })
-        var callbackResult: Boolean? = null
 
-        subject.shouldAuthorize { result -> callbackResult = result }
-
-        assertThat(callbackResult).isNotNull().isFalse()
-        coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
+        subject.shouldAuthorize { result ->
+            assertFalse(result)
+            coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
+        }
     }
 
     @Test

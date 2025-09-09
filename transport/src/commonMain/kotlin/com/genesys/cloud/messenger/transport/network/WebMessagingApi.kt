@@ -162,7 +162,7 @@ internal class WebMessagingApi(
     } catch (cancellationException: CancellationException) {
         Result.Failure(ErrorCode.CancellationError, cancellationException.message)
     } catch (e: Exception) {
-        Result.Failure(ErrorCode.UnexpectedError, e.message)
+        Result.Failure(ErrorCode.DeploymentConfigFetchFailed, e.message)
     }
 }
 
