@@ -9,6 +9,7 @@ import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.StateChange
+import com.genesys.cloud.messenger.transport.core.TransportSDKException
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.isClosed
 import com.genesys.cloud.messenger.transport.core.isConfigured
@@ -336,5 +337,29 @@ class MCConnectionTests : BaseMessagingClientTest() {
             invalidateSessionTokenSequence()
             mockStateChangedListener(fromConnectedToError(MessagingClient.State.Error(ErrorCode.CannotDowngradeToUnauthenticated, ErrorTest.MESSAGE)))
         }
+    }
+
+    @Test
+    fun `when connect is called without deployment config`() {
+        every { mockDeploymentConfig.get() } returns null
+
+        val exception = assertFailsWith<TransportSDKException> {
+            subject.connect()
+        }
+
+        assertThat(exception.errorCode).isEqualTo(ErrorCode.MissingDeploymentConfig)
+        assertThat(exception.message).isEqualTo(ErrorMessage.MissingDeploymentConfig)
+    }
+
+    @Test
+    fun `when connectAuthenticatedSession is called without deployment config`() {
+        every { mockDeploymentConfig.get() } returns null
+
+        val exception = assertFailsWith<TransportSDKException> {
+            subject.connectAuthenticatedSession()
+        }
+
+        assertThat(exception.errorCode).isEqualTo(ErrorCode.MissingDeploymentConfig)
+        assertThat(exception.message).isEqualTo(ErrorMessage.MissingDeploymentConfig)
     }
 }

@@ -46,6 +46,8 @@ final class MessengerInteractor {
             print("Event: \(event)")
             self?.eventSubject.send(event)
         }
+        
+        self.fetchDeployment(completion: { _, _ in })
     }
 
     func getFileAttachmentProfile() -> FileAttachmentProfile? {

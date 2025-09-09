@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.utility
 
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
+import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
@@ -68,6 +69,12 @@ object TestValues {
         INT_KEY to 123,
         BOOLEAN_KEY to false
     )
+
+    internal val configuration = Configuration(
+        deploymentId = DEPLOYMENT_ID,
+        domain = DOMAIN,
+    )
+
     internal val application = "TransportSDK-${MessengerTransportSDK.sdkVersion}"
 }
 
@@ -96,6 +103,11 @@ object InvalidValues {
     internal const val INVALID_REFRESH_TOKEN = "invalid_refresh_token"
     internal const val CANCELLATION_EXCEPTION = "cancellation_exception"
     internal const val UNKNOWN_EXCEPTION = "unknown_exception"
+
+    internal val configuration = Configuration(
+        deploymentId = DEPLOYMENT_ID,
+        domain = DOMAIN,
+    )
 }
 
 object MessageValues {

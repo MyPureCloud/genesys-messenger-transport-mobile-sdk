@@ -3,7 +3,6 @@ package transport.core
 import android.content.Context
 import assertk.assertThat
 import assertk.assertions.isInstanceOf
-import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.EncryptedVault
@@ -37,24 +36,14 @@ class MessengerTransportSDKTest {
 
     @Test
     fun `should create DefaultVault when encryptedVault is false`() {
-        val configuration = Configuration(
-            deploymentId = "testDeploymentId",
-            domain = "testDomain",
-            encryptedVault = false
-        )
-
-        val sdk = MessengerTransportSDK(configuration)
+        val sdk = MessengerTransportSDK(TestValues.configuration)
 
         assertThat(sdk.vault).isInstanceOf(DefaultVault::class.java)
     }
 
     @Test
     fun `should create EncryptedVault when encryptedVault is true`() {
-        val configuration = Configuration(
-            deploymentId = "testDeploymentId",
-            domain = "testDomain",
-            encryptedVault = true
-        )
+        val configuration = TestValues.configuration.copy(encryptedVault = true)
 
         val sdk = MessengerTransportSDK(configuration)
 
@@ -63,11 +52,7 @@ class MessengerTransportSDKTest {
 
     @Test
     fun `should use provided vault regardless of encryptedVault setting`() {
-        val configuration = Configuration(
-            deploymentId = "testDeploymentId",
-            domain = "testDomain",
-            encryptedVault = true
-        )
+        val configuration = TestValues.configuration.copy(encryptedVault = true)
         val customVault = FakeVault(TestValues.vaultKeys)
 
         val sdk = MessengerTransportSDK(configuration, customVault)

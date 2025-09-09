@@ -16,12 +16,7 @@ import com.genesys.cloud.messenger.transport.util.TokenStore
 import com.genesys.cloud.messenger.transport.util.Urls
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.logs.Log
-import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 
 /**
  * The entry point to the services provided by the transport SDK.
@@ -80,15 +75,6 @@ class MessengerTransportSDK(
      */
     fun createMessagingClient(): MessagingClient {
         val log = Log(configuration.logging, LogTag.MESSAGING_CLIENT)
-        if (deploymentConfig == null) {
-            CoroutineScope(Dispatchers.Main + SupervisorJob()).launch {
-                try {
-                    fetchDeploymentConfig()
-                } catch (t: Throwable) {
-                    log.w { LogMessages.failedFetchDeploymentConfig(t) }
-                }
-            }
-        }
         val api = WebMessagingApi(urls, configuration)
         val webSocket = PlatformSocket(
             log.withTag(LogTag.WEBSOCKET),
