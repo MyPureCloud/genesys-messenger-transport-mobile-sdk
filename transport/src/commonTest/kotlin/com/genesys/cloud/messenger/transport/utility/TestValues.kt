@@ -12,7 +12,6 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.PushErrorResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ButtonResponseContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.QuickReplyContent
-import com.genesys.cloud.messenger.transport.util.PUSH_CONFIG_KEY
 import com.genesys.cloud.messenger.transport.util.Vault
 
 internal const val DEFAULT_TIMEOUT = 10000L
@@ -33,7 +32,12 @@ object TestValues {
     internal const val TOKEN_KEY = "token_key"
     internal const val AUTH_REFRESH_TOKEN_KEY = "auth_refresh_token_key"
     internal const val WAS_AUTHENTICATED = "was_authenticated"
+    internal const val PUSH_CONFIG_KEY = "push_config_key"
     internal const val LOG_TAG = "TestLogTag"
+    internal const val CUSTOM_KEY = "custom_key"
+    internal const val INT_KEY = "int_key"
+    internal const val BOOLEAN_KEY = "boolean_key"
+    internal const val TRUE_STRING = "true"
     internal val defaultMap = mapOf("A" to "BBBBBB")
     internal val defaultSecureMap = mapOf("A" to "**BBBB")
     internal val advancedMap = mapOf("metadata" to """{"key":"value"}""")
@@ -55,6 +59,14 @@ object TestValues {
         authRefreshTokenKey = AUTH_REFRESH_TOKEN_KEY,
         wasAuthenticated = WAS_AUTHENTICATED,
         pushConfigKey = PUSH_CONFIG_KEY,
+    )
+    internal val migrationTestData = mapOf(
+        TOKEN_KEY to TOKEN,
+        AUTH_REFRESH_TOKEN_KEY to SECONDARY_TOKEN,
+        WAS_AUTHENTICATED to TRUE_STRING,
+        CUSTOM_KEY to DEFAULT_STRING,
+        INT_KEY to 123,
+        BOOLEAN_KEY to false
     )
     internal val application = "TransportSDK-${MessengerTransportSDK.sdkVersion}"
 }

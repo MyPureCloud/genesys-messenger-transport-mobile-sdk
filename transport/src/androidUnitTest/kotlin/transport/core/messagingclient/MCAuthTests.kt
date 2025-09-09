@@ -122,7 +122,37 @@ class MCAuthTests : BaseMessagingClientTest() {
 
     @Test
     fun `when logoutFromAuthenticatedSession and WebSocket is not configured`() {
-        assertFailsWith<IllegalStateException> { subject.logoutFromAuthenticatedSession() }
+        subject.logoutFromAuthenticatedSession()
+
+        verify {
+            mockAuthHandler.logout()
+        }
+    }
+
+    @Test
+    fun `when logoutFromAuthenticatedSession from any state`() {
+        // Test from Idle state
+        assertThat(subject.currentState).isIdle()
+        subject.logoutFromAuthenticatedSession()
+        verify { mockAuthHandler.logout() }
+
+        // Test from Error state
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.sessionNotFound)
+        }
+        subject.connect()
+        assertThat(subject.currentState).isError(ErrorCode.SessionNotFound, "session not found error message")
+        subject.logoutFromAuthenticatedSession()
+        verify(exactly = 2) { mockAuthHandler.logout() }
+
+        // Test from ReadOnly state
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.configureSuccess(readOnly = true))
+        }
+        subject.connect()
+        assertThat(subject.currentState).isReadOnly()
+        subject.logoutFromAuthenticatedSession()
+        verify(exactly = 3) { mockAuthHandler.logout() }
     }
 
     @Test

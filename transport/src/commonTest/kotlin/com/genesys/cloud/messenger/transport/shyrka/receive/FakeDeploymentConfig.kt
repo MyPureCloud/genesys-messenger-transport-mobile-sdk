@@ -54,10 +54,12 @@ fun createConversationsVOForTesting(
     conversationDisconnect: ConversationDisconnect = ConversationDisconnect(),
     conversationClear: ConversationClear = ConversationClear(enabled = true),
     notifications: Notifications = Notifications(enabled = false, notificationContentType = Notifications.NotificationContentType.IncludeMessagesContent),
+    markdown: Conversations.Markdown = Conversations.Markdown(enabled = false),
 ): Conversations = Conversations(
     messagingEndpoint = DeploymentConfigValues.MESSAGING_ENDPOINT,
     autoStart = autoStart,
     conversationDisconnect = conversationDisconnect,
     conversationClear = conversationClear,
     notifications = notifications,
+    markdown = markdown,
 )

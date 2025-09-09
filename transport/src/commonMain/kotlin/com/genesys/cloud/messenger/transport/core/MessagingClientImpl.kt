@@ -325,9 +325,7 @@ internal class MessagingClientImpl(
         }
     }
 
-    @Throws(IllegalStateException::class)
     override fun logoutFromAuthenticatedSession() {
-        stateMachine.checkIfConfigured()
         authHandler.logout()
     }
 

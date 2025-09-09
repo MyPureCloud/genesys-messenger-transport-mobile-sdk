@@ -116,6 +116,7 @@ internal class WebMessagingApi(
         val response = client.post(urls.jwtAuthUrl.toString()) {
             header("content-type", ContentType.Application.Json)
             setBody(requestBody)
+            retryOnServerErrors()
         }
         if (response.status.isSuccess()) {
             Result.Success(response.body())
@@ -170,7 +171,7 @@ internal class WebMessagingApi(
             this.method = operation.httpMethod
             header("content-type", ContentType.Application.Json)
             setBody(userPushConfig.toDeviceTokenRequestBody(operation))
-            retryOnInternalServerErrors()
+            retryOnServerErrors()
         }
 
         if (response.status.isSuccess()) {
