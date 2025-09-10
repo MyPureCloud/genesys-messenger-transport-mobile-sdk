@@ -92,17 +92,22 @@ private fun List<AttachmentContent>.toAttachments(): Map<String, Attachment> {
 private fun List<StructuredMessage.Content>.toQuickReplies(): List<ButtonResponse> {
     val filteredQuickReply = this.filterIsInstance<QuickReplyContent>()
     val filteredButtonResponse = this.filterIsInstance<ButtonResponseContent>()
-    return when {
-        filteredQuickReply.isNotEmpty() -> filteredQuickReply.map {
+
+    if (filteredQuickReply.isNotEmpty()) {
+        return filteredQuickReply.map {
             it.quickReply.run { ButtonResponse(text, payload, "QuickReply") }
         }
-
-        filteredButtonResponse.isNotEmpty() -> filteredButtonResponse.map {
-            it.buttonResponse.run { ButtonResponse(text, payload, type) }
-        }
-
-        else -> emptyList()
     }
+
+    if (filteredButtonResponse.isNotEmpty()) {
+        return filteredButtonResponse
+            .mapNotNull { it.buttonResponse }
+            .map { br -> br.copy(type = br.type.normalizeButtonType()) }
+            .filter { it.type == "QuickReply" }
+            .map { br -> ButtonResponse(br.text, br.payload, "QuickReply") }
+    }
+
+    return emptyList()
 }
 
 private fun StructuredMessage.Content.Action.toMessageCardAction(): ButtonResponse? =
@@ -114,9 +119,9 @@ private fun StructuredMessage.Content.Action.toMessageCardAction(): ButtonRespon
         )
         type.equals("Postback", ignoreCase = true) ||
             type.equals("Button", ignoreCase = true) -> ButtonResponse(
-            type = "QuickReply",
+            type = "Button",
             text = text,
-            payload = payload!!
+            payload = payload ?: ""
         )
         else -> null
     }
@@ -156,6 +161,12 @@ private fun StructuredMessage.Type.toMessageType(hasQuickReplies: Boolean, hasCa
                 else -> Message.Type.Unknown
             }
         }
+    }
+
+private fun String.normalizeButtonType(): String =
+    when {
+        this.equals("QuickReply", ignoreCase = true) -> "QuickReply"
+        else -> "Button" // anything else (including "Postback") is treated as Button
     }
 
 internal fun String.isHealthCheckResponseId(): Boolean = this == HealthCheckID

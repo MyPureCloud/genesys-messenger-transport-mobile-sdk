@@ -1059,10 +1059,75 @@ internal class MessageExtensionTest {
         val message = givenStructuredMessage.toMessage()
         val card = message.cards.single()
         val linkAction = card.actions.first { it.type == CardTestValues.LINK_TYPE }
-        val postbackAction = card.actions.first { it.type == QuickReplyTestValues.QUICK_REPLY }
+        val postbackAction = card.actions.first { it.type == QuickReplyTestValues.BUTTON }
 
         assertThat(linkAction.payload).isEqualTo(expectedUrl)
 
         assertThat(postbackAction.payload).isEqualTo(expectedPayload)
+    }
+
+    @Test
+    fun `when StructuredMessage has QuickReplyContent then messageType is QuickReply and quickReplies mapped`() {
+        val givenStructuredMessage = StructuredMessageValues.createStructuredMessageForTesting(
+            type = StructuredMessage.Type.Structured,
+            content = listOf(QuickReplyTestValues.createQuickReplyContentForTesting())
+        )
+        val expectedMessageType = Message.Type.QuickReply
+        val expectedQuickReply = ButtonResponse(
+            text = QuickReplyTestValues.TEXT_A,
+            payload = QuickReplyTestValues.PAYLOAD_A,
+            type = QuickReplyTestValues.QUICK_REPLY
+        )
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result.messageType).isEqualTo(expectedMessageType)
+        assertThat(result.quickReplies).containsExactly(expectedQuickReply)
+        assertThat(result.cards).isEmpty()
+    }
+
+    @Test
+    fun `when StructuredMessage has ButtonResponseContent with type QuickReply then messageType is QuickReply and quickReplies mapped`() {
+        val givenStructuredMessage = StructuredMessageValues.createStructuredMessageForTesting(
+            type = StructuredMessage.Type.Structured,
+            content = listOf(QuickReplyTestValues.createButtonResponseContentForTesting())
+        )
+        val expectedMessageType = Message.Type.QuickReply
+        val expectedQuickReply = ButtonResponse(
+            text = QuickReplyTestValues.TEXT_A,
+            payload = QuickReplyTestValues.PAYLOAD_A,
+            type = QuickReplyTestValues.QUICK_REPLY
+        )
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result.messageType).isEqualTo(expectedMessageType)
+        assertThat(result.quickReplies).containsExactly(expectedQuickReply)
+        assertThat(result.cards).isEmpty()
+    }
+
+    @Test
+    fun `when StructuredMessage has ButtonResponseContent with type Button then messageType is Unknown and quickReplies empty`() {
+        val givenButton = StructuredMessage.Content.ButtonResponseContent.ButtonResponse(
+            text = QuickReplyTestValues.TEXT_A,
+            payload = QuickReplyTestValues.PAYLOAD_A,
+            type = QuickReplyTestValues.BUTTON
+        )
+        val givenStructuredMessage = StructuredMessageValues.createStructuredMessageForTesting(
+            type = StructuredMessage.Type.Structured,
+            content = listOf(
+                StructuredMessage.Content.ButtonResponseContent(
+                    contentType = StructuredMessage.Content.Type.ButtonResponse.name,
+                    buttonResponse = givenButton
+                )
+            )
+        )
+        val expectedMessageType = Message.Type.Unknown
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result.messageType).isEqualTo(expectedMessageType)
+        assertThat(result.quickReplies).isEmpty()
+        assertThat(result.cards).isEmpty()
     }
 }
