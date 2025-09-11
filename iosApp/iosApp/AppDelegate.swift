@@ -1,4 +1,5 @@
 import UIKit
+import UserNotifications
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -8,7 +9,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
-        true
+        
+        UNUserNotificationCenter.current().delegate = self
+        return true
     }
 
     // MARK: UISceneSession Lifecycle
@@ -29,4 +32,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 func appDelegate() -> AppDelegate {
     return UIApplication.shared.delegate as! AppDelegate
+}
+
+//MARK: Push notifications handling
+extension AppDelegate: UNUserNotificationCenterDelegate {
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        let token = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
+        
+        NotificationCenter.default.post(name: Notification.Name.deviceTokenReceived, object: nil, userInfo: ["token": token])
+    }
+    
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: any Error) {
+        print("Failed to register: \(error.localizedDescription)")
+    }
+    
+    func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable: Any],fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+        print("Push notification received")
+        NotificationCenter.default.post(name: Notification.Name.notificationReceived, object: nil, userInfo: userInfo)
+
+        completionHandler(.newData)
+    }
 }

@@ -291,6 +291,34 @@ class AuthHandlerTest {
     }
 
     @Test
+    fun `when logout() without authorize failed because of 401`() {
+        coEvery { mockWebMessagingApi.logoutFromAuthenticatedSession(NO_JWT) } returns Result.Failure(
+            ErrorCode.ClientResponseError(401),
+            ErrorTest.MESSAGE
+        )
+        val expectedErrorCode = ErrorCode.ClientResponseError(401)
+        val expectedErrorMessage = ErrorTest.MESSAGE
+        val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
+
+        subject.logout()
+
+        coVerify {
+            mockWebMessagingApi.logoutFromAuthenticatedSession(NO_JWT)
+        }
+        verify {
+            mockLogger.e(capture(logSlot))
+            mockEventHandler.onEvent(
+                Event.Error(
+                    expectedErrorCode,
+                    expectedErrorMessage,
+                    expectedCorrectiveAction
+                )
+            )
+        }
+        assertThat(logSlot.captured.invoke()).isEqualTo(LogMessages.requestError("logout()", expectedErrorCode, expectedErrorMessage))
+    }
+
+    @Test
     fun `when authorized and logout() failed because of 401 and autoRefreshTokenWhenExpired is enabled but refreshToken() success`() {
         authorize()
         coEvery { mockWebMessagingApi.logoutFromAuthenticatedSession(any()) } returns Result.Failure(

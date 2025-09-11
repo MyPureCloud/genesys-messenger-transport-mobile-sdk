@@ -5,7 +5,12 @@ package com.genesys.cloud.messenger.transport.util
  */
 internal expect class Platform() {
     /**
-     * The name of the OS version currently running on this device.
+     * The name of the OS currently running on this device.
+     */
+    val os: String
+
+    /**
+     * The name of the OS and its version currently running on this device.
      */
     val platform: String
 
@@ -22,4 +27,6 @@ internal expect class Platform() {
      * @return the difference, in milliseconds, between current time and midnight January 1, 1970 UTC.
      */
     fun epochMillis(): Long
+
+    fun preferredLanguage(): String
 }

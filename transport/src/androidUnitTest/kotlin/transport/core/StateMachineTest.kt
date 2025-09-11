@@ -44,13 +44,13 @@ class StateMachineTest {
     }
 
     @Test
-    fun whenSubjectWasInitialized() {
+    fun `when subject was initialized`() {
         assertThat(subject.currentState).isIdle()
         assertTrue { subject.isInactive() }
     }
 
     @Test
-    fun whenOnConnectionOpened() {
+    fun `when onConnectionOpened`() {
         val expectedStateChange = StateChange(State.Idle, State.Connected)
 
         subject.onConnectionOpened()
@@ -71,7 +71,7 @@ class StateMachineTest {
     }
 
     @Test
-    fun whenOnConnectionOpenedAfterOnReconnect() {
+    fun `when onConnectionOpened after onReconnect`() {
         val expectedStateChange = StateChange(State.Idle, State.Reconnecting)
 
         subject.onReconnect()
@@ -86,7 +86,7 @@ class StateMachineTest {
     }
 
     @Test
-    fun whenOnConnect() {
+    fun `when onConnect`() {
         val expectedStateChange = StateChange(State.Idle, State.Connecting)
 
         subject.onConnect()
@@ -100,7 +100,7 @@ class StateMachineTest {
     }
 
     @Test
-    fun whenOnConnectAfterOnReconnect() {
+    fun `when onConnect after onReconnect`() {
         val expectedStateChange = StateChange(State.Idle, State.Reconnecting)
 
         subject.onReconnect()
@@ -115,28 +115,28 @@ class StateMachineTest {
     }
 
     @Test
-    fun whenOnConnectAndCurrentStateIsConnected() {
+    fun `when onConnect and current state is Connected`() {
         subject.onConnectionOpened()
 
         assertFailsWith<IllegalStateException> { subject.onConnect() }
     }
 
     @Test
-    fun whenOnConnectAndCurrentStateIsConfigured() {
+    fun `when onConnect and current state is Configured`() {
         subject.onSessionConfigured(connected = true, newSession = true)
 
         assertFailsWith<IllegalStateException> { subject.onConnect() }
     }
 
     @Test
-    fun whenOnConnectAndCurrentStateIsReadOnly() {
+    fun `when onConnect and current state is ReadOnly`() {
         subject.onReadOnly()
 
         assertFailsWith<IllegalStateException> { subject.onConnect() }
     }
 
     @Test
-    fun whenOnReconnect() {
+    fun `when onReconnect`() {
         val expectedStateChange = StateChange(State.Idle, State.Reconnecting)
 
         subject.onReconnect()
@@ -150,7 +150,7 @@ class StateMachineTest {
     }
 
     @Test
-    fun whenOnSessionConfigured() {
+    fun `when onSessionConfigured`() {
         val expectedStateChange =
             StateChange(State.Idle, State.Configured(connected = true, newSession = true))
 
@@ -168,7 +168,7 @@ class StateMachineTest {
     }
 
     @Test
-    fun whenOnSessionConfiguredAfterOnReconnect() {
+    fun `when onSessionConfigured after onReconnect`() {
         val expectedStateChange =
             StateChange(State.Reconnecting, State.Configured(connected = true, newSession = true))
 
@@ -187,7 +187,7 @@ class StateMachineTest {
     }
 
     @Test
-    fun whenOnClosingAfterConnectionWasOpened() {
+    fun `when onClosing after connection was opened`() {
         val expectedStateChange =
             StateChange(State.Connected, State.Closing(code = 1, reason = "A reason."))
 
@@ -203,26 +203,26 @@ class StateMachineTest {
     }
 
     @Test
-    fun whenOnClosingAndCurrentStateIsIdle() {
+    fun `when onClosing and current state is Idle`() {
         assertFailsWith<IllegalStateException> { subject.onClosing(code = 1, reason = "A reason.") }
     }
 
     @Test
-    fun whenOnClosingAndCurrentStateIsClosed() {
+    fun `when onClosing and current state is Closed`() {
         subject.onClosed(code = 1, reason = "A reason.")
 
         assertFailsWith<IllegalStateException> { subject.onClosing(code = 1, reason = "A reason.") }
     }
 
     @Test
-    fun whenOnClosingWhenStateIsError() {
+    fun `when onClosing when state is Error`() {
         subject.onError(code = ErrorCode.WebsocketError, message = "A message.")
 
         assertFailsWith<IllegalStateException> { subject.onClosing(code = 1, reason = "A reason.") }
     }
 
     @Test
-    fun whenOnClosed() {
+    fun `when onClosed`() {
         val expectedStateChange =
             StateChange(State.Idle, State.Closed(code = 1, reason = "A reason."))
 
@@ -237,7 +237,7 @@ class StateMachineTest {
     }
 
     @Test
-    fun whenOnError() {
+    fun `when onError`() {
         val expectedStateChange =
             StateChange(State.Idle, State.Error(ErrorCode.WebsocketError, "A message."))
 
@@ -260,7 +260,7 @@ class StateMachineTest {
     }
 
     @Test
-    fun whenOnReadOnly() {
+    fun `when onReadOnly`() {
         val expectedStateChange = StateChange(State.Idle, State.ReadOnly)
 
         subject.onReadOnly()
@@ -273,7 +273,7 @@ class StateMachineTest {
     }
 
     @Test
-    fun whenOnReadOnlyAfterOnReconnect() {
+    fun `when onReadOnly after onReconnect`() {
         val expectedStateChange = StateChange(State.Reconnecting, State.ReadOnly)
 
         subject.onReconnect()
@@ -287,7 +287,7 @@ class StateMachineTest {
     }
 
     @Test
-    fun verifyFullStateTransitionCycle() {
+    fun `validate full state transition cycle`() {
         subject.onConnect()
         assertThat(subject.currentState).isConnecting()
         subject.onConnectionOpened()
