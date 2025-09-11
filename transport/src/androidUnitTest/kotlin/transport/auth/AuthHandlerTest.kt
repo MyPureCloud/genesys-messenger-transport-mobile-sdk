@@ -46,6 +46,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class AuthHandlerTest {
 
@@ -548,12 +549,10 @@ class AuthHandlerTest {
     }
 
     @Test
-    fun `when shouldAuthorize() and auth is enabled in deployment config`() {
-        var callbackResult: Boolean? = null
-
-        subject.shouldAuthorize { result -> callbackResult = result }
-
-        assertThat(callbackResult!!).isTrue()
-        coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
+    fun `when shouldAuthorize() and auth is enabled in deployment config`() = runTest {
+        subject.shouldAuthorize { result ->
+            assertTrue(result)
+            coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
+        }
     }
 }
