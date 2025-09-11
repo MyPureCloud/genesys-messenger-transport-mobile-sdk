@@ -8,12 +8,12 @@ import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.resolveContentType
-import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.core.toErrorCode
 import com.genesys.cloud.messenger.transport.push.DeviceTokenOperation
 import com.genesys.cloud.messenger.transport.push.DeviceTokenRequestBody
 import com.genesys.cloud.messenger.transport.push.PushConfig
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
+import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageEntityList
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.PushErrorResponse

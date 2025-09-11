@@ -21,8 +21,8 @@ import com.genesys.cloud.messenger.transport.network.test_engines.uploadFileEngi
 import com.genesys.cloud.messenger.transport.network.test_engines.validHeaders
 import com.genesys.cloud.messenger.transport.push.DeviceTokenOperation
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
-import com.genesys.cloud.messenger.transport.util.Urls
 import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
+import com.genesys.cloud.messenger.transport.util.Urls
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.DEFAULT_TIMEOUT
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
