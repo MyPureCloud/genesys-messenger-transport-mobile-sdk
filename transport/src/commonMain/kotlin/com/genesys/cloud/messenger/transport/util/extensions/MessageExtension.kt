@@ -25,12 +25,13 @@ internal fun List<StructuredMessage>.toMessageList(): List<Message> =
 internal fun StructuredMessage.toMessage(): Message {
     val quickReplies = content.toQuickReplies()
     val cards = content.toCards()
+    val hasCardSelection = content.hasCardSelection()
 
     return Message(
         id = metadata["customMessageId"] ?: id,
         direction = if (isInbound()) Direction.Inbound else Direction.Outbound,
         state = Message.State.Sent,
-        messageType = type.toMessageType(quickReplies.isNotEmpty(), cards.isNotEmpty()),
+        messageType = type.toMessageType(quickReplies.isNotEmpty(), hasCardSelection, cards.isNotEmpty()),
         text = text,
         timeStamp = channel?.time.fromIsoToEpochMilliseconds(),
         attachments = content.filterIsInstance<AttachmentContent>().toAttachments(),
@@ -101,9 +102,9 @@ private fun List<StructuredMessage.Content>.toQuickReplies(): List<ButtonRespons
 
     if (filteredButtonResponse.isNotEmpty()) {
         return filteredButtonResponse
-            .mapNotNull { it.buttonResponse }
-            .map { br -> br.copy(type = br.type.normalizeButtonType()) }
-            .filter { it.type == "QuickReply" }
+            .mapNotNull { br ->
+                br.buttonResponse.takeIf { it.type.normalizeButtonType() == "QuickReply" }
+            }
             .map { br -> ButtonResponse(br.text, br.payload, "QuickReply") }
     }
 
@@ -150,14 +151,14 @@ private fun List<StructuredMessage.Content>.toCards(): List<Message.Card> =
         }
     }
 
-private fun StructuredMessage.Type.toMessageType(hasQuickReplies: Boolean, hasCards: Boolean): Message.Type =
+private fun StructuredMessage.Type.toMessageType(hasQuickReplies: Boolean, hasCards: Boolean, hasCardSelection: Boolean): Message.Type =
     when (this) {
         StructuredMessage.Type.Text -> Message.Type.Text
         StructuredMessage.Type.Event -> Message.Type.Event
         StructuredMessage.Type.Structured -> {
             when {
                 hasQuickReplies -> Message.Type.QuickReply
-                hasCards -> Message.Type.Cards
+                hasCards || hasCardSelection -> Message.Type.Cards
                 else -> Message.Type.Unknown
             }
         }
@@ -166,8 +167,17 @@ private fun StructuredMessage.Type.toMessageType(hasQuickReplies: Boolean, hasCa
 private fun String.normalizeButtonType(): String =
     when {
         this.equals("QuickReply", ignoreCase = true) -> "QuickReply"
-        else -> "Button" // anything else (including "Postback") is treated as Button
+        else -> "Button"
     }
+
+// private fun List<StructuredMessage.Content>.hasCardSelection(): Boolean =
+//    this.filterIsInstance<ButtonResponseContent>()
+//        .map { it.buttonResponse }
+//        .any { it.type.normalizeButtonType() == "Button" }
+
+private fun List<StructuredMessage.Content>.hasCardSelection(): Boolean =
+    this.filterIsInstance<ButtonResponseContent>()
+        .any { it.buttonResponse.type.normalizeButtonType() == "Button" }
 
 internal fun String.isHealthCheckResponseId(): Boolean = this == HealthCheckID
 
