@@ -324,10 +324,8 @@ class WebMessagingApiTest {
 
     @Test
     fun `when fetchDeploymentConfig fails with bad request`() {
-        val brokenConfiguration = Configuration(
-            deploymentId = TestValues.DEPLOYMENT_ID,
-            domain = InvalidValues.DOMAIN,
-            logging = false
+        val brokenConfiguration = InvalidValues.configuration.copy(
+            deploymentId = TestValues.DEPLOYMENT_ID
         )
         subject = buildWebMessagingApiWith(brokenConfiguration) { deploymentConfigEngine() }
         val expectedResult = Result.Failure(ErrorCode.DeploymentConfigFetchFailed, "Bad Request")
@@ -339,10 +337,9 @@ class WebMessagingApiTest {
 
     @Test
     fun `when fetchDeploymentConfig result in CancellationException`() {
-        val brokenConfiguration = Configuration(
+        val brokenConfiguration = InvalidValues.configuration.copy(
             deploymentId = TestValues.DEPLOYMENT_ID,
             domain = InvalidValues.CANCELLATION_EXCEPTION,
-            logging = false
         )
         subject = buildWebMessagingApiWith(brokenConfiguration) { deploymentConfigEngine() }
         val expectedResult = Result.Failure(ErrorCode.CancellationError, ErrorTest.MESSAGE)
@@ -354,10 +351,9 @@ class WebMessagingApiTest {
 
     @Test
     fun `when fetchDeploymentConfig result in UnknownException`() {
-        val brokenConfiguration = Configuration(
+        val brokenConfiguration = InvalidValues.configuration.copy(
             deploymentId = TestValues.DEPLOYMENT_ID,
             domain = InvalidValues.UNKNOWN_EXCEPTION,
-            logging = false
         )
         subject = buildWebMessagingApiWith(brokenConfiguration) { deploymentConfigEngine() }
         val expectedResult = Result.Failure(ErrorCode.DeploymentConfigFetchFailed, ErrorTest.MESSAGE)
