@@ -380,7 +380,7 @@ internal class AttachmentHandlerImplTest {
             assertThat(id).isEqualTo(expectedAttachment.id)
             assertThat(fileName).isNull()
             assertThat((state as State.Error).errorCode).isEqualTo(expectedState.errorCode)
-            assertThat(state.errorMessage).isEqualTo(expectedState.errorMessage)
+            assertThat((state as State.Error).errorMessage).isEqualTo(expectedState.errorMessage)
         }
         assertThat(processedAttachments.containsKey(AttachmentValues.ID)).isFalse()
         assertThat(logSlot[0].invoke()).isEqualTo(
@@ -414,7 +414,7 @@ internal class AttachmentHandlerImplTest {
             assertThat(id).isEqualTo(expectedAttachment.id)
             assertThat(fileName).isNull()
             assertThat((state as State.Error).errorCode).isEqualTo(expectedState.errorCode)
-            assertThat(state.errorMessage).isEqualTo(expectedState.errorMessage)
+            assertThat((state as State.Error).errorMessage).isEqualTo(expectedState.errorMessage)
         }
         assertThat(processedAttachments.containsKey(AttachmentValues.ID)).isFalse()
         assertThat(logSlot[0].invoke()).isEqualTo(
@@ -448,7 +448,7 @@ internal class AttachmentHandlerImplTest {
             assertThat(id).isEqualTo(expectedAttachment.id)
             assertThat(fileName).isNull()
             assertThat((state as State.Error).errorCode).isEqualTo(expectedState.errorCode)
-            assertThat(state.errorMessage).isEqualTo(expectedState.errorMessage)
+            assertThat((state as State.Error).errorMessage).isEqualTo(expectedState.errorMessage)
         }
         assertThat(processedAttachments.containsKey(AttachmentValues.ID)).isFalse()
         assertThat(logSlot[0].invoke()).isEqualTo(
