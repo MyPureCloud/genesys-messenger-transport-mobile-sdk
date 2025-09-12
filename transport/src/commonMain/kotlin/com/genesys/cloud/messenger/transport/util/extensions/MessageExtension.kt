@@ -170,11 +170,6 @@ private fun String.normalizeButtonType(): String =
         else -> "Button"
     }
 
-// private fun List<StructuredMessage.Content>.hasCardSelection(): Boolean =
-//    this.filterIsInstance<ButtonResponseContent>()
-//        .map { it.buttonResponse }
-//        .any { it.type.normalizeButtonType() == "Button" }
-
 private fun List<StructuredMessage.Content>.hasCardSelection(): Boolean =
     this.filterIsInstance<ButtonResponseContent>()
         .any { it.buttonResponse.type.normalizeButtonType() == "Button" }
