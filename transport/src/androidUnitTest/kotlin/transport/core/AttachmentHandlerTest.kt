@@ -48,7 +48,7 @@ import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertFailsWith
 
-internal class AttachmentHandlerImplTest {
+internal class AttachmentHandlerTest {
     private val mockApi: WebMessagingApi = mockk {
         coEvery { uploadFile(any(), any(), captureLambda()) } coAnswers {
             thirdArg<(Float) -> Unit>().invoke(25f)
