@@ -31,7 +31,7 @@ internal fun StructuredMessage.toMessage(): Message {
         id = metadata["customMessageId"] ?: id,
         direction = if (isInbound()) Direction.Inbound else Direction.Outbound,
         state = Message.State.Sent,
-        messageType = type.toMessageType(quickReplies.isNotEmpty(), hasCardSelection, cards.isNotEmpty()),
+        messageType = type.toMessageType(quickReplies.isNotEmpty(), cards.isNotEmpty(), hasCardSelection),
         text = text,
         timeStamp = channel?.time.fromIsoToEpochMilliseconds(),
         attachments = content.filterIsInstance<AttachmentContent>().toAttachments(),
