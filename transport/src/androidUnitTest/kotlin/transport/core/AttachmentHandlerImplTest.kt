@@ -380,7 +380,7 @@ internal class AttachmentHandlerImplTest {
             assertThat(id).isEqualTo(expectedAttachment.id)
             assertThat(fileName).isNull()
             assertThat((state as State.Error).errorCode).isEqualTo(expectedState.errorCode)
-            assertThat((state as State.Error).errorMessage).isEqualTo(expectedState.errorMessage)
+            assertThat(state.errorMessage).isEqualTo(expectedState.errorMessage)
         }
         assertThat(processedAttachments.containsKey(AttachmentValues.ID)).isFalse()
         assertThat(logSlot[0].invoke()).isEqualTo(
@@ -414,7 +414,7 @@ internal class AttachmentHandlerImplTest {
             assertThat(id).isEqualTo(expectedAttachment.id)
             assertThat(fileName).isNull()
             assertThat((state as State.Error).errorCode).isEqualTo(expectedState.errorCode)
-            assertThat((state as State.Error).errorMessage).isEqualTo(expectedState.errorMessage)
+            assertThat(state.errorMessage).isEqualTo(expectedState.errorMessage)
         }
         assertThat(processedAttachments.containsKey(AttachmentValues.ID)).isFalse()
         assertThat(logSlot[0].invoke()).isEqualTo(
@@ -427,7 +427,7 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenOnMessageErrorWithNullErrorMessage() {
+    fun `when onMessageError() with null error message`() {
         val expectedState = State.Error(ErrorCode.MessageTooLong, "")
         val expectedAttachment = Attachment(
             id = AttachmentValues.ID,
@@ -448,7 +448,7 @@ internal class AttachmentHandlerImplTest {
             assertThat(id).isEqualTo(expectedAttachment.id)
             assertThat(fileName).isNull()
             assertThat((state as State.Error).errorCode).isEqualTo(expectedState.errorCode)
-            assertThat((state as State.Error).errorMessage).isEqualTo(expectedState.errorMessage)
+            assertThat(state.errorMessage).isEqualTo(expectedState.errorMessage)
         }
         assertThat(processedAttachments.containsKey(AttachmentValues.ID)).isFalse()
         assertThat(logSlot[0].invoke()).isEqualTo(
@@ -491,7 +491,7 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenOnSendingHasNoUploadedAttachment() {
+    fun `when onSending() has no uploaded attachment`() {
         givenPrepareCalled()
 
         subject.onSending()
@@ -725,7 +725,7 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenSerializeAttachment() {
+    fun `when serializeAttachment()`() {
         val expectedAttachmentJson = """{"id":"${AttachmentValues.ID}"}"""
         val givenAttachment = Attachment(AttachmentValues.ID, AttachmentValues.FILE_NAME)
 
