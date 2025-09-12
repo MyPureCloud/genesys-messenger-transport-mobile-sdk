@@ -24,13 +24,11 @@ import org.junit.Test
 
 class EncryptedVaultTest {
 
-    // Mocks
     private val mockContext = mockk<Context>(relaxed = true)
     private val mockApplicationContext = mockk<Context>(relaxed = true)
     private val mockSharedPreferences = mockk<SharedPreferences>(relaxed = true)
     private val mockSharedPreferencesEditor = mockk<SharedPreferences.Editor>(relaxed = true)
 
-    // Test data
     private val testKeys = Vault.Keys(
         vaultKey = TestValues.VAULT_KEY,
         tokenKey = TestValues.TOKEN_KEY,
