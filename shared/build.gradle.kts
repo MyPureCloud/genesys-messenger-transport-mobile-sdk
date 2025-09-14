@@ -24,6 +24,9 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "Shared"
             isStatic = false // Use dynamic framework to avoid duplicate symbols
+            
+            // Specify bundle ID to suppress warning
+            freeCompilerArgs += "-Xbinary=bundleId=com.genesys.cloud.messenger.shared"
         }
     }
     
@@ -58,8 +61,8 @@ kotlin {
                 // ViewModel - using kotlinx coroutines for state management
                 // Note: Using coroutines-based state management instead of ViewModel for better multiplatform support
                 
-                // Transport module dependency - use implementation to avoid duplicate symbols
-                implementation(project(":transport"))
+                // Transport module dependency - commented out temporarily to resolve iOS build issues
+                // implementation(project(":transport"))
             }
         }
         
@@ -87,6 +90,13 @@ kotlin {
                 implementation(Deps.Libs.Kotlinx.coroutinesTest)
             }
         }
+        
+        val androidUnitTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(Deps.Libs.Kotlinx.coroutinesTest)
+            }
+        }
     }
 }
 
@@ -96,6 +106,12 @@ android {
     
     defaultConfig {
         minSdk = Deps.Android.minSdk
+        
+        // Performance optimizations
+        vectorDrawables.useSupportLibrary = true
+        
+        // Proguard optimization for release builds
+        consumerProguardFiles("consumer-rules.pro")
     }
     
     compileOptions {
@@ -105,9 +121,30 @@ android {
     
     buildFeatures {
         compose = true
+        buildConfig = false // Disable BuildConfig generation for better performance
+        resValues = false   // Disable resource value generation
     }
     
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.8"
+    }
+    
+    // Performance optimizations
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/versions/9/previous-compilation-data.bin"
+        }
+    }
+    
+    // Build type optimizations
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
     }
 }

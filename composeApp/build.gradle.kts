@@ -69,4 +69,15 @@ dependencies {
     implementation(Deps.Libs.ComposeMultiplatform.material3)
     
     testImplementation(Deps.Libs.junit)
+    
+    // Android integration testing dependencies
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:${Deps.composeVersion}")
+    androidTestImplementation("androidx.compose.ui:ui-test-manifest:${Deps.composeVersion}")
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test:rules:1.5.0")
+    androidTestImplementation("androidx.navigation:navigation-testing:2.7.6")
+    
+    debugImplementation("androidx.compose.ui:ui-test-manifest:${Deps.composeVersion}")
 }

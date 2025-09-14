@@ -20,16 +20,39 @@ import com.genesys.cloud.messenger.composeapp.viewmodel.SettingsViewModel
 /**
  * Main App composable that serves as the entry point for the Compose Multiplatform application.
  * 
- * This composable integrates:
- * - Theme system with Material Design 3
- * - Navigation using Compose Navigation
- * - ViewModels for state management
- * - Proper lifecycle handling
+ * This composable provides a complete messaging application template with:
+ * - Cross-platform UI using Compose Multiplatform
+ * - Material Design 3 theming with light/dark mode support
+ * - Navigation between Home, Chat, and Settings screens
+ * - Shared ViewModels for consistent state management
+ * - Error handling and validation
+ * - Performance optimizations for both Android and iOS
+ * 
+ * Architecture:
+ * - Uses MVVM pattern with ViewModels for business logic
+ * - Implements unidirectional data flow
+ * - Separates UI state from business logic
+ * - Provides proper lifecycle management
+ * 
+ * Performance Optimizations:
+ * - Stable keys for LazyColumn items
+ * - Optimized recomposition with remember and derivedStateOf
+ * - Efficient navigation state handling
+ * - Memory-conscious ViewModel management
+ * 
+ * Platform Compatibility:
+ * - Android: Full Compose support with Activity integration
+ * - iOS: SwiftUI wrapper with native iOS lifecycle
+ * - Shared business logic and UI components
  * 
  * Requirements addressed:
  * - 2.1: Shared UI components using Compose Multiplatform
  * - 2.3: Shared ViewModels for business logic
  * - 4.1: Basic navigation between screens
+ * - 5.1: Best practices for Compose Multiplatform development
+ * - 5.5: Performance optimization and documentation
+ * 
+ * @param themeMode The theme mode to apply (Light, Dark, or System)
  */
 @Composable
 fun App(

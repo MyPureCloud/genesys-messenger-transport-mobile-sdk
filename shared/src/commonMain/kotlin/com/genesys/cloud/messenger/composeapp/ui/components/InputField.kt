@@ -22,6 +22,7 @@ import com.genesys.cloud.messenger.composeapp.theme.CustomTextStyles
  * @param modifier Optional modifier for the component
  * @param placeholder Placeholder text to show when input is empty
  * @param enabled Whether the input field is enabled for interaction
+ * @param isError Whether the input field should show error state
  */
 @Composable
 fun InputField(
@@ -30,7 +31,8 @@ fun InputField(
     onSendMessage: () -> Unit,
     modifier: Modifier = Modifier,
     placeholder: String = "Type a message...",
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    isError: Boolean = false
 ) {
     val canSend = value.text.isNotBlank() && enabled
     
@@ -67,13 +69,15 @@ fun InputField(
                 enabled = enabled,
                 shape = RoundedCornerShape(24.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedBorderColor = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline,
+                    errorBorderColor = MaterialTheme.colorScheme.error,
                     disabledBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
                     focusedTextColor = MaterialTheme.colorScheme.onSurface,
                     unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                     disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
                 ),
+                isError = isError,
                 maxLines = 4,
                 singleLine = false
             )

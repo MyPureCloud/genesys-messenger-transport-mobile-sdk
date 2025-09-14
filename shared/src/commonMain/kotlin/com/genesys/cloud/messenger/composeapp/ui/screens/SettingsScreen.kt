@@ -44,6 +44,8 @@ fun SettingsScreen(
 ) {
     val uiState by settingsViewModel.uiState.collectAsState()
     val settings by settingsViewModel.settings.collectAsState()
+    val isLoading by settingsViewModel.isLoading.collectAsState()
+    val error by settingsViewModel.error.collectAsState()
     
     Column(
         modifier = modifier.fillMaxSize()
@@ -59,12 +61,15 @@ fun SettingsScreen(
         SettingsContent(
             uiState = uiState,
             settings = settings,
+            isLoading = isLoading,
+            error = error,
             onThemeChange = settingsViewModel::updateThemeMode,
             onNotificationsToggle = settingsViewModel::toggleNotifications,
             onLanguageChange = settingsViewModel::updateLanguage,
             onResetToDefaults = settingsViewModel::resetToDefaults,
             onClearError = settingsViewModel::clearError,
             onClearSuccessMessage = settingsViewModel::clearSuccessMessage,
+            onRetryLoad = settingsViewModel::reloadSettings,
             availableThemes = settingsViewModel.getAvailableThemeModes(),
             availableLanguages = settingsViewModel.getAvailableLanguages(),
             modifier = Modifier.fillMaxSize()
@@ -79,12 +84,15 @@ fun SettingsScreen(
 private fun SettingsContent(
     uiState: SettingsUiState,
     settings: AppSettings,
+    isLoading: Boolean,
+    error: com.genesys.cloud.messenger.composeapp.model.AppError?,
     onThemeChange: (ThemeMode) -> Unit,
     onNotificationsToggle: () -> Unit,
     onLanguageChange: (String) -> Unit,
     onResetToDefaults: () -> Unit,
     onClearError: () -> Unit,
     onClearSuccessMessage: () -> Unit,
+    onRetryLoad: () -> Unit,
     availableThemes: List<ThemeMode>,
     availableLanguages: List<LanguageOption>,
     modifier: Modifier = Modifier
@@ -105,14 +113,14 @@ private fun SettingsContent(
                 currentTheme = settings.theme,
                 availableThemes = availableThemes,
                 onThemeChange = onThemeChange,
-                enabled = !uiState.isLoading
+                enabled = !isLoading
             )
             
             // Notifications settings
             NotificationSettingsSection(
                 notificationsEnabled = settings.notifications,
                 onToggle = onNotificationsToggle,
-                enabled = !uiState.isLoading
+                enabled = !isLoading
             )
             
             // Language settings
@@ -120,20 +128,20 @@ private fun SettingsContent(
                 currentLanguage = settings.language,
                 availableLanguages = availableLanguages,
                 onLanguageChange = onLanguageChange,
-                enabled = !uiState.isLoading
+                enabled = !isLoading
             )
             
             // Reset section
             ResetSettingsSection(
                 onResetToDefaults = onResetToDefaults,
-                enabled = !uiState.isLoading
+                enabled = !isLoading
             )
             
             Spacer(modifier = Modifier.height(16.dp))
         }
         
         // Loading overlay
-        if (uiState.isLoading) {
+        if (isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -165,11 +173,12 @@ private fun SettingsContent(
             )
         }
         
-        // Error message
-        uiState.error?.let { error ->
-            ErrorMessage(
-                error = error,
+        // Error message using new error components
+        error?.let { appError ->
+            com.genesys.cloud.messenger.composeapp.ui.components.ErrorSnackbar(
+                error = appError,
                 onDismiss = onClearError,
+                onRetry = onRetryLoad,
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
         }
@@ -451,54 +460,3 @@ private fun SuccessMessage(
     }
 }
 
-/**
- * Error message display
- */
-@Composable
-private fun ErrorMessage(
-    error: String,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(
-                text = "Error",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = error,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                TextButton(onClick = onDismiss) {
-                    Text(
-                        text = "Dismiss",
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                }
-            }
-        }
-    }
-}

@@ -127,20 +127,48 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     private func setupLogging() {
         // Configure logging for debug builds
+        // In production, consider using a more sophisticated logging framework
         #if DEBUG
-        print("Debug logging enabled")
+        print("Debug logging enabled for iOS Compose Multiplatform app")
+        
+        // Enable additional debugging for Compose integration
+        UserDefaults.standard.set(true, forKey: "ComposeDebugEnabled")
+        #else
+        // Disable verbose logging in release builds for performance
+        UserDefaults.standard.set(false, forKey: "ComposeDebugEnabled")
         #endif
     }
     
     private func configureAppearance() {
-        // Configure global app appearance
+        // Configure global app appearance to match Compose Multiplatform theming
         if #available(iOS 13.0, *) {
             // iOS 13+ appearance configuration
-            // The app will use system appearance by default
+            // The app will use system appearance by default to match Material Design 3 theming
+            // This ensures consistency with the shared Compose theme system
+            
+            // Configure navigation bar appearance
+            let appearance = UINavigationBarAppearance()
+            appearance.configureWithOpaqueBackground()
+            UINavigationBar.appearance().standardAppearance = appearance
+            UINavigationBar.appearance().scrollEdgeAppearance = appearance
+            
+            // Configure tab bar appearance if needed
+            let tabBarAppearance = UITabBarAppearance()
+            tabBarAppearance.configureWithOpaqueBackground()
+            UITabBar.appearance().standardAppearance = tabBarAppearance
+            UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
         } else {
             // iOS 12 and earlier appearance configuration
+            // Fallback configuration for older iOS versions
             UIApplication.shared.statusBarStyle = .default
+            
+            // Configure navigation bar for consistency
+            UINavigationBar.appearance().isTranslucent = false
+            UINavigationBar.appearance().barTintColor = UIColor.systemBackground
         }
+        
+        // Ensure consistent appearance across the app
+        UIView.appearance().tintColor = UIColor.systemBlue
     }
 }
 

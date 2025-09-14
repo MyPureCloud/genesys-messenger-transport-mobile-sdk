@@ -1,16 +1,20 @@
 package com.genesys.cloud.messenger.composeapp.viewmodel
 
+import com.genesys.cloud.messenger.composeapp.model.AppError
 import com.genesys.cloud.messenger.composeapp.model.AppSettings
+import com.genesys.cloud.messenger.composeapp.model.Result
 import com.genesys.cloud.messenger.composeapp.model.ThemeMode
+import com.genesys.cloud.messenger.composeapp.validation.InputValidator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlin.random.Random
 
 /**
  * ViewModel for the Settings screen.
- * Manages app preferences and configuration settings.
+ * Manages app preferences, configuration settings, and validation.
  */
 class SettingsViewModel : BaseViewModel() {
     
@@ -25,70 +29,95 @@ class SettingsViewModel : BaseViewModel() {
     }
     
     /**
-     * Update the theme mode setting
+     * Update the theme mode setting with validation
      */
     fun updateThemeMode(themeMode: ThemeMode) {
         scope.launch {
-            val updatedSettings = _settings.value.copy(theme = themeMode)
-            _settings.value = updatedSettings
-            saveSettings(updatedSettings)
+            safeExecuteUnit(showLoading = false) {
+                val updatedSettings = _settings.value.copy(theme = themeMode)
+                _settings.value = updatedSettings
+                saveSettings(updatedSettings)
+                showSuccessMessage("Theme updated successfully")
+            }
         }
     }
     
     /**
-     * Toggle notifications setting
+     * Toggle notifications setting with validation
      */
     fun toggleNotifications() {
         scope.launch {
-            val updatedSettings = _settings.value.copy(notifications = !_settings.value.notifications)
-            _settings.value = updatedSettings
-            saveSettings(updatedSettings)
+            safeExecuteUnit(showLoading = false) {
+                val updatedSettings = _settings.value.copy(notifications = !_settings.value.notifications)
+                _settings.value = updatedSettings
+                saveSettings(updatedSettings)
+                showSuccessMessage("Notification settings updated")
+            }
         }
     }
     
     /**
-     * Update the language setting
+     * Update the language setting with validation
      */
     fun updateLanguage(language: String) {
         scope.launch {
-            val updatedSettings = _settings.value.copy(language = language)
-            _settings.value = updatedSettings
-            saveSettings(updatedSettings)
+            safeExecuteUnit(showLoading = false) {
+                // Validate language code
+                val availableLanguages = getAvailableLanguages().map { it.code }
+                val validationResult = InputValidator.validateLanguageCode(language, availableLanguages)
+                
+                when (validationResult) {
+                    is Result.Success -> {
+                        val updatedSettings = _settings.value.copy(language = validationResult.data)
+                        _settings.value = updatedSettings
+                        saveSettings(updatedSettings)
+                        showSuccessMessage("Language updated successfully")
+                    }
+                    is Result.Error -> {
+                        handleError(validationResult.error)
+                    }
+                }
+            }
         }
     }
     
     /**
-     * Reset all settings to default values
+     * Reset all settings to default values with confirmation
      */
     fun resetToDefaults() {
         scope.launch {
-            setLoading(true)
-            
-            // Simulate reset operation
-            delay(500)
-            
-            val defaultSettings = AppSettings()
-            _settings.value = defaultSettings
-            saveSettings(defaultSettings)
-            
-            setLoading(false)
-            showSuccessMessage("Settings reset to defaults")
+            safeExecuteUnit {
+                // Simulate reset operation
+                delay(500)
+                
+                // Simulate potential error (for demonstration)
+                if (Random.nextFloat() < 0.1f) { // 10% chance of error
+                    throw Exception("Failed to reset settings")
+                }
+                
+                val defaultSettings = AppSettings()
+                _settings.value = defaultSettings
+                saveSettings(defaultSettings)
+                showSuccessMessage("Settings reset to defaults")
+            }
         }
     }
     
     /**
-     * Load settings from storage (placeholder implementation)
+     * Load settings from storage with error handling
      */
     private fun loadSettings() {
         scope.launch {
-            setLoading(true)
-            
-            try {
+            safeExecuteUnit {
                 // Simulate loading from storage
                 delay(500)
                 
+                // Simulate potential loading error (for demonstration)
+                if (Random.nextFloat() < 0.05f) { // 5% chance of error
+                    throw Exception("Failed to access settings storage")
+                }
+                
                 // In a real implementation, this would load from platform-specific storage
-                // For now, we'll use default settings
                 val loadedSettings = AppSettings(
                     theme = ThemeMode.System,
                     notifications = true,
@@ -96,51 +125,31 @@ class SettingsViewModel : BaseViewModel() {
                 )
                 
                 _settings.value = loadedSettings
-                setLoading(false)
-            } catch (e: Exception) {
-                setError("Failed to load settings: ${e.message}")
-                setLoading(false)
             }
         }
     }
     
     /**
-     * Save settings to storage (placeholder implementation)
+     * Reload settings from storage
      */
-    private fun saveSettings(settings: AppSettings) {
-        scope.launch {
-            try {
-                // Simulate saving to storage
-                delay(200)
-                
-                // In a real implementation, this would save to platform-specific storage
-                // For now, we'll just show a success message
-                showSuccessMessage("Settings saved")
-            } catch (e: Exception) {
-                setError("Failed to save settings: ${e.message}")
-            }
+    fun reloadSettings() {
+        loadSettings()
+    }
+    
+    /**
+     * Save settings to storage with error handling
+     */
+    private suspend fun saveSettings(settings: AppSettings) {
+        // Simulate saving to storage
+        delay(200)
+        
+        // Simulate potential save error (for demonstration)
+        if (Random.nextFloat() < 0.05f) { // 5% chance of error
+            throw Exception("Failed to save settings to storage")
         }
-    }
-    
-    /**
-     * Set loading state
-     */
-    private fun setLoading(isLoading: Boolean) {
-        _uiState.value = _uiState.value.copy(isLoading = isLoading)
-    }
-    
-    /**
-     * Set error message
-     */
-    fun setError(error: String?) {
-        _uiState.value = _uiState.value.copy(error = error)
-    }
-    
-    /**
-     * Clear error message
-     */
-    fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
+        
+        // In a real implementation, this would save to platform-specific storage
+        // Success - no action needed as success message is handled by caller
     }
     
     /**
@@ -189,8 +198,6 @@ class SettingsViewModel : BaseViewModel() {
  * UI state for the Settings screen
  */
 data class SettingsUiState(
-    val isLoading: Boolean = false,
-    val error: String? = null,
     val successMessage: String? = null
 )
 

@@ -13,7 +13,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.genesys.cloud.messenger.composeapp.ui.components.SimpleTopBar
 import com.genesys.cloud.messenger.composeapp.viewmodel.HomeViewModel
-import com.genesys.cloud.messenger.composeapp.viewmodel.HomeUiState
 
 /**
  * Home screen composable that displays the main landing page of the application.
@@ -36,7 +35,8 @@ fun HomeScreen(
     onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val uiState by homeViewModel.uiState.collectAsState()
+    val isLoading by homeViewModel.isLoading.collectAsState()
+    val error by homeViewModel.error.collectAsState()
     
     Column(
         modifier = modifier.fillMaxSize()
@@ -49,7 +49,8 @@ fun HomeScreen(
         
         // Main content
         HomeContent(
-            uiState = uiState,
+            isLoading = isLoading,
+            error = error,
             onNavigateToChat = {
                 homeViewModel.navigateToChat()
                 onNavigateToChat()
@@ -58,7 +59,7 @@ fun HomeScreen(
                 homeViewModel.navigateToSettings()
                 onNavigateToSettings()
             },
-            onRetry = {
+            onDismissError = {
                 homeViewModel.clearError()
             },
             modifier = Modifier.fillMaxSize()
@@ -71,10 +72,11 @@ fun HomeScreen(
  */
 @Composable
 private fun HomeContent(
-    uiState: HomeUiState,
+    isLoading: Boolean,
+    error: com.genesys.cloud.messenger.composeapp.model.AppError?,
     onNavigateToChat: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    onRetry: () -> Unit,
+    onDismissError: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -98,7 +100,7 @@ private fun HomeContent(
             NavigationButtons(
                 onNavigateToChat = onNavigateToChat,
                 onNavigateToSettings = onNavigateToSettings,
-                enabled = !uiState.isLoading
+                enabled = !isLoading
             )
             
             Spacer(modifier = Modifier.height(32.dp))
@@ -108,7 +110,7 @@ private fun HomeContent(
         }
         
         // Loading indicator
-        if (uiState.isLoading) {
+        if (isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -117,11 +119,11 @@ private fun HomeContent(
             }
         }
         
-        // Error handling
-        uiState.error?.let { error ->
-            ErrorSection(
-                error = error,
-                onRetry = onRetry,
+        // Error handling using new error components
+        error?.let { appError ->
+            com.genesys.cloud.messenger.composeapp.ui.components.ErrorSnackbar(
+                error = appError,
+                onDismiss = onDismissError,
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
         }
@@ -262,42 +264,4 @@ private fun AppInfoSection() {
     }
 }
 
-/**
- * Error section for displaying errors
- */
-@Composable
-private fun ErrorSection(
-    error: String,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = error,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                textAlign = TextAlign.Center
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            TextButton(onClick = onRetry) {
-                Text(
-                    text = "Retry",
-                    color = MaterialTheme.colorScheme.onErrorContainer
-                )
-            }
-        }
-    }
-}
+// ErrorSection removed - using new error components instead
