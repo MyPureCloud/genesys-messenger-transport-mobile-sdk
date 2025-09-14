@@ -11,6 +11,7 @@ buildscript {
         classpath("org.jmailen.gradle:kotlinter-gradle:3.4.0")
         classpath("com.codingfeline.buildkonfig:buildkonfig-gradle-plugin:${Deps.buildKonfig}")
         classpath("com.google.gms:google-services:${Deps.googleServices}")
+        classpath("org.jetbrains.compose:compose-gradle-plugin:${Deps.composeVersion}")
     }
 }
 
@@ -23,6 +24,8 @@ allprojects {
 
 plugins {
     id("io.github.gradle-nexus.publish-plugin") version Deps.nexusPublish
+    id("org.jetbrains.compose") version Deps.composeVersion apply false
+    id("org.jetbrains.kotlin.multiplatform") version Deps.kotlinVersion apply false
 }
 
 // CocoaPods requires the podspec to have a `version`

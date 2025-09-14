@@ -1,0 +1,153 @@
+@startuml Architecture
+
+title Genesys Messenger Transport Mobile SDK - Architecture
+
+package "Android App" {
+    class MainActivity {
+        +onCreate()
+        +setContent()
+    }
+    
+    class MainApplication {
+        +onCreate()
+        +initializeSharedComponents()
+    }
+}
+
+package "iOS App" {
+    class iOSApp {
+        +body: Scene
+    }
+    
+    class ContentView {
+        +body: View
+    }
+    
+    class ComposeView {
+        +makeUIViewController()
+    }
+}
+
+package "Shared Module" {
+    package "UI" {
+        class App {
+            +App(themeMode)
+        }
+        
+        class HomeScreen {
+            +HomeScreen()
+        }
+        
+        class ChatScreen {
+            +ChatScreen()
+        }
+        
+        class MessageBubble {
+            +MessageBubble()
+        }
+        
+        class InputField {
+            +InputField()
+        }
+        
+        class AppTheme {
+            +AppTheme()
+        }
+    }
+    
+    package "ViewModels" {
+        abstract class BaseViewModel {
+            +onCleared()
+        }
+        
+        class HomeViewModel {
+            +navigateToChat()
+            +navigateToSettings()
+        }
+        
+        class ChatViewModel {
+            +sendMessage()
+            +updateCurrentMessage()
+        }
+    }
+    
+    package "Models" {
+        class ChatMessage {
+            +id: String
+            +content: String
+            +isFromUser: Boolean
+        }
+        
+        enum Screen {
+            Home
+            Chat
+            Settings
+        }
+        
+        enum ThemeMode {
+            Light
+            Dark
+            System
+        }
+    }
+    
+    package "Navigation" {
+        class AppNavigation {
+            +AppNavigation()
+        }
+    }
+    
+    package "Platform" {
+        interface Platform {
+            +name: String
+        }
+        
+        class AndroidPlatform {
+            +name: String
+        }
+        
+        class iOSPlatform {
+            +name: String
+        }
+    }
+}
+
+package "Transport SDK" {
+    class MessengerTransport {
+        +connect()
+        +sendMessage()
+        +disconnect()
+    }
+}
+
+MainActivity --> App
+iOSApp --> ContentView
+ContentView --> ComposeView
+ComposeView --> App
+
+App --> AppNavigation
+App --> AppTheme
+App --> HomeViewModel
+App --> ChatViewModel
+
+AppNavigation --> HomeScreen
+AppNavigation --> ChatScreen
+
+HomeScreen --> HomeViewModel
+ChatScreen --> ChatViewModel
+ChatScreen --> MessageBubble
+ChatScreen --> InputField
+
+BaseViewModel <|-- HomeViewModel
+BaseViewModel <|-- ChatViewModel
+
+ChatViewModel --> ChatMessage
+HomeViewModel --> Screen
+App --> ThemeMode
+
+Platform <|.. AndroidPlatform
+Platform <|.. iOSPlatform
+
+ChatViewModel --> MessengerTransport
+
+@enduml

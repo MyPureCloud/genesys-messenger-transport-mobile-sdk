@@ -9,7 +9,10 @@ object Deps {
     private const val okhttpVersion = "4.10.0"
     private const val klockVersion = "2.4.13"
     const val kotlinVersion = "1.9.22"
-    const val composeVersion = "1.5.10"
+    const val composeVersion = "1.6.0"
+    const val composeMultiplatformVersion = "1.5.10"
+    const val composeNavigationVersion = "2.7.0-alpha07"
+    const val viewModelVersion = "2.7.0"
     const val fragmentVersion = "1.3.5"
     const val activityComposeVersion = "1.8.2"
     const val lifecycleViewModelComposeVersion = "1.0.0-alpha05"
@@ -72,6 +75,18 @@ object Deps {
             const val lifecycleViewModelCompose = "androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycleViewModelComposeVersion"
             const val activityCompose = "androidx.activity:activity-compose:$activityComposeVersion"
             const val browser = "androidx.browser:browser:1.4.0"
+        }
+
+        object ComposeMultiplatform {
+            const val runtime = "org.jetbrains.compose.runtime:runtime:$composeMultiplatformVersion"
+            const val foundation = "org.jetbrains.compose.foundation:foundation:$composeMultiplatformVersion"
+            const val material = "org.jetbrains.compose.material:material:$composeMultiplatformVersion"
+            const val material3 = "org.jetbrains.compose.material3:material3:$composeMultiplatformVersion"
+            const val ui = "org.jetbrains.compose.ui:ui:$composeMultiplatformVersion"
+            const val uiTooling = "org.jetbrains.compose.ui:ui-tooling:$composeMultiplatformVersion"
+            const val uiToolingPreview = "org.jetbrains.compose.ui:ui-tooling-preview:$composeMultiplatformVersion"
+            const val navigation = "org.jetbrains.androidx.navigation:navigation-compose:$composeNavigationVersion"
+            const val viewModel = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:$viewModelVersion"
         }
     }
 
