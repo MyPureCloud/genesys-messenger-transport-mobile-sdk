@@ -59,14 +59,13 @@ dependencies {
     implementation(project(":shared"))
     implementation(project(":transport"))
     
+    // Core Android dependencies
     implementation(Deps.Libs.AndroidX.coreKtx)
     implementation(Deps.Libs.AndroidX.lifecycleRuntimeKtx)
     implementation(Deps.Libs.AndroidX.activityCompose)
+    
+    // Compose UI - minimal set since most UI is in shared module
     implementation(Deps.Libs.AndroidX.composeUi)
-    implementation(Deps.Libs.AndroidX.composeFoundation)
-    implementation(Deps.Libs.AndroidX.composeUiTooling)
-    implementation(Deps.Libs.AndroidX.lifecycleViewModelCompose)
-    implementation(Deps.Libs.ComposeMultiplatform.material3)
     
     testImplementation(Deps.Libs.junit)
     

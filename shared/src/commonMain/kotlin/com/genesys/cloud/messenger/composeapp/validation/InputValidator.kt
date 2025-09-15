@@ -18,11 +18,11 @@ import com.genesys.cloud.messenger.composeapp.model.Result
  * - Configurable validation rules
  * 
  * Validation Types:
- * - Chat messages: Length, content, and security validation
  * - Display names: Format and length validation
  * - Email addresses: Format and length validation
  * - Phone numbers: Format and length validation
- * - Language codes: Availability validation
+ * - Deployment IDs: UUID format validation
+ * - Regions: Availability validation
  * - Generic text fields: Customizable validation
  * 
  * Security Considerations:
@@ -38,58 +38,18 @@ import com.genesys.cloud.messenger.composeapp.model.Result
  * 
  * Usage Example:
  * ```kotlin
- * val result = InputValidator.validateChatMessage(userInput)
+ * val result = InputValidator.validateDeploymentId(userInput)
  * when (result) {
- *     is Result.Success -> handleValidMessage(result.data)
+ *     is Result.Success -> handleValidDeploymentId(result.data)
  *     is Result.Error -> showError(result.error)
  * }
  * ```
  */
 object InputValidator {
     
-    /**
-     * Validates a chat message input
-     */
-    fun validateChatMessage(message: String): Result<String> {
-        val trimmedMessage = message.trim()
-        
-        return when {
-            trimmedMessage.isEmpty() -> Result.Error(
-                AppError.ValidationError.EmptyFieldError("Message")
-            )
-            trimmedMessage.length > MAX_MESSAGE_LENGTH -> Result.Error(
-                AppError.ValidationError.TooLongError(
-                    fieldName = "Message",
-                    maxLength = MAX_MESSAGE_LENGTH
-                )
-            )
-            containsOnlyWhitespace(trimmedMessage) -> Result.Error(
-                AppError.ValidationError.EmptyFieldError("Message")
-            )
-            containsInvalidCharacters(trimmedMessage) -> Result.Error(
-                AppError.ValidationError.InvalidCharactersError("Message")
-            )
-            else -> Result.Success(trimmedMessage)
-        }
-    }
+
     
-    /**
-     * Validates language code selection
-     */
-    fun validateLanguageCode(languageCode: String, availableCodes: List<String>): Result<String> {
-        return when {
-            languageCode.isEmpty() -> Result.Error(
-                AppError.ValidationError.EmptyFieldError("Language")
-            )
-            !availableCodes.contains(languageCode) -> Result.Error(
-                AppError.ValidationError.InvalidFormatError(
-                    fieldName = "Language",
-                    message = "Selected language is not supported"
-                )
-            )
-            else -> Result.Success(languageCode)
-        }
-    }
+
     
     /**
      * Validates user display name or username
@@ -182,6 +142,54 @@ object InputValidator {
     }
     
     /**
+     * Validates deployment ID format
+     */
+    fun validateDeploymentId(deploymentId: String): Result<String> {
+        val trimmedId = deploymentId.trim()
+        
+        return when {
+            trimmedId.isEmpty() -> Result.Error(
+                AppError.ValidationError.EmptyFieldError("Deployment ID")
+            )
+            !isValidDeploymentIdFormat(trimmedId) -> {
+                // Debug: print validation failure
+                println("Deployment ID validation failed for: '$trimmedId'")
+                println("UUID pattern matches: ${isValidDeploymentIdFormat(trimmedId)}")
+                Result.Error(
+                    AppError.ValidationError.InvalidFormatError(
+                        fieldName = "Deployment ID",
+                        message = "Deployment ID must be a valid UUID format"
+                    )
+                )
+            }
+            else -> {
+                println("Deployment ID validation succeeded for: '$trimmedId'")
+                Result.Success(trimmedId)
+            }
+        }
+    }
+    
+    /**
+     * Validates region selection
+     */
+    fun validateRegion(region: String, availableRegions: List<String>): Result<String> {
+        val trimmedRegion = region.trim()
+        
+        return when {
+            trimmedRegion.isEmpty() -> Result.Error(
+                AppError.ValidationError.EmptyFieldError("Region")
+            )
+            !availableRegions.contains(trimmedRegion) -> Result.Error(
+                AppError.ValidationError.InvalidFormatError(
+                    fieldName = "Region",
+                    message = "Selected region is not supported"
+                )
+            )
+            else -> Result.Success(trimmedRegion)
+        }
+    }
+    
+    /**
      * Validates a generic text field with custom rules
      */
     fun validateTextField(
@@ -258,8 +266,13 @@ object InputValidator {
         return phoneNumber.all { it.isDigit() }
     }
     
+    private fun isValidDeploymentIdFormat(deploymentId: String): Boolean {
+        // UUID format validation: 8-4-4-4-12 hexadecimal digits
+        val uuidPattern = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+        return uuidPattern.matches(deploymentId)
+    }
+    
     // Constants
-    private const val MAX_MESSAGE_LENGTH = 4000
     private const val MIN_DISPLAY_NAME_LENGTH = 2
     private const val MAX_DISPLAY_NAME_LENGTH = 50
     private const val MAX_EMAIL_LENGTH = 254

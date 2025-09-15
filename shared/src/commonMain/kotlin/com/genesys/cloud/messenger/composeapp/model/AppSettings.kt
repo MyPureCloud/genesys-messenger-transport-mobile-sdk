@@ -1,23 +1,12 @@
 package com.genesys.cloud.messenger.composeapp.model
 
 /**
- * Represents user preferences and app configuration settings.
+ * Represents deployment configuration settings for the testbed.
  *
- * @param theme The selected theme mode for the app
- * @param notifications Whether push notifications are enabled
- * @param language The selected language code (e.g., "en", "es", "fr")
+ * @param deploymentId The deployment ID for the messaging client
+ * @param region The region/domain for the messaging client
  */
 data class AppSettings(
-    val theme: ThemeMode = ThemeMode.System,
-    val notifications: Boolean = true,
-    val language: String = "en"
+    val deploymentId: String = "",
+    val region: String = ""
 )
-
-/**
- * Available theme modes for the application.
- */
-enum class ThemeMode {
-    Light,
-    Dark,
-    System
-}

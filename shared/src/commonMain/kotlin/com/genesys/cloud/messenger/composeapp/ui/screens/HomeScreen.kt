@@ -31,7 +31,7 @@ import com.genesys.cloud.messenger.composeapp.viewmodel.HomeViewModel
 @Composable
 fun HomeScreen(
     homeViewModel: HomeViewModel,
-    onNavigateToChat: () -> Unit,
+    onNavigateToInteraction: () -> Unit,
     onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -51,9 +51,9 @@ fun HomeScreen(
         HomeContent(
             isLoading = isLoading,
             error = error,
-            onNavigateToChat = {
-                homeViewModel.navigateToChat()
-                onNavigateToChat()
+            onNavigateToInteraction = {
+                homeViewModel.navigateToInteraction()
+                onNavigateToInteraction()
             },
             onNavigateToSettings = {
                 homeViewModel.navigateToSettings()
@@ -74,7 +74,7 @@ fun HomeScreen(
 private fun HomeContent(
     isLoading: Boolean,
     error: com.genesys.cloud.messenger.composeapp.model.AppError?,
-    onNavigateToChat: () -> Unit,
+    onNavigateToInteraction: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onDismissError: () -> Unit,
     modifier: Modifier = Modifier
@@ -98,7 +98,7 @@ private fun HomeContent(
             
             // Navigation buttons
             NavigationButtons(
-                onNavigateToChat = onNavigateToChat,
+                onNavigateToInteraction = onNavigateToInteraction,
                 onNavigateToSettings = onNavigateToSettings,
                 enabled = !isLoading
             )
@@ -162,7 +162,7 @@ private fun WelcomeSection() {
  */
 @Composable
 private fun NavigationButtons(
-    onNavigateToChat: () -> Unit,
+    onNavigateToInteraction: () -> Unit,
     onNavigateToSettings: () -> Unit,
     enabled: Boolean
 ) {
@@ -170,9 +170,9 @@ private fun NavigationButtons(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Chat button
+        // TestBed Interaction button
         ElevatedButton(
-            onClick = onNavigateToChat,
+            onClick = onNavigateToInteraction,
             enabled = enabled,
             modifier = Modifier
                 .fillMaxWidth()
@@ -182,12 +182,12 @@ private fun NavigationButtons(
             )
         ) {
             Text(
-                text = "💬",
+                text = "🔧",
                 style = MaterialTheme.typography.titleMedium
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = "Start Chat",
+                text = "TestBed Interaction",
                 style = MaterialTheme.typography.titleMedium
             )
         }

@@ -2,7 +2,7 @@ package com.genesys.cloud.messenger.composeapp.integration
 
 import com.genesys.cloud.messenger.composeapp.platform.Platform
 import com.genesys.cloud.messenger.composeapp.util.TestDispatcherRule
-import com.genesys.cloud.messenger.composeapp.viewmodel.ChatViewModel
+import com.genesys.cloud.messenger.composeapp.viewmodel.TestBedViewModel
 import com.genesys.cloud.messenger.composeapp.viewmodel.HomeViewModel
 import com.genesys.cloud.messenger.composeapp.viewmodel.SettingsViewModel
 import kotlinx.coroutines.test.runTest
@@ -51,16 +51,16 @@ class IOSSpecificIntegrationTest {
     fun testIOSViewModelIntegration() = runTest {
         // Test that ViewModels work correctly on iOS
         val homeViewModel = HomeViewModel()
-        val chatViewModel = ChatViewModel()
+        val testBedViewModel = TestBedViewModel()
         val settingsViewModel = SettingsViewModel()
         
         // Test that ViewModels can handle iOS-specific lifecycle
         assertNotNull(homeViewModel.navigationEvent)
-        assertNotNull(chatViewModel.uiState.value)
-        assertNotNull(settingsViewModel.uiState.value)
+        assertNotNull(testBedViewModel.uiState.value)
+        assertNotNull(settingsViewModel.settings.value)
         
         // Test navigation on iOS
-        homeViewModel.navigateToChat()
+        homeViewModel.navigateToInteraction()
         kotlinx.coroutines.delay(100)
         assertNotNull(homeViewModel.navigationEvent.value)
     }
@@ -68,19 +68,17 @@ class IOSSpecificIntegrationTest {
     @Test
     fun testIOSCoroutineIntegration() = runTest {
         // Test that coroutines work correctly on iOS
-        val chatViewModel = ChatViewModel()
+        val testBedViewModel = TestBedViewModel()
         
         // Test async operations
-        chatViewModel.updateCurrentMessage("iOS test message")
-        chatViewModel.sendMessage()
+        testBedViewModel.onCommandSend("doConnect")
         
         // Give time for async processing
         kotlinx.coroutines.delay(200)
         
-        // Verify message was processed
-        val messages = chatViewModel.uiState.value.messages
-        assertTrue(messages.isNotEmpty())
-        assertTrue(messages.any { it.content == "iOS test message" && it.isFromUser })
+        // Verify command was processed
+        val socketMessages = testBedViewModel.uiState.value.socketMessages
+        assertTrue(socketMessages.isNotEmpty())
     }
 
     @Test
@@ -89,11 +87,12 @@ class IOSSpecificIntegrationTest {
         val settingsViewModel = SettingsViewModel()
         
         // Test state updates
-        settingsViewModel.toggleNotifications()
+        settingsViewModel.updateDeploymentId("12345678-1234-5678-9abc-123456789abc")
         val settings = settingsViewModel.settings.value
         
         // Verify state was updated
         assertNotNull(settings)
+        assertTrue(settings.deploymentId == "12345678-1234-5678-9abc-123456789abc")
     }
 
     @Test
@@ -118,62 +117,58 @@ class IOSSpecificIntegrationTest {
     @Test
     fun testIOSThreadSafety() = runTest {
         // Test that shared components are thread-safe on iOS
-        val chatViewModel = ChatViewModel()
+        val testBedViewModel = TestBedViewModel()
         
         // Simulate concurrent access from different threads
         repeat(5) { index ->
-            chatViewModel.updateCurrentMessage("Message $index")
-            chatViewModel.sendMessage()
+            testBedViewModel.onCommandSend("doSendMessage Message $index")
         }
         
         // Give time for processing
         kotlinx.coroutines.delay(300)
         
-        // Verify all messages were processed correctly
-        val messages = chatViewModel.uiState.value.messages
-        val userMessages = messages.filter { it.isFromUser }
-        assertTrue(userMessages.size == 5)
+        // Verify all commands were processed correctly
+        val socketMessages = testBedViewModel.uiState.value.socketMessages
+        assertTrue(socketMessages.size >= 5)
     }
 
     @Test
     fun testIOSResourceManagement() = runTest {
         // Test that resources are managed correctly on iOS
         val homeViewModel = HomeViewModel()
-        val chatViewModel = ChatViewModel()
+        val testBedViewModel = TestBedViewModel()
         val settingsViewModel = SettingsViewModel()
         
         // Simulate app going to background
         homeViewModel.onCleared()
-        chatViewModel.onCleared()
+        testBedViewModel.onCleared()
         settingsViewModel.onCleared()
         
         // Simulate app coming back to foreground
         val newHomeViewModel = HomeViewModel()
-        val newChatViewModel = ChatViewModel()
+        val newTestBedViewModel = TestBedViewModel()
         val newSettingsViewModel = SettingsViewModel()
         
         assertNotNull(newHomeViewModel.navigationEvent)
-        assertNotNull(newChatViewModel.uiState.value)
-        assertNotNull(newSettingsViewModel.uiState.value)
+        assertNotNull(newTestBedViewModel.uiState.value)
+        assertNotNull(newSettingsViewModel.settings.value)
     }
 
     @Test
     fun testIOSLifecycleIntegration() = runTest {
         // Test that ViewModels handle iOS app lifecycle correctly
-        val chatViewModel = ChatViewModel()
+        val testBedViewModel = TestBedViewModel()
         
-        // Add some messages
-        chatViewModel.updateCurrentMessage("Message before background")
-        chatViewModel.sendMessage()
+        // Execute some commands
+        testBedViewModel.onCommandSend("doConnect")
         
         // Give time for processing
         kotlinx.coroutines.delay(200)
         
         // Simulate app going to background and returning
         // In a real app, this would test state preservation
-        val messages = chatViewModel.uiState.value.messages
-        assertTrue(messages.isNotEmpty())
-        assertTrue(messages.any { it.content == "Message before background" && it.isFromUser })
+        val socketMessages = testBedViewModel.uiState.value.socketMessages
+        assertTrue(socketMessages.isNotEmpty())
     }
 
     @Test
@@ -186,7 +181,7 @@ class IOSSpecificIntegrationTest {
         assertNotNull(homeViewModel.navigationEvent)
         
         // Test navigation which would be called from Swift
-        homeViewModel.navigateToChat()
+        homeViewModel.navigateToInteraction()
         kotlinx.coroutines.delay(100)
         assertNotNull(homeViewModel.navigationEvent.value)
     }
@@ -194,17 +189,16 @@ class IOSSpecificIntegrationTest {
     @Test
     fun testIOSBackgroundProcessing() = runTest {
         // Test that background processing works correctly on iOS
-        val chatViewModel = ChatViewModel()
+        val testBedViewModel = TestBedViewModel()
         
-        // Simulate background message processing
-        chatViewModel.updateCurrentMessage("Background message")
-        chatViewModel.sendMessage()
+        // Simulate background command processing
+        testBedViewModel.onCommandSend("doSendMessage Background message")
         
         // Give time for processing
         kotlinx.coroutines.delay(200)
         
-        // Verify message was processed even in background
-        val messages = chatViewModel.uiState.value.messages
-        assertTrue(messages.isNotEmpty())
+        // Verify command was processed even in background
+        val socketMessages = testBedViewModel.uiState.value.socketMessages
+        assertTrue(socketMessages.isNotEmpty())
     }
 }

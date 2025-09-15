@@ -10,10 +10,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.genesys.cloud.messenger.composeapp.model.Screen
-import com.genesys.cloud.messenger.composeapp.ui.screens.ChatScreen
+import com.genesys.cloud.messenger.composeapp.ui.screens.InteractionScreen
 import com.genesys.cloud.messenger.composeapp.ui.screens.HomeScreen
 import com.genesys.cloud.messenger.composeapp.ui.screens.SettingsScreen
-import com.genesys.cloud.messenger.composeapp.viewmodel.ChatViewModel
+import com.genesys.cloud.messenger.composeapp.viewmodel.TestBedViewModel
 import com.genesys.cloud.messenger.composeapp.viewmodel.HomeViewModel
 import com.genesys.cloud.messenger.composeapp.viewmodel.SettingsViewModel
 
@@ -24,7 +24,7 @@ import com.genesys.cloud.messenger.composeapp.viewmodel.SettingsViewModel
  * @param navController The navigation controller to handle navigation actions
  * @param startDestination The initial screen to display when the app starts
  * @param homeViewModel ViewModel for the home screen
- * @param chatViewModel ViewModel for the chat screen
+ * @param testBedViewModel ViewModel for the interaction screen
  * @param settingsViewModel ViewModel for the settings screen
  */
 @Composable
@@ -32,7 +32,7 @@ fun AppNavigation(
     navController: NavHostController = rememberNavController(),
     startDestination: String = "home",
     homeViewModel: HomeViewModel = remember { HomeViewModel() },
-    chatViewModel: ChatViewModel = remember { ChatViewModel() },
+    testBedViewModel: TestBedViewModel = remember { TestBedViewModel() },
     settingsViewModel: SettingsViewModel = remember { SettingsViewModel() }
 ) {
     NavHost(
@@ -42,8 +42,8 @@ fun AppNavigation(
         composable("home") {
             HomeScreen(
                 homeViewModel = homeViewModel,
-                onNavigateToChat = {
-                    navController.navigate("chat")
+                onNavigateToInteraction = {
+                    navController.navigate("interaction")
                 },
                 onNavigateToSettings = {
                     navController.navigate("settings")
@@ -51,9 +51,10 @@ fun AppNavigation(
             )
         }
         
-        composable("chat") {
-            ChatScreen(
-                chatViewModel = chatViewModel,
+        composable("interaction") {
+            InteractionScreen(
+                testBedViewModel = testBedViewModel,
+                settingsViewModel = settingsViewModel,
                 onNavigateBack = {
                     navController.popBackStack()
                 }

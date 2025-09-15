@@ -37,14 +37,14 @@ class HomeViewModelTest {
     }
     
     @Test
-    fun testNavigateToChat() = runTest {
+    fun testNavigateToInteraction() = runTest {
         val viewModel = HomeViewModel()
         
-        viewModel.navigateToChat()
+        viewModel.navigateToInteraction()
         
         val navigationEvent = viewModel.navigationEvent.value
         assertTrue(navigationEvent is NavigationEvent.NavigateToScreen)
-        assertEquals(Screen.Chat, (navigationEvent as NavigationEvent.NavigateToScreen).screen)
+        assertEquals(Screen.Interaction, (navigationEvent as NavigationEvent.NavigateToScreen).screen)
         
         // Should not have any errors
         assertNull(viewModel.error.value)
@@ -69,7 +69,7 @@ class HomeViewModelTest {
         val viewModel = HomeViewModel()
         
         // First navigate somewhere
-        viewModel.navigateToChat()
+        viewModel.navigateToInteraction()
         assertTrue(viewModel.navigationEvent.value is NavigationEvent.NavigateToScreen)
         
         // Then clear the event
@@ -81,11 +81,11 @@ class HomeViewModelTest {
     fun testMultipleNavigationEvents() = runTest {
         val viewModel = HomeViewModel()
         
-        // Navigate to chat
-        viewModel.navigateToChat()
-        val chatEvent = viewModel.navigationEvent.value
-        assertTrue(chatEvent is NavigationEvent.NavigateToScreen)
-        assertEquals(Screen.Chat, (chatEvent as NavigationEvent.NavigateToScreen).screen)
+        // Navigate to interaction
+        viewModel.navigateToInteraction()
+        val interactionEvent = viewModel.navigationEvent.value
+        assertTrue(interactionEvent is NavigationEvent.NavigateToScreen)
+        assertEquals(Screen.Interaction, (interactionEvent as NavigationEvent.NavigateToScreen).screen)
         
         // Navigate to settings (should replace previous event)
         viewModel.navigateToSettings()
@@ -97,15 +97,15 @@ class HomeViewModelTest {
     @Test
     fun testNavigationEventTypes() {
         // Test the NavigationEvent sealed class
-        val chatEvent = NavigationEvent.NavigateToScreen(Screen.Chat)
+        val interactionEvent = NavigationEvent.NavigateToScreen(Screen.Interaction)
         val settingsEvent = NavigationEvent.NavigateToScreen(Screen.Settings)
         val homeEvent = NavigationEvent.NavigateToScreen(Screen.Home)
         
-        assertTrue(chatEvent is NavigationEvent.NavigateToScreen)
+        assertTrue(interactionEvent is NavigationEvent.NavigateToScreen)
         assertTrue(settingsEvent is NavigationEvent.NavigateToScreen)
         assertTrue(homeEvent is NavigationEvent.NavigateToScreen)
         
-        assertEquals(Screen.Chat, chatEvent.screen)
+        assertEquals(Screen.Interaction, interactionEvent.screen)
         assertEquals(Screen.Settings, settingsEvent.screen)
         assertEquals(Screen.Home, homeEvent.screen)
     }

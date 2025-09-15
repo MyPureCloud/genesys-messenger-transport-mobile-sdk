@@ -1,40 +1,39 @@
 # Screen Composables
 
-This directory contains the main screen composables for the Compose Multiplatform application.
+This directory contains the main screen composables for the Compose Multiplatform testbed application.
 
 ## Implemented Screens
 
 ### HomeScreen.kt
-- **Purpose**: Main landing page of the application
+- **Purpose**: Main landing page of the testbed application
 - **Features**:
-  - Welcome section with app description
-  - Navigation buttons to Chat and Settings screens
-  - App features showcase
+  - Welcome section with testbed description
+  - Navigation buttons to Interaction and Settings screens
+  - TestBed features showcase
   - Error handling with retry functionality
   - Loading states
 - **Requirements**: 2.1, 4.1, 4.3
 
-### ChatScreen.kt
-- **Purpose**: Messaging interface for user-agent conversations
+### InteractionScreen.kt
+- **Purpose**: TestBed interface for messaging client operations and socket message monitoring
 - **Features**:
-  - Message list with auto-scroll to bottom
-  - Message input field with send functionality
-  - Typing indicators for agent responses
-  - Loading and empty states
-  - Error handling with retry functionality
-  - Real-time message updates
-- **Requirements**: 2.1, 4.1, 4.3
+  - Command dropdown with all available messaging client commands
+  - Socket message display with expandable details
+  - Command execution with loading states
+  - Client state indicators
+  - Real-time socket message updates
+  - Command input with parameter support
+- **Requirements**: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 4.1, 4.2, 4.3, 4.4, 5.1, 5.2, 5.3, 5.4, 5.5
 
 ### SettingsScreen.kt
-- **Purpose**: App preferences and configuration management
+- **Purpose**: Simplified deployment configuration management
 - **Features**:
-  - Theme selection (Light, Dark, System)
-  - Notification preferences toggle
-  - Language selection dropdown
-  - Reset to defaults functionality
-  - Success and error message handling
-  - Loading states during operations
-- **Requirements**: 2.1, 4.1, 4.3
+  - Deployment ID input field
+  - Region selection dropdown
+  - Default value loading from BuildConfig
+  - Validation and error handling
+  - Save/load functionality
+- **Requirements**: 1.1, 1.2, 1.3, 1.4, 6.1, 6.2, 6.3
 
 ## Architecture
 
@@ -56,7 +55,7 @@ The screens are integrated into the navigation system via `AppNavigation.kt` and
 composable("home") {
     HomeScreen(
         homeViewModel = homeViewModel,
-        onNavigateToChat = { navController.navigate("chat") },
+        onNavigateToInteraction = { navController.navigate("interaction") },
         onNavigateToSettings = { navController.navigate("settings") }
     )
 }

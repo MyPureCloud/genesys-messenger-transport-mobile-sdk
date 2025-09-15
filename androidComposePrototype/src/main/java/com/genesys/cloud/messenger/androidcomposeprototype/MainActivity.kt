@@ -49,6 +49,8 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         if (supportFragmentManager.fragments.isNotEmpty()) {
             setPrototypeLauncherView()
             supportFragmentManager.popBackStackImmediate()
+        } else {
+            super.onBackPressed()
         }
     }
 

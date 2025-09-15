@@ -30,11 +30,7 @@ val DarkOnBackground = Color(0xFFE6E1E5)
 val DarkOnPrimary = Color(0xFFFFFFFF)
 val DarkOnSecondary = Color(0xFFFFFFFF)
 
-// Message bubble colors
-val UserMessageBackground = GenesysPrimary
-val BotMessageBackground = Color(0xFFF5F5F5)
-val UserMessageBackgroundDark = GenesysPrimaryVariant
-val BotMessageBackgroundDark = Color(0xFF2D2D2D)
+
 
 // Status colors
 val SuccessColor = Color(0xFF4CAF50)

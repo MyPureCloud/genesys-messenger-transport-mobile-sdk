@@ -11,9 +11,9 @@ sealed class Screen {
     object Home : Screen()
     
     /**
-     * Chat screen - messaging interface
+     * Interaction screen - TestBed interface for messaging client operations
      */
-    object Chat : Screen()
+    object Interaction : Screen()
     
     /**
      * Settings screen - app configuration

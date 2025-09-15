@@ -4,11 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import com.genesys.cloud.messenger.composeapp.model.ThemeMode
 
 /**
  * MainActivity for the Android Compose Multiplatform template application.
@@ -29,21 +24,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         
         setContent {
-            // Launch the shared App composable with default theme
+            // Launch the shared App composable
             // The App composable will create its own ViewModels internally
-            App(themeMode = ThemeMode.System)
+            App()
         }
-    }
-}
-
-/**
- * Determines the effective theme mode based on user preference and system settings.
- */
-@Composable
-private fun getEffectiveThemeMode(themeMode: ThemeMode): Boolean {
-    return when (themeMode) {
-        ThemeMode.Light -> false
-        ThemeMode.Dark -> true
-        ThemeMode.System -> isSystemInDarkTheme()
     }
 }

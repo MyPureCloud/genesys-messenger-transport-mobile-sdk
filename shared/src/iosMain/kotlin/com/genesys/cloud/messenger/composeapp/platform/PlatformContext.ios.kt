@@ -4,12 +4,12 @@ import platform.Foundation.*
 import platform.UIKit.*
 
 /**
- * iOS implementation of PlatformContext
+ * iOS implementation of PlatformContext interface
  */
 actual interface PlatformContext
 
 /**
- * iOS wrapper for context
+ * iOS wrapper for context - implements the platform interface
  */
 class IosPlatformContext(val context: Any) : PlatformContext
 

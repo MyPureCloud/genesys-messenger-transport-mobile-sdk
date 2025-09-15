@@ -14,7 +14,7 @@ import com.genesys.cloud.messenger.composeapp.model.Screen
 fun Screen.toRoute(): String {
     return when (this) {
         is Screen.Home -> "home"
-        is Screen.Chat -> "chat"
+        is Screen.Interaction -> "interaction"
         is Screen.Settings -> "settings"
     }
 }
@@ -25,7 +25,7 @@ fun Screen.toRoute(): String {
 fun String.toScreen(): Screen {
     return when (this) {
         "home" -> Screen.Home
-        "chat" -> Screen.Chat
+        "interaction" -> Screen.Interaction
         "settings" -> Screen.Settings
         else -> Screen.Home // Default fallback
     }

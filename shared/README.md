@@ -1,6 +1,6 @@
-# Compose Multiplatform Template - Shared Module
+# Compose Multiplatform TestBed - Shared Module
 
-This module contains the shared code for a Compose Multiplatform messaging application template, demonstrating best practices for cross-platform development with Kotlin Multiplatform and Compose Multiplatform.
+This module contains the shared code for a Compose Multiplatform testbed application, providing a developer-focused interface for testing and monitoring messaging client operations across Android and iOS platforms.
 
 ## 🏗️ Architecture
 
@@ -30,20 +30,20 @@ shared/
 ### Key Components
 
 #### 1. UI Layer (`ui/`)
-- **Screens**: Home, Chat, and Settings screens with full functionality
-- **Components**: Reusable components like MessageBubble, InputField, TopBar
-- **Theme**: Material Design 3 implementation with light/dark mode support
+- **Screens**: Home, Interaction (TestBed), and Settings screens
+- **Components**: Reusable components like InputField, TopBar, SocketMessageList
+- **Theme**: Material Design 3 implementation optimized for developer tools
 
 #### 2. ViewModel Layer (`viewmodel/`)
 - **BaseViewModel**: Common functionality for all ViewModels
-- **ChatViewModel**: Manages chat functionality and message state
+- **TestBedViewModel**: Manages messaging client operations, commands, and socket messages
 - **HomeViewModel**: Handles navigation and home screen state
-- **SettingsViewModel**: Manages app preferences and configuration
+- **SettingsViewModel**: Manages deployment configuration (deploymentId, region)
 
 #### 3. Model Layer (`model/`)
-- **Data Models**: ChatMessage, AppSettings, AppState
-- **Error Types**: Comprehensive error handling with typed errors
-- **Result Wrapper**: Type-safe result handling for operations
+- **Data Models**: SocketMessage, Command, AuthState, TestBedError
+- **Transport Types**: Placeholder implementations for messaging client integration
+- **Error Types**: Comprehensive error handling for testbed operations
 
 #### 4. Platform Layer (`platform/`)
 - **Platform Interface**: Expect/actual declarations for platform-specific functionality
@@ -52,19 +52,21 @@ shared/
 ## 🚀 Features
 
 ### Core Features
-- ✅ Cross-platform UI with Compose Multiplatform
-- ✅ Material Design 3 theming
-- ✅ Navigation between screens
-- ✅ Real-time chat interface with typing indicators
-- ✅ Settings management with validation
-- ✅ Error handling and retry mechanisms
-- ✅ Input validation with user feedback
-- ✅ Performance optimizations
+- ✅ Cross-platform TestBed UI with Compose Multiplatform
+- ✅ Command execution interface for messaging client operations
+- ✅ Socket message monitoring with expandable details
+- ✅ Real-time message type display and filtering
+- ✅ Deployment configuration management (deploymentId, region)
+- ✅ Authentication flow testing (OAuth, OKTA)
+- ✅ File attachment testing capabilities
+- ✅ Push notification testing
+- ✅ Error handling and command validation
+- ✅ Developer-focused UI optimizations
 
 ### Platform Support
-- **Android**: Full native Android support with Activity integration
-- **iOS**: SwiftUI wrapper with native iOS lifecycle management
-- **Shared Business Logic**: 100% code sharing for ViewModels and business logic
+- **Android**: Full native Android support with TestBed functionality
+- **iOS**: Native iOS support with shared TestBed operations
+- **Shared Business Logic**: 100% code sharing for TestBed operations and messaging client integration
 
 ## 🎯 Performance Optimizations
 

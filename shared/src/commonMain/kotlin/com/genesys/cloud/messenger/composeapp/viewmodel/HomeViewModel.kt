@@ -16,12 +16,12 @@ class HomeViewModel : BaseViewModel() {
     val navigationEvent: StateFlow<NavigationEvent?> = _navigationEvent.asStateFlow()
     
     /**
-     * Navigate to the chat screen with error handling
+     * Navigate to the interaction screen with error handling
      */
-    fun navigateToChat() {
+    fun navigateToInteraction() {
         scope.launch {
             safeExecuteUnit(showLoading = false) {
-                _navigationEvent.value = NavigationEvent.NavigateToScreen(Screen.Chat)
+                _navigationEvent.value = NavigationEvent.NavigateToScreen(Screen.Interaction)
             }
         }
     }

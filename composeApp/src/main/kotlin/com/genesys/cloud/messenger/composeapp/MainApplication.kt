@@ -2,6 +2,7 @@ package com.genesys.cloud.messenger.composeapp
 
 import android.app.Application
 import android.util.Log
+import com.genesys.cloud.messenger.composeapp.util.AndroidInitializer
 
 /**
  * MainApplication class for the Android Compose Multiplatform template application.
@@ -69,10 +70,19 @@ class MainApplication : Application() {
      * for expect/actual declarations.
      */
     private fun initializeSharedComponents() {
+        Log.d(TAG, "Initializing shared components...")
+        
+        // Initialize Android platform context for shared module
+        AndroidInitializer.initialize(this)
+        
+        // Verify initialization was successful
+        val isInitialized = AndroidInitializer.isInitialized()
+        Log.d(TAG, "Android platform context initialized: $isInitialized")
+        
         // Platform-specific initialization for shared module
         // This could include setting up Android-specific implementations
         // for platform interfaces defined in the shared module
-        Log.d(TAG, "Shared components initialized")
+        Log.d(TAG, "Shared components initialized - Android context set")
     }
     
     /**

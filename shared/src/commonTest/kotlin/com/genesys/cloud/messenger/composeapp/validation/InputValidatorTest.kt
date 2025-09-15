@@ -11,84 +11,6 @@ import kotlin.test.assertTrue
 class InputValidatorTest {
     
     @Test
-    fun testValidateChatMessageValid() {
-        val result = InputValidator.validateChatMessage("Hello, world!")
-        
-        assertTrue(result is Result.Success)
-        assertEquals("Hello, world!", (result as Result.Success).data)
-    }
-    
-    @Test
-    fun testValidateChatMessageEmpty() {
-        val result = InputValidator.validateChatMessage("")
-        
-        assertTrue(result is Result.Error)
-        assertTrue((result as Result.Error).error is AppError.ValidationError.EmptyFieldError)
-    }
-    
-    @Test
-    fun testValidateChatMessageWhitespaceOnly() {
-        val result = InputValidator.validateChatMessage("   \n\t   ")
-        
-        assertTrue(result is Result.Error)
-        assertTrue((result as Result.Error).error is AppError.ValidationError.EmptyFieldError)
-    }
-    
-    @Test
-    fun testValidateChatMessageTooLong() {
-        val longMessage = "a".repeat(4001)
-        val result = InputValidator.validateChatMessage(longMessage)
-        
-        assertTrue(result is Result.Error)
-        val error = (result as Result.Error).error
-        assertTrue(error is AppError.ValidationError.TooLongError)
-        assertEquals(4000, (error as AppError.ValidationError.TooLongError).maxLength)
-    }
-    
-    @Test
-    fun testValidateChatMessageWithInvalidCharacters() {
-        val result = InputValidator.validateChatMessage("Hello <script>alert('xss')</script>")
-        
-        assertTrue(result is Result.Error)
-        assertTrue((result as Result.Error).error is AppError.ValidationError.InvalidCharactersError)
-    }
-    
-    @Test
-    fun testValidateChatMessageTrimsWhitespace() {
-        val result = InputValidator.validateChatMessage("  Hello, world!  ")
-        
-        assertTrue(result is Result.Success)
-        assertEquals("Hello, world!", (result as Result.Success).data)
-    }
-    
-    @Test
-    fun testValidateLanguageCodeValid() {
-        val availableCodes = listOf("en", "es", "fr", "de")
-        val result = InputValidator.validateLanguageCode("es", availableCodes)
-        
-        assertTrue(result is Result.Success)
-        assertEquals("es", (result as Result.Success).data)
-    }
-    
-    @Test
-    fun testValidateLanguageCodeEmpty() {
-        val availableCodes = listOf("en", "es", "fr", "de")
-        val result = InputValidator.validateLanguageCode("", availableCodes)
-        
-        assertTrue(result is Result.Error)
-        assertTrue((result as Result.Error).error is AppError.ValidationError.EmptyFieldError)
-    }
-    
-    @Test
-    fun testValidateLanguageCodeInvalid() {
-        val availableCodes = listOf("en", "es", "fr", "de")
-        val result = InputValidator.validateLanguageCode("invalid", availableCodes)
-        
-        assertTrue(result is Result.Error)
-        assertTrue((result as Result.Error).error is AppError.ValidationError.InvalidFormatError)
-    }
-    
-    @Test
     fun testValidateDisplayNameValid() {
         val result = InputValidator.validateDisplayName("John Doe")
         
@@ -250,7 +172,7 @@ class InputValidatorTest {
     @Test
     fun testValidateFieldsMultiple() {
         val errors = validateFields(
-            { InputValidator.validateChatMessage("") },
+            { InputValidator.validateDeploymentId("") },
             { InputValidator.validateEmail("invalid") },
             { InputValidator.validateDisplayName("Valid Name") }
         )
@@ -263,7 +185,7 @@ class InputValidatorTest {
     @Test
     fun testValidateFieldsAllValid() {
         val errors = validateFields(
-            { InputValidator.validateChatMessage("Valid message") },
+            { InputValidator.validateDeploymentId("12345678-1234-1234-1234-123456789abc") },
             { InputValidator.validateEmail("test@example.com") },
             { InputValidator.validateDisplayName("Valid Name") }
         )

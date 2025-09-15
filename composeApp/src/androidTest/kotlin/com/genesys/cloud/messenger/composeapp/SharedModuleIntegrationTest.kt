@@ -6,8 +6,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.genesys.cloud.messenger.composeapp.model.ThemeMode
-import com.genesys.cloud.messenger.composeapp.viewmodel.ChatViewModel
+import com.genesys.cloud.messenger.composeapp.viewmodel.TestBedViewModel
 import com.genesys.cloud.messenger.composeapp.viewmodel.HomeViewModel
 import com.genesys.cloud.messenger.composeapp.viewmodel.SettingsViewModel
 import org.junit.Rule
@@ -37,47 +36,39 @@ class SharedModuleIntegrationTest {
     fun shared_app_composable_renders_correctly() {
         // Test the shared App composable directly
         composeTestRule.setContent {
-            App(themeMode = ThemeMode.Light)
+            App()
         }
         
         // Verify shared components are displayed
         composeTestRule.onNodeWithText("Welcome to Messenger").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Start Chat").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Start Interaction").assertIsDisplayed()
         composeTestRule.onNodeWithText("Settings").assertIsDisplayed()
     }
 
     @Test
     fun shared_viewmodels_work_on_android() {
         val homeViewModel = HomeViewModel()
-        val chatViewModel = ChatViewModel()
+        val testBedViewModel = TestBedViewModel()
         val settingsViewModel = SettingsViewModel()
         
         composeTestRule.setContent {
             App(
                 homeViewModel = homeViewModel,
-                chatViewModel = chatViewModel,
-                settingsViewModel = settingsViewModel,
-                themeMode = ThemeMode.Light
+                testBedViewModel = testBedViewModel,
+                settingsViewModel = settingsViewModel
             )
         }
         
         // Verify ViewModels are working by testing navigation
-        composeTestRule.onNodeWithText("Start Chat").performClick()
-        composeTestRule.onNodeWithText("Chat").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Start Interaction").performClick()
+        composeTestRule.onNodeWithText("Interaction").assertIsDisplayed()
     }
 
     @Test
     fun theme_system_works_on_android() {
-        // Test light theme
+        // Test theme system
         composeTestRule.setContent {
-            App(themeMode = ThemeMode.Light)
-        }
-        
-        composeTestRule.onNodeWithText("Welcome to Messenger").assertIsDisplayed()
-        
-        // Test dark theme
-        composeTestRule.setContent {
-            App(themeMode = ThemeMode.Dark)
+            App()
         }
         
         composeTestRule.onNodeWithText("Welcome to Messenger").assertIsDisplayed()
@@ -86,12 +77,12 @@ class SharedModuleIntegrationTest {
     @Test
     fun shared_navigation_works_on_android() {
         composeTestRule.setContent {
-            App(themeMode = ThemeMode.Light)
+            App()
         }
         
-        // Test navigation to chat
-        composeTestRule.onNodeWithText("Start Chat").performClick()
-        composeTestRule.onNodeWithText("Chat").assertIsDisplayed()
+        // Test navigation to interaction
+        composeTestRule.onNodeWithText("Start Interaction").performClick()
+        composeTestRule.onNodeWithText("Interaction").assertIsDisplayed()
         
         // Test navigation back
         composeTestRule.onNodeWithContentDescription("Navigate back").performClick()
@@ -103,35 +94,34 @@ class SharedModuleIntegrationTest {
     }
 
     @Test
-    fun shared_chat_components_work_on_android() {
+    fun shared_interaction_components_work_on_android() {
         composeTestRule.setContent {
-            App(themeMode = ThemeMode.Light)
+            App()
         }
         
-        // Navigate to chat
-        composeTestRule.onNodeWithText("Start Chat").performClick()
+        // Navigate to interaction
+        composeTestRule.onNodeWithText("Start Interaction").performClick()
         
-        // Verify shared chat components
-        composeTestRule.onNodeWithContentDescription("Message input field").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Send message").assertIsDisplayed()
+        // Verify shared interaction components
+        composeTestRule.onNodeWithContentDescription("Command input field").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Execute command").assertIsDisplayed()
         
-        // Test message input interaction
-        composeTestRule.onNodeWithContentDescription("Message input field").performClick()
+        // Test command input interaction
+        composeTestRule.onNodeWithContentDescription("Command input field").performClick()
     }
 
     @Test
     fun shared_settings_components_work_on_android() {
         composeTestRule.setContent {
-            App(themeMode = ThemeMode.Light)
+            App()
         }
         
         // Navigate to settings
         composeTestRule.onNodeWithText("Settings").performClick()
         
         // Verify shared settings components
-        composeTestRule.onNodeWithText("Theme").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Notifications").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Language").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Deployment ID").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Region").assertIsDisplayed()
     }
 
     @Test
@@ -140,7 +130,6 @@ class SharedModuleIntegrationTest {
         
         composeTestRule.setContent {
             AppWithLifecycle(
-                themeMode = ThemeMode.Light,
                 onViewModelCleared = { viewModelCleared = true }
             )
         }

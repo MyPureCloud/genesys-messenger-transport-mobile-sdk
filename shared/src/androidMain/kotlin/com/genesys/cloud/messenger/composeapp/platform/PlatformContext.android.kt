@@ -11,12 +11,12 @@ import android.widget.Toast
 import java.io.File
 
 /**
- * Android implementation of PlatformContext
+ * Android implementation of PlatformContext interface
  */
 actual interface PlatformContext
 
 /**
- * Android wrapper for Context
+ * Android wrapper for Context - implements the platform interface
  */
 class AndroidPlatformContext(val context: Context) : PlatformContext
 

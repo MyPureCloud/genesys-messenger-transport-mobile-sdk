@@ -2,35 +2,29 @@ package com.genesys.cloud.messenger.composeapp.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.genesys.cloud.messenger.composeapp.model.AppSettings
-import com.genesys.cloud.messenger.composeapp.model.ThemeMode
 import com.genesys.cloud.messenger.composeapp.ui.components.SimpleTopBar
-import com.genesys.cloud.messenger.composeapp.viewmodel.LanguageOption
 import com.genesys.cloud.messenger.composeapp.viewmodel.SettingsUiState
 import com.genesys.cloud.messenger.composeapp.viewmodel.SettingsViewModel
 
 /**
- * Settings screen composable that displays app preferences and configuration options.
- * Allows users to modify theme, notifications, language, and other app settings.
+ * Simplified Settings screen composable for deployment configuration only.
+ * Allows users to modify deploymentId and region settings.
  *
  * Requirements addressed:
- * - 2.1: Shared UI components using Compose Multiplatform
- * - 4.1: Basic navigation between screens
- * - 4.3: User interaction handling
+ * - 1.1: Display only deploymentID and region configuration fields
+ * - 1.2: Populate with default values from BuildConfig (AppConfig)
+ * - 1.3: Validate and save deployment configuration
+ * - 1.4: Remove appearance, notifications, and language settings
  *
  * @param settingsViewModel ViewModel for managing settings state
  * @param onNavigateBack Callback when user wants to navigate back
@@ -52,51 +46,49 @@ fun SettingsScreen(
     ) {
         // Top bar
         SimpleTopBar(
-            title = "Settings",
+            title = "Deployment Settings",
             showBackButton = true,
             onBackClick = onNavigateBack
         )
         
         // Settings content
-        SettingsContent(
+        DeploymentSettingsContent(
             uiState = uiState,
             settings = settings,
             isLoading = isLoading,
             error = error,
-            onThemeChange = settingsViewModel::updateThemeMode,
-            onNotificationsToggle = settingsViewModel::toggleNotifications,
-            onLanguageChange = settingsViewModel::updateLanguage,
+            onDeploymentIdChange = settingsViewModel::updateDeploymentId,
+            onRegionChange = settingsViewModel::updateRegion,
             onResetToDefaults = settingsViewModel::resetToDefaults,
             onClearError = settingsViewModel::clearError,
             onClearSuccessMessage = settingsViewModel::clearSuccessMessage,
             onRetryLoad = settingsViewModel::reloadSettings,
-            availableThemes = settingsViewModel.getAvailableThemeModes(),
-            availableLanguages = settingsViewModel.getAvailableLanguages(),
+            availableRegions = settingsViewModel.getAvailableRegions(),
             modifier = Modifier.fillMaxSize()
         )
     }
 }
 
 /**
- * Main content of the settings screen
+ * Main content of the deployment settings screen
  */
 @Composable
-private fun SettingsContent(
+private fun DeploymentSettingsContent(
     uiState: SettingsUiState,
     settings: AppSettings,
     isLoading: Boolean,
     error: com.genesys.cloud.messenger.composeapp.model.AppError?,
-    onThemeChange: (ThemeMode) -> Unit,
-    onNotificationsToggle: () -> Unit,
-    onLanguageChange: (String) -> Unit,
+    onDeploymentIdChange: (String) -> Unit,
+    onRegionChange: (String) -> Unit,
     onResetToDefaults: () -> Unit,
     onClearError: () -> Unit,
     onClearSuccessMessage: () -> Unit,
     onRetryLoad: () -> Unit,
-    availableThemes: List<ThemeMode>,
-    availableLanguages: List<LanguageOption>,
+    availableRegions: List<String>,
     modifier: Modifier = Modifier
 ) {
+    var deploymentIdText by remember(settings.deploymentId) { mutableStateOf(settings.deploymentId) }
+    
     Box(
         modifier = modifier.fillMaxSize()
     ) {
@@ -108,32 +100,30 @@ private fun SettingsContent(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Theme settings
-            ThemeSettingsSection(
-                currentTheme = settings.theme,
-                availableThemes = availableThemes,
-                onThemeChange = onThemeChange,
+            // Deployment ID settings
+            DeploymentIdSection(
+                deploymentId = deploymentIdText,
+                onDeploymentIdChange = { newValue ->
+                    deploymentIdText = newValue
+                    onDeploymentIdChange(newValue)
+                },
                 enabled = !isLoading
             )
             
-            // Notifications settings
-            NotificationSettingsSection(
-                notificationsEnabled = settings.notifications,
-                onToggle = onNotificationsToggle,
-                enabled = !isLoading
-            )
-            
-            // Language settings
-            LanguageSettingsSection(
-                currentLanguage = settings.language,
-                availableLanguages = availableLanguages,
-                onLanguageChange = onLanguageChange,
+            // Region settings
+            RegionSettingsSection(
+                currentRegion = settings.region,
+                availableRegions = availableRegions,
+                onRegionChange = onRegionChange,
                 enabled = !isLoading
             )
             
             // Reset section
             ResetSettingsSection(
-                onResetToDefaults = onResetToDefaults,
+                onResetToDefaults = {
+                    onResetToDefaults()
+                    // Reset local text field state when defaults are restored
+                },
                 enabled = !isLoading
             )
             
@@ -186,132 +176,53 @@ private fun SettingsContent(
 }
 
 /**
- * Theme settings section
+ * Deployment ID settings section
  */
 @Composable
-private fun ThemeSettingsSection(
-    currentTheme: ThemeMode,
-    availableThemes: List<ThemeMode>,
-    onThemeChange: (ThemeMode) -> Unit,
+private fun DeploymentIdSection(
+    deploymentId: String,
+    onDeploymentIdChange: (String) -> Unit,
     enabled: Boolean
 ) {
     SettingsSection(
-        title = "Appearance",
-        description = "Choose your preferred theme"
+        title = "Deployment ID",
+        description = "Enter your Genesys Cloud deployment ID"
     ) {
-        Column(
-            modifier = Modifier.selectableGroup()
-        ) {
-            availableThemes.forEach { theme ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .selectable(
-                            selected = currentTheme == theme,
-                            onClick = { if (enabled) onThemeChange(theme) },
-                            role = Role.RadioButton
-                        )
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = currentTheme == theme,
-                        onClick = null,
-                        enabled = enabled
-                    )
-                    
-                    Spacer(modifier = Modifier.width(16.dp))
-                    
-                    Text(
-                        text = when (theme) {
-                            ThemeMode.Light -> "Light"
-                            ThemeMode.Dark -> "Dark"
-                            ThemeMode.System -> "System default"
-                        },
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = if (enabled) {
-                            MaterialTheme.colorScheme.onSurface
-                        } else {
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
- * Notifications settings section
- */
-@Composable
-private fun NotificationSettingsSection(
-    notificationsEnabled: Boolean,
-    onToggle: () -> Unit,
-    enabled: Boolean
-) {
-    SettingsSection(
-        title = "Notifications",
-        description = "Manage notification preferences"
-    ) {
-        Row(
+        OutlinedTextField(
+            value = deploymentId,
+            onValueChange = onDeploymentIdChange,
+            enabled = enabled,
+            placeholder = { Text("e.g., 12345678-1234-1234-1234-123456789abc") },
+            supportingText = { Text("UUID format required") },
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = "Push notifications",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = if (enabled) {
-                        MaterialTheme.colorScheme.onSurface
-                    } else {
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    }
-                )
-                
-                Text(
-                    text = "Receive notifications for new messages",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            
-            Switch(
-                checked = notificationsEnabled,
-                onCheckedChange = { if (enabled) onToggle() },
-                enabled = enabled
-            )
-        }
+            singleLine = true
+        )
     }
 }
 
 /**
- * Language settings section
+ * Region settings section
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LanguageSettingsSection(
-    currentLanguage: String,
-    availableLanguages: List<LanguageOption>,
-    onLanguageChange: (String) -> Unit,
+private fun RegionSettingsSection(
+    currentRegion: String,
+    availableRegions: List<String>,
+    onRegionChange: (String) -> Unit,
     enabled: Boolean
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val currentLanguageOption = availableLanguages.find { it.code == currentLanguage }
     
     SettingsSection(
-        title = "Language",
-        description = "Select your preferred language"
+        title = "Region",
+        description = "Select your Genesys Cloud region"
     ) {
         ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { if (enabled) expanded = !expanded }
         ) {
             OutlinedTextField(
-                value = currentLanguageOption?.displayName ?: "Unknown",
+                value = currentRegion,
                 onValueChange = {},
                 readOnly = true,
                 enabled = enabled,
@@ -327,14 +238,14 @@ private fun LanguageSettingsSection(
                 expanded = expanded,
                 onDismissRequest = { expanded = false }
             ) {
-                availableLanguages.forEach { language ->
+                availableRegions.forEach { region ->
                     DropdownMenuItem(
                         text = {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(text = language.displayName)
-                                if (language.code == currentLanguage) {
+                                Text(text = region)
+                                if (region == currentRegion) {
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Icon(
                                         imageVector = Icons.Default.Check,
@@ -346,7 +257,7 @@ private fun LanguageSettingsSection(
                             }
                         },
                         onClick = {
-                            onLanguageChange(language.code)
+                            onRegionChange(region)
                             expanded = false
                         }
                     )
@@ -355,6 +266,8 @@ private fun LanguageSettingsSection(
         }
     }
 }
+
+
 
 /**
  * Reset settings section
@@ -366,7 +279,7 @@ private fun ResetSettingsSection(
 ) {
     SettingsSection(
         title = "Reset",
-        description = "Restore default settings"
+        description = "Restore default deployment settings"
     ) {
         OutlinedButton(
             onClick = onResetToDefaults,

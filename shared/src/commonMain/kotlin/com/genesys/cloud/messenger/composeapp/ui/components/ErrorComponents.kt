@@ -434,5 +434,12 @@ private fun getErrorDisplayInfo(error: AppError): ErrorDisplayInfo {
             backgroundColor = MaterialTheme.colorScheme.errorContainer,
             textColor = MaterialTheme.colorScheme.onErrorContainer
         )
+        else -> ErrorDisplayInfo(
+            title = "Error",
+            icon = Icons.Default.Warning,
+            iconColor = MaterialTheme.colorScheme.onErrorContainer,
+            backgroundColor = MaterialTheme.colorScheme.errorContainer,
+            textColor = MaterialTheme.colorScheme.onErrorContainer
+        )
     }
 }

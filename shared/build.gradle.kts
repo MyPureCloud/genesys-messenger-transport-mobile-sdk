@@ -55,14 +55,17 @@ kotlin {
                 // Coroutines
                 implementation(Deps.Libs.Kotlinx.coroutinesCore)
                 
+                // DateTime
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.1")
+                
                 // Navigation
                 implementation(Deps.Libs.ComposeMultiplatform.navigation)
                 
                 // ViewModel - using kotlinx coroutines for state management
                 // Note: Using coroutines-based state management instead of ViewModel for better multiplatform support
                 
-                // Transport module dependency - commented out temporarily to resolve iOS build issues
-                // implementation(project(":transport"))
+                // Transport module dependency
+                implementation(project(":transport"))
             }
         }
         

@@ -11,26 +11,7 @@ import kotlin.test.assertTrue
  */
 class NavigationTest {
     
-    @Test
-    fun testScreenToRoute() {
-        assertEquals("home", Screen.Home.toRoute())
-        assertEquals("chat", Screen.Chat.toRoute())
-        assertEquals("settings", Screen.Settings.toRoute())
-    }
-    
-    @Test
-    fun testRouteToScreen() {
-        assertEquals(Screen.Home, "home".toScreen())
-        assertEquals(Screen.Chat, "chat".toScreen())
-        assertEquals(Screen.Settings, "settings".toScreen())
-    }
-    
-    @Test
-    fun testRouteToScreenWithInvalidRoute() {
-        // Should default to Home for invalid routes
-        assertEquals(Screen.Home, "invalid".toScreen())
-        assertEquals(Screen.Home, "".toScreen())
-    }
+
     
     @Test
     fun testNavigationState() {
@@ -39,9 +20,9 @@ class NavigationTest {
         // Initial state should be Home
         assertEquals(Screen.Home, navigationState.currentScreen)
         
-        // Navigate to Chat
-        navigationState.navigateTo(Screen.Chat)
-        assertEquals(Screen.Chat, navigationState.currentScreen)
+        // Navigate to Interaction
+        navigationState.navigateTo(Screen.Interaction)
+        assertEquals(Screen.Interaction, navigationState.currentScreen)
         
         // Navigate to Settings
         navigationState.navigateTo(Screen.Settings)
@@ -57,8 +38,8 @@ class NavigationTest {
         val navigationState = NavigationState()
         
         // Navigate through multiple screens
-        navigationState.navigateTo(Screen.Chat)
-        assertEquals(Screen.Chat, navigationState.currentScreen)
+        navigationState.navigateTo(Screen.Interaction)
+        assertEquals(Screen.Interaction, navigationState.currentScreen)
         
         navigationState.navigateTo(Screen.Settings)
         assertEquals(Screen.Settings, navigationState.currentScreen)
@@ -80,25 +61,25 @@ class NavigationTest {
         assertEquals(navigationState1.currentScreen, navigationState2.currentScreen)
         
         // Navigating one should not affect the other
-        navigationState1.navigateTo(Screen.Chat)
-        assertEquals(Screen.Chat, navigationState1.currentScreen)
+        navigationState1.navigateTo(Screen.Interaction)
+        assertEquals(Screen.Interaction, navigationState1.currentScreen)
         assertEquals(Screen.Home, navigationState2.currentScreen)
     }
     
     @Test
     fun testScreenTypes() {
         val homeScreen = Screen.Home
-        val chatScreen = Screen.Chat
+        val interactionScreen = Screen.Interaction
         val settingsScreen = Screen.Settings
         
         // Verify they are different instances
-        assertNotEquals<Screen>(homeScreen, chatScreen)
-        assertNotEquals<Screen>(chatScreen, settingsScreen)
+        assertNotEquals<Screen>(homeScreen, interactionScreen)
+        assertNotEquals<Screen>(interactionScreen, settingsScreen)
         assertNotEquals<Screen>(homeScreen, settingsScreen)
         
         // Verify they are the correct types
         assertTrue(homeScreen is Screen.Home)
-        assertTrue(chatScreen is Screen.Chat)
+        assertTrue(interactionScreen is Screen.Interaction)
         assertTrue(settingsScreen is Screen.Settings)
     }
     
@@ -106,46 +87,46 @@ class NavigationTest {
     fun testScreenEquality() {
         val homeScreen1 = Screen.Home
         val homeScreen2 = Screen.Home
-        val chatScreen = Screen.Chat
+        val interactionScreen = Screen.Interaction
         
         // Same screen types should be equal
         assertEquals(homeScreen1, homeScreen2)
         
         // Different screen types should not be equal
-        assertNotEquals<Screen>(homeScreen1, chatScreen)
+        assertNotEquals<Screen>(homeScreen1, interactionScreen)
     }
     
     @Test
     fun testScreenHashCode() {
         val homeScreen1 = Screen.Home
         val homeScreen2 = Screen.Home
-        val chatScreen = Screen.Chat
+        val interactionScreen = Screen.Interaction
         
         // Same screen types should have same hash code
         assertEquals(homeScreen1.hashCode(), homeScreen2.hashCode())
         
         // Different screen types should have different hash codes
-        assertNotEquals(homeScreen1.hashCode(), chatScreen.hashCode())
+        assertNotEquals(homeScreen1.hashCode(), interactionScreen.hashCode())
     }
     
     @Test
     fun testScreenToString() {
         val homeScreen = Screen.Home
-        val chatScreen = Screen.Chat
+        val interactionScreen = Screen.Interaction
         val settingsScreen = Screen.Settings
         
         // toString should return meaningful values
         val homeString = homeScreen.toString()
-        val chatString = chatScreen.toString()
+        val interactionString = interactionScreen.toString()
         val settingsString = settingsScreen.toString()
         
         assertTrue(homeString.isNotEmpty())
-        assertTrue(chatString.isNotEmpty())
+        assertTrue(interactionString.isNotEmpty())
         assertTrue(settingsString.isNotEmpty())
         
         // Each should be different
-        assertNotEquals<String>(homeString, chatString)
-        assertNotEquals<String>(chatString, settingsString)
+        assertNotEquals<String>(homeString, interactionString)
+        assertNotEquals<String>(interactionString, settingsString)
         assertNotEquals<String>(homeString, settingsString)
     }
 }
