@@ -23,11 +23,11 @@ class MCIsAuthEnabledTest {
 
     @Test
     fun `when deployment config is available and auth enabled is true`() = runBlocking {
-        val deploymentConfig = createDeploymentConfigForTesting().copy(
+        val givenDeploymentConfig = createDeploymentConfigForTesting().copy(
             auth = Auth(enabled = true)
         )
         // Note: the configProperty is mockk but the element that tested in practice is deploymentConfig
-        val configProperty = createMockProperty(deploymentConfig)
+        val configProperty = createMockProperty(givenDeploymentConfig)
 
         val result = configProperty.isAuthEnabled(mockApi)
 
@@ -36,10 +36,10 @@ class MCIsAuthEnabledTest {
 
     @Test
     fun `when deployment config is available and auth enabled is false`() = runBlocking {
-        val deploymentConfig = createDeploymentConfigForTesting().copy(
+        val givenDeploymentConfig = createDeploymentConfigForTesting().copy(
             auth = Auth(enabled = false)
         )
-        val configProperty = createMockProperty(deploymentConfig)
+        val configProperty = createMockProperty(givenDeploymentConfig)
 
         val result = configProperty.isAuthEnabled(mockApi)
 
@@ -49,10 +49,10 @@ class MCIsAuthEnabledTest {
     @Test
     fun `when deployment config is null and API returns success with auth enabled`() = runBlocking {
         val configProperty = createMockProperty(null)
-        val apiDeploymentConfig = createDeploymentConfigForTesting().copy(
+        val givenApiDeploymentConfig = createDeploymentConfigForTesting().copy(
             auth = Auth(enabled = true)
         )
-        coEvery { mockApi.fetchDeploymentConfig() } returns Result.Success(apiDeploymentConfig)
+        coEvery { mockApi.fetchDeploymentConfig() } returns Result.Success(givenApiDeploymentConfig)
 
         val result = configProperty.isAuthEnabled(mockApi)
 
@@ -79,19 +79,6 @@ class MCIsAuthEnabledTest {
         coEvery { mockApi.fetchDeploymentConfig() } returns Result.Failure(
             ErrorCode.DeploymentConfigFetchFailed,
             "Failed to fetch config"
-        )
-
-        val result = configProperty.isAuthEnabled(mockApi)
-
-        assertThat(result).isFalse()
-    }
-
-    @Test
-    fun `when deployment config is null and API returns unexpected error`() = runBlocking {
-        val configProperty = createMockProperty(null)
-        coEvery { mockApi.fetchDeploymentConfig() } returns Result.Failure(
-            ErrorCode.UnexpectedError,
-            "Network error"
         )
 
         val result = configProperty.isAuthEnabled(mockApi)

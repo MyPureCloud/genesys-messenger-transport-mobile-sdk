@@ -853,7 +853,7 @@ internal suspend fun KProperty0<DeploymentConfig?>.isAuthEnabled(api: WebMessagi
     val config = this.get()
     return config?.auth?.enabled
         ?: when (val result = api.fetchDeploymentConfig()) {
-            is Result.Success -> result.value.auth.enabled == true
+            is Result.Success -> result.value.auth.enabled
             is Result.Failure -> false
         }
 }
