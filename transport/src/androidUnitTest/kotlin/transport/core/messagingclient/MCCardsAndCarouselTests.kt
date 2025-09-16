@@ -200,10 +200,12 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
                 givenChannel
             )
             mockLogger.i(any())
-            mockPlatformSocket.sendMessage(match { json ->
-                expectedJson.all { json.contains(it) } &&
+            mockPlatformSocket.sendMessage(
+                match { json ->
+                    expectedJson.all { json.contains(it) } &&
                         !nonEmptyPayloadRegex.containsMatchIn(json)
-            })
+                }
+            )
         }
     }
 
