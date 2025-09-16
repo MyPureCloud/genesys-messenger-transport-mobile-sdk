@@ -736,4 +736,34 @@ internal class MessageStoreTest {
         }
         return messageList
     }
+
+    @Test
+    fun `when preparePostbackMessage() then logs and publishes MessageInserted`() {
+        val givenButton = CardTestValues.postbackButtonResponse
+        val expectedMessage = subject.pendingMessage.copy(
+            state = State.Sending,
+            messageType = Message.Type.Cards,
+            type = Message.Type.Cards.name,
+            quickReplies = listOf(givenButton)
+        )
+
+        val result = subject.preparePostbackMessage(TestValues.TOKEN, givenButton)
+
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockMessageListener.invoke(capture(messageSlot))
+        }
+
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.postbackPrepareToSend(expectedMessage))
+
+        val inserted = messageSlot.captured as MessageEvent.MessageInserted
+        assertThat(inserted.message).isEqualTo(expectedMessage)
+
+        assertThat(result.token).isEqualTo(TestValues.TOKEN)
+        assertThat(result.message).isInstanceOf(StructuredMessage::class)
+        val sm = result.message as StructuredMessage
+        assertThat(sm.text).isEqualTo(givenButton.text)
+        assertThat(sm.metadata?.get("customMessageId")).isEqualTo(expectedMessage.id)
+        assertThat(sm.content.first().buttonResponse).isEqualTo(givenButton)
+    }
 }
