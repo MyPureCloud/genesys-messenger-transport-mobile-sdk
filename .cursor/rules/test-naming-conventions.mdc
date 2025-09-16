@@ -1,5 +1,5 @@
 ---
-description: "Testing standards and best practices"
+description: "Test naming conventions"
 globs: ["transport/**/*Test.kt", "transport/**/test/**", "transport/**/commonTest/**", "transport/**/androidUnitTest/**", "transport/**/iosX64Test/**"]
 alwaysApply: false
 ---
