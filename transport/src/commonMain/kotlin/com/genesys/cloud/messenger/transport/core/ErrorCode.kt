@@ -37,6 +37,7 @@ sealed class ErrorCode(val code: Int) {
     data object HistoryFetchFailure : ErrorCode(6004)
     data object ClearConversationFailure : ErrorCode(6005)
     data object MissingDeploymentConfig : ErrorCode(6006)
+    data object DeploymentConfigFetchFailed : ErrorCode(6007)
 
     // Push
     data object DeviceTokenOperationFailure : ErrorCode(6020)
@@ -80,6 +81,7 @@ sealed class ErrorCode(val code: Int) {
                 6004 -> HistoryFetchFailure
                 6005 -> ClearConversationFailure
                 6006 -> MissingDeploymentConfig
+                6007 -> DeploymentConfigFetchFailed
                 6020 -> DeviceTokenOperationFailure
                 6021 -> DeviceAlreadyRegistered
                 6022 -> DeviceNotFound

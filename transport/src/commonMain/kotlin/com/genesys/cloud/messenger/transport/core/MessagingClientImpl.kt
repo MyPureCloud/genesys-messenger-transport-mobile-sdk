@@ -91,7 +91,8 @@ internal class MessagingClientImpl(
         eventHandler,
         api,
         vault,
-        log.withTag(LogTag.AUTH_HANDLER)
+        log.withTag(LogTag.AUTH_HANDLER),
+        isAuthEnabled = { deploymentConfig.isAuthEnabled(api) }
     ),
     private val internalCustomAttributesStore: CustomAttributesStoreImpl = CustomAttributesStoreImpl(
         log.withTag(LogTag.CUSTOM_ATTRIBUTES_STORE),
@@ -847,6 +848,15 @@ private fun KProperty0<DeploymentConfig?>.isShowUserTypingEnabled(): Boolean =
 
 private fun KProperty0<DeploymentConfig?>.isClearConversationEnabled(): Boolean =
     this.get()?.messenger?.apps?.conversations?.conversationClear?.enabled == true
+
+internal suspend fun KProperty0<DeploymentConfig?>.isAuthEnabled(api: WebMessagingApi): Boolean {
+    val config = this.get()
+    return config?.auth?.enabled
+        ?: when (val result = api.fetchDeploymentConfig()) {
+            is Result.Success -> result.value.auth.enabled
+            is Result.Failure -> false
+        }
+}
 
 private fun KProperty0<DeploymentConfig?>.isPushServiceEnabled(): Boolean =
     this.get()?.messenger?.apps?.conversations?.notifications?.enabled == true

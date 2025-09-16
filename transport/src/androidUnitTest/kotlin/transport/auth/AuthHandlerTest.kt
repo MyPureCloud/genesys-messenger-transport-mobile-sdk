@@ -39,11 +39,14 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.serialization.encodeToString
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class AuthHandlerTest {
 
@@ -86,13 +89,14 @@ class AuthHandlerTest {
     private val fakeVault: FakeVault = FakeVault(TestValues.vaultKeys)
     private val dispatcher: CoroutineDispatcher = Dispatchers.Unconfined
 
-    private var subject = buildAuthHandler()
+    private lateinit var subject: AuthHandlerImpl
 
     @ExperimentalCoroutinesApi
     @Before
     fun setup() {
         MockKAnnotations.init(this)
         Dispatchers.setMain(dispatcher)
+        subject = buildAuthHandler()
     }
 
     @ExperimentalCoroutinesApi
@@ -504,13 +508,17 @@ class AuthHandlerTest {
         }
     }
 
-    private fun buildAuthHandler(givenAutoRefreshTokenWhenExpired: Boolean = true): AuthHandlerImpl {
+    private fun buildAuthHandler(
+        givenAutoRefreshTokenWhenExpired: Boolean = true,
+        isAuthEnabled: suspend () -> Boolean = { true }
+    ): AuthHandlerImpl {
         return AuthHandlerImpl(
             autoRefreshTokenWhenExpired = givenAutoRefreshTokenWhenExpired,
             eventHandler = mockEventHandler,
             api = mockWebMessagingApi,
             vault = fakeVault,
             log = mockLogger,
+            isAuthEnabled = isAuthEnabled
         )
     }
 
@@ -556,5 +564,23 @@ class AuthHandlerTest {
         assertThat(callbackResult!!).isTrue()
         assertThat(subject.jwt).isEqualTo(expectedAuthJwt.jwt)
         assertThat(fakeVault.authRefreshToken).isEqualTo(expectedAuthJwt.refreshToken)
+    }
+
+    @Test
+    fun `when shouldAuthorize() and auth is disabled in deployment config`() = runTest {
+        subject = buildAuthHandler(isAuthEnabled = { false })
+
+        subject.shouldAuthorize { result ->
+            assertFalse(result)
+            coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
+        }
+    }
+
+    @Test
+    fun `when shouldAuthorize() and auth is enabled in deployment config`() = runTest {
+        subject.shouldAuthorize { result ->
+            assertTrue(result)
+            coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
+        }
     }
 }
