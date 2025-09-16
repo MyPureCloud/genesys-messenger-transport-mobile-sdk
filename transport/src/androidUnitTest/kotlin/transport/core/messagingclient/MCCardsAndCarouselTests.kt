@@ -1,5 +1,8 @@
 package transport.core.messagingclient
 
+import assertk.assertThat
+import assertk.assertions.isNotEmpty
+import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
@@ -142,5 +145,83 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
         verify {
             mockMessageStore.onMessageError(any(), any())
         }
+    }
+
+    @Test
+    fun `when sendCardReply() with Link then no non-empty payload value is serialized`() {
+        val givenLinkButton = ButtonResponse(
+            text = "Open",
+            payload = "",
+            type = CardTestValues.LINK_TYPE
+        )
+        val expectedAttrs = mapOf("source" to "card")
+        val expectedChannel = Channel(Channel.Metadata(expectedAttrs))
+
+        every { mockCustomAttributesStore.getCustomAttributesToSend() } returns expectedAttrs
+        every {
+            mockMessageStore.preparePostbackMessage(
+                Request.token,
+                match { it.type == CardTestValues.LINK_TYPE },
+                expectedChannel
+            )
+        } returns OnMessageRequest(
+            token = Request.token,
+            message = StructuredMessage(
+                text = givenLinkButton.text,
+                metadata = mapOf("customMessageId" to "card-123"),
+                content = listOf(
+                    Message.Content(
+                        contentType = Message.Content.Type.ButtonResponse,
+                        buttonResponse = givenLinkButton
+                    )
+                ),
+                channel = expectedChannel
+            )
+        )
+
+        subject.connect()
+        subject.sendCardReply(givenLinkButton)
+
+        verifySequence {
+            connectSequence()
+            mockLogger.i(any())
+            mockCustomAttributesStore.getCustomAttributesToSend()
+            mockCustomAttributesStore.onSending()
+            mockMessageStore.preparePostbackMessage(
+                Request.token,
+                match { it.type == CardTestValues.LINK_TYPE },
+                expectedChannel
+            )
+            mockLogger.i(any())
+            mockPlatformSocket.sendMessage(
+                match { json ->
+                    if (!json.contains("\"type\":\"Structured\"")) return@match false
+                    if (!json.contains("\"type\":\"Link\"")) return@match false
+                    val nonEmptyPayload = Regex("\"payload\":\"[^\"]+\"")
+                    !nonEmptyPayload.containsMatchIn(json)
+                }
+            )
+        }
+    }
+
+    @Test
+    fun `sendCardReply logs success and then error messages`() {
+        every { mockLogger.i(capture(logSlot)) } answers { }
+        every { mockLogger.e(capture(logSlot)) } answers { }
+
+        subject.connect()
+
+        every { mockPlatformSocket.sendMessage(match { it.contains("\"action\":\"onMessage\"") }) } returns Unit
+
+        subject.sendCardReply(CardTestValues.postbackButtonResponse)
+
+        assertThat(logSlot).isNotEmpty()
+        assertThat(logSlot.any { it.invoke().contains("sendCardReply") }).isTrue()
+
+        every { mockPlatformSocket.sendMessage(match { it.contains("\"action\":\"onMessage\"") }) } throws RuntimeException("boom")
+
+        runCatching { subject.sendCardReply(CardTestValues.postbackButtonResponse) }
+
+        assertThat(logSlot.any { it.invoke().contains("requestError") || it.invoke().contains("sendCardReply") }).isTrue()
     }
 }
