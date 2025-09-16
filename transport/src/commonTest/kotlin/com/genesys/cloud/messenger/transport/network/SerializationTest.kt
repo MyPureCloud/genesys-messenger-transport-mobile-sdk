@@ -511,4 +511,99 @@ class SerializationTest {
         assertThat(message.body, "WebMessagingMessage body").isNotNull()
             .hasClass(SessionClearedEvent::class)
     }
+
+    @Test
+    fun whenStructuredMessageWithCarouselThenDecodes() {
+        val json = """{"type":"message","class":"StructuredMessage","code":200,"body":{"id":"carousel-id","type":"Structured","text":"Carousel content test","direction":"Outbound","content":[{"contentType":"Carousel","carousel":{"cards":[{"title":"Card 1","description":"D1","actions":[{"type":"Link","text":"Open","url":"http://example.org"}]},{"title":"Card 2","description":"D2","actions":[]}]} }],"originatingEntity":"Human"}}"""
+
+        val expected = WebMessagingMessage(
+            type = MessageType.Message.value,
+            code = 200,
+            body = StructuredMessage(
+                id = "carousel-id",
+                type = StructuredMessage.Type.Structured,
+                text = "Carousel content test",
+                direction = "Outbound",
+                content = listOf(
+                    StructuredMessage.Content.CarouselContent(
+                        contentType = "Carousel",
+                        carousel = StructuredMessage.Content.CarouselContent.Carousel(
+                            cards = listOf(
+                                StructuredMessage.Content.CardContent.Card(
+                                    title = "Card 1",
+                                    description = "D1",
+                                    image = null,
+                                    defaultAction = null,
+                                    actions = listOf(
+                                        StructuredMessage.Content.Action(
+                                            type = "Link",
+                                            text = "Open",
+                                            url = "http://example.org",
+                                            payload = null
+                                        )
+                                    )
+                                ),
+                                StructuredMessage.Content.CardContent.Card(
+                                    title = "Card 2",
+                                    description = "D2",
+                                    image = null,
+                                    defaultAction = null,
+                                    actions = emptyList()
+                                )
+                            )
+                        )
+                    )
+                ),
+                originatingEntity = "Human"
+            )
+        )
+
+        val message = WebMessagingJson.decodeFromString(json)
+
+        assertThat(message.body, "WebMessagingMessage body").isNotNull()
+            .hasClass(StructuredMessage::class)
+        assertThat(message).isEqualTo(expected)
+    }
+
+    @Test
+    fun whenStructuredMessageWithCardThenDecodes() {
+        val json = """{"type":"message","class":"StructuredMessage","code":200,"body":{"id":"card-id","type":"Structured","text":"Card content test","direction":"Outbound","content":[{"contentType":"Card","card":{"title":"One Card","description":"Single card","actions":[{"type":"Link","text":"Open","url":"http://example.org"}]}}],"originatingEntity":"Human"}}"""
+
+        val expected = WebMessagingMessage(
+            type = MessageType.Message.value,
+            code = 200,
+            body = StructuredMessage(
+                id = "card-id",
+                type = StructuredMessage.Type.Structured,
+                text = "Card content test",
+                direction = "Outbound",
+                content = listOf(
+                    StructuredMessage.Content.CardContent(
+                        contentType = "Card",
+                        card = StructuredMessage.Content.CardContent.Card(
+                            title = "One Card",
+                            description = "Single card",
+                            image = null,
+                            defaultAction = null,
+                            actions = listOf(
+                                StructuredMessage.Content.Action(
+                                    type = "Link",
+                                    text = "Open",
+                                    url = "http://example.org",
+                                    payload = null
+                                )
+                            )
+                        )
+                    )
+                ),
+                originatingEntity = "Human"
+            )
+        )
+
+        val message = WebMessagingJson.decodeFromString(json)
+
+        assertThat(message.body, "WebMessagingMessage body").isNotNull()
+            .hasClass(StructuredMessage::class)
+        assertThat(message).isEqualTo(expected)
+    }
 }

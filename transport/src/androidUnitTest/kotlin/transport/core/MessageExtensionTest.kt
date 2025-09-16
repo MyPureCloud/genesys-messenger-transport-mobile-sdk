@@ -9,6 +9,7 @@ import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import assertk.assertions.size
+import com.genesys.cloud.messenger.transport.core.Action
 import com.genesys.cloud.messenger.transport.core.Attachment
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
@@ -175,7 +176,7 @@ internal class MessageExtensionTest {
             assertThat(id).isEqualTo(expectedMessage.id)
             assertThat(direction).isEqualTo(expectedMessage.direction)
             assertThat(state).isEqualTo(expectedMessage.state)
-            assertThat(type).isEqualTo(expectedMessage.type)
+            assertThat(messageType).isEqualTo(expectedMessage.messageType)
             assertThat(timeStamp).isEqualTo(expectedMessage.timeStamp)
             assertThat(events).containsExactly(*expectedMessage.events.toTypedArray())
             from.run {
@@ -1064,5 +1065,115 @@ internal class MessageExtensionTest {
         assertThat(linkAction.payload).isEqualTo(expectedUrl)
 
         assertThat(postbackAction.payload).isEqualTo(expectedPayload)
+    }
+
+    @Test
+    fun `when creating Action subtypes then type getter and enum values are covered`() {
+        val givenLink = Action.Link(url = CardTestValues.url, text = "Open")
+        val givenPostback = Action.Postback(
+            text = CardTestValues.POSTBACK_TEXT,
+            payload = CardTestValues.POSTBACK_PAYLOAD
+        )
+
+        val expectedActionTypes = listOf("Link", "Postback")
+        val expectedLinkType = Action.Type.Link
+        val expectedPostbackType = Action.Type.Postback
+
+        val actualActionTypes = Action.Type.entries.map { it.name }
+        val actualLinkType = givenLink.type
+        val actualPostbackType = givenPostback.type
+
+        assertThat(actualActionTypes).containsExactly(*expectedActionTypes.toTypedArray())
+        assertThat(actualLinkType).isEqualTo(expectedLinkType)
+        assertThat(actualPostbackType).isEqualTo(expectedPostbackType)
+    }
+
+    @Test
+    fun `when card has unsupported action then else branch drops it`() {
+        val givenUnsupportedAction = StructuredMessage.Content.Action(
+            type = "Unsupported",
+            text = CardTestValues.text
+        )
+        val givenCard = StructuredMessage.Content.CardContent.Card(
+            title = CardTestValues.title,
+            description = CardTestValues.description,
+            image = CardTestValues.image,
+            actions = listOf(givenUnsupportedAction)
+        )
+        val givenStructuredMessage = StructuredMessageValues.createStructuredMessageForTesting(
+            type = StructuredMessage.Type.Structured,
+            direction = Message.Direction.Outbound.name,
+            content = listOf(CardTestValues.createCardContent(givenCard))
+        )
+
+        val expectedMessageType = Message.Type.Cards
+        val expectedActions = emptyList<ButtonResponse>()
+
+        val actualMessage: Message = givenStructuredMessage.toMessage()
+
+        assertThat(actualMessage.messageType).isEqualTo(expectedMessageType)
+        assertThat(actualMessage.cards.first().actions).isEqualTo(expectedActions)
+    }
+
+    @Test
+    fun `when defaultAction is not Link then else branch returns null`() {
+        val givenNonLinkDefault = StructuredMessage.Content.Action(
+            type = CardTestValues.POSTBACK_TYPE,
+            text = CardTestValues.POSTBACK_TEXT,
+            payload = CardTestValues.POSTBACK_PAYLOAD
+        )
+        val givenCard = StructuredMessage.Content.CardContent.Card(
+            title = CardTestValues.title,
+            description = CardTestValues.description,
+            image = CardTestValues.image,
+            defaultAction = givenNonLinkDefault,
+            actions = emptyList()
+        )
+        val givenStructuredMessage = StructuredMessageValues.createStructuredMessageForTesting(
+            type = StructuredMessage.Type.Structured,
+            direction = Message.Direction.Outbound.name,
+            content = listOf(CardTestValues.createCardContent(givenCard))
+        )
+
+        val expectedDefaultAction = null
+
+        val actualMessage: Message = givenStructuredMessage.toMessage()
+
+        assertThat(actualMessage.cards.first().defaultAction).isEqualTo(expectedDefaultAction)
+    }
+
+    @Test
+    fun `when carousel contains cards with unsupported actions then else branch drops them as well`() {
+        val givenUnsupportedAction = StructuredMessage.Content.Action(
+            type = "Unsupported",
+            text = CardTestValues.text
+        )
+        val givenCard1 = StructuredMessage.Content.CardContent.Card(
+            title = "${CardTestValues.title}-1",
+            description = CardTestValues.description,
+            image = CardTestValues.image,
+            actions = listOf(givenUnsupportedAction)
+        )
+        val givenCard2 = StructuredMessage.Content.CardContent.Card(
+            title = "${CardTestValues.title}-2",
+            description = CardTestValues.description,
+            image = CardTestValues.image,
+            actions = listOf(givenUnsupportedAction)
+        )
+        val givenCarousel = CardTestValues.createCarouselContent(givenCard1, givenCard2)
+        val givenStructuredMessage = StructuredMessageValues.createStructuredMessageForTesting(
+            type = StructuredMessage.Type.Structured,
+            direction = Message.Direction.Outbound.name,
+            content = listOf(givenCarousel)
+        )
+
+        val expectedCardCount = 2
+        val expectedActions = emptyList<ButtonResponse>()
+
+        val actualMessage: Message = givenStructuredMessage.toMessage()
+
+        assertThat(actualMessage.cards.size).isEqualTo(expectedCardCount)
+        assertThat(actualMessage.cards[0].actions).isEqualTo(expectedActions)
+        assertThat(actualMessage.cards[1].actions).isEqualTo(expectedActions)
     }
 }
