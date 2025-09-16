@@ -725,7 +725,7 @@ internal class AttachmentHandlerTest {
     }
 
     @Test
-    fun `when serializeAttachment()`() {
+    fun `when serialize Attachment`() {
         val expectedAttachmentJson = """{"id":"${AttachmentValues.ID}"}"""
         val givenAttachment = Attachment(AttachmentValues.ID, AttachmentValues.FILE_NAME)
 
