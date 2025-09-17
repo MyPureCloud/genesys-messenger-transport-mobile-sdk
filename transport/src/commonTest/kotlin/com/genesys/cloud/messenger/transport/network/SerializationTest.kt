@@ -1128,4 +1128,86 @@ class SerializationTest {
         )
         assertThat(decoded).isEqualTo(expected)
     }
+
+    @Test
+    fun whenStructuredActionLinkThenEncodesAndDecodes() {
+        val given = StructuredMessage.Content.Action(
+            type = CardTestValues.LINK_TYPE,
+            text = CardTestValues.text,
+            url = CardTestValues.url,
+            payload = null
+        )
+
+        val encoded = WebMessagingJson.json.encodeToString(
+            StructuredMessage.Content.Action.serializer(), given
+        )
+        val decoded = WebMessagingJson.json.decodeFromString(
+            StructuredMessage.Content.Action.serializer(), encoded
+        )
+
+        val expected = StructuredMessage.Content.Action(
+            type = CardTestValues.LINK_TYPE,
+            text = CardTestValues.text,
+            url = CardTestValues.url,
+            payload = null
+        )
+        assertThat(decoded).isEqualTo(expected)
+    }
+
+    @Test
+    fun whenStructuredActionPostbackThenEncodesAndDecodes() {
+        val given = StructuredMessage.Content.Action(
+            type = CardTestValues.POSTBACK_TYPE,
+            text = CardTestValues.POSTBACK_TEXT,
+            url = null,
+            payload = CardTestValues.POSTBACK_PAYLOAD
+        )
+
+        val encoded = WebMessagingJson.json.encodeToString(
+            StructuredMessage.Content.Action.serializer(), given
+        )
+        val decoded = WebMessagingJson.json.decodeFromString(
+            StructuredMessage.Content.Action.serializer(), encoded
+        )
+
+        val expected = StructuredMessage.Content.Action(
+            type = CardTestValues.POSTBACK_TYPE,
+            text = CardTestValues.POSTBACK_TEXT,
+            url = null,
+            payload = CardTestValues.POSTBACK_PAYLOAD
+        )
+        assertThat(decoded).isEqualTo(expected)
+    }
+
+    @Test
+    fun whenListOfStructuredActionsThenEncodesAndDecodes() {
+        val given = listOf(
+            StructuredMessage.Content.Action(
+                type = CardTestValues.LINK_TYPE, text = "Open", url = CardTestValues.url, payload = null
+            ),
+            StructuredMessage.Content.Action(
+                type = CardTestValues.POSTBACK_TYPE,
+                text = CardTestValues.POSTBACK_TEXT,
+                url = null,
+                payload = CardTestValues.POSTBACK_PAYLOAD
+            )
+        )
+
+        val ser = ListSerializer(StructuredMessage.Content.Action.serializer())
+        val encoded = WebMessagingJson.json.encodeToString(ser, given)
+        val decoded = WebMessagingJson.json.decodeFromString(ser, encoded)
+
+        val expected = listOf(
+            StructuredMessage.Content.Action(
+                type = CardTestValues.LINK_TYPE, text = "Open", url = CardTestValues.url, payload = null
+            ),
+            StructuredMessage.Content.Action(
+                type = CardTestValues.POSTBACK_TYPE,
+                text = CardTestValues.POSTBACK_TEXT,
+                url = null,
+                payload = CardTestValues.POSTBACK_PAYLOAD
+            )
+        )
+        assertThat(decoded).isEqualTo(expected)
+    }
 }
