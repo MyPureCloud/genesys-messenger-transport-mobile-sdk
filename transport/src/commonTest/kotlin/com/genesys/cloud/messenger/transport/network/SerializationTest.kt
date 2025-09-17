@@ -1210,4 +1210,39 @@ class SerializationTest {
         )
         assertThat(decoded).isEqualTo(expected)
     }
+
+    @Test fun whenButtonResponseContentThenDeserializes() {
+        val json = """{"contentType":"ButtonResponse","buttonResponse":{"text":"t","payload":"p","type":"QuickReply"}}"""
+        val decoded = WebMessagingJson.json.decodeFromString(StructuredMessage.Content.serializer(), json)
+        assertThat(decoded).isEqualTo(
+            StructuredMessage.Content.ButtonResponseContent(
+                contentType = "ButtonResponse",
+                buttonResponse = StructuredMessage.Content.ButtonResponseContent.ButtonResponse("t", "p", "QuickReply")
+            )
+        )
+    }
+
+    @Test fun whenCardContentThenDeserializes() {
+        val json = """{"contentType":"Card","card":{"title":"T","description":"D","actions":[]}}"""
+        val decoded = WebMessagingJson.json.decodeFromString(StructuredMessage.Content.serializer(), json)
+        assertThat(decoded).isEqualTo(
+            StructuredMessage.Content.CardContent(
+                contentType = "Card",
+                card = StructuredMessage.Content.CardContent.Card("T", "D", null, null, emptyList())
+            )
+        )
+    }
+
+    @Test fun whenCarouselContentThenDeserializes() {
+        val json = """{"contentType":"Carousel","carousel":{"cards":[{"title":"T","description":"D","actions":[]}]} }"""
+        val decoded = WebMessagingJson.json.decodeFromString(StructuredMessage.Content.serializer(), json)
+        assertThat(decoded).isEqualTo(
+            StructuredMessage.Content.CarouselContent(
+                contentType = "Carousel",
+                carousel = StructuredMessage.Content.CarouselContent.Carousel(
+                    listOf(StructuredMessage.Content.CardContent.Card("T", "D", null, null, emptyList()))
+                )
+            )
+        )
+    }
 }
