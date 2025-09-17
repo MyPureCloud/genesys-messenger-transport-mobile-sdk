@@ -7,6 +7,7 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import com.genesys.cloud.messenger.transport.core.Action
 import com.genesys.cloud.messenger.transport.core.Attachment
+import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.Card
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
@@ -41,6 +42,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.utility.CardTestValues
+import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
@@ -837,7 +839,7 @@ class SerializationTest {
                     )
                 )
             ),
-            Card(title = "${CardTestValues.title} 2") // second card exercises defaults
+            Card(title = "${CardTestValues.title} 2")
         )
 
         val encoded = WebMessagingJson.json.encodeToString(
@@ -871,5 +873,103 @@ class SerializationTest {
         assertThat(givenCard.image).isEqualTo(CardTestValues.image)
         assertThat(givenCard.defaultAction).isEqualTo(Action.Link(text = "Open", url = CardTestValues.url))
         assertThat(givenCard.actions).isEqualTo(listOf(Action.Postback(CardTestValues.POSTBACK_TEXT, CardTestValues.POSTBACK_PAYLOAD)))
+    }
+
+    @Test
+    fun whenCardWithLinkDefaultAndPostbackActionListThenEncodesAndDecodes() {
+        val givenCard = Card(
+            title = CardTestValues.title,
+            description = CardTestValues.description,
+            image = CardTestValues.image,
+            defaultAction = Action.Link(text = "Open", url = CardTestValues.url),
+            actions = listOf(
+                Action.Postback(
+                    text = CardTestValues.POSTBACK_TEXT,
+                    payload = CardTestValues.POSTBACK_PAYLOAD
+                )
+            )
+        )
+
+        val encoded = WebMessagingJson.json.encodeToString(Card.serializer(), givenCard)
+        val decoded = WebMessagingJson.json.decodeFromString(Card.serializer(), encoded)
+
+        val expectedCard = Card(
+            title = CardTestValues.title,
+            description = CardTestValues.description,
+            image = CardTestValues.image,
+            defaultAction = Action.Link(text = "Open", url = CardTestValues.url),
+            actions = listOf(
+                Action.Postback(
+                    text = CardTestValues.POSTBACK_TEXT,
+                    payload = CardTestValues.POSTBACK_PAYLOAD
+                )
+            )
+        )
+        assertThat(decoded).isEqualTo(expectedCard)
+    }
+
+    @Test
+    fun whenCardWithOnlyRequiredTitleThenEncodesAndDecodes() {
+        val givenCard = Card(title = CardTestValues.title)
+
+        val encoded = WebMessagingJson.json.encodeToString(Card.serializer(), givenCard)
+        val decoded = WebMessagingJson.json.decodeFromString(Card.serializer(), encoded)
+
+        val expectedCard = Card(
+            title = CardTestValues.title,
+            description = null,
+            image = null,
+            defaultAction = null,
+            actions = emptyList()
+        )
+        assertThat(decoded).isEqualTo(expectedCard)
+    }
+
+    @Test
+    fun whenMessageCardWithDefaultAndActionsThenEncodesAndDecodes() {
+        val givenCard = Message.Card(
+            title = CardTestValues.title,
+            description = CardTestValues.description,
+            imageUrl = CardTestValues.image,
+            actions = listOf(
+                ButtonResponse(
+                    type = QuickReplyTestValues.QUICK_REPLY,
+                    text = CardTestValues.POSTBACK_TEXT,
+                    payload = CardTestValues.POSTBACK_PAYLOAD
+                )
+            ),
+            defaultAction = ButtonResponse(
+                type = CardTestValues.LINK_TYPE,
+                text = "Open",
+                payload = CardTestValues.url
+            )
+        )
+
+        val encoded = WebMessagingJson.json.encodeToString(Message.Card.serializer(), givenCard)
+        val decoded = WebMessagingJson.json.decodeFromString(Message.Card.serializer(), encoded)
+
+        val expected = givenCard.copy()
+        assertThat(decoded).isEqualTo(expected)
+    }
+
+    @Test
+    fun whenMessageCardWithOnlyRequiredFieldsThenEncodesAndDecodes() {
+        val givenCard = Message.Card(
+            title = CardTestValues.title,
+            description = CardTestValues.description,
+            actions = emptyList()
+        )
+
+        val encoded = WebMessagingJson.json.encodeToString(Message.Card.serializer(), givenCard)
+        val decoded = WebMessagingJson.json.decodeFromString(Message.Card.serializer(), encoded)
+
+        val expected = Message.Card(
+            title = CardTestValues.title,
+            description = CardTestValues.description,
+            imageUrl = null,
+            actions = emptyList(),
+            defaultAction = null
+        )
+        assertThat(decoded).isEqualTo(expected)
     }
 }
