@@ -1241,4 +1241,119 @@ internal class MessageExtensionTest {
         assertThat(result.quickReplies).isEmpty()
         assertThat(result.cards).isEmpty()
     }
+
+    @Test
+    fun `when StructuredMessage has CardContent with Button action in mixed case then maps to Button`() {
+        val givenAction = StructuredMessage.Content.Action(
+            type = "bUtToN",
+            text = CardTestValues.POSTBACK_TEXT,
+            payload = CardTestValues.POSTBACK_PAYLOAD
+        )
+        val givenCard = StructuredMessage.Content.CardContent.Card(
+            title = CardTestValues.title,
+            description = CardTestValues.description,
+            image = CardTestValues.image,
+            defaultAction = null,
+            actions = listOf(givenAction)
+        )
+        val givenStructuredMessage = StructuredMessageValues.createStructuredMessageForTesting(
+            type = StructuredMessage.Type.Structured,
+            direction = Message.Direction.Outbound.name,
+            content = listOf(
+                StructuredMessage.Content.CardContent(
+                    contentType = "Card",
+                    card = givenCard
+                )
+            )
+        )
+
+        val decodedMessage: Message = givenStructuredMessage.toMessage()
+
+        assertThat(decodedMessage.messageType).isEqualTo(Message.Type.Cards)
+        val mappedAction = decodedMessage.cards.single().actions.single()
+        assertThat(mappedAction.type).isEqualTo(QuickReplyTestValues.BUTTON)
+        assertThat(mappedAction.text).isEqualTo(CardTestValues.POSTBACK_TEXT)
+        assertThat(mappedAction.payload).isEqualTo(CardTestValues.POSTBACK_PAYLOAD)
+    }
+
+    @Test
+    fun `when StructuredMessage has CardContent with Link action in mixed case then maps to Link with url payload`() {
+        val givenAction = StructuredMessage.Content.Action(
+            type = "lInK",
+            text = CardTestValues.text,
+            url = CardTestValues.url
+        )
+        val givenCard = StructuredMessage.Content.CardContent.Card(
+            title = CardTestValues.title,
+            description = CardTestValues.description,
+            image = CardTestValues.image,
+            defaultAction = null,
+            actions = listOf(givenAction)
+        )
+        val givenStructuredMessage = StructuredMessageValues.createStructuredMessageForTesting(
+            type = StructuredMessage.Type.Structured,
+            direction = Message.Direction.Outbound.name,
+            content = listOf(
+                StructuredMessage.Content.CardContent(
+                    contentType = "Card",
+                    card = givenCard
+                )
+            )
+        )
+
+        val decodedMessage: Message = givenStructuredMessage.toMessage()
+
+        assertThat(decodedMessage.messageType).isEqualTo(Message.Type.Cards)
+        val mappedAction = decodedMessage.cards.single().actions.single()
+        assertThat(mappedAction.type).isEqualTo(CardTestValues.LINK_TYPE)
+        assertThat(mappedAction.payload).isEqualTo(CardTestValues.url)
+        assertThat(mappedAction.text).isEqualTo(CardTestValues.text)
+    }
+
+    @Test
+    fun `when StructuredMessage toMessage() has no quick replies or cards then messageType is Unknown`() {
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                content = emptyList()
+            )
+        val expectedMessageType = Message.Type.Unknown
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result.messageType).isEqualTo(expectedMessageType)
+    }
+
+    @Test
+    fun `when StructuredMessage has CardContent with link action lowercase then maps to Link`() {
+        val givenAction = StructuredMessage.Content.Action(
+            type = "link",
+            text = "Open",
+            url = CardTestValues.url
+        )
+        val givenCard = StructuredMessage.Content.CardContent.Card(
+            title = "T",
+            description = "D",
+            actions = listOf(givenAction)
+        )
+        val givenStructuredMessage = StructuredMessageValues.createStructuredMessageForTesting(
+            type = StructuredMessage.Type.Structured,
+            direction = Message.Direction.Outbound.name,
+            content = listOf(
+                StructuredMessage.Content.CardContent(
+                    contentType = "Card",
+                    card = givenCard
+                )
+            )
+        )
+        val expectedActionType = CardTestValues.LINK_TYPE
+        val expectedPayload = CardTestValues.url
+
+        val decodedMessage: Message = givenStructuredMessage.toMessage()
+
+        assertThat(decodedMessage.messageType).isEqualTo(Message.Type.Cards)
+        val mappedAction = decodedMessage.cards.single().actions.single()
+        assertThat(mappedAction.type).isEqualTo(expectedActionType)
+        assertThat(mappedAction.payload).isEqualTo(expectedPayload)
+    }
 }
