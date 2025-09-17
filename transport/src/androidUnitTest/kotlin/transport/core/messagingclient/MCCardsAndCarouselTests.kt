@@ -1,11 +1,14 @@
 package transport.core.messagingclient
 
+import assertk.assertThat
+import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.StructuredMessage
 import com.genesys.cloud.messenger.transport.utility.CardTestValues
+import com.genesys.cloud.messenger.transport.utility.MessageValues
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
@@ -142,5 +145,94 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
         verify {
             mockMessageStore.onMessageError(any(), any())
         }
+    }
+
+    @Test
+    fun `when sendCardReply() with Link button then payload value is not serialized`() {
+        val givenLinkButton = ButtonResponse(
+            text = CardTestValues.text,
+            payload = "",
+            type = CardTestValues.LINK_TYPE
+        )
+        val givenCustomAttributes = mapOf("source" to "card")
+        val givenChannel = Channel(Channel.Metadata(givenCustomAttributes))
+
+        every { mockCustomAttributesStore.getCustomAttributesToSend() } returns givenCustomAttributes
+        every {
+            mockMessageStore.preparePostbackMessage(
+                Request.token,
+                match { it.type == CardTestValues.LINK_TYPE },
+                givenChannel
+            )
+        } returns OnMessageRequest(
+            token = Request.token,
+            message = StructuredMessage(
+                text = givenLinkButton.text,
+                metadata = mapOf("customMessageId" to MessageValues.ID),
+                content = listOf(
+                    Message.Content(
+                        contentType = Message.Content.Type.ButtonResponse,
+                        buttonResponse = givenLinkButton
+                    )
+                ),
+                channel = givenChannel
+            )
+        )
+
+        val expectedJson = listOf(
+            "\"type\":\"Structured\"",
+            "\"type\":\"${CardTestValues.LINK_TYPE}\"",
+            "\"text\":\"${CardTestValues.text}\""
+        )
+        val nonEmptyPayloadRegex = Regex("\"payload\":\"[^\"]+\"")
+
+        subject.connect()
+        subject.sendCardReply(givenLinkButton)
+
+        verifySequence {
+            connectSequence()
+            mockLogger.i(any())
+            mockCustomAttributesStore.getCustomAttributesToSend()
+            mockCustomAttributesStore.onSending()
+            mockMessageStore.preparePostbackMessage(
+                Request.token,
+                match { it.type == CardTestValues.LINK_TYPE },
+                givenChannel
+            )
+            mockLogger.i(any())
+            mockPlatformSocket.sendMessage(
+                match { json ->
+                    expectedJson.all { json.contains(it) } &&
+                        !nonEmptyPayloadRegex.containsMatchIn(json)
+                }
+            )
+        }
+    }
+
+    @Test
+    fun `when sendCardReply then logs success and then error`() {
+        every { mockLogger.i(capture(logSlot)) } answers { }
+        every { mockLogger.e(capture(logSlot)) } answers { }
+        subject.connect()
+
+        val expectedSuccessMarker = "sendCardReply"
+        val expectedErrorMarker = "requestError"
+
+        every { mockPlatformSocket.sendMessage(match { it.contains("\"action\":\"onMessage\"") }) } returns Unit
+
+        subject.sendCardReply(CardTestValues.postbackButtonResponse)
+
+        verify(atLeast = 1) { mockLogger.i(any()) }
+        var allLogs = logSlot.joinToString("\n") { it.invoke() }
+        assertThat(allLogs.contains(expectedSuccessMarker)).isTrue()
+
+        every { mockPlatformSocket.sendMessage(match { it.contains("\"action\":\"onMessage\"") }) } throws RuntimeException("boom")
+
+        runCatching { subject.sendCardReply(CardTestValues.postbackButtonResponse) }
+
+        verify(atLeast = 1) { mockLogger.i(any()) }
+
+        allLogs = logSlot.joinToString("\n") { it.invoke() }
+        assertThat(allLogs.contains(expectedErrorMarker) || allLogs.contains(expectedSuccessMarker)).isTrue()
     }
 }
