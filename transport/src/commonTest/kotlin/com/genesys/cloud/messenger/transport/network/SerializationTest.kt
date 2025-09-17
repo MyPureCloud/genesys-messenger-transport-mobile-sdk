@@ -972,4 +972,114 @@ class SerializationTest {
         )
         assertThat(decoded).isEqualTo(expected)
     }
+
+    @Test
+    fun whenMessageWithCardsThenEncodesAndDecodes() {
+        val givenMsg = Message(
+            id = TestValues.TOKEN,
+            direction = Message.Direction.Outbound,
+            messageType = Message.Type.Cards,
+            text = "Cards payload",
+            cards = listOf(
+                Message.Card(
+                    title = CardTestValues.title,
+                    description = CardTestValues.description,
+                    imageUrl = CardTestValues.image,
+                    actions = listOf(
+                        ButtonResponse(
+                            type = QuickReplyTestValues.QUICK_REPLY,
+                            text = CardTestValues.POSTBACK_TEXT,
+                            payload = CardTestValues.POSTBACK_PAYLOAD
+                        )
+                    ),
+                    defaultAction = ButtonResponse(
+                        type = CardTestValues.LINK_TYPE,
+                        text = "Open",
+                        payload = CardTestValues.url
+                    )
+                )
+            )
+        )
+
+        val encoded = WebMessagingJson.json.encodeToString(Message.serializer(), givenMsg)
+        val decoded = WebMessagingJson.json.decodeFromString(Message.serializer(), encoded)
+
+        val expected = Message(
+            id = TestValues.TOKEN,
+            direction = Message.Direction.Outbound,
+            messageType = Message.Type.Cards,
+            text = "Cards payload",
+            cards = listOf(
+                Message.Card(
+                    title = CardTestValues.title,
+                    description = CardTestValues.description,
+                    imageUrl = CardTestValues.image,
+                    actions = listOf(
+                        ButtonResponse(
+                            type = QuickReplyTestValues.QUICK_REPLY,
+                            text = CardTestValues.POSTBACK_TEXT,
+                            payload = CardTestValues.POSTBACK_PAYLOAD
+                        )
+                    ),
+                    defaultAction = ButtonResponse(
+                        type = CardTestValues.LINK_TYPE,
+                        text = "Open",
+                        payload = CardTestValues.url
+                    )
+                )
+            )
+        )
+        assertThat(decoded).isEqualTo(expected)
+    }
+
+    @Test
+    fun whenMessageWithCardsAndNoDefaultActionThenEncodesAndDecodes() {
+        val givenMsg = Message(
+            id = TestValues.SECONDARY_TOKEN,
+            direction = Message.Direction.Outbound,
+            messageType = Message.Type.Cards,
+            text = "Cards payload (no defaultAction)",
+            cards = listOf(
+                Message.Card(
+                    title = "${CardTestValues.title} 2",
+                    description = CardTestValues.description,
+                    imageUrl = null,
+                    actions = listOf(
+                        ButtonResponse(
+                            type = QuickReplyTestValues.QUICK_REPLY,
+                            text = CardTestValues.POSTBACK_TEXT,
+                            payload = CardTestValues.POSTBACK_PAYLOAD
+                        )
+                    ),
+                    defaultAction = null
+                )
+            )
+        )
+
+        val encoded = WebMessagingJson.json.encodeToString(Message.serializer(), givenMsg)
+        val decoded = WebMessagingJson.json.decodeFromString(Message.serializer(), encoded)
+
+        val expected = Message(
+            id = TestValues.SECONDARY_TOKEN,
+            direction = Message.Direction.Outbound,
+            messageType = Message.Type.Cards,
+            text = "Cards payload (no defaultAction)",
+            cards = listOf(
+                Message.Card(
+                    title = "${CardTestValues.title} 2",
+                    description = CardTestValues.description,
+                    imageUrl = null,
+                    actions = listOf(
+                        ButtonResponse(
+                            type = QuickReplyTestValues.QUICK_REPLY,
+                            text = CardTestValues.POSTBACK_TEXT,
+                            payload = CardTestValues.POSTBACK_PAYLOAD
+                        )
+                    ),
+                    defaultAction = null
+                )
+            )
+        )
+        assertThat(decoded).isEqualTo(expected)
+    }
 }
