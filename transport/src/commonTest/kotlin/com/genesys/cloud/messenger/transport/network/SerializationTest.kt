@@ -1,11 +1,13 @@
 package com.genesys.cloud.messenger.transport.network
 
 import assertk.assertThat
+import assertk.assertions.containsExactly
 import assertk.assertions.hasClass
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import com.genesys.cloud.messenger.transport.core.Action
 import com.genesys.cloud.messenger.transport.core.Attachment
+import com.genesys.cloud.messenger.transport.core.Card
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.AllowedMedia
@@ -610,29 +612,40 @@ class SerializationTest {
         assertThat(message).isEqualTo(expected)
     }
 
-    @Test fun whenLinkActionThenEncodesAndDecodes() {
-        val givenLink = Action.Link(
+    @Test
+    fun whenLinkActionThenEncodesAndDecodes() {
+        val givenActionLink = Action.Link(
             text = CardTestValues.text,
             url = CardTestValues.url
         )
 
-        val encoded = WebMessagingJson.json.encodeToString(Action.serializer(), givenLink)
+        val encoded = WebMessagingJson.json.encodeToString(Action.serializer(), givenActionLink)
         val decoded = WebMessagingJson.json.decodeFromString(Action.serializer(), encoded)
 
-        assertThat(decoded).isEqualTo(givenLink)
+        val expectedActionLink = Action.Link(
+            text = CardTestValues.text,
+            url = CardTestValues.url
+        )
+
+        assertThat(decoded).isEqualTo(expectedActionLink)
     }
 
     @Test
     fun whenPostbackActionThenEncodesAndDecodes() {
-        val givenPostback = Action.Postback(
+        val givenActionPostback = Action.Postback(
             text = CardTestValues.POSTBACK_TEXT,
             payload = CardTestValues.POSTBACK_PAYLOAD
         )
 
-        val encoded = WebMessagingJson.json.encodeToString(Action.serializer(), givenPostback)
+        val encoded = WebMessagingJson.json.encodeToString(Action.serializer(), givenActionPostback)
         val decoded = WebMessagingJson.json.decodeFromString(Action.serializer(), encoded)
 
-        assertThat(decoded).isEqualTo(givenPostback)
+        val expectedActionPostback = Action.Postback(
+            text = CardTestValues.POSTBACK_TEXT,
+            payload = CardTestValues.POSTBACK_PAYLOAD
+        )
+
+        assertThat(decoded).isEqualTo(expectedActionPostback)
     }
 
     @Test
@@ -648,6 +661,215 @@ class SerializationTest {
         val encoded = WebMessagingJson.json.encodeToString(ListSerializer(Action.serializer()), givenList)
         val decoded = WebMessagingJson.json.decodeFromString(ListSerializer(Action.serializer()), encoded)
 
-        assertThat(decoded).isEqualTo(givenList)
+        val expectedList = listOf(
+            Action.Link(text = "Open", url = CardTestValues.url),
+            Action.Postback(
+                text = CardTestValues.POSTBACK_TEXT,
+                payload = CardTestValues.POSTBACK_PAYLOAD
+            )
+        )
+
+        assertThat(decoded).isEqualTo(expectedList)
+    }
+
+    @Test
+    fun whenActionLinkThenSerializesAndDecodes() {
+        val givenActionLink = Action.Link(
+            text = "Open",
+            url = CardTestValues.url
+        )
+
+        val encoded = WebMessagingJson.json.encodeToString(Action.serializer(), givenActionLink)
+        val decoded = WebMessagingJson.json.decodeFromString(Action.serializer(), encoded)
+
+        val expectedActionLink = Action.Link(
+            text = "Open",
+            url = CardTestValues.url
+        )
+
+        assertThat(decoded).isEqualTo(expectedActionLink)
+    }
+
+    @Test
+    fun whenActionPostbackThenSerializesAndDecodes() {
+        val givenActionPostback = Action.Postback(
+            text = CardTestValues.POSTBACK_TEXT,
+            payload = CardTestValues.POSTBACK_PAYLOAD
+        )
+
+        val encoded = WebMessagingJson.json.encodeToString(Action.serializer(), givenActionPostback)
+        val decoded = WebMessagingJson.json.decodeFromString(Action.serializer(), encoded)
+
+        val expectedActionPostback = Action.Postback(
+            text = CardTestValues.POSTBACK_TEXT,
+            payload = CardTestValues.POSTBACK_PAYLOAD
+        )
+
+        assertThat(decoded).isEqualTo(expectedActionPostback)
+    }
+
+    @Test
+    fun whenActionEnumValuesThenCoversAll() {
+        val expectedTypeNames = listOf("Link", "Postback")
+
+        val typeNames = Action.Type.entries.map { it.name }
+
+        assertThat(typeNames).containsExactly(*expectedTypeNames.toTypedArray())
+        assertThat(
+            Action.Link(url = CardTestValues.url, text = CardTestValues.text).type
+        ).isEqualTo(Action.Type.Link)
+        assertThat(
+            Action.Postback(
+                text = CardTestValues.POSTBACK_TEXT,
+                payload = CardTestValues.POSTBACK_PAYLOAD
+            ).type
+        ).isEqualTo(Action.Type.Postback)
+    }
+
+    @Test
+    fun whenActionLinkThenSerializesAndDeserializes() {
+        val givenAction = Action.Link(
+            text = CardTestValues.text,
+            url = CardTestValues.url
+        )
+
+        val decoded = WebMessagingJson.json.decodeFromString<Action>(
+            WebMessagingJson.json.encodeToString(Action.serializer(), givenAction)
+        )
+
+        val expectedAction = Action.Link(
+            text = CardTestValues.text,
+            url = CardTestValues.url
+        )
+
+        assertThat(decoded).isEqualTo(expectedAction)
+    }
+
+    @Test
+    fun whenActionLinkWithNullTextThenSerializesAndDeserializes() {
+        val givenAction = Action.Link(
+            text = null,
+            url = CardTestValues.url
+        )
+
+        val decoded = WebMessagingJson.json.decodeFromString<Action>(
+            WebMessagingJson.json.encodeToString(Action.serializer(), givenAction)
+        )
+
+        val expectedAction = Action.Link(
+            text = null,
+            url = CardTestValues.url
+        )
+
+        assertThat(decoded).isEqualTo(expectedAction)
+    }
+
+    @Test
+    fun whenActionPostbackThenSerializesAndDeserializes() {
+        val givenAction = Action.Postback(
+            text = CardTestValues.POSTBACK_TEXT,
+            payload = CardTestValues.POSTBACK_PAYLOAD
+        )
+
+        val encoded = WebMessagingJson.json.encodeToString(Action.serializer(), givenAction)
+        val decoded = WebMessagingJson.json.decodeFromString<Action>(encoded)
+
+        val expectedAction = Action.Postback(
+            text = CardTestValues.POSTBACK_TEXT,
+            payload = CardTestValues.POSTBACK_PAYLOAD
+        )
+
+        assertThat(decoded).isEqualTo(expectedAction)
+    }
+
+    @Test
+    fun whenCardWithDefaultActionAndActionsThenEncodesAndDecodes() {
+        val givenCard = Card(
+            title = CardTestValues.title,
+            description = CardTestValues.description,
+            image = CardTestValues.image,
+            defaultAction = Action.Link(text = "Open", url = CardTestValues.url),
+            actions = listOf(
+                Action.Link(text = "Open", url = CardTestValues.url),
+                Action.Postback(
+                    text = CardTestValues.POSTBACK_TEXT,
+                    payload = CardTestValues.POSTBACK_PAYLOAD
+                )
+            )
+        )
+
+        val encoded = WebMessagingJson.json.encodeToString(Card.serializer(), givenCard)
+        val decoded = WebMessagingJson.json.decodeFromString(Card.serializer(), encoded)
+
+        val expectedCard = givenCard.copy()
+        assertThat(decoded).isEqualTo(expectedCard)
+    }
+
+    @Test
+    fun whenCardWithOnlyTitleThenEncodesAndDecodes() {
+        val givenCard = Card(title = CardTestValues.title)
+
+        val encoded = WebMessagingJson.json.encodeToString(Card.serializer(), givenCard)
+        val decoded = WebMessagingJson.json.decodeFromString(Card.serializer(), encoded)
+
+        val expectedCard = Card(
+            title = CardTestValues.title,
+            description = null,
+            image = null,
+            defaultAction = null,
+            actions = emptyList()
+        )
+        assertThat(decoded).isEqualTo(expectedCard)
+    }
+
+    @Test
+    fun whenListOfCardsThenEncodesAndDecodes() {
+        val givenCards = listOf(
+            Card(
+                title = CardTestValues.title,
+                description = CardTestValues.description,
+                image = CardTestValues.image,
+                defaultAction = Action.Link(text = "Open", url = CardTestValues.url),
+                actions = listOf(
+                    Action.Postback(
+                        text = CardTestValues.POSTBACK_TEXT,
+                        payload = CardTestValues.POSTBACK_PAYLOAD
+                    )
+                )
+            ),
+            Card(title = "${CardTestValues.title} 2") // second card exercises defaults
+        )
+
+        val encoded = WebMessagingJson.json.encodeToString(
+            ListSerializer(Card.serializer()),
+            givenCards
+        )
+        val decoded = WebMessagingJson.json.decodeFromString(
+            ListSerializer(Card.serializer()),
+            encoded
+        )
+
+        val expectedCards = listOf(
+            givenCards[0].copy(),
+            givenCards[1].copy()
+        )
+        assertThat(decoded).isEqualTo(expectedCards)
+    }
+
+    @Test
+    fun whenCardCreatedThenGettersReturnValues() {
+        val givenCard = Card(
+            title = CardTestValues.title,
+            description = CardTestValues.description,
+            image = CardTestValues.image,
+            defaultAction = Action.Link(text = "Open", url = CardTestValues.url),
+            actions = listOf(Action.Postback(CardTestValues.POSTBACK_TEXT, CardTestValues.POSTBACK_PAYLOAD))
+        )
+
+        assertThat(givenCard.title).isEqualTo(CardTestValues.title)
+        assertThat(givenCard.description).isEqualTo(CardTestValues.description)
+        assertThat(givenCard.image).isEqualTo(CardTestValues.image)
+        assertThat(givenCard.defaultAction).isEqualTo(Action.Link(text = "Open", url = CardTestValues.url))
+        assertThat(givenCard.actions).isEqualTo(listOf(Action.Postback(CardTestValues.POSTBACK_TEXT, CardTestValues.POSTBACK_PAYLOAD)))
     }
 }
