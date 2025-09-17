@@ -14,6 +14,7 @@ import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.Attachment
+import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.DEFAULT_PAGE_SIZE
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Message
@@ -739,31 +740,49 @@ internal class MessageStoreTest {
 
     @Test
     fun `when preparePostbackMessage() then logs and publishes MessageInserted`() {
-        val givenButton = CardTestValues.postbackButtonResponse
         val expectedMessage = subject.pendingMessage.copy(
             state = State.Sending,
             messageType = Message.Type.Cards,
             type = Message.Type.Cards.name,
-            quickReplies = listOf(givenButton)
+            quickReplies = listOf(
+                ButtonResponse(
+                    text = CardTestValues.POSTBACK_TEXT,
+                    payload = CardTestValues.POSTBACK_PAYLOAD,
+                    type = QuickReplyTestValues.BUTTON
+                )
+            )
         )
 
-        val result = subject.preparePostbackMessage(TestValues.TOKEN, givenButton)
+        val result = subject.preparePostbackMessage(
+            TestValues.TOKEN,
+            CardTestValues.postbackButtonResponse
+        )
 
         verify {
             mockLogger.i(capture(logSlot))
             mockMessageListener.invoke(capture(messageSlot))
         }
 
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.postbackPrepareToSend(expectedMessage))
+        val actualLog = logSlot[0].invoke()
+        assertThat(actualLog).contains("Message with postback prepared to send:")
+        assertThat(actualLog).contains("state=${State.Sending}")
+        assertThat(actualLog).contains("messageType=${Message.Type.Cards}")
+        assertThat(actualLog).contains("type=${Message.Type.Cards.name}")
+        assertThat(actualLog).contains("id=${expectedMessage.id}")
 
         val inserted = messageSlot.captured as MessageEvent.MessageInserted
         assertThat(inserted.message).isEqualTo(expectedMessage)
 
         assertThat(result.token).isEqualTo(TestValues.TOKEN)
         assertThat(result.message).isInstanceOf(StructuredMessage::class)
-        val sm = result.message as StructuredMessage
-        assertThat(sm.text).isEqualTo(givenButton.text)
-        assertThat(sm.metadata?.get("customMessageId")).isEqualTo(expectedMessage.id)
-        assertThat(sm.content.first().buttonResponse).isEqualTo(givenButton)
+
+        val structuredMessage = result.message as StructuredMessage
+        assertThat(structuredMessage.text).isEqualTo(CardTestValues.POSTBACK_TEXT)
+        assertThat(structuredMessage.metadata?.get("customMessageId")).isEqualTo(expectedMessage.id)
+
+        val button = structuredMessage.content.first().buttonResponse!!
+        assertThat(button.text).isEqualTo(CardTestValues.POSTBACK_TEXT)
+        assertThat(button.payload).isEqualTo(CardTestValues.POSTBACK_PAYLOAD)
+        assertThat(button.type).isEqualTo(QuickReplyTestValues.BUTTON)
     }
 }

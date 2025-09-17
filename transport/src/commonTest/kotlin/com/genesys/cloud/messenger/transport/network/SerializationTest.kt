@@ -43,6 +43,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.utility.CardTestValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
+import com.genesys.cloud.messenger.transport.utility.StructuredMessageValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
@@ -520,92 +521,66 @@ class SerializationTest {
     }
 
     @Test
-    fun whenStructuredMessageWithCarouselThenDecodes() {
+    fun `when StructuredMessage with Carousel then decodes`() {
         val json = """{"type":"message","class":"StructuredMessage","code":200,"body":{"id":"carousel-id","type":"Structured","text":"Carousel content test","direction":"Outbound","content":[{"contentType":"Carousel","carousel":{"cards":[{"title":"Card 1","description":"D1","actions":[{"type":"Link","text":"Open","url":"http://example.org"}]},{"title":"Card 2","description":"D2","actions":[]}]} }],"originatingEntity":"Human"}}"""
 
-        val expected = WebMessagingMessage(
-            type = MessageType.Message.value,
-            code = 200,
-            body = StructuredMessage(
-                id = "carousel-id",
-                type = StructuredMessage.Type.Structured,
-                text = "Carousel content test",
-                direction = "Outbound",
-                content = listOf(
-                    StructuredMessage.Content.CarouselContent(
-                        contentType = "Carousel",
-                        carousel = StructuredMessage.Content.CarouselContent.Carousel(
-                            cards = listOf(
-                                StructuredMessage.Content.CardContent.Card(
-                                    title = "Card 1",
-                                    description = "D1",
-                                    image = null,
-                                    defaultAction = null,
-                                    actions = listOf(
-                                        StructuredMessage.Content.Action(
-                                            type = "Link",
-                                            text = "Open",
-                                            url = "http://example.org",
-                                            payload = null
-                                        )
-                                    )
-                                ),
-                                StructuredMessage.Content.CardContent.Card(
-                                    title = "Card 2",
-                                    description = "D2",
-                                    image = null,
-                                    defaultAction = null,
-                                    actions = emptyList()
-                                )
-                            )
-                        )
-                    )
-                ),
-                originatingEntity = "Human"
-            )
+        val card1 = CardTestValues.createCard(
+            title = "Card 1",
+            description = "D1",
+            actionText = "Open",
+            linkUrl = "http://example.org"
         )
 
+        val card2 = StructuredMessage.Content.CardContent.Card(
+            title = "Card 2",
+            description = "D2",
+            image = null,
+            defaultAction = null,
+            actions = emptyList()
+        )
+
+        val expectedBody = StructuredMessageValues.createStructuredMessageForTesting(
+            id = "carousel-id",
+            type = StructuredMessage.Type.Structured,
+            direction = "Outbound",
+            text = "Carousel content test",
+            content = listOf(
+                StructuredMessage.Content.CarouselContent(
+                    contentType = "Carousel",
+                    carousel = StructuredMessage.Content.CarouselContent.Carousel(
+                        cards = listOf(card1, card2)
+                    )
+                )
+            )
+        ).copy(originatingEntity = "Human")
+
+        val expected = StructuredMessageValues.expectedWebMessage(expectedBody)
         val message = WebMessagingJson.decodeFromString(json)
 
-        assertThat(message.body, "WebMessagingMessage body").isNotNull()
-            .hasClass(StructuredMessage::class)
+        assertThat(message.body, "WebMessagingMessage body").isNotNull().hasClass(StructuredMessage::class)
         assertThat(message).isEqualTo(expected)
     }
 
     @Test
-    fun whenStructuredMessageWithCardThenDecodes() {
+    fun `when StructuredMessage with Card then decodes`() {
         val json = """{"type":"message","class":"StructuredMessage","code":200,"body":{"id":"card-id","type":"Structured","text":"Card content test","direction":"Outbound","content":[{"contentType":"Card","card":{"title":"One Card","description":"Single card","actions":[{"type":"Link","text":"Open","url":"http://example.org"}]}}],"originatingEntity":"Human"}}"""
 
-        val expected = WebMessagingMessage(
-            type = MessageType.Message.value,
-            code = 200,
-            body = StructuredMessage(
-                id = "card-id",
-                type = StructuredMessage.Type.Structured,
-                text = "Card content test",
-                direction = "Outbound",
-                content = listOf(
-                    StructuredMessage.Content.CardContent(
-                        contentType = "Card",
-                        card = StructuredMessage.Content.CardContent.Card(
-                            title = "One Card",
-                            description = "Single card",
-                            image = null,
-                            defaultAction = null,
-                            actions = listOf(
-                                StructuredMessage.Content.Action(
-                                    type = "Link",
-                                    text = "Open",
-                                    url = "http://example.org",
-                                    payload = null
-                                )
-                            )
-                        )
-                    )
-                ),
-                originatingEntity = "Human"
-            )
+        val givenCard = CardTestValues.createCard(
+            title = "One Card",
+            description = "Single card",
+            actionText = "Open",
+            linkUrl = "http://example.org"
         )
+
+        val expectedBody = StructuredMessageValues.createStructuredMessageForTesting(
+            id = "card-id",
+            type = StructuredMessage.Type.Structured,
+            direction = "Outbound",
+            text = "Card content test",
+            content = listOf(CardTestValues.createCardContent(givenCard)),
+        ).copy(originatingEntity = "Human")
+
+        val expected = StructuredMessageValues.expectedWebMessage(expectedBody)
 
         val message = WebMessagingJson.decodeFromString(json)
 
@@ -615,7 +590,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenLinkActionThenEncodesAndDecodes() {
+    fun `when Link Action then encodes and decodes`() {
         val givenActionLink = Action.Link(
             text = CardTestValues.text,
             url = CardTestValues.url
@@ -633,7 +608,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenPostbackActionThenEncodesAndDecodes() {
+    fun `when Postback Action then encodes and decodes`() {
         val givenActionPostback = Action.Postback(
             text = CardTestValues.POSTBACK_TEXT,
             payload = CardTestValues.POSTBACK_PAYLOAD
@@ -651,7 +626,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenListOfActionsThenEncodesAndDecodes() {
+    fun `when listOf Actions then encodes and decodes`() {
         val givenList = listOf(
             Action.Link(text = "Open", url = CardTestValues.url),
             Action.Postback(
@@ -675,7 +650,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenActionLinkThenSerializesAndDecodes() {
+    fun `when Action Link then serializes and decodes`() {
         val givenActionLink = Action.Link(
             text = "Open",
             url = CardTestValues.url
@@ -693,7 +668,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenActionPostbackThenSerializesAndDecodes() {
+    fun `when Action Postback then serializes and decodes`() {
         val givenActionPostback = Action.Postback(
             text = CardTestValues.POSTBACK_TEXT,
             payload = CardTestValues.POSTBACK_PAYLOAD
@@ -711,7 +686,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenActionEnumValuesThenCoversAll() {
+    fun `when Action enum values then covers all`() {
         val expectedTypeNames = listOf("Link", "Postback")
 
         val typeNames = Action.Type.entries.map { it.name }
@@ -729,15 +704,14 @@ class SerializationTest {
     }
 
     @Test
-    fun whenActionLinkThenSerializesAndDeserializes() {
+    fun `when Action Link then serializes and deserializes`() {
         val givenAction = Action.Link(
             text = CardTestValues.text,
             url = CardTestValues.url
         )
 
-        val decoded = WebMessagingJson.json.decodeFromString<Action>(
-            WebMessagingJson.json.encodeToString(Action.serializer(), givenAction)
-        )
+        val encoded = WebMessagingJson.json.encodeToString(Action.serializer(), givenAction)
+        val decoded = WebMessagingJson.json.decodeFromString(Action.serializer(), encoded)
 
         val expectedAction = Action.Link(
             text = CardTestValues.text,
@@ -748,15 +722,14 @@ class SerializationTest {
     }
 
     @Test
-    fun whenActionLinkWithNullTextThenSerializesAndDeserializes() {
+    fun `when Action Link with null text then serializes and deserializes`() {
         val givenAction = Action.Link(
             text = null,
             url = CardTestValues.url
         )
 
-        val decoded = WebMessagingJson.json.decodeFromString<Action>(
-            WebMessagingJson.json.encodeToString(Action.serializer(), givenAction)
-        )
+        val encoded = WebMessagingJson.json.encodeToString(Action.serializer(), givenAction)
+        val decoded = WebMessagingJson.json.decodeFromString(Action.serializer(), encoded)
 
         val expectedAction = Action.Link(
             text = null,
@@ -767,7 +740,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenActionPostbackThenSerializesAndDeserializes() {
+    fun `when Action Postback then serializes and deserializes`() {
         val givenAction = Action.Postback(
             text = CardTestValues.POSTBACK_TEXT,
             payload = CardTestValues.POSTBACK_PAYLOAD
@@ -785,7 +758,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenCardWithDefaultActionAndActionsThenEncodesAndDecodes() {
+    fun `when Card with defaultAction and Actions then encodes and decodes`() {
         val givenCard = Card(
             title = CardTestValues.title,
             description = CardTestValues.description,
@@ -808,7 +781,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenCardWithOnlyTitleThenEncodesAndDecodes() {
+    fun `when Card with only title then encodes and decodes`() {
         val givenCard = Card(title = CardTestValues.title)
 
         val encoded = WebMessagingJson.json.encodeToString(Card.serializer(), givenCard)
@@ -825,7 +798,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenListOfCardsThenEncodesAndDecodes() {
+    fun `when listOf Cards then encodes and decodes`() {
         val givenCards = listOf(
             Card(
                 title = CardTestValues.title,
@@ -859,7 +832,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenCardCreatedThenGettersReturnValues() {
+    fun `when Card created then getters return values`() {
         val givenCard = Card(
             title = CardTestValues.title,
             description = CardTestValues.description,
@@ -876,7 +849,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenCardWithLinkDefaultAndPostbackActionListThenEncodesAndDecodes() {
+    fun `when Card with Link default and Postback Action list then encodes and decodes`() {
         val givenCard = Card(
             title = CardTestValues.title,
             description = CardTestValues.description,
@@ -909,7 +882,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenCardWithOnlyRequiredTitleThenEncodesAndDecodes() {
+    fun `when Card with only required title then encodes and decodes`() {
         val givenCard = Card(title = CardTestValues.title)
 
         val encoded = WebMessagingJson.json.encodeToString(Card.serializer(), givenCard)
@@ -926,7 +899,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenMessageCardWithDefaultAndActionsThenEncodesAndDecodes() {
+    fun `when Message Card with default and Actions then encodes and decodes`() {
         val givenCard = Message.Card(
             title = CardTestValues.title,
             description = CardTestValues.description,
@@ -953,7 +926,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenMessageCardWithOnlyRequiredFieldsThenEncodesAndDecodes() {
+    fun `when Message Card with only required fields then encodes and decodes`() {
         val givenCard = Message.Card(
             title = CardTestValues.title,
             description = CardTestValues.description,
@@ -974,7 +947,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenMessageWithCardsThenEncodesAndDecodes() {
+    fun `when Message with Cards then encodes and decodes`() {
         val givenMsg = Message(
             id = TestValues.TOKEN,
             direction = Message.Direction.Outbound,
@@ -1033,7 +1006,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenMessageWithCardsAndNoDefaultActionThenEncodesAndDecodes() {
+    fun `when Message with Cards and no defaultActionThenEncodesAndDecodes`() {
         val givenMsg = Message(
             id = TestValues.SECONDARY_TOKEN,
             direction = Message.Direction.Outbound,
@@ -1084,7 +1057,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenActionLinkSerializerEncodesAndDecodes() {
+    fun `when Action Link serializer encodes and decodes`() {
         val given = Action.Link(
             text = CardTestValues.text,
             url = CardTestValues.url
@@ -1098,7 +1071,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenActionLinkSerializerWithNullTextThenEncodesAndDecodes() {
+    fun `when Action Link serializer with null text then encodes and decodes`() {
         val given = Action.Link(
             text = null,
             url = CardTestValues.url
@@ -1112,7 +1085,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenListOfActionLinksThenEncodesAndDecodesUsingLinkSerializer() {
+    fun `when listOf Action Links then encodes and decodes using link serializer`() {
         val given = listOf(
             Action.Link(text = "Open", url = CardTestValues.url),
             Action.Link(text = CardTestValues.text, url = CardTestValues.url)
@@ -1130,7 +1103,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenStructuredActionLinkThenEncodesAndDecodes() {
+    fun `when Structured Action Link then encodes and decodes`() {
         val given = StructuredMessage.Content.Action(
             type = CardTestValues.LINK_TYPE,
             text = CardTestValues.text,
@@ -1155,7 +1128,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenStructuredActionPostbackThenEncodesAndDecodes() {
+    fun `when Structured Action Postback then encodes and decodes`() {
         val given = StructuredMessage.Content.Action(
             type = CardTestValues.POSTBACK_TYPE,
             text = CardTestValues.POSTBACK_TEXT,
@@ -1180,7 +1153,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenListOfStructuredActionsThenEncodesAndDecodes() {
+    fun `when listOf Structured Actions then encodes and decodes`() {
         val given = listOf(
             StructuredMessage.Content.Action(
                 type = CardTestValues.LINK_TYPE, text = "Open", url = CardTestValues.url, payload = null
@@ -1193,9 +1166,9 @@ class SerializationTest {
             )
         )
 
-        val ser = ListSerializer(StructuredMessage.Content.Action.serializer())
-        val encoded = WebMessagingJson.json.encodeToString(ser, given)
-        val decoded = WebMessagingJson.json.decodeFromString(ser, encoded)
+        val actionListSerializer = ListSerializer(StructuredMessage.Content.Action.serializer())
+        val encoded = WebMessagingJson.json.encodeToString(actionListSerializer, given)
+        val decoded = WebMessagingJson.json.decodeFromString(actionListSerializer, encoded)
 
         val expected = listOf(
             StructuredMessage.Content.Action(
@@ -1211,7 +1184,7 @@ class SerializationTest {
         assertThat(decoded).isEqualTo(expected)
     }
 
-    @Test fun whenButtonResponseContentThenDeserializes() {
+    @Test fun `when ButtonResponse Content then deserializes`() {
         val json = """{"contentType":"ButtonResponse","buttonResponse":{"text":"t","payload":"p","type":"QuickReply"}}"""
         val decoded = WebMessagingJson.json.decodeFromString(StructuredMessage.Content.serializer(), json)
         assertThat(decoded).isEqualTo(
@@ -1222,7 +1195,7 @@ class SerializationTest {
         )
     }
 
-    @Test fun whenCardContentThenDeserializes() {
+    @Test fun `when CardContent then deserializes`() {
         val json = """{"contentType":"Card","card":{"title":"T","description":"D","actions":[]}}"""
         val decoded = WebMessagingJson.json.decodeFromString(StructuredMessage.Content.serializer(), json)
         assertThat(decoded).isEqualTo(
@@ -1233,7 +1206,7 @@ class SerializationTest {
         )
     }
 
-    @Test fun whenCarouselContentThenDeserializes() {
+    @Test fun `when CarouselContent then deserializes`() {
         val json = """{"contentType":"Carousel","carousel":{"cards":[{"title":"T","description":"D","actions":[]}]} }"""
         val decoded = WebMessagingJson.json.decodeFromString(StructuredMessage.Content.serializer(), json)
         assertThat(decoded).isEqualTo(

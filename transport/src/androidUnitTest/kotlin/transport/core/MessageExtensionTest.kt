@@ -1066,27 +1066,6 @@ internal class MessageExtensionTest {
         assertThat(postbackAction.payload).isEqualTo(expectedPayload)
     }
 
-//    @Test
-//    fun `when creating Action subtypes then type getter and enum values are covered`() {
-//        val givenLink = Action.Link(url = CardTestValues.url, text = "Open")
-//        val givenPostback = Action.Postback(
-//            text = CardTestValues.POSTBACK_TEXT,
-//            payload = CardTestValues.POSTBACK_PAYLOAD
-//        )
-//
-//        val expectedActionTypes = listOf("Link", "Postback")
-//        val expectedLinkType = Action.Type.Link
-//        val expectedPostbackType = Action.Type.Postback
-//
-//        val actualActionTypes = Action.Type.entries.map { it.name }
-//        val actualLinkType = givenLink.type
-//        val actualPostbackType = givenPostback.type
-//
-//        assertThat(actualActionTypes).containsExactly(*expectedActionTypes.toTypedArray())
-//        assertThat(actualLinkType).isEqualTo(expectedLinkType)
-//        assertThat(actualPostbackType).isEqualTo(expectedPostbackType)
-//    }
-
     @Test
     fun `when card has unsupported action then else branch drops it`() {
         val givenUnsupportedAction = StructuredMessage.Content.Action(
@@ -1106,12 +1085,11 @@ internal class MessageExtensionTest {
         )
 
         val expectedMessageType = Message.Type.Cards
-        val expectedActions = emptyList<ButtonResponse>()
 
         val actualMessage: Message = givenStructuredMessage.toMessage()
 
         assertThat(actualMessage.messageType).isEqualTo(expectedMessageType)
-        assertThat(actualMessage.cards.first().actions).isEqualTo(expectedActions)
+        assertThat(actualMessage.cards.first().actions).isEmpty()
     }
 
     @Test
@@ -1134,11 +1112,9 @@ internal class MessageExtensionTest {
             content = listOf(CardTestValues.createCardContent(givenCard))
         )
 
-        val expectedDefaultAction = null
-
         val actualMessage: Message = givenStructuredMessage.toMessage()
 
-        assertThat(actualMessage.cards.first().defaultAction).isEqualTo(expectedDefaultAction)
+        assertThat(actualMessage.cards.first().defaultAction).isNull()
     }
 
     @Test
@@ -1172,7 +1148,7 @@ internal class MessageExtensionTest {
         val actualMessage: Message = givenStructuredMessage.toMessage()
 
         assertThat(actualMessage.cards.size).isEqualTo(expectedCardCount)
-        assertThat(actualMessage.cards[0].actions).isEqualTo(expectedActions)
+        assertThat(actualMessage.cards[0].actions).isEmpty()
         assertThat(actualMessage.cards[1].actions).isEqualTo(expectedActions)
     }
 

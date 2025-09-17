@@ -8,10 +8,12 @@ import com.genesys.cloud.messenger.transport.push.DeviceTokenException
 import com.genesys.cloud.messenger.transport.push.PushConfig
 import com.genesys.cloud.messenger.transport.push.PushProvider
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
+import com.genesys.cloud.messenger.transport.shyrka.receive.MessageType
 import com.genesys.cloud.messenger.transport.shyrka.receive.PushErrorResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ButtonResponseContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.QuickReplyContent
+import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
 import com.genesys.cloud.messenger.transport.util.PUSH_CONFIG_KEY
 import com.genesys.cloud.messenger.transport.util.Vault
 
@@ -205,6 +207,15 @@ object StructuredMessageValues {
             content = content,
         )
     }
+
+    internal fun expectedWebMessage(
+        body: StructuredMessage
+    ): WebMessagingMessage<StructuredMessage> =
+        WebMessagingMessage(
+            type = MessageType.Message.value,
+            code = 200,
+            body = body
+        )
 }
 
 object CardTestValues {
@@ -252,6 +263,25 @@ object CardTestValues {
         image = image,
         defaultAction = null,
         actions = listOf(structuredAction)
+    )
+
+    internal fun createCard(
+        title: String,
+        description: String,
+        actionText: String,
+        linkUrl: String
+    ) = StructuredMessage.Content.CardContent.Card(
+        title = title,
+        description = description,
+        image = null,
+        defaultAction = null,
+        actions = listOf(
+            StructuredMessage.Content.Action(
+                type = LINK_TYPE,
+                text = actionText,
+                url = linkUrl
+            )
+        )
     )
 
     internal fun createCardContent(
