@@ -4,6 +4,7 @@ import assertk.assertThat
 import assertk.assertions.hasClass
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
+import com.genesys.cloud.messenger.transport.core.Action
 import com.genesys.cloud.messenger.transport.core.Attachment
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
@@ -37,8 +38,10 @@ import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
+import com.genesys.cloud.messenger.transport.utility.CardTestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.encodeToString
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
@@ -605,5 +608,46 @@ class SerializationTest {
         assertThat(message.body, "WebMessagingMessage body").isNotNull()
             .hasClass(StructuredMessage::class)
         assertThat(message).isEqualTo(expected)
+    }
+
+    @Test fun whenLinkActionThenEncodesAndDecodes() {
+        val givenLink = Action.Link(
+            text = CardTestValues.text,
+            url = CardTestValues.url
+        )
+
+        val encoded = WebMessagingJson.json.encodeToString(Action.serializer(), givenLink)
+        val decoded = WebMessagingJson.json.decodeFromString(Action.serializer(), encoded)
+
+        assertThat(decoded).isEqualTo(givenLink)
+    }
+
+    @Test
+    fun whenPostbackActionThenEncodesAndDecodes() {
+        val givenPostback = Action.Postback(
+            text = CardTestValues.POSTBACK_TEXT,
+            payload = CardTestValues.POSTBACK_PAYLOAD
+        )
+
+        val encoded = WebMessagingJson.json.encodeToString(Action.serializer(), givenPostback)
+        val decoded = WebMessagingJson.json.decodeFromString(Action.serializer(), encoded)
+
+        assertThat(decoded).isEqualTo(givenPostback)
+    }
+
+    @Test
+    fun whenListOfActionsThenEncodesAndDecodes() {
+        val givenList = listOf(
+            Action.Link(text = "Open", url = CardTestValues.url),
+            Action.Postback(
+                text = CardTestValues.POSTBACK_TEXT,
+                payload = CardTestValues.POSTBACK_PAYLOAD
+            )
+        )
+
+        val encoded = WebMessagingJson.json.encodeToString(ListSerializer(Action.serializer()), givenList)
+        val decoded = WebMessagingJson.json.decodeFromString(ListSerializer(Action.serializer()), encoded)
+
+        assertThat(decoded).isEqualTo(givenList)
     }
 }
