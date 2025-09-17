@@ -102,8 +102,8 @@ private fun List<StructuredMessage.Content>.toQuickReplies(): List<ButtonRespons
 
     if (filteredButtonResponse.isNotEmpty()) {
         return filteredButtonResponse
-            .mapNotNull { br ->
-                br.buttonResponse.takeIf { it.type.normalizeButtonType() == "QuickReply" }
+            .mapNotNull { buttonResponseContent ->
+                buttonResponseContent.buttonResponse.takeIf { it.type.normalizeButtonType() == "QuickReply" }
             }
             .map { br -> ButtonResponse(br.text, br.payload, "QuickReply") }
     }
