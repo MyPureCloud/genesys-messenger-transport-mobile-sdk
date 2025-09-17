@@ -1082,4 +1082,50 @@ class SerializationTest {
         )
         assertThat(decoded).isEqualTo(expected)
     }
+
+    @Test
+    fun whenActionLinkSerializerEncodesAndDecodes() {
+        val given = Action.Link(
+            text = CardTestValues.text,
+            url = CardTestValues.url
+        )
+
+        val encoded = WebMessagingJson.json.encodeToString(Action.Link.serializer(), given)
+        val decoded = WebMessagingJson.json.decodeFromString(Action.Link.serializer(), encoded)
+
+        val expected = Action.Link(text = CardTestValues.text, url = CardTestValues.url)
+        assertThat(decoded).isEqualTo(expected)
+    }
+
+    @Test
+    fun whenActionLinkSerializerWithNullTextThenEncodesAndDecodes() {
+        val given = Action.Link(
+            text = null,
+            url = CardTestValues.url
+        )
+
+        val encoded = WebMessagingJson.json.encodeToString(Action.Link.serializer(), given)
+        val decoded = WebMessagingJson.json.decodeFromString(Action.Link.serializer(), encoded)
+
+        val expected = Action.Link(text = null, url = CardTestValues.url)
+        assertThat(decoded).isEqualTo(expected)
+    }
+
+    @Test
+    fun whenListOfActionLinksThenEncodesAndDecodesUsingLinkSerializer() {
+        val given = listOf(
+            Action.Link(text = "Open", url = CardTestValues.url),
+            Action.Link(text = CardTestValues.text, url = CardTestValues.url)
+        )
+
+        val ser = ListSerializer(Action.Link.serializer())
+        val encoded = WebMessagingJson.json.encodeToString(ser, given)
+        val decoded = WebMessagingJson.json.decodeFromString(ser, encoded)
+
+        val expected = listOf(
+            Action.Link(text = "Open", url = CardTestValues.url),
+            Action.Link(text = CardTestValues.text, url = CardTestValues.url)
+        )
+        assertThat(decoded).isEqualTo(expected)
+    }
 }
