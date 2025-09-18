@@ -39,7 +39,6 @@ import io.mockk.verify
 import org.junit.Test
 
 internal class MessageStoreTest {
-    private val givenToken = TestValues.TOKEN
     private val messageSlot = slot<MessageEvent>()
     private val mockLogger: Log = mockk(relaxed = true)
     private val logSlot = mutableListOf<() -> String>()
@@ -54,7 +53,7 @@ internal class MessageStoreTest {
         val expectedMessage =
             subject.pendingMessage.copy(state = State.Sending, text = "test message")
         val expectedOnMessageRequest = OnMessageRequest(
-            givenToken,
+            TestValues.TOKEN,
             message = TextMessage(
                 "test message",
                 metadata = mapOf("customMessageId" to expectedMessage.id)
@@ -383,7 +382,7 @@ internal class MessageStoreTest {
         val expectedMessage =
             subject.pendingMessage.copy(state = State.Sending, text = "test message")
         val expectedOnMessageRequest = OnMessageRequest(
-            givenToken,
+            TestValues.TOKEN,
             message = TextMessage(
                 "test message",
                 metadata = mapOf("customMessageId" to expectedMessage.id),
@@ -473,7 +472,7 @@ internal class MessageStoreTest {
                 quickReplies = listOf(givenButtonResponse)
             )
         val expectedOnMessageRequest = OnMessageRequest(
-            givenToken,
+            TestValues.TOKEN,
             message = TextMessage(
                 text = "",
                 content = listOf(
@@ -511,7 +510,7 @@ internal class MessageStoreTest {
                 quickReplies = listOf(givenButtonResponse)
             )
         val expectedOnMessageRequest = OnMessageRequest(
-            givenToken,
+            TestValues.TOKEN,
             message = TextMessage(
                 text = "",
                 content = listOf(

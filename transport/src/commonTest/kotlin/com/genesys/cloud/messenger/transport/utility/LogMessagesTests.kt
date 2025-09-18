@@ -61,30 +61,27 @@ class LogMessagesTests {
 
     @Test
     fun `when detachingAttachment is called then it logs correctly`() {
-        val givenAttachmentId = AttachmentValues.ID
         val expectedMessage = "Detaching attachment: ${AttachmentValues.ID}"
 
-        val result = LogMessages.detachingAttachment(givenAttachmentId)
+        val result = LogMessages.detachingAttachment(AttachmentValues.ID)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
 
     @Test
     fun `when attachmentDetached is called then it logs correctly`() {
-        val givenAttachmentId = AttachmentValues.ID
         val expectedMessage = "Attachment detached: ${AttachmentValues.ID}"
 
-        val result = LogMessages.attachmentDetached(givenAttachmentId)
+        val result = LogMessages.attachmentDetached(AttachmentValues.ID)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
 
     @Test
     fun `when sendingAttachment is called then it logs correctly`() {
-        val givenAttachmentId = AttachmentValues.ID
         val expectedMessage = "Sending attachment: ${AttachmentValues.ID}"
 
-        val result = LogMessages.sendingAttachment(givenAttachmentId)
+        val result = LogMessages.sendingAttachment(AttachmentValues.ID)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
@@ -121,44 +118,40 @@ class LogMessagesTests {
 
     @Test
     fun `when attach is called then it logs correctly`() {
-        val givenFileName = AttachmentValues.FILE_NAME
-        val expectedMessage = "attach(fileName = $givenFileName)"
+        val expectedMessage = "attach(fileName = ${AttachmentValues.FILE_NAME})"
 
-        val result = LogMessages.attach(givenFileName)
+        val result = LogMessages.attach(AttachmentValues.FILE_NAME)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
 
     @Test
     fun `when detach is called then it logs correctly`() {
-        val givenAttachmentId = AttachmentValues.ID
-        val expectedMessage = "detach(attachmentId = $givenAttachmentId)"
+        val expectedMessage = "detach(attachmentId = ${AttachmentValues.ID})"
 
-        val result = LogMessages.detach(givenAttachmentId)
+        val result = LogMessages.detach(AttachmentValues.ID)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
 
     @Test
     fun `when attachmentError is called then it logs correctly`() {
-        val givenAttachmentId = AttachmentValues.ID
         val givenErrorCode = ErrorCode.AttachmentNotFound
         val givenErrorMessage = ErrorTest.MESSAGE
         val expectedMessage =
-            "Attachment error with id: $givenAttachmentId. ErrorCode: $givenErrorCode, errorMessage: $givenErrorMessage"
+            "Attachment error with id: ${AttachmentValues.ID}. ErrorCode: $givenErrorCode, errorMessage: $givenErrorMessage"
 
         val result =
-            LogMessages.attachmentError(givenAttachmentId, givenErrorCode, givenErrorMessage)
+            LogMessages.attachmentError(AttachmentValues.ID, givenErrorCode, givenErrorMessage)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
 
     @Test
     fun `when invalidAttachmentId is called then it logs correctly`() {
-        val givenAttachmentId = AttachmentValues.ID
-        val expectedMessage = "Invalid attachment ID: $givenAttachmentId. Detach failed."
+        val expectedMessage = "Invalid attachment ID: ${AttachmentValues.ID}. Detach failed."
 
-        val result = LogMessages.invalidAttachmentId(givenAttachmentId)
+        val result = LogMessages.invalidAttachmentId(AttachmentValues.ID)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
@@ -166,26 +159,24 @@ class LogMessagesTests {
     // Authentication
     @Test
     fun `when configureAuthenticatedSession is called then it logs correctly`() {
-        val givenToken = TestValues.TOKEN
         val givenStartNew = true
         val expectedToken = TestValues.TOKEN_SANITIZED
         val expectedMessage =
             "configureAuthenticatedSession(token = $expectedToken, startNew: $givenStartNew)"
 
-        val result = LogMessages.configureAuthenticatedSession(givenToken, givenStartNew)
+        val result = LogMessages.configureAuthenticatedSession(TestValues.TOKEN, givenStartNew)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
 
     @Test
     fun `when configureSession is called then it logs correctly`() {
-        val givenToken = TestValues.TOKEN
         val givenStartNew = false
         val expectedToken = TestValues.TOKEN_SANITIZED
         val expectedMessage =
             "configureSession (token = $expectedToken, startNew: $givenStartNew)"
 
-        val result = LogMessages.configureSession(givenToken, givenStartNew)
+        val result = LogMessages.configureSession(TestValues.TOKEN, givenStartNew)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
@@ -238,33 +229,29 @@ class LogMessagesTests {
 
     @Test
     fun `when fetchingHistory is called then it logs correctly`() {
-        val givenPageIndex = MessageValues.PAGE_NUMBER
-        val expectedMessage = "fetching history for page index = $givenPageIndex"
+        val expectedMessage = "fetching history for page index = ${MessageValues.PAGE_NUMBER}"
 
-        val result = LogMessages.fetchingHistory(givenPageIndex)
+        val result = LogMessages.fetchingHistory(MessageValues.PAGE_NUMBER)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
 
     @Test
     fun `when onMessage is called then it logs correctly`() {
-        val givenText = TestValues.DEFAULT_STRING
-        val expectedMessage = "onMessage(text = $givenText)"
+        val expectedMessage = "onMessage(text = ${TestValues.DEFAULT_STRING})"
 
-        val result = LogMessages.onMessage(givenText)
+        val result = LogMessages.onMessage(TestValues.DEFAULT_STRING)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
 
     @Test
     fun `when sendMessage is called then it logs correctly`() {
-        val givenText = TestValues.DEFAULT_STRING
-        val givenCustomAttributes = TestValues.defaultMap
         val expectedCustomAttributes = TestValues.defaultSecureMap
         val expectedMessage =
-            "sendMessage(text = $givenText, customAttributes = $expectedCustomAttributes)"
+            "sendMessage(text = ${TestValues.DEFAULT_STRING}, customAttributes = $expectedCustomAttributes)"
 
-        val result = LogMessages.sendMessage(givenText, givenCustomAttributes)
+        val result = LogMessages.sendMessage(TestValues.DEFAULT_STRING, TestValues.defaultMap)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
@@ -470,10 +457,9 @@ class LogMessagesTests {
 
     @Test
     fun `when cancellationExceptionAttachmentUpload is called then it logs correctly`() {
-        val givenAttachmentId = TestValues.DEFAULT_STRING
-        val expectedMessage = "Cancellation exception during attachment upload: $givenAttachmentId"
+        val expectedMessage = "Cancellation exception during attachment upload: ${TestValues.DEFAULT_STRING}"
 
-        val result = LogMessages.cancellationExceptionAttachmentUpload(givenAttachmentId)
+        val result = LogMessages.cancellationExceptionAttachmentUpload(TestValues.DEFAULT_STRING)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
@@ -526,24 +512,22 @@ class LogMessagesTests {
     // Custom Attributes
     @Test
     fun `when addCustomAttribute is called then it logs correctly`() {
-        val givenCustomAttributes = TestValues.defaultMap
         val expectedCustomAttributes = TestValues.defaultSecureMap
         val givenState = "ACTIVE"
         val expectedMessage = "add: $expectedCustomAttributes | state = $givenState"
 
-        val result = LogMessages.addCustomAttribute(givenCustomAttributes, givenState)
+        val result = LogMessages.addCustomAttribute(TestValues.defaultMap, givenState)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
 
     @Test
     fun `when addCustomAttribute with deep structure is called then it logs correctly`() {
-        val givenCustomAttributes = TestValues.advancedMap
         val expectedCustomAttributes = TestValues.advancedSecureMap
         val givenState = "ACTIVE"
         val expectedMessage = "add: $expectedCustomAttributes | state = $givenState"
 
-        val result = LogMessages.addCustomAttribute(givenCustomAttributes, givenState)
+        val result = LogMessages.addCustomAttribute(TestValues.advancedMap, givenState)
 
         assertThat(result).isEqualTo(expectedMessage)
     }

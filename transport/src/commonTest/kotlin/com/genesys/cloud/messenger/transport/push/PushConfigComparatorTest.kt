@@ -42,20 +42,16 @@ class PushConfigComparatorTest {
 
     @Test
     fun `when compare 2 similar pushConfig objects`() {
-        val givenUserConfig = PushTestValues.CONFIG
-        val givenStoredConfig = PushTestValues.CONFIG
 
-        val result = subject.compare(givenUserConfig, givenStoredConfig)
+        val result = subject.compare(PushTestValues.CONFIG, PushTestValues.CONFIG)
 
         assertThat(result).isEqualTo(Diff.NONE)
     }
 
     @Test
     fun `when storedConfig has unknown token`() {
-        val givenUserConfig = PushTestValues.CONFIG
-        val givenStoredConfig = DEFAULT_PUSH_CONFIG
 
-        val result = subject.compare(givenUserConfig, givenStoredConfig)
+        val result = subject.compare(PushTestValues.CONFIG, DEFAULT_PUSH_CONFIG)
 
         assertThat(result).isEqualTo(Diff.NO_TOKEN)
     }

@@ -22,4 +22,6 @@ alwaysApply: false
 
 ## Variable Naming Conventions
 
-// TODO
+| Category | Prefix/Pattern | Example(s) |
+|---|---|---|
+| Test constants should be used instead of given where they are straightforward | Use `TestValues.kt`, Ignore objects that use copy() | `syncSequence(PushTestValues.CONFIG, DEFAULT_PUSH_CONFIG)`, `val result = subject.add(TestValues.defaultMap)`|

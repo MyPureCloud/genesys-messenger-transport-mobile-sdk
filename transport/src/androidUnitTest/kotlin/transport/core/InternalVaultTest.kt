@@ -37,11 +37,9 @@ class InternalVaultTest {
 
     private val testKey = TestValues.VAULT_KEY
     private val testValue = TestValues.VAULT_VALUE
-    private val givenTestIv = TestValues.VAULT_IV
-    private val givenTestEncryptedBytes = TestValues.VAULT_ENCRYPTED_BYTES
     private val testBase64 = TestValues.VAULT_BASE64
-    private val givenTestCombined =
-        givenTestIv + TestValues.VAULT_SEPARATOR.toByteArray(Charsets.UTF_8) + givenTestEncryptedBytes
+    private val testCombined =
+        TestValues.VAULT_IV + TestValues.VAULT_SEPARATOR.toByteArray(Charsets.UTF_8) + TestValues.VAULT_ENCRYPTED_BYTES
 
     private lateinit var subject: InternalVault
 
@@ -74,8 +72,8 @@ class InternalVaultTest {
 
     @Test
     fun `test store saves encrypted value to SharedPreferences`() {
-        every { mockCipher.iv } returns givenTestIv
-        every { mockCipher.doFinal(any<ByteArray>()) } returns givenTestEncryptedBytes
+        every { mockCipher.iv } returns TestValues.VAULT_IV
+        every { mockCipher.doFinal(any<ByteArray>()) } returns TestValues.VAULT_ENCRYPTED_BYTES
         every { Base64.encodeToString(any(), Base64.DEFAULT) } returns testBase64
 
         subject.store(testKey, testValue)
@@ -104,7 +102,7 @@ class InternalVaultTest {
     @Test
     fun `test fetch returns decrypted value from SharedPreferences`() {
         every { mockSharedPreferences.getString(testKey, null) } returns testBase64
-        every { Base64.decode(testBase64, Base64.DEFAULT) } returns givenTestCombined
+        every { Base64.decode(testBase64, Base64.DEFAULT) } returns testCombined
         every { mockCipher.doFinal(any<ByteArray>()) } returns testValue.toByteArray(Charsets.UTF_8)
 
         val result = subject.fetch(testKey)
@@ -160,8 +158,8 @@ class InternalVaultTest {
     @Test
     fun `test store with empty value`() {
         val emptyValue = ""
-        every { mockCipher.iv } returns givenTestIv
-        every { mockCipher.doFinal(any<ByteArray>()) } returns givenTestEncryptedBytes
+        every { mockCipher.iv } returns TestValues.VAULT_IV
+        every { mockCipher.doFinal(any<ByteArray>()) } returns TestValues.VAULT_ENCRYPTED_BYTES
         every { Base64.encodeToString(any(), Base64.DEFAULT) } returns testBase64
 
         subject.store(testKey, emptyValue)
@@ -173,7 +171,7 @@ class InternalVaultTest {
     @Test
     fun `test cipher initialization failure during decryption returns null`() {
         every { mockSharedPreferences.getString(testKey, null) } returns testBase64
-        every { Base64.decode(testBase64, Base64.DEFAULT) } returns givenTestCombined
+        every { Base64.decode(testBase64, Base64.DEFAULT) } returns testCombined
         every { mockCipher.init(Cipher.DECRYPT_MODE, mockSecretKey, any<GCMParameterSpec>()) } throws
             Exception("Cipher initialization failed")
 

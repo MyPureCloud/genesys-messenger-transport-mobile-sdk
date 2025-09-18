@@ -366,10 +366,9 @@ class WebMessagingApiTest {
     @Test
     fun `when performDeviceTokenOperation Register with valid userConfig data`() {
         subject = buildWebMessagingApiWith { pushNotificationEngine() }
-        val givenUserPushConfig = PushTestValues.CONFIG
         val givenOperation = DeviceTokenOperation.Register
 
-        val result = runBlocking { subject.performDeviceTokenOperation(givenUserPushConfig, givenOperation) }
+        val result = runBlocking { subject.performDeviceTokenOperation(PushTestValues.CONFIG, givenOperation) }
 
         assertTrue(result is Result.Success<Empty>)
     }
@@ -377,10 +376,8 @@ class WebMessagingApiTest {
     @Test
     fun `when performDeviceTokenOperation Update with valid userConfig data`() {
         subject = buildWebMessagingApiWith { pushNotificationEngine() }
-        val givenUserPushConfig = PushTestValues.CONFIG
-        val givenOperation = DeviceTokenOperation.Update
 
-        val result = runBlocking { subject.performDeviceTokenOperation(givenUserPushConfig, givenOperation) }
+        val result = runBlocking { subject.performDeviceTokenOperation(PushTestValues.CONFIG, DeviceTokenOperation.Update) }
 
         assertTrue(result is Result.Success<Empty>)
     }
@@ -388,10 +385,8 @@ class WebMessagingApiTest {
     @Test
     fun `when performDeviceTokenOperation Delete with valid userConfig data`() {
         subject = buildWebMessagingApiWith { pushNotificationEngine() }
-        val givenUserPushConfig = PushTestValues.CONFIG
-        val givenOperation = DeviceTokenOperation.Delete
 
-        val result = runBlocking { subject.performDeviceTokenOperation(givenUserPushConfig, givenOperation) }
+        val result = runBlocking { subject.performDeviceTokenOperation(PushTestValues.CONFIG, DeviceTokenOperation.Delete) }
 
         assertTrue(result is Result.Success<Empty>)
     }
@@ -400,9 +395,8 @@ class WebMessagingApiTest {
     fun `when performDeviceTokenOperation Register with uppercase token in userConfig data`() {
         subject = buildWebMessagingApiWith { pushNotificationEngine() }
         val givenUserPushConfig = PushTestValues.CONFIG.copy(token = TestValues.TOKEN.uppercase())
-        val givenOperation = DeviceTokenOperation.Delete
 
-        val result = runBlocking { subject.performDeviceTokenOperation(givenUserPushConfig, givenOperation) }
+        val result = runBlocking { subject.performDeviceTokenOperation(givenUserPushConfig, DeviceTokenOperation.Delete) }
 
         assertTrue(result is Result.Success<Empty>)
     }
@@ -411,10 +405,9 @@ class WebMessagingApiTest {
     fun `when performDeviceTokenOperation register result in PushErrorResponse`() {
         subject = buildWebMessagingApiWith { pushNotificationEngine() }
         val givenUserPushConfig = PushTestValues.CONFIG.copy(pushProvider = null)
-        val givenOperation = DeviceTokenOperation.Register
         val expectedResult = Result.Failure(ErrorCode.DeviceRegistrationFailure, ErrorTest.MESSAGE)
 
-        val result = runBlocking { subject.performDeviceTokenOperation(givenUserPushConfig, givenOperation) }
+        val result = runBlocking { subject.performDeviceTokenOperation(givenUserPushConfig, DeviceTokenOperation.Register) }
 
         assertEquals(expectedResult, result)
     }
@@ -428,12 +421,11 @@ class WebMessagingApiTest {
 
         subject = buildWebMessagingApiWith(brokenConfigurations) { pushNotificationEngine() }
         val givenUserPushConfig = PushTestValues.CONFIG.copy(token = InvalidValues.CANCELLATION_EXCEPTION)
-        val givenOperation = DeviceTokenOperation.Register
         val expectedException = CancellationException(ErrorTest.MESSAGE)
         val expectedResult = Result.Failure(ErrorCode.CancellationError, ErrorTest.MESSAGE, expectedException)
 
         val result =
-            runBlocking { subject.performDeviceTokenOperation(givenUserPushConfig, givenOperation) }
+            runBlocking { subject.performDeviceTokenOperation(givenUserPushConfig, DeviceTokenOperation.Register) }
 
         (result as Result.Failure).run {
             assertEquals(expectedResult.errorCode, errorCode)
@@ -450,12 +442,11 @@ class WebMessagingApiTest {
         )
         subject = buildWebMessagingApiWith(brokenConfigurations) { pushNotificationEngine() }
         val givenUserPushConfig = PushTestValues.CONFIG.copy(token = InvalidValues.UNKNOWN_EXCEPTION)
-        val givenOperation = DeviceTokenOperation.Register
         val expectedException = CancellationException(ErrorTest.MESSAGE)
         val expectedResult = Result.Failure(ErrorCode.DeviceTokenOperationFailure, ErrorTest.MESSAGE, expectedException)
 
         val result =
-            runBlocking { subject.performDeviceTokenOperation(givenUserPushConfig, givenOperation) }
+            runBlocking { subject.performDeviceTokenOperation(givenUserPushConfig, DeviceTokenOperation.Register) }
 
         (result as Result.Failure).run {
             assertEquals(expectedResult.errorCode, errorCode)

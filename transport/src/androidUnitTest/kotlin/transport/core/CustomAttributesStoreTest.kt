@@ -33,10 +33,9 @@ class CustomAttributesStoreTest {
 
     @Test
     fun `when add a new customAttribute`() {
-        val givenCustomAttributes = TestValues.defaultMap
         val expectedCustomAttributes = TestValues.defaultMap
 
-        val result = subject.add(givenCustomAttributes)
+        val result = subject.add(TestValues.defaultMap)
 
         verify { mockLogger.i(capture(logSlot)) }
         assertThat(subject.state).isPending()
@@ -74,11 +73,10 @@ class CustomAttributesStoreTest {
 
     @Test
     fun `when add the same customAttribute twice`() {
-        val givenCustomAttributes = TestValues.defaultMap
         val expectedCustomAttributes = TestValues.defaultMap
 
-        val result1 = subject.add(givenCustomAttributes)
-        val result2 = subject.add(givenCustomAttributes)
+        val result1 = subject.add(TestValues.defaultMap)
+        val result2 = subject.add(TestValues.defaultMap)
 
         assertThat(subject.state).isPending()
         assertThat(subject.get()).isEqualTo(expectedCustomAttributes)
@@ -106,9 +104,8 @@ class CustomAttributesStoreTest {
 
     @Test
     fun `when getCustomAttributesToSend and current state is Pending `() {
-        val givenCustomAttributes = TestValues.defaultMap
         val expectedCustomAttributes = TestValues.defaultMap
-        subject.add(givenCustomAttributes)
+        subject.add(TestValues.defaultMap)
 
         val result = subject.getCustomAttributesToSend()
 
@@ -119,9 +116,8 @@ class CustomAttributesStoreTest {
 
     @Test
     fun `when getCustomAttributesToSend and current state is Sending`() {
-        val givenCustomAttributes = TestValues.defaultMap
         val expectedCustomAttributes = TestValues.defaultMap
-        subject.add(givenCustomAttributes)
+        subject.add(TestValues.defaultMap)
         subject.onSending()
 
         val result = subject.getCustomAttributesToSend()
@@ -133,9 +129,8 @@ class CustomAttributesStoreTest {
 
     @Test
     fun `when getCustomAttributesToSend and current state is Sent`() {
-        val givenCustomAttributes = TestValues.defaultMap
         val expectedCustomAttributes = TestValues.defaultMap
-        subject.add(givenCustomAttributes)
+        subject.add(TestValues.defaultMap)
         subject.onSending()
         subject.onSent()
 
@@ -148,8 +143,7 @@ class CustomAttributesStoreTest {
 
     @Test
     fun `when getCustomAttributesToSend and current state is Error`() {
-        val givenCustomAttributes = TestValues.defaultMap
-        subject.add(givenCustomAttributes)
+        subject.add(TestValues.defaultMap)
         subject.onError()
 
         val result = subject.getCustomAttributesToSend()
@@ -200,10 +194,9 @@ class CustomAttributesStoreTest {
 
     @Test
     fun `when add customAttributes and then onSessionClosed`() {
-        val givenCustomAttributes = TestValues.defaultMap
         val expectedCustomAttributes = TestValues.defaultMap
 
-        subject.add(givenCustomAttributes)
+        subject.add(TestValues.defaultMap)
         subject.onSessionClosed()
 
         assertThat(subject.state).isPending()
@@ -283,29 +276,23 @@ class CustomAttributesStoreTest {
 
     @Test
     fun `when maxCustomDataBytes was not set yet`() {
-        // Given
         val expectedMaxCustomDataBytes = MAX_CUSTOM_DATA_BYTES_UNSET
         subject = CustomAttributesStoreImpl(mockLogger, mockEventHandler)
 
-        // When
         val result = subject.maxCustomDataBytes
 
-        // Then
         assertThat(result).isEqualTo(expectedMaxCustomDataBytes)
     }
 
     @Test
     fun `when maxCustomDataBytes is updated with valid size and ca are already added`() {
-        // Given
         subject = CustomAttributesStoreImpl(mockLogger, mockEventHandler)
-        val givenMaxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
-        val givenCustomAttributes = TestValues.defaultMap
         val expectedCustomAttributes = TestValues.defaultMap
-        val result = subject.add(givenCustomAttributes)
+        val result = subject.add(TestValues.defaultMap)
         assertThat(subject.maxCustomDataBytes).isEqualTo(MAX_CUSTOM_DATA_BYTES_UNSET)
-        // When
-        subject.maxCustomDataBytes = givenMaxCustomDataBytes
-        // Then
+
+        subject.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
+
         verify(exactly = 0) {
             mockEventHandler.onEvent(any())
         }
@@ -315,15 +302,12 @@ class CustomAttributesStoreTest {
 
     @Test
     fun `when custom attributes are already added but are bigger than updated maxCustomDataBytes`() {
-        // Given
         subject = CustomAttributesStoreImpl(mockLogger, mockEventHandler)
-        val givenMaxCustomDataBytes = TestValues.DEFAULT_NUMBER
-        val givenCustomAttributes = TestValues.defaultMap
-        val result = subject.add(givenCustomAttributes)
+        val result = subject.add(TestValues.defaultMap)
         assertThat(subject.maxCustomDataBytes).isEqualTo(MAX_CUSTOM_DATA_BYTES_UNSET)
-        // When
-        subject.maxCustomDataBytes = givenMaxCustomDataBytes
-        // Then
+
+        subject.maxCustomDataBytes = TestValues.DEFAULT_NUMBER
+
         verify {
             mockEventHandler.onEvent(any())
         }
