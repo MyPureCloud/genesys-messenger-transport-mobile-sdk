@@ -21,7 +21,7 @@ class DeploymentConfigUseCaseTest {
     private val subject = DeploymentConfigUseCase(BASIC_DEPLOYMENT_CONFIG_RESPONSE_PATH, mockHttpClient())
 
     @Test
-    fun whenFetchDeploymentConfig() {
+    fun `when fetch deployment config`() {
         val expectedTestDeploymentConfig = TestWebMessagingApiResponses.testDeploymentConfig
 
         val result = runBlocking {
