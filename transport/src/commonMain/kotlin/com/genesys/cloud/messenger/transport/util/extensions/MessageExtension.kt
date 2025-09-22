@@ -135,7 +135,7 @@ private fun StructuredMessage.Content.Action.mapDefaultActionIfLink(): ButtonRes
 
 private fun StructuredMessage.Content.CardContent.Card.toMessageCard(): Message.Card =
     Message.Card(
-        title = title.filterNot { it.isWhitespace() },
+        title = title,
         description = description,
         imageUrl = image,
         actions = actions.mapNotNull { it.toMessageCardAction() },

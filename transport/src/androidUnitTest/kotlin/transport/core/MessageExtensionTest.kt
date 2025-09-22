@@ -56,7 +56,6 @@ import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.StructuredMessageValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
-import kotlinx.serialization.encodeToString
 import net.bytebuddy.utility.RandomString
 import org.junit.Test
 
@@ -981,7 +980,7 @@ internal class MessageExtensionTest {
     @Test
     fun `when StructuredMessage has CarouselContent then messageType is Carousel and cards are mapped`() {
         val givenTitles = listOf("Card One", "Card Two")
-        val expectedTitles = listOf("CardOne", "CardTwo")
+        val expectedTitles = listOf("Card One", "Card Two")
         val expectedActionText = "Open"
 
         val givenStructuredMessage = CardTestValues.createStructuredMessageWithCarouselContent(
