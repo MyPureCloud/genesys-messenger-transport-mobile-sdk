@@ -25,6 +25,7 @@ internal class AuthHandlerImpl(
     private val api: WebMessagingApi,
     private val vault: Vault,
     private val log: Log,
+    private val isAuthEnabled: suspend () -> Boolean,
     private val dispatcher: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
 ) : AuthHandler {
     private var logoutAttempts = 0
@@ -88,14 +89,21 @@ internal class AuthHandlerImpl(
     }
 
     override fun shouldAuthorize(callback: (Boolean) -> Unit) {
-        if (!authJwt.hasRefreshToken()) {
-            callback(true)
-            return
-        }
-        performTokenRefresh { result ->
-            when (result) {
-                is Result.Success -> callback(false)
-                is Result.Failure -> callback(true)
+        dispatcher.launch {
+            if (!isAuthEnabled()) {
+                callback(false)
+                return@launch
+            }
+
+            if (!authJwt.hasRefreshToken()) {
+                callback(true)
+                return@launch
+            }
+            performTokenRefresh { result ->
+                when (result) {
+                    is Result.Success -> callback(false)
+                    is Result.Failure -> callback(true)
+                }
             }
         }
     }

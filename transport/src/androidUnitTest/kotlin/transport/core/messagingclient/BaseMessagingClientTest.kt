@@ -97,7 +97,6 @@ open class BaseMessagingClientTest {
             )
         )
     }
-
     internal val mockAttachmentHandler: AttachmentHandler = mockk(relaxed = true) {
         every {
             prepare(
@@ -200,7 +199,7 @@ open class BaseMessagingClientTest {
 
     internal val subject = MessagingClientImpl(
         log = mockLogger,
-        configuration = Configuration("deploymentId", "inindca.com"),
+        configuration = TestValues.configuration,
         webSocket = mockPlatformSocket,
         api = mockWebMessagingApi,
         token = testToken,

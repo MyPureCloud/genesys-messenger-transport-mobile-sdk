@@ -11,6 +11,7 @@ import com.genesys.cloud.messenger.transport.mockHttpClientWith
 import com.genesys.cloud.messenger.transport.network.test_engines.UPLOAD_FILE_PATH
 import com.genesys.cloud.messenger.transport.network.test_engines.UPLOAD_FILE_SIZE
 import com.genesys.cloud.messenger.transport.network.test_engines.authorizeEngine
+import com.genesys.cloud.messenger.transport.network.test_engines.deploymentConfigEngine
 import com.genesys.cloud.messenger.transport.network.test_engines.historyEngine
 import com.genesys.cloud.messenger.transport.network.test_engines.invalidHeaders
 import com.genesys.cloud.messenger.transport.network.test_engines.logoutEngine
@@ -20,6 +21,7 @@ import com.genesys.cloud.messenger.transport.network.test_engines.uploadFileEngi
 import com.genesys.cloud.messenger.transport.network.test_engines.validHeaders
 import com.genesys.cloud.messenger.transport.push.DeviceTokenOperation
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
+import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
 import com.genesys.cloud.messenger.transport.util.Urls
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.DEFAULT_TIMEOUT
@@ -162,12 +164,8 @@ class WebMessagingApiTest {
 
     @Test
     fun `when fetchAuthJwt request body has invalid params`() {
-        val brokenConfigurations = Configuration(
-            deploymentId = InvalidValues.DEPLOYMENT_ID,
-            domain = InvalidValues.DOMAIN,
-            logging = false
-        )
-        subject = buildWebMessagingApiWith(brokenConfigurations) { authorizeEngine() }
+
+        subject = buildWebMessagingApiWith(InvalidValues.configuration) { authorizeEngine() }
 
         val expectedResult = Result.Failure(ErrorCode.AuthFailed, "Bad Request")
 
@@ -184,11 +182,7 @@ class WebMessagingApiTest {
 
     @Test
     fun `fetch should return result Failure when CancellationException is thrown`() {
-        val brokenConfigurations = Configuration(
-            deploymentId = InvalidValues.CANCELLATION_EXCEPTION,
-            domain = InvalidValues.DOMAIN,
-            logging = false
-        )
+        val brokenConfigurations = InvalidValues.configuration.copy(deploymentId = InvalidValues.CANCELLATION_EXCEPTION)
         subject = buildWebMessagingApiWith(brokenConfigurations) { authorizeEngine() }
 
         val expectedResult = Result.Failure(ErrorCode.CancellationError, ErrorTest.MESSAGE)
@@ -206,11 +200,7 @@ class WebMessagingApiTest {
 
     @Test
     fun `fetch should return result Failure when UnknownException is thrown`() {
-        val brokenConfigurations = Configuration(
-            deploymentId = InvalidValues.UNKNOWN_EXCEPTION,
-            domain = InvalidValues.DOMAIN,
-            logging = false
-        )
+        val brokenConfigurations = InvalidValues.configuration.copy(deploymentId = InvalidValues.UNKNOWN_EXCEPTION)
         subject = buildWebMessagingApiWith(brokenConfigurations) { authorizeEngine() }
 
         val expectedResult = Result.Failure(ErrorCode.AuthFailed, ErrorTest.MESSAGE)
@@ -323,6 +313,57 @@ class WebMessagingApiTest {
     }
 
     @Test
+    fun `when fetchDeploymentConfig is successful`() {
+        subject = buildWebMessagingApiWith { deploymentConfigEngine() }
+        val expectedResult = Result.Success(createDeploymentConfigForTesting())
+
+        val result = runBlocking { subject.fetchDeploymentConfig() }
+
+        assertEquals(expectedResult, result)
+    }
+
+    @Test
+    fun `when fetchDeploymentConfig fails with bad request`() {
+        val brokenConfiguration = InvalidValues.configuration.copy(
+            deploymentId = TestValues.DEPLOYMENT_ID
+        )
+        subject = buildWebMessagingApiWith(brokenConfiguration) { deploymentConfigEngine() }
+        val expectedResult = Result.Failure(ErrorCode.DeploymentConfigFetchFailed, "Bad Request")
+
+        val result = runBlocking { subject.fetchDeploymentConfig() }
+
+        assertEquals(expectedResult, result)
+    }
+
+    @Test
+    fun `when fetchDeploymentConfig result in CancellationException`() {
+        val brokenConfiguration = InvalidValues.configuration.copy(
+            deploymentId = TestValues.DEPLOYMENT_ID,
+            domain = InvalidValues.CANCELLATION_EXCEPTION,
+        )
+        subject = buildWebMessagingApiWith(brokenConfiguration) { deploymentConfigEngine() }
+        val expectedResult = Result.Failure(ErrorCode.CancellationError, ErrorTest.MESSAGE)
+
+        val result = runBlocking { subject.fetchDeploymentConfig() }
+
+        assertEquals(expectedResult, result)
+    }
+
+    @Test
+    fun `when fetchDeploymentConfig result in UnknownException`() {
+        val brokenConfiguration = InvalidValues.configuration.copy(
+            deploymentId = TestValues.DEPLOYMENT_ID,
+            domain = InvalidValues.UNKNOWN_EXCEPTION,
+        )
+        subject = buildWebMessagingApiWith(brokenConfiguration) { deploymentConfigEngine() }
+        val expectedResult = Result.Failure(ErrorCode.DeploymentConfigFetchFailed, ErrorTest.MESSAGE)
+
+        val result = runBlocking { subject.fetchDeploymentConfig() }
+
+        assertEquals(expectedResult, result)
+    }
+
+    @Test
     fun `when performDeviceTokenOperation Register with valid userConfig data`() {
         subject = buildWebMessagingApiWith { pushNotificationEngine() }
         val givenUserPushConfig = PushTestValues.CONFIG
@@ -380,11 +421,11 @@ class WebMessagingApiTest {
 
     @Test
     fun `when performDeviceTokenOperation any result in CancellationException`() {
-        val brokenConfigurations = Configuration(
+        val brokenConfigurations = InvalidValues.configuration.copy(
             deploymentId = InvalidValues.CANCELLATION_EXCEPTION,
             domain = InvalidValues.CANCELLATION_EXCEPTION,
-            logging = false
         )
+
         subject = buildWebMessagingApiWith(brokenConfigurations) { pushNotificationEngine() }
         val givenUserPushConfig = PushTestValues.CONFIG.copy(token = InvalidValues.CANCELLATION_EXCEPTION)
         val givenOperation = DeviceTokenOperation.Register
@@ -403,10 +444,9 @@ class WebMessagingApiTest {
 
     @Test
     fun `when performDeviceTokenOperation any result in general Exception`() {
-        val brokenConfigurations = Configuration(
+        val brokenConfigurations = InvalidValues.configuration.copy(
             deploymentId = InvalidValues.UNKNOWN_EXCEPTION,
             domain = InvalidValues.UNKNOWN_EXCEPTION,
-            logging = false
         )
         subject = buildWebMessagingApiWith(brokenConfigurations) { pushNotificationEngine() }
         val givenUserPushConfig = PushTestValues.CONFIG.copy(token = InvalidValues.UNKNOWN_EXCEPTION)
@@ -426,7 +466,7 @@ class WebMessagingApiTest {
 }
 
 private fun buildWebMessagingApiWith(
-    configuration: Configuration = configuration(),
+    configuration: Configuration = TestValues.configuration,
     engine: HttpClientConfig<MockEngineConfig>.() -> Unit,
 ): WebMessagingApi {
     return WebMessagingApi(
@@ -435,9 +475,3 @@ private fun buildWebMessagingApiWith(
         client = mockHttpClientWith { engine() }
     )
 }
-
-private fun configuration(): Configuration = Configuration(
-    deploymentId = TestValues.DEPLOYMENT_ID,
-    domain = TestValues.DOMAIN,
-    logging = false
-)

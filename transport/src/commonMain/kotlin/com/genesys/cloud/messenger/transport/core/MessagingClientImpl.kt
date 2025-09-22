@@ -91,7 +91,8 @@ internal class MessagingClientImpl(
         eventHandler,
         api,
         vault,
-        log.withTag(LogTag.AUTH_HANDLER)
+        log.withTag(LogTag.AUTH_HANDLER),
+        isAuthEnabled = { deploymentConfig.isAuthEnabled(api) }
     ),
     private val internalCustomAttributesStore: CustomAttributesStoreImpl = CustomAttributesStoreImpl(
         log.withTag(LogTag.CUSTOM_ATTRIBUTES_STORE),
@@ -148,20 +149,32 @@ internal class MessagingClientImpl(
     override val wasAuthenticated: Boolean
         get() = vault.wasAuthenticated
 
-    @Throws(IllegalStateException::class)
+    @Throws(IllegalStateException::class, TransportSDKException::class)
     override fun connect() {
         log.i { LogMessages.CONNECT }
+        validateDeploymentConfig()
         connectAuthenticated = false
         stateMachine.onConnect()
         webSocket.openSocket(socketListener)
     }
 
-    @Throws(IllegalStateException::class)
+    @Throws(IllegalStateException::class, TransportSDKException::class)
     override fun connectAuthenticatedSession() {
         log.i { LogMessages.CONNECT_AUTHENTICATED_SESSION }
+        validateDeploymentConfig()
         connectAuthenticated = true
         stateMachine.onConnect()
         webSocket.openSocket(socketListener)
+    }
+
+    @Throws(TransportSDKException::class)
+    private fun validateDeploymentConfig() {
+        if (deploymentConfig.get() == null) {
+            throw TransportSDKException(
+                ErrorCode.MissingDeploymentConfig,
+                ErrorMessage.MissingDeploymentConfig
+            )
+        }
     }
 
     @Throws(IllegalStateException::class)
@@ -334,9 +347,7 @@ internal class MessagingClientImpl(
         }
     }
 
-    @Throws(IllegalStateException::class)
     override fun logoutFromAuthenticatedSession() {
-        stateMachine.checkIfConfigured()
         authHandler.logout()
     }
 
@@ -847,6 +858,15 @@ private fun KProperty0<DeploymentConfig?>.isShowUserTypingEnabled(): Boolean =
 
 private fun KProperty0<DeploymentConfig?>.isClearConversationEnabled(): Boolean =
     this.get()?.messenger?.apps?.conversations?.conversationClear?.enabled == true
+
+internal suspend fun KProperty0<DeploymentConfig?>.isAuthEnabled(api: WebMessagingApi): Boolean {
+    val config = this.get()
+    return config?.auth?.enabled
+        ?: when (val result = api.fetchDeploymentConfig()) {
+            is Result.Success -> result.value.auth.enabled
+            is Result.Failure -> false
+        }
+}
 
 private fun KProperty0<DeploymentConfig?>.isPushServiceEnabled(): Boolean =
     this.get()?.messenger?.apps?.conversations?.notifications?.enabled == true

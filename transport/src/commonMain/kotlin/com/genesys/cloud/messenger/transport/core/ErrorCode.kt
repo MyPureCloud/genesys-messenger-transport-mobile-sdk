@@ -36,6 +36,8 @@ sealed class ErrorCode(val code: Int) {
     data object RefreshAuthTokenFailure : ErrorCode(6003)
     data object HistoryFetchFailure : ErrorCode(6004)
     data object ClearConversationFailure : ErrorCode(6005)
+    data object MissingDeploymentConfig : ErrorCode(6006)
+    data object DeploymentConfigFetchFailed : ErrorCode(6007)
 
     // Push
     data object DeviceTokenOperationFailure : ErrorCode(6020)
@@ -78,6 +80,8 @@ sealed class ErrorCode(val code: Int) {
                 6003 -> RefreshAuthTokenFailure
                 6004 -> HistoryFetchFailure
                 6005 -> ClearConversationFailure
+                6006 -> MissingDeploymentConfig
+                6007 -> DeploymentConfigFetchFailed
                 6020 -> DeviceTokenOperationFailure
                 6021 -> DeviceAlreadyRegistered
                 6022 -> DeviceNotFound
@@ -104,6 +108,7 @@ object ErrorMessage {
     const val AutoRefreshTokenDisabled = "AutoRefreshTokenWhenExpired is disabled in Configuration."
     const val NoRefreshToken = "No refreshAuthToken. Authentication is required."
     const val FailedToClearConversation = "Failed to clear conversation."
+    const val MissingDeploymentConfig = "DeploymentConfig must be fetched before connecting. Call fetchDeploymentConfig() first."
     const val FileSizeIsToSmall = "Attachment size cannot be less than 1 byte"
     const val FileAttachmentIsDisabled = "File attachment is disabled in Deployment Configuration."
     fun detachFailed(attachmentId: String) = "Detach failed: Invalid attachment ID ($attachmentId)"

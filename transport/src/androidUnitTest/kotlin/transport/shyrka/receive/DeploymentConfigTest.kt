@@ -161,7 +161,7 @@ class DeploymentConfigTest {
     @Test
     fun `when Conversations deserialized`() {
         val givenConversationsAsJson =
-            """{"messagingEndpoint":"messaging_endpoint","showAgentTypingIndicator":true,"showUserTypingIndicator":true,"autoStart":{"enabled":true},"conversationDisconnect":{"enabled":true,"type":"ReadOnly"},"conversationClear":{"enabled":false},"notifications":{"enabled":false,"notificationContentType":"ExcludeMessagesContent"}}"""
+            """{"messagingEndpoint":"messaging_endpoint","showAgentTypingIndicator":true,"showUserTypingIndicator":true,"autoStart":{"enabled":true},"conversationDisconnect":{"enabled":true,"type":"ReadOnly"},"conversationClear":{"enabled":false},"notifications":{"enabled":false,"notificationContentType":"ExcludeMessagesContent"},"markdown":{"enabled":false}}"""
         val expectedConversationClear = ConversationClear(enabled = false)
         val expectedAutoStart = AutoStart(true)
         val expectedConversationDisconnect =

@@ -117,6 +117,9 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         context.assets.open(SAVED_ATTACHMENT_FILE_NAME).use { inputStream ->
             inputStream.readBytes().also { attachment = it }
         }
+        launch {
+            messengerTransport.fetchDeploymentConfig()
+        }
     }
 
     fun onCommandChanged(newCommand: String) {

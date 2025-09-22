@@ -54,7 +54,7 @@ import kotlin.test.assertFailsWith
 class SerializationTest {
 
     @Test
-    fun whenConfigureSessionRequestThenEncodes() {
+    fun `when ConfigureSessionRequest then encodes`() {
         val journeyContext = JourneyContext(
             JourneyCustomer("00000000-0000-0000-0000-000000000000", "cookie"),
             JourneyCustomerSession("", "web"),
@@ -73,7 +73,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenEchoRequestThenEncodes() {
+    fun `when EchoRequest then encodes`() {
         val echoRequest = EchoRequest("<token>")
 
         val encodedString = WebMessagingJson.json.encodeToString(echoRequest)
@@ -83,7 +83,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenOnMessageRequestThenEncodes() {
+    fun `when OnMessageRequest then encodes`() {
         val messageRequest = OnMessageRequest("<token>", TextMessage("Hello world"))
 
         var encodedString = WebMessagingJson.json.encodeToString(messageRequest)
@@ -115,7 +115,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenOnAttachmentRequestThenEncodes() {
+    fun `when OnAttachmentRequest then encodes`() {
         val attachmentRequest = OnAttachmentRequest(
             token = "<token>",
             attachmentId = "00000000-0000-0000-0000-000000000001",
@@ -132,7 +132,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenSessionExpiredEventThenDecodes() {
+    fun `when SessionExpiredEvent then decodes`() {
         val json =
             """
             {
@@ -154,7 +154,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenEchoMessageThenDecodingAsWebMessagingMessageThrowsException() {
+    fun `when EchoMessage then decoding as WebMessagingMessage throws exception`() {
         val json =
             """
             {
@@ -170,7 +170,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenSessionResponseThenDecodes() {
+    fun `when SessionResponse then decodes`() {
         val json =
             """
             {
@@ -220,7 +220,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenUnsolicitedMessageThenDecodes() {
+    fun `when UnsolicitedMessage then decodes`() {
         val json =
             """
             {
@@ -276,7 +276,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenPresignedUrlResponseThenDecodes() {
+    fun `when PresignedUrlResponse then decodes`() {
         val json =
             """{"type":"response","class":"PresignedUrlResponse","code":200,"body":{"attachmentId":"abcd-1234","headers":{"x-amz-tagging":"organizationId=1234&originPlatform=PureCloud&role=Darth&owner=Dev-CloudAppsDarth@genesys.com"},"url":"https://uploads.url/foo.png"}}"""
         val presignedUrlResponse = PresignedUrlResponse(
@@ -298,7 +298,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenUploadSuccessEventThenDecodes() {
+    fun `when UploadSuccessEvent then decodes`() {
         val json =
             """{"type":"message","class":"UploadSuccessEvent","code":200,"body":{"attachmentId":"abcd-1234","downloadUrl":"https://uploads.url/foo.png","timestamp":"2021-04-21T14:03:09.581Z"}}"""
         val uploadSuccessEvent = UploadSuccessEvent(
@@ -320,7 +320,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenJwtResponseThenDecodes() {
+    fun `when JwtResponse then decodes`() {
         val json =
             """{"type":"response","class":"JwtResponse","code":200,"body":{"jwt":"expected-jwt-token","exp":1623675564}}"""
         val jwtResponse = JwtResponse(
@@ -341,13 +341,13 @@ class SerializationTest {
     }
 
     @Test
-    fun whenMessageClassNameDoesNotMatchSupportedTypes() {
+    fun `when message class name does not match supported types`() {
         val json = """{"type":"response","class":"NotSupportedClassName","code":200,"body":{}}"""
         assertFailsWith<IllegalArgumentException> { decode(json) }
     }
 
     @Test
-    fun whenUploadFailureEventThenDecodes() {
+    fun `when UploadFailureEvent then decodes`() {
         val json =
             """{"type":"message","class":"UploadFailureEvent","code":200,"body":{"attachmentId":"abcd-1234","errorCode":4001,"errorMessage":"error message", "timestamp":"2021-04-21T14:03:09.581Z"}}"""
         val uploadFailureEvent = UploadFailureEvent(
@@ -370,7 +370,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenGenerateUrlErrorEventThenDecodes() {
+    fun `when GenerateUrlErrorEvent then decodes`() {
         val json =
             """{"type":"message","class":"GenerateUrlError","code":200,"body":{"attachmentId":"abcd-1234","errorCode":4001,"errorMessage":"error message"}}"""
         val generateUrlError = GenerateUrlError(
@@ -392,7 +392,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenTooManyRequestsErrorMessageThenDecodes() {
+    fun `when TooManyRequestsErrorMessage then decodes`() {
         val json =
             """
             {"type":"response","class":"TooManyRequestsErrorMessage","code":429,"body":{"retryAfter":3,"errorCode":4029,"errorMessage":"Message rate too high for this session"}}
@@ -414,7 +414,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenConnectionClosedEventThenDecodes() {
+    fun `when ConnectionClosedEvent then decodes`() {
         val json = """{"type":"message","class":"ConnectionClosedEvent","code":200,"body":{}}"""
 
         val message = decode(json)
@@ -424,7 +424,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenCloseSessionRequestThenEncodes() {
+    fun `when CloseSessionRequest then encodes`() {
         val encodedString = WebMessagingJson.json.encodeToString(
             CloseSessionRequest(
                 token = "<token>",
@@ -437,7 +437,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenConfigureAuthenticatedSessionRequestThenEncodes() {
+    fun `when ConfigureAuthenticatedSessionRequest then encodes`() {
         val journeyContext = JourneyContext(
             JourneyCustomer("00000000-0000-0000-0000-000000000000", "cookie"),
             JourneyCustomerSession("", "web"),
@@ -458,7 +458,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenLogoutEventThenDecodes() {
+    fun `when LogoutEvent then decodes`() {
         val json = """{"type":"message","class":"LogoutEvent","code":200,"body":{}}"""
 
         val message = decode(json)
@@ -468,7 +468,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenStructuredMessageWithAttachmentAndUnknownContent() {
+    fun `when StructuredMessage with attachment and unknown content`() {
         val givenStructuredMessage = """{"type":"message","class":"StructuredMessage","code":200,"body":{"direction":"Outbound","id":"msg_id","type":"Text","text":"Hi","content":[{"fakeContent":{"foo":"bar"},"contentType":"FakeContent"},{"attachment":{"id":"attachment_id","filename":"image.png","mediaType":"Image","url":"https://downloadurl.com"},"contentType":"Attachment"}],"originatingEntity":"Human"}}"""
         val expectedStructuredMessage = WebMessagingMessage(
             type = "message",
@@ -499,7 +499,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenClearConversationRequestThenEncodes() {
+    fun `when ClearConversationRequest then encodes`() {
         val encodedString = WebMessagingJson.json.encodeToString(
             ClearConversationRequest(
                 token = "<token>",
@@ -511,7 +511,7 @@ class SerializationTest {
     }
 
     @Test
-    fun whenSessionClearedEventThenDecodes() {
+    fun `when SessionClearedEvent then decodes`() {
         val json = """{"type":"message","class":"SessionClearedEvent","code":200,"body":{}}"""
 
         val message = decode(json)

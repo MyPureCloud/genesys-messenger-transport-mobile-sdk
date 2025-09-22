@@ -86,7 +86,7 @@ internal object Response {
         metadata: Map<String, String> = mapOf("correlationId" to "0000000-0000-0000-0000-0000000000"),
     ): String {
         return """{"type": "message","class": "StructuredMessage","code": 200,"body": {"direction": "${direction.name}","id": "0000000-0000-0000-0000-0000000000","channel": {"time": "2022-03-09T13:35:31.104Z","messageId": "0000000-0000-0000-0000-0000000000"},"type": "Event","metadata": ${
-        Json.encodeToString(metadata)
+            Json.encodeToString(metadata)
         },"events": [$events]}}"""
     }
 

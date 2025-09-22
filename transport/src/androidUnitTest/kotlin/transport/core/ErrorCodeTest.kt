@@ -42,6 +42,7 @@ internal class ErrorCodeTest {
         assertThat(ErrorCode.mapFrom(6003)).isEqualTo(ErrorCode.RefreshAuthTokenFailure)
         assertThat(ErrorCode.mapFrom(6004)).isEqualTo(ErrorCode.HistoryFetchFailure)
         assertThat(ErrorCode.mapFrom(6005)).isEqualTo(ErrorCode.ClearConversationFailure)
+        assertThat(ErrorCode.mapFrom(6007)).isEqualTo(ErrorCode.DeploymentConfigFetchFailed)
         assertThat(ErrorCode.mapFrom(6020)).isEqualTo(ErrorCode.DeviceTokenOperationFailure)
         assertThat(ErrorCode.mapFrom(6021)).isEqualTo(ErrorCode.DeviceAlreadyRegistered)
         assertThat(ErrorCode.mapFrom(6022)).isEqualTo(ErrorCode.DeviceNotFound)
@@ -50,6 +51,7 @@ internal class ErrorCodeTest {
         assertThat(ErrorCode.mapFrom(6025)).isEqualTo(ErrorCode.DeviceUpdateFailure)
         assertThat(ErrorCode.mapFrom(6026)).isEqualTo(ErrorCode.DeviceDeleteFailure)
         assertThat(ErrorCode.mapFrom(6027)).isEqualTo(ErrorCode.DeploymentIdMismatch)
+        assertThat(ErrorCode.mapFrom(6006)).isEqualTo(ErrorCode.MissingDeploymentConfig)
 
         val randomIn300Range = Random.nextInt(300, 400)
         ErrorCode.mapFrom(randomIn300Range).run {

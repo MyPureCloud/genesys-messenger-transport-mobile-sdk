@@ -1,0 +1,25 @@
+---
+description: "Test naming conventions"
+globs: ["transport/**/*Test.kt", "transport/**/test/**", "transport/**/commonTest/**", "transport/**/androidUnitTest/**", "transport/**/iosX64Test/**"]
+alwaysApply: false
+---
+
+## Test Class Naming Conventions
+
+| Scenario | Pattern | Example |
+|---|---|---|
+| Standard unit test for a type | `<SUT>Test` | `AttachmentHandlerTest` |
+// TODO MORE RULES TO COME
+
+## Test Function Naming Conventions
+
+### Required Format
+- Backticks are required for all test function names
+
+### Naming Families (compact)
+
+// TODO
+
+## Variable Naming Conventions
+
+// TODO

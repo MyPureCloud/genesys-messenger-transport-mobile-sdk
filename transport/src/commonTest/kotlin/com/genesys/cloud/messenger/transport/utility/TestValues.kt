@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.utility
 
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
+import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
@@ -35,7 +36,12 @@ object TestValues {
     internal const val TOKEN_KEY = "token_key"
     internal const val AUTH_REFRESH_TOKEN_KEY = "auth_refresh_token_key"
     internal const val WAS_AUTHENTICATED = "was_authenticated"
+    internal const val PUSH_CONFIG_KEY = "push_config_key"
     internal const val LOG_TAG = "TestLogTag"
+    internal const val CUSTOM_KEY = "custom_key"
+    internal const val INT_KEY = "int_key"
+    internal const val BOOLEAN_KEY = "boolean_key"
+    internal const val TRUE_STRING = "true"
     internal val defaultMap = mapOf("A" to "BBBBBB")
     internal val defaultSecureMap = mapOf("A" to "**BBBB")
     internal val advancedMap = mapOf("metadata" to """{"key":"value"}""")
@@ -58,6 +64,20 @@ object TestValues {
         wasAuthenticated = WAS_AUTHENTICATED,
         pushConfigKey = PUSH_CONFIG_KEY,
     )
+    internal val migrationTestData = mapOf(
+        TOKEN_KEY to TOKEN,
+        AUTH_REFRESH_TOKEN_KEY to SECONDARY_TOKEN,
+        WAS_AUTHENTICATED to TRUE_STRING,
+        CUSTOM_KEY to DEFAULT_STRING,
+        INT_KEY to 123,
+        BOOLEAN_KEY to false
+    )
+
+    internal val configuration = Configuration(
+        deploymentId = DEPLOYMENT_ID,
+        domain = DOMAIN,
+    )
+
     internal val application = "TransportSDK-${MessengerTransportSDK.sdkVersion}"
 }
 
@@ -86,6 +106,11 @@ object InvalidValues {
     internal const val INVALID_REFRESH_TOKEN = "invalid_refresh_token"
     internal const val CANCELLATION_EXCEPTION = "cancellation_exception"
     internal const val UNKNOWN_EXCEPTION = "unknown_exception"
+
+    internal val configuration = Configuration(
+        deploymentId = DEPLOYMENT_ID,
+        domain = DOMAIN,
+    )
 }
 
 object MessageValues {
