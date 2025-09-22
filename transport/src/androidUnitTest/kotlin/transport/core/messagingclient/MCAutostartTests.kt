@@ -2,7 +2,10 @@ package transport.core.messagingclient
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import com.genesys.cloud.messenger.transport.core.ErrorCode
+import com.genesys.cloud.messenger.transport.core.ErrorMessage
 import com.genesys.cloud.messenger.transport.core.Message
+import com.genesys.cloud.messenger.transport.core.TransportSDKException
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
@@ -16,6 +19,7 @@ import io.mockk.verifySequence
 import org.junit.Test
 import transport.util.Request
 import transport.util.Response
+import kotlin.test.assertFailsWith
 
 class MCAutostartTests : BaseMessagingClientTest() {
 
@@ -101,7 +105,12 @@ class MCAutostartTests : BaseMessagingClientTest() {
     fun `when new session and deploymentConfig not set`() {
         every { mockDeploymentConfig.get() } returns null
 
-        subject.connect()
+        val exception = assertFailsWith<TransportSDKException> {
+            subject.connect()
+        }
+
+        assertThat(exception.errorCode).isEqualTo(ErrorCode.MissingDeploymentConfig)
+        assertThat(exception.message).isEqualTo(ErrorMessage.MissingDeploymentConfig)
 
         verify(exactly = 0) {
             mockCustomAttributesStore.getCustomAttributesToSend()

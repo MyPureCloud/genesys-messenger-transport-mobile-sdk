@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
     spec.name                     = 'transport'
-    spec.version                  = '2.9.2'
+    spec.version                  = '2.9.3'
     spec.homepage                 = 'https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk'
     spec.source                   = { :http=> ''}
     spec.authors                  = 'Genesys Cloud Services, Inc.'
@@ -8,7 +8,7 @@ Pod::Spec.new do |spec|
     spec.summary                  = 'Genesys Cloud Messenger Transport Framework - Development podspec for use with local testbed app.'
     spec.vendored_frameworks      = 'build/cocoapods/framework/MessengerTransport.framework'
     spec.libraries                = 'c++'
-    spec.ios.deployment_target = '13.0'
+    spec.ios.deployment_target    = '13.0'
                 
                 
     if !Dir.exist?('build/cocoapods/framework/MessengerTransport.framework') || Dir.empty?('build/cocoapods/framework/MessengerTransport.framework')
@@ -21,6 +21,10 @@ Pod::Spec.new do |spec|
 
         Alternatively, proper pod installation is performed during Gradle sync in the IDE (if Podfile location is set)"
     end
+                
+    spec.xcconfig = {
+        'ENABLE_USER_SCRIPT_SANDBOXING' => 'NO',
+    }
                 
     spec.pod_target_xcconfig = {
         'KOTLIN_PROJECT_PATH' => ':transport',
