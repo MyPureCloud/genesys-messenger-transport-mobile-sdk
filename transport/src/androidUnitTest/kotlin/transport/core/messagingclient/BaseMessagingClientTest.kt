@@ -3,7 +3,6 @@ package transport.core.messagingclient
 import com.genesys.cloud.messenger.transport.auth.AuthHandler
 import com.genesys.cloud.messenger.transport.core.AttachmentHandler
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
-import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.CustomAttributesStoreImpl
 import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.JwtHandler
