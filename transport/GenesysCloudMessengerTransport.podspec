@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name                   = 'GenesysCloudMessengerTransport'
-  s.version                = '2.9.3'
+  s.version                = '2.10.0-rc5'
   s.summary                = 'Genesys Cloud Messenger Transport SDK'
 
   s.description            = <<-DESC
@@ -33,7 +33,7 @@ SOFTWARE.
                                LICENSE
                              }
   s.author                 = 'Genesys Cloud Services, Inc.'
-  s.source                 = { :http => 'https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/releases/download/v2.9.3/MessengerTransport.xcframework.zip' }
+  s.source                 = { :http => 'https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/releases/download/v2.10.0-rc5/MessengerTransport.xcframework.zip' }
 
   s.ios.deployment_target  = '13.0'
 
