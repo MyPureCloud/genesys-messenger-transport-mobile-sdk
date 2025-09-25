@@ -42,7 +42,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
-import kotlinx.serialization.encodeToString
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -746,12 +745,16 @@ internal class AttachmentHandlerTest {
 
     private fun presignedUrlResponse(id: String = AttachmentValues.ID): PresignedUrlResponse =
         PresignedUrlResponse(
-            id, mapOf("header" to "given header"), "http://someuploadurl.com",
+            id,
+            mapOf("header" to "given header"),
+            "http://someuploadurl.com",
         )
 
     private fun uploadSuccessEvent(id: String = AttachmentValues.ID): UploadSuccessEvent =
         UploadSuccessEvent(
-            id, "http://somedownloadurl.com", "2021-08-17T17:00:08.746Z",
+            id,
+            "http://somedownloadurl.com",
+            "2021-08-17T17:00:08.746Z",
         )
 
     /**

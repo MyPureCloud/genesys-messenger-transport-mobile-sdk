@@ -135,7 +135,10 @@ internal class InternalVault(private val serviceName: String) {
         fun query(vararg pairs: Pair<CFStringRef?, CFTypeRef?>): CFDictionaryRef? {
             val map = mapOf(*pairs).plus(refs.filter { it.value != null })
             return CFDictionaryCreateMutable(
-                null, map.size.convert(), null, null
+                null,
+                map.size.convert(),
+                null,
+                null
             ).apply {
                 map.entries.forEach { CFDictionaryAddValue(this, it.key, it.value) }
             }.apply {

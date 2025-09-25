@@ -113,7 +113,8 @@ internal actual class PlatformSocket actual constructor(
                 nsError != null -> {
                     log.e { LogMessages.receiveMessageError(nsError.code, nsError.localizedDescription) }
                     handleError(
-                        nsError, "Receive handler error"
+                        nsError,
+                        "Receive handler error"
                     )
                     return@receiveMessageWithCompletionHandler
                 }

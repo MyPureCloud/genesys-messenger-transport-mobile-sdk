@@ -94,7 +94,8 @@ class SerializationTest {
         val messageWithAttachmentAndCustomAttributesRequest = OnMessageRequest(
             token = "<token>",
             message = TextMessage(
-                text = "Hello world", metadata = mapOf("id" to "aaa-bbb-ccc"),
+                text = "Hello world",
+                metadata = mapOf("id" to "aaa-bbb-ccc"),
                 content = listOf(
                     Message.Content(
                         contentType = Message.Content.Type.Attachment,
