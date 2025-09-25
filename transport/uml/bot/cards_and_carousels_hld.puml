@@ -14,6 +14,7 @@ participant MessageStore
 end box
 box BackEnd
 participant Shyrka
+participant GenesysCloud
 end box
 
 rnote over MessagingClient
@@ -32,23 +33,30 @@ MessageStore -> MessageStore: add message to Conversation
 MessageStore -> App: messageListener(MessageUpdated(Type.Text,"Welcome Message from bot"))
 App -> App: display text message in UI
 end
-Shyrka -> MessagingClient: onMessage(type = Type.Carousel, text = String, content = listOf(Carousel/Cards)
+Shyrka -> MessagingClient: onMessage(type=Structured, text=String, content=listOf(Carousel/Cards))
 MessagingClient -> MessagingClient : Normalize the (Carousel/Cards) to listOf(Cards)
+rnote over MessagingClient
+  Card mapping:
+  * actions = ButtonResponse list
+    - Link → ButtonResponse(type="Link", text, payload=url)
+    - Button/Postback → ButtonResponse(type="Button", text, payload or "")
+  * defaultAction = Link only (if url not blank)
+end rnote
 MessagingClient -> MessageStore: update(Message)
 MessageStore -> MessageStore: add message to Conversation
-MessageStore -> App: messageListener(CardsReceived(Message(type:Type.Cards, content: List<Card(title, description, image), Action(type, text, url?, payload?>)))
+MessageStore -> App: messageListener(CardsReceived(Message(type=Type.Cards, content=List))))
 App -> App: Display cards in UI
-alt #aaff8833 user selects cards option with "Postback"
-App -> App: User taps a Card Action (type = "Postback")
+alt #aaff8833 user selects cards option with "Button"
+App -> App: User taps a Card Action (type="Button")
 rnote over App
   The SDK exposes the Card and its Actions.
   App constructs a ButtonResponse using the selected Action.
 end rnote
-App -> MessagingClient: sendCardReply(postbackResponse: ButtonResponse)
+App -> MessagingClient: sendCardReply(postbackResponse: ButtonResponse(type="Button"))
 MessagingClient -> MessageStore: sendCardReply(postbackResponse: ButtonResponse)
 MessageStore -> MessageStore: add message to Conversation
-MessageStore --> MessagingClient: OnMessageRequest(text=ButtonResponse.text,\n  content=ButtonResponse(text, payload, type="Button"))
-MessageStore -> App: messageListener(MessageInserted(\n  Message(Type.Cards, ButtonResponse("Button"), State.Sending)))
+MessageStore --> MessagingClient: OnMessageRequest(type="button", text, payload)
+MessageStore -> App: messageListener(MessageInserted(Message(Type.Cards, ButtonResponse("Button"), State.Sending)))
 MessagingClient -> Shyrka: send(OnMessageRequest)
 alt #aaff8833 response (Success)
 Shyrka -> MessagingClient: response 200 to OnMessageRequest
@@ -60,7 +68,7 @@ MessagingClient -> MessageStore: updateMessageState(Message(State.Error))
 MessageStore -> App: messageListener(MessageUpdated(Message(Type.Cards,State.Error)))
 App -> App: Display error message
 else #aaff8833 user selects cards option with "Link"
-App -> App: Open link
+App -> App: Open link (no outbound message)
 else #aaff8833 user sends a direct message
 App -> MessagingClient: sendMessage("user message")
 rnote over MessagingClient
@@ -84,8 +92,7 @@ MessagingClient -> GenesysCloud: fetch history
 GenesysCloud --> MessagingClient: history response
 MessagingClient -> MessagingClient: parse history response.
  rnote over App
-   * All non consumed (Carousel/Cards) will be part of history response. Including the options.
-   * (if history contains pbr add text here. check if text or structured)
+   * All non-consumed (Carousel/Cards) will be part of history response, including actions + defaultAction.
  end rnote
 MessagingClient -> MessageStore: updateMessageHistory
 MessageStore -> MessageStore: add messages to Conversation
