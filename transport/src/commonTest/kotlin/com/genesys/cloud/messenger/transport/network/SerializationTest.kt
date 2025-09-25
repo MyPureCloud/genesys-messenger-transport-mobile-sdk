@@ -39,7 +39,6 @@ import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.encodeToString
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
@@ -86,7 +85,8 @@ class SerializationTest {
         val messageWithAttachmentAndCustomAttributesRequest = OnMessageRequest(
             token = "<token>",
             message = TextMessage(
-                text = "Hello world", metadata = mapOf("id" to "aaa-bbb-ccc"),
+                text = "Hello world",
+                metadata = mapOf("id" to "aaa-bbb-ccc"),
                 content = listOf(
                     Message.Content(
                         contentType = Message.Content.Type.Attachment,
