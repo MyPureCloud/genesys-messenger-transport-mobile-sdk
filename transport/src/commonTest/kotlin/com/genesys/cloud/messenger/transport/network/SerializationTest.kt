@@ -47,7 +47,6 @@ import com.genesys.cloud.messenger.transport.utility.StructuredMessageValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.encodeToString
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
@@ -1113,10 +1112,12 @@ class SerializationTest {
         )
 
         val encoded = WebMessagingJson.json.encodeToString(
-            StructuredMessage.Content.Action.serializer(), given
+            StructuredMessage.Content.Action.serializer(),
+            given
         )
         val decoded = WebMessagingJson.json.decodeFromString(
-            StructuredMessage.Content.Action.serializer(), encoded
+            StructuredMessage.Content.Action.serializer(),
+            encoded
         )
 
         val expected = StructuredMessage.Content.Action(
@@ -1138,10 +1139,12 @@ class SerializationTest {
         )
 
         val encoded = WebMessagingJson.json.encodeToString(
-            StructuredMessage.Content.Action.serializer(), given
+            StructuredMessage.Content.Action.serializer(),
+            given
         )
         val decoded = WebMessagingJson.json.decodeFromString(
-            StructuredMessage.Content.Action.serializer(), encoded
+            StructuredMessage.Content.Action.serializer(),
+            encoded
         )
 
         val expected = StructuredMessage.Content.Action(
@@ -1157,7 +1160,10 @@ class SerializationTest {
     fun `when listOf Structured Actions then encodes and decodes`() {
         val given = listOf(
             StructuredMessage.Content.Action(
-                type = CardTestValues.LINK_TYPE, text = "Open", url = CardTestValues.url, payload = null
+                type = CardTestValues.LINK_TYPE,
+                text = "Open",
+                url = CardTestValues.url,
+                payload = null
             ),
             StructuredMessage.Content.Action(
                 type = CardTestValues.POSTBACK_TYPE,
@@ -1173,7 +1179,10 @@ class SerializationTest {
 
         val expected = listOf(
             StructuredMessage.Content.Action(
-                type = CardTestValues.LINK_TYPE, text = "Open", url = CardTestValues.url, payload = null
+                type = CardTestValues.LINK_TYPE,
+                text = "Open",
+                url = CardTestValues.url,
+                payload = null
             ),
             StructuredMessage.Content.Action(
                 type = CardTestValues.POSTBACK_TYPE,
