@@ -329,6 +329,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private var sendFileName = SAVED_ATTACHMENT_FILE_NAME
     private lateinit var attachment: ByteArray
+
     private fun doAttachSavedImage() {
         try {
             client.attach(
@@ -517,8 +518,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
                 quickRepliesMap.putAll(quickReplies.associateBy { it.text })
                 "QuickReplyReceived: text: $text | quick reply options: $quickReplies"
             }
-
-            else -> event.toString()
         }
         onSocketMessageReceived(eventMessage)
     }
@@ -600,9 +599,13 @@ private fun String.toKeyValuePair(): Pair<String, String> {
 
 sealed class AuthState {
     data object NoAuth : AuthState()
+
     data class AuthCodeReceived(val authCode: String) : AuthState()
+
     data object Authorized : AuthState()
+
     data object LoggedOut : AuthState()
+
     data class Error(
         val errorCode: ErrorCode,
         val message: String? = null,

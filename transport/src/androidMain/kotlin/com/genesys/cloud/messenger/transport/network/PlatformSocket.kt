@@ -43,6 +43,7 @@ internal actual class PlatformSocket actual constructor(
             socketRequest,
             object : okhttp3.WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) = listener.onOpen()
+
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) =
                     when (response?.code) {
                         403 -> listener.onFailure(Throwable(response.message, t), ErrorCode.WebsocketAccessDenied)

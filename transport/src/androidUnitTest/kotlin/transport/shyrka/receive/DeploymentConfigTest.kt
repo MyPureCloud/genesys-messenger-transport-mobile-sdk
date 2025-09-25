@@ -24,7 +24,6 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.createConversationsV
 import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createMessengerVOForTesting
 import com.genesys.cloud.messenger.transport.utility.DeploymentConfigValues
-import kotlinx.serialization.encodeToString
 import org.junit.Test
 
 class DeploymentConfigTest {
@@ -243,6 +242,7 @@ class DeploymentConfigTest {
         assertThat(result).isEqualTo(expectedConversationClear)
         assertThat(result.enabled).isTrue()
     }
+
     @Test
     fun `when Markdown serialized`() {
         val givenMarkdown = Conversations.Markdown(enabled = true)
