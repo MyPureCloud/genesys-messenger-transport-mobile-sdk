@@ -69,6 +69,7 @@ internal actual class PlatformSocket actual constructor(
                         listener.onOpen()
                     }
                 }
+
                 override fun URLSession(
                     session: NSURLSession,
                     webSocketTask: NSURLSessionWebSocketTask,

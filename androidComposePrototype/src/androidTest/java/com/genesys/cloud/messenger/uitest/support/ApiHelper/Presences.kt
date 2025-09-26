@@ -21,6 +21,7 @@ private fun API.getAllPresences(): AllPresences {
 }
 
 private var savedPresenceList: MutableMap<String, String>? = null
+
 fun API.getPresenceList(): MutableMap<String, String> {
     if (savedPresenceList != null) {
         val presenceList = savedPresenceList!!

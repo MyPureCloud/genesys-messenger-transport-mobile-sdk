@@ -264,10 +264,12 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         val itemToTap = uiAutomatorInstance.findObject(UiSelector().descriptionContains(contentDescription))
         itemToTap.click()
     }
+
     protected fun hasTextView(text: String): Boolean {
         val uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         return uiDevice.hasObject(By.textContains(text))
     }
+
     protected fun tapTextWithUIAutomator(text: String) {
         val uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         val itemToTap = uiDevice.findObject(UiSelector().text(text))
