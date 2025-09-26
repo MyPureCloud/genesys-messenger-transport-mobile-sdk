@@ -14,7 +14,7 @@ import org.junit.Test
 import transport.util.Response
 import transport.util.fromConfiguredToError
 
-class MCEventHandlingTests : BaseMessagingClientTest() {
+class MessagingClientEventHandlingTest : BaseMessagingClientTest() {
 
     @Test
     fun `when eventListener is set`() {

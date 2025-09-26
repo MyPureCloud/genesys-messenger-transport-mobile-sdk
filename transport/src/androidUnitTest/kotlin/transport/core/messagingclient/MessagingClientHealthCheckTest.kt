@@ -18,7 +18,7 @@ import transport.util.fromConnectedToConfigured
 import transport.util.fromConnectingToConnected
 import kotlin.test.assertFailsWith
 
-class MCHealthCheckTests : BaseMessagingClientTest() {
+class MessagingClientHealthCheckTest : BaseMessagingClientTest() {
 
     @Test
     fun `when send HealthCheck`() {

@@ -14,7 +14,7 @@ import com.genesys.cloud.messenger.transport.util.extensions.sanitize
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import kotlin.test.Test
 
-class LogMessagesTests {
+class LogMessagesTest {
 
     // Attachment
     @Test

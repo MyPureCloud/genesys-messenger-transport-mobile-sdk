@@ -34,7 +34,7 @@ import transport.util.fromIdleToConnecting
 import transport.util.fromReconnectingToError
 import kotlin.test.assertFailsWith
 
-class MCConnectionTests : BaseMessagingClientTest() {
+class MessagingClientConnectionTest : BaseMessagingClientTest() {
 
     @Test
     fun `when stateListener is not set`() {

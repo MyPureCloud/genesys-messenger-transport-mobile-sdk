@@ -30,7 +30,7 @@ import transport.util.Request
 import transport.util.fromConnectedToConfigured
 import kotlin.coroutines.cancellation.CancellationException
 
-class MCPushNotificationsTest : BaseMessagingClientTest() {
+class MessagingClientPushNotificationsTest : BaseMessagingClientTest() {
 
     private val dispatcher: CoroutineDispatcher = Dispatchers.Unconfined
 
