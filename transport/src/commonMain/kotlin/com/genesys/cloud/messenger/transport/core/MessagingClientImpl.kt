@@ -282,15 +282,16 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun refreshAttachmentUrl(attachmentId: String) {
-        WebMessagingJson.json.encodeToString(
-            GetAttachmentRequest(
-                token = token,
-                attachmentId = attachmentId
-            )
-        ).also {
-            log.i { "getAttachmentRequest()" }
-            send(it)
-        }
+        WebMessagingJson.json
+            .encodeToString(
+                GetAttachmentRequest(
+                    token = token,
+                    attachmentId = attachmentId
+                )
+            ).also {
+                log.i { "getAttachmentRequest()" }
+                send(it)
+            }
     }
 
     @Throws(IllegalStateException::class)
@@ -401,15 +402,16 @@ internal class MessagingClientImpl(
      * indicating that new chat should be configured.
      */
     private fun closeAllConnectionsForTheSession() {
-        WebMessagingJson.json.encodeToString(
-            CloseSessionRequest(
-                token = token,
-                closeAllConnections = true
-            )
-        ).also {
-            log.i { LogMessages.CLOSE_SESSION }
-            webSocket.sendMessage(it)
-        }
+        WebMessagingJson.json
+            .encodeToString(
+                CloseSessionRequest(
+                    token = token,
+                    closeAllConnections = true
+                )
+            ).also {
+                log.i { LogMessages.CLOSE_SESSION }
+                webSocket.sendMessage(it)
+            }
     }
 
     private fun handleSessionResponse(sessionResponse: SessionResponse) = sessionResponse.run {
@@ -841,13 +843,30 @@ private fun String?.isClearConversationError(): Boolean {
 }
 
 private fun KProperty0<DeploymentConfig?>.isAutostartEnabled(): Boolean =
-    this.get()?.messenger?.apps?.conversations?.autoStart?.enabled == true
+    this
+        .get()
+        ?.messenger
+        ?.apps
+        ?.conversations
+        ?.autoStart
+        ?.enabled == true
 
 private fun KProperty0<DeploymentConfig?>.isShowUserTypingEnabled(): Boolean =
-    this.get()?.messenger?.apps?.conversations?.showUserTypingIndicator == true
+    this
+        .get()
+        ?.messenger
+        ?.apps
+        ?.conversations
+        ?.showUserTypingIndicator == true
 
 private fun KProperty0<DeploymentConfig?>.isClearConversationEnabled(): Boolean =
-    this.get()?.messenger?.apps?.conversations?.conversationClear?.enabled == true
+    this
+        .get()
+        ?.messenger
+        ?.apps
+        ?.conversations
+        ?.conversationClear
+        ?.enabled == true
 
 internal suspend fun KProperty0<DeploymentConfig?>.isAuthEnabled(api: WebMessagingApi): Boolean {
     val config = this.get()
@@ -859,7 +878,13 @@ internal suspend fun KProperty0<DeploymentConfig?>.isAuthEnabled(api: WebMessagi
 }
 
 private fun KProperty0<DeploymentConfig?>.isPushServiceEnabled(): Boolean =
-    this.get()?.messenger?.apps?.conversations?.notifications?.enabled == true
+    this
+        .get()
+        ?.messenger
+        ?.apps
+        ?.conversations
+        ?.notifications
+        ?.enabled == true
 
 private fun Map<String, String>.asChannel(): Channel? {
     return if (this.isNotEmpty()) {

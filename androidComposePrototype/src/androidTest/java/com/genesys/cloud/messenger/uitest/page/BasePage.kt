@@ -16,7 +16,8 @@ open class BasePage(val activity: Activity) {
 
     // Initialize activity
     init {
-        ActivityLifecycleMonitorRegistry.getInstance()
+        ActivityLifecycleMonitorRegistry
+            .getInstance()
             .addLifecycleCallback { activity, stage ->
                 if (stage == Stage.PRE_ON_CREATE) {
                     activity.window.addFlags(FLAG_KEEP_SCREEN_ON)

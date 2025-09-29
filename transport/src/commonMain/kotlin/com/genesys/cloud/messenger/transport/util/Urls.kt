@@ -15,8 +15,7 @@ internal class Urls(val domain: String, val deploymentId: String, val applicatio
                 path("v1")
                 parameters.append("deploymentId", deploymentId)
                 parameters.append("application", application)
-            }
-            .build()
+            }.build()
     }
 
     private val apiBaseUrl: Url by lazy {
@@ -24,9 +23,10 @@ internal class Urls(val domain: String, val deploymentId: String, val applicatio
     }
 
     internal val deploymentConfigUrl: Url by lazy {
-        URLBuilder("https://api-cdn.$domain").apply {
-            path("webdeployments/v1/deployments/$deploymentId/config.json")
-        }.build()
+        URLBuilder("https://api-cdn.$domain")
+            .apply {
+                path("webdeployments/v1/deployments/$deploymentId/config.json")
+            }.build()
     }
 
     internal val history: Url by lazy {
@@ -46,7 +46,8 @@ internal class Urls(val domain: String, val deploymentId: String, val applicatio
     }
 
     internal val deviceTokenUrl: (String, String) -> Url = { deploymentId, token ->
-        URLBuilder(apiBaseUrl).apply { path("$BASE_WEBMESSAGING_PATH/deployments/$deploymentId/pushdevices/$token") }
+        URLBuilder(apiBaseUrl)
+            .apply { path("$BASE_WEBMESSAGING_PATH/deployments/$deploymentId/pushdevices/$token") }
             .build()
     }
 }

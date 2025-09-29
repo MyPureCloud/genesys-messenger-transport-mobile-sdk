@@ -24,12 +24,12 @@ internal actual class PlatformSocket actual constructor(
 
     actual fun openSocket(listener: PlatformSocketListener) {
         this.listener = listener
-        val socketRequest =
-            Request.Builder()
-                .url(url.toString())
-                .header(name = "Origin", value = url.host)
-                .header(name = "User-Agent", Platform().platform)
-                .build()
+        val socketRequest = Request
+            .Builder()
+            .url(url.toString())
+            .header(name = "Origin", value = url.host)
+            .header(name = "User-Agent", Platform().platform)
+            .build()
         val webClient = OkHttpClient()
             .newBuilder()
             .pingInterval(pingInterval.toLong(), TimeUnit.SECONDS)
@@ -37,8 +37,7 @@ internal actual class PlatformSocket actual constructor(
                 HttpLoggingInterceptor(logger = log.okHttpLogger()).apply {
                     level = HttpLoggingInterceptor.Level.BODY
                 }
-            )
-            .build()
+            ).build()
         webSocket = webClient.newWebSocket(
             socketRequest,
             object : okhttp3.WebSocketListener() {

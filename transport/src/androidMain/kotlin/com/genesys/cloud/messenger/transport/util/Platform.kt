@@ -39,8 +39,17 @@ internal actual class Platform {
      * @return A String like "en-us" or "fr-fr" representing the preferred language.
      */
     actual fun preferredLanguage(): String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-        Resources.getSystem().configuration.locales.get(0).toLanguageTag().lowercase()
+        Resources
+            .getSystem()
+            .configuration.locales
+            .get(0)
+            .toLanguageTag()
+            .lowercase()
     } else {
-        Resources.getSystem().configuration.locale.toLanguageTag().lowercase()
+        Resources
+            .getSystem()
+            .configuration.locale
+            .toLanguageTag()
+            .lowercase()
     }
 }
