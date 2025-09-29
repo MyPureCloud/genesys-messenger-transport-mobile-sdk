@@ -15,7 +15,7 @@ import transport.util.Request
 import transport.util.Response
 import kotlin.test.assertFailsWith
 
-class MCHistoryTests : BaseMessagingClientTest() {
+class MessagingClientHistoryTest : BaseMessagingClientTest() {
 
     @Test
     fun `when fetchNextPage but session is not configured`() {

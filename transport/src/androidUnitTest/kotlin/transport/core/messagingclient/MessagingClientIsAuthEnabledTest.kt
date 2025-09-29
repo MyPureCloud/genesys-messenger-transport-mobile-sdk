@@ -17,7 +17,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import kotlin.reflect.KProperty0
 
-class MCIsAuthEnabledTest {
+class MessagingClientIsAuthEnabledTest {
 
     private val mockApi = mockk<WebMessagingApi>()
 

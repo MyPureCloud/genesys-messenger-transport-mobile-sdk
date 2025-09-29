@@ -25,7 +25,7 @@ import org.junit.Test
 import transport.util.Request
 import transport.util.Response
 
-class MCCustomAttributesTests : BaseMessagingClientTest() {
+class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
 
     @Test
     fun `when getCustomAttributesStore()`() {
