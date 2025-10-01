@@ -18,13 +18,22 @@ data class Conversation(
 ) {
     fun getParticipantForUserId(userId: String): Participant? {
         return participants.firstOrNull { participant ->
-            participant.userId == userId && participant.purpose == "agent" && participant.messages.firstOrNull()?.isDisconnected()?.not() ?: false
+            participant.userId == userId &&
+                participant.purpose == "agent" &&
+                participant.messages
+                    .firstOrNull()
+                    ?.isDisconnected()
+                    ?.not() ?: false
         }
     }
 
     fun getParticipantFromPurpose(purpose: String): Participant? {
         return participants.firstOrNull { participant ->
-            participant.purpose == purpose && participant.messages.firstOrNull()?.isDisconnected()?.not() ?: false
+            participant.purpose == purpose &&
+                participant.messages
+                    .firstOrNull()
+                    ?.isDisconnected()
+                    ?.not() ?: false
         }
     }
 
@@ -152,7 +161,10 @@ fun API.getDefaultWrapupCodeId(conversationId: String, participantId: String): J
 }
 
 fun API.waitForParticipantToConnectOrDisconnect(conversationId: String, connectionState: String = "disconnected") {
-    Awaitility.await().atMost(60, TimeUnit.SECONDS).ignoreExceptions()
+    Awaitility
+        .await()
+        .atMost(60, TimeUnit.SECONDS)
+        .ignoreExceptions()
         .untilAsserted {
             val listOfMessages = getConversationInfo(conversationId).getParticipantFromPurpose("agent")?.messages?.toList()
             listOfMessages?.get(0)?.state == connectionState

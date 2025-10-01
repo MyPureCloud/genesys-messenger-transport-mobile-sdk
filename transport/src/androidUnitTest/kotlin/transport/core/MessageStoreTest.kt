@@ -121,9 +121,11 @@ internal class MessageStoreTest {
 
     @Test
     fun `when update() inbound message`() {
-        val sentMessageId =
-            subject.prepareMessage(TestValues.TOKEN, "test message").message.metadata?.get("customMessageId")
-                ?: "empty"
+        val sentMessageId = subject
+            .prepareMessage(TestValues.TOKEN, "test message")
+            .message.metadata
+            ?.get("customMessageId")
+            ?: "empty"
         val givenMessage =
             Message(id = sentMessageId, state = State.Sent, text = "test message")
         clearMocks(mockMessageListener)
@@ -157,9 +159,11 @@ internal class MessageStoreTest {
 
     @Test
     fun `when update() inbound and then outbound messages`() {
-        val sentMessageId =
-            subject.prepareMessage(TestValues.TOKEN, "test message").message.metadata?.get("customMessageId")
-                ?: "empty"
+        val sentMessageId = subject
+            .prepareMessage(TestValues.TOKEN, "test message")
+            .message.metadata
+            ?.get("customMessageId")
+            ?: "empty"
         val expectedConversationSize = 2
         val givenMessage =
             Message(id = sentMessageId, state = State.Sent, text = "test message")

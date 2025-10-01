@@ -171,7 +171,11 @@ class ComposePrototypeUITest : BaseTests() {
     }
 
     fun clearBrowser() {
-        InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand("pm clear com.android.chrome").close()
+        InstrumentationRegistry
+            .getInstrumentation()
+            .getUiAutomation()
+            .executeShellCommand("pm clear com.android.chrome")
+            .close()
     }
 
     fun checkForReadOnly() {

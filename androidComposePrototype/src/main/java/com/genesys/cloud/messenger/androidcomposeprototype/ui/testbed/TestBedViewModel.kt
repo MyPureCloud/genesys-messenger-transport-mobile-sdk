@@ -332,12 +332,14 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private fun doAttachSavedImage() {
         try {
-            client.attach(
-                attachment,
-                sendFileName
-            ) { progress -> println("Attachment upload progress: $progress") }.also {
-                attachedIds.add(it)
-            }
+            client
+                .attach(
+                    attachment,
+                    sendFileName
+                ) { progress -> println("Attachment upload progress: $progress") }
+                .also {
+                    attachedIds.add(it)
+                }
         } catch (t: Throwable) {
             handleException(t, "attach")
         }
@@ -554,12 +556,14 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     fun onFileSelected(byteArray: ByteArray, fileName: String) {
         commandWaiting = false
-        client.attach(
-            byteArray,
-            fileName
-        ) { progress -> println("Attachment upload progress: $progress") }.also {
-            attachedIds.add(it)
-        }
+        client
+            .attach(
+                byteArray,
+                fileName
+            ) { progress -> println("Attachment upload progress: $progress") }
+            .also {
+                attachedIds.add(it)
+            }
     }
 
     fun onCancelFileSelection() {
