@@ -36,27 +36,27 @@ class MessengerTransportSDKTest {
 
     @Test
     fun `should create DefaultVault when encryptedVault is false`() {
-        val sdk = MessengerTransportSDK(TestValues.configuration)
+        val subject = MessengerTransportSDK(TestValues.configuration)
 
-        assertThat(sdk.vault).isInstanceOf(DefaultVault::class.java)
+        assertThat(subject.vault).isInstanceOf(DefaultVault::class.java)
     }
 
     @Test
     fun `should create EncryptedVault when encryptedVault is true`() {
         val configuration = TestValues.configuration.copy(encryptedVault = true)
 
-        val sdk = MessengerTransportSDK(configuration)
+        val subject = MessengerTransportSDK(configuration)
 
-        assertThat(sdk.vault).isInstanceOf(EncryptedVault::class.java)
+        assertThat(subject.vault).isInstanceOf(EncryptedVault::class.java)
     }
 
     @Test
     fun `should use provided vault regardless of encryptedVault setting`() {
         val configuration = TestValues.configuration.copy(encryptedVault = true)
-        val customVault = FakeVault(TestValues.vaultKeys)
+        val fakeVault = FakeVault(TestValues.vaultKeys)
 
-        val sdk = MessengerTransportSDK(configuration, customVault)
+        val subject = MessengerTransportSDK(configuration, fakeVault)
 
-        assertThat(sdk.vault).isInstanceOf(FakeVault::class.java)
+        assertThat(subject.vault).isInstanceOf(FakeVault::class.java)
     }
 }
