@@ -5,6 +5,7 @@ import assertk.assertThat
 import assertk.assertions.isInstanceOf
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
+import com.genesys.cloud.messenger.transport.push.PushService
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.EncryptedVault
 import com.genesys.cloud.messenger.transport.utility.FakeVault
@@ -67,5 +68,14 @@ class MessengerTransportSDKTest {
         val result = subject.createMessagingClient()
 
         assertThat(result).isInstanceOf(MessagingClient::class.java)
+    }
+
+    @Test
+    fun `when createPushService() is called`() {
+        val subject = MessengerTransportSDK(TestValues.configuration)
+
+        val result = subject.createPushService()
+
+        assertThat(result).isInstanceOf(PushService::class.java)
     }
 }
