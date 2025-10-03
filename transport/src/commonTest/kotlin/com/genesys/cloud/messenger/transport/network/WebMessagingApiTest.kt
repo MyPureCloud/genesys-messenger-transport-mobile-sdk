@@ -103,7 +103,7 @@ class WebMessagingApiTest {
     @Test
     fun `when uploadFile with valid headers`() {
         subject = buildWebMessagingApiWith { uploadFileEngine() }
-        val expectedResult = Result.Success(Empty())
+        val expectedSuccess = Result.Success(Empty())
 
         val givenPresignedUrlResponse = PresignedUrlResponse(
             attachmentId = "99999999-9999-9999-9999-999999999999",
@@ -120,7 +120,7 @@ class WebMessagingApiTest {
             )
         }
 
-        assertThat(result).isEqualToWithGivenProperties(expectedResult)
+        assertThat(result).isEqualToWithGivenProperties(expectedSuccess)
     }
 
     @Test
@@ -181,7 +181,7 @@ class WebMessagingApiTest {
     }
 
     @Test
-    fun `fetch should return result Failure when CancellationException is thrown`() {
+    fun `fetch returns result Failure when CancellationException is thrown`() {
         val brokenConfigurations = InvalidValues.configuration.copy(deploymentId = InvalidValues.CANCELLATION_EXCEPTION)
         subject = buildWebMessagingApiWith(brokenConfigurations) { authorizeEngine() }
 
@@ -199,7 +199,7 @@ class WebMessagingApiTest {
     }
 
     @Test
-    fun `fetch should return result Failure when UnknownException is thrown`() {
+    fun `fetch returns result Failure when UnknownException is thrown`() {
         val brokenConfigurations = InvalidValues.configuration.copy(deploymentId = InvalidValues.UNKNOWN_EXCEPTION)
         subject = buildWebMessagingApiWith(brokenConfigurations) { authorizeEngine() }
 

@@ -217,7 +217,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
     }
 
     @Test
-    fun `when AllowedMedia in SessionResponse has filetypes without wildcard but with maxFileSizeKB and blockedExtensions entries`() {
+    fun `when AllowedMedia has filetypes without wildcard with maxFileSizeKB and blockedExtensions`() {
         val fileAttachmentProfileSlot = createFileAttachmentProfileSlot()
         every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             slot.captured.onMessage(

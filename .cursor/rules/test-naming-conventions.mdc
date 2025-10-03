@@ -6,22 +6,126 @@ alwaysApply: false
 
 ## Test Class Naming Conventions
 
-| Scenario | Pattern | Example |
-|---|---|---|
-| Standard unit test for a type | `<SUT>Test` | `AttachmentHandlerTest` |
-| Large SUT split by feature | `Base<SUT>Test` + `<SUT><Feature>Test` | `BaseMessagingClientTest`, `MCAuthTest` |
-| DTO/serialization suite (consolidated) | `RequestSerializationTest` | `RequestSerializationTest` |
-| DTO/serialization split by type | `<Type>SerializationTest` | `EchoRequestSerializationTest` |
+| Scenario | Pattern | Example | Notes |
+|---|---|---|---|
+| Standard unit test for a type | `<SUT>Test` | `AttachmentHandlerTest` | Most common pattern |
+| Large SUT split by feature | `Base<SUT>Test` + `<SUT><Feature>Test` | `BaseMessagingClientTest`, `MessagingClientAuthTest` | When SUT has multiple responsibilities |
+| DTO/serialization suite (consolidated) | `<Domain>SerializationTest` | `RequestSerializationTest` | All serialization tests in one class |
+| DTO/serialization split by type | `<Type>SerializationTest` | `EchoRequestSerializationTest` | When types are complex enough to warrant separate classes |
+| Utility/Helper tests | `<Utility>Test` | `LogMessagesTest`, `ValidationTest` | For utility classes and helpers |
+| Integration tests | `<Feature>IntegrationTest` | `AuthIntegrationTest` | For tests that span multiple components |
+
 
 ## Test Function Naming Conventions
 
 ### Required Format
-- Backticks are required for all test function names
+- **Backticks are required** for all test function names
+- **Use present tense** for actions and states
+- **Be specific about conditions** that affect behavior
 
-### Naming Families (compact)
+### Naming Families
 
-// TODO
+| Family | Use for | Template | Example | Notes |
+|---|---|---|---|---|
+| **Behavior/State** | Functionality, state transitions, side-effects, error handling | `` `when <method() \| event \| operation> [and …] [but …] [because of …]` `` | `` `when connectAuthenticatedSession() and AuthHandler has no jwt and refreshToken() fails` `` | Most common pattern |
+| **Validation** | DTOs, constructors, (de)serialization, mappings | `` `validate <Type> (serialization\|decoding\|default constructor\|resolution …)` `` | `` `validate WebMessagingMessage decoding with unsupported class name` `` | No `()` after types |
+| **Error Handling** | Exception scenarios, error conditions | `` `when <operation> throws <ExceptionType> [because of …]` `` | `` `when detach() throws IllegalArgumentException because of invalid attachmentId` `` | Focus on the error condition |
+| **State Transitions** | State changes, lifecycle events | `` `when <event> transitions <from> to <to>` `` | `` `when disconnect() transitions from Connected to Disconnected` `` | For state machine testing |
+| **Configuration** | Setup, configuration, initialization | `` `when <component> is configured with <condition>` `` | `` `when MessagingClient is configured with invalid deploymentId` `` | For configuration testing |
+
+### Common Patterns
+- **Success cases**: `` `when <method>() succeeds [with <condition>]` ``
+- **Failure cases**: `` `when <method>() fails [with <condition>]` ``
+- **Edge cases**: `` `when <method>() with <edge case condition>` ``
+- **Integration**: `` `when <operation> integrates with <component>` ``
 
 ## Variable Naming Conventions
 
-// TODO
+| Category | Prefix/Pattern | Example(s) | Notes |
+|---|---|---|---|
+| **SUT instance** | `subject` | `private var subject = AuthHandler()` | Always use `subject` for the system under test |
+| **Mocks/Spies/Stubs** | `mock` + Domain | `mockWebMessagingApi`, `mockLogger`, `mockContext` | Use descriptive domain names |
+| **Fakes** | `fake` + Domain | `fakeVault`, `fakeDatabase` | For test doubles that provide real behavior |
+| **Inputs/Setup** | `given` + Noun | `givenUserConfig`, `givenPresignedUrlResponse`, `givenToken` | For test inputs and setup data |
+| **Expected values** | `expected` + Noun | `expectedAuthJwt`, `expectedErrorCode`, `expectedMessage` | For assertions and verifications |
+| **Primary result** | `result` (or add noun) | `result`, `decoded`, `response` | For the main return value |
+| **Serialization helpers** | `encodedString`, `decoded` | `val encodedString = json.encodeToString(..)` | For encoding/decoding operations |
+| **Captured slots** | `<thing>Slot` | `attachmentSlot`, `progressSlot`, `messageSlot` | For capturing mock interactions |
+| **Exceptions** | Context-dependent | `val exception = assertFailsWith<IllegalArgumentException> { … }` | Use `givenException` for inputs, `expectedException` for expected results, `exception` for `assertFailsWith` |
+| **Test constants** | Inline when possible | `subject.add(TestValues.defaultMap)` | **Rule**: Inline TestValues when used only once. Keep as variables when used multiple times or when modified with `.copy()` |
+
+### Exception Variable Rules
+- **Input exceptions**: `givenException` (when passing to methods)
+- **Expected exceptions**: `expectedException` (when asserting expected results)
+- **Caught exceptions**: `exception` (when using `assertFailsWith`)
+- **Example**: 
+  ```kotlin
+  val givenException = Exception("Network error")
+  val expectedException = CancellationException("Timeout")
+  val exception = assertFailsWith<IllegalArgumentException> { ... }
+  ```
+
+### TestValues Inline Rule
+- **Inline when**: Used only once in the test
+- **Keep as variable when**: Used multiple times, modified with `.copy()`, or improves readability
+- **Examples**:
+  ```kotlin
+  // ✅ Inline (used once)
+  subject.add(TestValues.defaultMap)
+  
+  // ✅ Keep as variable (used multiple times)
+  val givenConfig = TestValues.configuration
+  subject.configure(givenConfig)
+  assertThat(subject.config).isEqualTo(givenConfig)
+  
+  // ✅ Keep as variable (modified)
+  val givenConfig = TestValues.configuration.copy(token = "custom")
+  ```
+
+## Common Anti-Patterns to Avoid
+
+### Test Function Names
+- ❌ `testSomething()` (missing backticks)
+- ❌ `whenSomethingShouldHappen()` (baking expectations)
+- ❌ `whenSomethingHappensAndItShouldWork()` (too verbose)
+- ❌ `test()` (too generic)
+
+### Variable Names
+- ❌ `val data = TestValues.defaultMap` (should be `givenData` or inline)
+- ❌ `val expected = Result.Success()` (should be `expectedResult`)
+- ❌ `val mock = mockk<Api>()` (should be `mockApi`)
+
+## Examples
+
+### Good Test Function Names
+```kotlin
+fun `when connectAuthenticatedSession() succeeds with valid jwt`()
+fun `when onMessage() receives structured message with quick replies`()
+fun `when detach() throws IllegalArgumentException because of invalid attachmentId`()
+fun `validate WebMessagingMessage serialization with all fields`()
+```
+
+### Good Variable Names
+```kotlin
+val subject = MessagingClient(configuration)
+val mockApi = mockk<WebMessagingApi>()
+val fakeVault = FakeVault(keys)
+val givenToken = TestValues.TOKEN
+val expectedError = ErrorCode.AuthFailed
+val result = subject.connect()
+val exception = assertFailsWith<IllegalArgumentException> { ... }
+```
+
+### Bad Examples
+```kotlin
+// ❌ Missing backticks
+fun testConnect()
+
+// ❌ Baking expectations
+fun `when connect should succeed`()
+
+// ❌ Poor variable names
+val sut = MessagingClient()  // Should be 'subject'
+val api = mockk<WebMessagingApi>()  // Should be 'mockApi'
+val expected = Result.Success()  // Should be 'expectedResult'
+```
