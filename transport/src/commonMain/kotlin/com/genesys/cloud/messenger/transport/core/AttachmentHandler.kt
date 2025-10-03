@@ -20,19 +20,29 @@ internal interface AttachmentHandler {
     fun upload(presignedUrlResponse: PresignedUrlResponse)
 
     @Throws(IllegalArgumentException::class)
-    fun detach(token: String, attachmentId: String): DeleteAttachmentRequest?
+    fun detach(
+        token: String,
+        attachmentId: String
+    ): DeleteAttachmentRequest?
 
     fun onUploadSuccess(uploadSuccessEvent: UploadSuccessEvent)
 
     fun onDetached(attachmentId: String)
 
-    fun onError(attachmentId: String, errorCode: ErrorCode, errorMessage: String)
+    fun onError(
+        attachmentId: String,
+        errorCode: ErrorCode,
+        errorMessage: String
+    )
 
     fun onSending()
 
     fun onSent(attachments: Map<String, Attachment>)
 
-    fun onMessageError(code: ErrorCode, message: String?)
+    fun onMessageError(
+        code: ErrorCode,
+        message: String?
+    )
 
     fun onAttachmentRefreshed(presignedUrlResponse: PresignedUrlResponse)
 

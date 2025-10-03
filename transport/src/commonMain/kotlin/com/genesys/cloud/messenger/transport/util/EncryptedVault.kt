@@ -14,7 +14,10 @@ expect class EncryptedVault(
         pushConfigKey = PUSH_CONFIG_KEY,
     ),
 ) : Vault {
-    override fun store(key: String, value: String)
+    override fun store(
+        key: String,
+        value: String
+    )
 
     override fun fetch(key: String): String?
 

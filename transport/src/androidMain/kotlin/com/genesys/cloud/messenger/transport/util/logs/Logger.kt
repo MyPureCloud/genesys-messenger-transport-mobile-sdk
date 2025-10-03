@@ -22,7 +22,10 @@ internal actual class Logger actual constructor(
         if (enableLogs) Log.e(tag, message())
     }
 
-    actual fun e(throwable: Throwable?, message: () -> String) {
+    actual fun e(
+        throwable: Throwable?,
+        message: () -> String
+    ) {
         if (enableLogs) Log.e(tag, message(), throwable)
     }
 }

@@ -62,7 +62,10 @@ abstract class Vault(val keys: Keys) {
      * @param key the key to use for storage.
      * @param value the value to store in storage.
      */
-    abstract fun store(key: String, value: String)
+    abstract fun store(
+        key: String,
+        value: String
+    )
 
     /**
      * Fetches the existing value from the storage and returns it, or null if it doesn't exist.

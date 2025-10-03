@@ -160,8 +160,7 @@ internal fun String.sanitize(): String {
     return "*".repeat(this.length - lastChars) + this.takeLast(lastChars)
 }
 
-fun String.sanitizeSensitiveData(): String =
-    this.sanitizeToken().sanitizeText().sanitizeCustomAttributes()
+fun String.sanitizeSensitiveData(): String = this.sanitizeToken().sanitizeText().sanitizeCustomAttributes()
 
 internal fun String.sanitizeCustomAttributes(): String {
     val regex = """("customAttributes":\{)(.*?)(\})""".toRegex()

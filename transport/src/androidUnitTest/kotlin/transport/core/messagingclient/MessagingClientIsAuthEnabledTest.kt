@@ -22,42 +22,45 @@ class MessagingClientIsAuthEnabledTest {
     private val mockApi = mockk<WebMessagingApi>()
 
     @Test
-    fun `when deployment config is available and auth enabled is true`() = runBlocking {
-        val givenDeploymentConfig = createDeploymentConfigForTesting().copy(
-            auth = Auth(enabled = true)
-        )
-        // Note: the configProperty is mockk but the element that tested in practice is deploymentConfig
-        val configProperty = createMockProperty(givenDeploymentConfig)
+    fun `when deployment config is available and auth enabled is true`() =
+        runBlocking {
+            val givenDeploymentConfig = createDeploymentConfigForTesting().copy(
+                auth = Auth(enabled = true)
+            )
+            // Note: the configProperty is mockk but the element that tested in practice is deploymentConfig
+            val configProperty = createMockProperty(givenDeploymentConfig)
 
-        val result = configProperty.isAuthEnabled(mockApi)
+            val result = configProperty.isAuthEnabled(mockApi)
 
-        assertThat(result).isTrue()
-    }
-
-    @Test
-    fun `when deployment config is available and auth enabled is false`() = runBlocking {
-        val givenDeploymentConfig = createDeploymentConfigForTesting().copy(
-            auth = Auth(enabled = false)
-        )
-        val configProperty = createMockProperty(givenDeploymentConfig)
-
-        val result = configProperty.isAuthEnabled(mockApi)
-
-        assertThat(result).isFalse()
-    }
+            assertThat(result).isTrue()
+        }
 
     @Test
-    fun `when deployment config is null and API returns success with auth enabled`() = runBlocking {
-        val configProperty = createMockProperty(null)
-        val givenApiDeploymentConfig = createDeploymentConfigForTesting().copy(
-            auth = Auth(enabled = true)
-        )
-        coEvery { mockApi.fetchDeploymentConfig() } returns Result.Success(givenApiDeploymentConfig)
+    fun `when deployment config is available and auth enabled is false`() =
+        runBlocking {
+            val givenDeploymentConfig = createDeploymentConfigForTesting().copy(
+                auth = Auth(enabled = false)
+            )
+            val configProperty = createMockProperty(givenDeploymentConfig)
 
-        val result = configProperty.isAuthEnabled(mockApi)
+            val result = configProperty.isAuthEnabled(mockApi)
 
-        assertThat(result).isTrue()
-    }
+            assertThat(result).isFalse()
+        }
+
+    @Test
+    fun `when deployment config is null and API returns success with auth enabled`() =
+        runBlocking {
+            val configProperty = createMockProperty(null)
+            val givenApiDeploymentConfig = createDeploymentConfigForTesting().copy(
+                auth = Auth(enabled = true)
+            )
+            coEvery { mockApi.fetchDeploymentConfig() } returns Result.Success(givenApiDeploymentConfig)
+
+            val result = configProperty.isAuthEnabled(mockApi)
+
+            assertThat(result).isTrue()
+        }
 
     @Test
     fun `when deployment config is null and API returns success with auth disabled`() =
@@ -74,17 +77,18 @@ class MessagingClientIsAuthEnabledTest {
         }
 
     @Test
-    fun `when deployment config is null and API returns failure`() = runBlocking {
-        val configProperty = createMockProperty(null)
-        coEvery { mockApi.fetchDeploymentConfig() } returns Result.Failure(
-            ErrorCode.DeploymentConfigFetchFailed,
-            "Failed to fetch config"
-        )
+    fun `when deployment config is null and API returns failure`() =
+        runBlocking {
+            val configProperty = createMockProperty(null)
+            coEvery { mockApi.fetchDeploymentConfig() } returns Result.Failure(
+                ErrorCode.DeploymentConfigFetchFailed,
+                "Failed to fetch config"
+            )
 
-        val result = configProperty.isAuthEnabled(mockApi)
+            val result = configProperty.isAuthEnabled(mockApi)
 
-        assertThat(result).isFalse()
-    }
+            assertThat(result).isFalse()
+        }
 
     private fun createMockProperty(config: DeploymentConfig?): KProperty0<DeploymentConfig?> {
         val mockProperty = mockk<KProperty0<DeploymentConfig?>>()

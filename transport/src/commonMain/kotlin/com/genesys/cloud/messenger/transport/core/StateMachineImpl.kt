@@ -46,16 +46,25 @@ internal class StateMachineImpl(
     }
 
     @Throws(IllegalStateException::class)
-    override fun onClosing(code: Int, reason: String) {
+    override fun onClosing(
+        code: Int,
+        reason: String
+    ) {
         check(currentState.canDisconnect()) { "MessagingClient state must not already be Closed, Idle or Error" }
         currentState = State.Closing(code, reason)
     }
 
-    override fun onClosed(code: Int, reason: String) {
+    override fun onClosed(
+        code: Int,
+        reason: String
+    ) {
         currentState = State.Closed(code, reason)
     }
 
-    override fun onError(code: ErrorCode, message: String?) {
+    override fun onError(
+        code: ErrorCode,
+        message: String?
+    ) {
         currentState = State.Error(code, message)
     }
 
@@ -71,24 +80,18 @@ internal fun StateMachine.isReadOnly(): Boolean = currentState is State.ReadOnly
 internal fun StateMachine.isReconnecting(): Boolean = currentState is State.Reconnecting
 
 @Throws(IllegalStateException::class)
-internal fun StateMachine.checkIfConfigured() =
-    check(currentState is State.Configured) { "MessagingClient is not Configured or in ReadOnly state." }
+internal fun StateMachine.checkIfConfigured() = check(currentState is State.Configured) { "MessagingClient is not Configured or in ReadOnly state." }
 
 @Throws(IllegalStateException::class)
-internal fun StateMachine.checkIfConfiguredOrReadOnly() =
-    check(currentState is State.Configured || isReadOnly()) { "To perform this action MessagingClient must be either Configured or in ReadOnly state. " }
+internal fun StateMachine.checkIfConfiguredOrReadOnly() = check(currentState is State.Configured || isReadOnly()) { "To perform this action MessagingClient must be either Configured or in ReadOnly state. " }
 
-internal fun StateMachine.isInactive(): Boolean =
-    currentState is State.Idle || currentState is State.Closing || currentState is State.Closed || currentState is State.Error
+internal fun StateMachine.isInactive(): Boolean = currentState is State.Idle || currentState is State.Closing || currentState is State.Closed || currentState is State.Error
 
 internal fun StateMachine.isClosing(): Boolean = currentState is State.Closing
 
 @Throws(IllegalStateException::class)
-internal fun StateMachine.checkIfCanStartANewChat() =
-    check(isReadOnly()) { "MessagingClient is not in ReadOnly state." }
+internal fun StateMachine.checkIfCanStartANewChat() = check(isReadOnly()) { "MessagingClient is not in ReadOnly state." }
 
-private fun State.canConnect(): Boolean =
-    this is State.Closed || this is State.Idle || this is State.Error || this is State.Reconnecting
+private fun State.canConnect(): Boolean = this is State.Closed || this is State.Idle || this is State.Error || this is State.Reconnecting
 
-private fun State.canDisconnect(): Boolean =
-    this !is State.Closed && this !is State.Idle && this !is State.Error
+private fun State.canDisconnect(): Boolean = this !is State.Closed && this !is State.Idle && this !is State.Error

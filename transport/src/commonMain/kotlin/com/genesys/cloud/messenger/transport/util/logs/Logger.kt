@@ -12,5 +12,8 @@ internal expect class Logger(
 
     fun e(message: () -> String)
 
-    fun e(throwable: Throwable?, message: () -> String)
+    fun e(
+        throwable: Throwable?,
+        message: () -> String
+    )
 }

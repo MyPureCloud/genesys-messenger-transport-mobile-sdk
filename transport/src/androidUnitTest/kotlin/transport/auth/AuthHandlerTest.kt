@@ -566,20 +566,22 @@ class AuthHandlerTest {
     }
 
     @Test
-    fun `when shouldAuthorize() and auth is disabled in deployment config`() = runTest {
-        subject = buildAuthHandler(isAuthEnabled = { false })
+    fun `when shouldAuthorize() and auth is disabled in deployment config`() =
+        runTest {
+            subject = buildAuthHandler(isAuthEnabled = { false })
 
-        subject.shouldAuthorize { result ->
-            assertFalse(result)
-            coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
+            subject.shouldAuthorize { result ->
+                assertFalse(result)
+                coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
+            }
         }
-    }
 
     @Test
-    fun `when shouldAuthorize() and auth is enabled in deployment config`() = runTest {
-        subject.shouldAuthorize { result ->
-            assertTrue(result)
-            coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
+    fun `when shouldAuthorize() and auth is enabled in deployment config`() =
+        runTest {
+            subject.shouldAuthorize { result ->
+                assertTrue(result)
+                coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
+            }
         }
-    }
 }

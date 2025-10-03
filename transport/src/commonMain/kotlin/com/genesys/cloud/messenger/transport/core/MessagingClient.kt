@@ -186,7 +186,10 @@ interface MessagingClient {
      * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
      */
     @Throws(IllegalStateException::class)
-    fun sendMessage(text: String, customAttributes: Map<String, String> = emptyMap())
+    fun sendMessage(
+        text: String,
+        customAttributes: Map<String, String> = emptyMap()
+    )
 
     /**
      * Send a quick reply to the Agent/Bot.
@@ -294,7 +297,11 @@ interface MessagingClient {
      * @param redirectUri The redirect URI to use for fetching the Auth JWT.
      * @param codeVerifier The code verifier to use for fetching the Auth JWT (optional).
      */
-    fun authorize(authCode: String, redirectUri: String, codeVerifier: String?)
+    fun authorize(
+        authCode: String,
+        redirectUri: String,
+        codeVerifier: String?
+    )
 
     /**
      * Logs out user from authenticated session on all devices that shares the same auth session.

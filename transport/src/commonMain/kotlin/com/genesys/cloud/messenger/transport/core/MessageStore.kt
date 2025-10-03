@@ -21,7 +21,11 @@ internal class MessageStore(private val log: Log) {
     val updateAttachmentStateWith = { attachment: Attachment -> update(attachment) }
     var messageListener: ((MessageEvent) -> Unit)? = null
 
-    fun prepareMessage(token: String, text: String, channel: Channel? = null): OnMessageRequest {
+    fun prepareMessage(
+        token: String,
+        text: String,
+        channel: Channel? = null
+    ): OnMessageRequest {
         val messageToSend = pendingMessage.copy(text = text, state = Message.State.Sending).also {
             log.i { LogMessages.messagePreparedToSend(it) }
             activeConversation.add(it)
@@ -74,17 +78,18 @@ internal class MessageStore(private val log: Log) {
         )
     }
 
-    fun update(message: Message) = message.run {
-        log.i { LogMessages.messageStateUpdated(this) }
-        when (direction) {
-            Direction.Inbound -> findAndPublish(this)
-            Direction.Outbound -> {
-                activeConversation.add(this)
-                publish(this.toMessageEvent())
+    fun update(message: Message) =
+        message.run {
+            log.i { LogMessages.messageStateUpdated(this) }
+            when (direction) {
+                Direction.Inbound -> findAndPublish(this)
+                Direction.Outbound -> {
+                    activeConversation.add(this)
+                    publish(this.toMessageEvent())
+                }
             }
+            nextPage = activeConversation.getNextPage()
         }
-        nextPage = activeConversation.getNextPage()
-    }
 
     private fun update(attachment: Attachment) {
         log.i { LogMessages.attachmentStateUpdated(attachment) }
@@ -96,7 +101,10 @@ internal class MessageStore(private val log: Log) {
         publish(MessageEvent.AttachmentUpdated(attachment))
     }
 
-    fun updateMessageHistory(historyPage: List<Message>, total: Int) {
+    fun updateMessageHistory(
+        historyPage: List<Message>,
+        total: Int
+    ) {
         startOfConversation = isAllHistoryFetched(total)
         with(historyPage.takeInactiveMessages().reversed()) {
             log.i { LogMessages.messageHistoryUpdated(this) }
@@ -108,7 +116,10 @@ internal class MessageStore(private val log: Log) {
 
     fun getConversation(): List<Message> = activeConversation.toList()
 
-    fun onMessageError(code: ErrorCode, message: String?) {
+    fun onMessageError(
+        code: ErrorCode,
+        message: String?
+    ) {
         activeConversation.find { it.state == Message.State.Sending }?.let {
             update(it.copy(state = Message.State.Error(code, message)))
         }
@@ -142,8 +153,7 @@ internal class MessageStore(private val log: Log) {
 
     private fun <E> MutableList<E>.getNextPage(): Int = (this.size / DEFAULT_PAGE_SIZE) + 1
 
-    private fun isAllHistoryFetched(totalInStash: Int) =
-        totalInStash - activeConversation.size <= DEFAULT_PAGE_SIZE
+    private fun isAllHistoryFetched(totalInStash: Int) = totalInStash - activeConversation.size <= DEFAULT_PAGE_SIZE
 
     private fun List<Message>.takeInactiveMessages(): List<Message> {
         return this.filter { message ->

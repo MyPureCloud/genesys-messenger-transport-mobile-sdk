@@ -25,23 +25,24 @@ private val RETRYABLE_STATUS_CODES = setOf(
     HttpStatusCode.GatewayTimeout,
 )
 
-internal fun defaultHttpClient(logging: Boolean = false): HttpClient = HttpClient {
-    if (logging) {
-        install(Logging) {
-            this.logger = Log(logging, LogTag.HTTP_CLIENT).ktorLogger
-            level = LogLevel.INFO
+internal fun defaultHttpClient(logging: Boolean = false): HttpClient =
+    HttpClient {
+        if (logging) {
+            install(Logging) {
+                this.logger = Log(logging, LogTag.HTTP_CLIENT).ktorLogger
+                level = LogLevel.INFO
+            }
         }
+        install(ContentNegotiation) {
+            json(WebMessagingJson.json)
+        }
+        install(HttpCallValidator)
+        install(HttpTimeout) {
+            socketTimeoutMillis = TIMEOUT_IN_MS
+            connectTimeoutMillis = TIMEOUT_IN_MS
+        }
+        install(HttpRequestRetry)
     }
-    install(ContentNegotiation) {
-        json(WebMessagingJson.json)
-    }
-    install(HttpCallValidator)
-    install(HttpTimeout) {
-        socketTimeoutMillis = TIMEOUT_IN_MS
-        connectTimeoutMillis = TIMEOUT_IN_MS
-    }
-    install(HttpRequestRetry)
-}
 
 internal fun HttpRequestBuilder.retryOnServerErrors() {
     retry {
