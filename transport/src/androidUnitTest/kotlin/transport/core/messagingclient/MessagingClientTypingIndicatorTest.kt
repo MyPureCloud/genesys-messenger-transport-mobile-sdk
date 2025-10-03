@@ -17,7 +17,7 @@ import transport.util.Response
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
-class MCTypingIndicatorTests : BaseMessagingClientTest() {
+class MessagingClientTypingIndicatorTest : BaseMessagingClientTest() {
 
     @Test
     fun `when indicateTyping and showUserTyping is enabled`() {

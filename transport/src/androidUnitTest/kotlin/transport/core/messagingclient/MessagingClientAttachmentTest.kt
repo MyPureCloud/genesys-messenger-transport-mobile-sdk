@@ -35,7 +35,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
-class MCAttachmentTests : BaseMessagingClientTest() {
+class MessagingClientAttachmentTest : BaseMessagingClientTest() {
 
     @Test
     fun `when attach()`() {

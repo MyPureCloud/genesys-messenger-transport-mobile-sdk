@@ -49,17 +49,18 @@ internal class MessageStore(
         channel: Channel? = null,
     ): OnMessageRequest {
         val type = Message.Type.QuickReply
-        val messageToSend = pendingMessage.copy(
-            messageType = type,
-            type = type.name,
-            state = Message.State.Sending,
-            quickReplies = listOf(buttonResponse),
-        ).also {
-            log.i { LogMessages.quickReplyPrepareToSend(it) }
-            activeConversation.add(it)
-            publish(MessageEvent.MessageInserted(it))
-            pendingMessage = Message(attachments = it.attachments)
-        }
+        val messageToSend = pendingMessage
+            .copy(
+                messageType = type,
+                type = type.name,
+                state = Message.State.Sending,
+                quickReplies = listOf(buttonResponse),
+            ).also {
+                log.i { LogMessages.quickReplyPrepareToSend(it) }
+                activeConversation.add(it)
+                publish(MessageEvent.MessageInserted(it))
+                pendingMessage = Message(attachments = it.attachments)
+            }
         val content = listOf(
             Message.Content(
                 contentType = Message.Content.Type.ButtonResponse,
@@ -91,9 +92,10 @@ internal class MessageStore(
 
     private fun update(attachment: Attachment) {
         log.i { LogMessages.attachmentStateUpdated(attachment) }
-        val attachments = pendingMessage.attachments.toMutableMap().also {
-            it[attachment.id] = attachment
-        }.filterNot { it.value.state is Attachment.State.Sent }
+        val attachments = pendingMessage.attachments
+            .toMutableMap()
+            .also { it[attachment.id] = attachment }
+            .filterNot { it.value.state is Attachment.State.Sent }
         pendingMessage = pendingMessage.copy(attachments = attachments)
         publish(MessageEvent.AttachmentUpdated(attachment))
     }

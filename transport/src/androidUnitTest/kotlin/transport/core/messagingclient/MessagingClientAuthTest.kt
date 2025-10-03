@@ -34,7 +34,7 @@ import transport.util.fromIdleToConnecting
 import transport.util.fromReconnectingToError
 import kotlin.test.assertFailsWith
 
-class MCAuthTests : BaseMessagingClientTest() {
+class MessagingClientAuthTest : BaseMessagingClientTest() {
 
     @Test
     fun `when authorize is called`() {

@@ -38,6 +38,7 @@ class EncryptedVaultTest {
     )
     private val testKey = TestValues.VAULT_KEY
     private val testValue = TestValues.VAULT_VALUE
+
     @Before
     fun setUp() {
         clearAllMocks()

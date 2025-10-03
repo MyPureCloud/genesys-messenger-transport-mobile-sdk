@@ -26,7 +26,7 @@ import transport.util.Request
 import transport.util.Response
 import kotlin.test.assertFailsWith
 
-class MCClearConversationTests : BaseMessagingClientTest() {
+class MessagingClientClearConversationTest : BaseMessagingClientTest() {
 
     @Test
     fun `when clearConversation from any non ReadOnly or Configured states`() {

@@ -120,4 +120,5 @@ internal class CustomAttributesStoreImpl(
 }
 
 private fun Int.isUnset(): Boolean = this == MAX_CUSTOM_DATA_BYTES_UNSET
+
 private fun Int.isSet(): Boolean = this != MAX_CUSTOM_DATA_BYTES_UNSET

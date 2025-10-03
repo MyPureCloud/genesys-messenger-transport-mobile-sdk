@@ -21,7 +21,7 @@ import transport.util.Request
 import transport.util.Response
 import kotlin.test.assertFailsWith
 
-class MCAutostartTests : BaseMessagingClientTest() {
+class MessagingClientAutostartTest : BaseMessagingClientTest() {
 
     @Test
     fun `when new session and autostart enabled`() {

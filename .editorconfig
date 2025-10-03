@@ -3,9 +3,6 @@ root = true
 # Necessary rules
 ktlint_function_naming_ignore_when_annotated_with = Composable
 # Investigation candidate rules
-ktlint_standard_blank-line-before-declaration = disabled
-ktlint_standard_block-comment-initial-star-alignment = disabled
-ktlint_standard_chain-method-continuation = disabled
 ktlint_standard_class-signature = disabled
 ktlint_standard_function-expression-body = disabled
 ktlint_standard_function-signature = disabled

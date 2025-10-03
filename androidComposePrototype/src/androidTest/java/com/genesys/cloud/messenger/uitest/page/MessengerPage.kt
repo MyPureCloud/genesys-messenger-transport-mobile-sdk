@@ -85,7 +85,9 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
 
     // Wait for client to return proper response
     fun waitForProperResponse(response: String) {
-        Awaitility.await().atMost(waitTime, SECONDS)
+        Awaitility
+            .await()
+            .atMost(waitTime, SECONDS)
             .until {
                 getFullResponse().contains(response, ignoreCase = true)
             }
@@ -107,7 +109,8 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     }
 
     fun waitForAuthMsgReceived(messageToBeReceived: String) {
-        await().atMost(waitTime, SECONDS)
+        await()
+            .atMost(waitTime, SECONDS)
             .until {
                 getAuthStateResponse().contains(
                     messageToBeReceived,
@@ -119,14 +122,16 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     // Wait for configure response
     fun waitForConfigured() {
         var clientResponse: String = ""
-        await().atMost(waitTime, SECONDS)
+        await()
+            .atMost(waitTime, SECONDS)
             .until {
                 clientResponse = getClientResponse()
                 (clientResponse.contains("Configured", ignoreCase = true) || (clientResponse.contains("ReadOnly", ignoreCase = true)))
             }
         if (clientResponse.contains("ReadOnly", ignoreCase = true)) {
             enterCommand(newChatText)
-            await().atMost(waitTime, SECONDS)
+            await()
+                .atMost(waitTime, SECONDS)
                 .until {
                     clientResponse = getClientResponse()
                     clientResponse.contains("Configured", ignoreCase = true)
@@ -135,7 +140,8 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     }
 
     fun waitForReadOnly() {
-        await().atMost(waitTime, SECONDS)
+        await()
+            .atMost(waitTime, SECONDS)
             .until {
                 getClientResponse().contains("ReadOnly", ignoreCase = true)
             }
@@ -143,7 +149,8 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
 
     // Wait for client to be closed
     fun waitForClosed() {
-        await().atMost(waitTime, SECONDS)
+        await()
+            .atMost(waitTime, SECONDS)
             .until {
                 getClientResponse().contains("Closed", ignoreCase = true)
             }
@@ -236,7 +243,9 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     }
 
     protected fun pressTab() {
-        await().atMost(3, SECONDS).ignoreExceptions()
+        await()
+            .atMost(3, SECONDS)
+            .ignoreExceptions()
             .untilAsserted {
                 UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()) != null
             }
@@ -244,7 +253,9 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     }
 
     protected fun pressEnterKey() {
-        await().atMost(3, SECONDS).ignoreExceptions()
+        await()
+            .atMost(3, SECONDS)
+            .ignoreExceptions()
             .untilAsserted {
                 UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()) != null
             }
@@ -252,7 +263,9 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     }
 
     fun pressBackKey() {
-        await().atMost(3, SECONDS).ignoreExceptions()
+        await()
+            .atMost(3, SECONDS)
+            .ignoreExceptions()
             .untilAsserted {
                 UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()) != null
             }
@@ -264,10 +277,12 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         val itemToTap = uiAutomatorInstance.findObject(UiSelector().descriptionContains(contentDescription))
         itemToTap.click()
     }
+
     protected fun hasTextView(text: String): Boolean {
         val uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         return uiDevice.hasObject(By.textContains(text))
     }
+
     protected fun tapTextWithUIAutomator(text: String) {
         val uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         val itemToTap = uiDevice.findObject(UiSelector().text(text))

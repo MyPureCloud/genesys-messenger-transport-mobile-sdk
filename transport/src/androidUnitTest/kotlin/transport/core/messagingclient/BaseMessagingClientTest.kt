@@ -293,6 +293,7 @@ open class BaseMessagingClientTest {
         mockReconnectionHandler.clear()
         mockJwtHandler.clear()
     }
+
     protected fun MockKVerificationScope.invalidateSessionTokenSequence() {
         mockLogger.i(capture(logSlot))
         mockVault.keys

@@ -6,6 +6,7 @@ import com.genesys.cloud.messenger.transport.utility.MessageValues
 
 internal object Request {
     const val token = "00000000-0000-0000-0000-000000000000"
+
     fun configureRequest(startNew: Boolean = false) =
         """{"token":"$token","deploymentId":"deploymentId","startNew":$startNew,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"tracingId":"test-tracing-id","action":"configureSession"}"""
     fun configureAuthenticatedRequest(startNew: Boolean = false) =

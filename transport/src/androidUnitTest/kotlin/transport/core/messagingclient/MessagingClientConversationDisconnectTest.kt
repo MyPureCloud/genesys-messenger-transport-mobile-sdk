@@ -31,7 +31,7 @@ import transport.util.fromReadOnlyToError
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
-class MCConversationDisconnectTests : BaseMessagingClientTest() {
+class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
 
     @Test
     fun `when event Presence Disconnect received and there is no readOnly field in metadata`() {

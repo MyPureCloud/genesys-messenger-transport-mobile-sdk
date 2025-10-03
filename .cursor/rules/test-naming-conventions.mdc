@@ -9,7 +9,9 @@ alwaysApply: false
 | Scenario | Pattern | Example |
 |---|---|---|
 | Standard unit test for a type | `<SUT>Test` | `AttachmentHandlerTest` |
-// TODO MORE RULES TO COME
+| Large SUT split by feature | `Base<SUT>Test` + `<SUT><Feature>Test` | `BaseMessagingClientTest`, `MCAuthTest` |
+| DTO/serialization suite (consolidated) | `RequestSerializationTest` | `RequestSerializationTest` |
+| DTO/serialization split by type | `<Type>SerializationTest` | `EchoRequestSerializationTest` |
 
 ## Test Function Naming Conventions
 

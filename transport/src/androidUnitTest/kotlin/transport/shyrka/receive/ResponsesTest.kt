@@ -31,7 +31,7 @@ import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlinx.serialization.encodeToString
 import org.junit.Test
 
-class ResponsesTests {
+class ResponsesTest {
 
     @Test
     fun `when AttachmentDeleteResponse serialized`() {

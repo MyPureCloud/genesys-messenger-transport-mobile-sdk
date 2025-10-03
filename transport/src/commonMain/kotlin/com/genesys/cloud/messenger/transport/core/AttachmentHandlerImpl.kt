@@ -66,7 +66,8 @@ internal class AttachmentHandlerImpl(
     override fun upload(presignedUrlResponse: PresignedUrlResponse) {
         processedAttachments[presignedUrlResponse.attachmentId]?.let {
             log.i { LogMessages.uploadingAttachment(it.attachment) }
-            it.attachment = it.attachment.copy(state = Uploading)
+            it.attachment = it.attachment
+                .copy(state = Uploading)
                 .also(updateAttachmentStateWith)
             it.job = uploadDispatcher.launch {
                 when (val result = api.uploadFile(presignedUrlResponse.copy(fileName = it.attachment.fileName), it.byteArray, it.uploadProgress)) {
@@ -80,9 +81,9 @@ internal class AttachmentHandlerImpl(
     override fun onUploadSuccess(uploadSuccessEvent: UploadSuccessEvent) {
         processedAttachments[uploadSuccessEvent.attachmentId]?.let {
             log.i { LogMessages.attachmentUploaded(it.attachment) }
-            it.attachment = it.attachment.copy(
-                state = Uploaded(uploadSuccessEvent.downloadUrl)
-            ).also(updateAttachmentStateWith)
+            it.attachment = it.attachment
+                .copy(state = Uploaded(uploadSuccessEvent.downloadUrl))
+                .also(updateAttachmentStateWith)
             it.job = null
         }
     }
@@ -134,7 +135,8 @@ internal class AttachmentHandlerImpl(
         processedAttachments.forEach { entry ->
             entry.value.takeUploaded()?.let {
                 log.i { LogMessages.sendingAttachment(it.attachment.id) }
-                it.attachment = it.attachment.copy(state = Sending)
+                it.attachment = it.attachment
+                    .copy(state = Sending)
                     .also(updateAttachmentStateWith)
             }
         }

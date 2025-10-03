@@ -47,11 +47,10 @@ internal fun StructuredMessage.toMessage(): Message {
 
 internal fun Message.getUploadedAttachments(): List<Message.Content> {
     if (attachments.isEmpty()) return emptyList()
-    return attachments.filter {
-        it.value.state is Attachment.State.Uploaded
-    }.map {
-        Message.Content(contentType = Message.Content.Type.Attachment, attachment = it.value)
-    }.toList()
+    return attachments
+        .filter { it.value.state is Attachment.State.Uploaded }
+        .map { Message.Content(contentType = Message.Content.Type.Attachment, attachment = it.value) }
+        .toList()
 }
 
 internal fun String?.fromIsoToEpochMilliseconds(): Long? {
@@ -114,7 +113,11 @@ internal fun String.isHealthCheckResponseId(): Boolean = this == HealthCheckID
 internal fun Message.isOutbound(): Boolean = this.direction == Direction.Outbound
 
 internal fun SessionResponse.toFileAttachmentProfile(): FileAttachmentProfile {
-    val allowedFileTypes = allowedMedia?.inbound?.fileTypes?.map { it.type }?.toMutableList() ?: mutableListOf()
+    val allowedFileTypes = allowedMedia
+        ?.inbound
+        ?.fileTypes
+        ?.map { it.type }
+        ?.toMutableList() ?: mutableListOf()
     val maxFileSize = allowedMedia?.inbound?.maxFileSizeKB ?: 0
     val enabled = allowedFileTypes.isNotEmpty() && maxFileSize > 0
     val hasWildcard = allowedFileTypes.remove(WILD_CARD)
