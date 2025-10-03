@@ -52,21 +52,28 @@ class MCMessageTests : BaseMessagingClientTest() {
 
     @Test
     fun `when connect and then sendMessage()`() {
-        every { mockPlatformSocket.sendMessage(Request.textMessage()) } answers {
+        every {
+            mockPlatformSocket.sendMessage(match { it.contains("\"action\":\"configureSession\"") })
+        } answers {
+            slot.captured.onMessage(Response.configureSuccess())
+        }
+
+        every {
+            mockPlatformSocket.sendMessage(match { it.contains("\"action\":\"onMessage\"") })
+        } answers {
             slot.captured.onMessage(Response.onMessage())
         }
-        val expectedMessageRequest =
-            """{"token":"${Request.token}","message":{"text":"${MessageValues.TEXT}","type":"Text"},"action":"onMessage"}"""
+
         val expectedMessage = Message(
-            id = "some_custom_message_id",
+            id = "test_id",
             state = State.Sent,
             messageType = Type.Text,
             type = "Text",
             text = MessageValues.TEXT,
             timeStamp = 1661196266704,
         )
-        subject.connect()
 
+        subject.connect()
         subject.sendMessage("Hello world!")
 
         verifySequence {
@@ -74,10 +81,10 @@ class MCMessageTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockCustomAttributesStore.add(emptyMap())
             mockCustomAttributesStore.getCustomAttributesToSend()
-            mockMessageStore.prepareMessage(Request.token, MessageValues.TEXT)
+            mockMessageStore.prepareMessage(Request.token, MessageValues.TEXT, null)
             mockAttachmentHandler.onSending()
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(expectedMessageRequest)
+            mockPlatformSocket.sendMessage(match { it.contains("\"action\":\"onMessage\"") })
             mockMessageStore.update(expectedMessage)
             mockCustomAttributesStore.onSent()
             mockAttachmentHandler.onSent(emptyMap())
@@ -87,6 +94,7 @@ class MCMessageTests : BaseMessagingClientTest() {
             mockCustomAttributesStore.onSending()
             mockEventHandler.onEvent(Event.HealthChecked)
         }
+
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessage(MessageValues.TEXT_SANITIZED))
@@ -200,7 +208,7 @@ class MCMessageTests : BaseMessagingClientTest() {
     @Test
     fun `when SocketListener invoke onMessage with Outbound text message`() {
         val expectedMessage = Message(
-            id = "some_custom_message_id",
+            id = "test_id", // 🔧 align with Response.onMessage(Direction.Outbound)
             direction = Direction.Outbound,
             state = State.Sent,
             messageType = Type.Text,

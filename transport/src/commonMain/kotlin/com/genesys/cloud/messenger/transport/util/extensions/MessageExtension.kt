@@ -25,7 +25,7 @@ internal fun List<StructuredMessage>.toMessageList(): List<Message> =
 internal fun StructuredMessage.toMessage(): Message {
     val quickReplies = content.toQuickReplies()
     return Message(
-        id = metadata["customMessageId"] ?: id,
+        id = id,
         direction = if (isInbound()) Direction.Inbound else Direction.Outbound,
         state = Message.State.Sent,
         messageType = type.toMessageType(quickReplies.isNotEmpty()),

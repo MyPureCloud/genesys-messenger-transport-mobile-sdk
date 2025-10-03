@@ -28,6 +28,7 @@ class MCTypingIndicatorTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
+            testTracingIdProvider.getTracingId()
             mockLogger.i(capture(logSlot))
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)

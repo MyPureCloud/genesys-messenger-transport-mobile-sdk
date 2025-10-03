@@ -43,6 +43,7 @@ class MCAutostartTests : BaseMessagingClientTest() {
         verifySequence {
             connectSequence()
             mockCustomAttributesStore.getCustomAttributesToSend()
+            testTracingIdProvider.getTracingId()
             mockLogger.i(capture(logSlot))
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.autostart(""))

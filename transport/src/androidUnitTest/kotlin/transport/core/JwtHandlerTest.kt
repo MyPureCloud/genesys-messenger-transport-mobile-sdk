@@ -74,7 +74,7 @@ class JwtHandlerTest {
 
         coVerify {
             mockJwtFn(AuthTest.JWT_TOKEN)
-            mockWebSocket.sendMessage(Request.jwt)
+            mockWebSocket.sendMessage(match { it.contains("\"action\":\"getJwt\"") && it.contains("\"token\":\"00000000-0000-0000-0000-000000000000\"") })
         }
         assertThat(slot.captured).isEqualTo(AuthTest.JWT_TOKEN)
         subject.jwtResponse.run {

@@ -37,6 +37,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.UserTypingRequest
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.Journey
+import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlinx.serialization.encodeToString
 import kotlin.test.Test
@@ -51,9 +52,9 @@ class RequestSerializationTest {
         )
         val expectedEvents = listOf(expectedPresenceEvent)
         val expectedMessage = EventMessage(expectedEvents)
-        val expectedRequest = AutoStartRequest(TestValues.TOKEN, null)
+        val expectedRequest = AutoStartRequest(TestValues.TOKEN, null, tracingId = TestValues.TRACING_ID )
         val expectedJson =
-            """{"token":"token","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Join"}}],"type":"Event"}}"""
+            """{"token":"token","tracingId":"${TestValues.TRACING_ID}","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Join"}}],"type":"Event"}}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<AutoStartRequest>(expectedJson)
@@ -92,9 +93,9 @@ class RequestSerializationTest {
         )
         val expectedEvents = listOf(expectedPresenceEvent)
         val expectedMessage = EventMessage(expectedEvents)
-        val expectedRequest = ClearConversationRequest(TestValues.TOKEN)
+        val expectedRequest = ClearConversationRequest(TestValues.TOKEN, tracingId = TestValues.TRACING_ID)
         val expectedJson =
-            """{"token":"token","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Clear"}}],"type":"Event"}}"""
+            """{"token":"token","tracingId":"${TestValues.TRACING_ID}","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Clear"}}],"type":"Event"}}"""
         val expectedPresenceJson = """{"type":"Clear"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
@@ -118,9 +119,10 @@ class RequestSerializationTest {
         val expectedRequest = CloseSessionRequest(
             token = TestValues.TOKEN,
             closeAllConnections = true,
+            tracingId = TestValues.TRACING_ID
         )
         val expectedJson =
-            """{"token":"token","closeAllConnections":true,"action":"closeSession"}"""
+            """{"token":"token","closeAllConnections":true,"tracingId":"${TestValues.TRACING_ID}","action":"closeSession"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<CloseSessionRequest>(expectedJson)
@@ -140,10 +142,11 @@ class RequestSerializationTest {
             token = TestValues.TOKEN,
             deploymentId = TestValues.DEPLOYMENT_ID,
             startNew = false,
-            data = expectedData
+            data = expectedData,
+            tracingId = TestValues.TRACING_ID
         )
         val expectedJson =
-            """{"token":"token","deploymentId":"deploymentId","startNew":false,"data":{"code":"jwt_Token"},"action":"configureAuthenticatedSession"}"""
+            """{"token":"token","deploymentId":"deploymentId","startNew":false,"data":{"code":"jwt_Token"},"tracingId":"${TestValues.TRACING_ID}","action":"configureAuthenticatedSession"}"""
         val expectedDataJson = """{"code":"jwt_Token"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
@@ -178,9 +181,10 @@ class RequestSerializationTest {
             token = TestValues.TOKEN,
             deploymentId = TestValues.DEPLOYMENT_ID,
             startNew = true,
+            tracingId = TestValues.TRACING_ID
         )
         val expectedJson =
-            """{"token":"token","deploymentId":"deploymentId","startNew":true,"action":"configureSession"}"""
+            """{"token":"token","deploymentId":"deploymentId","startNew":true,"tracingId":"${TestValues.TRACING_ID}","action":"configureSession"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<ConfigureSessionRequest>(expectedJson)
@@ -199,10 +203,11 @@ class RequestSerializationTest {
     fun `validate DeleteAttachmentRequest serialization`() {
         val expectedRequest = DeleteAttachmentRequest(
             token = TestValues.TOKEN,
-            attachmentId = AttachmentValues.ID
+            attachmentId = AttachmentValues.ID,
+            tracingId = TestValues.TRACING_ID
         )
         val expectedJson =
-            """{"token":"token","attachmentId":"test_attachment_id","action":"deleteAttachment"}"""
+            """{"token":"token","attachmentId":"test_attachment_id","tracingId":"${TestValues.TRACING_ID}","action":"deleteAttachment"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<DeleteAttachmentRequest>(expectedJson)
@@ -217,12 +222,13 @@ class RequestSerializationTest {
 
     @Test
     fun `validate EchoRequest serialization`() {
-        val expectedTextMessage = TextMessage("ping", mapOf("customMessageId" to HealthCheckID))
+        val expectedTextMessage = TextMessage("ping")
         val expectedRequest = EchoRequest(
             token = TestValues.TOKEN,
+            tracingId = HealthCheckID
         )
         val expectedJson =
-            """{"token":"token","action":"echo","message":{"text":"ping","metadata":{"customMessageId":"SGVhbHRoQ2hlY2tNZXNzYWdlSWQ="},"type":"Text"}}"""
+            """{"token":"token","tracingId":"SGVhbHRoQ2hlY2tNZXNzYWdlSWQ=","action":"echo","message":{"text":"ping","type":"Text"}}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<EchoRequest>(expectedJson)
@@ -231,10 +237,10 @@ class RequestSerializationTest {
         decoded.run {
             assertThat(action).isEqualTo(RequestAction.ECHO_MESSAGE.value)
             assertThat(token).isEqualTo(TestValues.TOKEN)
+            assertThat(tracingId).isEqualTo(HealthCheckID)
             assertThat(message).isEqualTo(expectedTextMessage)
             message.run {
                 assertThat(text).isEqualTo(expectedTextMessage.text)
-                assertThat(metadata?.get("customMessageId")).isEqualTo(HealthCheckID)
             }
         }
     }
@@ -268,10 +274,11 @@ class RequestSerializationTest {
     fun `validate GetAttachmentRequest serialization`() {
         val expectedRequest = GetAttachmentRequest(
             token = TestValues.TOKEN,
-            attachmentId = AttachmentValues.ID
+            attachmentId = AttachmentValues.ID,
+            tracingId = TestValues.TRACING_ID
         )
         val expectedJson =
-            """{"token":"token","attachmentId":"test_attachment_id","action":"getAttachment"}"""
+            """{"token":"token","attachmentId":"test_attachment_id","tracingId":"${TestValues.TRACING_ID}","action":"getAttachment"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<GetAttachmentRequest>(expectedJson)
@@ -375,8 +382,8 @@ class RequestSerializationTest {
 
     @Test
     fun `validate JwtRequest serialization`() {
-        val expectedRequest = JwtRequest(token = TestValues.TOKEN)
-        val expectedJson = """{"token":"${TestValues.TOKEN}","action":"getJwt"}"""
+        val expectedRequest = JwtRequest(token = TestValues.TOKEN, tracingId = TestValues.TRACING_ID)
+        val expectedJson = """{"token":"${TestValues.TOKEN}","tracingId":"${TestValues.TRACING_ID}","action":"getJwt"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<JwtRequest>(expectedJson)
@@ -418,10 +425,11 @@ class RequestSerializationTest {
             fileType = AttachmentValues.FILE_TYPE,
             fileSize = AttachmentValues.FILE_SIZE,
             fileMd5 = AttachmentValues.FILE_MD5,
+            tracingId = TestValues.TRACING_ID,
             errorsAsJson = false,
         )
         val expectedJson =
-            """{"token":"${TestValues.TOKEN}","attachmentId":"${AttachmentValues.ID}","fileName":"${AttachmentValues.FILE_NAME}","fileType":"${AttachmentValues.FILE_TYPE}","fileSize":${AttachmentValues.FILE_SIZE},"fileMd5":"${AttachmentValues.FILE_MD5}","errorsAsJson":false,"action":"onAttachment"}"""
+            """{"token":"${TestValues.TOKEN}","attachmentId":"${AttachmentValues.ID}","fileName":"${AttachmentValues.FILE_NAME}","fileType":"${AttachmentValues.FILE_TYPE}","fileSize":${AttachmentValues.FILE_SIZE},"fileMd5":"${AttachmentValues.FILE_MD5}","errorsAsJson":false,"tracingId":"${TestValues.TRACING_ID}","action":"onAttachment"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<OnAttachmentRequest>(expectedJson)
@@ -446,9 +454,9 @@ class RequestSerializationTest {
         )
         val expectedEventList = listOf(expectedEvent)
         val expectedMessage = EventMessage(expectedEventList)
-        val expectedRequest = UserTypingRequest(token = TestValues.TOKEN)
+        val expectedRequest = UserTypingRequest(token = TestValues.TOKEN, tracingId = TestValues.TRACING_ID)
         val expectedJson =
-            """{"token":"token","action":"onMessage","message":{"events":[{"eventType":"Typing","typing":{"type":"On"}}],"type":"Event"}}"""
+            """{"token":"token","tracingId":"${TestValues.TRACING_ID}","action":"onMessage","message":{"events":[{"eventType":"Typing","typing":{"type":"On"}}],"type":"Event"}}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
         val decoded = WebMessagingJson.json.decodeFromString<UserTypingRequest>(expectedJson)

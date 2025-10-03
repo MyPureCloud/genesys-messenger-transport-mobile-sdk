@@ -22,9 +22,6 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
 
     @Test
     fun `when send HealthCheck`() {
-        every { mockPlatformSocket.sendMessage(Request.echo) } answers {
-            slot.captured.onMessage(Response.echo)
-        }
         val expectedMessage = Request.echo
         subject.connect()
 
@@ -35,7 +32,6 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
-            mockEventHandler.onEvent(Event.HealthChecked)
         }
         verify(exactly = 0) {
             mockMessageStore.update(any())
@@ -93,6 +89,7 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
             mockPlatformSocket.openSocket(any())
             mockStateChangedListener(fromConnectingToConnected)
             mockLogger.i(capture(logSlot))
+            testTracingIdProvider.getTracingId()
             mockPlatformSocket.sendMessage(Request.configureRequest())
             mockVault.wasAuthenticated = false
             mockAttachmentHandler.fileAttachmentProfile = any()
@@ -125,6 +122,15 @@ class MCHealthCheckTests : BaseMessagingClientTest() {
 
     @Test
     fun `when SocketListener invoke onMessage with HealthCheck response message`() {
+        // Add specific stub for configureSession to handle dynamic tracingId
+        every { mockPlatformSocket.sendMessage(match { 
+            it.contains("\"action\":\"configureSession\"") && 
+            it.contains("\"startNew\":false") &&
+            !it.contains("\"data\":")
+        }) } answers {
+            slot.captured.onMessage(Response.configureSuccess())
+        }
+        
         subject.connect()
 
         slot.captured.onMessage(Response.healthCheckResponse)

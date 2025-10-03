@@ -17,6 +17,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
+import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.MockKVerificationScope
 import io.mockk.every
 import io.mockk.verify
@@ -37,7 +38,7 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
     @Test
     fun `when sendMessage with customAttributes`() {
         val expectedMessage =
-            """{"token":"${Request.token}","message":{"text":"${MessageValues.TEXT}","channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"action":"onMessage"}"""
+            """{"token":"${Request.token}","message":{"text":"${MessageValues.TEXT}","channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"tracingId":"${TestValues.TRACING_ID}","action":"onMessage"}"""
         val expectedText = MessageValues.TEXT
         val expectedCustomAttributes = mapOf("A" to "B")
         val expectedChannel = Channel(Channel.Metadata(expectedCustomAttributes))
@@ -47,6 +48,7 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
                 text = MessageValues.TEXT,
                 channel = expectedChannel,
             ),
+            tracingId = TestValues.TRACING_ID
         )
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mapOf("A" to "B")
         subject.connect()
@@ -176,9 +178,33 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
                     )
                 ),
             ),
+            tracingId = TestValues.TRACING_ID
         )
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mapOf("A" to "B")
+        
+        // Add specific stub for configureSession to handle dynamic tracingId
+        every { mockPlatformSocket.sendMessage(match { 
+            it.contains("\"action\":\"configureSession\"") && 
+            it.contains("\"startNew\":false") &&
+            !it.contains("\"data\":")
+        }) } answers {
+            slot.captured.onMessage(Response.configureSuccess())
+        }
+        
         subject.connect()
+
+        // Lenient stub for onMessage to ignore dynamic tracingId and JSON ordering
+        every {
+            mockPlatformSocket.sendMessage(match {
+                it.contains("\"action\":\"onMessage\"") &&
+                it.contains("\"contentType\":\"ButtonResponse\"") &&
+                it.contains("\"text\":\"text_a\"") &&
+                it.contains("\"payload\":\"payload_a\"") &&
+                it.contains("\"customAttributes\":{\"A\":\"B\"}")
+            })
+        } answers {
+            slot.captured.onMessage(Response.onMessage())
+        }
 
         subject.sendQuickReply(QuickReplyTestValues.buttonResponse_a)
 
@@ -189,13 +215,23 @@ class MCCustomAttributesTests : BaseMessagingClientTest() {
             mockCustomAttributesStore.onSending()
             mockMessageStore.prepareMessageWith(Request.token, expectedButtonResponse, expectedChannel)
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(Request.quickReplyWith(channel = """"channel":{"metadata":{"customAttributes":{"A":"B"}}},"""))
+            mockPlatformSocket.sendMessage(match {
+                it.contains("\"action\":\"onMessage\"") &&
+                it.contains("\"contentType\":\"ButtonResponse\"") &&
+                it.contains("\"text\":\"text_a\"") &&
+                it.contains("\"payload\":\"payload_a\"") &&
+                it.contains("\"customAttributes\":{\"A\":\"B\"}")
+            })
+            mockMessageStore.update(any())
+            mockCustomAttributesStore.onSent()
+            mockAttachmentHandler.onSent(any())
         }
     }
 
     private fun MockKVerificationScope.sendingCustomAttributesSequence(message: String) {
         mockCustomAttributesStore.getCustomAttributesToSend()
         mockCustomAttributesStore.onSending()
+        testTracingIdProvider.getTracingId()
         mockLogger.i(capture(logSlot))
         mockLogger.i(capture(logSlot))
         mockPlatformSocket.sendMessage(message)

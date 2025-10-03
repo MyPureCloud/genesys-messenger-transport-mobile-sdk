@@ -12,6 +12,7 @@ import com.genesys.cloud.messenger.transport.push.PushServiceImpl
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.EncryptedVault
+import com.genesys.cloud.messenger.transport.util.TracingIdProviderImpl
 import com.genesys.cloud.messenger.transport.util.TokenStore
 import com.genesys.cloud.messenger.transport.util.Urls
 import com.genesys.cloud.messenger.transport.util.Vault
@@ -83,11 +84,13 @@ class MessengerTransportSDK(
         )
         // Support old TokenStore. If TokenStore not present fallback to the Vault.
         val token = tokenStore?.token ?: vault.token
-        val messageStore = MessageStore(log.withTag(LogTag.MESSAGE_STORE))
+        val tracingProvider = TracingIdProviderImpl()
+        val messageStore = MessageStore(log.withTag(LogTag.MESSAGE_STORE), tracingProvider)
         val attachmentHandler = AttachmentHandlerImpl(
             api,
             log.withTag(LogTag.ATTACHMENT_HANDLER),
             messageStore.updateAttachmentStateWith,
+            tracingProvider,
         )
 
         return MessagingClientImpl(
@@ -104,6 +107,7 @@ class MessengerTransportSDK(
                 configuration.reconnectionTimeoutInSeconds,
                 log.withTag(LogTag.RECONNECTION_HANDLER),
             ),
+            tracingIdProvider = tracingProvider,
             deploymentConfig = this::deploymentConfig,
         )
     }

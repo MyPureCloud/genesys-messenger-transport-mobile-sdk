@@ -71,7 +71,7 @@ internal class MessageExtensionTest {
             from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
         )
         val expectedMessage2 = Message(
-            id = "1234567890",
+            id = "46e7001c24abed05e9bcd1a006eb54b7",
             direction = Direction.Inbound,
             state = State.Sent,
             messageType = Type.Event,
@@ -81,7 +81,7 @@ internal class MessageExtensionTest {
             from = Participant(originatingEntity = Participant.OriginatingEntity.Human),
         )
         val expectedMessage3 = Message(
-            id = "1234567890",
+            id = "message3_id",
             direction = Direction.Outbound,
             state = State.Sent,
             messageType = Type.QuickReply,
@@ -136,11 +136,12 @@ internal class MessageExtensionTest {
                     eventType = StructuredMessageEvent.Type.Presence,
                     presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.SignIn)
                 )
-            )
+            ),
+            tracingId = "test custom id"
         )
         val expectedMessage =
             Message(
-                id = "test custom id",
+                id = "id",
                 direction = Direction.Inbound,
                 state = State.Sent,
                 messageType = Type.Text,
@@ -525,7 +526,7 @@ internal class MessageExtensionTest {
         )
 
         val expectedMessageEntityListAsJson =
-            """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
+            """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound","tracingId":"${givenStructuredMessage.tracingId}"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
 
         val result = WebMessagingJson.json.encodeToString(givenMessageEntityList)
 
@@ -535,11 +536,12 @@ internal class MessageExtensionTest {
     @Test
     fun `when MessageEntityList deserialized`() {
         val givenMessageEntityListAsJson =
-            """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
+            """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound","tracingId":"test-tracing-id"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
         val expectedStructuredMessage = StructuredMessage(
             id = "some_id",
             type = StructuredMessage.Type.Text,
-            direction = "Inbound"
+            direction = "Inbound",
+            tracingId = "test-tracing-id"
         )
         val expectedMessageEntityList = MessageEntityList(
             entities = listOf(expectedStructuredMessage),

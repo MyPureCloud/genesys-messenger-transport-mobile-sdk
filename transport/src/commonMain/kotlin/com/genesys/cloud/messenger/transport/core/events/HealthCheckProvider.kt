@@ -2,6 +2,7 @@ package com.genesys.cloud.messenger.transport.core.events
 
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.send.EchoRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
@@ -22,7 +23,7 @@ internal class HealthCheckProvider(
         val delta = currentTimestamp - lastSentHealthCheckTimestamp
         return if (delta > HEALTH_CHECK_COOL_DOWN_MILLISECONDS) {
             lastSentHealthCheckTimestamp = currentTimestamp
-            val request = EchoRequest(token = token)
+            val request = EchoRequest(token = token, tracingId = HealthCheckID)
             WebMessagingJson.json.encodeToString(request)
         } else {
             log.w { LogMessages.healthCheckCoolDown(HEALTH_CHECK_COOL_DOWN_MILLISECONDS) }

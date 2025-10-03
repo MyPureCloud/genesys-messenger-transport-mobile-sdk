@@ -11,7 +11,8 @@ internal data class AutoStartRequest(
     override val token: String,
     @Transient
     private val channel: Channel? = null,
-) : WebMessagingRequest {
+    override val tracingId: String,
+) : BaseWebMessagingRequest() {
     @Required
     override val action: String = RequestAction.ON_MESSAGE.value
     @Required

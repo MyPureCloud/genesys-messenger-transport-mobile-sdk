@@ -4,13 +4,17 @@ import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
+import com.genesys.cloud.messenger.transport.util.TracingIdProvider
 import com.genesys.cloud.messenger.transport.util.extensions.getUploadedAttachments
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 
 internal const val DEFAULT_PAGE_SIZE = 25
 
-internal class MessageStore(private val log: Log) {
+internal class MessageStore(
+    private val log: Log,
+    private val tracingIdProvider: TracingIdProvider
+) {
     var nextPage: Int = 1
         private set
     var startOfConversation = false
@@ -32,10 +36,10 @@ internal class MessageStore(private val log: Log) {
             token = token,
             message = TextMessage(
                 text,
-                metadata = mapOf("customMessageId" to messageToSend.id),
                 content = messageToSend.getUploadedAttachments(),
                 channel = channel,
-            )
+            ),
+            tracingId = tracingIdProvider.getTracingId()
         )
     }
 
@@ -66,10 +70,10 @@ internal class MessageStore(private val log: Log) {
             token = token,
             message = TextMessage(
                 text = "",
-                metadata = mapOf("customMessageId" to messageToSend.id),
                 content = content,
                 channel = channel,
-            )
+            ),
+            tracingId = tracingIdProvider.getTracingId()
         )
     }
 

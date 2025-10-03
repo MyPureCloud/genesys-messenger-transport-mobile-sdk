@@ -29,9 +29,11 @@ import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.TracingIdProvider
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import com.genesys.cloud.messenger.transport.utility.AuthTest
+import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues.TOKEN_KEY
@@ -62,7 +64,8 @@ open class BaseMessagingClientTest {
     internal val mockMessageStore: MessageStore = mockk(relaxed = true) {
         every { prepareMessage(any(), any(), any()) } returns OnMessageRequest(
             token = testToken,
-            message = TextMessage("Hello world!")
+            message = TextMessage("Hello world!"),
+            tracingId = TestValues.TRACING_ID
         )
         every { prepareMessageWith(any(), any(), null) } returns OnMessageRequest(
             token = testToken,
@@ -75,6 +78,7 @@ open class BaseMessagingClientTest {
                     )
                 ),
             ),
+            tracingId = TestValues.TRACING_ID
         )
     }
     internal val mockAttachmentHandler: AttachmentHandler = mockk(relaxed = true) {
@@ -92,11 +96,13 @@ open class BaseMessagingClientTest {
             fileName = "test_attachment.png",
             fileType = "image/png",
             errorsAsJson = true,
+            tracingId = TestValues.TRACING_ID
         )
 
         every { detach(any(), any()) } returns DeleteAttachmentRequest(
             token = Request.token,
-            attachmentId = "88888888-8888-8888-8888-888888888888"
+            attachmentId = "88888888-8888-8888-8888-888888888888",
+            tracingId = TestValues.TRACING_ID
         )
         every { fileAttachmentProfile } returns null
     }
@@ -142,10 +148,16 @@ open class BaseMessagingClientTest {
     protected val mockDeploymentConfig = mockk<KProperty0<DeploymentConfig?>> {
         every { get() } returns createDeploymentConfigForTesting()
     }
+    
+    internal val testTracingIdProvider = mockk<TracingIdProvider> {
+        every { getTracingId() } returns TestValues.TRACING_ID
+    }
+    
     internal val userTypingProvider = UserTypingProvider(
         log = mockk(relaxed = true),
         showUserTypingEnabled = mockShowUserTypingIndicatorFunction,
         getCurrentTimestamp = mockTimestampFunction,
+        tracingIdProvider = testTracingIdProvider,
     )
     internal val mockAuthHandler: AuthHandler = mockk(relaxed = true) {
         every { jwt } returns AuthTest.JWT_TOKEN
@@ -188,6 +200,7 @@ open class BaseMessagingClientTest {
         attachmentHandler = mockAttachmentHandler,
         messageStore = mockMessageStore,
         reconnectionHandler = mockReconnectionHandler,
+        tracingIdProvider = testTracingIdProvider,
         eventHandler = mockEventHandler,
         userTypingProvider = userTypingProvider,
         healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),
@@ -225,6 +238,7 @@ open class BaseMessagingClientTest {
             mockAuthHandler.jwt // check if jwt is valid
             mockAuthHandler.jwt // use jwt for request
         }
+        testTracingIdProvider.getTracingId()
         mockPlatformSocket.sendMessage(configureRequest)
         mockVault.wasAuthenticated = shouldConfigureAuth
         mockAttachmentHandler.fileAttachmentProfile = any()
@@ -237,6 +251,7 @@ open class BaseMessagingClientTest {
         fromIdleToConnectedSequence()
         mockLogger.i(capture(logSlot))
         mockPlatformSocket.sendMessage(Request.configureRequest())
+        mockVault.wasAuthenticated = false
         mockAttachmentHandler.fileAttachmentProfile = any()
         mockReconnectionHandler.clear()
         mockJwtHandler.clear()

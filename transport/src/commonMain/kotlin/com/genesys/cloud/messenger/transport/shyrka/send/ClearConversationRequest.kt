@@ -8,7 +8,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 internal data class ClearConversationRequest(
     override val token: String,
-) : WebMessagingRequest {
+    override val tracingId: String,
+) : BaseWebMessagingRequest() {
     @Required
     override val action: String = RequestAction.ON_MESSAGE.value
     @Required

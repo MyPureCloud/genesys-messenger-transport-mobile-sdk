@@ -217,6 +217,7 @@ class MCConnectionTests : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.openSocket(any())
             mockLogger.i(capture(logSlot))
+            testTracingIdProvider.getTracingId()
             mockPlatformSocket.sendMessage(eq(Request.configureRequest()))
             errorSequence(fromReconnectingToError(expectedErrorState))
         }

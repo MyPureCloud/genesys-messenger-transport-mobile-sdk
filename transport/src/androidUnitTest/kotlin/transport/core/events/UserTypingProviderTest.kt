@@ -6,6 +6,7 @@ import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.core.events.TYPING_INDICATOR_COOL_DOWN_MILLISECONDS
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
 import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.TracingIdProvider
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.mockk.every
@@ -29,6 +30,7 @@ class UserTypingProviderTest {
         log = mockLogger,
         showUserTypingEnabled = mockShowUserTypingIndicatorFunction,
         getCurrentTimestamp = mockTimestampFunction,
+        tracingIdProvider = mockk { every { getTracingId() } returns "test-tracing-id" },
     )
 
     @Test
@@ -106,7 +108,8 @@ class UserTypingProviderTest {
     fun `when encode with default getCurrentTimestamp function`() {
         val subject = UserTypingProvider(
             log = mockLogger,
-            showUserTypingEnabled = { true }
+            showUserTypingEnabled = { true },
+            tracingIdProvider = mockk { every { getTracingId() } returns "test-tracing-id" }
         )
 
         val result = subject.encodeRequest(token = Request.token)

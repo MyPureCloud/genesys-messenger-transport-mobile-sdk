@@ -41,7 +41,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
     fun `when attach()`() {
         val expectedAttachmentId = "88888888-8888-8888-8888-888888888888"
         val expectedMessage =
-            """{"token":"${Request.token}","attachmentId":"88888888-8888-8888-8888-888888888888","fileName":"test_attachment.png","fileType":"image/png","errorsAsJson":true,"action":"onAttachment"}"""
+            """{"token":"${Request.token}","attachmentId":"88888888-8888-8888-8888-888888888888","fileName":"test_attachment.png","fileType":"image/png","errorsAsJson":true,"tracingId":"test-tracing-id","action":"onAttachment"}"""
         subject.connect()
 
         val result = subject.attach(ByteArray(1), "test.png")
@@ -64,7 +64,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
     fun `when detach()`() {
         val expectedAttachmentId = "88888888-8888-8888-8888-888888888888"
         val expectedMessage =
-            """{"token":"${Request.token}","attachmentId":"88888888-8888-8888-8888-888888888888","action":"deleteAttachment"}"""
+            """{"token":"${Request.token}","attachmentId":"88888888-8888-8888-8888-888888888888","tracingId":"test-tracing-id","action":"deleteAttachment"}"""
         val attachmentIdSlot = slot<String>()
         subject.connect()
 

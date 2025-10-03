@@ -23,6 +23,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
+import com.genesys.cloud.messenger.transport.util.TracingIdProvider
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
@@ -32,6 +33,7 @@ import io.mockk.Called
 import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.spyk
@@ -65,10 +67,14 @@ internal class AttachmentHandlerTest {
 
     @ExperimentalCoroutinesApi
     private val dispatcher: CoroutineDispatcher = UnconfinedTestDispatcher()
+    private val mockTracingProvider: TracingIdProvider = mockk {
+        every { getTracingId() } returns "test-tracing-id"
+    }
     private val subject = AttachmentHandlerImpl(
         mockApi,
         mockLogger,
         mockAttachmentListener,
+        mockTracingProvider,
         processedAttachments,
     )
 
@@ -101,6 +107,7 @@ internal class AttachmentHandlerTest {
             fileSize = AttachmentValues.FILE_SIZE,
             null,
             true,
+            tracingId = "test-tracing-id"
         )
 
         val onAttachmentRequest =
@@ -137,6 +144,7 @@ internal class AttachmentHandlerTest {
             fileSize = AttachmentValues.FILE_SIZE,
             null,
             true,
+            tracingId = "test-tracing-id"
         )
 
         val onAttachmentRequest =
@@ -294,7 +302,7 @@ internal class AttachmentHandlerTest {
             Attachment(AttachmentValues.ID, AttachmentValues.FILE_NAME, null, State.Detaching)
         val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(1))
         val expectedDeleteAttachmentRequest =
-            DeleteAttachmentRequest(TestValues.TOKEN, AttachmentValues.ID)
+            DeleteAttachmentRequest(TestValues.TOKEN, AttachmentValues.ID, "test-tracing-id")
         givenPrepareCalled()
         givenUploadSuccessCalled()
 
@@ -574,6 +582,7 @@ internal class AttachmentHandlerTest {
             2000,
             null,
             true,
+            tracingId = "test-tracing-id"
         )
 
         val givenByteArray = ByteArray(2000)
@@ -609,6 +618,7 @@ internal class AttachmentHandlerTest {
             2000,
             null,
             true,
+            tracingId = "test-tracing-id"
         )
 
         val onAttachmentRequest =
@@ -642,6 +652,7 @@ internal class AttachmentHandlerTest {
             2000,
             null,
             true,
+            tracingId = "test-tracing-id"
         )
 
         val onAttachmentRequest =
@@ -684,6 +695,7 @@ internal class AttachmentHandlerTest {
             1,
             null,
             true,
+            tracingId = "test-tracing-id"
         )
 
         val onAttachmentRequest =

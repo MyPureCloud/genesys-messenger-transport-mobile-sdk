@@ -12,6 +12,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
+import com.genesys.cloud.messenger.transport.util.TracingIdProvider
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.ktor.http.ContentType
@@ -26,6 +27,7 @@ internal class AttachmentHandlerImpl(
     private val api: WebMessagingApi,
     private val log: Log,
     private val updateAttachmentStateWith: (Attachment) -> Unit,
+    private val tracingProvider: TracingIdProvider,
     private val processedAttachments: MutableMap<String, ProcessedAttachment> = mutableMapOf(),
 ) : AttachmentHandler {
     private val uploadDispatcher = CoroutineScope(Dispatchers.Main + SupervisorJob())
@@ -57,6 +59,7 @@ internal class AttachmentHandlerImpl(
             fileType = resolveContentType(fileName).toString(),
             fileSize = byteArray.size,
             errorsAsJson = true,
+            tracingId = tracingProvider.getTracingId()
         )
     }
 
@@ -98,7 +101,8 @@ internal class AttachmentHandlerImpl(
                     it.attachment.copy(state = Detaching).also(updateAttachmentStateWith)
                 return DeleteAttachmentRequest(
                     token = token,
-                    attachmentId = attachmentId
+                    attachmentId = attachmentId,
+                    tracingId = tracingProvider.getTracingId()
                 )
             } else {
                 onDetached(attachmentId)

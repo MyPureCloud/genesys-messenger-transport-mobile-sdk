@@ -44,6 +44,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.TracingIdProvider
 import com.genesys.cloud.messenger.transport.util.UNKNOWN
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.extensions.isHealthCheckResponseId
@@ -79,12 +80,14 @@ internal class MessagingClientImpl(
     private val attachmentHandler: AttachmentHandler,
     private val messageStore: MessageStore,
     private val reconnectionHandler: ReconnectionHandler,
+    private val tracingIdProvider: TracingIdProvider,
     private val stateMachine: StateMachine = StateMachineImpl(log.withTag(LogTag.STATE_MACHINE)),
     private val eventHandler: EventHandler = EventHandlerImpl(log.withTag(LogTag.EVENT_HANDLER)),
     private val healthCheckProvider: HealthCheckProvider = HealthCheckProvider(log.withTag(LogTag.HEALTH_CHECK_PROVIDER)),
     private val userTypingProvider: UserTypingProvider = UserTypingProvider(
         log.withTag(LogTag.TYPING_INDICATOR_PROVIDER),
         { deploymentConfig.isShowUserTypingEnabled() },
+        tracingIdProvider = tracingIdProvider,
     ),
     private val authHandler: AuthHandler = AuthHandlerImpl(
         configuration.autoRefreshTokenWhenExpired,
@@ -285,7 +288,8 @@ internal class MessagingClientImpl(
         WebMessagingJson.json.encodeToString(
             GetAttachmentRequest(
                 token = token,
-                attachmentId = attachmentId
+                attachmentId = attachmentId,
+                tracingId = tracingIdProvider.getTracingId()
             )
         ).also {
             log.i { "getAttachmentRequest()" }
@@ -359,7 +363,7 @@ internal class MessagingClientImpl(
             )
             return
         }
-        WebMessagingJson.json.encodeToString(ClearConversationRequest(token)).let {
+        WebMessagingJson.json.encodeToString(ClearConversationRequest(token, tracingIdProvider.getTracingId())).let {
             log.i { LogMessages.SEND_CLEAR_CONVERSATION }
             webSocket.sendMessage(it)
         }
@@ -387,7 +391,7 @@ internal class MessagingClientImpl(
     private fun sendAutoStart() {
         sendingAutostart = true
         val channel = prepareCustomAttributesForSending()
-        WebMessagingJson.json.encodeToString(AutoStartRequest(token, channel)).let {
+        WebMessagingJson.json.encodeToString(AutoStartRequest(token, channel, tracingIdProvider.getTracingId())).let {
             log.i { LogMessages.SEND_AUTO_START }
             send(it)
         }
@@ -667,7 +671,8 @@ internal class MessagingClientImpl(
                 journeyContext = JourneyContext(
                     JourneyCustomer(token, "cookie"),
                     JourneyCustomerSession("", "web")
-                )
+                ),
+                tracingId = tracingIdProvider.getTracingId()
             )
         )
 
@@ -681,7 +686,8 @@ internal class MessagingClientImpl(
                     JourneyCustomer(token, "cookie"),
                     JourneyCustomerSession("", "web")
                 ),
-                data = ConfigureAuthenticatedSessionRequest.Data(authHandler.jwt)
+                data = ConfigureAuthenticatedSessionRequest.Data(authHandler.jwt),
+                tracingId = tracingIdProvider.getTracingId()
             )
         )
 
