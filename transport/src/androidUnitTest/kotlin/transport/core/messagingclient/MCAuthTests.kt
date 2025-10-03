@@ -26,13 +26,11 @@ import org.junit.Test
 import transport.util.Request
 import transport.util.Response
 import transport.util.fromConfiguredToError
-import transport.util.fromConfiguredToReadOnly
 import transport.util.fromConfiguredToReconnecting
 import transport.util.fromConnectedToConfigured
 import transport.util.fromConnectedToError
 import transport.util.fromConnectingToConnected
 import transport.util.fromIdleToConnecting
-import transport.util.fromReadOnlyToConfigured
 import transport.util.fromReconnectingToError
 import kotlin.test.assertFailsWith
 
@@ -296,32 +294,39 @@ class MCAuthTests : BaseMessagingClientTest() {
 
     @Test
     fun `when authenticated conversation was disconnected with ReadOnly and startNewChat resulted in ClientResponseError(401)`() {
-        // Setup stubs with flexible matchers for dynamic tracingId
-        var configureSessionResponsesCounter = 0
-        
-        // Stub for initial authenticated connection
-        every { mockPlatformSocket.sendMessage(match { 
-            it.contains("\"action\":\"configureAuthenticatedSession\"") && 
-            it.contains("\"startNew\":false") && 
-            it.contains("\"data\":{\"code\":\"${AuthTest.JWT_TOKEN}\"}") 
-        }) } answers {
+        var configureSessionResponsesCounter = 0 // Needed to exit the retry attempts from failing Response.unauthorized
+        every {
+            mockPlatformSocket.sendMessage(
+                match {
+                    it.contains("\"action\":\"configureAuthenticatedSession\"") &&
+                        it.contains("\"startNew\":false") &&
+                        it.contains("\"data\":{\"code\":\"${AuthTest.JWT_TOKEN}\"}")
+                }
+            )
+        } answers {
             slot.captured.onMessage(Response.configureSuccess())
         }
-        
-        // Stub for close session
-        every { mockPlatformSocket.sendMessage(match { 
-            it.contains("\"action\":\"closeSession\"") && 
-            it.contains("\"closeAllConnections\":true") 
-        }) } answers {
+
+        every {
+            mockPlatformSocket.sendMessage(
+                match {
+                    it.contains("\"action\":\"closeSession\"") &&
+                        it.contains("\"closeAllConnections\":true")
+                }
+            )
+        } answers {
             slot.captured.onMessage(Response.configureSuccess(connected = false, readOnly = true))
         }
-        
-        // Stub for reconfigure with 401 retry mechanism
-        every { mockPlatformSocket.sendMessage(match { 
-            it.contains("\"action\":\"configureAuthenticatedSession\"") && 
-            it.contains("\"startNew\":true") && 
-            it.contains("\"data\":{\"code\":\"${AuthTest.JWT_TOKEN}\"}") 
-        }) } answers {
+
+        every {
+            mockPlatformSocket.sendMessage(
+                match {
+                    it.contains("\"action\":\"configureAuthenticatedSession\"") &&
+                        it.contains("\"startNew\":true") &&
+                        it.contains("\"data\":{\"code\":\"${AuthTest.JWT_TOKEN}\"}")
+                }
+            )
+        } answers {
             if (configureSessionResponsesCounter < 1) {
                 configureSessionResponsesCounter++
                 slot.captured.onMessage(Response.unauthorized)
@@ -329,14 +334,12 @@ class MCAuthTests : BaseMessagingClientTest() {
                 slot.captured.onMessage(Response.configureSuccess())
             }
         }
-        
-        // Setup auth handler for token refresh
+
         every { mockAuthHandler.refreshToken(captureLambda()) } answers {
             every { mockAuthHandler.jwt } returns AuthTest.JWT_TOKEN
             lambda<(Result<Empty>) -> Unit>().invoke(Result.Success(Empty()))
         }
-        
-        // Execute the test flow
+
         subject.connectAuthenticatedSession()
         slot.captured.onMessage(
             Response.structuredMessageWithEvents(
@@ -347,27 +350,27 @@ class MCAuthTests : BaseMessagingClientTest() {
 
         subject.startNewChat()
 
-        // Verify the key behavior: final state should be Configured
         assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
-        
-        // Verify that the 401 retry mechanism worked (should be called twice: 401 then success)
+
         verify(exactly = 2) {
-            mockPlatformSocket.sendMessage(match {
-                it.contains("\"action\":\"configureAuthenticatedSession\"") &&
-                it.contains("\"startNew\":true") &&
-                it.contains("\"data\":{\"code\":\"${AuthTest.JWT_TOKEN}\"}")
-            })
+            mockPlatformSocket.sendMessage(
+                match {
+                    it.contains("\"action\":\"configureAuthenticatedSession\"") &&
+                        it.contains("\"startNew\":true") &&
+                        it.contains("\"data\":{\"code\":\"${AuthTest.JWT_TOKEN}\"}")
+                }
+            )
         }
-        
-        // Verify that close session was called
+
         verify(exactly = 1) {
-            mockPlatformSocket.sendMessage(match {
-                it.contains("\"action\":\"closeSession\"") &&
-                it.contains("\"closeAllConnections\":true")
-            })
+            mockPlatformSocket.sendMessage(
+                match {
+                    it.contains("\"action\":\"closeSession\"") &&
+                        it.contains("\"closeAllConnections\":true")
+                }
+            )
         }
-        
-        // Verify that token refresh was called
+
         verify(exactly = 1) {
             mockAuthHandler.refreshToken(any())
         }

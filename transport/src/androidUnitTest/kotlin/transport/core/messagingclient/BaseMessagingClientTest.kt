@@ -33,7 +33,6 @@ import com.genesys.cloud.messenger.transport.util.TracingIdProvider
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import com.genesys.cloud.messenger.transport.utility.AuthTest
-import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues.TOKEN_KEY
@@ -148,11 +147,11 @@ open class BaseMessagingClientTest {
     protected val mockDeploymentConfig = mockk<KProperty0<DeploymentConfig?>> {
         every { get() } returns createDeploymentConfigForTesting()
     }
-    
+
     internal val testTracingIdProvider = mockk<TracingIdProvider> {
         every { getTracingId() } returns TestValues.TRACING_ID
     }
-    
+
     internal val userTypingProvider = UserTypingProvider(
         log = mockk(relaxed = true),
         showUserTypingEnabled = mockShowUserTypingIndicatorFunction,

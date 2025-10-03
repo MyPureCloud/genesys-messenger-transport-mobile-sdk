@@ -224,51 +224,63 @@ class MCConversationDisconnectTests : BaseMessagingClientTest() {
 
     @Test
     fun `when startNewChat and WebSocket receives a SessionResponse that has connected=false and readOnly=true`() {
-        // Setup stubs with flexible matchers for dynamic tracingId
-        every { mockPlatformSocket.sendMessage(match { 
-            it.contains("\"action\":\"configureSession\"") && 
-            it.contains("\"startNew\":false") &&
-            !it.contains("\"data\":")
-        }) } answers {
+        every {
+            mockPlatformSocket.sendMessage(
+                match {
+                    it.contains("\"action\":\"configureSession\"") &&
+                        it.contains("\"startNew\":false") &&
+                        !it.contains("\"data\":")
+                }
+            )
+        } answers {
             slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         }
-        
-        every { mockPlatformSocket.sendMessage(match { 
-            it.contains("\"action\":\"closeSession\"") && 
-            it.contains("\"closeAllConnections\":true") 
-        }) } answers {
+
+        every {
+            mockPlatformSocket.sendMessage(
+                match {
+                    it.contains("\"action\":\"closeSession\"") &&
+                        it.contains("\"closeAllConnections\":true")
+                }
+            )
+        } answers {
             slot.captured.onMessage(Response.configureSuccess(connected = false, readOnly = true))
         }
-        
-        every { mockPlatformSocket.sendMessage(match { 
-            it.contains("\"action\":\"configureSession\"") && 
-            it.contains("\"startNew\":true") &&
-            !it.contains("\"data\":")
-        }) } answers {
+
+        every {
+            mockPlatformSocket.sendMessage(
+                match {
+                    it.contains("\"action\":\"configureSession\"") &&
+                        it.contains("\"startNew\":true") &&
+                        !it.contains("\"data\":")
+                }
+            )
+        } answers {
             slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         }
 
         subject.connect()
         subject.startNewChat()
 
-        // Verify the key behavior: final state should be ReadOnly
         assertThat(subject.currentState).isReadOnly()
-        
-        // Verify that the reconfigure call happened (this proves the close session was recognized)
+
         verify(exactly = 1) {
-            mockPlatformSocket.sendMessage(match {
-                it.contains("\"action\":\"configureSession\"") && 
-                it.contains("\"startNew\":true") &&
-                !it.contains("\"data\":")
-            })
+            mockPlatformSocket.sendMessage(
+                match {
+                    it.contains("\"action\":\"configureSession\"") &&
+                        it.contains("\"startNew\":true") &&
+                        !it.contains("\"data\":")
+                }
+            )
         }
-        
-        // Verify that close session was called
+
         verify(exactly = 1) {
-            mockPlatformSocket.sendMessage(match {
-                it.contains("\"action\":\"closeSession\"") && 
-                it.contains("\"closeAllConnections\":true")
-            })
+            mockPlatformSocket.sendMessage(
+                match {
+                    it.contains("\"action\":\"closeSession\"") &&
+                        it.contains("\"closeAllConnections\":true")
+                }
+            )
         }
     }
 

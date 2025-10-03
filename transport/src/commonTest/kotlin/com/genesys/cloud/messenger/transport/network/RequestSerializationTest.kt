@@ -37,9 +37,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.UserTypingRequest
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.Journey
-import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
-import kotlinx.serialization.encodeToString
 import kotlin.test.Test
 
 class RequestSerializationTest {
@@ -52,7 +50,7 @@ class RequestSerializationTest {
         )
         val expectedEvents = listOf(expectedPresenceEvent)
         val expectedMessage = EventMessage(expectedEvents)
-        val expectedRequest = AutoStartRequest(TestValues.TOKEN, null, tracingId = TestValues.TRACING_ID )
+        val expectedRequest = AutoStartRequest(TestValues.TOKEN, null, tracingId = TestValues.TRACING_ID)
         val expectedJson =
             """{"token":"token","tracingId":"${TestValues.TRACING_ID}","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Join"}}],"type":"Event"}}"""
 

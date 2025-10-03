@@ -37,7 +37,6 @@ import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
-import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlinx.serialization.SerializationException
 import kotlin.test.Test

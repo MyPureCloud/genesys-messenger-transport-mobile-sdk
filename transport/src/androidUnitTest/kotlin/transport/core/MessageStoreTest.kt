@@ -48,7 +48,7 @@ internal class MessageStoreTest {
     private val mockMessageListener: ((MessageEvent) -> Unit) = mockk(relaxed = true)
 
     private val mockTracingProvider: TracingIdProvider = mockk {
-        every { getTracingId() } returns "test-tracing-id"
+        every { getTracingId() } returns TestValues.TRACING_ID
     }
     private val subject = MessageStore(mockLogger, mockTracingProvider).also {
         it.messageListener = mockMessageListener
@@ -63,7 +63,7 @@ internal class MessageStoreTest {
             message = TextMessage(
                 "test message",
             ),
-            tracingId = "test-tracing-id"
+            tracingId = mockTracingProvider.getTracingId()
         )
 
         subject.prepareMessage(TestValues.TOKEN, "test message").run {
@@ -348,7 +348,7 @@ internal class MessageStoreTest {
 
         subject.onMessageError(ErrorCode.MessageTooLong, errorMessage)
 
-        assertThat { subject.getConversation().contains(expectedMessage) }
+        assertThat(subject.getConversation()).contains(expectedMessage)
         verify { mockMessageListener.invoke(capture(messageSlot)) }
         (messageSlot.captured as MessageEvent.MessageUpdated).message.run {
             assertThat(this).isEqualTo(expectedMessage)
@@ -391,7 +391,7 @@ internal class MessageStoreTest {
                 "test message",
                 channel = Channel(Channel.Metadata(mapOf("A" to "B"))),
             ),
-            tracingId = expectedMessage.id
+            tracingId = mockTracingProvider.getTracingId()
         )
 
         val onMessageRequest =
@@ -487,7 +487,7 @@ internal class MessageStoreTest {
                 ),
                 channel = givenChannel
             ),
-            tracingId = expectedMessage.id
+            tracingId = mockTracingProvider.getTracingId()
         )
 
         subject.prepareMessageWith(TestValues.TOKEN, givenButtonResponse, givenChannel).run {
@@ -524,7 +524,7 @@ internal class MessageStoreTest {
                     )
                 ),
             ),
-            tracingId = expectedMessage.id
+            tracingId = mockTracingProvider.getTracingId()
         )
 
         subject.prepareMessageWith(TestValues.TOKEN, givenButtonResponse).run {

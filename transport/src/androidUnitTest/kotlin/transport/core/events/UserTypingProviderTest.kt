@@ -6,7 +6,6 @@ import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.core.events.TYPING_INDICATOR_COOL_DOWN_MILLISECONDS
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
 import com.genesys.cloud.messenger.transport.util.Platform
-import com.genesys.cloud.messenger.transport.util.TracingIdProvider
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.mockk.every
