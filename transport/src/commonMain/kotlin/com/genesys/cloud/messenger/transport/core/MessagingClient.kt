@@ -56,12 +56,18 @@ interface MessagingClient {
         /**
          * Remote peer has indicated that no more incoming messages will be transmitted.
          */
-        data class Closing(val code: Int, val reason: String) : State()
+        data class Closing(
+            val code: Int,
+            val reason: String
+        ) : State()
 
         /**
          * Both peers have indicated that no more messages will be transmitted and the connection has been successfully released.
          */
-        data class Closed(val code: Int, val reason: String) : State()
+        data class Closed(
+            val code: Int,
+            val reason: String
+        ) : State()
 
         /**
          * In case of fatal, unrecoverable errors MessagingClient will transition to this state.
@@ -69,7 +75,10 @@ interface MessagingClient {
          * @property code the [ErrorCode] representing the reason for the failure.
          * @property message an optional message describing the error.
          */
-        data class Error(val code: ErrorCode, val message: String?) : State()
+        data class Error(
+            val code: ErrorCode,
+            val message: String?
+        ) : State()
     }
 
     /**

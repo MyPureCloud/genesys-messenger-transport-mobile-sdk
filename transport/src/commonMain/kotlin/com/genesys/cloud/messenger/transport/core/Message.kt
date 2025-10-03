@@ -91,7 +91,10 @@ data class Message(
          * @property code is Genesys error code representation of the failure.
          * @property message optional message describing reason of failure.
          */
-        data class Error(val code: ErrorCode, val message: String?) : State()
+        data class Error(
+            val code: ErrorCode,
+            val message: String?
+        ) : State()
     }
 
     /**
