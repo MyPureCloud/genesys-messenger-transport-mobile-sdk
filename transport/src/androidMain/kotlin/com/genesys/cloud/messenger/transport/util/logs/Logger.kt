@@ -19,7 +19,10 @@ internal actual class Logger actual constructor(private val enableLogs: Boolean,
         if (enableLogs) Log.e(tag, message())
     }
 
-    actual fun e(throwable: Throwable?, message: () -> String) {
+    actual fun e(
+        throwable: Throwable?,
+        message: () -> String
+    ) {
         if (enableLogs) Log.e(tag, message(), throwable)
     }
 }

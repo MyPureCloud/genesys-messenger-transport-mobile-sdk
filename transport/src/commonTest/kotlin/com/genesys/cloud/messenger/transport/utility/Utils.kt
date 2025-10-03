@@ -5,5 +5,4 @@ import io.ktor.client.engine.mock.respond
 import io.ktor.client.request.HttpResponseData
 import io.ktor.http.HttpStatusCode
 
-internal fun MockRequestHandleScope.respondUnauthorized(): HttpResponseData =
-    respond("You are not authorized", HttpStatusCode.Unauthorized)
+internal fun MockRequestHandleScope.respondUnauthorized(): HttpResponseData = respond("You are not authorized", HttpStatusCode.Unauthorized)

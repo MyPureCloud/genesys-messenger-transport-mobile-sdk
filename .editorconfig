@@ -2,10 +2,16 @@ root = true
 [*.{kt,kts}]
 # Necessary rules
 ktlint_function_naming_ignore_when_annotated_with = Composable
+ktlint_standard_function-expression-body = disabled
+# Enabled Rules
+ktlint_standard_argument-list-wrapping = enabled
+ktlint_standard_blank-line-before-declaration = enabled
+ktlint_standard_block-comment-initial-star-alignment = enabled
+ktlint_standard_chain-method-continuation = enabled
+ktlint_standard_class-signature = enabled
+ktlint_standard_function-signature = enabled
 # Investigation candidate rules
 ktlint_standard_class-signature = disabled
-ktlint_standard_function-expression-body = disabled
-ktlint_standard_function-signature = disabled
 ktlint_standard_if-else-bracing = disabled
 ktlint_standard_if-else-wrapping = disabled
 ktlint_standard_max-line-length = disabled

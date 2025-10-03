@@ -577,13 +577,14 @@ internal class MessageStoreTest {
         assertThat(subject.pendingMessage.attachments).isEmpty()
     }
 
-    private fun outboundMessage(messageId: Int = 0): Message = Message(
-        id = "$messageId",
-        direction = Direction.Outbound,
-        state = State.Sent,
-        text = "message from agent number $messageId",
-        timeStamp = 100 * messageId.toLong(),
-    )
+    private fun outboundMessage(messageId: Int = 0): Message =
+        Message(
+            id = "$messageId",
+            direction = Direction.Outbound,
+            state = State.Sent,
+            text = "message from agent number $messageId",
+            timeStamp = 100 * messageId.toLong(),
+        )
 
     private fun attachment(
         id: String = "given id",
