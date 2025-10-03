@@ -63,7 +63,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.encodeToString
 import kotlin.reflect.KProperty0
 
 private const val MAX_RECONFIGURE_ATTEMPTS = 3
@@ -285,16 +284,17 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun refreshAttachmentUrl(attachmentId: String) {
-        WebMessagingJson.json.encodeToString(
-            GetAttachmentRequest(
-                token = token,
-                attachmentId = attachmentId,
-                tracingId = tracingIdProvider.getTracingId()
-            )
-        ).also {
-            log.i { "getAttachmentRequest()" }
-            send(it)
-        }
+        WebMessagingJson.json
+            .encodeToString(
+                GetAttachmentRequest(
+                    token = token,
+                    attachmentId = attachmentId,
+                    tracingId = tracingIdProvider.getTracingId()
+                )
+            ).also {
+                log.i { "getAttachmentRequest()" }
+                send(it)
+            }
     }
 
     @Throws(IllegalStateException::class)
