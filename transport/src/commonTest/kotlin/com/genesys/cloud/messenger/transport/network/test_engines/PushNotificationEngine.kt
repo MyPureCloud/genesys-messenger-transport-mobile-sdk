@@ -99,23 +99,25 @@ private fun MockRequestHandleScope.respondToDeleteDeviceToken(request: HttpReque
     }
 }
 
-private fun MockRequestHandleScope.respondSuccess(): HttpResponseData = respond(
-    status = HttpStatusCode.NoContent,
-    headers = headersOf(
-        HttpHeaders.ContentType,
-        MockEngineValues.CONTENT_TYPE_JSON
-    ),
-    content = MockEngineValues.NO_CONTENT
-)
+private fun MockRequestHandleScope.respondSuccess(): HttpResponseData =
+    respond(
+        status = HttpStatusCode.NoContent,
+        headers = headersOf(
+            HttpHeaders.ContentType,
+            MockEngineValues.CONTENT_TYPE_JSON
+        ),
+        content = MockEngineValues.NO_CONTENT
+    )
 
 private fun MockRequestHandleScope.respondWithPushErrorResponse(
     statusCode: HttpStatusCode = HttpStatusCode.NotFound,
     content: PushErrorResponse = PushTestValues.pushErrorResponseWith(PushTestValues.PUSH_CODE_DEPLOYMENT_NOT_FOUND),
-): HttpResponseData = respond(
-    status = statusCode,
-    headers = headersOf(
-        HttpHeaders.ContentType,
-        MockEngineValues.CONTENT_TYPE_JSON
-    ),
-    content = WebMessagingJson.json.encodeToString(content)
-)
+): HttpResponseData =
+    respond(
+        status = statusCode,
+        headers = headersOf(
+            HttpHeaders.ContentType,
+            MockEngineValues.CONTENT_TYPE_JSON
+        ),
+        content = WebMessagingJson.json.encodeToString(content)
+    )

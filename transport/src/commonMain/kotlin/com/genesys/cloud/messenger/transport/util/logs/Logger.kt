@@ -9,5 +9,8 @@ internal expect class Logger(enableLogs: Boolean, tag: String) {
 
     fun e(message: () -> String)
 
-    fun e(throwable: Throwable?, message: () -> String)
+    fun e(
+        throwable: Throwable?,
+        message: () -> String
+    )
 }

@@ -20,7 +20,10 @@ class ConcreteVault(
 ) : Vault(keys) {
     private val storage = mutableMapOf<String, String>()
 
-    override fun store(key: String, value: String) {
+    override fun store(
+        key: String,
+        value: String
+    ) {
         storage[key] = value
     }
 

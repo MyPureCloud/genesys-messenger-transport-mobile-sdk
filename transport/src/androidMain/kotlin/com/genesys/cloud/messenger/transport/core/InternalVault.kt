@@ -43,7 +43,10 @@ internal class InternalVault(
      * @param key The key to store
      * @param value The value to store
      */
-    fun store(key: String, value: String) {
+    fun store(
+        key: String,
+        value: String
+    ) {
         try {
             val encryptedData = encrypt(value)
             with(sharedPreferences.edit()) {

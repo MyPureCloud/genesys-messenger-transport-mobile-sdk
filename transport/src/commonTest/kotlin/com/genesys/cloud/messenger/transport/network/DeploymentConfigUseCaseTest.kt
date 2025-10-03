@@ -32,24 +32,25 @@ class DeploymentConfigUseCaseTest {
         assertEquals(expectedTestDeploymentConfig, result)
     }
 
-    private fun mockHttpClient(): HttpClient = HttpClient(MockEngine) {
-        install(ContentNegotiation) {
-            json()
-        }
-        engine {
-            val responseHeaders =
-                headersOf("Content-Type" to listOf(ContentType.Application.Json.toString()))
-            addHandler { request ->
-                when (request.url.fullPath) {
-                    BASIC_DEPLOYMENT_CONFIG_RESPONSE_PATH -> {
-                        respond(
-                            TestWebMessagingApiResponses.deploymentConfigResponse,
-                            headers = responseHeaders
-                        )
+    private fun mockHttpClient(): HttpClient =
+        HttpClient(MockEngine) {
+            install(ContentNegotiation) {
+                json()
+            }
+            engine {
+                val responseHeaders =
+                    headersOf("Content-Type" to listOf(ContentType.Application.Json.toString()))
+                addHandler { request ->
+                    when (request.url.fullPath) {
+                        BASIC_DEPLOYMENT_CONFIG_RESPONSE_PATH -> {
+                            respond(
+                                TestWebMessagingApiResponses.deploymentConfigResponse,
+                                headers = responseHeaders
+                            )
+                        }
+                        else -> error("Unhandled ${request.url.fullPath}")
                     }
-                    else -> error("Unhandled ${request.url.fullPath}")
                 }
             }
         }
-    }
 }

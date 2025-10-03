@@ -153,13 +153,11 @@ object ErrorMessage {
     const val INVALID_DEVICE_TOKEN = "DeviceToken can not be empty."
     const val INVALID_PUSH_PROVIDER = "PushProvider can not be null."
 
-    fun fileSizeIsTooBig(maxFileSize: Long?) =
-        "Reduce the attachment size to $maxFileSize KB or less."
+    fun fileSizeIsTooBig(maxFileSize: Long?) = "Reduce the attachment size to $maxFileSize KB or less."
 
     fun fileTypeIsProhibited(fileName: String) = "File type  $fileName is prohibited for upload."
 
-    fun customAttributesSizeError(maxSize: Int) =
-        "Error: Custom attributes exceed allowed max size of $maxSize bytes."
+    fun customAttributesSizeError(maxSize: Int) = "Error: Custom attributes exceed allowed max size of $maxSize bytes."
 }
 
 sealed class CorrectiveAction(val message: String) {
@@ -187,40 +185,41 @@ sealed class CorrectiveAction(val message: String) {
     }
 }
 
-internal fun ErrorCode.toCorrectiveAction(): CorrectiveAction = when (this.code) {
-    400 -> CorrectiveAction.BadRequest
-    403 -> CorrectiveAction.Forbidden
-    404 -> CorrectiveAction.NotFound
-    408 -> CorrectiveAction.RequestTimeOut
-    429 -> CorrectiveAction.TooManyRequests
-    4013 -> CorrectiveAction.CustomAttributeSizeTooLarge
-    ErrorCode.AuthFailed.code,
-    ErrorCode.AuthLogoutFailed.code,
-    ErrorCode.RefreshAuthTokenFailure.code,
-    -> CorrectiveAction.ReAuthenticate
+internal fun ErrorCode.toCorrectiveAction(): CorrectiveAction =
+    when (this.code) {
+        400 -> CorrectiveAction.BadRequest
+        403 -> CorrectiveAction.Forbidden
+        404 -> CorrectiveAction.NotFound
+        408 -> CorrectiveAction.RequestTimeOut
+        429 -> CorrectiveAction.TooManyRequests
+        4013 -> CorrectiveAction.CustomAttributeSizeTooLarge
+        ErrorCode.AuthFailed.code,
+        ErrorCode.AuthLogoutFailed.code,
+        ErrorCode.RefreshAuthTokenFailure.code,
+        -> CorrectiveAction.ReAuthenticate
 
-    else -> CorrectiveAction.Unknown
-}
-
-internal fun ErrorCode.isUnauthorized(): Boolean =
-    this.code == HttpStatusCode.Unauthorized.value
-
-internal fun PushErrorResponse.toErrorCode(): ErrorCode = when (code) {
-    "device.not.found" -> ErrorCode.DeviceNotFound
-    "device.registration.failure" -> ErrorCode.DeviceRegistrationFailure
-    "device.update.failure" -> ErrorCode.DeviceUpdateFailure
-    "device.delete.failure" -> ErrorCode.DeviceDeleteFailure
-    "device.already.registered" -> ErrorCode.DeviceAlreadyRegistered
-    "contacts.stitching.error" -> ErrorCode.ContactStitchingError
-    "feature.toggle.disabled" -> ErrorCode.FeatureUnavailable
-    "too.many.requests.retry.after" -> ErrorCode.RequestRateTooHigh
-    "identity.resolution.disabled" -> ErrorCode.DeviceRegistrationFailure
-    "required.fields.missing", "update.fields.missing" -> ErrorCode.MissingParameter
-    "invalid.path.parameter" -> if (message == DEPLOYMENT_ID_MISMATCH_ERROR_MESSAGE) {
-        ErrorCode.DeploymentIdMismatch
-    } else {
-        ErrorCode.DeviceTokenOperationFailure
+        else -> CorrectiveAction.Unknown
     }
 
-    else -> ErrorCode.DeviceTokenOperationFailure
-}
+internal fun ErrorCode.isUnauthorized(): Boolean = this.code == HttpStatusCode.Unauthorized.value
+
+internal fun PushErrorResponse.toErrorCode(): ErrorCode =
+    when (code) {
+        "device.not.found" -> ErrorCode.DeviceNotFound
+        "device.registration.failure" -> ErrorCode.DeviceRegistrationFailure
+        "device.update.failure" -> ErrorCode.DeviceUpdateFailure
+        "device.delete.failure" -> ErrorCode.DeviceDeleteFailure
+        "device.already.registered" -> ErrorCode.DeviceAlreadyRegistered
+        "contacts.stitching.error" -> ErrorCode.ContactStitchingError
+        "feature.toggle.disabled" -> ErrorCode.FeatureUnavailable
+        "too.many.requests.retry.after" -> ErrorCode.RequestRateTooHigh
+        "identity.resolution.disabled" -> ErrorCode.DeviceRegistrationFailure
+        "required.fields.missing", "update.fields.missing" -> ErrorCode.MissingParameter
+        "invalid.path.parameter" -> if (message == DEPLOYMENT_ID_MISMATCH_ERROR_MESSAGE) {
+            ErrorCode.DeploymentIdMismatch
+        } else {
+            ErrorCode.DeviceTokenOperationFailure
+        }
+
+        else -> ErrorCode.DeviceTokenOperationFailure
+    }

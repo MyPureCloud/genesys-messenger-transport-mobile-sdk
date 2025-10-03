@@ -20,7 +20,10 @@ internal actual class Logger actual constructor(private val enableLogs: Boolean,
         if (enableLogs) NSLog("ERROR: ${message()}")
     }
 
-    actual fun e(throwable: Throwable?, message: () -> String) {
+    actual fun e(
+        throwable: Throwable?,
+        message: () -> String
+    ) {
         if (enableLogs) {
             NSLog("ERROR: [$tag] ${message()}")
             throwable?.let { NSLog("ERROR: ${it.message}") }
