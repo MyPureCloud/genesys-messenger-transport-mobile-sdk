@@ -237,7 +237,6 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
     private fun MockKVerificationScope.sendingCustomAttributesSequence(message: String) {
         mockCustomAttributesStore.getCustomAttributesToSend()
         mockCustomAttributesStore.onSending()
-        testTracingIdProvider.getTracingId()
         mockLogger.i(capture(logSlot))
         mockLogger.i(capture(logSlot))
         mockPlatformSocket.sendMessage(message)

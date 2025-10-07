@@ -27,7 +27,6 @@ internal class AttachmentHandlerImpl(
     private val api: WebMessagingApi,
     private val log: Log,
     private val updateAttachmentStateWith: (Attachment) -> Unit,
-    private val tracingProvider: TracingIdProvider,
     private val processedAttachments: MutableMap<String, ProcessedAttachment> = mutableMapOf(),
 ) : AttachmentHandler {
     private val uploadDispatcher = CoroutineScope(Dispatchers.Main + SupervisorJob())
@@ -59,7 +58,7 @@ internal class AttachmentHandlerImpl(
             fileType = resolveContentType(fileName).toString(),
             fileSize = byteArray.size,
             errorsAsJson = true,
-            tracingId = tracingProvider.getTracingId()
+            tracingId = TracingIdProvider.getTracingId()
         )
     }
 
@@ -103,7 +102,7 @@ internal class AttachmentHandlerImpl(
                 return DeleteAttachmentRequest(
                     token = token,
                     attachmentId = attachmentId,
-                    tracingId = tracingProvider.getTracingId()
+                    tracingId = TracingIdProvider.getTracingId()
                 )
             } else {
                 onDetached(attachmentId)

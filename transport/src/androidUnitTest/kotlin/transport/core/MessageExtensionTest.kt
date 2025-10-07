@@ -53,7 +53,6 @@ import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.StructuredMessageValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
-import kotlinx.serialization.encodeToString
 import net.bytebuddy.utility.RandomString
 import org.junit.Test
 
@@ -62,7 +61,7 @@ internal class MessageExtensionTest {
     @Test
     fun `when MessageEntityList toMessageList()`() {
         val expectedMessage1 = Message(
-            id = "5befde6373a23f32f20b59b4e1cba0e6",
+            id = "message1_id",
             direction = Direction.Outbound,
             state = State.Sent,
             messageType = Type.Text,
@@ -173,7 +172,7 @@ internal class MessageExtensionTest {
             assertThat(id).isEqualTo(expectedMessage.id)
             assertThat(direction).isEqualTo(expectedMessage.direction)
             assertThat(state).isEqualTo(expectedMessage.state)
-            assertThat(type).isEqualTo(expectedMessage.type)
+            assertThat(messageType).isEqualTo(expectedMessage.messageType)
             assertThat(timeStamp).isEqualTo(expectedMessage.timeStamp)
             assertThat(events).containsExactly(*expectedMessage.events.toTypedArray())
             from.run {
@@ -515,7 +514,8 @@ internal class MessageExtensionTest {
         val givenStructuredMessage = StructuredMessage(
             id = "some_id",
             type = StructuredMessage.Type.Text,
-            direction = "Inbound"
+            direction = "Inbound",
+            tracingId = TestValues.TRACING_ID
         )
         val givenMessageEntityList = MessageEntityList(
             entities = listOf(givenStructuredMessage),
@@ -526,7 +526,7 @@ internal class MessageExtensionTest {
         )
 
         val expectedMessageEntityListAsJson =
-            """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound","tracingId":"${givenStructuredMessage.tracingId}"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
+            """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound","tracingId":"test-tracing-id"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
 
         val result = WebMessagingJson.json.encodeToString(givenMessageEntityList)
 

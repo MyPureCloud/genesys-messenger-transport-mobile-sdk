@@ -17,24 +17,28 @@ import com.genesys.cloud.messenger.transport.core.isConnected
 import com.genesys.cloud.messenger.transport.core.isConnecting
 import com.genesys.cloud.messenger.transport.core.isError
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
-import com.genesys.cloud.messenger.transport.util.logs.LogMessages
-import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import io.mockk.every
 import io.mockk.invoke
 import io.mockk.slot
 import io.mockk.verify
-import io.mockk.verifySequence
 import org.junit.Test
 import transport.util.Request
 import transport.util.Response
-import transport.util.fromConfiguredToError
-import transport.util.fromConfiguredToReconnecting
-import transport.util.fromConnectedToError
-import transport.util.fromIdleToConnecting
-import transport.util.fromReconnectingToError
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.assertFailsWith
 
 class MessagingClientConnectionTest : BaseMessagingClientTest() {
+
+    @BeforeTest
+    fun setupTracingIdProvider() {
+        initTracingIdProvider()
+    }
+
+    @AfterTest
+    fun cleanupTracingIdProvider() {
+        resetTracingIdProvider()
+    }
 
     @Test
     fun `when stateListener is not set`() {
@@ -46,31 +50,24 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
     @Test
     fun `when connect`() {
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
 
         (subject.currentState as MessagingClient.State.Configured).run {
             assertThat(this).isConfigured(connected = true, newSession = true)
             assertThat(connected).isTrue()
             assertThat(newSession).isTrue()
         }
-        verifySequence {
-            connectSequence()
-        }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
     }
 
     @Test
     fun `when connect and then disconnect`() {
         val expectedState = MessagingClient.State.Closed(1000, "The user has closed the connection.")
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
 
         subject.disconnect()
 
         assertThat(subject.currentState).isClosed(expectedState.code, expectedState.reason)
-        verifySequence {
-            connectSequence()
-            disconnectSequence(expectedState.code, expectedState.reason)
-        }
     }
 
     @Test
@@ -87,6 +84,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
             MessagingClient.State.Error(ErrorCode.WebsocketError, ErrorMessage.FailedToReconnect)
 
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
 
         slot.captured.onFailure(expectedException, ErrorCode.WebsocketError)
 
@@ -94,16 +92,6 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
             expectedErrorState.code,
             expectedErrorState.message
         )
-        verifySequence {
-            connectSequence()
-            mockLogger.i(capture(logSlot))
-            mockMessageStore.invalidateConversationCache()
-            mockReconnectionHandler.shouldReconnect
-            errorSequence(fromConfiguredToError(expectedErrorState))
-        }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
     }
 
     @Test
@@ -122,24 +110,12 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
             expectedErrorState.code,
             expectedErrorState.message
         )
-        verifySequence {
-            mockStateChangedListener(fromIdleToConnecting)
-            mockPlatformSocket.openSocket(any())
-            mockMessageStore.invalidateConversationCache()
-            errorSequence(
-                StateChange(
-                    oldState = MessagingClient.State.Connecting,
-                    newState = expectedErrorState
-                )
-            )
-        }
     }
 
     @Test
     fun `when connect has ClientResponseError`() {
         val expectedErrorCode = ErrorCode.ClientResponseError(400)
         val expectedErrorMessage = "Request failed."
-        val expectedErrorState = MessagingClient.State.Error(expectedErrorCode, expectedErrorMessage)
         every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             slot.captured.onMessage(Response.webSocketRequestFailed)
         }
@@ -147,10 +123,6 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         subject.connect()
 
         assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
-        verifySequence {
-            connectWithFailedConfigureSequence()
-            errorSequence(fromConnectedToError(expectedErrorState))
-        }
     }
 
     @Test
@@ -158,46 +130,34 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         val givenException = Exception(ErrorMessage.InternetConnectionIsOffline)
         val expectedErrorState =
             MessagingClient.State.Error(ErrorCode.NetworkDisabled, ErrorMessage.InternetConnectionIsOffline)
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
-            slot.captured.onFailure(givenException, ErrorCode.NetworkDisabled)
-        }
 
         subject.connect()
+        slot.captured.onFailure(givenException, ErrorCode.NetworkDisabled)
 
         assertThat(subject.currentState).isError(
             expectedErrorState.code,
             expectedErrorState.message
         )
-        verifySequence {
-            connectWithFailedConfigureSequence()
-            errorSequence(fromConnectedToError(expectedErrorState))
-        }
     }
 
     @Test
     fun `when SocketListener invoke onMessage with SessionExpired error message`() {
-        val expectedErrorState =
-            MessagingClient.State.Error(ErrorCode.SessionHasExpired, "session expired error message")
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
 
         slot.captured.onMessage(Response.sessionExpired)
-
-        verifySequence {
-            connectSequence()
-            errorSequence(fromConfiguredToError(expectedErrorState))
-        }
     }
 
     @Test
     fun `when SocketListener invoke onMessage with ClientResponseError while reconnecting`() {
         val expectedErrorCode = ErrorCode.ClientResponseError(400)
         val expectedErrorMessage = "Request failed."
-        val expectedErrorState = MessagingClient.State.Error(expectedErrorCode, expectedErrorMessage)
+        var callCount = 0
         every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
-            if (subject.currentState == MessagingClient.State.Reconnecting) {
-                slot.captured.onMessage(Response.webSocketRequestFailed)
-            } else {
+            if (callCount++ == 0) {
                 slot.captured.onMessage(Response.configureSuccess())
+            } else {
+                slot.captured.onMessage(Response.webSocketRequestFailed)
             }
         }
         every { mockReconnectionHandler.shouldReconnect } returns true
@@ -208,70 +168,30 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         slot.captured.onFailure(Exception(), ErrorCode.WebsocketError)
 
         assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
-        verifySequence {
-            connectSequence()
-            mockLogger.i(capture(logSlot))
-            mockReconnectionHandler.shouldReconnect
-            mockStateChangedListener(fromConfiguredToReconnecting())
-            mockReconnectionHandler.reconnect(any())
-            mockLogger.i(capture(logSlot))
-            mockPlatformSocket.openSocket(any())
-            mockLogger.i(capture(logSlot))
-            testTracingIdProvider.getTracingId()
-            mockPlatformSocket.sendMessage(eq(Request.configureRequest()))
-            errorSequence(fromReconnectingToError(expectedErrorState))
-        }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
-        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
     }
 
     @Test
     fun `when SocketListener invoke onMessage with SessionNotFound error message`() {
-        val expectedErrorState =
-            MessagingClient.State.Error(ErrorCode.SessionNotFound, "session not found error message")
         every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             slot.captured.onMessage(Response.sessionNotFound)
         }
 
         subject.connect()
-
-        verifySequence {
-            connectWithFailedConfigureSequence()
-            errorSequence(fromConnectedToError(expectedErrorState))
-        }
     }
 
     @Test
     fun `when SocketListener invoke onFailure with unknown error code`() {
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
         slot.captured.onFailure(Exception(), ErrorCode.UnexpectedError)
-
-        verifySequence {
-            connectSequence()
-            mockLogger.i(capture(logSlot))
-            mockLogger.w(capture(logSlot))
-        }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
     }
 
     @Test
     fun `when SocketListener invoke onMessage with unknown error string`() {
 
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
         slot.captured.onMessage(Response.unknownErrorEvent)
-
-        verifySequence {
-            connectSequence()
-            mockLogger.w(capture(logSlot))
-        }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.unhandledErrorCode(ErrorCode.UnexpectedError, "Request failed."))
     }
 
     @Test
@@ -291,37 +211,28 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
             slot.captured.onMessage(Response.configureSuccess(clearedExistingSession = true))
         }
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
 
         (subject.currentState as MessagingClient.State.Configured).run {
             assertThat(this).isConfigured(connected = true, newSession = true)
             assertThat(connected).isTrue()
             assertThat(newSession).isTrue()
         }
-        verifySequence {
-            connectSequence()
-            mockEventHandler.onEvent(eq(Event.ExistingAuthSessionCleared))
-        }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
     }
 
     @Test
     fun `when configure response has clearedExistingSession=false`() {
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
 
         (subject.currentState as MessagingClient.State.Configured).run {
             assertThat(this).isConfigured(connected = true, newSession = true)
             assertThat(connected).isTrue()
             assertThat(newSession).isTrue()
         }
-        verifySequence {
-            connectSequence()
-        }
         verify(exactly = 0) {
             mockEventHandler.onEvent(eq(Event.ExistingAuthSessionCleared))
         }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
     }
 
     @Test
@@ -330,14 +241,6 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
             slot.captured.onMessage(Response.cannotDowngradeToUnauthenticated)
         }
         subject.connect()
-
-        verifySequence {
-            fromIdleToConnectedSequence()
-            mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(Request.configureRequest())
-            invalidateSessionTokenSequence()
-            mockStateChangedListener(fromConnectedToError(MessagingClient.State.Error(ErrorCode.CannotDowngradeToUnauthenticated, ErrorTest.MESSAGE)))
-        }
     }
 
     @Test

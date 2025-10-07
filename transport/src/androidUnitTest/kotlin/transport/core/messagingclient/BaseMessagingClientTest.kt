@@ -45,8 +45,10 @@ import io.mockk.invoke
 import io.mockk.just
 import io.mockk.justRun
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.slot
 import io.mockk.spyk
+import io.mockk.unmockkObject
 import transport.util.Request
 import transport.util.Response
 import transport.util.fromConnectedToConfigured
@@ -55,8 +57,14 @@ import transport.util.fromConnectingToConnected
 import transport.util.fromIdleToConnecting
 import kotlin.reflect.KProperty0
 import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 
 open class BaseMessagingClientTest {
+    init {
+        mockkObject(TracingIdProvider)
+        every { TracingIdProvider.getTracingId() } returns TestValues.TRACING_ID
+    }
+
     private var testToken = Request.token
     internal val slot = slot<PlatformSocketListener>()
     protected val mockStateChangedListener: (StateChange) -> Unit = spyk()
@@ -148,15 +156,10 @@ open class BaseMessagingClientTest {
         every { get() } returns createDeploymentConfigForTesting()
     }
 
-    internal val testTracingIdProvider = mockk<TracingIdProvider> {
-        every { getTracingId() } returns TestValues.TRACING_ID
-    }
-
     internal val userTypingProvider = UserTypingProvider(
         log = mockk(relaxed = true),
         showUserTypingEnabled = mockShowUserTypingIndicatorFunction,
         getCurrentTimestamp = mockTimestampFunction,
-        tracingIdProvider = testTracingIdProvider,
     )
     internal val mockAuthHandler: AuthHandler = mockk(relaxed = true) {
         every { jwt } returns AuthTest.JWT_TOKEN
@@ -199,7 +202,6 @@ open class BaseMessagingClientTest {
         attachmentHandler = mockAttachmentHandler,
         messageStore = mockMessageStore,
         reconnectionHandler = mockReconnectionHandler,
-        tracingIdProvider = testTracingIdProvider,
         eventHandler = mockEventHandler,
         userTypingProvider = userTypingProvider,
         healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),
@@ -211,8 +213,17 @@ open class BaseMessagingClientTest {
         it.stateChangedListener = mockStateChangedListener
     }
 
+    @BeforeTest
+    fun initTracingIdProvider() {
+        mockkObject(TracingIdProvider)
+        every { TracingIdProvider.getTracingId() } returns TestValues.TRACING_ID
+    }
+
     @AfterTest
-    fun after() = clearAllMocks()
+    fun resetTracingIdProvider() {
+        unmockkObject(TracingIdProvider)
+        clearAllMocks()
+    }
 
     protected fun MockKVerificationScope.fromIdleToConnectedSequence() {
         mockLogger.withTag(LogTag.STATE_MACHINE)
@@ -237,7 +248,6 @@ open class BaseMessagingClientTest {
             mockAuthHandler.jwt // check if jwt is valid
             mockAuthHandler.jwt // use jwt for request
         }
-        testTracingIdProvider.getTracingId()
         mockPlatformSocket.sendMessage(configureRequest)
         mockVault.wasAuthenticated = shouldConfigureAuth
         mockAttachmentHandler.fileAttachmentProfile = any()

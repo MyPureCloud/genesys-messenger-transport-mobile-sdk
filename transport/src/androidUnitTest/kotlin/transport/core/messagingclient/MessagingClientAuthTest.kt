@@ -281,7 +281,6 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.jwt
-            testTracingIdProvider.getTracingId()
             mockPlatformSocket.sendMessage(eq(Request.configureAuthenticatedRequest()))
             errorSequence(fromReconnectingToError(expectedErrorState))
         }

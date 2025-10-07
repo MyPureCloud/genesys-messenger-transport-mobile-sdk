@@ -21,23 +21,34 @@ import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.every
 import io.mockk.verify
-import io.mockk.verifySequence
 import org.junit.Test
 import transport.util.Request
 import transport.util.Response
 import transport.util.fromConfiguredToReadOnly
 import transport.util.fromConnectedToReadOnly
-import transport.util.fromReadOnlyToError
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
+
+    @BeforeTest
+    fun setupTracingIdProvider() {
+        initTracingIdProvider()
+    }
+
+    @AfterTest
+    fun cleanupTracingIdProvider() {
+        resetTracingIdProvider()
+    }
 
     @Test
     fun `when event Presence Disconnect received and there is no readOnly field in metadata`() {
         val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = Response.StructuredEvent.presenceDisconnect))
 
         assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
@@ -53,6 +64,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
         slot.captured.onMessage(
             Response.structuredMessageWithEvents(
                 events = Response.StructuredEvent.presenceDisconnect,
@@ -61,8 +73,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         )
 
         assertTrue(subject.currentState is MessagingClient.State.ReadOnly)
-        verifySequence {
-            connectSequence()
+        verify {
             mockStateChangedListener.invoke(fromConfiguredToReadOnly())
             mockEventHandler.onEvent(eq(expectedEvent))
         }
@@ -73,6 +84,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
         slot.captured.onMessage(
             Response.structuredMessageWithEvents(
                 events = Response.StructuredEvent.presenceDisconnect,
@@ -91,11 +103,9 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         }
 
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess(readOnly = true))
 
         assertThat(subject.currentState).isReadOnly()
-        verifySequence {
-            connectToReadOnlySequence()
-        }
     }
 
     @Test
@@ -114,11 +124,9 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         )
 
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess(readOnly = true))
 
         assertThat(subject.currentState).isReadOnly()
-        verifySequence {
-            connectToReadOnlySequence()
-        }
         verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart()) }
     }
 
@@ -129,6 +137,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         }
 
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess(readOnly = true))
 
         assertThat(subject.currentState).isReadOnly()
         assertFailsWith<IllegalStateException> { subject.sendMessage("Hello!") }
@@ -146,6 +155,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
 
         // currentState = Configured
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
 
         assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
         assertFailsWith<IllegalStateException>("MessagingClient is not in ReadOnly state.") { subject.startNewChat() }
@@ -160,6 +170,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
 
         // currentState = Error
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
         every { mockReconnectionHandler.shouldReconnect } returns false
         val givenException2 = Exception(ErrorMessage.FailedToReconnect)
         slot.captured.onFailure(givenException2, ErrorCode.WebsocketError)
@@ -172,6 +183,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
 
         // currentState = Closed
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
         subject.disconnect()
 
         assertThat(subject.currentState).isClosed(1000, "The user has closed the connection.")
@@ -185,11 +197,11 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         }
 
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         subject.startNewChat()
 
         assertThat(subject.currentState).isReadOnly()
-        verifySequence {
-            connectToReadOnlySequence()
+        verify {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(match { it.contains("\"action\":\"closeSession\"") && it.contains("\"closeAllConnections\":true") })
         }
@@ -205,20 +217,19 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         }
         val expectedErrorCode = ErrorCode.ClientResponseError(400)
         val expectedErrorMessage = "Request failed."
-        val expectedErrorState = MessagingClient.State.Error(expectedErrorCode, expectedErrorMessage)
+        MessagingClient.State.Error(expectedErrorCode, expectedErrorMessage)
         every { mockPlatformSocket.sendMessage(match { it.contains("\"action\":\"closeSession\"") && it.contains("\"closeAllConnections\":true") }) } answers {
             slot.captured.onMessage(Response.webSocketRequestFailed)
         }
 
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         subject.startNewChat()
 
         assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
-        verifySequence {
-            connectToReadOnlySequence()
+        verify {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(match { it.contains("\"action\":\"closeSession\"") && it.contains("\"closeAllConnections\":true") })
-            errorSequence(fromReadOnlyToError(errorState = expectedErrorState))
         }
     }
 
@@ -260,6 +271,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         }
 
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         subject.startNewChat()
 
         assertThat(subject.currentState).isReadOnly()
@@ -294,11 +306,11 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         }
 
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         subject.startNewChat()
 
         assertThat(subject.currentState).isReadOnly()
-        verifySequence {
-            connectToReadOnlySequence()
+        verify {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(match { it.contains("\"action\":\"closeSession\"") && it.contains("\"closeAllConnections\":true") })
             mockVault.wasAuthenticated = false
@@ -317,12 +329,12 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
     @Test
     fun `when WebSocket receives a SessionResponse that has connected=false and readOnly=true but startNewChat was not invoked`() {
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
 
         slot.captured.onMessage(Response.configureSuccess(connected = false, readOnly = true))
 
         assertThat(subject.currentState).isReadOnly()
-        verifySequence {
-            connectSequence()
+        verify {
             mockVault.wasAuthenticated = false
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()

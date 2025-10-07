@@ -95,7 +95,6 @@ class MessagingClientClearConversationTest : BaseMessagingClientTest() {
         assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
         verifySequence {
             connectSequence()
-            testTracingIdProvider.getTracingId()
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(eq(Request.clearConversation()))
         }
@@ -151,7 +150,6 @@ class MessagingClientClearConversationTest : BaseMessagingClientTest() {
         assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
         verifySequence {
             connectSequence()
-            testTracingIdProvider.getTracingId()
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(eq(Request.clearConversation()))
             mockEventHandler.onEvent(expectedEvent)

@@ -13,7 +13,6 @@ internal const val DEFAULT_PAGE_SIZE = 25
 
 internal class MessageStore(
     private val log: Log,
-    private val tracingIdProvider: TracingIdProvider
 ) {
     var nextPage: Int = 1
         private set
@@ -24,8 +23,9 @@ internal class MessageStore(
     private val activeConversation = mutableListOf<Message>()
     val updateAttachmentStateWith = { attachment: Attachment -> update(attachment) }
     var messageListener: ((MessageEvent) -> Unit)? = null
+    private val tracingIdProvider = TracingIdProvider.getTracingId()
 
-    fun prepareMessage(token: String, text: String, channel: Channel? = null): OnMessageRequest {
+    fun prepareMessage(token: String, text: String, channel: Channel? = null, tracingId: String = tracingIdProvider): OnMessageRequest {
         val messageToSend = pendingMessage.copy(text = text, state = Message.State.Sending).also {
             log.i { LogMessages.messagePreparedToSend(it) }
             activeConversation.add(it)
@@ -39,7 +39,7 @@ internal class MessageStore(
                 content = messageToSend.getUploadedAttachments(),
                 channel = channel,
             ),
-            tracingId = tracingIdProvider.getTracingId()
+            tracingId = tracingId
         )
     }
 
@@ -47,6 +47,7 @@ internal class MessageStore(
         token: String,
         buttonResponse: ButtonResponse,
         channel: Channel? = null,
+        tracingId: String = tracingIdProvider
     ): OnMessageRequest {
         val type = Message.Type.QuickReply
         val messageToSend = pendingMessage
@@ -74,7 +75,7 @@ internal class MessageStore(
                 content = content,
                 channel = channel,
             ),
-            tracingId = tracingIdProvider.getTracingId()
+            tracingId = tracingId
         )
     }
 

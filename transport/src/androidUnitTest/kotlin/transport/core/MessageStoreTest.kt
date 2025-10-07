@@ -26,7 +26,6 @@ import com.genesys.cloud.messenger.transport.core.MessageStore
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
-import com.genesys.cloud.messenger.transport.util.TracingIdProvider
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
@@ -34,7 +33,6 @@ import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.Called
 import io.mockk.clearMocks
-import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
@@ -46,11 +44,7 @@ internal class MessageStoreTest {
     private val mockLogger: Log = mockk(relaxed = true)
     private val logSlot = mutableListOf<() -> String>()
     private val mockMessageListener: ((MessageEvent) -> Unit) = mockk(relaxed = true)
-
-    private val mockTracingProvider: TracingIdProvider = mockk {
-        every { getTracingId() } returns TestValues.TRACING_ID
-    }
-    private val subject = MessageStore(mockLogger, mockTracingProvider).also {
+    private val subject = MessageStore(mockLogger).also {
         it.messageListener = mockMessageListener
     }
 
@@ -63,7 +57,7 @@ internal class MessageStoreTest {
             message = TextMessage(
                 "test message",
             ),
-            tracingId = mockTracingProvider.getTracingId()
+            tracingId = TestValues.TRACING_ID
         )
 
         subject.prepareMessage(TestValues.TOKEN, "test message").run {
@@ -391,7 +385,7 @@ internal class MessageStoreTest {
                 "test message",
                 channel = Channel(Channel.Metadata(mapOf("A" to "B"))),
             ),
-            tracingId = mockTracingProvider.getTracingId()
+            tracingId = TestValues.TRACING_ID
         )
 
         val onMessageRequest =
@@ -487,7 +481,7 @@ internal class MessageStoreTest {
                 ),
                 channel = givenChannel
             ),
-            tracingId = mockTracingProvider.getTracingId()
+            tracingId = TestValues.TRACING_ID
         )
 
         subject.prepareMessageWith(TestValues.TOKEN, givenButtonResponse, givenChannel).run {
@@ -524,7 +518,7 @@ internal class MessageStoreTest {
                     )
                 ),
             ),
-            tracingId = mockTracingProvider.getTracingId()
+            tracingId = TestValues.TRACING_ID
         )
 
         subject.prepareMessageWith(TestValues.TOKEN, givenButtonResponse).run {

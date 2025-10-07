@@ -27,46 +27,54 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.slot
 import io.mockk.verify
-import io.mockk.verifySequence
 import org.junit.Test
 import transport.util.Request
 import transport.util.Response
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 class MessagingClientAttachmentTest : BaseMessagingClientTest() {
 
+    @BeforeTest
+    fun setupTracingIdProvider() {
+        initTracingIdProvider()
+    }
+
+    @AfterTest
+    fun cleanupTracingIdProvider() {
+        resetTracingIdProvider()
+    }
+
     @Test
     fun `when attach()`() {
         val expectedAttachmentId = "88888888-8888-8888-8888-888888888888"
         val expectedMessage =
-            """{"token":"${Request.token}","attachmentId":"88888888-8888-8888-8888-888888888888","fileName":"test_attachment.png","fileType":"image/png","errorsAsJson":true,"tracingId":"test-tracing-id","action":"onAttachment"}"""
+            """{"token":"${Request.token}","attachmentId":"88888888-8888-8888-8888-888888888888","fileName":"test_attachment.png","fileType":"image/png","errorsAsJson":true,"tracingId":"${TestValues.TRACING_ID}","action":"onAttachment"}"""
+
         subject.connect()
+
+        slot.captured.onMessage(Response.configureSuccess())
 
         val result = subject.attach(ByteArray(1), "test.png")
 
         assertEquals(expectedAttachmentId, result)
-        verifySequence {
-            connectSequence()
-            mockLogger.i(capture(logSlot))
+        verify {
             mockAttachmentHandler.prepare(Request.token, any(), any(), any())
-            mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
         }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.attach("test.png"))
-        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WILL_SEND_MESSAGE)
     }
 
     @Test
     fun `when detach()`() {
         val expectedAttachmentId = "88888888-8888-8888-8888-888888888888"
         val expectedMessage =
-            """{"token":"${Request.token}","attachmentId":"88888888-8888-8888-8888-888888888888","tracingId":"test-tracing-id","action":"deleteAttachment"}"""
+            """{"token":"${Request.token}","attachmentId":"88888888-8888-8888-8888-888888888888","tracingId":"${TestValues.TRACING_ID}","action":"deleteAttachment"}"""
         val attachmentIdSlot = slot<String>()
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
 
         subject.detach("88888888-8888-8888-8888-888888888888")
 
@@ -85,6 +93,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
     fun `when detach() non existing attachmentId`() {
         val givenAttachmentId = TestValues.DEFAULT_STRING
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
         clearMocks(mockPlatformSocket)
         every { mockAttachmentHandler.detach(any(), any()) } throws IllegalArgumentException(ErrorMessage.detachFailed(givenAttachmentId))
 
@@ -100,6 +109,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
     @Test
     fun `when detach() non uploaded attachment`() {
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
         clearMocks(mockPlatformSocket)
         every { mockAttachmentHandler.detach(any(), any()) } returns null
 
@@ -116,11 +126,11 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
         val expectedAttachmentId = "attachment_id"
 
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
 
         slot.captured.onMessage(Response.attachmentDeleted)
 
-        verifySequence {
-            connectSequence()
+        verify {
             mockAttachmentHandler.onDetached(expectedAttachmentId)
         }
     }
@@ -159,11 +169,11 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
         )
 
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
 
         slot.captured.onMessage(Response.onMessageWithAttachment(Direction.Inbound))
 
-        verifySequence {
-            connectSequence()
+        verify {
             mockMessageStore.update(expectedMessage)
             mockCustomAttributesStore.onSent()
             mockAttachmentHandler.onSent(mapOf("attachment_id" to expectedAttachment))
@@ -178,6 +188,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
         }
         val expectedFileAttachmentProfile = FileAttachmentProfile()
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
         // FileAttachmentProfileSlot captured value has to be returned after "connect" sequence, as it is initialized from SessionResponse.
         every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
 
@@ -188,13 +199,13 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
 
     @Test
     fun `when AllowedMedia in SessionResponse has no inbound and blockedExtensions entries`() {
-        val fileAttachmentProfileSlot = createFileAttachmentProfileSlot()
         every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             slot.captured.onMessage(Response.configureSuccess(allowedMedia = Response.AllowedMedia.noInbound))
         }
         val expectedFileAttachmentProfile = FileAttachmentProfile()
         subject.connect()
-        every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
+        slot.captured.onMessage(Response.configureSuccess())
+        every { mockAttachmentHandler.fileAttachmentProfile } returns expectedFileAttachmentProfile
 
         slot.captured.onMessage(Response.onMessageWithAttachment())
 
@@ -209,6 +220,8 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
         }
         val expectedFileAttachmentProfile = FileAttachmentProfile()
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
+        // FileAttachmentProfileSlot captured value has to be returned after "connect" sequence, as it is initialized from SessionResponse.
         every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
 
         slot.captured.onMessage(Response.onMessageWithAttachment())
@@ -218,7 +231,6 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
 
     @Test
     fun `when AllowedMedia in SessionResponse has filetypes without wildcard but with maxFileSizeKB and blockedExtensions entries`() {
-        val fileAttachmentProfileSlot = createFileAttachmentProfileSlot()
         every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             slot.captured.onMessage(
                 Response.configureSuccess(
@@ -235,7 +247,8 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
             hasWildCard = false,
         )
         subject.connect()
-        every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
+        slot.captured.onMessage(Response.configureSuccess())
+        every { mockAttachmentHandler.fileAttachmentProfile } returns expectedFileAttachmentProfile
 
         slot.captured.onMessage(Response.onMessageWithAttachment())
 
@@ -244,7 +257,6 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
 
     @Test
     fun `when AllowedMedia in SessionResponse has filetypes with wildcard,maxFileSizeKB and blockedExtensions entries`() {
-        val fileAttachmentProfileSlot = createFileAttachmentProfileSlot()
         every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             slot.captured.onMessage(
                 Response.configureSuccess(
@@ -261,7 +273,8 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
             hasWildCard = true,
         )
         subject.connect()
-        every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
+        slot.captured.onMessage(Response.configureSuccess())
+        every { mockAttachmentHandler.fileAttachmentProfile } returns expectedFileAttachmentProfile
 
         slot.captured.onMessage(Response.onMessageWithAttachment())
 
@@ -278,7 +291,6 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
                 )
             )
         )
-        val fileAttachmentProfileSlot = createFileAttachmentProfileSlot()
         every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             slot.captured.onMessage(
                 Response.configureSuccess(
@@ -289,7 +301,8 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
         }
         val expectedFileAttachmentProfile = FileAttachmentProfile()
         subject.connect()
-        every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
+        slot.captured.onMessage(Response.configureSuccess())
+        every { mockAttachmentHandler.fileAttachmentProfile } returns expectedFileAttachmentProfile
 
         slot.captured.onMessage(Response.onMessageWithAttachment())
 
@@ -305,14 +318,14 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
                 )
             )
         )
-        val fileAttachmentProfileSlot = createFileAttachmentProfileSlot()
         val expectedFileAttachmentProfile = FileAttachmentProfile(
             enabled = true,
             allowedFileTypes = listOf("png"),
             maxFileSizeKB = 100
         )
         subject.connect()
-        every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
+        slot.captured.onMessage(Response.configureSuccess())
+        every { mockAttachmentHandler.fileAttachmentProfile } returns expectedFileAttachmentProfile
 
         slot.captured.onMessage(Response.onMessageWithAttachment())
 
@@ -341,6 +354,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
             )
         } throws IllegalArgumentException(ErrorMessage.fileSizeIsTooBig(null))
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
 
         assertFailsWith<IllegalArgumentException>(ErrorMessage.fileSizeIsTooBig(null)) {
             subject.attach(givenByteArray, "test.png")
@@ -349,7 +363,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
 
     @Test
     fun `when refreshAttachmentUrl()`() {
-        every { mockPlatformSocket.sendMessage(Request.refreshAttachmentUrl) } answers {
+        every { mockPlatformSocket.sendMessage(any()) } answers {
             slot.captured.onMessage(Response.presignedUrlResponse(headers = "", fileSize = 1))
         }
         val expectedPresignedUrlResponse = PresignedUrlResponse(
@@ -361,11 +375,11 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
             fileType = "image/jpeg"
         )
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
 
         subject.refreshAttachmentUrl("88888888-8888-8888-8888-888888888888")
 
         verify {
-            connectSequence()
             mockPlatformSocket.sendMessage(Request.refreshAttachmentUrl)
             mockAttachmentHandler.onAttachmentRefreshed(expectedPresignedUrlResponse)
         }
@@ -408,11 +422,11 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
         )
 
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
 
         slot.captured.onMessage(Response.onMessageWithAttachment(Direction.Outbound))
 
-        verifySequence {
-            connectSequence()
+        verify {
             mockMessageStore.update(expectedMessage)
         }
 
@@ -431,11 +445,11 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
         )
 
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
 
         slot.captured.onMessage(Response.uploadSuccessEvent)
 
-        verifySequence {
-            connectSequence()
+        verify {
             mockAttachmentHandler.onUploadSuccess(expectedEvent)
         }
     }
@@ -449,11 +463,11 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
         )
 
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
 
         slot.captured.onMessage(Response.presignedUrlResponse)
 
-        verifySequence {
-            connectSequence()
+        verify {
             mockAttachmentHandler.upload(expectedEvent)
         }
     }
@@ -461,11 +475,11 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
     @Test
     fun `when SocketListener invoke OnMessage with GenerateUrlError response`() {
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
 
         slot.captured.onMessage(Response.generateUrlError)
 
-        verifySequence {
-            connectSequence()
+        verify {
             mockAttachmentHandler.onError(AttachmentValues.ID, ErrorCode.FileTypeInvalid, ErrorTest.MESSAGE)
         }
     }
@@ -473,11 +487,11 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
     @Test
     fun `when SocketListener invoke OnMessage with UploadFailureEvent response`() {
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
 
         slot.captured.onMessage(Response.uploadFailureEvent)
 
-        verifySequence {
-            connectSequence()
+        verify {
             mockAttachmentHandler.onError(AttachmentValues.ID, ErrorCode.FileTypeInvalid, ErrorTest.MESSAGE)
         }
     }

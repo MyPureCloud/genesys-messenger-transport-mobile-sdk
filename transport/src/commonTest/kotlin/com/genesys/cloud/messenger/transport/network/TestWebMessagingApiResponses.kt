@@ -20,7 +20,7 @@ object TestWebMessagingApiResponses {
 
     internal const val isoTestTimestamp = "2014-04-30T21:09:51.411Z"
     internal const val messageEntityResponseWith3Messages =
-        """{"entities":[{"id":"5befde6373a23f32f20b59b4e1cba0e6","channel":{"time":"$isoTestTimestamp"},"type":"Text","text":"\uD83E\uDD2A","tracingId":"test-tracing-id-1","content":[],"direction":"Outbound","originatingEntity":"Bot"},{"id":"46e7001c24abed05e9bcd1a006eb54b7","channel":{"time":null},"type":"Event","events":[{"eventType":"Presence","presence":{"type":"Join"}}],"tracingId":"test-tracing-id-2","text":"customer msg 7","content":[],"direction":"Inbound","originatingEntity":"Human"},{"text":"quick reply text","type":"Structured","direction":"Outbound","id":"message3_id","channel":{"time":null},"content":[{"contentType":"QuickReply","quickReply":{"text":"text_a","payload":"payload_a","action":"action_a"}},{"contentType":"QuickReply","quickReply":{"text":"text_b","payload":"payload_b","action":"action_b"}}],"tracingId":"test-tracing-id-3","originatingEntity":"Bot"}],"pageSize":25,"pageNumber":1,"total":3,"pageCount":1}"""
+        """{"entities":[{"id":"message1_id","channel":{"time":"$isoTestTimestamp"},"type":"Text","text":"\uD83E\uDD2A","tracingId":"test-tracing-id-1","content":[],"direction":"Outbound","originatingEntity":"Bot"},{"id":"46e7001c24abed05e9bcd1a006eb54b7","channel":{"time":null},"type":"Event","events":[{"eventType":"Presence","presence":{"type":"Join"}}],"tracingId":"test-tracing-id-2","text":"customer msg 7","content":[],"direction":"Inbound","originatingEntity":"Human"},{"text":"quick reply text","type":"Structured","direction":"Outbound","id":"message3_id","channel":{"time":null},"content":[{"contentType":"QuickReply","quickReply":{"text":"text_a","payload":"payload_a","action":"action_a"}},{"contentType":"QuickReply","quickReply":{"text":"text_b","payload":"payload_b","action":"action_b"}}],"tracingId":"test-tracing-id-3","originatingEntity":"Bot"}],"pageSize":25,"pageNumber":1,"total":3,"pageCount":1}"""
 
     internal const val messageEntityListResponseWithoutMessages =
         """{"entities":[],"pageSize":0,"pageNumber":1, "total": 0, "pageCount": 0}"""
@@ -90,7 +90,7 @@ object TestWebMessagingApiResponses {
         listOf(
             // Text message
             messageEntity(
-                id = "5befde6373a23f32f20b59b4e1cba0e6",
+                id = "message1_id",
                 time = isoTestTimestamp,
                 text = "\uD83E\uDD2A",
                 isInbound = false,

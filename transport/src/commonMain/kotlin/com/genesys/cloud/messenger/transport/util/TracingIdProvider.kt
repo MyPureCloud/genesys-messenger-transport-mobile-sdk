@@ -1,5 +1,5 @@
 package com.genesys.cloud.messenger.transport.util
 
-interface TracingIdProvider {
-    fun getTracingId(): String
+object TracingIdProvider {
+    fun getTracingId(): String = Platform().randomUUID()
 }

@@ -35,8 +35,10 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.slot
 import io.mockk.spyk
+import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -67,26 +69,25 @@ internal class AttachmentHandlerTest {
 
     @ExperimentalCoroutinesApi
     private val dispatcher: CoroutineDispatcher = UnconfinedTestDispatcher()
-    private val mockTracingProvider: TracingIdProvider = mockk {
-        every { getTracingId() } returns "test-tracing-id"
-    }
     private val subject = AttachmentHandlerImpl(
         mockApi,
         mockLogger,
         mockAttachmentListener,
-        mockTracingProvider,
         processedAttachments,
     )
 
     @ExperimentalCoroutinesApi
     @Before
     fun setup() {
+        mockkObject(TracingIdProvider)
+        every { TracingIdProvider.getTracingId() } returns TestValues.TRACING_ID
         Dispatchers.setMain(dispatcher)
     }
 
     @ExperimentalCoroutinesApi
     @After
     fun tearDown() {
+        unmockkObject(TracingIdProvider)
         Dispatchers.resetMain()
     }
 
@@ -107,7 +108,7 @@ internal class AttachmentHandlerTest {
             fileSize = AttachmentValues.FILE_SIZE,
             null,
             true,
-            tracingId = "test-tracing-id"
+            tracingId = TestValues.TRACING_ID
         )
 
         val onAttachmentRequest =
@@ -144,7 +145,7 @@ internal class AttachmentHandlerTest {
             fileSize = AttachmentValues.FILE_SIZE,
             null,
             true,
-            tracingId = "test-tracing-id"
+            tracingId = TestValues.TRACING_ID
         )
 
         val onAttachmentRequest =
@@ -302,7 +303,7 @@ internal class AttachmentHandlerTest {
             Attachment(AttachmentValues.ID, AttachmentValues.FILE_NAME, null, State.Detaching)
         val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(1))
         val expectedDeleteAttachmentRequest =
-            DeleteAttachmentRequest(TestValues.TOKEN, AttachmentValues.ID, "test-tracing-id")
+            DeleteAttachmentRequest(TestValues.TOKEN, AttachmentValues.ID, TestValues.TRACING_ID)
         givenPrepareCalled()
         givenUploadSuccessCalled()
 
@@ -582,7 +583,7 @@ internal class AttachmentHandlerTest {
             2000,
             null,
             true,
-            tracingId = "test-tracing-id"
+            tracingId = TestValues.TRACING_ID
         )
 
         val givenByteArray = ByteArray(2000)
@@ -618,7 +619,7 @@ internal class AttachmentHandlerTest {
             2000,
             null,
             true,
-            tracingId = "test-tracing-id"
+            tracingId = TestValues.TRACING_ID
         )
 
         val onAttachmentRequest =
@@ -652,7 +653,7 @@ internal class AttachmentHandlerTest {
             2000,
             null,
             true,
-            tracingId = "test-tracing-id"
+            tracingId = TestValues.TRACING_ID
         )
 
         val onAttachmentRequest =
@@ -695,7 +696,7 @@ internal class AttachmentHandlerTest {
             1,
             null,
             true,
-            tracingId = "test-tracing-id"
+            tracingId = TestValues.TRACING_ID
         )
 
         val onAttachmentRequest =

@@ -89,7 +89,6 @@ class MessagingClientHealthCheckTest : BaseMessagingClientTest() {
             mockPlatformSocket.openSocket(any())
             mockStateChangedListener(fromConnectingToConnected)
             mockLogger.i(capture(logSlot))
-            testTracingIdProvider.getTracingId()
             mockPlatformSocket.sendMessage(Request.configureRequest())
             mockVault.wasAuthenticated = false
             mockAttachmentHandler.fileAttachmentProfile = any()
