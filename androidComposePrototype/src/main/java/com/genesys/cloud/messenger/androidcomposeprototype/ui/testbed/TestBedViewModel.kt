@@ -361,8 +361,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private fun doFileAttachmentProfile() =
-        onSocketMessageReceived("FileAttachmentProfile: ${client.fileAttachmentProfile}")
+    private fun doFileAttachmentProfile() = onSocketMessageReceived("FileAttachmentProfile: ${client.fileAttachmentProfile}")
 
     private fun doChangeFileName(newFileName: String) {
         sendFileName = newFileName
@@ -465,7 +464,10 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private fun onClientStateChanged(oldState: State, newState: State) {
+    private fun onClientStateChanged(
+        oldState: State,
+        newState: State
+    ) {
         Log.v(TAG, "onClientStateChanged(oldState = $oldState, newState = $newState)")
         clientState = newState
         val statePayloadMessage = when (newState) {
@@ -492,7 +494,10 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         commandWaiting = false
     }
 
-    private fun handleException(t: Throwable, action: String) {
+    private fun handleException(
+        t: Throwable,
+        action: String
+    ) {
         val failMessage = "Failed to $action"
         Log.e(TAG, failMessage, t)
         onSocketMessageReceived(t.message ?: failMessage)
@@ -554,7 +559,10 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    fun onFileSelected(byteArray: ByteArray, fileName: String) {
+    fun onFileSelected(
+        byteArray: ByteArray,
+        fileName: String
+    ) {
         commandWaiting = false
         client
             .attach(

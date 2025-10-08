@@ -74,7 +74,10 @@ private fun ButtonsColumn(
 }
 
 @Composable
-private fun LaunchScreenButton(buttonText: String, btnOnClick: () -> Unit) {
+private fun LaunchScreenButton(
+    buttonText: String,
+    btnOnClick: () -> Unit
+) {
     TextButton(
         modifier = Modifier
             .height(40.dp)
@@ -130,7 +133,10 @@ private fun RegionDropDownMenu(
 }
 
 @Composable
-private fun DeploymentIdTextField(deploymentId: String, onValueChanged: (String) -> Unit) {
+private fun DeploymentIdTextField(
+    deploymentId: String,
+    onValueChanged: (String) -> Unit
+) {
     OutlinedTextField(
         modifier = Modifier
             .fillMaxWidth(0.8f),

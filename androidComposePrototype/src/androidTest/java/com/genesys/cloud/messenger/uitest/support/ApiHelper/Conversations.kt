@@ -114,7 +114,10 @@ fun API.sendTypingIndicatorFromAgentToUser(conversationInfo: Conversation) {
     publicApiCall("POST", "/api/v2/conversations/messages/${conversationInfo.id}/communications/${conversationInfo.getCommunicationId(participant!!)}/typing", payload = payload)
 }
 
-fun API.sendOutboundMessageFromAgentToUser(conversationInfo: Conversation, message: String) {
+fun API.sendOutboundMessageFromAgentToUser(
+    conversationInfo: Conversation,
+    message: String
+) {
     val agentParticipant = conversationInfo.getParticipantFromPurpose("agent")
     val communicationId = conversationInfo.getCommunicationId(agentParticipant!!)
     val payload = "{\"textBody\": \"${message}\"}".toByteArray()
@@ -133,7 +136,11 @@ fun API.answerNewConversation(): Conversation? {
     return getConversationInfo(conversation.id)
 }
 
-fun API.sendConnectOrDisconnect(conversationInfo: Conversation, connecting: Boolean = false, wrapup: Boolean = true) {
+fun API.sendConnectOrDisconnect(
+    conversationInfo: Conversation,
+    connecting: Boolean = false,
+    wrapup: Boolean = true
+) {
     var statusPayload = ""
     println("Sending $connecting request to: ${conversationInfo.id} from a conversation.")
     val agentParticipant = conversationInfo.getParticipantFromPurpose("agent")
@@ -155,12 +162,18 @@ fun API.sendConnectOrDisconnect(conversationInfo: Conversation, connecting: Bool
     }
 }
 
-fun API.getDefaultWrapupCodeId(conversationId: String, participantId: String): JsonNode? {
+fun API.getDefaultWrapupCodeId(
+    conversationId: String,
+    participantId: String
+): JsonNode? {
     val wrapupCodeId = publicApiCall("GET", "/api/v2/conversations/$conversationId/participants/$participantId/wrapupcodes")?.firstOrNull()?.get("id")
     return wrapupCodeId
 }
 
-fun API.waitForParticipantToConnectOrDisconnect(conversationId: String, connectionState: String = "disconnected") {
+fun API.waitForParticipantToConnectOrDisconnect(
+    conversationId: String,
+    connectionState: String = "disconnected"
+) {
     Awaitility
         .await()
         .atMost(60, TimeUnit.SECONDS)
@@ -171,11 +184,18 @@ fun API.waitForParticipantToConnectOrDisconnect(conversationId: String, connecti
         }
 }
 
-fun API.sendStatusToParticipant(conversationId: String, participantId: String, statusPayload: String) {
+fun API.sendStatusToParticipant(
+    conversationId: String,
+    participantId: String,
+    statusPayload: String
+) {
     publicApiCall("PATCH", "/api/v2/conversations/messages/$conversationId/participants/$participantId", statusPayload.toByteArray())
 }
 
-fun API.sendWrapupCode(conversationInfo: Conversation, wrapupPayload: JsonNode?) {
+fun API.sendWrapupCode(
+    conversationInfo: Conversation,
+    wrapupPayload: JsonNode?
+) {
     val agentParticipant = conversationInfo.getParticipantFromPurpose("agent")
     val communicationId = conversationInfo.getCommunicationId(agentParticipant!!)
     publicApiCall(
