@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.launcher.PrototypeLauncherView
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed.TestBedFragment
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed.TestBedViewModel
@@ -26,6 +27,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setPrototypeLauncherView()
+        WindowCompat.setDecorFitsSystemWindows(window, false)
     }
 
     private fun setPrototypeLauncherView() {
