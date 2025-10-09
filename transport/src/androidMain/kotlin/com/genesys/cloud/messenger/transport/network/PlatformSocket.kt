@@ -84,7 +84,9 @@ internal actual class PlatformSocket actual constructor(
     ) {
         log.i { LogMessages.closeSocket(code, reason) }
         val shutdownInitiatedByThisCall = webSocket?.close(code, reason) ?: false
-        if (!shutdownInitiatedByThisCall) { listener?.onClosed(code, reason) }
+        if (!shutdownInitiatedByThisCall) {
+            listener?.onClosed(code, reason)
+        }
         webSocket = null
     }
 
