@@ -3,6 +3,7 @@ root = true
 # Necessary rules
 ktlint_function_naming_ignore_when_annotated_with = Composable
 ktlint_standard_function-expression-body = disabled
+ktlint_standard_max-line-length = disabled
 # Enabled Rules
 ktlint_standard_argument-list-wrapping = enabled
 ktlint_standard_blank-line-before-declaration = enabled
@@ -14,7 +15,6 @@ ktlint_standard_if-else-bracing = enabled
 ktlint_standard_if-else-wrapping = enable
 # Investigation candidate rules
 ktlint_standard_class-signature = disabled
-ktlint_standard_max-line-length = disabled
 ktlint_standard_multiline-expression-wrapping = disabled
 ktlint_standard_multiline-if-else = disabled
 ktlint_standard_no-empty-first-line-in-class-body = disabled
