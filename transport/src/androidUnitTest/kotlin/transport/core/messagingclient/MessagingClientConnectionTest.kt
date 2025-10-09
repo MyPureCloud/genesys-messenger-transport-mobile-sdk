@@ -259,7 +259,6 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
 
     @Test
     fun `when SocketListener invoke onMessage with unknown error string`() {
-
         subject.connect()
         slot.captured.onMessage(Response.unknownErrorEvent)
 

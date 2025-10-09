@@ -34,7 +34,6 @@ fun PrototypeLauncherView(
     testBedBtnOnClick: () -> Unit,
 ) {
     WebMessagingTheme {
-
         Column(
             modifier =
                 Modifier

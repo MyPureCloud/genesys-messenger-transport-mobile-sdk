@@ -26,7 +26,6 @@ object InternalConfigurationFactory {
         autoRefreshTokenWhenExpired: Boolean = true,
         encryptedVault: Boolean = false
     ): Configuration {
-
         val config =
             Configuration(
                 deploymentId = deploymentId,

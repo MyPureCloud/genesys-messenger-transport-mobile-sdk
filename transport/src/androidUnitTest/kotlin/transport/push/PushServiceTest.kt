@@ -214,7 +214,6 @@ class PushServiceTest {
     @Test
     fun `when unregister but device was not registered before`() =
         runTest {
-
             subject.unregister()
 
             coVerifySequence {

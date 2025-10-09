@@ -48,7 +48,6 @@ class MessagingClientPushNotificationsTest : BaseMessagingClientTest() {
 
     @Test
     fun `when connect() but notifications are disabled in DeploymentConfig`() {
-
         subject.connect()
 
         verifySequence {
