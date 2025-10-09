@@ -76,7 +76,7 @@
 		7555FFA2242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		83E5C5259A079A8109FD4D26 /* Pods_iosApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_iosApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		8C3B25292926EAC500599F72 /* PropertiesResource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PropertiesResource.swift; sourceTree = "<group>"; };
-		8C4A6A19273C3CD8008B8150 /* deployment.properties */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text; name = deployment.properties; path = ../../deployment.properties; sourceTree = "<group>"; };
+		8C4A6A19273C3CD8008B8150 /* deployment.properties */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = deployment.properties; path = ../../deployment.properties; sourceTree = "<group>"; };
 		8C4A6A22273C696C008B8150 /* Deployment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deployment.swift; sourceTree = "<group>"; };
 		8CF6294E27074EB400AE0CA8 /* TestbedViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestbedViewController.swift; sourceTree = "<group>"; };
 		BA5B8CD328CA2FEC007C8160 /* MessengerInteractorTester.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessengerInteractorTester.swift; sourceTree = "<group>"; };
