@@ -20,7 +20,7 @@ ktlint_class_signature_rule_force_multiline_when_parameter_count_greater_or_equa
 
 # Investigation candidate rules
 ktlint_standard_class-signature = disabled
-ktlint_standard_if-else-bracing = disabled
+ktlint_standard_if-else-bracing = enabled
 ktlint_standard_if-else-wrapping = disabled
 ktlint_standard_max-line-length = disabled
 ktlint_standard_multiline-expression-wrapping = disabled

@@ -247,7 +247,9 @@ class ComposePrototypeUITest : BaseTests() {
                     waitForProperResponse("$attachmentIdText}$attachmentId}")
                     enterCommand("$refreshCommandText $attachmentId")
                     waitForProperResponse(refreshedText)
-                } else AssertionError("Attachment Id was not found")
+                } else {
+                    AssertionError("Attachment Id was not found")
+                }
             } else {
                 waitForProperResponse(fileTypeInvalidText)
                 waitForProperResponse(notSupportedText)
@@ -388,7 +390,9 @@ class ComposePrototypeUITest : BaseTests() {
             apiHelper.sendTypingIndicatorFromAgentToUser(conversationInfo)
             verifyResponse(typingIndicatorResponse)
             apiHelper.sendConnectOrDisconnect(conversationInfo)
-        } else AssertionError("Agent did not answer conversation.")
+        } else {
+            AssertionError("Agent did not answer conversation.")
+        }
         apiHelper.disconnectAllConversations()
     }
 
@@ -402,8 +406,9 @@ class ComposePrototypeUITest : BaseTests() {
         connect()
         verifyResponse(autoStartEnabledText)
         val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation with autoStart enabled.")
-        else {
+        if (conversationInfo == null) {
+            AssertionError("Unable to answer conversation with autoStart enabled.")
+        } else {
             Log.i(TAG, "Conversation started successfully with autoStart enabled.")
             apiHelper.sendConnectOrDisconnect(conversationInfo)
         }
@@ -416,8 +421,9 @@ class ComposePrototypeUITest : BaseTests() {
         enterDeploymentInfo(testConfig.deploymentId)
         connect()
         val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation with autoStart enabled.")
-        else {
+        if (conversationInfo == null) {
+            AssertionError("Unable to answer conversation with autoStart enabled.")
+        } else {
             Log.i(TAG, "Conversation started successfully with autoStart enabled.")
             healthcheckTest()
             apiHelper.sendConnectOrDisconnect(conversationInfo)
@@ -431,8 +437,9 @@ class ComposePrototypeUITest : BaseTests() {
         enterDeploymentInfo(testConfig.deploymentId)
         connect()
         val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-        else {
+        if (conversationInfo == null) {
+            AssertionError("Unable to answer conversation.")
+        } else {
             Log.i(TAG, "Conversation started successfully.")
             sendMsg(helloText)
             sleep(3000)
@@ -457,8 +464,9 @@ class ComposePrototypeUITest : BaseTests() {
         connect()
         sendMsg(helloText)
         val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-        else {
+        if (conversationInfo == null) {
+            AssertionError("Unable to answer conversation.")
+        } else {
             Log.i(TAG, "Conversation started successfully.")
             attachDesignatedImage("testImage.png", true)
             apiHelper.sendConnectOrDisconnect(conversationInfo)
@@ -473,8 +481,9 @@ class ComposePrototypeUITest : BaseTests() {
         connect()
         sendMsg(helloText)
         val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-        else {
+        if (conversationInfo == null) {
+            AssertionError("Unable to answer conversation.")
+        } else {
             Log.i(TAG, "Conversation started successfully.")
             // Get the deployment config to check for allowed media
             enterDeploymentCommand(deploymentConfigText)
@@ -492,8 +501,9 @@ class ComposePrototypeUITest : BaseTests() {
         enterDeploymentInfo(testConfig.deploymentId)
         connect()
         val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-        else {
+        if (conversationInfo == null) {
+            AssertionError("Unable to answer conversation.")
+        } else {
             Log.i(TAG, "Conversation started successfully.")
             addCustomAttribute(nameText, newNameText)
             sleep(3000)
@@ -509,8 +519,9 @@ class ComposePrototypeUITest : BaseTests() {
         connect()
         sendMsg(helloText)
         val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-        else {
+        if (conversationInfo == null) {
+            AssertionError("Unable to answer conversation.")
+        } else {
             Log.i(TAG, "Conversation started successfully.")
             apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
             verifyResponse(outboundMessage)
@@ -542,8 +553,9 @@ class ComposePrototypeUITest : BaseTests() {
         connect()
         sendMsg(helloText)
         val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-        else {
+        if (conversationInfo == null) {
+            AssertionError("Unable to answer conversation.")
+        } else {
             Log.i(TAG, "Conversation started successfully.")
             // conversationInfo: Conversation, connecting: Boolean, wrapup: Boolean = true
             apiHelper.sendConnectOrDisconnect(conversationInfo)
@@ -565,8 +577,9 @@ class ComposePrototypeUITest : BaseTests() {
         connect()
         sendMsg(helloText)
         val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-        else {
+        if (conversationInfo == null) {
+            AssertionError("Unable to answer conversation.")
+        } else {
             Log.i(TAG, "Conversation started successfully.")
             apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
             verifyResponse(outboundMessage)
@@ -575,8 +588,9 @@ class ComposePrototypeUITest : BaseTests() {
             apiHelper.waitForParticipantToConnectOrDisconnect(conversationInfo.id)
             sendMsg(helloText)
             val conversation2Info = apiHelper.answerNewConversation()
-            if (conversation2Info == null) AssertionError("Unable to answer conversation.")
-            else {
+            if (conversation2Info == null) {
+                AssertionError("Unable to answer conversation.")
+            } else {
                 Log.i(TAG, "Conversation started successfully.")
                 if (conversationInfo.id != conversation2Info.id) AssertionError("Reconnecting a conversation may not have matching conversation IDs.")
                 else (Log.i(TAG, "Conversation ids matched as expected."))
@@ -594,8 +608,9 @@ class ComposePrototypeUITest : BaseTests() {
         connect()
         sendMsg(helloText)
         val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-        else {
+        if (conversationInfo == null) {
+            AssertionError("Unable to answer conversation.")
+        } else {
             Log.i(TAG, "Conversation started successfully.")
             apiHelper.sendConnectOrDisconnect(conversationInfo)
             // wait for agent to disconnect
@@ -606,8 +621,9 @@ class ComposePrototypeUITest : BaseTests() {
             // Just to clear things up, let's start a new chat, wait for configured
             startNewChat()
             val conversation2Info = apiHelper.answerNewConversation()
-            if (conversation2Info == null) AssertionError("Unable to answer conversation.")
-            else {
+            if (conversation2Info == null) {
+                AssertionError("Unable to answer conversation.")
+            } else {
                 Log.i(TAG, "Conversation started successfully.")
                 apiHelper.sendConnectOrDisconnect(conversation2Info)
                 // wait for agent to disconnect
@@ -627,8 +643,9 @@ class ComposePrototypeUITest : BaseTests() {
         connect(authenticateConnectText)
         sendMsg(helloText)
         val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-        else {
+        if (conversationInfo == null) {
+            AssertionError("Unable to answer conversation.")
+        } else {
             Log.i(TAG, "Conversation started successfully.")
             apiHelper.sendOutboundMessageFromAgentToUser(conversationInfo, outboundMessage)
             verifyResponse(outboundMessage)
@@ -641,8 +658,9 @@ class ComposePrototypeUITest : BaseTests() {
             connect(authenticateConnectText)
             sendMsg(helloText)
             val conversation2Info = apiHelper.answerNewConversation()
-            if (conversation2Info == null) AssertionError("Unable to answer conversation.")
-            else {
+            if (conversation2Info == null) {
+                AssertionError("Unable to answer conversation.")
+            } else {
                 Log.i(TAG, "Conversation started successfully.")
                 apiHelper.sendOutboundMessageFromAgentToUser(conversation2Info, outboundMessage)
                 verifyResponse(outboundMessage)
@@ -667,8 +685,9 @@ class ComposePrototypeUITest : BaseTests() {
         connect()
         sendMsg(helloText)
         val conversationInfo = apiHelper.answerNewConversation()
-        if (conversationInfo == null) AssertionError("Unable to answer conversation.")
-        else {
+        if (conversationInfo == null) {
+            AssertionError("Unable to answer conversation.")
+        } else {
             Log.i(TAG, "Conversation started successfully.")
             // Test case 1: Send clear conversation command and check for connection closed and conversation cleared
             clearConversation()
@@ -679,8 +698,9 @@ class ComposePrototypeUITest : BaseTests() {
             verifyResponse(autoStartEnabledText)
             sendMsg(helloText)
             val conversationInfo2 = apiHelper.answerNewConversation()
-            if (conversationInfo2 == null) AssertionError("Unable to answer second conversation.")
-            else {
+            if (conversationInfo2 == null) {
+                AssertionError("Unable to answer second conversation.")
+            } else {
                 Log.i(TAG, "Second Conversation started successfully.")
                 if (conversationInfo.id == conversationInfo2.id) AssertionError("The conversation ids are the same after a conversation clear but should not be.")
                 apiHelper.sendConnectOrDisconnect(conversationInfo2)
