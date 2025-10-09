@@ -12,7 +12,7 @@ ktlint_standard_class-signature = enabled
 ktlint_standard_function-signature = disabled
 # Investigation candidate rules
 ktlint_standard_class-signature = disabled
-ktlint_standard_if-else-bracing = disabled
+ktlint_standard_if-else-bracing = enabled
 ktlint_standard_if-else-wrapping = disabled
 ktlint_standard_max-line-length = disabled
 ktlint_standard_multiline-expression-wrapping = disabled
