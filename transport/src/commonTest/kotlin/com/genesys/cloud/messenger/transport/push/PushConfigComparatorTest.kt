@@ -20,9 +20,10 @@ class PushConfigComparatorTest {
         val givenStoredConfig = PushTestValues.CONFIG
         val expectedExceptionMessage = ErrorMessage.INVALID_DEVICE_TOKEN
 
-        val exception = assertFailsWith<IllegalArgumentException> {
-            subject.compare(givenUserConfig, givenStoredConfig)
-        }
+        val exception =
+            assertFailsWith<IllegalArgumentException> {
+                subject.compare(givenUserConfig, givenStoredConfig)
+            }
 
         assertThat(exception.message).isEqualTo(expectedExceptionMessage)
     }
@@ -33,9 +34,10 @@ class PushConfigComparatorTest {
         val givenStoredConfig = PushTestValues.CONFIG
         val expectedExceptionMessage = ErrorMessage.INVALID_PUSH_PROVIDER
 
-        val exception = assertFailsWith<IllegalArgumentException> {
-            subject.compare(givenUserConfig, givenStoredConfig)
-        }
+        val exception =
+            assertFailsWith<IllegalArgumentException> {
+                subject.compare(givenUserConfig, givenStoredConfig)
+            }
 
         assertThat(exception.message).isEqualTo(expectedExceptionMessage)
     }
@@ -63,11 +65,12 @@ class PushConfigComparatorTest {
     @Test
     fun `when userConfig token is different from storedConfig token`() {
         val givenUserConfig = PushTestValues.CONFIG
-        val givenStoredConfig = PushTestValues.CONFIG.copy(
-            token = TestValues.DEFAULT_STRING,
-            deviceToken = TestValues.DEFAULT_STRING,
-            preferredLanguage = TestValues.DEFAULT_STRING,
-        )
+        val givenStoredConfig =
+            PushTestValues.CONFIG.copy(
+                token = TestValues.DEFAULT_STRING,
+                deviceToken = TestValues.DEFAULT_STRING,
+                preferredLanguage = TestValues.DEFAULT_STRING,
+            )
 
         val result = subject.compare(givenUserConfig, givenStoredConfig)
 
@@ -77,10 +80,11 @@ class PushConfigComparatorTest {
     @Test
     fun `when userConfig deviceToken is different from storedConfig deviceToken`() {
         val givenUserConfig = PushTestValues.CONFIG
-        val givenStoredConfig = PushTestValues.CONFIG.copy(
-            deviceToken = TestValues.DEFAULT_STRING,
-            preferredLanguage = TestValues.DEFAULT_STRING,
-        )
+        val givenStoredConfig =
+            PushTestValues.CONFIG.copy(
+                deviceToken = TestValues.DEFAULT_STRING,
+                preferredLanguage = TestValues.DEFAULT_STRING,
+            )
 
         val result = subject.compare(givenUserConfig, givenStoredConfig)
 
@@ -140,10 +144,11 @@ class PushConfigComparatorTest {
     @Test
     fun `when userConfig and storedConfig differ in deviceType and pushProvider`() {
         val givenUserConfig = PushTestValues.CONFIG
-        val givenStoredConfig = PushTestValues.CONFIG.copy(
-            deviceType = TestValues.DEFAULT_STRING,
-            pushProvider = PushProvider.FCM
-        )
+        val givenStoredConfig =
+            PushTestValues.CONFIG.copy(
+                deviceType = TestValues.DEFAULT_STRING,
+                pushProvider = PushProvider.FCM
+            )
 
         val result = subject.compare(givenUserConfig, givenStoredConfig)
 

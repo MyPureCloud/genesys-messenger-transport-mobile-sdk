@@ -47,11 +47,12 @@ class ResponsesTest {
 
     @Test
     fun `when GenerateUrlError serialized`() {
-        val expectedRequest = GenerateUrlError(
-            attachmentId = AttachmentValues.ID,
-            errorCode = ErrorCode.FileNameInvalid.code,
-            errorMessage = ErrorTest.MESSAGE
-        )
+        val expectedRequest =
+            GenerateUrlError(
+                attachmentId = AttachmentValues.ID,
+                errorCode = ErrorCode.FileNameInvalid.code,
+                errorMessage = ErrorTest.MESSAGE
+            )
         val expectedJson = """{"attachmentId":"${AttachmentValues.ID}","errorCode":4004,"errorMessage":"${ErrorTest.MESSAGE}"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
@@ -84,14 +85,15 @@ class ResponsesTest {
 
     @Test
     fun `when PresignedUrlResponse serialized`() {
-        val expectedRequest = PresignedUrlResponse(
-            attachmentId = AttachmentValues.ID,
-            fileName = AttachmentValues.FILE_NAME,
-            headers = mapOf(AttachmentValues.PRESIGNED_HEADER_KEY to AttachmentValues.PRESIGNED_HEADER_VALUE),
-            url = AttachmentValues.DOWNLOAD_URL,
-            fileSize = AttachmentValues.FILE_SIZE,
-            fileType = AttachmentValues.FILE_TYPE,
-        )
+        val expectedRequest =
+            PresignedUrlResponse(
+                attachmentId = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                headers = mapOf(AttachmentValues.PRESIGNED_HEADER_KEY to AttachmentValues.PRESIGNED_HEADER_VALUE),
+                url = AttachmentValues.DOWNLOAD_URL,
+                fileSize = AttachmentValues.FILE_SIZE,
+                fileType = AttachmentValues.FILE_TYPE,
+            )
         val expectedJson = """{"attachmentId":"test_attachment_id","headers":{"x-amz-tagging":"abc"},"url":"https://downloadurl.png","fileName":"fileName.png","fileSize":100,"fileType":"png"}"""
 
         val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
@@ -113,12 +115,13 @@ class ResponsesTest {
 
     @Test
     fun `when SessionResponse serialized`() {
-        val givenSessionResponse = SessionResponse(
-            connected = true,
-            newSession = true,
-            readOnly = false,
-            clearedExistingSession = false
-        )
+        val givenSessionResponse =
+            SessionResponse(
+                connected = true,
+                newSession = true,
+                readOnly = false,
+                clearedExistingSession = false
+            )
         val expectedSessionResponse = """{"connected":true,"newSession":true}"""
 
         val result = WebMessagingJson.json.encodeToString(givenSessionResponse)
@@ -151,15 +154,17 @@ class ResponsesTest {
 
     @Test
     fun `validate StructuredMessage_Attachment serialization`() {
-        val expectedRequest = StructuredMessage.Content.AttachmentContent(
-            contentType = AttachmentValues.ATTACHMENT_CONTENT_TYPE,
-            attachment = StructuredMessage.Content.AttachmentContent.Attachment(
-                id = AttachmentValues.ID,
-                url = AttachmentValues.DOWNLOAD_URL,
-                filename = AttachmentValues.FILE_NAME,
-                mediaType = AttachmentValues.MEDIA_TYPE,
+        val expectedRequest =
+            StructuredMessage.Content.AttachmentContent(
+                contentType = AttachmentValues.ATTACHMENT_CONTENT_TYPE,
+                attachment =
+                    StructuredMessage.Content.AttachmentContent.Attachment(
+                        id = AttachmentValues.ID,
+                        url = AttachmentValues.DOWNLOAD_URL,
+                        filename = AttachmentValues.FILE_NAME,
+                        mediaType = AttachmentValues.MEDIA_TYPE,
+                    )
             )
-        )
         val expectedJson =
             """{"contentType":"Attachment","attachment":{"id":"test_attachment_id","url":"https://downloadurl.png","filename":"fileName.png","mediaType":"png"}}"""
 
@@ -184,11 +189,12 @@ class ResponsesTest {
 
     @Test
     fun `validate TooManyRequestsErrorMessage serialization`() {
-        val expectedRequest = TooManyRequestsErrorMessage(
-            retryAfter = ErrorTest.RETRY_AFTER,
-            errorCode = ErrorCode.UnexpectedError.code,
-            errorMessage = ErrorTest.MESSAGE
-        )
+        val expectedRequest =
+            TooManyRequestsErrorMessage(
+                retryAfter = ErrorTest.RETRY_AFTER,
+                errorCode = ErrorCode.UnexpectedError.code,
+                errorMessage = ErrorTest.MESSAGE
+            )
         val expectedJson =
             """{"retryAfter":1,"errorCode":5000,"errorMessage":"This is a generic error message for testing."}"""
 
@@ -205,12 +211,13 @@ class ResponsesTest {
 
     @Test
     fun `validate UploadFailureEvent serialization`() {
-        val expectedRequest = UploadFailureEvent(
-            attachmentId = AttachmentValues.ID,
-            errorCode = ErrorCode.UnexpectedError.code,
-            errorMessage = ErrorTest.MESSAGE,
-            timestamp = TestValues.TIME_STAMP
-        )
+        val expectedRequest =
+            UploadFailureEvent(
+                attachmentId = AttachmentValues.ID,
+                errorCode = ErrorCode.UnexpectedError.code,
+                errorMessage = ErrorTest.MESSAGE,
+                timestamp = TestValues.TIME_STAMP
+            )
         val expectedJson =
             """{"attachmentId":"test_attachment_id","errorCode":5000,"errorMessage":"This is a generic error message for testing.","timestamp":"2022-08-22T19:24:26.704Z"}"""
 
@@ -228,11 +235,12 @@ class ResponsesTest {
 
     @Test
     fun `validate UploadSuccessEvent serialization`() {
-        val expectedRequest = UploadSuccessEvent(
-            attachmentId = AttachmentValues.ID,
-            downloadUrl = AttachmentValues.DOWNLOAD_URL,
-            timestamp = TestValues.TIME_STAMP
-        )
+        val expectedRequest =
+            UploadSuccessEvent(
+                attachmentId = AttachmentValues.ID,
+                downloadUrl = AttachmentValues.DOWNLOAD_URL,
+                timestamp = TestValues.TIME_STAMP
+            )
         val expectedJson =
             """{"attachmentId":"test_attachment_id","downloadUrl":"https://downloadurl.png","timestamp":"2022-08-22T19:24:26.704Z"}"""
 

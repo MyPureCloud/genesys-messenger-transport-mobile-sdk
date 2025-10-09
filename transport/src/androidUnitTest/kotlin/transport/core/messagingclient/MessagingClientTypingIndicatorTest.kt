@@ -100,11 +100,12 @@ class MessagingClientTypingIndicatorTest : BaseMessagingClientTest() {
     @Test
     fun `when WebSocket respond with typing indicator forbidden error`() {
         val expectedErrorCode = ErrorCode.ClientResponseError(403)
-        val expectedEvent = Event.Error(
-            errorCode = expectedErrorCode,
-            message = "Turn on the Feature Toggle or fix the configuration.",
-            correctiveAction = expectedErrorCode.toCorrectiveAction(),
-        )
+        val expectedEvent =
+            Event.Error(
+                errorCode = expectedErrorCode,
+                message = "Turn on the Feature Toggle or fix the configuration.",
+                correctiveAction = expectedErrorCode.toCorrectiveAction(),
+            )
         subject.connect()
 
         slot.captured.onMessage(Response.typingIndicatorForbidden)

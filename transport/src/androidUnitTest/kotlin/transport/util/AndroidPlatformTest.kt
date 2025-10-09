@@ -49,13 +49,14 @@ class AndroidPlatformTest {
 
     @Test
     fun `test Vault Keys`() {
-        val result = Vault.Keys(
-            vaultKey = VAULT_KEY,
-            tokenKey = TOKEN_KEY,
-            authRefreshTokenKey = AUTH_REFRESH_TOKEN_KEY,
-            wasAuthenticated = WAS_AUTHENTICATED,
-            pushConfigKey = PUSH_CONFIG_KEY
-        )
+        val result =
+            Vault.Keys(
+                vaultKey = VAULT_KEY,
+                tokenKey = TOKEN_KEY,
+                authRefreshTokenKey = AUTH_REFRESH_TOKEN_KEY,
+                wasAuthenticated = WAS_AUTHENTICATED,
+                pushConfigKey = PUSH_CONFIG_KEY
+            )
 
         result.run {
             assertThat(vaultKey).isEqualTo(VAULT_KEY)

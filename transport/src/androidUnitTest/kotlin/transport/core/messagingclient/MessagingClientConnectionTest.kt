@@ -275,10 +275,11 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
 
     @Test
     fun `when StateChange is tested`() {
-        val subject = StateChange(
-            oldState = MessagingClient.State.Connecting,
-            newState = MessagingClient.State.Connected,
-        )
+        val subject =
+            StateChange(
+                oldState = MessagingClient.State.Connecting,
+                newState = MessagingClient.State.Connected,
+            )
 
         assertThat(subject.oldState).isConnecting()
         assertThat(subject.newState).isConnected()
@@ -343,9 +344,10 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
     fun `when connect is called without deployment config`() {
         every { mockDeploymentConfig.get() } returns null
 
-        val exception = assertFailsWith<TransportSDKException> {
-            subject.connect()
-        }
+        val exception =
+            assertFailsWith<TransportSDKException> {
+                subject.connect()
+            }
 
         assertThat(exception.errorCode).isEqualTo(ErrorCode.MissingDeploymentConfig)
         assertThat(exception.message).isEqualTo(ErrorMessage.MissingDeploymentConfig)
@@ -355,9 +357,10 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
     fun `when connectAuthenticatedSession is called without deployment config`() {
         every { mockDeploymentConfig.get() } returns null
 
-        val exception = assertFailsWith<TransportSDKException> {
-            subject.connectAuthenticatedSession()
-        }
+        val exception =
+            assertFailsWith<TransportSDKException> {
+                subject.connectAuthenticatedSession()
+            }
 
         assertThat(exception.errorCode).isEqualTo(ErrorCode.MissingDeploymentConfig)
         assertThat(exception.message).isEqualTo(ErrorMessage.MissingDeploymentConfig)
