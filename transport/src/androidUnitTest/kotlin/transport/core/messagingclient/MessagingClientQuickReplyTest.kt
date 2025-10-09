@@ -11,7 +11,6 @@ import transport.util.Response
 import kotlin.test.assertFailsWith
 
 class MessagingClientQuickReplyTest : BaseMessagingClientTest() {
-
     @Test
     fun `when SocketListener invoke onMessage with Structured message that contains QuickReplies`() {
         val expectedMessage =

@@ -16,7 +16,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 
 class MainActivity : AppCompatActivity(), CoroutineScope {
-
     private val TAG = MainActivity::class.simpleName
 
     override val coroutineContext = Dispatchers.Main + Job()

@@ -43,7 +43,6 @@ import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
 class SerializationTest {
-
     @Test
     fun `when ConfigureSessionRequest then encodes`() {
         val journeyContext =

@@ -32,7 +32,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
-
     @Test
     fun `when event Presence Disconnect received and there is no readOnly field in metadata`() {
         val expectedEvent = Event.ConversationDisconnect

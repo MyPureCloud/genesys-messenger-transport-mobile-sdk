@@ -21,7 +21,6 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
 internal object WebMessagingJson {
-
     val json =
         Json {
             ignoreUnknownKeys = true

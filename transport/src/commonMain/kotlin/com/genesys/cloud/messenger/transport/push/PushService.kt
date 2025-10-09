@@ -6,7 +6,6 @@ import kotlin.coroutines.cancellation.CancellationException
  * Service interface for push notification operations.
  */
 interface PushService {
-
     /**
      * Synchronizes the device token with the specified notification provider.
      *

@@ -18,7 +18,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 class MessagingClientTypingIndicatorTest : BaseMessagingClientTest() {
-
     @Test
     fun `when indicateTyping and showUserTyping is enabled`() {
         val expectedMessage = Request.userTypingRequest

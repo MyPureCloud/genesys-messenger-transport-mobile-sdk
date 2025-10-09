@@ -36,7 +36,6 @@ import kotlinx.coroutines.withContext
 private const val SAVED_ATTACHMENT_FILE_NAME = "test_asset.png"
 
 class TestBedViewModel : ViewModel(), CoroutineScope {
-
     override val coroutineContext = Dispatchers.IO + Job()
 
     private val TAG = TestBedViewModel::class.simpleName

@@ -45,7 +45,6 @@ internal class WebMessagingApi(
     private val configuration: Configuration,
     private val client: HttpClient = defaultHttpClient(configuration.logging),
 ) {
-
     /**
      * Returns Result.Success<MessageEntityList> upon successful response and parsing.
      * Otherwise, return Result.Failure with description the failure.

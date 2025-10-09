@@ -57,7 +57,6 @@ import net.bytebuddy.utility.RandomString
 import org.junit.Test
 
 internal class MessageExtensionTest {
-
     @Test
     fun `when MessageEntityList toMessageList()`() {
         val expectedMessage1 =

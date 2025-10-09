@@ -22,7 +22,6 @@ import transport.util.Response
 import kotlin.test.assertFailsWith
 
 class MessagingClientAutostartTest : BaseMessagingClientTest() {
-
     @Test
     fun `when new session and autostart enabled`() {
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns emptyMap()

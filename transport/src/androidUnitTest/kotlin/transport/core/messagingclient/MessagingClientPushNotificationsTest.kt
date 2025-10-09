@@ -31,7 +31,6 @@ import transport.util.fromConnectedToConfigured
 import kotlin.coroutines.cancellation.CancellationException
 
 class MessagingClientPushNotificationsTest : BaseMessagingClientTest() {
-
     private val dispatcher: CoroutineDispatcher = Dispatchers.Unconfined
 
     @ExperimentalCoroutinesApi

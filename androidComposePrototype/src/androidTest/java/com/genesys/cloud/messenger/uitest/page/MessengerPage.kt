@@ -15,7 +15,6 @@ import java.lang.Thread.sleep
 import java.util.concurrent.TimeUnit.SECONDS
 
 class MessengerPage(activity: Activity) : BasePage(activity) {
-
     private val title = "Web Messaging Testbed"
     private val sendText = "Send"
     private val messageResultText1 = "direction=Inbound"

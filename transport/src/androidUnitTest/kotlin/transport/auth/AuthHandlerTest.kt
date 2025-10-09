@@ -48,7 +48,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class AuthHandlerTest {
-
     @MockK(relaxed = true)
     private val mockEventHandler: EventHandler = mockk(relaxed = true)
     private val mockLogger: Log = mockk(relaxed = true)

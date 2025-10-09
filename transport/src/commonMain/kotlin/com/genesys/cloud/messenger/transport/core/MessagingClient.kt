@@ -7,7 +7,6 @@ import com.genesys.cloud.messenger.transport.core.events.Event
  * via Web Messaging service.
  */
 interface MessagingClient {
-
     /**
      * Container that holds all possible MessagingClient states.
      */

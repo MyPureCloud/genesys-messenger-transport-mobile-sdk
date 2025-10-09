@@ -37,7 +37,6 @@ data class Message(
     val authenticated: Boolean = false,
     val text: String? = null,
 ) {
-
     /**
      * The enum type representation of the message.
      *

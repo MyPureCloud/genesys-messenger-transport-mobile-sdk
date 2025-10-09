@@ -11,7 +11,6 @@ import java.net.URL
 import java.util.concurrent.atomic.AtomicBoolean
 
 class API : IdlingResource {
-
     val mapper = jacksonObjectMapper()
     val agentToken = testConfig.agentToken
     val agentEmail = testConfig.agentEmail
