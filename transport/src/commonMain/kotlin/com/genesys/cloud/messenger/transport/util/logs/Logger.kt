@@ -1,6 +1,9 @@
 package com.genesys.cloud.messenger.transport.util.logs
 
-internal expect class Logger(enableLogs: Boolean, tag: String) {
+internal expect class Logger(
+    enableLogs: Boolean,
+    tag: String
+) {
     fun d(message: () -> String)
 
     fun i(message: () -> String)
