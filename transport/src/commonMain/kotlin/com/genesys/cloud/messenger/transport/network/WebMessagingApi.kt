@@ -37,13 +37,26 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import kotlinx.serialization.encodeToString
 import kotlin.coroutines.cancellation.CancellationException
+
+private fun parseRetryAfterSeconds(raw: String?): Int? = raw?.toIntOrNull()
+
+internal fun rateLimitErrorFrom(
+    response: io.ktor.client.statement.HttpResponse,
+    cfg: Configuration
+): ErrorCode {
+    val retryAfterSec = parseRetryAfterSeconds(response.headers[HttpHeaders.RetryAfter])
+    return when {
+        retryAfterSec == null -> ErrorCode.RateLimitError.MissingHeader
+        retryAfterSec > cfg.maxRetryAfterWaitSeconds -> ErrorCode.RateLimitError.TooLong(retryAfterSec)
+        else -> ErrorCode.RateLimitError.WithinCap(retryAfterSec)
+    }
+}
 
 internal class WebMessagingApi(
     private val urls: Urls,
     private val configuration: Configuration,
-    private val client: HttpClient = defaultHttpClient(configuration.logging),
+    private val client: HttpClient = defaultHttpClient(configuration),
 ) {
 
     /**
@@ -61,11 +74,17 @@ internal class WebMessagingApi(
                 headerOrigin(configuration.domain)
                 parameter("pageNumber", pageNumber)
                 parameter("pageSize", pageSize)
+                // Retries enabled by default for data-fetching operations
             }
             if (response.status.isSuccess()) {
                 Result.Success(response.body())
             } else {
-                Result.Failure(ErrorCode.mapFrom(response.status.value), response.body())
+                val code = if (response.status == HttpStatusCode.TooManyRequests) {
+                    rateLimitErrorFrom(response, configuration)
+                } else {
+                    ErrorCode.mapFrom(response.status.value)
+                }
+                Result.Failure(code, response.body())
             }
         } catch (cancellationException: CancellationException) {
             Result.Failure(ErrorCode.CancellationError, cancellationException.message)
@@ -93,11 +112,17 @@ internal class WebMessagingApi(
                     }
                 }
                 setBody(byteArray)
+                noRetry() // No retry for file upload - side-effecty operation
             }
             if (response.status.isSuccess()) {
                 Result.Success(Empty())
             } else {
-                Result.Failure(ErrorCode.mapFrom(response.status.value), response.body<String>())
+                val code = if (response.status == HttpStatusCode.TooManyRequests) {
+                    rateLimitErrorFrom(response, configuration)
+                } else {
+                    ErrorCode.mapFrom(response.status.value)
+                }
+                Result.Failure(code, response.body<String>())
             }
         } catch (cancellationException: CancellationException) {
             Result.Failure(ErrorCode.CancellationError, cancellationException.message)
@@ -122,7 +147,7 @@ internal class WebMessagingApi(
             val response = client.post(urls.jwtAuthUrl.toString()) {
                 header("content-type", ContentType.Application.Json)
                 setBody(requestBody)
-                retryOnServerErrors()
+                noRetry()
             }
             if (response.status.isSuccess()) {
                 Result.Success(response.body())
@@ -139,6 +164,7 @@ internal class WebMessagingApi(
         try {
             val response = client.delete(urls.logoutUrl.toString()) {
                 headerAuthorizationBearer(jwt)
+                noRetry()
             }
             if (response.status.isSuccess()) {
                 Result.Success(Empty())
@@ -158,6 +184,7 @@ internal class WebMessagingApi(
             val response = client.post(urls.refreshAuthTokenUrl.toString()) {
                 header("content-type", ContentType.Application.Json)
                 setBody(RefreshToken(refreshToken))
+                noRetry()
             }
             if (response.status.isSuccess()) {
                 Result.Success(response.body())
@@ -172,7 +199,8 @@ internal class WebMessagingApi(
 
     suspend fun fetchDeploymentConfig(): Result<DeploymentConfig> =
         try {
-            val response = client.get(urls.deploymentConfigUrl.toString())
+            val response = client.get(urls.deploymentConfigUrl.toString()) {
+            }
             if (response.status.isSuccess()) {
                 Result.Success(response.body())
             } else {
@@ -194,7 +222,6 @@ internal class WebMessagingApi(
                 this.method = operation.httpMethod
                 header("content-type", ContentType.Application.Json)
                 setBody(userPushConfig.toDeviceTokenRequestBody(operation))
-                retryOnServerErrors()
             }
 
             if (response.status.isSuccess()) {

@@ -117,7 +117,7 @@ class MessengerTransportSDK(
     suspend fun fetchDeploymentConfig(): DeploymentConfig {
         return DeploymentConfigUseCase(
             urls.deploymentConfigUrl.toString(),
-            defaultHttpClient(configuration.logging)
+            defaultHttpClient(configuration)
         ).fetch().also {
             deploymentConfig = it
         }
