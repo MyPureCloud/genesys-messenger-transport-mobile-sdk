@@ -14,7 +14,7 @@ object Deps {
     const val fragmentVersion = "1.3.5"
     const val activityComposeVersion = "1.8.2"
     const val lifecycleViewModelComposeVersion = "1.0.0-alpha05"
-    const val agp = "8.13.0"
+    const val agp = "8.3.0"
     const val buildKonfig = "0.17.1"
     const val nexusPublish = "1.3.0"
     const val googleServices = "4.4.2"
@@ -61,10 +61,10 @@ object Deps {
         }
 
         object AndroidX {
-            const val coreKtx = "androidx.core:core-ktx:1.13.1"
-            const val appcompat = "androidx.appcompat:appcompat:1.7.0"
-            const val material = "com.google.android.material:material:1.12.0"
-            const val lifecycleRuntimeKtx = "androidx.lifecycle:lifecycle-runtime-ktx:2.8.6"
+            const val coreKtx = "androidx.core:core-ktx:1.3.2"
+            const val appcompat = "androidx.appcompat:appcompat:1.2.0"
+            const val material = "com.google.android.material:material:1.3.0"
+            const val lifecycleRuntimeKtx = "androidx.lifecycle:lifecycle-runtime-ktx:2.3.0"
             const val fragmentKtx = "androidx.fragment:fragment-ktx:$fragmentVersion"
             const val composeUi = "androidx.compose.ui:ui:$composeVersion"
             const val composeMaterial = "androidx.compose.material:material:$composeVersion"
@@ -72,14 +72,14 @@ object Deps {
             const val composeFoundation = "androidx.compose.foundation:foundation:$composeVersion"
             const val lifecycleViewModelCompose = "androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycleViewModelComposeVersion"
             const val activityCompose = "androidx.activity:activity-compose:$activityComposeVersion"
-            const val browser = "androidx.browser:browser:1.8.0"
+            const val browser = "androidx.browser:browser:1.4.0"
         }
     }
 
     object Android {
-        const val compileSdk = 35
+        const val compileSdk = 34
         const val minSdk = 21
-        const val targetSdk = 35
+        const val targetSdk = 33
         const val jvmTarget = "17"
     }
 }
