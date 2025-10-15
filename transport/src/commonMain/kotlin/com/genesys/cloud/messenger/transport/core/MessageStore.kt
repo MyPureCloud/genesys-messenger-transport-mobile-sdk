@@ -25,7 +25,12 @@ internal class MessageStore(
     var messageListener: ((MessageEvent) -> Unit)? = null
     private val tracingIdProvider = TracingIdProvider.getTracingId()
 
-    fun prepareMessage(token: String, text: String, channel: Channel? = null, tracingId: String = tracingIdProvider): OnMessageRequest {
+    fun prepareMessage(
+        token: String,
+        text: String,
+        channel: Channel? = null,
+        tracingId: String = tracingIdProvider
+    ): OnMessageRequest {
         val messageToSend = pendingMessage.copy(text = text, state = Message.State.Sending).also {
             log.i { LogMessages.messagePreparedToSend(it) }
             activeConversation.add(it)

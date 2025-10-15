@@ -74,17 +74,17 @@ class JwtHandlerTest {
 
             subject.withJwt(Request.token, mockJwtFn)
 
-        coVerify {
-            mockJwtFn(AuthTest.JWT_TOKEN)
-            mockWebSocket.sendMessage(match { it.contains("\"action\":\"getJwt\"") && it.contains("\"token\":\"00000000-0000-0000-0000-000000000000\"") })
+            coVerify {
+                mockJwtFn(AuthTest.JWT_TOKEN)
+                mockWebSocket.sendMessage(match { it.contains("\"action\":\"getJwt\"") && it.contains("\"token\":\"00000000-0000-0000-0000-000000000000\"") })
+            }
+            assertThat(slot.captured).isEqualTo(AuthTest.JWT_TOKEN)
+            subject.jwtResponse.run {
+                assertThat(this).isEqualTo(givenJwtResponse)
+                assertThat(jwt).isEqualTo(AuthTest.JWT_TOKEN)
+                assertThat(exp).isEqualTo(0)
+            }
         }
-        assertThat(slot.captured).isEqualTo(AuthTest.JWT_TOKEN)
-        subject.jwtResponse.run {
-            assertThat(this).isEqualTo(givenJwtResponse)
-            assertThat(jwt).isEqualTo(AuthTest.JWT_TOKEN)
-            assertThat(exp).isEqualTo(0)
-        }
-    }
 
     @Test
     fun `when clear() after jwt was set`() {
