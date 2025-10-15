@@ -14,7 +14,7 @@ object Deps {
     const val fragmentVersion = "1.3.5"
     const val activityComposeVersion = "1.8.2"
     const val lifecycleViewModelComposeVersion = "1.0.0-alpha05"
-    const val agp = "8.3.0"
+    const val agp = "8.6.1"
     const val buildKonfig = "0.17.1"
     const val nexusPublish = "1.3.0"
     const val googleServices = "4.4.2"
@@ -77,9 +77,9 @@ object Deps {
     }
 
     object Android {
-        const val compileSdk = 34
+        const val compileSdk = 35
         const val minSdk = 21
-        const val targetSdk = 33
+        const val targetSdk = 35
         const val jvmTarget = "17"
     }
 }
