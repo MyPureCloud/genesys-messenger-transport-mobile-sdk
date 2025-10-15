@@ -16,7 +16,11 @@ class API : IdlingResource {
     val agentToken = testConfig.agentToken
     val agentEmail = testConfig.agentEmail
 
-    fun publicApiCall(httpMethod: String, httpURL: String, payload: ByteArray? = null): JsonNode? {
+    fun publicApiCall(
+        httpMethod: String,
+        httpURL: String,
+        payload: ByteArray? = null
+    ): JsonNode? {
         val url = URL("${testConfig.apiBaseAddress}$httpURL")
         var output: JsonNode? = null
         setIdle(false)

@@ -48,29 +48,31 @@ class JwtHandlerTest {
     private val slot = slot<String>()
 
     @Test
-    fun `when withJwt() and jwtResponse is valid`() = runBlocking {
-        val givenExpiry = Platform().epochMillis()
-        val givenJwtResponse = JwtResponse(AuthTest.JWT_TOKEN, givenExpiry)
-        subject.jwtResponse = givenJwtResponse
+    fun `when withJwt() and jwtResponse is valid`() =
+        runBlocking {
+            val givenExpiry = Platform().epochMillis()
+            val givenJwtResponse = JwtResponse(AuthTest.JWT_TOKEN, givenExpiry)
+            subject.jwtResponse = givenJwtResponse
 
-        subject.withJwt(Request.token, mockJwtFn)
+            subject.withJwt(Request.token, mockJwtFn)
 
-        coVerify { mockJwtFn(AuthTest.JWT_TOKEN) }
-        coVerify(exactly = 0) { mockWebSocket.sendMessage(Request.jwt) }
-        assertThat(slot.captured).isEqualTo(AuthTest.JWT_TOKEN)
-        subject.jwtResponse.run {
-            assertThat(this).isEqualTo(givenJwtResponse)
-            assertThat(jwt).isEqualTo(AuthTest.JWT_TOKEN)
-            assertThat(exp).isEqualTo(givenExpiry)
+            coVerify { mockJwtFn(AuthTest.JWT_TOKEN) }
+            coVerify(exactly = 0) { mockWebSocket.sendMessage(Request.jwt) }
+            assertThat(slot.captured).isEqualTo(AuthTest.JWT_TOKEN)
+            subject.jwtResponse.run {
+                assertThat(this).isEqualTo(givenJwtResponse)
+                assertThat(jwt).isEqualTo(AuthTest.JWT_TOKEN)
+                assertThat(exp).isEqualTo(givenExpiry)
+            }
         }
-    }
 
     @Test
-    fun `when withJwt() and jwtResponse is invalid`() = runBlocking {
-        val givenJwtResponse = JwtResponse(AuthTest.JWT_TOKEN, 0)
-        subject.jwtResponse = givenJwtResponse
+    fun `when withJwt() and jwtResponse is invalid`() =
+        runBlocking {
+            val givenJwtResponse = JwtResponse(AuthTest.JWT_TOKEN, 0)
+            subject.jwtResponse = givenJwtResponse
 
-        subject.withJwt(Request.token, mockJwtFn)
+            subject.withJwt(Request.token, mockJwtFn)
 
         coVerify {
             mockJwtFn(AuthTest.JWT_TOKEN)

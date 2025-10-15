@@ -18,7 +18,10 @@ interface PushService {
      * @throws CancellationException if the coroutine is cancelled.
      */
     @Throws(DeviceTokenException::class, IllegalArgumentException::class, CancellationException::class)
-    suspend fun synchronize(deviceToken: String, pushProvider: PushProvider)
+    suspend fun synchronize(
+        deviceToken: String,
+        pushProvider: PushProvider
+    )
 
     /**
      * Unregister device from push notifications.

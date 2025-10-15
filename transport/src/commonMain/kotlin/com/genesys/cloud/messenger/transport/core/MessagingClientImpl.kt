@@ -225,7 +225,10 @@ internal class MessagingClientImpl(
     }
 
     @Throws(IllegalStateException::class)
-    override fun sendMessage(text: String, customAttributes: Map<String, String>) {
+    override fun sendMessage(
+        text: String,
+        customAttributes: Map<String, String>
+    ) {
         stateMachine.checkIfConfigured()
         log.i { LogMessages.sendMessage(text.sanitize(), customAttributes) }
         internalCustomAttributesStore.add(customAttributes)
@@ -381,7 +384,11 @@ internal class MessagingClientImpl(
         }
     }
 
-    override fun authorize(authCode: String, redirectUri: String, codeVerifier: String?) {
+    override fun authorize(
+        authCode: String,
+        redirectUri: String,
+        codeVerifier: String?
+    ) {
         invalidateSessionToken()
         authHandler.authorize(authCode, redirectUri, codeVerifier)
     }
@@ -416,30 +423,31 @@ internal class MessagingClientImpl(
             }
     }
 
-    private fun handleSessionResponse(sessionResponse: SessionResponse) = sessionResponse.run {
-        vault.wasAuthenticated = connectAuthenticated
-        attachmentHandler.fileAttachmentProfile = createFileAttachmentProfile(this)
-        reconnectionHandler.clear()
-        jwtHandler.clear()
-        internalCustomAttributesStore.maxCustomDataBytes = this.maxCustomDataBytes
-        synchronizePushService()
-        if (readOnly) {
-            stateMachine.onReadOnly()
-            if (!connected && isStartingANewSession) {
-                cleanUp()
-                configureSession(startNew = true)
+    private fun handleSessionResponse(sessionResponse: SessionResponse) =
+        sessionResponse.run {
+            vault.wasAuthenticated = connectAuthenticated
+            attachmentHandler.fileAttachmentProfile = createFileAttachmentProfile(this)
+            reconnectionHandler.clear()
+            jwtHandler.clear()
+            internalCustomAttributesStore.maxCustomDataBytes = this.maxCustomDataBytes
+            synchronizePushService()
+            if (readOnly) {
+                stateMachine.onReadOnly()
+                if (!connected && isStartingANewSession) {
+                    cleanUp()
+                    configureSession(startNew = true)
+                }
+            } else {
+                isStartingANewSession = false
+                stateMachine.onSessionConfigured(connected, newSession)
+                if (newSession && deploymentConfig.isAutostartEnabled()) {
+                    sendAutoStart()
+                }
             }
-        } else {
-            isStartingANewSession = false
-            stateMachine.onSessionConfigured(connected, newSession)
-            if (newSession && deploymentConfig.isAutostartEnabled()) {
-                sendAutoStart()
+            if (clearedExistingSession) {
+                eventHandler.onEvent(Event.ExistingAuthSessionCleared)
             }
         }
-        if (clearedExistingSession) {
-            eventHandler.onEvent(Event.ExistingAuthSessionCleared)
-        }
-    }
 
     private fun synchronizePushService() {
         if (!deploymentConfig.isPushServiceEnabled()) return
@@ -468,7 +476,10 @@ internal class MessagingClientImpl(
         }
     }
 
-    private fun handleError(code: ErrorCode, message: String? = null) {
+    private fun handleError(
+        code: ErrorCode,
+        message: String? = null
+    ) {
         when (code) {
             is ErrorCode.SessionHasExpired,
             is ErrorCode.SessionNotFound,
@@ -559,7 +570,10 @@ internal class MessagingClientImpl(
         }
     }
 
-    private fun handleConfigureSessionErrorResponse(code: ErrorCode, message: String?) {
+    private fun handleConfigureSessionErrorResponse(
+        code: ErrorCode,
+        message: String?
+    ) {
         if (connectAuthenticated && code.isUnauthorized() && reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
             reconfigureAttempts++
             if (stateMachine.isConnected() || stateMachine.isReadOnly()) {
@@ -572,7 +586,10 @@ internal class MessagingClientImpl(
         }
     }
 
-    private fun handleConventionalHttpErrorResponse(code: ErrorCode, message: String?) {
+    private fun handleConventionalHttpErrorResponse(
+        code: ErrorCode,
+        message: String?
+    ) {
         val errorCode =
             if (message.isClearConversationError()) ErrorCode.ClearConversationFailure else code
         eventHandler.onEvent(
@@ -597,31 +614,32 @@ internal class MessagingClientImpl(
         }
     }
 
-    private fun Message.handleAsEvent(isReadOnly: Boolean) = this.run {
-        if (isOutbound()) {
-            // Every Outbound event should be reported to UI.
-            events.forEach {
-                if (it is Event.ConversationDisconnect && isReadOnly) stateMachine.onReadOnly()
-                eventHandler.onEvent(it)
-            }
-        } else {
-            events.forEach {
-                when (it) {
-                    is Event.ConversationAutostart -> {
-                        sendingAutostart = false
-                        internalCustomAttributesStore.onSent()
-                        eventHandler.onEvent(it)
-                    }
+    private fun Message.handleAsEvent(isReadOnly: Boolean) =
+        this.run {
+            if (isOutbound()) {
+                // Every Outbound event should be reported to UI.
+                events.forEach {
+                    if (it is Event.ConversationDisconnect && isReadOnly) stateMachine.onReadOnly()
+                    eventHandler.onEvent(it)
+                }
+            } else {
+                events.forEach {
+                    when (it) {
+                        is Event.ConversationAutostart -> {
+                            sendingAutostart = false
+                            internalCustomAttributesStore.onSent()
+                            eventHandler.onEvent(it)
+                        }
 
-                    is Event.SignedIn -> eventHandler.onEvent(it)
-                    else -> {
-                        // Do nothing. Autostart and SignedIn are the only Inbound events that should be reported to UI.
-                        log.i { LogMessages.ignoreInboundEvent(it) }
+                        is Event.SignedIn -> eventHandler.onEvent(it)
+                        else -> {
+                            // Do nothing. Autostart and SignedIn are the only Inbound events that should be reported to UI.
+                            log.i { LogMessages.ignoreInboundEvent(it) }
+                        }
                     }
                 }
             }
         }
-    }
 
     private fun Message.handleAsStructuredMessage() {
         when (messageType) {
@@ -645,7 +663,10 @@ internal class MessagingClientImpl(
         internalCustomAttributesStore.onSessionClosed()
     }
 
-    private fun transitionToStateError(errorCode: ErrorCode, errorMessage: String?) {
+    private fun transitionToStateError(
+        errorCode: ErrorCode,
+        errorMessage: String?
+    ) {
         stateMachine.onError(errorCode, errorMessage)
         reconnectionHandler.clear()
         jwtHandler.clear()
@@ -710,7 +731,10 @@ internal class MessagingClientImpl(
             configureSession()
         }
 
-        override fun onFailure(t: Throwable, errorCode: ErrorCode) {
+        override fun onFailure(
+            t: Throwable,
+            errorCode: ErrorCode
+        ) {
             log.e(throwable = t) { LogMessages.onFailure(t) }
             handleWebSocketError(errorCode)
         }
@@ -817,12 +841,18 @@ internal class MessagingClientImpl(
             }
         }
 
-        override fun onClosing(code: Int, reason: String) {
+        override fun onClosing(
+            code: Int,
+            reason: String
+        ) {
             log.i { LogMessages.onClosing(code, reason) }
             stateMachine.onClosing(code, reason)
         }
 
-        override fun onClosed(code: Int, reason: String) {
+        override fun onClosed(
+            code: Int,
+            reason: String
+        ) {
             log.i { LogMessages.onClosed(code, reason) }
             stateMachine.onClosed(code, reason)
             cleanUp()

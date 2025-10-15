@@ -26,7 +26,10 @@ internal class JwtHandler(private val webSocket: PlatformSocket) {
             }
         }
 
-    internal suspend inline fun <reified R> withJwt(token: String, jwtFn: (String) -> R): R {
+    internal suspend inline fun <reified R> withJwt(
+        token: String,
+        jwtFn: (String) -> R
+    ): R {
         val jwtResponse = jwtResponse
         return if (jwtResponse.isValid()) {
             jwtFn.invoke(jwtResponse.jwt)

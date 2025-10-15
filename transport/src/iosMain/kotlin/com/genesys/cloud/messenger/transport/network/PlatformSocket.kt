@@ -92,7 +92,10 @@ internal actual class PlatformSocket actual constructor(
         listenMessages(listener)
     }
 
-    actual fun closeSocket(code: Int, reason: String) {
+    actual fun closeSocket(
+        code: Int,
+        reason: String
+    ) {
         log.i { LogMessages.closeSocket(code, reason) }
         deactivateAndCancelWebSocket(code, reason)
         listener?.onClosed(code, reason)
@@ -190,14 +193,20 @@ internal actual class PlatformSocket actual constructor(
      * Attempt to send a final close frame with the given code and reason without `listener.onClosed()` being called.
      */
     @OptIn(BetaInteropApi::class)
-    private fun deactivateAndCancelWebSocket(code: Int, reason: String?) {
+    private fun deactivateAndCancelWebSocket(
+        code: Int,
+        reason: String?
+    ) {
         log.i { LogMessages.deactivateWithCloseCode(code, reason) }
         val webSocketRef = webSocket
         deactivate()
         webSocketRef?.cancelWithCloseCode(code.toLong(), reason?.toNSData())
     }
 
-    private fun handleError(error: NSError, context: String? = null) {
+    private fun handleError(
+        error: NSError,
+        context: String? = null
+    ) {
         log.e { "handleError (${context ?: "no context"}) [${error.code}] $error" }
         if (active) {
             deactivateAndCancelWebSocket(

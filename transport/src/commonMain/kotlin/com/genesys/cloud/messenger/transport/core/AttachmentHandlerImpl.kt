@@ -88,7 +88,10 @@ internal class AttachmentHandlerImpl(
     }
 
     @Throws(IllegalArgumentException::class)
-    override fun detach(token: String, attachmentId: String): DeleteAttachmentRequest? {
+    override fun detach(
+        token: String,
+        attachmentId: String
+    ): DeleteAttachmentRequest? {
         if (!processedAttachments.containsKey(attachmentId)) {
             log.e { LogMessages.invalidAttachmentId(attachmentId) }
             throw IllegalArgumentException(ErrorMessage.detachFailed(attachmentId))
@@ -118,13 +121,20 @@ internal class AttachmentHandlerImpl(
         }
     }
 
-    override fun onError(attachmentId: String, errorCode: ErrorCode, errorMessage: String) {
+    override fun onError(
+        attachmentId: String,
+        errorCode: ErrorCode,
+        errorMessage: String
+    ) {
         log.e { LogMessages.attachmentError(attachmentId, errorCode, errorMessage) }
         processedAttachments.remove(attachmentId)
         updateAttachmentStateWith(Attachment(attachmentId, state = Error(errorCode, errorMessage)))
     }
 
-    override fun onMessageError(code: ErrorCode, message: String?) {
+    override fun onMessageError(
+        code: ErrorCode,
+        message: String?
+    ) {
         processedAttachments.mapNotNull { it.value.takeSendingId() }.forEach {
             onError(it, code, message ?: "")
         }
@@ -169,7 +179,10 @@ internal class AttachmentHandlerImpl(
      * @throws IllegalArgumentException if attachment does not match [fileAttachmentProfile] requirements.
      */
     @Throws(IllegalArgumentException::class)
-    private fun validate(byteArray: ByteArray, fileName: String) {
+    private fun validate(
+        byteArray: ByteArray,
+        fileName: String
+    ) {
         fileAttachmentProfile?.let {
             if (!it.enabled) {
                 throw IllegalArgumentException(ErrorMessage.FileAttachmentIsDisabled)
@@ -186,7 +199,10 @@ internal class AttachmentHandlerImpl(
         }
     }
 
-    private fun handleUploadFailure(attachmentId: String, result: Result.Failure) {
+    private fun handleUploadFailure(
+        attachmentId: String,
+        result: Result.Failure
+    ) {
         if (result.errorCode is ErrorCode.CancellationError) {
             log.w { LogMessages.cancellationExceptionAttachmentUpload(attachmentId) }
             return
@@ -201,11 +217,9 @@ internal class AttachmentHandlerImpl(
     }
 }
 
-private fun ByteArray.isInvalid(maxFileSizeKB: Long?): Boolean =
-    maxFileSizeKB?.let { this.toKB() > maxFileSizeKB } ?: false
+private fun ByteArray.isInvalid(maxFileSizeKB: Long?): Boolean = maxFileSizeKB?.let { this.toKB() > maxFileSizeKB } ?: false
 
-private fun String.isProhibited(blockedFileTypes: List<String>): Boolean =
-    blockedFileTypes.contains(".${substringAfterLast('.')}")
+private fun String.isProhibited(blockedFileTypes: List<String>): Boolean = blockedFileTypes.contains(".${substringAfterLast('.')}")
 
 internal class ProcessedAttachment(
     var attachment: Attachment,
@@ -236,11 +250,9 @@ internal class ProcessedAttachment(
     }
 }
 
-private fun ProcessedAttachment.takeSendingId(): String? =
-    this.takeIf { it.attachment.state is Sending }?.attachment?.id
+private fun ProcessedAttachment.takeSendingId(): String? = this.takeIf { it.attachment.state is Sending }?.attachment?.id
 
-private fun ProcessedAttachment.takeUploaded(): ProcessedAttachment? =
-    this.takeIf { it.attachment.state is Uploaded }
+private fun ProcessedAttachment.takeUploaded(): ProcessedAttachment? = this.takeIf { it.attachment.state is Uploaded }
 
 private fun ByteArray.toKB(): Long = size / 1000L
 

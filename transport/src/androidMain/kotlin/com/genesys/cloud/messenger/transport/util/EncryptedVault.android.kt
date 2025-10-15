@@ -22,7 +22,10 @@ actual class EncryptedVault actual constructor(keys: Keys) : Vault(keys) {
         migrateFromDefaultVault()
     }
 
-    actual override fun store(key: String, value: String) {
+    actual override fun store(
+        key: String,
+        value: String
+    ) {
         internalVault.store(key, value)
     }
 

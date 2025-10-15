@@ -40,11 +40,12 @@ internal actual class Platform {
      *
      * @return the difference, in milliseconds, between current time and midnight January 1, 1970 UTC.
      */
-    actual fun epochMillis(): Long = memScoped {
-        val timeVal = alloc<timeval>()
-        gettimeofday(timeVal.ptr, null)
-        (timeVal.tv_sec * 1000) + (timeVal.tv_usec / 1000)
-    }
+    actual fun epochMillis(): Long =
+        memScoped {
+            val timeVal = alloc<timeval>()
+            gettimeofday(timeVal.ptr, null)
+            (timeVal.tv_sec * 1000) + (timeVal.tv_usec / 1000)
+        }
 
     /**
      * Gets the device's preferred language as a lowercase string.
@@ -53,11 +54,12 @@ internal actual class Platform {
      * IETF BCP 47 language tag (e.g., "en-us", "fr-fr") or just a language code
      * (e.g., "en", "fr"), depending on the system's locale settings.
      */
-    actual fun preferredLanguage(): String = NSLocale.preferredLanguages.run {
-        if (this.isNotEmpty()) {
-            (first() as String).lowercase()
-        } else {
-            NSLocale.currentLocale.languageCode.lowercase()
+    actual fun preferredLanguage(): String =
+        NSLocale.preferredLanguages.run {
+            if (this.isNotEmpty()) {
+                (first() as String).lowercase()
+            } else {
+                NSLocale.currentLocale.languageCode.lowercase()
+            }
         }
-    }
 }

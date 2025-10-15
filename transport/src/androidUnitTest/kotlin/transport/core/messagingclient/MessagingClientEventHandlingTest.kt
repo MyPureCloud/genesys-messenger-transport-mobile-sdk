@@ -34,16 +34,16 @@ class MessagingClientEventHandlingTest : BaseMessagingClientTest() {
 
     @Test
     fun `when StructuredMessage with outbound multiple events is received`() {
-        val firstExpectedEvent = Event.AgentTyping(1000)
-        val secondsExpectedEvent = Event.AgentTyping(5000)
+        val expectedFirstEvent = Event.AgentTyping(1000)
+        val expectedSecondEvent = Event.AgentTyping(5000)
 
         subject.connect()
 
         slot.captured.onMessage(Response.structuredMessageWithEvents())
 
         verifySequence {
-            mockEventHandler.onEvent(eq(firstExpectedEvent))
-            mockEventHandler.onEvent(eq(secondsExpectedEvent))
+            mockEventHandler.onEvent(eq(expectedFirstEvent))
+            mockEventHandler.onEvent(eq(expectedSecondEvent))
         }
         verify(exactly = 0) { mockMessageStore.update(any()) }
         verify(exactly = 0) { mockAttachmentHandler.onSent(any()) }
