@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.launcher.PrototypeLauncherView
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed.TestBedFragment
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed.TestBedViewModel
@@ -15,7 +16,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 
-class MainActivity : AppCompatActivity(), CoroutineScope {
+class MainActivity :
+    AppCompatActivity(),
+    CoroutineScope {
 
     private val TAG = MainActivity::class.simpleName
 
@@ -26,6 +29,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setPrototypeLauncherView()
+        WindowCompat.setDecorFitsSystemWindows(window, false)
     }
 
     private fun setPrototypeLauncherView() {

@@ -207,8 +207,10 @@ sealed class MessageEvent {
      * @property startOfConversation is a flag that indicated if user has fetched all messages in the conversation history.
      * When true - no more [com.genesys.cloud.messenger.transport.network.WebMessagingApi.getMessages] requests will be executed.
      */
-    class HistoryFetched(val messages: List<Message>, val startOfConversation: Boolean) :
-        MessageEvent()
+    class HistoryFetched(
+        val messages: List<Message>,
+        val startOfConversation: Boolean
+    ) : MessageEvent()
 
     /**
      * Dispatched when message with quick replies was sent by the Bot. To get the actual quick reply

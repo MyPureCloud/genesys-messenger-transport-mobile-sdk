@@ -51,7 +51,10 @@ data class Conversations(
     data class AutoStart(val enabled: Boolean = false)
 
     @Serializable
-    data class ConversationDisconnect(val enabled: Boolean = false, val type: Type = Type.Send) {
+    data class ConversationDisconnect(
+        val enabled: Boolean = false,
+        val type: Type = Type.Send
+    ) {
 
         @Serializable
         enum class Type {

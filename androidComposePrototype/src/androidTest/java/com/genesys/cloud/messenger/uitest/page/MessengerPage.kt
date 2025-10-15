@@ -210,7 +210,10 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         if (!(response.contains("Deleted", ignoreCase = true))) AssertionError("Response does not contain: Deleted")
     }
 
-    fun loginWithOkta(email: String, password: String) {
+    fun loginWithOkta(
+        email: String,
+        password: String
+    ) {
         waitForElementWithUIAutomator(acceptText, shortWaitTime)
         if (hasTextView(acceptText)) {
             tapTextWithUIAutomator(acceptText)
@@ -223,7 +226,10 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         pressEnterKey()
     }
 
-    protected fun typeWithUIAutomator(id: String, text: String) {
+    protected fun typeWithUIAutomator(
+        id: String,
+        text: String
+    ) {
         val uiAutomatorInstance = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         val target = uiAutomatorInstance.findObject(UiSelector().resourceId(id))
         target.clearTextField()
@@ -231,7 +237,10 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         target.setText(text)
     }
 
-    protected fun typeIndexWithUIAutomator(index: Int, text: String) {
+    protected fun typeIndexWithUIAutomator(
+        index: Int,
+        text: String
+    ) {
         val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         val responseBox = mDevice.findObject(
             UiSelector().index(index)
