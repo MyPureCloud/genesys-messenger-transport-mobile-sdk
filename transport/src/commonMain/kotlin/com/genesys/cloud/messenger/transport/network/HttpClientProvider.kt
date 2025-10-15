@@ -12,7 +12,8 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.HttpRequestBuilder
-import io.ktor.http.*
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.util.AttributeKey
 
@@ -21,11 +22,6 @@ private val SkipRetry = AttributeKey<Boolean>("transport.retry.skip")
 
 internal fun HttpRequestBuilder.noRetry() {
     attributes.put(SkipRetry, true)
-}
-
-private fun parseRetryAfterMillis(raw: String?): Long? {
-    if (raw.isNullOrBlank()) return null
-    return raw.toLongOrNull()?.let { it * 1000L }
 }
 
 internal fun defaultHttpClient(configuration: Configuration): HttpClient =
@@ -42,7 +38,6 @@ internal fun defaultHttpClient(configuration: Configuration): HttpClient =
             socketTimeoutMillis = TIMEOUT_IN_MS
             connectTimeoutMillis = TIMEOUT_IN_MS
         }
-
         install(HttpRequestRetry) {
             if (!configuration.retryEnabled) {
                 maxRetries = 0
@@ -72,10 +67,11 @@ internal fun defaultHttpClient(configuration: Configuration): HttpClient =
                 if (request.attributes.getOrNull(SkipRetry) == true) return@retryOnExceptionIf false
                 configuration.backoffEnabled && cause !is kotlin.coroutines.cancellation.CancellationException
             }
-
-            // Use exponential backoff for 5xx errors (3s, 9s, 27s)
-            // Known limitation on Ktor 3.2.3: we cannot use Retry-After for the delay.
-            // 429 retries follow 3/9/27s until we can upgrade.
             exponentialDelay(base = 3.0)
         }
     }
+
+private fun parseRetryAfterMillis(raw: String?): Long? {
+    if (raw.isNullOrBlank()) return null
+    return raw.toLongOrNull()?.let { it * 1000L }
+}
