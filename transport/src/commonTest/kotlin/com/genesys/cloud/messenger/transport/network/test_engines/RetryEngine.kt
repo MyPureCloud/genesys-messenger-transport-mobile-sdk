@@ -4,12 +4,10 @@ import com.genesys.cloud.messenger.transport.respondNotFound
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.mock.MockEngineConfig
 import io.ktor.client.engine.mock.respond
-import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.headersOf
 
 /**
- * Test engine for retry scenarios including 429 rate limits and 5xx server errors
+ * Test engine for 5xx server error retry scenarios
  */
 internal fun HttpClientConfig<MockEngineConfig>.retryEngine() {
     engine {
@@ -19,41 +17,6 @@ internal fun HttpClientConfig<MockEngineConfig>.retryEngine() {
             requestCount++
 
             when (request.url.toString()) {
-                "https://test.com/rate-limit-with-retry-after" -> {
-                    if (requestCount == 1) {
-                        respond(
-                            status = HttpStatusCode.TooManyRequests,
-                            headers = headersOf(HttpHeaders.RetryAfter, "2"),
-                            content = "Rate limited"
-                        )
-                    } else {
-                        respond("Success after retry")
-                    }
-                }
-
-                "https://test.com/rate-limit-exceeds-cap" -> {
-                    respond(
-                        status = HttpStatusCode.TooManyRequests,
-                        headers = headersOf(HttpHeaders.RetryAfter, "60"),
-                        content = "Rate limited - exceeds cap"
-                    )
-                }
-
-                "https://test.com/rate-limit-no-retry-after" -> {
-                    respond(
-                        status = HttpStatusCode.TooManyRequests,
-                        content = "Rate limited - no retry after"
-                    )
-                }
-
-                "https://test.com/rate-limit-invalid-retry-after" -> {
-                    respond(
-                        status = HttpStatusCode.TooManyRequests,
-                        headers = headersOf(HttpHeaders.RetryAfter, "invalid"),
-                        content = "Rate limited - invalid retry after"
-                    )
-                }
-
                 "https://test.com/server-error-502" -> {
                     if (requestCount <= 3) {
                         respond(

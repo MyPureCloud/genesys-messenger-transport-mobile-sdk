@@ -11,18 +11,11 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
-import io.ktor.client.request.HttpRequestBuilder
-import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.util.AttributeKey
 
 private const val TIMEOUT_IN_MS = 30000L
-private val SkipRetry = AttributeKey<Boolean>("transport.retry.skip")
-
-internal fun HttpRequestBuilder.noRetry() {
-    attributes.put(SkipRetry, true)
-}
+private const val MAX_RETRIES_ON_SERVER_ERRORS = 3
 
 internal fun defaultHttpClient(configuration: Configuration): HttpClient =
     HttpClient {
@@ -39,39 +32,21 @@ internal fun defaultHttpClient(configuration: Configuration): HttpClient =
             connectTimeoutMillis = TIMEOUT_IN_MS
         }
         install(HttpRequestRetry) {
-            if (!configuration.retryEnabled) {
-                maxRetries = 0
-                return@install
-            }
-
-            maxRetries = 3
+            maxRetries = MAX_RETRIES_ON_SERVER_ERRORS
 
             retryIf { request, response ->
-                if (request.attributes.getOrNull(SkipRetry) == true) return@retryIf false
-
                 when (response.status) {
-                    HttpStatusCode.TooManyRequests -> {
-                        val ms = parseRetryAfterMillis(response.headers[HttpHeaders.RetryAfter])
-                        ms != null && ms <= configuration.maxRetryAfterWaitSeconds * 1000L
-                    }
-
                     HttpStatusCode.BadGateway,
                     HttpStatusCode.ServiceUnavailable,
-                    HttpStatusCode.GatewayTimeout -> configuration.backoffEnabled
-
+                    HttpStatusCode.GatewayTimeout -> true
                     else -> false
                 }
             }
 
             retryOnExceptionIf { request, cause ->
-                if (request.attributes.getOrNull(SkipRetry) == true) return@retryOnExceptionIf false
-                configuration.backoffEnabled && cause !is kotlin.coroutines.cancellation.CancellationException
+                cause !is kotlin.coroutines.cancellation.CancellationException
             }
+
             exponentialDelay(base = 3.0)
         }
     }
-
-private fun parseRetryAfterMillis(raw: String?): Long? {
-    if (raw.isNullOrBlank()) return null
-    return raw.toLongOrNull()?.let { it * 1000L }
-}

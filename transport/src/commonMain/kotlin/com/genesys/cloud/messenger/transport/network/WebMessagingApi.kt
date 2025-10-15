@@ -39,20 +39,6 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlin.coroutines.cancellation.CancellationException
 
-private fun parseRetryAfterSeconds(raw: String?): Int? = raw?.toIntOrNull()
-
-internal fun rateLimitErrorFrom(
-    response: io.ktor.client.statement.HttpResponse,
-    cfg: Configuration
-): ErrorCode {
-    val retryAfterSec = parseRetryAfterSeconds(response.headers[HttpHeaders.RetryAfter])
-    return when {
-        retryAfterSec == null -> ErrorCode.RateLimitError.MissingHeader
-        retryAfterSec > cfg.maxRetryAfterWaitSeconds -> ErrorCode.RateLimitError.TooLong(retryAfterSec)
-        else -> ErrorCode.RateLimitError.WithinCap(retryAfterSec)
-    }
-}
-
 internal class WebMessagingApi(
     private val urls: Urls,
     private val configuration: Configuration,
@@ -79,11 +65,7 @@ internal class WebMessagingApi(
             if (response.status.isSuccess()) {
                 Result.Success(response.body())
             } else {
-                val code = if (response.status == HttpStatusCode.TooManyRequests) {
-                    rateLimitErrorFrom(response, configuration)
-                } else {
-                    ErrorCode.mapFrom(response.status.value)
-                }
+                val code = ErrorCode.mapFrom(response.status.value)
                 Result.Failure(code, response.body())
             }
         } catch (cancellationException: CancellationException) {
@@ -112,16 +94,11 @@ internal class WebMessagingApi(
                     }
                 }
                 setBody(byteArray)
-                noRetry() // No retry for file upload - side-effecty operation
             }
             if (response.status.isSuccess()) {
                 Result.Success(Empty())
             } else {
-                val code = if (response.status == HttpStatusCode.TooManyRequests) {
-                    rateLimitErrorFrom(response, configuration)
-                } else {
-                    ErrorCode.mapFrom(response.status.value)
-                }
+                val code = ErrorCode.mapFrom(response.status.value)
                 Result.Failure(code, response.body<String>())
             }
         } catch (cancellationException: CancellationException) {
@@ -147,7 +124,6 @@ internal class WebMessagingApi(
             val response = client.post(urls.jwtAuthUrl.toString()) {
                 header("content-type", ContentType.Application.Json)
                 setBody(requestBody)
-                noRetry()
             }
             if (response.status.isSuccess()) {
                 Result.Success(response.body())
@@ -164,7 +140,6 @@ internal class WebMessagingApi(
         try {
             val response = client.delete(urls.logoutUrl.toString()) {
                 headerAuthorizationBearer(jwt)
-                noRetry()
             }
             if (response.status.isSuccess()) {
                 Result.Success(Empty())
@@ -184,7 +159,6 @@ internal class WebMessagingApi(
             val response = client.post(urls.refreshAuthTokenUrl.toString()) {
                 header("content-type", ContentType.Application.Json)
                 setBody(RefreshToken(refreshToken))
-                noRetry()
             }
             if (response.status.isSuccess()) {
                 Result.Success(response.body())

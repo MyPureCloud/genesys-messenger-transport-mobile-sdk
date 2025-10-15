@@ -83,14 +83,6 @@ sealed class ErrorCode(val code: Int) {
 
     data object DeploymentIdMismatch : ErrorCode(6027) // ErrorCode needed to support proper QA automation. Not expected to happen in production.
 
-    sealed class RateLimitError : ErrorCode(6028) {
-        data class TooLong(val retryAfterSeconds: Int) : RateLimitError()
-
-        data object MissingHeader : RateLimitError()
-
-        data class WithinCap(val retryAfterSeconds: Int) : RateLimitError()
-    }
-
     data class RedirectResponseError(val value: Int) : ErrorCode(value)
 
     data class ClientResponseError(val value: Int) : ErrorCode(value)
@@ -134,7 +126,6 @@ sealed class ErrorCode(val code: Int) {
                 6025 -> DeviceUpdateFailure
                 6026 -> DeviceDeleteFailure
                 6027 -> DeploymentIdMismatch
-                6028 -> RateLimitError.WithinCap(0)
                 in 300..399 -> RedirectResponseError(value)
                 in 400..499 -> ClientResponseError(value)
                 in 500..599 -> ServerResponseError(value)

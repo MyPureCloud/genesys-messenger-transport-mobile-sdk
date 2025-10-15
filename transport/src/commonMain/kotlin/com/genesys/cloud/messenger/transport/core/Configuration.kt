@@ -6,9 +6,6 @@ package com.genesys.cloud.messenger.transport.core
  * @param logging indicates if logging should be enabled.
  * @param reconnectionTimeoutInSeconds period of time during which Transport will try to reconnect to the web socket in case of connectivity lost.
  * @param autoRefreshTokenWhenExpired indicates if Transport should auto refresh auth token if it was expired.
- * @param maxRetryAfterWaitSeconds maximum time in seconds to wait for 429 Retry-After header. If Retry-After exceeds this value, the request will fail immediately.
- * @param retryEnabled indicates if automatic retries should be enabled for REST API calls.
- * @param backoffEnabled indicates if exponential backoff should be enabled for 5xx server errors.
  */
 data class Configuration(
     val deploymentId: String,
@@ -16,10 +13,7 @@ data class Configuration(
     val logging: Boolean = false,
     val reconnectionTimeoutInSeconds: Long = 60 * 5,
     val autoRefreshTokenWhenExpired: Boolean = true,
-    val encryptedVault: Boolean = false,
-    val maxRetryAfterWaitSeconds: Int = 30,
-    val retryEnabled: Boolean = true,
-    val backoffEnabled: Boolean = true
+    val encryptedVault: Boolean = false
 ) {
 
     /**
@@ -41,10 +35,7 @@ data class Configuration(
         logging = logging,
         reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
         autoRefreshTokenWhenExpired = true,
-        encryptedVault = false,
-        maxRetryAfterWaitSeconds = 30,
-        retryEnabled = true,
-        backoffEnabled = true
+        encryptedVault = false
     )
 
     internal var application: String = "TransportSDK-${MessengerTransportSDK.sdkVersion}"
