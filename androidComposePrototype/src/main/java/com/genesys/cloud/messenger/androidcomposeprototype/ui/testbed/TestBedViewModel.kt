@@ -35,7 +35,9 @@ import kotlinx.coroutines.withContext
 
 private const val SAVED_ATTACHMENT_FILE_NAME = "test_asset.png"
 
-class TestBedViewModel : ViewModel(), CoroutineScope {
+class TestBedViewModel :
+    ViewModel(),
+    CoroutineScope {
 
     override val coroutineContext = Dispatchers.IO + Job()
 
@@ -329,14 +331,17 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private var sendFileName = SAVED_ATTACHMENT_FILE_NAME
     private lateinit var attachment: ByteArray
+
     private fun doAttachSavedImage() {
         try {
-            client.attach(
-                attachment,
-                sendFileName
-            ) { progress -> println("Attachment upload progress: $progress") }.also {
-                attachedIds.add(it)
-            }
+            client
+                .attach(
+                    attachment,
+                    sendFileName
+                ) { progress -> println("Attachment upload progress: $progress") }
+                .also {
+                    attachedIds.add(it)
+                }
         } catch (t: Throwable) {
             handleException(t, "attach")
         }
@@ -358,8 +363,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private fun doFileAttachmentProfile() =
-        onSocketMessageReceived("FileAttachmentProfile: ${client.fileAttachmentProfile}")
+    private fun doFileAttachmentProfile() = onSocketMessageReceived("FileAttachmentProfile: ${client.fileAttachmentProfile}")
 
     private fun doChangeFileName(newFileName: String) {
         sendFileName = newFileName
@@ -462,7 +466,10 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private fun onClientStateChanged(oldState: State, newState: State) {
+    private fun onClientStateChanged(
+        oldState: State,
+        newState: State
+    ) {
         Log.v(TAG, "onClientStateChanged(oldState = $oldState, newState = $newState)")
         clientState = newState
         val statePayloadMessage = when (newState) {
@@ -489,7 +496,10 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         commandWaiting = false
     }
 
-    private fun handleException(t: Throwable, action: String) {
+    private fun handleException(
+        t: Throwable,
+        action: String
+    ) {
         val failMessage = "Failed to $action"
         Log.e(TAG, failMessage, t)
         onSocketMessageReceived(t.message ?: failMessage)
@@ -517,8 +527,6 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
                 quickRepliesMap.putAll(quickReplies.associateBy { it.text })
                 "QuickReplyReceived: text: $text | quick reply options: $quickReplies"
             }
-
-            else -> event.toString()
         }
         onSocketMessageReceived(eventMessage)
     }
@@ -553,14 +561,19 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    fun onFileSelected(byteArray: ByteArray, fileName: String) {
+    fun onFileSelected(
+        byteArray: ByteArray,
+        fileName: String
+    ) {
         commandWaiting = false
-        client.attach(
-            byteArray,
-            fileName
-        ) { progress -> println("Attachment upload progress: $progress") }.also {
-            attachedIds.add(it)
-        }
+        client
+            .attach(
+                byteArray,
+                fileName
+            ) { progress -> println("Attachment upload progress: $progress") }
+            .also {
+                attachedIds.add(it)
+            }
     }
 
     fun onCancelFileSelection() {
@@ -600,9 +613,13 @@ private fun String.toKeyValuePair(): Pair<String, String> {
 
 sealed class AuthState {
     data object NoAuth : AuthState()
+
     data class AuthCodeReceived(val authCode: String) : AuthState()
+
     data object Authorized : AuthState()
+
     data object LoggedOut : AuthState()
+
     data class Error(
         val errorCode: ErrorCode,
         val message: String? = null,

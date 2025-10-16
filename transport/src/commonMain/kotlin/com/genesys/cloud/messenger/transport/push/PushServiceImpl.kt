@@ -25,7 +25,10 @@ internal class PushServiceImpl(
 ) : PushService {
 
     @Throws(DeviceTokenException::class, IllegalArgumentException::class, CancellationException::class)
-    override suspend fun synchronize(deviceToken: String, pushProvider: PushProvider) {
+    override suspend fun synchronize(
+        deviceToken: String,
+        pushProvider: PushProvider
+    ) {
         log.i { LogMessages.synchronizingPush(deviceToken, pushProvider) }
         val storedPushConfig = vault.pushConfig
         val userPushConfig = buildPushConfigFromUserData(deviceToken, pushProvider)
@@ -143,7 +146,10 @@ internal class PushServiceImpl(
     }
 
     @Throws(DeviceTokenException::class)
-    private fun throwDeviceTokenException(result: Result.Failure, userPushConfig: PushConfig) {
+    private fun throwDeviceTokenException(
+        result: Result.Failure,
+        userPushConfig: PushConfig
+    ) {
         log.e { LogMessages.failedToSynchronizeDeviceToken(userPushConfig, result.errorCode) }
         throw DeviceTokenException(result.errorCode, result.message, result.throwable)
     }

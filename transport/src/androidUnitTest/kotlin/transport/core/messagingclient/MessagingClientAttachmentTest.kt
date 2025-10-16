@@ -35,7 +35,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
-class MCAttachmentTests : BaseMessagingClientTest() {
+class MessagingClientAttachmentTest : BaseMessagingClientTest() {
 
     @Test
     fun `when attach()`() {
@@ -217,7 +217,7 @@ class MCAttachmentTests : BaseMessagingClientTest() {
     }
 
     @Test
-    fun `when AllowedMedia in SessionResponse has filetypes without wildcard but with maxFileSizeKB and blockedExtensions entries`() {
+    fun `when AllowedMedia has filetypes without wildcard with maxFileSizeKB and blockedExtensions`() {
         val fileAttachmentProfileSlot = createFileAttachmentProfileSlot()
         every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             slot.captured.onMessage(

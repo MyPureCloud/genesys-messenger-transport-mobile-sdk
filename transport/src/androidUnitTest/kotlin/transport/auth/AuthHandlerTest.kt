@@ -39,11 +39,13 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.serialization.encodeToString
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class AuthHandlerTest {
 
@@ -86,13 +88,14 @@ class AuthHandlerTest {
     private val fakeVault: FakeVault = FakeVault(TestValues.vaultKeys)
     private val dispatcher: CoroutineDispatcher = Dispatchers.Unconfined
 
-    private var subject = buildAuthHandler()
+    private lateinit var subject: AuthHandlerImpl
 
     @ExperimentalCoroutinesApi
     @Before
     fun setup() {
         MockKAnnotations.init(this)
         Dispatchers.setMain(dispatcher)
+        subject = buildAuthHandler()
     }
 
     @ExperimentalCoroutinesApi
@@ -287,7 +290,35 @@ class AuthHandlerTest {
     }
 
     @Test
-    fun `when authorized and logout() failed because of 401 and autoRefreshTokenWhenExpired is enabled but refreshToken() success`() {
+    fun `when logout() without authorize failed because of 401`() {
+        coEvery { mockWebMessagingApi.logoutFromAuthenticatedSession(NO_JWT) } returns Result.Failure(
+            ErrorCode.ClientResponseError(401),
+            ErrorTest.MESSAGE
+        )
+        val expectedErrorCode = ErrorCode.ClientResponseError(401)
+        val expectedErrorMessage = ErrorTest.MESSAGE
+        val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
+
+        subject.logout()
+
+        coVerify {
+            mockWebMessagingApi.logoutFromAuthenticatedSession(NO_JWT)
+        }
+        verify {
+            mockLogger.e(capture(logSlot))
+            mockEventHandler.onEvent(
+                Event.Error(
+                    expectedErrorCode,
+                    expectedErrorMessage,
+                    expectedCorrectiveAction
+                )
+            )
+        }
+        assertThat(logSlot.captured.invoke()).isEqualTo(LogMessages.requestError("logout()", expectedErrorCode, expectedErrorMessage))
+    }
+
+    @Test
+    fun `when authorized and logout() fails with 401 and autoRefreshTokenWhenExpired is enabled but refreshToken() succeeds`() {
         authorize()
         coEvery { mockWebMessagingApi.logoutFromAuthenticatedSession(any()) } returns Result.Failure(
             ErrorCode.ClientResponseError(401),
@@ -476,13 +507,17 @@ class AuthHandlerTest {
         }
     }
 
-    private fun buildAuthHandler(givenAutoRefreshTokenWhenExpired: Boolean = true): AuthHandlerImpl {
+    private fun buildAuthHandler(
+        givenAutoRefreshTokenWhenExpired: Boolean = true,
+        isAuthEnabled: suspend () -> Boolean = { true }
+    ): AuthHandlerImpl {
         return AuthHandlerImpl(
             autoRefreshTokenWhenExpired = givenAutoRefreshTokenWhenExpired,
             eventHandler = mockEventHandler,
             api = mockWebMessagingApi,
             vault = fakeVault,
             log = mockLogger,
+            isAuthEnabled = isAuthEnabled
         )
     }
 
@@ -529,4 +564,24 @@ class AuthHandlerTest {
         assertThat(subject.jwt).isEqualTo(expectedAuthJwt.jwt)
         assertThat(fakeVault.authRefreshToken).isEqualTo(expectedAuthJwt.refreshToken)
     }
+
+    @Test
+    fun `when shouldAuthorize() and auth is disabled in deployment config`() =
+        runTest {
+            subject = buildAuthHandler(isAuthEnabled = { false })
+
+            subject.shouldAuthorize { result ->
+                assertFalse(result)
+                coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
+            }
+        }
+
+    @Test
+    fun `when shouldAuthorize() and auth is enabled in deployment config`() =
+        runTest {
+            subject.shouldAuthorize { result ->
+                assertTrue(result)
+                coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
+            }
+        }
 }

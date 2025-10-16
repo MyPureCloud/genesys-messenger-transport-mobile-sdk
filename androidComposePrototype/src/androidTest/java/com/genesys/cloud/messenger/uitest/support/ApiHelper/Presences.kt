@@ -21,6 +21,7 @@ private fun API.getAllPresences(): AllPresences {
 }
 
 private var savedPresenceList: MutableMap<String, String>? = null
+
 fun API.getPresenceList(): MutableMap<String, String> {
     if (savedPresenceList != null) {
         val presenceList = savedPresenceList!!
@@ -37,7 +38,11 @@ fun API.getPresenceList(): MutableMap<String, String> {
     return presenceList
 }
 
-fun API.changePresence(presenceName: String, agentId: String, message: String = "") {
+fun API.changePresence(
+    presenceName: String,
+    agentId: String,
+    message: String = ""
+) {
     val presenceList = getPresenceList()
     val presenceID = presenceList[presenceName]
     val payload = "{\"primary\": \"true\",\"presenceDefinition\": {\"id\": \"$presenceID\"},\"message\": \"$message\" }".toByteArray()

@@ -17,8 +17,7 @@ private val LightColorPalette = lightColors(
 
 @Composable
 fun WebMessagingTheme(
-//    darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable() () -> Unit
+    content: @Composable () -> Unit
 ) {
     MaterialTheme(
         colors = LightColorPalette,

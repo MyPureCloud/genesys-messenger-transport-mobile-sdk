@@ -42,13 +42,12 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
-import kotlinx.serialization.encodeToString
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertFailsWith
 
-internal class AttachmentHandlerImplTest {
+internal class AttachmentHandlerTest {
     private val mockApi: WebMessagingApi = mockk {
         coEvery { uploadFile(any(), any(), captureLambda()) } coAnswers {
             thirdArg<(Float) -> Unit>().invoke(25f)
@@ -427,7 +426,7 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenOnMessageErrorWithNullErrorMessage() {
+    fun `when onMessageError() with null error message`() {
         val expectedState = State.Error(ErrorCode.MessageTooLong, "")
         val expectedAttachment = Attachment(
             id = AttachmentValues.ID,
@@ -491,7 +490,7 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenOnSendingHasNoUploadedAttachment() {
+    fun `when onSending() has no uploaded attachment`() {
         givenPrepareCalled()
 
         subject.onSending()
@@ -725,7 +724,7 @@ internal class AttachmentHandlerImplTest {
     }
 
     @Test
-    fun whenSerializeAttachment() {
+    fun `when serialize Attachment`() {
         val expectedAttachmentJson = """{"id":"${AttachmentValues.ID}"}"""
         val givenAttachment = Attachment(AttachmentValues.ID, AttachmentValues.FILE_NAME)
 
@@ -746,12 +745,16 @@ internal class AttachmentHandlerImplTest {
 
     private fun presignedUrlResponse(id: String = AttachmentValues.ID): PresignedUrlResponse =
         PresignedUrlResponse(
-            id, mapOf("header" to "given header"), "http://someuploadurl.com",
+            id,
+            mapOf("header" to "given header"),
+            "http://someuploadurl.com",
         )
 
     private fun uploadSuccessEvent(id: String = AttachmentValues.ID): UploadSuccessEvent =
         UploadSuccessEvent(
-            id, "http://somedownloadurl.com", "2021-08-17T17:00:08.746Z",
+            id,
+            "http://somedownloadurl.com",
+            "2021-08-17T17:00:08.746Z",
         )
 
     /**

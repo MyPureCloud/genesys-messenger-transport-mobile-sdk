@@ -15,7 +15,10 @@ actual class EncryptedVault actual constructor(keys: Keys) : Vault(keys) {
      * @param key the key to use for storage.
      * @param value the value to store in storage.
      */
-    actual override fun store(key: String, value: String) {
+    actual override fun store(
+        key: String,
+        value: String
+    ) {
         vault.set(key, value)
     }
 

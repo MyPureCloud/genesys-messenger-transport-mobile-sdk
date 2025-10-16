@@ -36,7 +36,7 @@ import transport.util.fromReadOnlyToConfigured
 import transport.util.fromReconnectingToError
 import kotlin.test.assertFailsWith
 
-class MCAuthTests : BaseMessagingClientTest() {
+class MessagingClientAuthTest : BaseMessagingClientTest() {
 
     @Test
     fun `when authorize is called`() {
@@ -95,9 +95,9 @@ class MCAuthTests : BaseMessagingClientTest() {
 
     @Test
     fun `when connectAuthenticatedSession and AuthHandler has no Jwt and refreshToken fails`() {
-        val givenResult = Result.Failure(ErrorCode.AuthFailed, ErrorTest.MESSAGE)
+        val givenFailure = Result.Failure(ErrorCode.AuthFailed, ErrorTest.MESSAGE)
         every { mockAuthHandler.refreshToken(captureLambda()) } answers {
-            lambda<(Result<Empty>) -> Unit>().invoke(givenResult)
+            lambda<(Result<Empty>) -> Unit>().invoke(givenFailure)
         }
         every { mockAuthHandler.jwt } returns NO_JWT
 
@@ -227,13 +227,13 @@ class MCAuthTests : BaseMessagingClientTest() {
     }
 
     @Test
-    fun `when connectAuthenticatedSession fails and WebSocket respond with WebsocketError and there are no reconnection attempts left`() {
-        val expectedException = Exception(ErrorMessage.FailedToReconnect)
+    fun `when connectAuthenticatedSession fails with WebsocketError and no reconnection attempts left`() {
+        val givenException = Exception(ErrorMessage.FailedToReconnect)
         val expectedErrorState =
             MessagingClient.State.Error(ErrorCode.WebsocketError, ErrorMessage.FailedToReconnect)
 
         subject.connectAuthenticatedSession()
-        slot.captured.onFailure(expectedException, ErrorCode.WebsocketError)
+        slot.captured.onFailure(givenException, ErrorCode.WebsocketError)
 
         assertThat(subject.currentState).isError(
             expectedErrorState.code,
