@@ -6,11 +6,16 @@ import com.genesys.cloud.messenger.transport.core.JwtHandler
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
 import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.TracingIds
 import com.genesys.cloud.messenger.transport.utility.AuthTest
+import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.slot
+import io.mockk.unmockkObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.newSingleThreadContext
@@ -36,11 +41,14 @@ class JwtHandlerTest {
     fun setup() {
         Dispatchers.setMain(threadSurrogate)
         coEvery { mockJwtFn(capture(slot)) } returns Unit
+        mockkObject(TracingIds)
+        every { TracingIds.newId() } returns TestValues.TRACING_ID
     }
 
     @ExperimentalCoroutinesApi
     @After
     fun tearDown() {
+        unmockkObject(TracingIds)
         Dispatchers.resetMain()
         threadSurrogate.close()
     }
@@ -76,7 +84,7 @@ class JwtHandlerTest {
 
             coVerify {
                 mockJwtFn(AuthTest.JWT_TOKEN)
-                mockWebSocket.sendMessage(match { it.contains("\"action\":\"getJwt\"") && it.contains("\"token\":\"00000000-0000-0000-0000-000000000000\"") })
+                mockWebSocket.sendMessage(Request.jwt)
             }
             assertThat(slot.captured).isEqualTo(AuthTest.JWT_TOKEN)
             subject.jwtResponse.run {

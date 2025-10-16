@@ -1,6 +1,6 @@
 package com.genesys.cloud.messenger.transport.shyrka.send
 
-import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.TracingIds
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 
@@ -8,8 +8,9 @@ import kotlinx.serialization.Serializable
 internal data class CloseSessionRequest(
     override val token: String,
     val closeAllConnections: Boolean,
-    override val tracingId: String = Platform().randomUUID(),
+    override val tracingId: String,
 ) : BaseWebMessagingRequest() {
     @Required
     override val action: String = RequestAction.CLOSE_SESSION.value
+    constructor(token: String, closeAllConnections: Boolean) : this(token, closeAllConnections, TracingIds.newId())
 }

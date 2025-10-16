@@ -29,7 +29,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.Platform
-import com.genesys.cloud.messenger.transport.util.TracingIdProvider
+import com.genesys.cloud.messenger.transport.util.TracingIds
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import com.genesys.cloud.messenger.transport.utility.AuthTest
@@ -61,8 +61,8 @@ import kotlin.test.BeforeTest
 
 open class BaseMessagingClientTest {
     init {
-        mockkObject(TracingIdProvider)
-        every { TracingIdProvider.getTracingId() } returns TestValues.TRACING_ID
+        mockkObject(TracingIds)
+        every { TracingIds.newId() } returns TestValues.TRACING_ID
     }
 
     private var testToken = Request.token
@@ -71,8 +71,7 @@ open class BaseMessagingClientTest {
     internal val mockMessageStore: MessageStore = mockk(relaxed = true) {
         every { prepareMessage(any(), any(), any()) } returns OnMessageRequest(
             token = testToken,
-            message = TextMessage("Hello world!"),
-            tracingId = TestValues.TRACING_ID
+            message = TextMessage("Hello world!")
         )
         every { prepareMessageWith(any(), any(), null) } returns OnMessageRequest(
             token = testToken,
@@ -84,8 +83,7 @@ open class BaseMessagingClientTest {
                         buttonResponse = QuickReplyTestValues.buttonResponse_a,
                     )
                 ),
-            ),
-            tracingId = TestValues.TRACING_ID
+            )
         )
     }
     internal val mockAttachmentHandler: AttachmentHandler = mockk(relaxed = true) {
@@ -102,14 +100,12 @@ open class BaseMessagingClientTest {
             attachmentId = "88888888-8888-8888-8888-888888888888",
             fileName = "test_attachment.png",
             fileType = "image/png",
-            errorsAsJson = true,
-            tracingId = TestValues.TRACING_ID
+            errorsAsJson = true
         )
 
         every { detach(any(), any()) } returns DeleteAttachmentRequest(
             token = Request.token,
-            attachmentId = "88888888-8888-8888-8888-888888888888",
-            tracingId = TestValues.TRACING_ID
+            attachmentId = "88888888-8888-8888-8888-888888888888"
         )
         every { fileAttachmentProfile } returns null
     }
@@ -214,14 +210,14 @@ open class BaseMessagingClientTest {
     }
 
     @BeforeTest
-    fun initTracingIdProvider() {
-        mockkObject(TracingIdProvider)
-        every { TracingIdProvider.getTracingId() } returns TestValues.TRACING_ID
+    fun initTracingIds() {
+        mockkObject(TracingIds)
+        every { TracingIds.newId() } returns TestValues.TRACING_ID
     }
 
     @AfterTest
-    fun resetTracingIdProvider() {
-        unmockkObject(TracingIdProvider)
+    fun resetTracingIds() {
+        unmockkObject(TracingIds)
         clearAllMocks()
     }
 
@@ -287,15 +283,6 @@ open class BaseMessagingClientTest {
         mockStateChangedListener(fromClosingToClosed)
         mockLogger.i(capture(logSlot))
         verifyCleanUp()
-    }
-
-    protected fun MockKVerificationScope.connectWithFailedConfigureSequence(shouldConfigureAuth: Boolean = false) {
-        val configureRequest =
-            if (shouldConfigureAuth) Request.configureAuthenticatedRequest() else Request.configureRequest()
-        mockStateChangedListener(fromIdleToConnecting)
-        mockPlatformSocket.openSocket(any())
-        mockStateChangedListener(fromConnectingToConnected)
-        mockPlatformSocket.sendMessage(configureRequest)
     }
 
     protected fun errorSequence(stateChange: StateChange) {

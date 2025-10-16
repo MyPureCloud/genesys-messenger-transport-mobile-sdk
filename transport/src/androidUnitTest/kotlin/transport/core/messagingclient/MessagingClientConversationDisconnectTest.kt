@@ -34,13 +34,13 @@ import kotlin.test.assertTrue
 class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
 
     @BeforeTest
-    fun setupTracingIdProvider() {
-        initTracingIdProvider()
+    fun setupTracingIds() {
+        initTracingIds()
     }
 
     @AfterTest
-    fun cleanupTracingIdProvider() {
-        resetTracingIdProvider()
+    fun cleanupTracingIds() {
+        resetTracingIds()
     }
 
     @Test

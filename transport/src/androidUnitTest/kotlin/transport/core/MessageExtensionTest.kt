@@ -70,7 +70,7 @@ internal class MessageExtensionTest {
             from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
         )
         val expectedMessage2 = Message(
-            id = "46e7001c24abed05e9bcd1a006eb54b7",
+            id = "msg2",
             direction = Direction.Inbound,
             state = State.Sent,
             messageType = Type.Event,

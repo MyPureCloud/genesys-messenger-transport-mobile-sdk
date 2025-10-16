@@ -44,7 +44,6 @@ import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.util.Platform
-import com.genesys.cloud.messenger.transport.util.TracingIdProvider
 import com.genesys.cloud.messenger.transport.util.UNKNOWN
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.extensions.isHealthCheckResponseId
@@ -110,7 +109,6 @@ internal class MessagingClientImpl(
     private var reconfigureAttempts = 0
     private var sendingAutostart = false
     private var clearingConversation = false
-    private val tracingIdProvider = TracingIdProvider.getTracingId()
 
     override val currentState: State
         get() {
@@ -290,8 +288,7 @@ internal class MessagingClientImpl(
             .encodeToString(
                 GetAttachmentRequest(
                     token = token,
-                    attachmentId = attachmentId,
-                    tracingId = tracingIdProvider
+                    attachmentId = attachmentId
                 )
             ).also {
                 log.i { "getAttachmentRequest()" }
@@ -365,7 +362,7 @@ internal class MessagingClientImpl(
             )
             return
         }
-        WebMessagingJson.json.encodeToString(ClearConversationRequest(token, tracingIdProvider)).let {
+        WebMessagingJson.json.encodeToString(ClearConversationRequest(token)).let {
             log.i { LogMessages.SEND_CLEAR_CONVERSATION }
             webSocket.sendMessage(it)
         }
@@ -397,7 +394,7 @@ internal class MessagingClientImpl(
     private fun sendAutoStart() {
         sendingAutostart = true
         val channel = prepareCustomAttributesForSending()
-        WebMessagingJson.json.encodeToString(AutoStartRequest(token, channel, tracingIdProvider)).let {
+        WebMessagingJson.json.encodeToString(AutoStartRequest(token, channel)).let {
             log.i { LogMessages.SEND_AUTO_START }
             send(it)
         }
@@ -692,8 +689,7 @@ internal class MessagingClientImpl(
                 journeyContext = JourneyContext(
                     JourneyCustomer(token, "cookie"),
                     JourneyCustomerSession("", "web")
-                ),
-                tracingId = tracingIdProvider
+                )
             )
         )
 
@@ -707,8 +703,7 @@ internal class MessagingClientImpl(
                     JourneyCustomer(token, "cookie"),
                     JourneyCustomerSession("", "web")
                 ),
-                data = ConfigureAuthenticatedSessionRequest.Data(authHandler.jwt),
-                tracingId = tracingIdProvider
+                data = ConfigureAuthenticatedSessionRequest.Data(authHandler.jwt)
             )
         )
 

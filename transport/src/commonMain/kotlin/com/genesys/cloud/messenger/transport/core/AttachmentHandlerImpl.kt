@@ -12,7 +12,6 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
-import com.genesys.cloud.messenger.transport.util.TracingIdProvider
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.ktor.http.ContentType
@@ -57,8 +56,7 @@ internal class AttachmentHandlerImpl(
             fileName = fileName,
             fileType = resolveContentType(fileName).toString(),
             fileSize = byteArray.size,
-            errorsAsJson = true,
-            tracingId = TracingIdProvider.getTracingId()
+            errorsAsJson = true
         )
     }
 
@@ -70,7 +68,7 @@ internal class AttachmentHandlerImpl(
                 .also(updateAttachmentStateWith)
             it.job = uploadDispatcher.launch {
                 when (val result = api.uploadFile(presignedUrlResponse.copy(fileName = it.attachment.fileName), it.byteArray, it.uploadProgress)) {
-                    is Result.Success -> {} // Nothing to do here. We are waiting for UploadSuccess/Failure Event from Shyrka.
+                    is Result.Success -> {}
                     is Result.Failure -> handleUploadFailure(presignedUrlResponse.attachmentId, result)
                 }
             }
@@ -104,8 +102,7 @@ internal class AttachmentHandlerImpl(
                     it.attachment.copy(state = Detaching).also(updateAttachmentStateWith)
                 return DeleteAttachmentRequest(
                     token = token,
-                    attachmentId = attachmentId,
-                    tracingId = TracingIdProvider.getTracingId()
+                    attachmentId = attachmentId
                 )
             } else {
                 onDetached(attachmentId)

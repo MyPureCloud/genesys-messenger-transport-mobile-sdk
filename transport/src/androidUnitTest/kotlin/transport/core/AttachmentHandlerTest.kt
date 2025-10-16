@@ -23,7 +23,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
-import com.genesys.cloud.messenger.transport.util.TracingIdProvider
+import com.genesys.cloud.messenger.transport.util.TracingIds
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
@@ -79,15 +79,15 @@ internal class AttachmentHandlerTest {
     @ExperimentalCoroutinesApi
     @Before
     fun setup() {
-        mockkObject(TracingIdProvider)
-        every { TracingIdProvider.getTracingId() } returns TestValues.TRACING_ID
+        mockkObject(TracingIds)
+        every { TracingIds.newId() } returns TestValues.TRACING_ID
         Dispatchers.setMain(dispatcher)
     }
 
     @ExperimentalCoroutinesApi
     @After
     fun tearDown() {
-        unmockkObject(TracingIdProvider)
+        unmockkObject(TracingIds)
         Dispatchers.resetMain()
     }
 
@@ -388,7 +388,7 @@ internal class AttachmentHandlerTest {
             assertThat(id).isEqualTo(expectedAttachment.id)
             assertThat(fileName).isNull()
             assertThat((state as State.Error).errorCode).isEqualTo(expectedState.errorCode)
-            assertThat((state as State.Error).errorMessage).isEqualTo(expectedState.errorMessage)
+            assertThat(state.errorMessage).isEqualTo(expectedState.errorMessage)
         }
         assertThat(processedAttachments.containsKey(AttachmentValues.ID)).isFalse()
         assertThat(logSlot[0].invoke()).isEqualTo(
@@ -422,7 +422,7 @@ internal class AttachmentHandlerTest {
             assertThat(id).isEqualTo(expectedAttachment.id)
             assertThat(fileName).isNull()
             assertThat((state as State.Error).errorCode).isEqualTo(expectedState.errorCode)
-            assertThat((state as State.Error).errorMessage).isEqualTo(expectedState.errorMessage)
+            assertThat(state.errorMessage).isEqualTo(expectedState.errorMessage)
         }
         assertThat(processedAttachments.containsKey(AttachmentValues.ID)).isFalse()
         assertThat(logSlot[0].invoke()).isEqualTo(
@@ -456,7 +456,7 @@ internal class AttachmentHandlerTest {
             assertThat(id).isEqualTo(expectedAttachment.id)
             assertThat(fileName).isNull()
             assertThat((state as State.Error).errorCode).isEqualTo(expectedState.errorCode)
-            assertThat((state as State.Error).errorMessage).isEqualTo(expectedState.errorMessage)
+            assertThat(state.errorMessage).isEqualTo(expectedState.errorMessage)
         }
         assertThat(processedAttachments.containsKey(AttachmentValues.ID)).isFalse()
         assertThat(logSlot[0].invoke()).isEqualTo(

@@ -4,7 +4,6 @@ import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
-import com.genesys.cloud.messenger.transport.util.TracingIdProvider
 import com.genesys.cloud.messenger.transport.util.extensions.getUploadedAttachments
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
@@ -23,13 +22,11 @@ internal class MessageStore(
     private val activeConversation = mutableListOf<Message>()
     val updateAttachmentStateWith = { attachment: Attachment -> update(attachment) }
     var messageListener: ((MessageEvent) -> Unit)? = null
-    private val tracingIdProvider = TracingIdProvider.getTracingId()
 
     fun prepareMessage(
         token: String,
         text: String,
-        channel: Channel? = null,
-        tracingId: String = tracingIdProvider
+        channel: Channel? = null
     ): OnMessageRequest {
         val messageToSend = pendingMessage.copy(text = text, state = Message.State.Sending).also {
             log.i { LogMessages.messagePreparedToSend(it) }
@@ -43,19 +40,17 @@ internal class MessageStore(
                 text,
                 content = messageToSend.getUploadedAttachments(),
                 channel = channel,
-            ),
-            tracingId = tracingId
+            )
         )
     }
 
     fun prepareMessageWith(
         token: String,
         buttonResponse: ButtonResponse,
-        channel: Channel? = null,
-        tracingId: String = tracingIdProvider
+        channel: Channel? = null
     ): OnMessageRequest {
         val type = Message.Type.QuickReply
-        val messageToSend = pendingMessage
+        pendingMessage
             .copy(
                 messageType = type,
                 type = type.name,
@@ -79,8 +74,7 @@ internal class MessageStore(
                 text = "",
                 content = content,
                 channel = channel,
-            ),
-            tracingId = tracingId
+            )
         )
     }
 

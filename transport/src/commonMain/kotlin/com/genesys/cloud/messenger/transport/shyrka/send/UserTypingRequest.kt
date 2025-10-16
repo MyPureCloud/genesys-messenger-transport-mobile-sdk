@@ -2,14 +2,14 @@ package com.genesys.cloud.messenger.transport.shyrka.send
 
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.TypingEvent
-import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.TracingIds
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 
 @Serializable
 internal data class UserTypingRequest(
     override val token: String,
-    override val tracingId: String = Platform().randomUUID(),
+    override val tracingId: String,
 ) : BaseWebMessagingRequest() {
     @Required
     override val action: String = RequestAction.ON_MESSAGE.value
@@ -23,4 +23,5 @@ internal data class UserTypingRequest(
             )
         )
     )
+    constructor(token: String) : this(token, TracingIds.newId())
 }

@@ -6,7 +6,7 @@ import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.core.events.TYPING_INDICATOR_COOL_DOWN_MILLISECONDS
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
 import com.genesys.cloud.messenger.transport.util.Platform
-import com.genesys.cloud.messenger.transport.util.TracingIdProvider
+import com.genesys.cloud.messenger.transport.util.TracingIds
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.TestValues
@@ -39,13 +39,13 @@ class UserTypingProviderTest {
 
     @Before
     fun setup() {
-        mockkObject(TracingIdProvider)
-        every { TracingIdProvider.getTracingId() } returns TestValues.TRACING_ID
+        mockkObject(TracingIds)
+        every { TracingIds.newId() } returns TestValues.TRACING_ID
     }
 
     @After
     fun tearDown() {
-        unmockkObject(TracingIdProvider)
+        unmockkObject(TracingIds)
     }
 
     @Test

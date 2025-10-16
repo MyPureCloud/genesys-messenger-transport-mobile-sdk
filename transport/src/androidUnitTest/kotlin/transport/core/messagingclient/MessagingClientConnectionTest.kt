@@ -31,13 +31,13 @@ import kotlin.test.assertFailsWith
 class MessagingClientConnectionTest : BaseMessagingClientTest() {
 
     @BeforeTest
-    fun setupTracingIdProvider() {
-        initTracingIdProvider()
+    fun setupTracingIds() {
+        initTracingIds()
     }
 
     @AfterTest
-    fun cleanupTracingIdProvider() {
-        resetTracingIdProvider()
+    fun cleanupTracingIds() {
+        resetTracingIds()
     }
 
     @Test

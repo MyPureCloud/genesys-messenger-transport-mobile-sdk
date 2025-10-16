@@ -3,7 +3,6 @@ package com.genesys.cloud.messenger.transport.core.events
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.send.UserTypingRequest
 import com.genesys.cloud.messenger.transport.util.Platform
-import com.genesys.cloud.messenger.transport.util.TracingIdProvider
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 
@@ -23,7 +22,7 @@ internal class UserTypingProvider(
             val delta = currentTimestamp - lastSentUserTypingTimestamp
             if (delta > TYPING_INDICATOR_COOL_DOWN_MILLISECONDS) {
                 lastSentUserTypingTimestamp = currentTimestamp
-                val request = UserTypingRequest(token = token, tracingId = TracingIdProvider.getTracingId())
+                val request = UserTypingRequest(token = token)
                 WebMessagingJson.json.encodeToString(request)
             } else {
                 log.w { LogMessages.typingIndicatorCoolDown(TYPING_INDICATOR_COOL_DOWN_MILLISECONDS) }

@@ -2,6 +2,7 @@ package com.genesys.cloud.messenger.transport.shyrka.send
 
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEvent
+import com.genesys.cloud.messenger.transport.util.TracingIds
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -25,4 +26,5 @@ internal data class AutoStartRequest(
         ),
         channel = channel,
     )
+    constructor(token: String, channel: Channel? = null) : this(token, channel, TracingIds.newId())
 }
