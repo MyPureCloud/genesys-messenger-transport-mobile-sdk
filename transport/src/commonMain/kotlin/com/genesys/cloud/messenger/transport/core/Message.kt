@@ -146,6 +146,7 @@ data class Message(
             Unknown,
         }
     }
+
     @Serializable
     data class Card(
         val title: String,

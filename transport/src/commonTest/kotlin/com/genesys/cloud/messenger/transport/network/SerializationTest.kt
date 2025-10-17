@@ -550,20 +550,21 @@ class SerializationTest {
             actions = emptyList()
         )
 
-        val expectedBody = StructuredMessageValues.createStructuredMessageForTesting(
-            id = "carousel-id",
-            type = StructuredMessage.Type.Structured,
-            direction = "Outbound",
-            text = "Carousel content test",
-            content = listOf(
-                StructuredMessage.Content.CarouselContent(
-                    contentType = "Carousel",
-                    carousel = StructuredMessage.Content.CarouselContent.Carousel(
-                        cards = listOf(card1, card2)
+        val expectedBody = StructuredMessageValues
+            .createStructuredMessageForTesting(
+                id = "carousel-id",
+                type = StructuredMessage.Type.Structured,
+                direction = "Outbound",
+                text = "Carousel content test",
+                content = listOf(
+                    StructuredMessage.Content.CarouselContent(
+                        contentType = "Carousel",
+                        carousel = StructuredMessage.Content.CarouselContent.Carousel(
+                            cards = listOf(card1, card2)
+                        )
                     )
                 )
-            )
-        ).copy(originatingEntity = "Human")
+            ).copy(originatingEntity = "Human")
 
         val expected = StructuredMessageValues.expectedWebMessage(expectedBody)
         val message = WebMessagingJson.decodeFromString(json)
@@ -583,19 +584,21 @@ class SerializationTest {
             linkUrl = "http://example.org"
         )
 
-        val expectedBody = StructuredMessageValues.createStructuredMessageForTesting(
-            id = "card-id",
-            type = StructuredMessage.Type.Structured,
-            direction = "Outbound",
-            text = "Card content test",
-            content = listOf(CardTestValues.createCardContent(givenCard)),
-        ).copy(originatingEntity = "Human")
+        val expectedBody = StructuredMessageValues
+            .createStructuredMessageForTesting(
+                id = "card-id",
+                type = StructuredMessage.Type.Structured,
+                direction = "Outbound",
+                text = "Card content test",
+                content = listOf(CardTestValues.createCardContent(givenCard)),
+            ).copy(originatingEntity = "Human")
 
         val expected = StructuredMessageValues.expectedWebMessage(expectedBody)
 
         val message = WebMessagingJson.decodeFromString(json)
 
-        assertThat(message.body, "WebMessagingMessage body").isNotNull()
+        assertThat(message.body, "WebMessagingMessage body")
+            .isNotNull()
             .hasClass(StructuredMessage::class)
         assertThat(message).isEqualTo(expected)
     }
@@ -707,10 +710,11 @@ class SerializationTest {
             Action.Link(url = CardTestValues.url, text = CardTestValues.text).type
         ).isEqualTo(Action.Type.Link)
         assertThat(
-            Action.Postback(
-                text = CardTestValues.POSTBACK_TEXT,
-                payload = CardTestValues.POSTBACK_PAYLOAD
-            ).type
+            Action
+                .Postback(
+                    text = CardTestValues.POSTBACK_TEXT,
+                    payload = CardTestValues.POSTBACK_PAYLOAD
+                ).type
         ).isEqualTo(Action.Type.Postback)
     }
 

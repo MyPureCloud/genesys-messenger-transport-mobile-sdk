@@ -974,7 +974,13 @@ internal class MessageExtensionTest {
         assertThat(result.messageType).isEqualTo(expectedMessageType)
         assertThat(result.cards).size().isEqualTo(TestValues.DEFAULT_NUMBER)
         assertThat(result.cards.first().title).isEqualTo(expectedCardTitle)
-        assertThat(result.cards.first().actions.first().text).isEqualTo(expectedActionText)
+        assertThat(
+            result.cards
+                .first()
+                .actions
+                .first()
+                .text
+        ).isEqualTo(expectedActionText)
     }
 
     @Test
@@ -994,7 +1000,12 @@ internal class MessageExtensionTest {
         assertThat(result.cards).size().isEqualTo(givenTitles.size)
         assertThat(result.cards[0].title).isEqualTo(expectedTitles[0])
         assertThat(result.cards[1].title).isEqualTo(expectedTitles[1])
-        assertThat(result.cards[1].actions.first().text).isEqualTo(expectedActionText)
+        assertThat(
+            result.cards[1]
+                .actions
+                .first()
+                .text
+        ).isEqualTo(expectedActionText)
     }
 
     @Test
@@ -1244,7 +1255,10 @@ internal class MessageExtensionTest {
         val decodedMessage = givenStructuredMessage.toMessage()
 
         assertThat(decodedMessage.messageType).isEqualTo(Type.Cards)
-        val mappedAction = decodedMessage.cards.single().actions.single()
+        val mappedAction = decodedMessage.cards
+            .single()
+            .actions
+            .single()
         assertThat(mappedAction.type).isEqualTo(QuickReplyTestValues.BUTTON)
         assertThat(mappedAction.text).isEqualTo(CardTestValues.POSTBACK_TEXT)
         assertThat(mappedAction.payload).isEqualTo(CardTestValues.POSTBACK_PAYLOAD)
@@ -1278,7 +1292,10 @@ internal class MessageExtensionTest {
         val decodedMessage: Message = givenStructuredMessage.toMessage()
 
         assertThat(decodedMessage.messageType).isEqualTo(Type.Cards)
-        val mappedAction = decodedMessage.cards.single().actions.single()
+        val mappedAction = decodedMessage.cards
+            .single()
+            .actions
+            .single()
         assertThat(mappedAction.type).isEqualTo(CardTestValues.LINK_TYPE)
         assertThat(mappedAction.payload).isEqualTo(CardTestValues.url)
         assertThat(mappedAction.text).isEqualTo(CardTestValues.text)
@@ -1326,7 +1343,10 @@ internal class MessageExtensionTest {
         val decodedMessage: Message = givenStructuredMessage.toMessage()
 
         assertThat(decodedMessage.messageType).isEqualTo(Type.Cards)
-        val mappedAction = decodedMessage.cards.single().actions.single()
+        val mappedAction = decodedMessage.cards
+            .single()
+            .actions
+            .single()
         assertThat(mappedAction.type).isEqualTo(expectedActionType)
         assertThat(mappedAction.payload).isEqualTo(expectedPayload)
     }

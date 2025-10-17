@@ -41,7 +41,6 @@ import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.CardTestValues
 import com.genesys.cloud.messenger.transport.utility.Journey
 import com.genesys.cloud.messenger.transport.utility.TestValues
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -508,10 +507,11 @@ class RequestSerializationTest {
             metadata = mapOf("customMessageId" to "12345")
         )
 
-        val messageJson = WebMessagingJson.json.encodeToJsonElement(
-            StructuredMessage.serializer(),
-            structuredMessage
-        ).jsonObject
+        val messageJson = WebMessagingJson.json
+            .encodeToJsonElement(
+                StructuredMessage.serializer(),
+                structuredMessage
+            ).jsonObject
 
         val text = messageJson["text"]?.jsonPrimitive?.content
         val content = messageJson["content"]?.jsonArray?.firstOrNull()?.jsonObject

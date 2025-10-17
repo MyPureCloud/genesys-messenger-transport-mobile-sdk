@@ -360,7 +360,7 @@ internal class MessageStoreTest {
         (messageSlot.captured as MessageEvent.MessageUpdated).message.run {
             assertThat(this).isEqualTo(expectedMessage)
             assertThat((state as State.Error).code).isEqualTo(expectedState.code)
-            assertThat((state as State.Error).message).isEqualTo(expectedState.message)
+            assertThat(state.message).isEqualTo(expectedState.message)
         }
     }
 
@@ -626,9 +626,9 @@ internal class MessageStoreTest {
         val givenCard = CardTestValues.cardWithPostbackAction
         val givenMessage = Message(
             id = "msg_id",
-            direction = Message.Direction.Outbound,
+            direction = Direction.Outbound,
             state = State.Sent,
-            messageType = Message.Type.Cards,
+            messageType = Type.Cards,
             text = "You selected this card option",
             cards = listOf(givenCard),
             from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
@@ -717,13 +717,14 @@ internal class MessageStoreTest {
         assertThat(actualFetchedEvent.messages).isEqualTo(expectedFetchedMessages)
     }
 
-    private fun outboundMessage(messageId: Int = 0): Message = Message(
-        id = "$messageId",
-        direction = Direction.Outbound,
-        state = State.Sent,
-        text = "message from agent number $messageId",
-        timeStamp = 100 * messageId.toLong(),
-    )
+    private fun outboundMessage(messageId: Int = 0): Message =
+        Message(
+            id = "$messageId",
+            direction = Direction.Outbound,
+            state = State.Sent,
+            text = "message from agent number $messageId",
+            timeStamp = 100 * messageId.toLong(),
+        )
 
     private fun attachment(
         id: String = "given id",
@@ -742,8 +743,8 @@ internal class MessageStoreTest {
     fun `when preparePostbackMessage() then logs and publishes MessageInserted`() {
         val expectedMessage = subject.pendingMessage.copy(
             state = State.Sending,
-            messageType = Message.Type.Cards,
-            type = Message.Type.Cards.name,
+            messageType = Type.Cards,
+            type = Type.Cards.name,
             quickReplies = listOf(
                 ButtonResponse(
                     text = CardTestValues.POSTBACK_TEXT,
@@ -766,8 +767,8 @@ internal class MessageStoreTest {
         val actualLog = logSlot[0].invoke()
         assertThat(actualLog).contains("Message with postback prepared to send:")
         assertThat(actualLog).contains("state=${State.Sending}")
-        assertThat(actualLog).contains("messageType=${Message.Type.Cards}")
-        assertThat(actualLog).contains("type=${Message.Type.Cards.name}")
+        assertThat(actualLog).contains("messageType=${Type.Cards}")
+        assertThat(actualLog).contains("type=${Type.Cards.name}")
         assertThat(actualLog).contains("id=${expectedMessage.id}")
 
         val inserted = messageSlot.captured as MessageEvent.MessageInserted

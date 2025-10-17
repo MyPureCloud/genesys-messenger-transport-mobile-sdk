@@ -15,8 +15,7 @@ internal fun String.sanitize(): String {
     return "*".repeat(this.length - lastChars) + this.takeLast(lastChars)
 }
 
-fun String.sanitizeSensitiveData(): String =
-    this.sanitizeToken().sanitizeText().sanitizeCustomAttributes()
+fun String.sanitizeSensitiveData(): String = this.sanitizeToken().sanitizeText().sanitizeCustomAttributes()
 
 internal fun String.sanitizeCustomAttributes(): String {
     val regex = """("customAttributes":\{)(.*?)(\})""".toRegex()
@@ -30,7 +29,7 @@ internal fun String.sanitizeText(): String {
     var sanitizedInput = this.replace(regex) {
         """${it.groupValues[1]}${it.groupValues[2].sanitize()}${it.groupValues[3]}"""
     }
-    regex = """(text=)(.*?)(?=(?:, \w+:)|$|[)])""".toRegex()
+    regex = """(text=)(.*?)(?=, \w+:|$|[)])""".toRegex()
     sanitizedInput = sanitizedInput.replace(regex) {
         """${it.groupValues[1]}${it.groupValues[2].sanitize()}"""
     }

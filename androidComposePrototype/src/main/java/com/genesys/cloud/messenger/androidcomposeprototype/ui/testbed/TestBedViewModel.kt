@@ -78,7 +78,6 @@ class TestBedViewModel :
 
     val regions = listOf("inindca.com", "inintca.com", "mypurecloud.com", "usw2.pure.cloud", "mypurecloud.jp", "mypurecloud.com.au", "mypurecloud.de", "euw2.pure.cloud", "cac1.pure.cloud", "apne2.pure.cloud", "aps1.pure.cloud", "sae1.pure.cloud", "mec1.pure.cloud", "apne3.pure.cloud", "euc2.pure.cloud")
     private lateinit var onOpenUrl: (url: String) -> Unit
-    private lateinit var onOktaSingIn: (url: String) -> Unit
     private val quickRepliesMap = mutableMapOf<String, ButtonResponse>()
     private val cardActionsMap = mutableMapOf<String, ButtonResponse>()
     private lateinit var selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit
@@ -474,7 +473,10 @@ class TestBedViewModel :
         }
     }
 
-    private fun onClientStateChanged(oldState: State, newState: State) {
+    private fun onClientStateChanged(
+        oldState: State,
+        newState: State
+    ) {
         Log.v(TAG, "onClientStateChanged(oldState = $oldState, newState = $newState)")
         clientState = newState
         val statePayloadMessage = when (newState) {
@@ -543,7 +545,6 @@ class TestBedViewModel :
                 "CardMessageReceived with actions: $tempActionsMap"
             }
 
-            else -> event.toString()
         }
         onSocketMessageReceived(eventMessage)
     }

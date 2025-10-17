@@ -45,7 +45,7 @@ internal fun StructuredMessage.toMessage(): Message {
                 isInbound()
             }
         ),
-        authenticated = metadata["authenticated"].toBoolean()
+        authenticated = metadata["authenticated"]?.toBoolean() ?: false
     )
 }
 
@@ -103,8 +103,7 @@ private fun List<StructuredMessage.Content>.toQuickReplies(): List<ButtonRespons
         return filteredButtonResponse
             .mapNotNull { buttonResponseContent ->
                 buttonResponseContent.buttonResponse.takeIf { it.type.normalizeButtonType() == "QuickReply" }
-            }
-            .map { br -> ButtonResponse(br.text, br.payload, "QuickReply") }
+            }.map { br -> ButtonResponse(br.text, br.payload, "QuickReply") }
     }
 
     return emptyList()
@@ -115,7 +114,7 @@ private fun StructuredMessage.Content.Action.toMessageCardAction(): ButtonRespon
         type.equals("Link", ignoreCase = true) -> ButtonResponse(
             type = "Link",
             text = text,
-            payload = url!!
+            payload = url ?: ""
         )
         type.equals("Postback", ignoreCase = true) ||
             type.equals("Button", ignoreCase = true) -> ButtonResponse(
@@ -150,7 +149,11 @@ private fun List<StructuredMessage.Content>.toCards(): List<Message.Card> =
         }
     }
 
-private fun StructuredMessage.Type.toMessageType(hasQuickReplies: Boolean, hasCards: Boolean, hasCardSelection: Boolean): Message.Type =
+private fun StructuredMessage.Type.toMessageType(
+    hasQuickReplies: Boolean,
+    hasCards: Boolean,
+    hasCardSelection: Boolean
+): Message.Type =
     when (this) {
         StructuredMessage.Type.Text -> Message.Type.Text
         StructuredMessage.Type.Event -> Message.Type.Event
@@ -170,7 +173,8 @@ private fun String.normalizeButtonType(): String =
     }
 
 private fun List<StructuredMessage.Content>.hasCardSelection(): Boolean =
-    this.filterIsInstance<ButtonResponseContent>()
+    this
+        .filterIsInstance<ButtonResponseContent>()
         .any { it.buttonResponse.type.normalizeButtonType() == "Button" }
 
 internal fun String.isHealthCheckResponseId(): Boolean = this == HealthCheckID
@@ -211,50 +215,4 @@ internal fun FileUpload?.toFileAttachmentProfile(): FileAttachmentProfile {
 
 internal fun PresignedUrlResponse.isRefreshUrl(): Boolean {
     return headers.isEmpty() && fileSize != null
-}
-
-/**
- * Replaces characters with stars (*) except for the last 4 characters
- */
-internal fun String.sanitize(): String {
-    val lastChars = 4
-    if (this.length <= lastChars) {
-        return this // Nothing to sanitize if length is lastChars or fewer characters
-    }
-
-    return "*".repeat(this.length - lastChars) + this.takeLast(lastChars)
-}
-
-fun String.sanitizeSensitiveData(): String = this.sanitizeToken().sanitizeText().sanitizeCustomAttributes()
-
-internal fun String.sanitizeCustomAttributes(): String {
-    val regex = """("customAttributes":\{)(.*?)(\})""".toRegex()
-    return this.replace(regex) {
-        """${it.groupValues[1]}${it.groupValues[2].sanitize()}${it.groupValues[3]}"""
-    }
-}
-
-internal fun String.sanitizeText(): String {
-    var regex = """("text":")([^"]*)(")""".toRegex()
-    var sanitizedInput = this.replace(regex) {
-        """${it.groupValues[1]}${it.groupValues[2].sanitize()}${it.groupValues[3]}"""
-    }
-    regex = """(text=)(.*?)(?=(?:, \w+:)|$|[)])""".toRegex()
-    sanitizedInput = sanitizedInput.replace(regex) {
-        """${it.groupValues[1]}${it.groupValues[2].sanitize()}"""
-    }
-    return sanitizedInput
-}
-
-internal fun String.sanitizeToken(): String {
-    val tokenRegex = """("token":")([a-fA-F0-9-]{36})(")""".toRegex()
-    return this.replace(tokenRegex) {
-        """${it.groupValues[1]}${it.groupValues[2].sanitize()}${it.groupValues[3]}"""
-    }
-}
-
-internal fun Map<String, String>.sanitizeValues(): Map<String, String> {
-    return this.mapValues { (_, value) ->
-        value.sanitize()
-    }
 }

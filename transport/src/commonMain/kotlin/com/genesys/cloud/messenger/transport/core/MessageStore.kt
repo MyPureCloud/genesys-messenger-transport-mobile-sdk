@@ -86,17 +86,18 @@ internal class MessageStore(private val log: Log) {
     ): OnMessageRequest {
         val type = Message.Type.Cards
 
-        val messageToSend = pendingMessage.copy(
-            messageType = type,
-            type = type.name,
-            state = Message.State.Sending,
-            quickReplies = listOf(buttonResponse),
-        ).also {
-            log.i { LogMessages.postbackPrepareToSend(it) }
-            activeConversation.add(it)
-            publish(MessageEvent.MessageInserted(it))
-            pendingMessage = Message(attachments = it.attachments)
-        }
+        val messageToSend = pendingMessage
+            .copy(
+                messageType = type,
+                type = type.name,
+                state = Message.State.Sending,
+                quickReplies = listOf(buttonResponse),
+            ).also {
+                log.i { LogMessages.postbackPrepareToSend(it) }
+                activeConversation.add(it)
+                publish(MessageEvent.MessageInserted(it))
+                pendingMessage = Message(attachments = it.attachments)
+            }
 
         val content = listOf(
             Message.Content(
@@ -116,17 +117,18 @@ internal class MessageStore(private val log: Log) {
         )
     }
 
-    fun update(message: Message) = message.run {
-        log.i { LogMessages.messageStateUpdated(this) }
-        when (direction) {
-            Direction.Inbound -> findAndPublish(this)
-            Direction.Outbound -> {
-                activeConversation.add(this)
-                publish(this.toMessageEvent())
+    fun update(message: Message) =
+        message.run {
+            log.i { LogMessages.messageStateUpdated(this) }
+            when (direction) {
+                Direction.Inbound -> findAndPublish(this)
+                Direction.Outbound -> {
+                    activeConversation.add(this)
+                    publish(this.toMessageEvent())
+                }
             }
+            nextPage = activeConversation.getNextPage()
         }
-        nextPage = activeConversation.getNextPage()
-    }
 
     private fun update(attachment: Attachment) {
         log.i { LogMessages.attachmentStateUpdated(attachment) }

@@ -75,8 +75,9 @@ internal object Response {
         """{"type":"response","class":"StructuredMessage","code":200,"body":{"text":"ping","type":"Text","direction":"Inbound","id":"ebb7e3aa5829c0fed0f43ccbcca4ade7","metadata":{"customMessageId":"SGVhbHRoQ2hlY2tNZXNzYWdlSWQ="}}}"""
     const val jwtResponse =
         """{"type":"response","class":"JwtResponse","code":200,"body":{"jwt":"some_jwt","exp":333}}"""
-    fun clearConversationForbidden(errorMessage: String = "Presence events Conversation Clear are not supported") =
-        """{"type":"response","class":"string","code":403,"body":"$errorMessage"}"""
+
+    fun clearConversationForbidden(errorMessage: String = "Presence events Conversation Clear are not supported") = """{"type":"response","class":"string","code":403,"body":"$errorMessage"}"""
+
     const val onMessageWithPostbackCardReply =
         """{"type":"message","class":"StructuredMessage","code":200,"body":{"direction":"Outbound","id":"msg_id","channel":{"time":"some_time","type":"Private"},"type":"Structured","text":"You selected this card option","content":[{"contentType":"Card","card":{"title":"Title","description":"Description","image":"http://image.com/image.png","actions":[{"type":"Postback","text":"Select this option","payload":"postback_payload"}]}}],"originatingEntity":"Bot"}}"""
 
