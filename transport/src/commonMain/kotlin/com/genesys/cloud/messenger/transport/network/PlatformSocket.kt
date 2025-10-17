@@ -20,6 +20,11 @@ internal expect class PlatformSocket(
     val pingInterval: Int
 
     fun openSocket(listener: PlatformSocketListener)
-    fun closeSocket(code: Int, reason: String)
+
+    fun closeSocket(
+        code: Int,
+        reason: String
+    )
+
     fun sendMessage(text: String)
 }

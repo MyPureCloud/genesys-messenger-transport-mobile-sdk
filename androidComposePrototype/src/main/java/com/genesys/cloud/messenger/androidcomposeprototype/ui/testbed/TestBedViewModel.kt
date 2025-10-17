@@ -20,8 +20,11 @@ import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
 import com.genesys.cloud.messenger.transport.core.events.Event
+import com.genesys.cloud.messenger.transport.push.PushProvider
+import com.genesys.cloud.messenger.transport.push.PushService
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.EncryptedVault
+import com.google.firebase.messaging.FirebaseMessaging
 import io.ktor.http.URLBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,7 +35,9 @@ import kotlinx.coroutines.withContext
 
 private const val SAVED_ATTACHMENT_FILE_NAME = "test_asset.png"
 
-class TestBedViewModel : ViewModel(), CoroutineScope {
+class TestBedViewModel :
+    ViewModel(),
+    CoroutineScope {
 
     override val coroutineContext = Dispatchers.IO + Job()
 
@@ -40,6 +45,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private lateinit var messengerTransport: MessengerTransportSDK
     private lateinit var client: MessagingClient
+    private lateinit var pushService: PushService
     private val attachedIds = mutableListOf<String>()
 
     var command: String by mutableStateOf("")
@@ -72,6 +78,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     val regions = listOf("inindca.com", "inintca.com", "mypurecloud.com", "usw2.pure.cloud", "mypurecloud.jp", "mypurecloud.com.au", "mypurecloud.de", "euw2.pure.cloud", "cac1.pure.cloud", "apne2.pure.cloud", "aps1.pure.cloud", "sae1.pure.cloud", "mec1.pure.cloud", "apne3.pure.cloud", "euc2.pure.cloud")
     private lateinit var onOpenUrl: (url: String) -> Unit
+    private lateinit var onOktaSingIn: (url: String) -> Unit
     private val quickRepliesMap = mutableMapOf<String, ButtonResponse>()
     private val cardActionsMap = mutableMapOf<String, ButtonResponse>()
     private lateinit var selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit
@@ -98,6 +105,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
         messengerTransport = MessengerTransportSDK(mmsdkConfiguration)
         client = messengerTransport.createMessagingClient()
+        pushService = messengerTransport.createPushService()
         client.customAttributesStore.add(mapOf("sdkVersion" to "Transport SDK: ${MessengerTransportSDK.sdkVersion}"))
         with(client) {
             stateChangedListener = {
@@ -170,6 +178,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "stepUp" -> doStepUp()
             "wasAuthenticated" -> doWasAuthenticated()
             "shouldAuthorize" -> doShouldAuthorize()
+            "syncDeviceToken" -> doSynchronizeDeviceToken()
+            "unregPush" -> doUnregisterFromPush()
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
@@ -329,14 +339,17 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private var sendFileName = SAVED_ATTACHMENT_FILE_NAME
     private lateinit var attachment: ByteArray
+
     private fun doAttachSavedImage() {
         try {
-            client.attach(
-                attachment,
-                sendFileName
-            ) { progress -> println("Attachment upload progress: $progress") }.also {
-                attachedIds.add(it)
-            }
+            client
+                .attach(
+                    attachment,
+                    sendFileName
+                ) { progress -> println("Attachment upload progress: $progress") }
+                .also {
+                    attachedIds.add(it)
+                }
         } catch (t: Throwable) {
             handleException(t, "attach")
         }
@@ -358,8 +371,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private fun doFileAttachmentProfile() =
-        onSocketMessageReceived("FileAttachmentProfile: ${client.fileAttachmentProfile}")
+    private fun doFileAttachmentProfile() = onSocketMessageReceived("FileAttachmentProfile: ${client.fileAttachmentProfile}")
 
     private fun doChangeFileName(newFileName: String) {
         sendFileName = newFileName
@@ -426,6 +438,42 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
+    private fun doSynchronizeDeviceToken() {
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.d(TAG, "Synchronize Push: error")
+                onSocketMessageReceived("Failed to retrieve deviceToken")
+            } else {
+                viewModelScope.launch {
+                    try {
+                        Log.d(TAG, "Synchronize Push with device token: ${task.result}")
+                        pushService.synchronize(task.result, PushProvider.FCM)
+                        clearCommand()
+                    } catch (t: Throwable) {
+                        Log.d(TAG, "Synchronize Push: error")
+                        withContext(Dispatchers.Main) {
+                            handleException(t, "Synchronize push")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun doUnregisterFromPush() {
+        viewModelScope.launch {
+            try {
+                pushService.unregister()
+                clearCommand()
+            } catch (t: Throwable) {
+                Log.d(TAG, "UnregisterFromPush: error")
+                withContext(Dispatchers.Main) {
+                    handleException(t, "unregister from push")
+                }
+            }
+        }
+    }
+
     private fun onClientStateChanged(oldState: State, newState: State) {
         Log.v(TAG, "onClientStateChanged(oldState = $oldState, newState = $newState)")
         clientState = newState
@@ -452,7 +500,10 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         commandWaiting = false
     }
 
-    private fun handleException(t: Throwable, action: String) {
+    private fun handleException(
+        t: Throwable,
+        action: String
+    ) {
         val failMessage = "Failed to $action"
         Log.e(TAG, failMessage, t)
         onSocketMessageReceived(t.message ?: failMessage)
@@ -525,14 +576,19 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    fun onFileSelected(byteArray: ByteArray, fileName: String) {
+    fun onFileSelected(
+        byteArray: ByteArray,
+        fileName: String
+    ) {
         commandWaiting = false
-        client.attach(
-            byteArray,
-            fileName
-        ) { progress -> println("Attachment upload progress: $progress") }.also {
-            attachedIds.add(it)
-        }
+        client
+            .attach(
+                byteArray,
+                fileName
+            ) { progress -> println("Attachment upload progress: $progress") }
+            .also {
+                attachedIds.add(it)
+            }
     }
 
     fun onCancelFileSelection() {
@@ -572,9 +628,13 @@ private fun String.toKeyValuePair(): Pair<String, String> {
 
 sealed class AuthState {
     data object NoAuth : AuthState()
+
     data class AuthCodeReceived(val authCode: String) : AuthState()
+
     data object Authorized : AuthState()
+
     data object LoggedOut : AuthState()
+
     data class Error(
         val errorCode: ErrorCode,
         val message: String? = null,

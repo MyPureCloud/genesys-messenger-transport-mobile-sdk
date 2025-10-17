@@ -143,7 +143,11 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
-    fun oktaSignInWithPKCE(userName: String, password: String, validSignIn: Boolean = true) {
+    fun oktaSignInWithPKCE(
+        userName: String,
+        password: String,
+        validSignIn: Boolean = true
+    ) {
         messenger {
             verifyPageIsVisible()
             enterCommand(oktaSignInWithPKCEText)
@@ -171,7 +175,11 @@ class ComposePrototypeUITest : BaseTests() {
     }
 
     fun clearBrowser() {
-        InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand("pm clear com.android.chrome").close()
+        InstrumentationRegistry
+            .getInstrumentation()
+            .getUiAutomation()
+            .executeShellCommand("pm clear com.android.chrome")
+            .close()
     }
 
     fun checkForReadOnly() {
@@ -219,7 +227,10 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
-    fun attachDesignatedImage(fileName: String, valid: Boolean) {
+    fun attachDesignatedImage(
+        fileName: String,
+        valid: Boolean
+    ) {
         val attachmentId = ""
         messenger {
             enterCommand("$savedFileNameText $fileName")
@@ -301,7 +312,10 @@ class ComposePrototypeUITest : BaseTests() {
         }
     }
 
-    fun addCustomAttribute(key: String, value: String) {
+    fun addCustomAttribute(
+        key: String,
+        value: String
+    ) {
         messenger {
             verifyPageIsVisible()
             enterCommand("$addAtrributeText $key $value")

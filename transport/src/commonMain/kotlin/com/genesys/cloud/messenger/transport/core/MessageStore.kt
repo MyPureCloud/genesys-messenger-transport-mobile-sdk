@@ -22,7 +22,11 @@ internal class MessageStore(private val log: Log) {
     val updateAttachmentStateWith = { attachment: Attachment -> update(attachment) }
     var messageListener: ((MessageEvent) -> Unit)? = null
 
-    fun prepareMessage(token: String, text: String, channel: Channel? = null): OnMessageRequest {
+    fun prepareMessage(
+        token: String,
+        text: String,
+        channel: Channel? = null
+    ): OnMessageRequest {
         val messageToSend = pendingMessage.copy(text = text, state = Message.State.Sending).also {
             log.i { LogMessages.messagePreparedToSend(it) }
             activeConversation.add(it)
@@ -46,17 +50,18 @@ internal class MessageStore(private val log: Log) {
         channel: Channel? = null,
     ): OnMessageRequest {
         val type = Message.Type.QuickReply
-        val messageToSend = pendingMessage.copy(
-            messageType = type,
-            type = type.name,
-            state = Message.State.Sending,
-            quickReplies = listOf(buttonResponse),
-        ).also {
-            log.i { LogMessages.quickReplyPrepareToSend(it) }
-            activeConversation.add(it)
-            publish(MessageEvent.MessageInserted(it))
-            pendingMessage = Message(attachments = it.attachments)
-        }
+        val messageToSend = pendingMessage
+            .copy(
+                messageType = type,
+                type = type.name,
+                state = Message.State.Sending,
+                quickReplies = listOf(buttonResponse),
+            ).also {
+                log.i { LogMessages.quickReplyPrepareToSend(it) }
+                activeConversation.add(it)
+                publish(MessageEvent.MessageInserted(it))
+                pendingMessage = Message(attachments = it.attachments)
+            }
         val content = listOf(
             Message.Content(
                 contentType = Message.Content.Type.ButtonResponse,
@@ -125,14 +130,18 @@ internal class MessageStore(private val log: Log) {
 
     private fun update(attachment: Attachment) {
         log.i { LogMessages.attachmentStateUpdated(attachment) }
-        val attachments = pendingMessage.attachments.toMutableMap().also {
-            it[attachment.id] = attachment
-        }.filterNot { it.value.state is Attachment.State.Sent }
+        val attachments = pendingMessage.attachments
+            .toMutableMap()
+            .also { it[attachment.id] = attachment }
+            .filterNot { it.value.state is Attachment.State.Sent }
         pendingMessage = pendingMessage.copy(attachments = attachments)
         publish(MessageEvent.AttachmentUpdated(attachment))
     }
 
-    fun updateMessageHistory(historyPage: List<Message>, total: Int) {
+    fun updateMessageHistory(
+        historyPage: List<Message>,
+        total: Int
+    ) {
         startOfConversation = isAllHistoryFetched(total)
         with(historyPage.takeInactiveMessages().reversed()) {
             log.i { LogMessages.messageHistoryUpdated(this) }
@@ -144,7 +153,10 @@ internal class MessageStore(private val log: Log) {
 
     fun getConversation(): List<Message> = activeConversation.toList()
 
-    fun onMessageError(code: ErrorCode, message: String?) {
+    fun onMessageError(
+        code: ErrorCode,
+        message: String?
+    ) {
         activeConversation.find { it.state == Message.State.Sending }?.let {
             update(it.copy(state = Message.State.Error(code, message)))
         }
@@ -178,8 +190,7 @@ internal class MessageStore(private val log: Log) {
 
     private fun <E> MutableList<E>.getNextPage(): Int = (this.size / DEFAULT_PAGE_SIZE) + 1
 
-    private fun isAllHistoryFetched(totalInStash: Int) =
-        totalInStash - activeConversation.size <= DEFAULT_PAGE_SIZE
+    private fun isAllHistoryFetched(totalInStash: Int) = totalInStash - activeConversation.size <= DEFAULT_PAGE_SIZE
 
     private fun List<Message>.takeInactiveMessages(): List<Message> {
         return this.filter { message ->
@@ -233,8 +244,10 @@ sealed class MessageEvent {
      * @property startOfConversation is a flag that indicated if user has fetched all messages in the conversation history.
      * When true - no more [com.genesys.cloud.messenger.transport.network.WebMessagingApi.getMessages] requests will be executed.
      */
-    class HistoryFetched(val messages: List<Message>, val startOfConversation: Boolean) :
-        MessageEvent()
+    class HistoryFetched(
+        val messages: List<Message>,
+        val startOfConversation: Boolean
+    ) : MessageEvent()
 
     /**
      * Dispatched when message with quick replies was sent by the Bot. To get the actual quick reply

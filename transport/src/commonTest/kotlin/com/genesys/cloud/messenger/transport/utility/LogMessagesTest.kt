@@ -14,7 +14,7 @@ import com.genesys.cloud.messenger.transport.util.extensions.sanitize
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import kotlin.test.Test
 
-class LogMessagesTests {
+class LogMessagesTest {
 
     // Attachment
     @Test
@@ -166,26 +166,24 @@ class LogMessagesTests {
     // Authentication
     @Test
     fun `when configureAuthenticatedSession is called then it logs correctly`() {
-        val givenToken = TestValues.TOKEN
         val givenStartNew = true
         val expectedToken = TestValues.TOKEN_SANITIZED
         val expectedMessage =
             "configureAuthenticatedSession(token = $expectedToken, startNew: $givenStartNew)"
 
-        val result = LogMessages.configureAuthenticatedSession(givenToken, givenStartNew)
+        val result = LogMessages.configureAuthenticatedSession(TestValues.TOKEN, givenStartNew)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
 
     @Test
     fun `when configureSession is called then it logs correctly`() {
-        val givenToken = TestValues.TOKEN
         val givenStartNew = false
         val expectedToken = TestValues.TOKEN_SANITIZED
         val expectedMessage =
             "configureSession (token = $expectedToken, startNew: $givenStartNew)"
 
-        val result = LogMessages.configureSession(givenToken, givenStartNew)
+        val result = LogMessages.configureSession(TestValues.TOKEN, givenStartNew)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
@@ -248,37 +246,34 @@ class LogMessagesTests {
 
     @Test
     fun `when onMessage is called then it logs correctly`() {
-        val givenText = TestValues.DEFAULT_STRING
-        val expectedMessage = "onMessage(text = $givenText)"
+        val expectedMessage = "onMessage(text = ${TestValues.DEFAULT_STRING})"
 
-        val result = LogMessages.onMessage(givenText)
+        val result = LogMessages.onMessage(TestValues.DEFAULT_STRING)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
 
     @Test
     fun `when sendMessage is called then it logs correctly`() {
-        val givenText = TestValues.DEFAULT_STRING
-        val givenCustomAttributes = TestValues.defaultMap
         val expectedCustomAttributes = TestValues.defaultSecureMap
         val expectedMessage =
-            "sendMessage(text = $givenText, customAttributes = $expectedCustomAttributes)"
+            "sendMessage(text = ${TestValues.DEFAULT_STRING}, customAttributes = $expectedCustomAttributes)"
 
-        val result = LogMessages.sendMessage(givenText, givenCustomAttributes)
+        val result = LogMessages.sendMessage(TestValues.DEFAULT_STRING, TestValues.defaultMap)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
 
     @Test
     fun `when unhandledMessage is called then it logs correctly`() {
-        val givenDecoded = WebMessagingMessage(
+        val decoded = WebMessagingMessage(
             type = MessageValues.TYPE,
             code = MessageValues.PRE_IDENTIFIED_MESSAGE_CODE,
             body = MessageValues.TEXT
         )
-        val expectedMessage = "Unhandled message received from Shyrka: $givenDecoded"
+        val expectedMessage = "Unhandled message received from Shyrka: $decoded"
 
-        val result = LogMessages.unhandledMessage(givenDecoded)
+        val result = LogMessages.unhandledMessage(decoded)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
@@ -470,10 +465,9 @@ class LogMessagesTests {
 
     @Test
     fun `when cancellationExceptionAttachmentUpload is called then it logs correctly`() {
-        val givenAttachmentId = TestValues.DEFAULT_STRING
-        val expectedMessage = "Cancellation exception during attachment upload: $givenAttachmentId"
+        val expectedMessage = "Cancellation exception during attachment upload: ${TestValues.DEFAULT_STRING}"
 
-        val result = LogMessages.cancellationExceptionAttachmentUpload(givenAttachmentId)
+        val result = LogMessages.cancellationExceptionAttachmentUpload(TestValues.DEFAULT_STRING)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
@@ -526,24 +520,22 @@ class LogMessagesTests {
     // Custom Attributes
     @Test
     fun `when addCustomAttribute is called then it logs correctly`() {
-        val givenCustomAttributes = TestValues.defaultMap
         val expectedCustomAttributes = TestValues.defaultSecureMap
         val givenState = "ACTIVE"
         val expectedMessage = "add: $expectedCustomAttributes | state = $givenState"
 
-        val result = LogMessages.addCustomAttribute(givenCustomAttributes, givenState)
+        val result = LogMessages.addCustomAttribute(TestValues.defaultMap, givenState)
 
         assertThat(result).isEqualTo(expectedMessage)
     }
 
     @Test
     fun `when addCustomAttribute with deep structure is called then it logs correctly`() {
-        val givenCustomAttributes = TestValues.advancedMap
         val expectedCustomAttributes = TestValues.advancedSecureMap
         val givenState = "ACTIVE"
         val expectedMessage = "add: $expectedCustomAttributes | state = $givenState"
 
-        val result = LogMessages.addCustomAttribute(givenCustomAttributes, givenState)
+        val result = LogMessages.addCustomAttribute(TestValues.advancedMap, givenState)
 
         assertThat(result).isEqualTo(expectedMessage)
     }

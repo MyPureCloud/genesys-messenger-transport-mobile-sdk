@@ -145,7 +145,8 @@ class SerializationTest {
 
         val message = decode(json)
 
-        assertThat(message.body, "WebMessagingMessage body").isNotNull()
+        assertThat(message.body, "WebMessagingMessage body")
+            .isNotNull()
             .hasClass(SessionExpiredEvent::class)
     }
 
@@ -214,7 +215,8 @@ class SerializationTest {
 
         val message = decode(json)
 
-        assertThat(message.body, "WebMessagingMessage body").isNotNull()
+        assertThat(message.body, "WebMessagingMessage body")
+            .isNotNull()
             .hasClass(SessionResponse::class)
         assertThat(message).isEqualTo(expectedSessionResponseMessage)
     }
@@ -270,7 +272,8 @@ class SerializationTest {
 
         val message = decode(json)
 
-        assertThat(message.body, "WebMessagingMessage body").isNotNull()
+        assertThat(message.body, "WebMessagingMessage body")
+            .isNotNull()
             .hasClass(StructuredMessage::class)
         assertThat(message).isEqualTo(expectedUnsolicitedMessage)
     }
@@ -292,7 +295,8 @@ class SerializationTest {
 
         val message = decode(json)
 
-        assertThat(message.body, "WebMessagingMessage body").isNotNull()
+        assertThat(message.body, "WebMessagingMessage body")
+            .isNotNull()
             .hasClass(PresignedUrlResponse::class)
         assertThat(message).isEqualTo(expectedPresignedUrlResponseMessage)
     }
@@ -314,7 +318,8 @@ class SerializationTest {
 
         val message = decode(json)
 
-        assertThat(message.body, "WebMessagingMessage body").isNotNull()
+        assertThat(message.body, "WebMessagingMessage body")
+            .isNotNull()
             .hasClass(UploadSuccessEvent::class)
         assertThat(message).isEqualTo(expectedUploadSuccessEventMessage)
     }
@@ -335,7 +340,8 @@ class SerializationTest {
 
         val message = decode(json)
 
-        assertThat(message.body, "WebMessagingMessage body").isNotNull()
+        assertThat(message.body, "WebMessagingMessage body")
+            .isNotNull()
             .hasClass(JwtResponse::class)
         assertThat(message).isEqualTo(expectedJwtResponse)
     }
@@ -364,7 +370,8 @@ class SerializationTest {
 
         val message = decode(json)
 
-        assertThat(message.body, "WebMessagingMessage body").isNotNull()
+        assertThat(message.body, "WebMessagingMessage body")
+            .isNotNull()
             .hasClass(UploadFailureEvent::class)
         assertThat(message).isEqualTo(expectedUploadFailureEventMessage)
     }
@@ -386,7 +393,8 @@ class SerializationTest {
 
         val message = decode(json)
 
-        assertThat(message.body, "WebMessagingMessage body").isNotNull()
+        assertThat(message.body, "WebMessagingMessage body")
+            .isNotNull()
             .hasClass(GenerateUrlError::class)
         assertThat(message).isEqualTo(expectedGenerateUrlErrorMessage)
     }
@@ -419,7 +427,8 @@ class SerializationTest {
 
         val message = decode(json)
 
-        assertThat(message.body, "WebMessagingMessage body").isNotNull()
+        assertThat(message.body, "WebMessagingMessage body")
+            .isNotNull()
             .hasClass(ConnectionClosedEvent::class)
     }
 
@@ -463,7 +472,8 @@ class SerializationTest {
 
         val message = decode(json)
 
-        assertThat(message.body, "WebMessagingMessage body").isNotNull()
+        assertThat(message.body, "WebMessagingMessage body")
+            .isNotNull()
             .hasClass(LogoutEvent::class)
     }
 
@@ -516,7 +526,8 @@ class SerializationTest {
 
         val message = decode(json)
 
-        assertThat(message.body, "WebMessagingMessage body").isNotNull()
+        assertThat(message.body, "WebMessagingMessage body")
+            .isNotNull()
             .hasClass(SessionClearedEvent::class)
     }
 

@@ -18,7 +18,6 @@ import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.CardTestValues
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
-import kotlinx.serialization.encodeToString
 import org.junit.Test
 
 class MessageTest {
@@ -32,9 +31,9 @@ class MessageTest {
         val expectedParticipant =
             Participant(originatingEntity = Participant.OriginatingEntity.Human)
 
-        val message = Message()
+        val subject = Message()
 
-        message.run {
+        subject.run {
             assertThat(direction).isEqualTo(expectedDirection)
             assertThat(state).isEqualTo(expectedState)
             assertThat(type).isEqualTo(expectedType)
@@ -75,7 +74,7 @@ class MessageTest {
             originatingEntity = Participant.OriginatingEntity.Bot
         )
 
-        val message = Message(
+        val subject = Message(
             id = MessageValues.ID,
             direction = Direction.Outbound,
             state = State.Sending,
@@ -95,7 +94,7 @@ class MessageTest {
             authenticated = true
         )
 
-        message.run {
+        subject.run {
             assertThat(id).isEqualTo(expectedId)
             assertThat(direction).isEqualTo(expectedDirection)
             assertThat(state).isEqualTo(expectedState)

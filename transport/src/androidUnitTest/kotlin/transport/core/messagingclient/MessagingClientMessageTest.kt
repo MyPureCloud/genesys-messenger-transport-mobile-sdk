@@ -24,7 +24,7 @@ import transport.util.Request
 import transport.util.Response
 import kotlin.test.assertFailsWith
 
-class MCMessageTests : BaseMessagingClientTest() {
+class MessagingClientMessageTest : BaseMessagingClientTest() {
 
     @Test
     fun `when messageListener is set`() {

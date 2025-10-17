@@ -6,7 +6,10 @@ actual class DefaultVault actual constructor(keys: Keys) : Vault(keys) {
 
     private val vault = InternalVault(keys.vaultKey)
 
-    actual override fun store(key: String, value: String) {
+    actual override fun store(
+        key: String,
+        value: String
+    ) {
         vault.set(key, value)
     }
 

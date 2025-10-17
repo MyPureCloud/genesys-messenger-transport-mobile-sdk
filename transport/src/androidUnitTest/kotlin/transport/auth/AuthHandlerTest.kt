@@ -41,7 +41,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.serialization.encodeToString
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -319,7 +318,7 @@ class AuthHandlerTest {
     }
 
     @Test
-    fun `when authorized and logout() failed because of 401 and autoRefreshTokenWhenExpired is enabled but refreshToken() success`() {
+    fun `when authorized and logout() fails with 401 and autoRefreshTokenWhenExpired is enabled but refreshToken() succeeds`() {
         authorize()
         coEvery { mockWebMessagingApi.logoutFromAuthenticatedSession(any()) } returns Result.Failure(
             ErrorCode.ClientResponseError(401),
@@ -567,20 +566,22 @@ class AuthHandlerTest {
     }
 
     @Test
-    fun `when shouldAuthorize() and auth is disabled in deployment config`() = runTest {
-        subject = buildAuthHandler(isAuthEnabled = { false })
+    fun `when shouldAuthorize() and auth is disabled in deployment config`() =
+        runTest {
+            subject = buildAuthHandler(isAuthEnabled = { false })
 
-        subject.shouldAuthorize { result ->
-            assertFalse(result)
-            coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
+            subject.shouldAuthorize { result ->
+                assertFalse(result)
+                coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
+            }
         }
-    }
 
     @Test
-    fun `when shouldAuthorize() and auth is enabled in deployment config`() = runTest {
-        subject.shouldAuthorize { result ->
-            assertTrue(result)
-            coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
+    fun `when shouldAuthorize() and auth is enabled in deployment config`() =
+        runTest {
+            subject.shouldAuthorize { result ->
+                assertTrue(result)
+                coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
+            }
         }
-    }
 }

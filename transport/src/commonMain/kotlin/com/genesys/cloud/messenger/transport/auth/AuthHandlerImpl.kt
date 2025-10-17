@@ -34,7 +34,11 @@ internal class AuthHandlerImpl(
     override val jwt: String
         get() = authJwt.jwt
 
-    override fun authorize(authCode: String, redirectUri: String, codeVerifier: String?) {
+    override fun authorize(
+        authCode: String,
+        redirectUri: String,
+        codeVerifier: String?
+    ) {
         dispatcher.launch {
             when (val result = api.fetchAuthJwt(authCode, redirectUri, codeVerifier)) {
                 is Result.Success -> {
@@ -133,7 +137,10 @@ internal class AuthHandlerImpl(
         vault.authRefreshToken = NO_REFRESH_TOKEN
     }
 
-    private fun handleRequestError(result: Result.Failure, requestName: String) {
+    private fun handleRequestError(
+        result: Result.Failure,
+        requestName: String
+    ) {
         if (result.errorCode is ErrorCode.CancellationError) {
             log.w { LogMessages.cancellationExceptionRequestName(requestName) }
             return
@@ -150,5 +157,4 @@ internal class AuthHandlerImpl(
             authJwt.hasRefreshToken()
 }
 
-private fun AuthJwt.hasRefreshToken(): Boolean =
-    refreshToken != null && refreshToken != NO_REFRESH_TOKEN
+private fun AuthJwt.hasRefreshToken(): Boolean = refreshToken != null && refreshToken != NO_REFRESH_TOKEN

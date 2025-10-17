@@ -10,7 +10,7 @@ import transport.util.Request
 import transport.util.Response
 import kotlin.test.assertFailsWith
 
-class MCQuickReplyTests : BaseMessagingClientTest() {
+class MessagingClientQuickReplyTest : BaseMessagingClientTest() {
 
     @Test
     fun `when SocketListener invoke onMessage with Structured message that contains QuickReplies`() {

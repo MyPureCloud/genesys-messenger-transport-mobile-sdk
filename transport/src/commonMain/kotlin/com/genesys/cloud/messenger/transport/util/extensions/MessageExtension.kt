@@ -51,11 +51,10 @@ internal fun StructuredMessage.toMessage(): Message {
 
 internal fun Message.getUploadedAttachments(): List<Message.Content> {
     if (attachments.isEmpty()) return emptyList()
-    return attachments.filter {
-        it.value.state is Attachment.State.Uploaded
-    }.map {
-        Message.Content(contentType = Message.Content.Type.Attachment, attachment = it.value)
-    }.toList()
+    return attachments
+        .filter { it.value.state is Attachment.State.Uploaded }
+        .map { Message.Content(contentType = Message.Content.Type.Attachment, attachment = it.value) }
+        .toList()
 }
 
 internal fun String?.fromIsoToEpochMilliseconds(): Long? {
@@ -179,7 +178,11 @@ internal fun String.isHealthCheckResponseId(): Boolean = this == HealthCheckID
 internal fun Message.isOutbound(): Boolean = this.direction == Direction.Outbound
 
 internal fun SessionResponse.toFileAttachmentProfile(): FileAttachmentProfile {
-    val allowedFileTypes = allowedMedia?.inbound?.fileTypes?.map { it.type }?.toMutableList() ?: mutableListOf()
+    val allowedFileTypes = allowedMedia
+        ?.inbound
+        ?.fileTypes
+        ?.map { it.type }
+        ?.toMutableList() ?: mutableListOf()
     val maxFileSize = allowedMedia?.inbound?.maxFileSizeKB ?: 0
     val enabled = allowedFileTypes.isNotEmpty() && maxFileSize > 0
     val hasWildcard = allowedFileTypes.remove(WILD_CARD)
@@ -208,4 +211,50 @@ internal fun FileUpload?.toFileAttachmentProfile(): FileAttachmentProfile {
 
 internal fun PresignedUrlResponse.isRefreshUrl(): Boolean {
     return headers.isEmpty() && fileSize != null
+}
+
+/**
+ * Replaces characters with stars (*) except for the last 4 characters
+ */
+internal fun String.sanitize(): String {
+    val lastChars = 4
+    if (this.length <= lastChars) {
+        return this // Nothing to sanitize if length is lastChars or fewer characters
+    }
+
+    return "*".repeat(this.length - lastChars) + this.takeLast(lastChars)
+}
+
+fun String.sanitizeSensitiveData(): String = this.sanitizeToken().sanitizeText().sanitizeCustomAttributes()
+
+internal fun String.sanitizeCustomAttributes(): String {
+    val regex = """("customAttributes":\{)(.*?)(\})""".toRegex()
+    return this.replace(regex) {
+        """${it.groupValues[1]}${it.groupValues[2].sanitize()}${it.groupValues[3]}"""
+    }
+}
+
+internal fun String.sanitizeText(): String {
+    var regex = """("text":")([^"]*)(")""".toRegex()
+    var sanitizedInput = this.replace(regex) {
+        """${it.groupValues[1]}${it.groupValues[2].sanitize()}${it.groupValues[3]}"""
+    }
+    regex = """(text=)(.*?)(?=(?:, \w+:)|$|[)])""".toRegex()
+    sanitizedInput = sanitizedInput.replace(regex) {
+        """${it.groupValues[1]}${it.groupValues[2].sanitize()}"""
+    }
+    return sanitizedInput
+}
+
+internal fun String.sanitizeToken(): String {
+    val tokenRegex = """("token":")([a-fA-F0-9-]{36})(")""".toRegex()
+    return this.replace(tokenRegex) {
+        """${it.groupValues[1]}${it.groupValues[2].sanitize()}${it.groupValues[3]}"""
+    }
+}
+
+internal fun Map<String, String>.sanitizeValues(): Map<String, String> {
+    return this.mapValues { (_, value) ->
+        value.sanitize()
+    }
 }

@@ -16,13 +16,14 @@ class TransportUtil {
      * @return the resulting KotlinByteArray or KotlinByteArray(0) if provided NSDAta is empty.
      */
     @OptIn(ExperimentalForeignApi::class)
-    fun nsDataToKotlinByteArray(data: NSData): ByteArray = try {
-        ByteArray(data.length.toInt()).apply {
-            usePinned {
-                memcpy(it.addressOf(0), data.bytes, data.length)
+    fun nsDataToKotlinByteArray(data: NSData): ByteArray =
+        try {
+            ByteArray(data.length.toInt()).apply {
+                usePinned {
+                    memcpy(it.addressOf(0), data.bytes, data.length)
+                }
             }
+        } catch (exception: Exception) {
+            ByteArray(0)
         }
-    } catch (exception: Exception) {
-        ByteArray(0)
-    }
 }

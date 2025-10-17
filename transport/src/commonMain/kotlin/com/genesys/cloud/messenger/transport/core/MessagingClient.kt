@@ -56,12 +56,18 @@ interface MessagingClient {
         /**
          * Remote peer has indicated that no more incoming messages will be transmitted.
          */
-        data class Closing(val code: Int, val reason: String) : State()
+        data class Closing(
+            val code: Int,
+            val reason: String
+        ) : State()
 
         /**
          * Both peers have indicated that no more messages will be transmitted and the connection has been successfully released.
          */
-        data class Closed(val code: Int, val reason: String) : State()
+        data class Closed(
+            val code: Int,
+            val reason: String
+        ) : State()
 
         /**
          * In case of fatal, unrecoverable errors MessagingClient will transition to this state.
@@ -69,7 +75,10 @@ interface MessagingClient {
          * @property code the [ErrorCode] representing the reason for the failure.
          * @property message an optional message describing the error.
          */
-        data class Error(val code: ErrorCode, val message: String?) : State()
+        data class Error(
+            val code: ErrorCode,
+            val message: String?
+        ) : State()
     }
 
     /**
@@ -177,7 +186,10 @@ interface MessagingClient {
      * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
      */
     @Throws(IllegalStateException::class)
-    fun sendMessage(text: String, customAttributes: Map<String, String> = emptyMap())
+    fun sendMessage(
+        text: String,
+        customAttributes: Map<String, String> = emptyMap()
+    )
 
     /**
      * Send a quick reply to the Agent/Bot.
@@ -294,7 +306,11 @@ interface MessagingClient {
      * @param redirectUri The redirect URI to use for fetching the Auth JWT.
      * @param codeVerifier The code verifier to use for fetching the Auth JWT (optional).
      */
-    fun authorize(authCode: String, redirectUri: String, codeVerifier: String?)
+    fun authorize(
+        authCode: String,
+        redirectUri: String,
+        codeVerifier: String?
+    )
 
     /**
      * Logs out user from authenticated session on all devices that shares the same auth session.
