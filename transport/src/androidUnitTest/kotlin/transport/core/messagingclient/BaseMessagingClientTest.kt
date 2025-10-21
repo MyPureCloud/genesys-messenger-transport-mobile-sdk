@@ -4,6 +4,7 @@ import com.genesys.cloud.messenger.transport.auth.AuthHandler
 import com.genesys.cloud.messenger.transport.core.AttachmentHandler
 import com.genesys.cloud.messenger.transport.core.CustomAttributesStoreImpl
 import com.genesys.cloud.messenger.transport.core.Empty
+import com.genesys.cloud.messenger.transport.core.HistoryHandler
 import com.genesys.cloud.messenger.transport.core.JwtHandler
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.MessageStore
@@ -170,6 +171,7 @@ open class BaseMessagingClientTest {
         every { pushConfig } returns DEFAULT_PUSH_CONFIG
     }
     internal val mockJwtHandler: JwtHandler = mockk(relaxed = true)
+    internal val mockHistoryHandler: HistoryHandler = mockk(relaxed = true)
 
     internal val mockLogger: Log = mockk(relaxed = true)
     internal val logSlot = mutableListOf<() -> String>()
@@ -195,6 +197,7 @@ open class BaseMessagingClientTest {
         authHandler = mockAuthHandler,
         internalCustomAttributesStore = mockCustomAttributesStore,
         pushService = mockPushService,
+        historyHandler = mockHistoryHandler,
     ).also {
         it.stateChangedListener = mockStateChangedListener
     }

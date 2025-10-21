@@ -52,7 +52,6 @@ import com.genesys.cloud.messenger.transport.util.extensions.isRefreshUrl
 import com.genesys.cloud.messenger.transport.util.extensions.sanitize
 import com.genesys.cloud.messenger.transport.util.extensions.toFileAttachmentProfile
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
-import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
@@ -102,6 +101,13 @@ internal class MessagingClientImpl(
         vault = vault,
         api = api,
         log = log.withTag(LogTag.PUSH_SERVICE),
+    ),
+    private val historyHandler: HistoryHandler = HistoryHandlerImpl(
+        messageStore,
+        api,
+        eventHandler,
+        log.withTag(LogTag.HISTORY_HANDLER),
+        suspend { jwtHandler.withJwt(token) { it } }
     ),
     private val defaultDispatcher: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
 ) : MessagingClient {
@@ -307,39 +313,7 @@ internal class MessagingClientImpl(
     @Throws(Exception::class)
     override suspend fun fetchNextPage() {
         stateMachine.checkIfConfiguredOrReadOnly()
-        if (messageStore.startOfConversation) {
-            log.i { LogMessages.ALL_HISTORY_FETCHED }
-            messageStore.updateMessageHistory(emptyList(), conversation.size)
-            return
-        }
-        log.i { LogMessages.fetchingHistory(messageStore.nextPage) }
-        jwtHandler.withJwt(token) { jwt ->
-            api.getMessages(jwt, messageStore.nextPage).also {
-                when (it) {
-                    is Result.Success -> {
-                        messageStore.updateMessageHistory(
-                            it.value.entities.toMessageList(),
-                            it.value.total,
-                        )
-                    }
-
-                    is Result.Failure -> {
-                        if (it.errorCode is ErrorCode.CancellationError) {
-                            log.w { LogMessages.CANCELLATION_EXCEPTION_GET_MESSAGES }
-                            return
-                        }
-                        log.w { LogMessages.historyFetchFailed(it) }
-                        eventHandler.onEvent(
-                            Event.Error(
-                                ErrorCode.HistoryFetchFailure,
-                                it.message,
-                                it.errorCode.toCorrectiveAction()
-                            )
-                        )
-                    }
-                }
-            }
-        }
+        historyHandler.fetchNextPage()
     }
 
     override fun logoutFromAuthenticatedSession() {
