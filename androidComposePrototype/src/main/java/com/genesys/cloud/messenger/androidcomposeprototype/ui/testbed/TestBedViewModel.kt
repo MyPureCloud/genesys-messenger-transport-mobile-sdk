@@ -544,7 +544,6 @@ class TestBedViewModel :
                 }
                 "CardMessageReceived with actions: $tempActionsMap"
             }
-
         }
         onSocketMessageReceived(eventMessage)
     }
