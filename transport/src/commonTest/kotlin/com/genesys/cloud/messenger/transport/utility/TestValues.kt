@@ -54,6 +54,8 @@ object TestValues {
     internal val PUSH_PROVIDER = PushProvider.APNS
     internal const val DEVICE_TYPE = "android"
     internal const val PREFERRED_LANGUAGE = "Eng"
+
+    internal const val HISTORY_PAGE_ONE = 1
     internal val vaultKeys = Vault.Keys(
         vaultKey = VAULT_KEY,
         tokenKey = TOKEN_KEY,

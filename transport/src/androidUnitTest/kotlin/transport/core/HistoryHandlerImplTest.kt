@@ -17,6 +17,7 @@ import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.InvalidValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -25,18 +26,23 @@ import org.junit.Test
 
 class HistoryHandlerImplTest {
 
-    private val messageStore = mockk<MessageStore>(relaxed = true)
+    private val messageStore = mockk<MessageStore>(relaxed = true){
+        every { startOfConversation } returns false
+        every { nextPage } returns TestValues.HISTORY_PAGE_ONE
+    }
     private val api = mockk<WebMessagingApi>(relaxed = true)
     private val eventHandler = mockk<EventHandler>(relaxed = true)
     private val log = mockk<Log>(relaxed = true)
-    private val tokenProvider = mockk<suspend () -> String>()
+    private val tokenProvider = mockk<suspend () -> String>(){
+        coEvery { this@mockk() } returns TestValues.TOKEN
+    }
     private val logSlot = mutableListOf<() -> String>()
     private val subject = HistoryHandlerImpl(
         messageStore = messageStore,
         api = api,
         eventHandler = eventHandler,
         log = log,
-        tokenProvider = tokenProvider
+        jwtTokenProvider = tokenProvider
     )
 
     @Test
@@ -48,6 +54,8 @@ class HistoryHandlerImplTest {
 
             verify { log.i(capture(logSlot)) }
             verify { messageStore.updateMessageHistory(emptyList(), any()) }
+            coVerify(exactly = 0) { api.getMessages(any(), any()) }
+            verify(exactly = 0) { eventHandler.onEvent(any()) }
             assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.ALL_HISTORY_FETCHED)
             assertThat(logSlot.size).isEqualTo(1)
         }
@@ -55,40 +63,30 @@ class HistoryHandlerImplTest {
     @Test
     fun `when fetch history success`() =
         runTest {
-            val token = TestValues.TOKEN
-            val pageNumber = 1
             val response = TestWebMessagingApiResponses.testMessageEntityList
 
-            every { messageStore.startOfConversation } returns false
-            every { messageStore.nextPage } returns pageNumber
-            coEvery { tokenProvider() } returns token
-            coEvery { api.getMessages(token, pageNumber) } returns Result.Success(response)
+            coEvery { api.getMessages(TestValues.TOKEN, TestValues.HISTORY_PAGE_ONE) } returns Result.Success(response)
 
             subject.fetchNextPage()
 
             verify { log.i(capture(logSlot)) }
             verify { messageStore.updateMessageHistory(response.entities.toMessageList(), response.total) }
-            assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.fetchingHistory(pageNumber))
+            assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.fetchingHistory(TestValues.HISTORY_PAGE_ONE))
         }
 
     @Test
     fun `when fetch history fails with cancellation error`() =
         runTest {
-            val token = TestValues.TOKEN
-            val pageNumber = 1
             val errorMessage = InvalidValues.CANCELLATION_EXCEPTION
 
-            every { messageStore.startOfConversation } returns false
-            every { messageStore.nextPage } returns pageNumber
-            coEvery { tokenProvider() } returns token
-            coEvery { api.getMessages(token, pageNumber) } returns Result.Failure(ErrorCode.CancellationError, errorMessage)
+            coEvery { api.getMessages(TestValues.TOKEN, TestValues.HISTORY_PAGE_ONE) } returns Result.Failure(ErrorCode.CancellationError, errorMessage)
 
             subject.fetchNextPage()
 
             verify { log.i(capture(logSlot)) }
             verify { log.w(capture(logSlot)) }
             verify(exactly = 0) { eventHandler.onEvent(any()) }
-            assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.fetchingHistory(pageNumber))
+            assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.fetchingHistory(TestValues.HISTORY_PAGE_ONE))
             assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.CANCELLATION_EXCEPTION_GET_MESSAGES)
         }
 
@@ -96,15 +94,12 @@ class HistoryHandlerImplTest {
     fun `when fetch history fails with other error`() =
         runTest {
             val token = "test-token"
-            val pageNumber = 1
             val errorCode = ErrorCode.ServerResponseError(500)
             val errorMessage = "Server error"
             val failure = Result.Failure(errorCode, errorMessage)
 
-            every { messageStore.startOfConversation } returns false
-            every { messageStore.nextPage } returns pageNumber
             coEvery { tokenProvider() } returns token
-            coEvery { api.getMessages(token, pageNumber) } returns failure
+            coEvery { api.getMessages(token, TestValues.HISTORY_PAGE_ONE) } returns failure
 
             subject.fetchNextPage()
 
@@ -119,7 +114,7 @@ class HistoryHandlerImplTest {
                     )
                 )
             }
-            assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.fetchingHistory(pageNumber))
+            assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.fetchingHistory(TestValues.HISTORY_PAGE_ONE))
             assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.historyFetchFailed(failure))
         }
 }

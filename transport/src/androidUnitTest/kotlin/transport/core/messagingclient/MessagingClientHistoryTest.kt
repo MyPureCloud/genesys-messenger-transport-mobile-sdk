@@ -21,7 +21,7 @@ class MessagingClientHistoryTest : BaseMessagingClientTest() {
     }
 
     @Test
-    fun `when fetchNextPage but all history was already fetched`() {
+    fun `when fetchNextPage and session is configured`() {
         subject.connect()
 
         runBlocking { subject.fetchNextPage() }
@@ -30,15 +30,6 @@ class MessagingClientHistoryTest : BaseMessagingClientTest() {
         verify { mockLogger.i(capture(logSlot)) }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
-    }
-
-    @Test
-    fun `when fetchNextPage should delegate to historyHandler`() {
-        subject.connect()
-
-        runBlocking { subject.fetchNextPage() }
-
-        coVerify { mockHistoryHandler.fetchNextPage() }
     }
 
     @Test

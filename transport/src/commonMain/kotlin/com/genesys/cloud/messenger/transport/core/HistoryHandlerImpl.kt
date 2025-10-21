@@ -13,7 +13,7 @@ internal class HistoryHandlerImpl(
     private val api: WebMessagingApi,
     private val eventHandler: EventHandler,
     private val log: Log,
-    private val tokenProvider: suspend () -> String,
+    private val jwtTokenProvider: suspend () -> String,
 ) : HistoryHandler {
 
     override suspend fun fetchNextPage() {
@@ -32,7 +32,7 @@ internal class HistoryHandlerImpl(
 
     private suspend fun fetchHistoryPage() {
         log.i { LogMessages.fetchingHistory(messageStore.nextPage) }
-        val token = tokenProvider()
+        val token = jwtTokenProvider()
         val result = api.getMessages(token, messageStore.nextPage)
         handleApiResult(result)
     }
