@@ -8,9 +8,9 @@ import kotlinx.serialization.Serializable
 internal data class CloseSessionRequest(
     override val token: String,
     val closeAllConnections: Boolean,
-    override val tracingId: String,
+    @Required
+    override val tracingId: String = TracingIds.newId(),
 ) : BaseWebMessagingRequest() {
     @Required
     override val action: String = RequestAction.CLOSE_SESSION.value
-    constructor(token: String, closeAllConnections: Boolean) : this(token, closeAllConnections, TracingIds.newId())
 }

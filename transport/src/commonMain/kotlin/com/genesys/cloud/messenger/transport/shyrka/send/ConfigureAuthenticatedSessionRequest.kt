@@ -11,12 +11,11 @@ internal data class ConfigureAuthenticatedSessionRequest(
     val startNew: Boolean,
     val journeyContext: JourneyContext? = null,
     val data: Data,
-    override val tracingId: String,
+    @Required
+    override val tracingId: String = TracingIds.newId(),
 ) : BaseWebMessagingRequest() {
     @Required
     override val action: String = RequestAction.CONFIGURE_AUTHENTICATED_SESSION.value
-    constructor(token: String, deploymentId: String, startNew: Boolean, journeyContext: JourneyContext? = null, data: Data) :
-        this(token, deploymentId, startNew, journeyContext, data, TracingIds.newId())
 
     @Serializable
     internal data class Data(val code: String)

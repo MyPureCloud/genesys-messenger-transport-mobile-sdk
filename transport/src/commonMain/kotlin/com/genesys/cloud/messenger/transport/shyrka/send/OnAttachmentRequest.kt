@@ -13,10 +13,9 @@ internal data class OnAttachmentRequest(
     val fileSize: Int? = null,
     val fileMd5: String? = null,
     val errorsAsJson: Boolean,
-    override val tracingId: String,
+    @Required
+    override val tracingId: String = TracingIds.newId(),
 ) : BaseWebMessagingRequest() {
     @Required
     override val action: String = RequestAction.ON_ATTACHMENT.value
-    constructor(token: String, attachmentId: String, fileName: String, fileType: String, fileSize: Int? = null, fileMd5: String? = null, errorsAsJson: Boolean) :
-        this(token, attachmentId, fileName, fileType, fileSize, fileMd5, errorsAsJson, TracingIds.newId())
 }

@@ -9,8 +9,8 @@ internal class OnMessageRequest(
     override val token: String,
     val message: TextMessage,
     val time: String? = null,
-    override val tracingId: String,
+    @Required
+    override val tracingId: String = TracingIds.newId(),
 ) : BaseWebMessagingRequest() {
     @Required override val action: String = RequestAction.ON_MESSAGE.value
-    constructor(token: String, message: TextMessage, time: String? = null) : this(token, message, time, TracingIds.newId())
 }

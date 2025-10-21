@@ -10,9 +10,8 @@ internal data class ConfigureSessionRequest(
     val deploymentId: String,
     val startNew: Boolean,
     val journeyContext: JourneyContext? = null,
-    override val tracingId: String,
+    @Required
+    override val tracingId: String = TracingIds.newId(),
 ) : BaseWebMessagingRequest() {
     @Required override val action: String = RequestAction.CONFIGURE_SESSION.value
-    constructor(token: String, deploymentId: String, startNew: Boolean, journeyContext: JourneyContext? = null) :
-        this(token, deploymentId, startNew, journeyContext, TracingIds.newId())
 }

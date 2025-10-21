@@ -71,7 +71,8 @@ open class BaseMessagingClientTest {
     internal val mockMessageStore: MessageStore = mockk(relaxed = true) {
         every { prepareMessage(any(), any(), any()) } returns OnMessageRequest(
             token = testToken,
-            message = TextMessage("Hello world!")
+            message = TextMessage("Hello world!"),
+            tracingId = TestValues.TRACING_ID
         )
         every { prepareMessageWith(any(), any(), null) } returns OnMessageRequest(
             token = testToken,
@@ -83,7 +84,8 @@ open class BaseMessagingClientTest {
                         buttonResponse = QuickReplyTestValues.buttonResponse_a,
                     )
                 ),
-            )
+            ),
+            tracingId = TestValues.TRACING_ID
         )
     }
     internal val mockAttachmentHandler: AttachmentHandler = mockk(relaxed = true) {
@@ -100,12 +102,14 @@ open class BaseMessagingClientTest {
             attachmentId = "88888888-8888-8888-8888-888888888888",
             fileName = "test_attachment.png",
             fileType = "image/png",
-            errorsAsJson = true
+            errorsAsJson = true,
+            tracingId = TestValues.TRACING_ID
         )
 
         every { detach(any(), any()) } returns DeleteAttachmentRequest(
             token = Request.token,
-            attachmentId = "88888888-8888-8888-8888-888888888888"
+            attachmentId = "88888888-8888-8888-8888-888888888888",
+            tracingId = TestValues.TRACING_ID
         )
         every { fileAttachmentProfile } returns null
     }

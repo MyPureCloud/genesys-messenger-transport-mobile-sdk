@@ -12,7 +12,8 @@ internal data class AutoStartRequest(
     override val token: String,
     @Transient
     private val channel: Channel? = null,
-    override val tracingId: String,
+    @Required
+    override val tracingId: String = TracingIds.newId(),
 ) : BaseWebMessagingRequest() {
     @Required
     override val action: String = RequestAction.ON_MESSAGE.value
@@ -26,5 +27,4 @@ internal data class AutoStartRequest(
         ),
         channel = channel,
     )
-    constructor(token: String, channel: Channel? = null) : this(token, channel, TracingIds.newId())
 }

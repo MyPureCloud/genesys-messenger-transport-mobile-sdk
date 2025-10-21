@@ -7,9 +7,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 internal data class JwtRequest(
     override val token: String,
-    override val tracingId: String,
+    @Required
+    override val tracingId: String = TracingIds.newId(),
 ) : BaseWebMessagingRequest() {
     @Required
     override val action: String = RequestAction.GET_JWT.value
-    constructor(token: String) : this(token, TracingIds.newId())
 }

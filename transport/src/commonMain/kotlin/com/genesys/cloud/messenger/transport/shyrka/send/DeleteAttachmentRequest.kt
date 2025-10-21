@@ -8,9 +8,9 @@ import kotlinx.serialization.Serializable
 internal data class DeleteAttachmentRequest(
     override val token: String,
     val attachmentId: String,
-    override val tracingId: String,
+    @Required
+    override val tracingId: String = TracingIds.newId(),
 ) : BaseWebMessagingRequest() {
     @Required
     override val action: String = RequestAction.DELETE_ATTACHMENT.value
-    constructor(token: String, attachmentId: String) : this(token, attachmentId, TracingIds.newId())
 }

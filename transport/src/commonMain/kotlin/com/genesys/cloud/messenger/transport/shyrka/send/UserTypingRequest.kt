@@ -9,7 +9,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 internal data class UserTypingRequest(
     override val token: String,
-    override val tracingId: String,
+    @Required
+    override val tracingId: String = TracingIds.newId(),
 ) : BaseWebMessagingRequest() {
     @Required
     override val action: String = RequestAction.ON_MESSAGE.value
@@ -23,5 +24,4 @@ internal data class UserTypingRequest(
             )
         )
     )
-    constructor(token: String) : this(token, TracingIds.newId())
 }
