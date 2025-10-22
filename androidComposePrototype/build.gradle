@@ -49,8 +49,8 @@ android {
     defaultConfig {
         applicationId "com.genesys.cloud.webmessaging.androidcomposeprototype"
         minSdkVersion 21
-        compileSdk 34
-        targetSdkVersion 34
+        compileSdk 35
+        targetSdkVersion 35
         versionCode 1
         versionName "1.0"
 
