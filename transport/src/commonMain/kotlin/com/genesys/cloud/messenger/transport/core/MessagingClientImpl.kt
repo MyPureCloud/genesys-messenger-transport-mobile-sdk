@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.core
 import com.genesys.cloud.messenger.transport.auth.AuthHandler
 import com.genesys.cloud.messenger.transport.auth.AuthHandlerImpl
 import com.genesys.cloud.messenger.transport.auth.NO_JWT
+import com.genesys.cloud.messenger.transport.auth.NO_REFRESH_TOKEN
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
@@ -179,11 +180,17 @@ internal class MessagingClientImpl(
         val encodedJson = if (connectAuthenticated) {
             log.i { LogMessages.configureAuthenticatedSession(token, startNew) }
             if (authHandler.jwt == NO_JWT) {
+                if (vault.authRefreshToken == NO_REFRESH_TOKEN) {
+                    eventHandler.onEvent(Event.AuthorizationRequired)
+                    transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
+                    return
+                }
                 if (reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
                     reconfigureAttempts++
                     refreshTokenAndPerform { configureSession(startNew) }
                     return
                 }
+                eventHandler.onEvent(Event.AuthorizationRequired)
                 transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
                 return
             }
@@ -355,6 +362,11 @@ internal class MessagingClientImpl(
     override fun authorize(authCode: String, redirectUri: String, codeVerifier: String?) {
         invalidateSessionToken()
         authHandler.authorize(authCode, redirectUri, codeVerifier)
+    }
+
+    override fun authorizeImplicit(idToken: String) {
+        invalidateSessionToken()
+        authHandler.authorizeImplicit(idToken)
     }
 
     @Throws(IllegalStateException::class)

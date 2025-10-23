@@ -155,6 +155,44 @@ class WebMessagingApiTest {
     }
 
     @Test
+    fun `when fetchAuthJwt with implicit flow is successful`() {
+        subject = buildWebMessagingApiWith { authorizeEngine() }
+        val expectedResult = Result.Success(AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN))
+
+        val result = runBlocking {
+            subject.fetchAuthJwt(
+                authCode = AuthTest.AUTH_CODE,
+                redirectUri = null,
+                codeVerifier = null,
+            )
+        }
+
+        assertEquals(expectedResult, result)
+    }
+
+    @Test
+    fun `when fetchAuthJwt with implicit flow fails`() {
+        val brokenConfigurations = Configuration(
+            deploymentId = InvalidValues.DEPLOYMENT_ID,
+            domain = InvalidValues.DOMAIN,
+            logging = false
+        )
+        subject = buildWebMessagingApiWith(brokenConfigurations) { authorizeEngine() }
+
+        val expectedResult = Result.Failure(ErrorCode.AuthFailed, "Bad Request")
+
+        val result = runBlocking {
+            subject.fetchAuthJwt(
+                authCode = AuthTest.AUTH_CODE,
+                redirectUri = null,
+                codeVerifier = null,
+            )
+        }
+
+        assertEquals(expectedResult, result)
+    }
+
+    @Test
     fun `when fetchAuthJwt request body has invalid params`() {
         val brokenConfigurations = Configuration(
             deploymentId = InvalidValues.DEPLOYMENT_ID,
