@@ -243,6 +243,25 @@ open class BaseMessagingClientTest {
         mockStateChangedListener(fromConnectedToConfigured)
     }
 
+    protected fun MockKVerificationScope.connectWithFailedConfigureSequence() {
+        fromIdleToConnectedSequence()
+        mockLogger.i(capture(logSlot))
+        mockPlatformSocket.sendMessage(Request.configureRequest())
+        mockLogger.i(capture(logSlot))
+    }
+
+    protected fun MockKVerificationScope.connectToReadOnlySequence() {
+        fromIdleToConnectedSequence()
+        mockLogger.i(capture(logSlot))
+        mockPlatformSocket.sendMessage(Request.configureRequest())
+        mockVault.wasAuthenticated = false
+        mockAttachmentHandler.fileAttachmentProfile = any()
+        mockReconnectionHandler.clear()
+        mockJwtHandler.clear()
+        mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
+        mockStateChangedListener(fromConnectedToReadOnly)
+    }
+
     protected fun MockKVerificationScope.configureSequence(shouldConfigureAuth: Boolean = false) {
         val configureRequest =
             if (shouldConfigureAuth) Request.configureAuthenticatedRequest() else Request.configureRequest()
@@ -257,18 +276,6 @@ open class BaseMessagingClientTest {
         mockReconnectionHandler.clear()
         mockJwtHandler.clear()
         mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
-    }
-
-    protected fun MockKVerificationScope.connectToReadOnlySequence() {
-        fromIdleToConnectedSequence()
-        mockLogger.i(capture(logSlot))
-        mockPlatformSocket.sendMessage(Request.configureRequest())
-        mockVault.wasAuthenticated = false
-        mockAttachmentHandler.fileAttachmentProfile = any()
-        mockReconnectionHandler.clear()
-        mockJwtHandler.clear()
-        mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
-        mockStateChangedListener(fromConnectedToReadOnly)
     }
 
     protected fun MockKVerificationScope.disconnectSequence(

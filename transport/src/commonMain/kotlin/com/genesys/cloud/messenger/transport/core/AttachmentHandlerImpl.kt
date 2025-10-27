@@ -56,7 +56,7 @@ internal class AttachmentHandlerImpl(
             fileName = fileName,
             fileType = resolveContentType(fileName).toString(),
             fileSize = byteArray.size,
-            errorsAsJson = true
+            errorsAsJson = true,
         )
     }
 
@@ -68,7 +68,7 @@ internal class AttachmentHandlerImpl(
                 .also(updateAttachmentStateWith)
             it.job = uploadDispatcher.launch {
                 when (val result = api.uploadFile(presignedUrlResponse.copy(fileName = it.attachment.fileName), it.byteArray, it.uploadProgress)) {
-                    is Result.Success -> {}
+                    is Result.Success -> {} // Nothing to do here. We are waiting for UploadSuccess/Failure Event from Shyrka.
                     is Result.Failure -> handleUploadFailure(presignedUrlResponse.attachmentId, result)
                 }
             }

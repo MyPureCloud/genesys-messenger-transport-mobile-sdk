@@ -121,18 +121,6 @@ class MessagingClientHealthCheckTest : BaseMessagingClientTest() {
 
     @Test
     fun `when SocketListener invoke onMessage with HealthCheck response message`() {
-        every {
-            mockPlatformSocket.sendMessage(
-                match {
-                    it.contains("\"action\":\"configureSession\"") &&
-                        it.contains("\"startNew\":false") &&
-                        !it.contains("\"data\":")
-                }
-            )
-        } answers {
-            slot.captured.onMessage(Response.configureSuccess())
-        }
-
         subject.connect()
 
         slot.captured.onMessage(Response.healthCheckResponse)

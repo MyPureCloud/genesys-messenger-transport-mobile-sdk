@@ -240,7 +240,7 @@ class SerializationTest {
                 },
                 "type": "Text",
                 "content": [],
-                "tracingId": "test-tracing-id"
+                "tracingId": "${TestValues.TRACING_ID}"
               }
             }
             """.trimIndent()

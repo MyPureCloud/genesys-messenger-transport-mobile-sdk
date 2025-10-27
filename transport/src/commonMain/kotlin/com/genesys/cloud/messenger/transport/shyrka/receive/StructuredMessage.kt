@@ -1,7 +1,7 @@
 package com.genesys.cloud.messenger.transport.shyrka.receive
 
 import com.genesys.cloud.messenger.transport.core.Message.Direction
-import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.TracingIds
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -30,7 +30,7 @@ internal data class StructuredMessage(
     val metadata: Map<String, String> = emptyMap(),
     val events: List<StructuredMessageEvent> = emptyList(),
     val originatingEntity: String? = null,
-    val tracingId: String = Platform().randomUUID(),
+    val tracingId: String = TracingIds.newId(),
 ) {
     @Serializable
     data class Participant(

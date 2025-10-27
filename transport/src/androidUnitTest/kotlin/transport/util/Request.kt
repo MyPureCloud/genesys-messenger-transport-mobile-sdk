@@ -1,6 +1,12 @@
 package transport.util
 
+import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
+import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureAuthenticatedSessionRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
+import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
+import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
+import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
@@ -8,9 +14,34 @@ import com.genesys.cloud.messenger.transport.utility.TestValues
 internal object Request {
     const val token = "00000000-0000-0000-0000-000000000000"
 
-    fun configureRequest(startNew: Boolean = false) = """{"token":"$token","deploymentId":"deploymentId","startNew":$startNew,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"tracingId":"${TestValues.TRACING_ID}","action":"configureSession"}"""
+    fun configureRequest(startNew: Boolean = false): String {
+        val request = ConfigureSessionRequest(
+            token = token,
+            deploymentId = "deploymentId",
+            startNew = startNew,
+            journeyContext = JourneyContext(
+                JourneyCustomer("00000000-0000-0000-0000-000000000000", "cookie"),
+                JourneyCustomerSession("", "web")
+            ),
+            tracingId = TestValues.TRACING_ID
+        )
+        return WebMessagingJson.json.encodeToString(request)
+    }
 
-    fun configureAuthenticatedRequest(startNew: Boolean = false) = """{"token":"$token","deploymentId":"deploymentId","startNew":$startNew,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"data":{"code":"${AuthTest.JWT_TOKEN}"},"tracingId":"${TestValues.TRACING_ID}","action":"configureAuthenticatedSession"}"""
+    fun configureAuthenticatedRequest(startNew: Boolean = false): String {
+        val request = ConfigureAuthenticatedSessionRequest(
+            token = token,
+            deploymentId = "deploymentId",
+            startNew = startNew,
+            journeyContext = JourneyContext(
+                JourneyCustomer("00000000-0000-0000-0000-000000000000", "cookie"),
+                JourneyCustomerSession("", "web")
+            ),
+            data = ConfigureAuthenticatedSessionRequest.Data(AuthTest.JWT_TOKEN),
+            tracingId = TestValues.TRACING_ID
+        )
+        return WebMessagingJson.json.encodeToString(request)
+    }
 
     const val userTypingRequest =
         """{"token":"$token","tracingId":"${TestValues.TRACING_ID}","action":"onMessage","message":{"events":[{"eventType":"Typing","typing":{"type":"On"}}],"type":"Event"}}"""

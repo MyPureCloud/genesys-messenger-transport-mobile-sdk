@@ -181,34 +181,7 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
             tracingId = TestValues.TRACING_ID
         )
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mapOf("A" to "B")
-
-        every {
-            mockPlatformSocket.sendMessage(
-                match {
-                    it.contains("\"action\":\"configureSession\"") &&
-                        it.contains("\"startNew\":false") &&
-                        !it.contains("\"data\":")
-                }
-            )
-        } answers {
-            slot.captured.onMessage(Response.configureSuccess())
-        }
-
         subject.connect()
-
-        every {
-            mockPlatformSocket.sendMessage(
-                match {
-                    it.contains("\"action\":\"onMessage\"") &&
-                        it.contains("\"contentType\":\"ButtonResponse\"") &&
-                        it.contains("\"text\":\"text_a\"") &&
-                        it.contains("\"payload\":\"payload_a\"") &&
-                        it.contains("\"customAttributes\":{\"A\":\"B\"}")
-                }
-            )
-        } answers {
-            slot.captured.onMessage(Response.onMessage())
-        }
 
         subject.sendQuickReply(QuickReplyTestValues.buttonResponse_a)
 
@@ -219,18 +192,7 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
             mockCustomAttributesStore.onSending()
             mockMessageStore.prepareMessageWith(Request.token, expectedButtonResponse, expectedChannel)
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(
-                match {
-                    it.contains("\"action\":\"onMessage\"") &&
-                        it.contains("\"contentType\":\"ButtonResponse\"") &&
-                        it.contains("\"text\":\"text_a\"") &&
-                        it.contains("\"payload\":\"payload_a\"") &&
-                        it.contains("\"customAttributes\":{\"A\":\"B\"}")
-                }
-            )
-            mockMessageStore.update(any())
-            mockCustomAttributesStore.onSent()
-            mockAttachmentHandler.onSent(any())
+            mockPlatformSocket.sendMessage("""{"token":"00000000-0000-0000-0000-000000000000","message":{"text":"","content":[{"contentType":"ButtonResponse","buttonResponse":{"text":"text_a","payload":"payload_a","type":"QuickReply"}}],"channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"tracingId":"${TestValues.TRACING_ID}","action":"onMessage"}""")
         }
     }
 

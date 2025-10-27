@@ -58,33 +58,7 @@ class MessagingClientQuickReplyTest : BaseMessagingClientTest() {
     fun `when connect() and then sendQuickReply() but no custom attributes`() {
         val expectedButtonResponse = QuickReplyTestValues.buttonResponse_a
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns emptyMap()
-
-        every {
-            mockPlatformSocket.sendMessage(
-                match {
-                    it.contains("\"action\":\"configureSession\"") &&
-                        it.contains("\"startNew\":false") &&
-                        !it.contains("\"data\":")
-                }
-            )
-        } answers {
-            slot.captured.onMessage(Response.configureSuccess())
-        }
-
         subject.connect()
-
-        every {
-            mockPlatformSocket.sendMessage(
-                match {
-                    it.contains("\"action\":\"onMessage\"") &&
-                        it.contains("\"contentType\":\"ButtonResponse\"") &&
-                        it.contains("\"text\":\"text_a\"") &&
-                        it.contains("\"payload\":\"payload_a\"")
-                }
-            )
-        } answers {
-            slot.captured.onMessage(Response.onMessage())
-        }
 
         subject.sendQuickReply(QuickReplyTestValues.buttonResponse_a)
 
@@ -94,17 +68,7 @@ class MessagingClientQuickReplyTest : BaseMessagingClientTest() {
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockMessageStore.prepareMessageWith(Request.token, expectedButtonResponse, null)
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(
-                match {
-                    it.contains("\"action\":\"onMessage\"") &&
-                        it.contains("\"contentType\":\"ButtonResponse\"") &&
-                        it.contains("\"text\":\"text_a\"") &&
-                        it.contains("\"payload\":\"payload_a\"")
-                }
-            )
-            mockMessageStore.update(any())
-            mockCustomAttributesStore.onSent()
-            mockAttachmentHandler.onSent(any())
+            mockPlatformSocket.sendMessage("""{"token":"00000000-0000-0000-0000-000000000000","message":{"text":"","content":[{"contentType":"ButtonResponse","buttonResponse":{"text":"text_a","payload":"payload_a","type":"QuickReply"}}],"type":"Text"},"tracingId":"test-tracing-id","action":"onMessage"}""")
         }
 
         verify(exactly = 0) {

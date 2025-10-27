@@ -70,7 +70,7 @@ internal class MessageExtensionTest {
             from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
         )
         val expectedMessage2 = Message(
-            id = "msg2",
+            id = "message2_id",
             direction = Direction.Inbound,
             state = State.Sent,
             messageType = Type.Event,
@@ -125,7 +125,7 @@ internal class MessageExtensionTest {
                 )
             ),
             direction = "Inbound",
-            metadata = mapOf("customMessageId" to "test custom id"),
+            metadata = emptyMap(),
             events = listOf(
                 PresenceEvent(
                     eventType = StructuredMessageEvent.Type.Presence,
@@ -526,7 +526,7 @@ internal class MessageExtensionTest {
         )
 
         val expectedMessageEntityListAsJson =
-            """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound","tracingId":"test-tracing-id"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
+            """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound","tracingId":"${TestValues.TRACING_ID}"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
 
         val result = WebMessagingJson.json.encodeToString(givenMessageEntityList)
 
@@ -536,12 +536,12 @@ internal class MessageExtensionTest {
     @Test
     fun `when MessageEntityList deserialized`() {
         val givenMessageEntityListAsJson =
-            """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound","tracingId":"test-tracing-id"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
+            """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound","tracingId":"${TestValues.TRACING_ID}"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
         val expectedStructuredMessage = StructuredMessage(
             id = "some_id",
             type = StructuredMessage.Type.Text,
             direction = "Inbound",
-            tracingId = "test-tracing-id"
+            tracingId = TestValues.TRACING_ID
         )
         val expectedMessageEntityList = MessageEntityList(
             entities = listOf(expectedStructuredMessage),

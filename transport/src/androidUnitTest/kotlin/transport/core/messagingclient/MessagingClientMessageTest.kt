@@ -15,6 +15,7 @@ import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.isClosed
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.MessageValues
+import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
@@ -52,18 +53,11 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
 
     @Test
     fun `when connect and then sendMessage()`() {
-        every {
-            mockPlatformSocket.sendMessage(match { it.contains("\"action\":\"configureSession\"") })
-        } answers {
-            slot.captured.onMessage(Response.configureSuccess())
-        }
-
-        every {
-            mockPlatformSocket.sendMessage(match { it.contains("\"action\":\"onMessage\"") })
-        } answers {
+        every { mockPlatformSocket.sendMessage("""{"token":"00000000-0000-0000-0000-000000000000","message":{"text":"Hello world!","type":"Text"},"tracingId":"test-tracing-id","action":"onMessage"}""") } answers {
             slot.captured.onMessage(Response.onMessage())
         }
-
+        val expectedMessageRequest =
+            """{"token":"${Request.token}","message":{"text":"${MessageValues.TEXT}","type":"Text"},"tracingId":"${TestValues.TRACING_ID}","action":"onMessage"}"""
         val expectedMessage = Message(
             id = "test_id",
             state = State.Sent,
@@ -73,6 +67,7 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
             timeStamp = 1661196266704,
         )
         subject.connect()
+
         subject.sendMessage("Hello world!")
 
         verifySequence {
@@ -83,7 +78,7 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
             mockMessageStore.prepareMessage(Request.token, MessageValues.TEXT, null)
             mockAttachmentHandler.onSending()
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(match { it.contains("\"action\":\"onMessage\"") })
+            mockPlatformSocket.sendMessage(expectedMessageRequest)
             mockMessageStore.update(expectedMessage)
             mockCustomAttributesStore.onSent()
             mockAttachmentHandler.onSent(emptyMap())

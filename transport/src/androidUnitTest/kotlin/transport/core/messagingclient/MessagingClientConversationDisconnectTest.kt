@@ -21,34 +21,23 @@ import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.every
 import io.mockk.verify
+import io.mockk.verifySequence
 import org.junit.Test
 import transport.util.Request
 import transport.util.Response
 import transport.util.fromConfiguredToReadOnly
 import transport.util.fromConnectedToReadOnly
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
+import transport.util.fromReadOnlyToError
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
-
-    @BeforeTest
-    fun setupTracingIds() {
-        initTracingIds()
-    }
-
-    @AfterTest
-    fun cleanupTracingIds() {
-        resetTracingIds()
-    }
 
     @Test
     fun `when event Presence Disconnect received and there is no readOnly field in metadata`() {
         val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
-        slot.captured.onMessage(Response.configureSuccess())
         slot.captured.onMessage(Response.structuredMessageWithEvents(events = Response.StructuredEvent.presenceDisconnect))
 
         assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
@@ -64,7 +53,6 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
-        slot.captured.onMessage(Response.configureSuccess())
         slot.captured.onMessage(
             Response.structuredMessageWithEvents(
                 events = Response.StructuredEvent.presenceDisconnect,
@@ -73,7 +61,8 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         )
 
         assertTrue(subject.currentState is MessagingClient.State.ReadOnly)
-        verify {
+        verifySequence {
+            connectSequence()
             mockStateChangedListener.invoke(fromConfiguredToReadOnly())
             mockEventHandler.onEvent(eq(expectedEvent))
         }
@@ -84,7 +73,6 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         val expectedEvent = Event.ConversationDisconnect
 
         subject.connect()
-        slot.captured.onMessage(Response.configureSuccess())
         slot.captured.onMessage(
             Response.structuredMessageWithEvents(
                 events = Response.StructuredEvent.presenceDisconnect,
@@ -103,9 +91,11 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         }
 
         subject.connect()
-        slot.captured.onMessage(Response.configureSuccess(readOnly = true))
 
         assertThat(subject.currentState).isReadOnly()
+        verifySequence {
+            connectToReadOnlySequence()
+        }
     }
 
     @Test
@@ -124,9 +114,11 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         )
 
         subject.connect()
-        slot.captured.onMessage(Response.configureSuccess(readOnly = true))
 
         assertThat(subject.currentState).isReadOnly()
+        verifySequence {
+            connectToReadOnlySequence()
+        }
         verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart()) }
     }
 
@@ -137,7 +129,6 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         }
 
         subject.connect()
-        slot.captured.onMessage(Response.configureSuccess(readOnly = true))
 
         assertThat(subject.currentState).isReadOnly()
         assertFailsWith<IllegalStateException> { subject.sendMessage("Hello!") }
@@ -155,7 +146,6 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
 
         // currentState = Configured
         subject.connect()
-        slot.captured.onMessage(Response.configureSuccess())
 
         assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
         assertFailsWith<IllegalStateException>("MessagingClient is not in ReadOnly state.") { subject.startNewChat() }
@@ -170,7 +160,6 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
 
         // currentState = Error
         subject.connect()
-        slot.captured.onMessage(Response.configureSuccess())
         every { mockReconnectionHandler.shouldReconnect } returns false
         val givenException2 = Exception(ErrorMessage.FailedToReconnect)
         slot.captured.onFailure(givenException2, ErrorCode.WebsocketError)
@@ -183,7 +172,6 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
 
         // currentState = Closed
         subject.connect()
-        slot.captured.onMessage(Response.configureSuccess())
         subject.disconnect()
 
         assertThat(subject.currentState).isClosed(1000, "The user has closed the connection.")
@@ -197,13 +185,13 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         }
 
         subject.connect()
-        slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         subject.startNewChat()
 
         assertThat(subject.currentState).isReadOnly()
-        verify {
+        verifySequence {
+            connectToReadOnlySequence()
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(match { it.contains("\"action\":\"closeSession\"") && it.contains("\"closeAllConnections\":true") })
+            mockPlatformSocket.sendMessage(Request.closeAllConnections)
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
@@ -217,103 +205,69 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         }
         val expectedErrorCode = ErrorCode.ClientResponseError(400)
         val expectedErrorMessage = "Request failed."
-        MessagingClient.State.Error(expectedErrorCode, expectedErrorMessage)
-        every { mockPlatformSocket.sendMessage(match { it.contains("\"action\":\"closeSession\"") && it.contains("\"closeAllConnections\":true") }) } answers {
+        val expectedErrorState = MessagingClient.State.Error(expectedErrorCode, expectedErrorMessage)
+        every { mockPlatformSocket.sendMessage(Request.closeAllConnections) } answers {
             slot.captured.onMessage(Response.webSocketRequestFailed)
         }
 
         subject.connect()
-        slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         subject.startNewChat()
 
         assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
-        verify {
+        verifySequence {
+            connectToReadOnlySequence()
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(match { it.contains("\"action\":\"closeSession\"") && it.contains("\"closeAllConnections\":true") })
+            mockPlatformSocket.sendMessage(Request.closeAllConnections)
+            errorSequence(fromReadOnlyToError(errorState = expectedErrorState))
         }
     }
 
     @Test
     fun `when startNewChat and WebSocket receives a SessionResponse that has connected=false and readOnly=true`() {
-        every {
-            mockPlatformSocket.sendMessage(
-                match {
-                    it.contains("\"action\":\"configureSession\"") &&
-                        it.contains("\"startNew\":false") &&
-                        !it.contains("\"data\":")
-                }
-            )
-        } answers {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         }
-
-        every {
-            mockPlatformSocket.sendMessage(
-                match {
-                    it.contains("\"action\":\"closeSession\"") &&
-                        it.contains("\"closeAllConnections\":true")
-                }
-            )
-        } answers {
+        every { mockPlatformSocket.sendMessage(Request.closeAllConnections) } answers {
             slot.captured.onMessage(Response.configureSuccess(connected = false, readOnly = true))
         }
 
-        every {
-            mockPlatformSocket.sendMessage(
-                match {
-                    it.contains("\"action\":\"configureSession\"") &&
-                        it.contains("\"startNew\":true") &&
-                        !it.contains("\"data\":")
-                }
-            )
-        } answers {
-            slot.captured.onMessage(Response.configureSuccess(readOnly = true))
-        }
-
         subject.connect()
-        slot.captured.onMessage(Response.configureSuccess(readOnly = true))
-        subject.startNewChat()
-
-        assertThat(subject.currentState).isReadOnly()
-
-        verify(exactly = 1) {
-            mockPlatformSocket.sendMessage(
-                match {
-                    it.contains("\"action\":\"configureSession\"") &&
-                        it.contains("\"startNew\":true") &&
-                        !it.contains("\"data\":")
-                }
-            )
-        }
-
-        verify(exactly = 1) {
-            mockPlatformSocket.sendMessage(
-                match {
-                    it.contains("\"action\":\"closeSession\"") &&
-                        it.contains("\"closeAllConnections\":true")
-                }
-            )
-        }
-    }
-
-    @Test
-    fun `when startNewChat and WebSocket receives a SessionResponse that has connected=true and readOnly=true`() {
-        every { mockPlatformSocket.sendMessage(match { it.contains("\"action\":\"configureSession\"") && it.contains("\"startNew\":false") }) } answers {
-            slot.captured.onMessage(Response.configureSuccess(readOnly = true))
-        }
-        every { mockPlatformSocket.sendMessage(match { it.contains("\"action\":\"closeSession\"") && it.contains("\"closeAllConnections\":true") }) } answers {
-            slot.captured.onMessage(Response.configureSuccess(connected = true, readOnly = true))
-        }
-
-        subject.connect()
-        slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         subject.startNewChat()
 
         assertThat(subject.currentState).isReadOnly()
         verify {
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(match { it.contains("\"action\":\"closeSession\"") && it.contains("\"closeAllConnections\":true") })
-            mockVault.wasAuthenticated = false
+            mockPlatformSocket.sendMessage(Request.closeAllConnections)
+            mockAttachmentHandler.fileAttachmentProfile = any()
+            mockReconnectionHandler.clear()
+            mockJwtHandler.clear()
+            mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
+        }
+        verify {
+            mockMessageStore.invalidateConversationCache()
+            mockAttachmentHandler.clearAll()
+        }
+        verify {
+            mockPlatformSocket.sendMessage(Request.configureRequest(startNew = true))
+        }
+    }
+
+    @Test
+    fun `when startNewChat and WebSocket receives a SessionResponse that has connected=true and readOnly=true`() {
+        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+            slot.captured.onMessage(Response.configureSuccess(readOnly = true))
+        }
+        every { mockPlatformSocket.sendMessage(Request.closeAllConnections) } answers {
+            slot.captured.onMessage(Response.configureSuccess(connected = true, readOnly = true))
+        }
+
+        subject.connect()
+        subject.startNewChat()
+
+        assertThat(subject.currentState).isReadOnly()
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockPlatformSocket.sendMessage(Request.closeAllConnections)
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()
@@ -329,12 +283,12 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
     @Test
     fun `when WebSocket receives a SessionResponse that has connected=false and readOnly=true but startNewChat was not invoked`() {
         subject.connect()
-        slot.captured.onMessage(Response.configureSuccess())
 
         slot.captured.onMessage(Response.configureSuccess(connected = false, readOnly = true))
 
         assertThat(subject.currentState).isReadOnly()
-        verify {
+        verifySequence {
+            connectSequence()
             mockVault.wasAuthenticated = false
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()

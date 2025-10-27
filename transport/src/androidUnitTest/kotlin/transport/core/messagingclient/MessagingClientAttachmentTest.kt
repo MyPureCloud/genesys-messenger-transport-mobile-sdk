@@ -27,26 +27,15 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.slot
 import io.mockk.verify
+import io.mockk.verifySequence
 import org.junit.Test
 import transport.util.Request
 import transport.util.Response
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 class MessagingClientAttachmentTest : BaseMessagingClientTest() {
-
-    @BeforeTest
-    fun setupTracingIds() {
-        initTracingIds()
-    }
-
-    @AfterTest
-    fun cleanupTracingIds() {
-        resetTracingIds()
-    }
 
     @Test
     fun `when attach()`() {
@@ -126,11 +115,11 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
         val expectedAttachmentId = "attachment_id"
 
         subject.connect()
-        slot.captured.onMessage(Response.configureSuccess())
 
         slot.captured.onMessage(Response.attachmentDeleted)
 
-        verify {
+        verifySequence {
+            connectSequence()
             mockAttachmentHandler.onDetached(expectedAttachmentId)
         }
     }
@@ -291,6 +280,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
                 )
             )
         )
+        val fileAttachmentProfileSlot = createFileAttachmentProfileSlot()
         every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             slot.captured.onMessage(
                 Response.configureSuccess(
@@ -302,7 +292,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
         val expectedFileAttachmentProfile = FileAttachmentProfile()
         subject.connect()
         slot.captured.onMessage(Response.configureSuccess())
-        every { mockAttachmentHandler.fileAttachmentProfile } returns expectedFileAttachmentProfile
+        every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
 
         slot.captured.onMessage(Response.onMessageWithAttachment())
 
@@ -363,7 +353,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
 
     @Test
     fun `when refreshAttachmentUrl()`() {
-        every { mockPlatformSocket.sendMessage(any()) } answers {
+        every { mockPlatformSocket.sendMessage(Request.refreshAttachmentUrl) } answers {
             slot.captured.onMessage(Response.presignedUrlResponse(headers = "", fileSize = 1))
         }
         val expectedPresignedUrlResponse = PresignedUrlResponse(
@@ -375,11 +365,11 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
             fileType = "image/jpeg"
         )
         subject.connect()
-        slot.captured.onMessage(Response.configureSuccess())
 
         subject.refreshAttachmentUrl("88888888-8888-8888-8888-888888888888")
 
         verify {
+            connectSequence()
             mockPlatformSocket.sendMessage(Request.refreshAttachmentUrl)
             mockAttachmentHandler.onAttachmentRefreshed(expectedPresignedUrlResponse)
         }

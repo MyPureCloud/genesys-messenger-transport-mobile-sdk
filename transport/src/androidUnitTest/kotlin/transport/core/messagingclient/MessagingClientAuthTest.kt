@@ -26,11 +26,13 @@ import org.junit.Test
 import transport.util.Request
 import transport.util.Response
 import transport.util.fromConfiguredToError
+import transport.util.fromConfiguredToReadOnly
 import transport.util.fromConfiguredToReconnecting
 import transport.util.fromConnectedToConfigured
 import transport.util.fromConnectedToError
 import transport.util.fromConnectingToConnected
 import transport.util.fromIdleToConnecting
+import transport.util.fromReadOnlyToConfigured
 import transport.util.fromReconnectingToError
 import kotlin.test.assertFailsWith
 
@@ -295,36 +297,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
     fun `when authenticated conversation was disconnected with ReadOnly and startNewChat resulted in ClientResponseError(401)`() {
         var configureSessionResponsesCounter = 0 // Needed to exit the retry attempts from failing Response.unauthorized
         every {
-            mockPlatformSocket.sendMessage(
-                match {
-                    it.contains("\"action\":\"configureAuthenticatedSession\"") &&
-                        it.contains("\"startNew\":false") &&
-                        it.contains("\"data\":{\"code\":\"${AuthTest.JWT_TOKEN}\"}")
-                }
-            )
-        } answers {
-            slot.captured.onMessage(Response.configureSuccess())
-        }
-
-        every {
-            mockPlatformSocket.sendMessage(
-                match {
-                    it.contains("\"action\":\"closeSession\"") &&
-                        it.contains("\"closeAllConnections\":true")
-                }
-            )
-        } answers {
-            slot.captured.onMessage(Response.configureSuccess(connected = false, readOnly = true))
-        }
-
-        every {
-            mockPlatformSocket.sendMessage(
-                match {
-                    it.contains("\"action\":\"configureAuthenticatedSession\"") &&
-                        it.contains("\"startNew\":true") &&
-                        it.contains("\"data\":{\"code\":\"${AuthTest.JWT_TOKEN}\"}")
-                }
-            )
+            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest(startNew = true))
         } answers {
             if (configureSessionResponsesCounter < 1) {
                 configureSessionResponsesCounter++
@@ -333,12 +306,13 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
                 slot.captured.onMessage(Response.configureSuccess())
             }
         }
-
+        every { mockPlatformSocket.sendMessage(Request.closeAllConnections) } answers {
+            slot.captured.onMessage(Response.configureSuccess(connected = false, readOnly = true))
+        }
         every { mockAuthHandler.refreshToken(captureLambda()) } answers {
             every { mockAuthHandler.jwt } returns AuthTest.JWT_TOKEN
             lambda<(Result<Empty>) -> Unit>().invoke(Result.Success(Empty()))
         }
-
         subject.connectAuthenticatedSession()
         slot.captured.onMessage(
             Response.structuredMessageWithEvents(
@@ -346,33 +320,27 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
                 metadata = mapOf("readOnly" to "true"),
             )
         )
-
         subject.startNewChat()
 
         assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
-
-        verify(exactly = 2) {
-            mockPlatformSocket.sendMessage(
-                match {
-                    it.contains("\"action\":\"configureAuthenticatedSession\"") &&
-                        it.contains("\"startNew\":true") &&
-                        it.contains("\"data\":{\"code\":\"${AuthTest.JWT_TOKEN}\"}")
-                }
-            )
+        verifySequence {
+            fromIdleToConnectedSequence()
+            mockLogger.i(capture(logSlot))
+            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
+            mockStateChangedListener(fromConnectedToConfigured)
+            mockStateChangedListener(fromConfiguredToReadOnly())
+            mockLogger.i(capture(logSlot))
+            mockPlatformSocket.sendMessage(Request.closeAllConnections)
+            mockLogger.i(capture(logSlot))
+            mockLogger.i(capture(logSlot))
+            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest(startNew = true))
+            mockLogger.i(capture(logSlot))
+            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest(startNew = true))
+            mockStateChangedListener(fromReadOnlyToConfigured)
         }
-
-        verify(exactly = 1) {
-            mockPlatformSocket.sendMessage(
-                match {
-                    it.contains("\"action\":\"closeSession\"") &&
-                        it.contains("\"closeAllConnections\":true")
-                }
-            )
-        }
-
-        verify(exactly = 1) {
-            mockAuthHandler.refreshToken(any())
-        }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT_AUTHENTICATED_SESSION)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(Request.token, false))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLOSE_SESSION)
     }
 
     @Test

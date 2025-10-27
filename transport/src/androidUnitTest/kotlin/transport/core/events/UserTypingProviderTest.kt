@@ -31,18 +31,16 @@ class UserTypingProviderTest {
         every { it.invoke() } returns true
     }
 
-    private lateinit var subject: UserTypingProvider
+    private val subject = UserTypingProvider(
+        log = mockLogger,
+        showUserTypingEnabled = mockShowUserTypingIndicatorFunction,
+        getCurrentTimestamp = mockTimestampFunction,
+    )
 
     @Before
     fun setup() {
         mockkObject(TracingIds)
         every { TracingIds.newId() } returns TestValues.TRACING_ID
-
-        subject = UserTypingProvider(
-            log = mockLogger,
-            showUserTypingEnabled = mockShowUserTypingIndicatorFunction,
-            getCurrentTimestamp = mockTimestampFunction,
-        )
     }
 
     @After
