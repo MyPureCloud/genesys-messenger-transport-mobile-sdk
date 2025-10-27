@@ -1,0 +1,31 @@
+@startuml
+!theme bluegray
+!pragma teoz true
+
+skinparam backgroundColor #whitesmoke
+
+title Register Device Token
+
+box TransportSDK #lightcyan
+participant PushService
+participant WebMessagingAPI
+end box
+box Backend
+participant Thandora
+end box
+
+App -> PushService : synchronize(deviceToken, notificationProvider)
+PushService -> WebMessagingAPI : registerDeviceToken(pushConfig)
+WebMessagingAPI -> Thandora : POST /api/v2/push-notification/devices
+		rnote right of WebMessagingAPI
+            {
+            "tokenId": "0061a6ba-1r67-4ufe-8n2a-s6cc18907d81",
+            "deploymentId": "7322597b-802a-4159-ru03-n9a5873b5438",
+            "deviceToken": "XXXXXXXXXX",
+            "deviceType": "Android",
+            "notificationProvider": "FCM",
+            "language": "en_US"
+            }
+    	end rnote
+!include thandora_request-response.puml
+@enduml

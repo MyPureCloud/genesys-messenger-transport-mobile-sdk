@@ -53,7 +53,6 @@ import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.StructuredMessageValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
-import kotlinx.serialization.encodeToString
 import net.bytebuddy.utility.RandomString
 import org.junit.Test
 
@@ -699,7 +698,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun `when SessionResponse toFileAttachmentProfile() but AllowedMedia has no filetypes,maxFileSizeKB and blockedExtensions entries`() {
+    fun `when SessionResponse toFileAttachmentProfile() but AllowedMedia has no filetypes or size limits`() {
         val givenSessionResponse =
             SessionResponse(connected = true, allowedMedia = AllowedMedia(Inbound()))
         val expectedFileAttachmentProfile = FileAttachmentProfile()
@@ -710,7 +709,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun `when SessionResponse toFileAttachmentProfile() and AllowedMedia has filetypes without wildcard but with maxFileSizeKB and blockedExtensions entries`() {
+    fun `when SessionResponse toFileAttachmentProfile() and AllowedMedia has filetypes without wildcard with size limits`() {
         val givenSessionResponse = SessionResponse(
             connected = true,
             allowedMedia = AllowedMedia(
@@ -735,7 +734,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun `when SessionResponse toFileAttachmentProfile() and AllowedMedia has filetypes with wildcard,maxFileSizeKB and blockedExtensions entries`() {
+    fun `when SessionResponse toFileAttachmentProfile() and AllowedMedia has filetypes with wildcard and size limits`() {
         val givenSessionResponse = SessionResponse(
             connected = true,
             allowedMedia = AllowedMedia(
@@ -850,7 +849,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun `when sanitize JSON text field longer than 4 chars should apply mask`() {
+    fun `when sanitize JSON text field longer than 4 chars applies mask`() {
         val givenText = """bla bla "text":"blaaa4aa" other"""
         val expectedText = """bla bla "text":"****a4aa" other"""
 
@@ -870,7 +869,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun `when sanitize text field with equation mark longer than 4 chars should apply mask`() {
+    fun `when sanitize text field with equation mark longer than 4 chars applies mask`() {
         val givenText = """bla bla text=blaaa aa4aa"""
         val expectedText = """bla bla text=*******a4aa"""
 
@@ -880,7 +879,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun `when sanitize text field with equation mark, comma and space of toString longer than 4 chars should apply mask`() {
+    fun `when sanitize text field with equation mark, comma and space of toString longer than 4 chars applies mask`() {
         val givenText = """bla bla text=Yes I did, my secret is 12345, other:etew"""
         val expectedText = """bla bla text=*************************2345, other:etew"""
 
@@ -890,7 +889,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun `when sanitize text field of an object's toString longer than 4 chars should apply mask`() {
+    fun `when sanitize text field of an object's toString longer than 4 chars applies mask`() {
         val givenText = """Message(bla=b la=bla text=Yes I did, my secret is 12345)"""
         val expectedText = """Message(bla=b la=bla text=*************************2345)"""
 
@@ -910,7 +909,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun `when sanitize token longer than 4 chars should apply mask`() {
+    fun `when sanitize token longer than 4 chars applies mask`() {
         val givenText = """bla bla "token":"aaaaaaaaaabbbbbbbbbb1111111111222222" other"""
         val expectedText = """bla bla "token":"********************************2222" other"""
 
@@ -940,7 +939,7 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun `when sanitize customAttributes field should apply mask`() {
+    fun `when sanitize customAttributes field applies mask`() {
         val givenText = """bla bla "customAttributes":{bla4aa:rrr} other"""
         val expectedText = """bla bla "customAttributes":{******:rrr} other"""
 

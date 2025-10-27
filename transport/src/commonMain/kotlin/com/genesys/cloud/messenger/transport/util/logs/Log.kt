@@ -16,7 +16,10 @@ internal class Log(
 
     fun e(message: () -> String) = logger.e(message)
 
-    fun e(throwable: Throwable, message: () -> String) = logger.e(throwable, message)
+    fun e(
+        throwable: Throwable,
+        message: () -> String
+    ) = logger.e(throwable, message)
 
     fun withTag(tag: String) = Log(enableLogs, tag)
 }
