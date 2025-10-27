@@ -25,6 +25,7 @@ internal class AuthHandlerImpl(
     private val api: WebMessagingApi,
     private val vault: Vault,
     private val log: Log,
+    private val isAuthEnabled: suspend () -> Boolean,
     private val dispatcher: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
 ) : AuthHandler {
     private var logoutAttempts = 0
@@ -33,7 +34,11 @@ internal class AuthHandlerImpl(
     override val jwt: String
         get() = authJwt.jwt
 
-    override fun authorize(authCode: String, redirectUri: String, codeVerifier: String?) {
+    override fun authorize(
+        authCode: String,
+        redirectUri: String,
+        codeVerifier: String?
+    ) {
         dispatcher.launch {
             when (val result = api.fetchAuthJwt(authCode, redirectUri, codeVerifier)) {
                 is Result.Success -> {
@@ -88,14 +93,21 @@ internal class AuthHandlerImpl(
     }
 
     override fun shouldAuthorize(callback: (Boolean) -> Unit) {
-        if (!authJwt.hasRefreshToken()) {
-            callback(true)
-            return
-        }
-        performTokenRefresh { result ->
-            when (result) {
-                is Result.Success -> callback(false)
-                is Result.Failure -> callback(true)
+        dispatcher.launch {
+            if (!isAuthEnabled()) {
+                callback(false)
+                return@launch
+            }
+
+            if (!authJwt.hasRefreshToken()) {
+                callback(true)
+                return@launch
+            }
+            performTokenRefresh { result ->
+                when (result) {
+                    is Result.Success -> callback(false)
+                    is Result.Failure -> callback(true)
+                }
             }
         }
     }
@@ -125,7 +137,10 @@ internal class AuthHandlerImpl(
         vault.authRefreshToken = NO_REFRESH_TOKEN
     }
 
-    private fun handleRequestError(result: Result.Failure, requestName: String) {
+    private fun handleRequestError(
+        result: Result.Failure,
+        requestName: String
+    ) {
         if (result.errorCode is ErrorCode.CancellationError) {
             log.w { LogMessages.cancellationExceptionRequestName(requestName) }
             return
@@ -142,5 +157,4 @@ internal class AuthHandlerImpl(
             authJwt.hasRefreshToken()
 }
 
-private fun AuthJwt.hasRefreshToken(): Boolean =
-    refreshToken != null && refreshToken != NO_REFRESH_TOKEN
+private fun AuthJwt.hasRefreshToken(): Boolean = refreshToken != null && refreshToken != NO_REFRESH_TOKEN

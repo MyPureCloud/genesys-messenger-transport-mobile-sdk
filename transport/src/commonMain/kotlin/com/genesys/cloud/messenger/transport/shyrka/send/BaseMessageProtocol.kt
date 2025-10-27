@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 internal interface BaseMessageProtocol {
     @Required
     val type: Type
+
     @Serializable
     enum class Type {
         Text,

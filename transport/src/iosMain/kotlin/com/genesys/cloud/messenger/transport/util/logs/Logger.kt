@@ -2,7 +2,10 @@ package com.genesys.cloud.messenger.transport.util.logs
 
 import platform.Foundation.NSLog
 
-internal actual class Logger actual constructor(private val enableLogs: Boolean, val tag: String) {
+internal actual class Logger actual constructor(
+    private val enableLogs: Boolean,
+    val tag: String
+) {
 
     actual fun d(message: () -> String) {
         if (enableLogs) NSLog("DEBUG: [$tag] ${message()}")
@@ -20,7 +23,10 @@ internal actual class Logger actual constructor(private val enableLogs: Boolean,
         if (enableLogs) NSLog("ERROR: ${message()}")
     }
 
-    actual fun e(throwable: Throwable?, message: () -> String) {
+    actual fun e(
+        throwable: Throwable?,
+        message: () -> String
+    ) {
         if (enableLogs) {
             NSLog("ERROR: [$tag] ${message()}")
             throwable?.let { NSLog("ERROR: ${it.message}") }

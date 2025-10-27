@@ -1,5 +1,9 @@
 package com.genesys.cloud.messenger.transport.shyrka.receive
 
+import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations.AutoStart
+import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations.ConversationClear
+import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations.ConversationDisconnect
+import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations.Notifications
 import com.genesys.cloud.messenger.transport.utility.DeploymentConfigValues
 
 fun createDeploymentConfigForTesting(
@@ -46,12 +50,17 @@ fun createFileUploadVOForTesting(
 }
 
 fun createConversationsVOForTesting(
-    autoStart: Conversations.AutoStart = Conversations.AutoStart(),
-    conversationDisconnect: Conversations.ConversationDisconnect = Conversations.ConversationDisconnect(),
-    conversationClear: Conversations.ConversationClear = Conversations.ConversationClear(enabled = true),
-): Conversations = Conversations(
-    messagingEndpoint = DeploymentConfigValues.MESSAGING_ENDPOINT,
-    autoStart = autoStart,
-    conversationDisconnect = conversationDisconnect,
-    conversationClear = conversationClear,
-)
+    autoStart: AutoStart = AutoStart(),
+    conversationDisconnect: ConversationDisconnect = ConversationDisconnect(),
+    conversationClear: ConversationClear = ConversationClear(enabled = true),
+    notifications: Notifications = Notifications(enabled = false, notificationContentType = Notifications.NotificationContentType.IncludeMessagesContent),
+    markdown: Conversations.Markdown = Conversations.Markdown(enabled = false),
+): Conversations =
+    Conversations(
+        messagingEndpoint = DeploymentConfigValues.MESSAGING_ENDPOINT,
+        autoStart = autoStart,
+        conversationDisconnect = conversationDisconnect,
+        conversationClear = conversationClear,
+        notifications = notifications,
+        markdown = markdown,
+    )

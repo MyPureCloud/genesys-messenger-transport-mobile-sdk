@@ -71,6 +71,9 @@ data class Attachment(
          * @param errorCode is an error code representing reason of the failure.
          * @param errorMessage is a detail error message.
          */
-        data class Error(val errorCode: ErrorCode, val errorMessage: String) : State()
+        data class Error(
+            val errorCode: ErrorCode,
+            val errorMessage: String
+        ) : State()
     }
 }

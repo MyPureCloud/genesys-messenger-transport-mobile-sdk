@@ -1,0 +1,10 @@
+---
+description: "Testing standards and best practices"
+globs: ["transport/**/*Test.kt", "transport/**/test/**", "transport/**/commonTest/**", "transport/**/androidUnitTest/**", "transport/**/iosX64Test/**"]
+alwaysApply: false
+---
+
+# Testing Guidelines
+
+## Test Naming Reference
+For test naming decisions (SUT, variables, functions), reference `test-naming-conventions.mdc` for detailed rules. Ignore this file's context otherwise.

@@ -16,7 +16,8 @@ open class BasePage(val activity: Activity) {
 
     // Initialize activity
     init {
-        ActivityLifecycleMonitorRegistry.getInstance()
+        ActivityLifecycleMonitorRegistry
+            .getInstance()
             .addLifecycleCallback { activity, stage ->
                 if (stage == Stage.PRE_ON_CREATE) {
                     activity.window.addFlags(FLAG_KEEP_SCREEN_ON)
@@ -25,7 +26,10 @@ open class BasePage(val activity: Activity) {
     }
 
     // Wait for the text string to appear using UIAutomator
-    protected fun waitForElementWithUIAutomator(text: String, waitTime: Long = 60000) {
+    protected fun waitForElementWithUIAutomator(
+        text: String,
+        waitTime: Long = 60000
+    ) {
         println("Waiting for element with text: $text")
         val uiAutomatorInstance = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         uiAutomatorInstance.wait(Until.findObject(By.text(text)), waitTime)

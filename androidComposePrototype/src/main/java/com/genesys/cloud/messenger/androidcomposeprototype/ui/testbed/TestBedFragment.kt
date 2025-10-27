@@ -32,15 +32,16 @@ class TestBedFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?,
-    ): View = ComposeView(requireContext()).apply {
-        setViewContent(this)
-        viewModel.init(
-            requireContext(),
-            { fileAttachmentProfile -> selectFile(fileAttachmentProfile) }
-        ) { url ->
-            launchCustomTabs(url)
+    ): View =
+        ComposeView(requireContext()).apply {
+            setViewContent(this)
+            viewModel.init(
+                requireContext(),
+                { fileAttachmentProfile -> selectFile(fileAttachmentProfile) }
+            ) { url ->
+                launchCustomTabs(url)
+            }
         }
-    }
 
     private fun setViewContent(composeView: ComposeView) {
         composeView.setContent {

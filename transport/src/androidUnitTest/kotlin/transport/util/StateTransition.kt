@@ -24,8 +24,7 @@ internal val fromConnectedToConfigured =
         newState = MessagingClient.State.Configured(connected = true, newSession = true)
     )
 
-internal fun fromConnectedToError(errorState: MessagingClient.State) =
-    StateChange(oldState = MessagingClient.State.Connected, newState = errorState)
+internal fun fromConnectedToError(errorState: MessagingClient.State) = StateChange(oldState = MessagingClient.State.Connected, newState = errorState)
 
 internal fun fromConfiguredToError(errorState: MessagingClient.State) =
     StateChange(
@@ -33,8 +32,7 @@ internal fun fromConfiguredToError(errorState: MessagingClient.State) =
         newState = errorState,
     )
 
-internal fun fromErrorToConnecting(errorState: MessagingClient.State) =
-    StateChange(oldState = errorState, newState = MessagingClient.State.Connecting)
+internal fun fromErrorToConnecting(errorState: MessagingClient.State) = StateChange(oldState = errorState, newState = MessagingClient.State.Connecting)
 
 internal fun fromReadOnlyToError(errorState: MessagingClient.State) =
     StateChange(
@@ -54,8 +52,7 @@ internal val fromConnectedToReadOnly =
         newState = MessagingClient.State.ReadOnly,
     )
 
-internal fun fromReconnectingToError(errorState: MessagingClient.State) =
-    StateChange(oldState = MessagingClient.State.Reconnecting, newState = errorState)
+internal fun fromReconnectingToError(errorState: MessagingClient.State) = StateChange(oldState = MessagingClient.State.Reconnecting, newState = errorState)
 
 internal fun fromConfiguredToReconnecting(): StateChange =
     StateChange(

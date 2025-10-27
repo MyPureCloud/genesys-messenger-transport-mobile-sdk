@@ -3,10 +3,16 @@ package com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
@@ -43,6 +49,7 @@ fun TestBedScreen(testBedViewModel: TestBedViewModel) {
         scaffoldState = scaffoldState,
         topBar = {
             TopAppBar(
+                modifier = Modifier.statusBarsPadding(),
                 title = { Text("Web Messaging Testbed") },
                 navigationIcon = {
                     IconButton(
@@ -67,7 +74,13 @@ fun TestBedScreen(testBedViewModel: TestBedViewModel) {
         }
     ) { innerPadding ->
         TestBedContent(
-            modifier = Modifier.padding(innerPadding),
+            modifier = Modifier
+                .padding(innerPadding)
+                .windowInsetsPadding(
+                    WindowInsets.safeDrawing.only(
+                        WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal
+                    )
+                ),
             command = testBedViewModel.command,
             onCommandChange = testBedViewModel::onCommandChanged,
             onCommandSend = testBedViewModel::onCommandSend,
@@ -91,7 +104,7 @@ fun TestBedContent(
     currentAuthState: AuthState,
 ) {
     Column(
-        modifier = Modifier.padding(8.dp)
+        modifier = modifier.fillMaxSize().padding(8.dp)
     ) {
         CommandView(command, onCommandChange, onCommandSend, commandWaiting)
         Spacer(modifier = Modifier.height(16.dp))
@@ -106,6 +119,7 @@ fun DrawerContent(onCommandSelected: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing)
             .padding(16.dp)
     ) {
         Text("Commands", style = MaterialTheme.typography.h6)
