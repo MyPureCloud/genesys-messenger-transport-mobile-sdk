@@ -268,6 +268,8 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         verify {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
+        }
+        verify {
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()

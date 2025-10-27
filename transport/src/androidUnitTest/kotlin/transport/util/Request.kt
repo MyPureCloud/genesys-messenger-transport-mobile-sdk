@@ -53,9 +53,9 @@ internal object Request {
     fun quickReplyWith(
         content: String = """"content":[{"contentType":"ButtonResponse","buttonResponse":{"text":"text_a","payload":"payload_a","type":"QuickReply"}}]""",
         channel: String = ""
-    ) = """{"token":"$token","tracingId":"${TestValues.TRACING_ID}","message":{"text":"",$content,$channel"type":"Text"},"action":"onMessage"}"""
+    ) = """{"token":"$token","message":{"text":"",$content${if (channel.isNotEmpty()) ",$channel" else ""},"type":"Text"},"tracingId":"${TestValues.TRACING_ID}","action":"onMessage"}"""
 
-    fun textMessage(text: String = MessageValues.TEXT) = """{"token":"$token","tracingId":"${TestValues.TRACING_ID}","message":{"text":"$text","type":"Text"},"action":"onMessage"}"""
+    fun textMessage(text: String = MessageValues.TEXT) = """{"token":"$token","message":{"text":"$text","type":"Text"},"tracingId":"${TestValues.TRACING_ID}","action":"onMessage"}"""
 
     const val closeAllConnections =
         """{"token":"$token","closeAllConnections":true,"tracingId":"${TestValues.TRACING_ID}","action":"closeSession"}"""

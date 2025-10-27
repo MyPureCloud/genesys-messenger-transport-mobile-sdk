@@ -53,7 +53,7 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
 
     @Test
     fun `when connect and then sendMessage()`() {
-        every { mockPlatformSocket.sendMessage("""{"token":"00000000-0000-0000-0000-000000000000","message":{"text":"Hello world!","type":"Text"},"tracingId":"test-tracing-id","action":"onMessage"}""") } answers {
+        every { mockPlatformSocket.sendMessage(Request.textMessage()) } answers {
             slot.captured.onMessage(Response.onMessage())
         }
         val expectedMessageRequest =

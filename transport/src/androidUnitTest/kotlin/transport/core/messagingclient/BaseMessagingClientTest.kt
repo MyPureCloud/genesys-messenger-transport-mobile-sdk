@@ -58,7 +58,6 @@ import transport.util.fromConnectingToConnected
 import transport.util.fromIdleToConnecting
 import kotlin.reflect.KProperty0
 import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 
 open class BaseMessagingClientTest {
     init {
@@ -216,12 +215,6 @@ open class BaseMessagingClientTest {
         it.stateChangedListener = mockStateChangedListener
     }
 
-    @BeforeTest
-    fun initTracingIds() {
-        mockkObject(TracingIds)
-        every { TracingIds.newId() } returns TestValues.TRACING_ID
-    }
-
     @AfterTest
     fun resetTracingIds() {
         unmockkObject(TracingIds)
@@ -320,4 +313,5 @@ open class BaseMessagingClientTest {
         mockJwtHandler.clear()
         mockCustomAttributesStore.onSessionClosed()
     }
+
 }
