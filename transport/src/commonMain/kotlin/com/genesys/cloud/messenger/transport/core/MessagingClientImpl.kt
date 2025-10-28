@@ -893,5 +893,7 @@ private fun KProperty0<DeploymentConfig?>.isPushServiceEnabled(): Boolean =
 private fun Map<String, String>.asChannel(): Channel? {
     return if (this.isNotEmpty()) {
         Channel(Channel.Metadata(this))
-    } else null
+    } else {
+        null
+    }
 }
