@@ -94,5 +94,8 @@ sealed class Event {
      */
     data object ExistingAuthSessionCleared : Event()
 
+    /**
+     * Sent when authorization is required for authenticated session configuration.
+     */
     data object AuthorizationRequired : Event()
 }

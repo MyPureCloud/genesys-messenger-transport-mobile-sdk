@@ -33,7 +33,10 @@ internal fun HttpClientConfig<MockEngineConfig>.authorizeEngine() {
                             AuthJwtRequest.serializer(),
                             (request.body as TextContent).text
                         )
-                        if (requestBody.deploymentId == TestValues.DEPLOYMENT_ID && requestBody.oauth.code == AuthTest.AUTH_CODE) {
+                        if (requestBody.deploymentId == TestValues.DEPLOYMENT_ID) {
+                            val isImplicitFlow = requestBody.oauth.redirectUri == null && requestBody.oauth.codeVerifier == null
+                            val refreshToken = if (isImplicitFlow) null else AuthTest.REFRESH_TOKEN
+
                             respond(
                                 status = HttpStatusCode.OK,
                                 headers = headersOf(
@@ -42,7 +45,7 @@ internal fun HttpClientConfig<MockEngineConfig>.authorizeEngine() {
                                 ),
                                 content = Json.encodeToString(
                                     AuthJwt.serializer(),
-                                    AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN)
+                                    AuthJwt(AuthTest.JWT_TOKEN, refreshToken)
                                 )
                             )
                         } else {

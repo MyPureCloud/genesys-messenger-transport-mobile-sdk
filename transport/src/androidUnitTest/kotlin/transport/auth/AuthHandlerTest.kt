@@ -588,9 +588,8 @@ class AuthHandlerTest {
     @Test
     fun `when authorizeImplicit() success`() {
         coEvery { mockWebMessagingApi.fetchAuthJwt(AuthTest.ID_TOKEN) } returns Result.Success(
-            AuthJwt(AuthTest.JWT_TOKEN, NO_REFRESH_TOKEN)
+            AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN)
         )
-
         val expectedAuthJwt = AuthJwt(AuthTest.JWT_TOKEN, NO_REFRESH_TOKEN)
 
         subject.authorizeImplicit(AuthTest.ID_TOKEN)

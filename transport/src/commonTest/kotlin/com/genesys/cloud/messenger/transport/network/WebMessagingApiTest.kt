@@ -165,13 +165,11 @@ class WebMessagingApiTest {
     @Test
     fun `when fetchAuthJwt with implicit flow is successful`() {
         subject = buildWebMessagingApiWith { authorizeEngine() }
-        val expectedResult = Result.Success(AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN))
+        val expectedResult = Result.Success(AuthJwt(AuthTest.JWT_TOKEN, null))
 
         val result = runBlocking {
             subject.fetchAuthJwt(
-                authCode = AuthTest.AUTH_CODE,
-                redirectUri = null,
-                codeVerifier = null,
+                authCode = AuthTest.ID_TOKEN,
             )
         }
 
@@ -191,9 +189,7 @@ class WebMessagingApiTest {
 
         val result = runBlocking {
             subject.fetchAuthJwt(
-                authCode = AuthTest.AUTH_CODE,
-                redirectUri = null,
-                codeVerifier = null,
+                authCode = AuthTest.ID_TOKEN,
             )
         }
 

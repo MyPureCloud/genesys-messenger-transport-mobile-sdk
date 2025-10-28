@@ -37,7 +37,6 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import kotlinx.serialization.encodeToString
 import kotlin.coroutines.cancellation.CancellationException
 
 internal class WebMessagingApi(
@@ -109,30 +108,31 @@ internal class WebMessagingApi(
         authCode: String,
         redirectUri: String? = null,
         codeVerifier: String? = null,
-    ): Result<AuthJwt> = try {
-        val requestBody = AuthJwtRequest(
-            deploymentId = configuration.deploymentId,
-            oauth = OAuth(
-                code = authCode,
-                redirectUri = redirectUri,
-                codeVerifier = codeVerifier,
+    ): Result<AuthJwt> =
+        try {
+            val requestBody = AuthJwtRequest(
+                deploymentId = configuration.deploymentId,
+                oauth = OAuth(
+                    code = authCode,
+                    redirectUri = redirectUri,
+                    codeVerifier = codeVerifier,
+                )
             )
-        )
-        val response = client.post(configuration.jwtAuthUrl.toString()) {
-            header("content-type", ContentType.Application.Json)
-            setBody(requestBody)
-            retryOnServerErrors()
+            val response = client.post(urls.jwtAuthUrl.toString()) {
+                header("content-type", ContentType.Application.Json)
+                setBody(requestBody)
+                retryOnServerErrors()
+            }
+            if (response.status.isSuccess()) {
+                Result.Success(response.body())
+            } else {
+                Result.Failure(ErrorCode.AuthFailed, response.body<String>())
+            }
+        } catch (cancellationException: CancellationException) {
+            Result.Failure(ErrorCode.CancellationError, cancellationException.message)
+        } catch (exception: Exception) {
+            Result.Failure(ErrorCode.AuthFailed, exception.message)
         }
-        if (response.status.isSuccess()) {
-            Result.Success(response.body())
-        } else {
-            Result.Failure(ErrorCode.AuthFailed, response.body<String>())
-        }
-    } catch (cancellationException: CancellationException) {
-        Result.Failure(ErrorCode.CancellationError, cancellationException.message)
-    } catch (exception: Exception) {
-        Result.Failure(ErrorCode.AuthFailed, exception.message)
-    }
 
     suspend fun logoutFromAuthenticatedSession(jwt: String): Result<Empty> =
         try {

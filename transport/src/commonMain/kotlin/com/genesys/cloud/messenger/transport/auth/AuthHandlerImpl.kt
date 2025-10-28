@@ -152,11 +152,10 @@ internal class AuthHandlerImpl(
         vault.authRefreshToken = NO_REFRESH_TOKEN
     }
 
-    override fun hasRefreshToken(): Boolean {
-        return authJwt.hasRefreshToken()
-    }
-
-    private fun handleRequestError(result: Result.Failure, requestName: String) {
+    private fun handleRequestError(
+        result: Result.Failure,
+        requestName: String
+    ) {
         if (result.errorCode is ErrorCode.CancellationError) {
             log.w { LogMessages.cancellationExceptionRequestName(requestName) }
             return
@@ -173,5 +172,4 @@ internal class AuthHandlerImpl(
             authJwt.hasRefreshToken()
 }
 
-private fun AuthJwt.hasRefreshToken(): Boolean =
-    refreshToken != null && refreshToken != NO_REFRESH_TOKEN
+private fun AuthJwt.hasRefreshToken(): Boolean = refreshToken != null && refreshToken != NO_REFRESH_TOKEN
