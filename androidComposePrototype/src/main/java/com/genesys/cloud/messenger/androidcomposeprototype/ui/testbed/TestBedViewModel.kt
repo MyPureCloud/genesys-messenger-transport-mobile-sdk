@@ -227,7 +227,7 @@ class TestBedViewModel :
     }
 
     private fun doImplicitSignIn() {
-        val url = buildImplicitAuthUrl()
+        val url = buildImplicitOktaAuthorizeUrl()
         Log.d(TAG, "doImplicitOktaSignIn: $url")
         onOktaSingIn(url)
         commandWaiting = false
@@ -635,23 +635,18 @@ class TestBedViewModel :
         return builder.build().toString()
     }
 
-    private fun generateNonce(): String = UUID.randomUUID().toString()
-
-    private fun buildImplicitAuthUrl(): String = buildImplicitOktaAuthorizeUrl(generateNonce())
-
-    private fun buildImplicitOktaAuthorizeUrl(nonce: String? = null): String =
-        URLBuilder("https://${BuildConfig.OKTA_DOMAIN}/oauth2/v1/authorize")
-            .apply {
+    private fun buildImplicitOktaAuthorizeUrl(): String {
+        val builder =
+            URLBuilder("https://${BuildConfig.OKTA_DOMAIN}/oauth2/default/v1/authorize").apply {
                 parameters.append("client_id", BuildConfig.CLIENT_ID)
                 parameters.append("response_type", "id_token")
                 parameters.append("scope", "openid profile email")
                 parameters.append("redirect_uri", BuildConfig.SIGN_IN_REDIRECT_URI)
                 parameters.append("state", BuildConfig.OKTA_STATE)
-                nonce?.let {
-                    parameters.append("nonce", nonce)
-                }
-            }.build()
-            .toString()
+                parameters.append("nonce", UUID.randomUUID().toString())
+            }
+        return builder.build().toString()
+    }
 }
 
 private fun String.toKeyValuePair(): Pair<String, String> {

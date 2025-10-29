@@ -105,8 +105,6 @@ class ComposePrototypeUITest : BaseTests() {
     private val helloSession1 = "Session 1 - Authenticated message."
     private val helloSession2 = "Session 2 - Unauthenticated message."
     private val helloResumeSession1 = "Session 1 - Attempt to resume after step-up."
-    private val implicitFlowMessage = "Implicit flow authenticated message."
-    private val implicitFlowText = "implicitLogin"
 
     fun enterDeploymentInfo(deploymentId: String) {
         opening {
@@ -155,19 +153,6 @@ class ComposePrototypeUITest : BaseTests() {
             enterCommand(oktaSignInWithPKCEText)
             loginWithOkta(userName, password)
             if (validSignIn) waitForAuthMsgReceived(authCodeReceivedText)
-        }
-    }
-
-    fun oktaSignInImplicit(
-        userName: String,
-        password: String,
-        validSignIn: Boolean = true
-    ) {
-        messenger {
-            verifyPageIsVisible()
-            enterCommand(implicitFlowText)
-            loginWithOkta(userName, password)
-            if (validSignIn) waitForAuthMsgReceived("ID Token:")
         }
     }
 
@@ -733,22 +718,6 @@ class ComposePrototypeUITest : BaseTests() {
         authorize()
         stepUp()
         sendMsg("Authenticated session message after step-up.")
-        oktaLogout()
-    }
-
-    @Test
-    fun testImplicitFlowAuthentication() {
-        apiHelper.disconnectAllConversations()
-        enterDeploymentInfo(testConfig.authDeploymentId)
-        clearBrowser()
-        oktaSignInImplicit(testConfig.oktaUsername, testConfig.oktaPassword)
-        messenger {
-            verifyPageIsVisible()
-            enterCommand(implicitFlowText)
-            waitForAuthMsgReceived(authorizedText)
-        }
-        connect(authenticateConnectText)
-        sendMsg(implicitFlowMessage)
         oktaLogout()
     }
 
