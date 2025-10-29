@@ -72,11 +72,12 @@ class MainActivity :
     }
 
     private fun handleOktaRedirect(data: Uri) {
-        // If authcode is present.
         data.getQueryParameter("code")?.let { authCode ->
             viewModel.authCode = authCode
         }
-        // Otherwise there will be an error.
+        data.getQueryParameter("id_token")?.let { idToken ->
+            viewModel.idToken = idToken
+        }
         data.getQueryParameter("error_description")?.let { error ->
             Log.e(TAG, error)
             Toast.makeText(applicationContext, error, Toast.LENGTH_LONG).show()
