@@ -3,7 +3,6 @@ package com.genesys.cloud.messenger.transport.core
 import com.genesys.cloud.messenger.transport.auth.AuthHandler
 import com.genesys.cloud.messenger.transport.auth.AuthHandlerImpl
 import com.genesys.cloud.messenger.transport.auth.NO_JWT
-import com.genesys.cloud.messenger.transport.auth.NO_REFRESH_TOKEN
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
@@ -62,7 +61,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.encodeToString
 import kotlin.reflect.KProperty0
 
 private const val MAX_RECONFIGURE_ATTEMPTS = 3
@@ -214,11 +212,6 @@ internal class MessagingClientImpl(
         val encodedJson = if (connectAuthenticated) {
             log.i { LogMessages.configureAuthenticatedSession(token, startNew) }
             if (authHandler.jwt == NO_JWT) {
-                if (vault.authRefreshToken == NO_REFRESH_TOKEN) {
-                    eventHandler.onEvent(Event.AuthorizationRequired)
-                    transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
-                    return
-                }
                 if (reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
                     reconfigureAttempts++
                     refreshTokenAndPerform { configureSession(startNew) }
@@ -523,7 +516,14 @@ internal class MessagingClientImpl(
         authHandler.refreshToken { result ->
             when (result) {
                 is Result.Success -> action()
-                is Result.Failure -> transitionToStateError(result.errorCode, result.message)
+                is Result.Failure -> {
+                    if (result.errorCode is ErrorCode.RefreshAuthTokenFailure && result.message == ErrorMessage.NoRefreshToken) {
+                        eventHandler.onEvent(Event.AuthorizationRequired)
+                        transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
+                    } else {
+                        transitionToStateError(result.errorCode, result.message)
+                    }
+                }
             }
         }
     }

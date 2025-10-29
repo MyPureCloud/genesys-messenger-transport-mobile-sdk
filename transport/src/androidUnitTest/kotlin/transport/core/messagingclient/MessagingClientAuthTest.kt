@@ -72,6 +72,11 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
     fun `when connectAuthenticatedSession and no JWT and no refresh token`() {
         every { mockAuthHandler.jwt } returns NO_JWT
         every { mockVault.authRefreshToken } returns NO_REFRESH_TOKEN
+        every { mockAuthHandler.refreshToken(captureLambda()) } answers {
+            lambda<(Result<Empty>) -> Unit>().invoke(
+                Result.Failure(ErrorCode.RefreshAuthTokenFailure, ErrorMessage.NoRefreshToken)
+            )
+        }
 
         subject.connectAuthenticatedSession()
 
@@ -80,6 +85,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
             mockPlatformSocket.openSocket(any())
             mockStateChangedListener(fromConnectingToConnected)
             mockAuthHandler.jwt
+            mockAuthHandler.refreshToken(any())
             mockEventHandler.onEvent(Event.AuthorizationRequired)
             errorSequence(fromConnectedToError(MessagingClient.State.Error(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)))
         }
@@ -124,10 +130,10 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
     @Test
     fun `when connectAuthenticatedSession and AuthHandler has no Jwt and refreshToken fails`() {
         every { mockVault.authRefreshToken } returns AuthTest.REFRESH_TOKEN
+        Result.Failure(ErrorCode.AuthFailed, ErrorTest.MESSAGE)
         val givenResult = Result.Failure(ErrorCode.AuthFailed, ErrorTest.MESSAGE)
-        val givenFailure = Result.Failure(ErrorCode.AuthFailed, ErrorTest.MESSAGE)
         every { mockAuthHandler.refreshToken(captureLambda()) } answers {
-            lambda<(Result<Empty>) -> Unit>().invoke(givenFailure)
+            lambda<(Result<Empty>) -> Unit>().invoke(givenResult)
         }
         every { mockAuthHandler.jwt } returns NO_JWT
 
