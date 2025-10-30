@@ -16,7 +16,7 @@ ktlint_standard_if-else-wrapping = enabled
 ktlint_standard_multiline-expression-wrapping = enabled
 # Investigation candidate rules
 ktlint_standard_class-signature = disabled
-ktlint_standard_multiline-if-else = disabled
+ktlint_standard_multiline-if-else = enabled
 ktlint_standard_no-empty-first-line-in-class-body = disabled
 ktlint_standard_no-empty-first-line-in-method-block = disabled
 ktlint_standard_package-name = disabled
