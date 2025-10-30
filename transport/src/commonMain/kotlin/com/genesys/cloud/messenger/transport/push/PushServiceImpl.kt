@@ -23,7 +23,6 @@ internal class PushServiceImpl(
     private val pushConfigComparator: PushConfigComparator = PushConfigComparatorImpl(),
     private val log: Log,
 ) : PushService {
-
     @Throws(DeviceTokenException::class, IllegalArgumentException::class, CancellationException::class)
     override suspend fun synchronize(
         deviceToken: String,

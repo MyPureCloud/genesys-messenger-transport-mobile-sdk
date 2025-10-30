@@ -5,7 +5,6 @@ internal class Log(
     tag: String,
     val logger: Logger = Logger(enableLogs, tag)
 ) {
-
     val ktorLogger: io.ktor.client.plugins.logging.Logger =
         KtorLogger(
             Logger(enableLogs, LogTag.API)

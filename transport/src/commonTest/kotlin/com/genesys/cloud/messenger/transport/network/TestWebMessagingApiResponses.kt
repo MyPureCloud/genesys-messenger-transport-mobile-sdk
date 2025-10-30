@@ -17,7 +17,6 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEve
 import com.genesys.cloud.messenger.transport.shyrka.receive.Styles
 
 object TestWebMessagingApiResponses {
-
     internal const val isoTestTimestamp = "2014-04-30T21:09:51.411Z"
     internal const val messageEntityResponseWith3Messages =
         """{"entities":[{"id":"5befde6373a23f32f20b59b4e1cba0e6","channel":{"time":"$isoTestTimestamp"},"type":"Text","text":"\uD83E\uDD2A","content":[],"direction":"Outbound","originatingEntity":"Bot"},{"id":"46e7001c24abed05e9bcd1a006eb54b7","channel":{"time":null},"type":"Event","events":[{"eventType":"Presence","presence":{"type":"Join"}}],"metadata":{"customMessageId":"1234567890"},"text":"customer msg 7","content":[],"direction":"Inbound","originatingEntity":"Human"},{"text":"quick reply text","type":"Structured","direction":"Outbound","id":"message3_id","channel":{"time":null},"content":[{"contentType":"QuickReply","quickReply":{"text":"text_a","payload":"payload_a","action":"action_a"}},{"contentType":"QuickReply","quickReply":{"text":"text_b","payload":"payload_b","action":"action_b"}}],"metadata":{"customMessageId":"1234567890"},"originatingEntity":"Bot"}],"pageSize":25,"pageNumber":1, "total": 3, "pageCount": 1}"""

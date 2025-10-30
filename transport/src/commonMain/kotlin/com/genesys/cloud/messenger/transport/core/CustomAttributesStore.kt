@@ -1,7 +1,6 @@
 package com.genesys.cloud.messenger.transport.core
 
 interface CustomAttributesStore {
-
     /**
      * Get existing custom attributes.
      */

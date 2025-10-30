@@ -20,7 +20,6 @@ import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import org.junit.Test
 
 class MessageTest {
-
     @Test
     fun `validate default constructor`() {
         val expectedDirection = Direction.Inbound

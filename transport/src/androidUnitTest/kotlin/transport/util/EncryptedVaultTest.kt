@@ -23,7 +23,6 @@ import org.junit.Before
 import org.junit.Test
 
 class EncryptedVaultTest {
-
     private val mockContext = mockk<Context>(relaxed = true)
     private val mockApplicationContext = mockk<Context>(relaxed = true)
     private val mockSharedPreferences = mockk<SharedPreferences>(relaxed = true)

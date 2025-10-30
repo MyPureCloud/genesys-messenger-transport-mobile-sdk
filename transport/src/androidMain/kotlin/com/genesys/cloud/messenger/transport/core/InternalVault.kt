@@ -26,7 +26,6 @@ internal class InternalVault(
     private val serviceName: String,
     private val sharedPreferences: SharedPreferences
 ) {
-
     companion object {
         private const val ANDROID_KEYSTORE = "AndroidKeyStore"
         private const val TRANSFORMATION = "AES/GCM/NoPadding"

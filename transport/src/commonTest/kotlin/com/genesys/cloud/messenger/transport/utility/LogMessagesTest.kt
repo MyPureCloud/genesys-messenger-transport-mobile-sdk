@@ -15,7 +15,6 @@ import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import kotlin.test.Test
 
 class LogMessagesTest {
-
     // Attachment
     @Test
     fun `when presigningAttachment is called then it logs correctly`() {

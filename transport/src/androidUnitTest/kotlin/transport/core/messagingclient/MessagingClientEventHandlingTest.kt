@@ -15,7 +15,6 @@ import transport.util.Response
 import transport.util.fromConfiguredToError
 
 class MessagingClientEventHandlingTest : BaseMessagingClientTest() {
-
     @Test
     fun `when eventListener is set`() {
         val givenEventListener: (Event) -> Unit = {}

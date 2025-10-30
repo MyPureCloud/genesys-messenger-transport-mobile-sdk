@@ -21,7 +21,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class TestBedFragment : Fragment() {
-
     private val viewModel: TestBedViewModel by activityViewModels()
     private val selectFileResult =
         registerForActivityResult(

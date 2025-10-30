@@ -26,7 +26,6 @@ import transport.util.Request
 import transport.util.Response
 
 class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
-
     @Test
     fun `when getCustomAttributesStore()`() {
         val result = subject.customAttributesStore

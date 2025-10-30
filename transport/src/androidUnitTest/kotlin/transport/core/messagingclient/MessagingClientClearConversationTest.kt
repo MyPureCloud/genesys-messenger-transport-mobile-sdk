@@ -27,7 +27,6 @@ import transport.util.Response
 import kotlin.test.assertFailsWith
 
 class MessagingClientClearConversationTest : BaseMessagingClientTest() {
-
     @Test
     fun `when clearConversation from any non ReadOnly or Configured states`() {
         // currentState = Idle

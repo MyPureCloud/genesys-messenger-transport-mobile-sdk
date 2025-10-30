@@ -18,7 +18,6 @@ import org.junit.Test
 import kotlin.reflect.KProperty0
 
 class MessagingClientIsAuthEnabledTest {
-
     private val mockApi = mockk<WebMessagingApi>()
 
     @Test

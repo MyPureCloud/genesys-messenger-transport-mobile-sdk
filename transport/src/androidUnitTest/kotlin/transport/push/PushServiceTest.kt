@@ -34,7 +34,6 @@ import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
 class PushServiceTest {
-
     private val mockVault: Vault =
         mockk {
             every { pushConfig } returns DEFAULT_PUSH_CONFIG

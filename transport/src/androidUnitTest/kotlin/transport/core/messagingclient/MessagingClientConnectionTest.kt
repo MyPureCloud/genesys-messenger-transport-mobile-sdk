@@ -35,7 +35,6 @@ import transport.util.fromReconnectingToError
 import kotlin.test.assertFailsWith
 
 class MessagingClientConnectionTest : BaseMessagingClientTest() {
-
     @Test
     fun `when stateListener is not set`() {
         subject.stateChangedListener = null

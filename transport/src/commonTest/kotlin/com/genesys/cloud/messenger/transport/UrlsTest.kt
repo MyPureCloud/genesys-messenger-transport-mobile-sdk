@@ -9,7 +9,6 @@ import io.ktor.http.Url
 import kotlin.test.Test
 
 class UrlsTest {
-
     private val subject = Urls(TestValues.DOMAIN, TestValues.DEPLOYMENT_ID, TestValues.application)
 
     @Test

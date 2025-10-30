@@ -36,7 +36,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 class MessagingClientAttachmentTest : BaseMessagingClientTest() {
-
     @Test
     fun `when attach()`() {
         val expectedAttachmentId = "88888888-8888-8888-8888-888888888888"

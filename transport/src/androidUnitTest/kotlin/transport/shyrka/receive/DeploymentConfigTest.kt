@@ -27,7 +27,6 @@ import com.genesys.cloud.messenger.transport.utility.DeploymentConfigValues
 import org.junit.Test
 
 class DeploymentConfigTest {
-
     @Test
     fun `when DeploymentConfig serialized`() {
         val givenDeploymentConfig =

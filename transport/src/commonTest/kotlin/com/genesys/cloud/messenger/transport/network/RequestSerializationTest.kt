@@ -42,7 +42,6 @@ import kotlinx.serialization.encodeToString
 import kotlin.test.Test
 
 class RequestSerializationTest {
-
     @Test
     fun `validate AutoStartRequest serialization`() {
         val expectedPresenceEvent =

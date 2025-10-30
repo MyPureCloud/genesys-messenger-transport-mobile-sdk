@@ -704,7 +704,6 @@ internal class MessagingClientImpl(
     private inner class SocketListener(
         private val log: Log,
     ) : PlatformSocketListener {
-
         override fun onOpen() {
             log.i { LogMessages.ON_OPEN }
             stateMachine.onConnectionOpened()

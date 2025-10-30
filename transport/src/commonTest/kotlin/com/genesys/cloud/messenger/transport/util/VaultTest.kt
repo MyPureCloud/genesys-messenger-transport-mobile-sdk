@@ -14,7 +14,6 @@ import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlin.test.Test
 
 class VaultTest {
-
     val subject = ConcreteVault()
 
     @Test

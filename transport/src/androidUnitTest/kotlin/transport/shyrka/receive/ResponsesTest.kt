@@ -32,7 +32,6 @@ import kotlinx.serialization.encodeToString
 import org.junit.Test
 
 class ResponsesTest {
-
     @Test
     fun `when AttachmentDeleteResponse serialized`() {
         val expectedRequest = AttachmentDeletedResponse(AttachmentValues.ID)

@@ -11,7 +11,6 @@ import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
 class PushConfigComparatorTest {
-
     private val subject: PushConfigComparator = PushConfigComparatorImpl()
 
     @Test

@@ -25,7 +25,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class HistoryHandlerImplTest {
-
     private val messageStore =
         mockk<MessageStore>(relaxed = true) {
             every { startOfConversation } returns false
