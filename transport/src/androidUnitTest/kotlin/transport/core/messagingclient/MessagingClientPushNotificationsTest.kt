@@ -184,18 +184,23 @@ class MessagingClientPushNotificationsTest : BaseMessagingClientTest() {
     }
 
     private fun turnOnNotificationsInDeploymentConfig() {
-        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
-            messenger = createMessengerVOForTesting(
-                apps = Apps(
-                    conversations = createConversationsVOForTesting(
-                        notifications = Conversations.Notifications(
-                            enabled = true,
-                            notificationContentType = NotificationContentType.IncludeMessagesContent
-                        )
+        every { mockDeploymentConfig.get() } returns
+            createDeploymentConfigForTesting(
+                messenger =
+                    createMessengerVOForTesting(
+                        apps =
+                            Apps(
+                                conversations =
+                                    createConversationsVOForTesting(
+                                        notifications =
+                                            Conversations.Notifications(
+                                                enabled = true,
+                                                notificationContentType = NotificationContentType.IncludeMessagesContent
+                                            )
+                                    )
+                            )
                     )
-                )
             )
-        )
     }
 
     private fun assertLogsForPushConfig() {

@@ -18,12 +18,13 @@ import io.ktor.serialization.kotlinx.json.json
 private const val TIMEOUT_IN_MS = 30000L
 private const val MAX_RETRIES_ON_SERVER_ERRORS = 3
 private const val DELAY_BETWEEN_RETRIES_IN_MILLISECONDS = 5000L
-private val RETRYABLE_STATUS_CODES = setOf(
-    HttpStatusCode.InternalServerError,
-    HttpStatusCode.BadGateway,
-    HttpStatusCode.ServiceUnavailable,
-    HttpStatusCode.GatewayTimeout,
-)
+private val RETRYABLE_STATUS_CODES =
+    setOf(
+        HttpStatusCode.InternalServerError,
+        HttpStatusCode.BadGateway,
+        HttpStatusCode.ServiceUnavailable,
+        HttpStatusCode.GatewayTimeout,
+    )
 
 internal fun defaultHttpClient(logging: Boolean = false): HttpClient =
     HttpClient {

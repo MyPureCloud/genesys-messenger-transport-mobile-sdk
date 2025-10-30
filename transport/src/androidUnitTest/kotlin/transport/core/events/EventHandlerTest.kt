@@ -38,29 +38,31 @@ class EventHandlerTest {
     internal val logSlot = mutableListOf<() -> String>()
     private val eventSlot = mutableListOf<Event>()
     private val mockEventListener: ((Event) -> Unit) = mockk(relaxed = true)
-    private val subject = EventHandlerImpl(mockLogger).also {
-        it.eventListener = mockEventListener
-    }
+    private val subject =
+        EventHandlerImpl(mockLogger).also {
+            it.eventListener = mockEventListener
+        }
 
     @Test
     fun `when onEvent()`() {
-        val events = listOf(
-            AgentTyping(3000),
-            HealthChecked,
-            Error(
-                errorCode = ErrorCode.ClientResponseError(403),
-                message = "some message",
-                correctiveAction = CorrectiveAction.Forbidden,
-            ),
-            ConversationAutostart,
-            ConversationDisconnect,
-            ConnectionClosed(ConnectionClosed.Reason.UserSignedIn),
-            Authorized,
-            Logout,
-            ConversationCleared,
-            SignedIn(MessageValues.PARTICIPANT_NAME, MessageValues.PARTICIPANT_LAST_NAME),
-            ExistingAuthSessionCleared,
-        )
+        val events =
+            listOf(
+                AgentTyping(3000),
+                HealthChecked,
+                Error(
+                    errorCode = ErrorCode.ClientResponseError(403),
+                    message = "some message",
+                    correctiveAction = CorrectiveAction.Forbidden,
+                ),
+                ConversationAutostart,
+                ConversationDisconnect,
+                ConnectionClosed(ConnectionClosed.Reason.UserSignedIn),
+                Authorized,
+                Logout,
+                ConversationCleared,
+                SignedIn(MessageValues.PARTICIPANT_NAME, MessageValues.PARTICIPANT_LAST_NAME),
+                ExistingAuthSessionCleared,
+            )
 
         events.forEach {
             subject.onEvent(it)
@@ -85,10 +87,11 @@ class EventHandlerTest {
     fun `when TypingEvent toTransportEvent()`() {
         val expectedEvent = AgentTyping(3000)
 
-        val result = TypingEvent(
-            eventType = StructuredMessageEvent.Type.Typing,
-            typing = Typing(type = "On", duration = 3000)
-        ).toTransportEvent()
+        val result =
+            TypingEvent(
+                eventType = StructuredMessageEvent.Type.Typing,
+                typing = Typing(type = "On", duration = 3000)
+            ).toTransportEvent()
 
         assertThat(result).isEqualTo(expectedEvent)
     }
@@ -97,10 +100,11 @@ class EventHandlerTest {
     fun `when TypingEvent with null duration toTransportEvent()`() {
         val expectedEvent = AgentTyping(5000)
 
-        val result = TypingEvent(
-            eventType = StructuredMessageEvent.Type.Typing,
-            typing = Typing(type = "On", duration = null)
-        ).toTransportEvent()
+        val result =
+            TypingEvent(
+                eventType = StructuredMessageEvent.Type.Typing,
+                typing = Typing(type = "On", duration = null)
+            ).toTransportEvent()
 
         assertThat(result).isEqualTo(expectedEvent)
     }
@@ -109,12 +113,13 @@ class EventHandlerTest {
     fun `when PresenceEvent Join toTransportEvent()`() {
         val expectedEvent = ConversationAutostart
 
-        val result = PresenceEvent(
-            StructuredMessageEvent.Type.Presence,
-            PresenceEvent.Presence(
-                PresenceEvent.Presence.Type.Join
-            )
-        ).toTransportEvent()
+        val result =
+            PresenceEvent(
+                StructuredMessageEvent.Type.Presence,
+                PresenceEvent.Presence(
+                    PresenceEvent.Presence.Type.Join
+                )
+            ).toTransportEvent()
 
         assertThat(result).isEqualTo(expectedEvent)
     }
@@ -123,43 +128,47 @@ class EventHandlerTest {
     fun `when PresenceEvent Disconnect toTransportEvent()`() {
         val expectedEvent = ConversationDisconnect
 
-        val result = PresenceEvent(
-            StructuredMessageEvent.Type.Presence,
-            PresenceEvent.Presence(
-                PresenceEvent.Presence.Type.Disconnect
-            )
-        ).toTransportEvent()
+        val result =
+            PresenceEvent(
+                StructuredMessageEvent.Type.Presence,
+                PresenceEvent.Presence(
+                    PresenceEvent.Presence.Type.Disconnect
+                )
+            ).toTransportEvent()
 
         assertThat(result).isEqualTo(expectedEvent)
     }
 
     @Test
     fun `when PresenceEvent Clear toTransportEvent()`() {
-        val result = PresenceEvent(
-            StructuredMessageEvent.Type.Presence,
-            PresenceEvent.Presence(
-                PresenceEvent.Presence.Type.Clear
-            )
-        ).toTransportEvent()
+        val result =
+            PresenceEvent(
+                StructuredMessageEvent.Type.Presence,
+                PresenceEvent.Presence(
+                    PresenceEvent.Presence.Type.Clear
+                )
+            ).toTransportEvent()
 
         assertNull(result)
     }
 
     @Test
     fun `when PresenceEvent SignIn with Participant data toTransportEvent()`() {
-        val givenParticipantData = StructuredMessage.Participant(
-            firstName = MessageValues.PARTICIPANT_NAME,
-            lastName = MessageValues.PARTICIPANT_LAST_NAME,
-        )
+        val givenParticipantData =
+            StructuredMessage.Participant(
+                firstName = MessageValues.PARTICIPANT_NAME,
+                lastName = MessageValues.PARTICIPANT_LAST_NAME,
+            )
         val expectedEvent =
             SignedIn(MessageValues.PARTICIPANT_NAME, MessageValues.PARTICIPANT_LAST_NAME)
 
-        val result = PresenceEvent(
-            StructuredMessageEvent.Type.Presence,
-            PresenceEvent.Presence(
-                PresenceEvent.Presence.Type.SignIn
-            )
-        ).toTransportEvent(givenParticipantData)
+        val result =
+            PresenceEvent(
+                StructuredMessageEvent.Type.Presence,
+                PresenceEvent.Presence(
+                    PresenceEvent.Presence.Type.SignIn
+                )
+            ).toTransportEvent(givenParticipantData)
 
         assertThat(result).isEqualTo(expectedEvent)
     }
@@ -168,12 +177,13 @@ class EventHandlerTest {
     fun `when PresenceEvent SignIn without Participant data toTransportEvent()`() {
         val expectedEvent = SignedIn()
 
-        val result = PresenceEvent(
-            StructuredMessageEvent.Type.Presence,
-            PresenceEvent.Presence(
-                PresenceEvent.Presence.Type.SignIn
-            )
-        ).toTransportEvent()
+        val result =
+            PresenceEvent(
+                StructuredMessageEvent.Type.Presence,
+                PresenceEvent.Presence(
+                    PresenceEvent.Presence.Type.SignIn
+                )
+            ).toTransportEvent()
 
         assertThat(result).isEqualTo(expectedEvent)
     }
@@ -183,11 +193,12 @@ class EventHandlerTest {
         val expectedErrorCodePayload = ErrorCode.UnexpectedError
         val expectedErrorMessagePayload = ErrorTest.MESSAGE
         val expectedCorrectiveActionPayload = CorrectiveAction.Unknown
-        val expectedErrorEvent = Error(
-            expectedErrorCodePayload,
-            expectedErrorMessagePayload,
-            expectedCorrectiveActionPayload
-        )
+        val expectedErrorEvent =
+            Error(
+                expectedErrorCodePayload,
+                expectedErrorMessagePayload,
+                expectedCorrectiveActionPayload
+            )
         val givenErrorEvent =
             Error(ErrorCode.UnexpectedError, ErrorTest.MESSAGE, CorrectiveAction.Unknown)
 

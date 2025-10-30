@@ -19,11 +19,12 @@ class LogMessagesTest {
     // Attachment
     @Test
     fun `when presigningAttachment is called then it logs correctly`() {
-        val givenAttachment = Attachment(
-            id = AttachmentValues.ID,
-            fileName = AttachmentValues.FILE_NAME,
-            fileSizeInBytes = AttachmentValues.FILE_SIZE
-        )
+        val givenAttachment =
+            Attachment(
+                id = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                fileSizeInBytes = AttachmentValues.FILE_SIZE
+            )
         val expectedMessage = "Presigning attachment: $givenAttachment"
 
         val result = LogMessages.presigningAttachment(givenAttachment)
@@ -33,11 +34,12 @@ class LogMessagesTest {
 
     @Test
     fun `when uploadingAttachment is called then it logs correctly`() {
-        val givenAttachment = Attachment(
-            id = AttachmentValues.ID,
-            fileName = AttachmentValues.FILE_NAME,
-            fileSizeInBytes = AttachmentValues.FILE_SIZE
-        )
+        val givenAttachment =
+            Attachment(
+                id = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                fileSizeInBytes = AttachmentValues.FILE_SIZE
+            )
         val expectedMessage = "Uploading attachment: $givenAttachment"
 
         val result = LogMessages.uploadingAttachment(givenAttachment)
@@ -47,11 +49,12 @@ class LogMessagesTest {
 
     @Test
     fun `when attachmentUploaded is called then it logs correctly`() {
-        val givenAttachment = Attachment(
-            id = AttachmentValues.ID,
-            fileName = AttachmentValues.FILE_NAME,
-            fileSizeInBytes = AttachmentValues.FILE_SIZE
-        )
+        val givenAttachment =
+            Attachment(
+                id = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                fileSizeInBytes = AttachmentValues.FILE_SIZE
+            )
         val expectedMessage = "Attachment uploaded: $givenAttachment"
 
         val result = LogMessages.attachmentUploaded(givenAttachment)
@@ -91,13 +94,15 @@ class LogMessagesTest {
 
     @Test
     fun `when attachmentSent is called then it logs correctly`() {
-        val givenAttachments = mapOf(
-            AttachmentValues.ID to Attachment(
-                id = AttachmentValues.ID,
-                fileName = AttachmentValues.FILE_NAME,
-                fileSizeInBytes = AttachmentValues.FILE_SIZE
+        val givenAttachments =
+            mapOf(
+                AttachmentValues.ID to
+                    Attachment(
+                        id = AttachmentValues.ID,
+                        fileName = AttachmentValues.FILE_NAME,
+                        fileSizeInBytes = AttachmentValues.FILE_SIZE
+                    )
             )
-        )
         val expectedMessage = "Attachments sent: $givenAttachments"
 
         val result = LogMessages.attachmentSent(givenAttachments)
@@ -107,11 +112,12 @@ class LogMessagesTest {
 
     @Test
     fun `when attachmentStateUpdated is called then it logs correctly`() {
-        val givenAttachment = Attachment(
-            id = AttachmentValues.ID,
-            fileName = AttachmentValues.FILE_NAME,
-            fileSizeInBytes = AttachmentValues.FILE_SIZE
-        )
+        val givenAttachment =
+            Attachment(
+                id = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                fileSizeInBytes = AttachmentValues.FILE_SIZE
+            )
         val expectedMessage = "Attachment state updated: $givenAttachment"
 
         val result = LogMessages.attachmentStateUpdated(givenAttachment)
@@ -266,11 +272,12 @@ class LogMessagesTest {
 
     @Test
     fun `when unhandledMessage is called then it logs correctly`() {
-        val decoded = WebMessagingMessage(
-            type = MessageValues.TYPE,
-            code = MessageValues.PRE_IDENTIFIED_MESSAGE_CODE,
-            body = MessageValues.TEXT
-        )
+        val decoded =
+            WebMessagingMessage(
+                type = MessageValues.TYPE,
+                code = MessageValues.PRE_IDENTIFIED_MESSAGE_CODE,
+                body = MessageValues.TEXT
+            )
         val expectedMessage = "Unhandled message received from Shyrka: $decoded"
 
         val result = LogMessages.unhandledMessage(decoded)
@@ -640,10 +647,11 @@ class LogMessagesTest {
         val expectedMessage =
             "Failed to synchronize deviceToken: ${TestValues.DEVICE_TOKEN.sanitize()} ,pushProvider ${TestValues.PUSH_PROVIDER} with errorCode: ${ErrorCode.DeviceTokenOperationFailure}."
 
-        val result = LogMessages.failedToSynchronizeDeviceToken(
-            PushTestValues.CONFIG,
-            ErrorCode.DeviceTokenOperationFailure
-        )
+        val result =
+            LogMessages.failedToSynchronizeDeviceToken(
+                PushTestValues.CONFIG,
+                ErrorCode.DeviceTokenOperationFailure
+            )
 
         assertThat(result).isEqualTo(expectedMessage)
     }

@@ -59,20 +59,25 @@ class MessagingClientClearConversationTest : BaseMessagingClientTest() {
 
     @Test
     fun `when clearConversation api is called but clearConversation is disabled in deploymentConfig`() {
-        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
-            messenger = createMessengerVOForTesting(
-                apps = Apps(
-                    conversations = createConversationsVOForTesting(
-                        conversationClear = Conversations.ConversationClear(enabled = false)
+        every { mockDeploymentConfig.get() } returns
+            createDeploymentConfigForTesting(
+                messenger =
+                    createMessengerVOForTesting(
+                        apps =
+                            Apps(
+                                conversations =
+                                    createConversationsVOForTesting(
+                                        conversationClear = Conversations.ConversationClear(enabled = false)
+                                    )
+                            )
                     )
-                )
             )
-        )
-        val expectedEvent = Event.Error(
-            errorCode = ErrorCode.ClearConversationFailure,
-            message = ErrorMessage.FailedToClearConversation,
-            correctiveAction = CorrectiveAction.Forbidden,
-        )
+        val expectedEvent =
+            Event.Error(
+                errorCode = ErrorCode.ClearConversationFailure,
+                message = ErrorMessage.FailedToClearConversation,
+                correctiveAction = CorrectiveAction.Forbidden,
+            )
         subject.connect()
 
         subject.clearConversation()
@@ -138,11 +143,12 @@ class MessagingClientClearConversationTest : BaseMessagingClientTest() {
         every { mockPlatformSocket.sendMessage(Request.clearConversation) } answers {
             slot.captured.onMessage(Response.clearConversationForbidden())
         }
-        val expectedEvent = Event.Error(
-            errorCode = ErrorCode.ClearConversationFailure,
-            message = "Presence events Conversation Clear are not supported",
-            correctiveAction = CorrectiveAction.Forbidden,
-        )
+        val expectedEvent =
+            Event.Error(
+                errorCode = ErrorCode.ClearConversationFailure,
+                message = "Presence events Conversation Clear are not supported",
+                correctiveAction = CorrectiveAction.Forbidden,
+            )
         subject.connect()
 
         subject.clearConversation()
@@ -165,11 +171,12 @@ class MessagingClientClearConversationTest : BaseMessagingClientTest() {
         every { mockPlatformSocket.sendMessage(Request.clearConversation) } answers {
             slot.captured.onMessage(Response.clearConversationForbidden("Presence events Clear Conversation are not supported"))
         }
-        val expectedEventCase1 = Event.Error(
-            errorCode = ErrorCode.ClientResponseError(403),
-            message = "Presence events Clear Conversation are not supported",
-            correctiveAction = CorrectiveAction.Forbidden,
-        )
+        val expectedEventCase1 =
+            Event.Error(
+                errorCode = ErrorCode.ClientResponseError(403),
+                message = "Presence events Clear Conversation are not supported",
+                correctiveAction = CorrectiveAction.Forbidden,
+            )
         subject.connect()
 
         subject.clearConversation()
@@ -183,11 +190,12 @@ class MessagingClientClearConversationTest : BaseMessagingClientTest() {
         every { mockPlatformSocket.sendMessage(Request.clearConversation) } answers {
             slot.captured.onMessage(Response.clearConversationForbidden("Presence events Clear THE Conversation are not supported"))
         }
-        val expectedEventCase2 = Event.Error(
-            errorCode = ErrorCode.ClientResponseError(403),
-            message = "Presence events Clear THE Conversation are not supported",
-            correctiveAction = CorrectiveAction.Forbidden,
-        )
+        val expectedEventCase2 =
+            Event.Error(
+                errorCode = ErrorCode.ClientResponseError(403),
+                message = "Presence events Clear THE Conversation are not supported",
+                correctiveAction = CorrectiveAction.Forbidden,
+            )
         subject.clearConversation()
 
         verify {
@@ -199,11 +207,12 @@ class MessagingClientClearConversationTest : BaseMessagingClientTest() {
         every { mockPlatformSocket.sendMessage(Request.clearConversation) } answers {
             slot.captured.onMessage(Response.clearConversationForbidden("Presence events ClearConversation are not supported"))
         }
-        val expectedEventCase3 = Event.Error(
-            errorCode = ErrorCode.ClientResponseError(403),
-            message = "Presence events ClearConversation are not supported",
-            correctiveAction = CorrectiveAction.Forbidden,
-        )
+        val expectedEventCase3 =
+            Event.Error(
+                errorCode = ErrorCode.ClientResponseError(403),
+                message = "Presence events ClearConversation are not supported",
+                correctiveAction = CorrectiveAction.Forbidden,
+            )
         subject.clearConversation()
 
         verify {

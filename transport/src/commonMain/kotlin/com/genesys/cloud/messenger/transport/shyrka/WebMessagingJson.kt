@@ -22,10 +22,11 @@ import kotlinx.serialization.json.Json
 
 internal object WebMessagingJson {
 
-    val json = Json {
-        ignoreUnknownKeys = true
-        useAlternativeNames = false
-    }
+    val json =
+        Json {
+            ignoreUnknownKeys = true
+            useAlternativeNames = false
+        }
 
     /**
      * Decodes and deserializes the given string to a type of WebMessagingMessage.

@@ -103,15 +103,19 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         }
-        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
-            messenger = createMessengerVOForTesting(
-                apps = Apps(
-                    conversations = createConversationsVOForTesting(
-                        autoStart = Conversations.AutoStart(enabled = true),
+        every { mockDeploymentConfig.get() } returns
+            createDeploymentConfigForTesting(
+                messenger =
+                    createMessengerVOForTesting(
+                        apps =
+                            Apps(
+                                conversations =
+                                    createConversationsVOForTesting(
+                                        autoStart = Conversations.AutoStart(enabled = true),
+                                    )
+                            )
                     )
-                )
             )
-        )
 
         subject.connect()
 

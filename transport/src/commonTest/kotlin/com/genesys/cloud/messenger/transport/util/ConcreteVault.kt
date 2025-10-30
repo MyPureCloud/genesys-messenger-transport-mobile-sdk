@@ -10,13 +10,14 @@ package com.genesys.cloud.messenger.transport.util
  * @property keys The set of keys used to access stored data.
  */
 class ConcreteVault(
-    keys: Keys = Keys(
-        vaultKey = VAULT_KEY,
-        tokenKey = TOKEN_KEY,
-        authRefreshTokenKey = AUTH_REFRESH_TOKEN_KEY,
-        wasAuthenticated = WAS_AUTHENTICATED,
-        pushConfigKey = PUSH_CONFIG_KEY,
-    ),
+    keys: Keys =
+        Keys(
+            vaultKey = VAULT_KEY,
+            tokenKey = TOKEN_KEY,
+            authRefreshTokenKey = AUTH_REFRESH_TOKEN_KEY,
+            wasAuthenticated = WAS_AUTHENTICATED,
+            pushConfigKey = PUSH_CONFIG_KEY,
+        ),
 ) : Vault(keys) {
     private val storage = mutableMapOf<String, String>()
 

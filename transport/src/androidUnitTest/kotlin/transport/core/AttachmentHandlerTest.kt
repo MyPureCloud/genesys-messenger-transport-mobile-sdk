@@ -48,12 +48,13 @@ import org.junit.Test
 import kotlin.test.assertFailsWith
 
 internal class AttachmentHandlerTest {
-    private val mockApi: WebMessagingApi = mockk {
-        coEvery { uploadFile(any(), any(), captureLambda()) } coAnswers {
-            thirdArg<(Float) -> Unit>().invoke(25f)
-            Result.Success(Empty())
+    private val mockApi: WebMessagingApi =
+        mockk {
+            coEvery { uploadFile(any(), any(), captureLambda()) } coAnswers {
+                thirdArg<(Float) -> Unit>().invoke(25f)
+                Result.Success(Empty())
+            }
         }
-    }
     private val mockLogger: Log = mockk(relaxed = true)
     private val logSlot = mutableListOf<() -> String>()
     private val attachmentSlot = slot<Attachment>()
@@ -65,12 +66,13 @@ internal class AttachmentHandlerTest {
 
     @ExperimentalCoroutinesApi
     private val dispatcher: CoroutineDispatcher = UnconfinedTestDispatcher()
-    private val subject = AttachmentHandlerImpl(
-        mockApi,
-        mockLogger,
-        mockAttachmentListener,
-        processedAttachments,
-    )
+    private val subject =
+        AttachmentHandlerImpl(
+            mockApi,
+            mockLogger,
+            mockAttachmentListener,
+            processedAttachments,
+        )
 
     @ExperimentalCoroutinesApi
     @Before
@@ -86,22 +88,24 @@ internal class AttachmentHandlerTest {
 
     @Test
     fun `when prepare()`() {
-        val expectedAttachment = Attachment(
-            AttachmentValues.ID,
-            AttachmentValues.FILE_NAME,
-            null,
-            State.Presigning
-        )
+        val expectedAttachment =
+            Attachment(
+                AttachmentValues.ID,
+                AttachmentValues.FILE_NAME,
+                null,
+                State.Presigning
+            )
         val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(AttachmentValues.FILE_SIZE))
-        val expectedOnAttachmentRequest = OnAttachmentRequest(
-            token = TestValues.TOKEN,
-            attachmentId = AttachmentValues.ID,
-            fileName = AttachmentValues.FILE_NAME,
-            fileType = "image/png",
-            fileSize = AttachmentValues.FILE_SIZE,
-            null,
-            true,
-        )
+        val expectedOnAttachmentRequest =
+            OnAttachmentRequest(
+                token = TestValues.TOKEN,
+                attachmentId = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                fileType = "image/png",
+                fileSize = AttachmentValues.FILE_SIZE,
+                null,
+                true,
+            )
 
         val onAttachmentRequest =
             subject.prepare(TestValues.TOKEN, AttachmentValues.ID, ByteArray(AttachmentValues.FILE_SIZE), AttachmentValues.FILE_NAME)
@@ -122,22 +126,24 @@ internal class AttachmentHandlerTest {
 
     @Test
     fun `when prepare() txt file`() {
-        val expectedAttachment = Attachment(
-            AttachmentValues.ID,
-            AttachmentValues.TXT_FILE_NAME,
-            null,
-            State.Presigning
-        )
+        val expectedAttachment =
+            Attachment(
+                AttachmentValues.ID,
+                AttachmentValues.TXT_FILE_NAME,
+                null,
+                State.Presigning
+            )
         val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(AttachmentValues.FILE_SIZE))
-        val expectedOnAttachmentRequest = OnAttachmentRequest(
-            token = TestValues.TOKEN,
-            attachmentId = AttachmentValues.ID,
-            fileName = AttachmentValues.TXT_FILE_NAME,
-            fileType = "text/plain",
-            fileSize = AttachmentValues.FILE_SIZE,
-            null,
-            true,
-        )
+        val expectedOnAttachmentRequest =
+            OnAttachmentRequest(
+                token = TestValues.TOKEN,
+                attachmentId = AttachmentValues.ID,
+                fileName = AttachmentValues.TXT_FILE_NAME,
+                fileType = "text/plain",
+                fileSize = AttachmentValues.FILE_SIZE,
+                null,
+                true,
+            )
 
         val onAttachmentRequest =
             subject.prepare(TestValues.TOKEN, AttachmentValues.ID, ByteArray(AttachmentValues.FILE_SIZE), AttachmentValues.TXT_FILE_NAME)
@@ -195,18 +201,21 @@ internal class AttachmentHandlerTest {
     @Test
     fun `when uploadFile() fails with ResponseError`() {
         val attachmentSlotList = mutableListOf<Attachment>()
-        coEvery { mockApi.uploadFile(any(), any(), any()) } returns Result.Failure(
-            ErrorCode.mapFrom(404),
-            "something went wrong"
-        )
-        val expectedState = State.Error(
-            ErrorCode.ClientResponseError(404),
-            "something went wrong"
-        )
-        val expectedAttachment = Attachment(
-            id = AttachmentValues.ID,
-            state = expectedState,
-        )
+        coEvery { mockApi.uploadFile(any(), any(), any()) } returns
+            Result.Failure(
+                ErrorCode.mapFrom(404),
+                "something went wrong"
+            )
+        val expectedState =
+            State.Error(
+                ErrorCode.ClientResponseError(404),
+                "something went wrong"
+            )
+        val expectedAttachment =
+            Attachment(
+                id = AttachmentValues.ID,
+                state = expectedState,
+            )
         givenPrepareCalled()
 
         subject.upload(givenPresignedUrlResponse)
@@ -231,15 +240,17 @@ internal class AttachmentHandlerTest {
     @Test
     fun `when uploadFile() fails with CancellationError`() {
         val attachmentSlotList = mutableListOf<Attachment>()
-        coEvery { mockApi.uploadFile(any(), any(), any()) } returns Result.Failure(
-            ErrorCode.CancellationError,
-            "upload was cancelled."
-        )
-        val expectedAttachment = Attachment(
-            id = AttachmentValues.ID,
-            fileName = AttachmentValues.FILE_NAME,
-            state = State.Uploading,
-        )
+        coEvery { mockApi.uploadFile(any(), any(), any()) } returns
+            Result.Failure(
+                ErrorCode.CancellationError,
+                "upload was cancelled."
+            )
+        val expectedAttachment =
+            Attachment(
+                id = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                state = State.Uploading,
+            )
         givenPrepareCalled()
 
         subject.upload(givenPresignedUrlResponse)
@@ -333,9 +344,10 @@ internal class AttachmentHandlerTest {
     fun `when detach() on not processed attachment`() {
         val givenAttachmentId = TestValues.DEFAULT_STRING
 
-        val exception = assertFailsWith<IllegalArgumentException> {
-            subject.detach(TestValues.TOKEN, givenAttachmentId)
-        }
+        val exception =
+            assertFailsWith<IllegalArgumentException> {
+                subject.detach(TestValues.TOKEN, givenAttachmentId)
+            }
         assertThat(exception.message).isEqualTo(ErrorMessage.detachFailed(givenAttachmentId))
 
         verify { listOf(mockAttachmentListener) wasNot Called }
@@ -362,10 +374,11 @@ internal class AttachmentHandlerTest {
     @Test
     fun `when OnError()`() {
         val expectedState = State.Error(ErrorCode.FileTypeInvalid, "something went wrong")
-        val expectedAttachment = Attachment(
-            id = AttachmentValues.ID,
-            state = expectedState,
-        )
+        val expectedAttachment =
+            Attachment(
+                id = AttachmentValues.ID,
+                state = expectedState,
+            )
         givenPrepareCalled()
 
         subject.onError(AttachmentValues.ID, ErrorCode.mapFrom(4001), "something went wrong")
@@ -394,10 +407,11 @@ internal class AttachmentHandlerTest {
     @Test
     fun `when OnMessageError() while has sending attachment`() {
         val expectedState = State.Error(ErrorCode.MessageTooLong, "Message too long")
-        val expectedAttachment = Attachment(
-            id = AttachmentValues.ID,
-            state = expectedState,
-        )
+        val expectedAttachment =
+            Attachment(
+                id = AttachmentValues.ID,
+                state = expectedState,
+            )
         givenPrepareCalled()
         givenUploadSuccessCalled()
         givenOnSendingCalled()
@@ -428,10 +442,11 @@ internal class AttachmentHandlerTest {
     @Test
     fun `when onMessageError() with null error message`() {
         val expectedState = State.Error(ErrorCode.MessageTooLong, "")
-        val expectedAttachment = Attachment(
-            id = AttachmentValues.ID,
-            state = expectedState,
-        )
+        val expectedAttachment =
+            Attachment(
+                id = AttachmentValues.ID,
+                state = expectedState,
+            )
         givenPrepareCalled()
         givenUploadSuccessCalled()
         givenOnSendingCalled()
@@ -468,11 +483,12 @@ internal class AttachmentHandlerTest {
 
     @Test
     fun `when onSending() has uploaded attachment`() {
-        val expectedAttachment = Attachment(
-            id = AttachmentValues.ID,
-            fileName = AttachmentValues.FILE_NAME,
-            state = State.Sending
-        )
+        val expectedAttachment =
+            Attachment(
+                id = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                state = State.Sending
+            )
         val expectedProcessedAttachment =
             ProcessedAttachment(expectedAttachment, ByteArray(1))
         givenPrepareCalled()
@@ -510,12 +526,13 @@ internal class AttachmentHandlerTest {
 
         subject.onSent(
             mapOf(
-                AttachmentValues.ID to Attachment(
-                    AttachmentValues.ID,
-                    AttachmentValues.FILE_NAME,
-                    AttachmentValues.FILE_SIZE,
-                    State.Sent("http://somedownloadurl.com")
-                )
+                AttachmentValues.ID to
+                    Attachment(
+                        AttachmentValues.ID,
+                        AttachmentValues.FILE_NAME,
+                        AttachmentValues.FILE_SIZE,
+                        State.Sent("http://somedownloadurl.com")
+                    )
             )
         )
 
@@ -542,12 +559,13 @@ internal class AttachmentHandlerTest {
     fun `when onSent() on not processed Attachment`() {
         subject.onSent(
             mapOf(
-                AttachmentValues.ID to Attachment(
-                    AttachmentValues.ID,
-                    AttachmentValues.FILE_NAME,
-                    AttachmentValues.FILE_SIZE,
-                    State.Sent("http://somedownloadurl.com")
-                )
+                AttachmentValues.ID to
+                    Attachment(
+                        AttachmentValues.ID,
+                        AttachmentValues.FILE_NAME,
+                        AttachmentValues.FILE_SIZE,
+                        State.Sent("http://somedownloadurl.com")
+                    )
             )
         )
 
@@ -566,15 +584,16 @@ internal class AttachmentHandlerTest {
 
     @Test
     fun `when prepare() but fileAttachmentProfile is not set`() {
-        val expectedOnAttachmentRequest = OnAttachmentRequest(
-            token = TestValues.TOKEN,
-            attachmentId = AttachmentValues.ID,
-            fileName = AttachmentValues.FILE_NAME,
-            fileType = "image/png",
-            2000,
-            null,
-            true,
-        )
+        val expectedOnAttachmentRequest =
+            OnAttachmentRequest(
+                token = TestValues.TOKEN,
+                attachmentId = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                fileType = "image/png",
+                2000,
+                null,
+                true,
+            )
 
         val givenByteArray = ByteArray(2000)
 
@@ -601,15 +620,16 @@ internal class AttachmentHandlerTest {
         val givenByteArray = ByteArray(2000)
         subject.fileAttachmentProfile = FileAttachmentProfile(enabled = true, maxFileSizeKB = 2)
         val expectedFileSizeInKB = 2L
-        val expectedOnAttachmentRequest = OnAttachmentRequest(
-            token = TestValues.TOKEN,
-            attachmentId = AttachmentValues.ID,
-            fileName = AttachmentValues.FILE_NAME,
-            fileType = "image/png",
-            2000,
-            null,
-            true,
-        )
+        val expectedOnAttachmentRequest =
+            OnAttachmentRequest(
+                token = TestValues.TOKEN,
+                attachmentId = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                fileType = "image/png",
+                2000,
+                null,
+                true,
+            )
 
         val onAttachmentRequest =
             subject.prepare(TestValues.TOKEN, AttachmentValues.ID, givenByteArray, AttachmentValues.FILE_NAME)
@@ -634,15 +654,16 @@ internal class AttachmentHandlerTest {
         val givenByteArray = ByteArray(2000)
         subject.fileAttachmentProfile = FileAttachmentProfile(enabled = true, maxFileSizeKB = 100)
         val expectedFileSizeInKB = 100L
-        val expectedOnAttachmentRequest = OnAttachmentRequest(
-            token = TestValues.TOKEN,
-            attachmentId = AttachmentValues.ID,
-            fileName = AttachmentValues.FILE_NAME,
-            fileType = "image/png",
-            2000,
-            null,
-            true,
-        )
+        val expectedOnAttachmentRequest =
+            OnAttachmentRequest(
+                token = TestValues.TOKEN,
+                attachmentId = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                fileType = "image/png",
+                2000,
+                null,
+                true,
+            )
 
         val onAttachmentRequest =
             subject.prepare(TestValues.TOKEN, AttachmentValues.ID, givenByteArray, AttachmentValues.FILE_NAME)
@@ -676,15 +697,16 @@ internal class AttachmentHandlerTest {
                 maxFileSizeKB = 100,
                 blockedFileTypes = listOf(".exe")
             )
-        val expectedOnAttachmentRequest = OnAttachmentRequest(
-            token = TestValues.TOKEN,
-            attachmentId = AttachmentValues.ID,
-            fileName = AttachmentValues.FILE_NAME,
-            fileType = "image/png",
-            1,
-            null,
-            true,
-        )
+        val expectedOnAttachmentRequest =
+            OnAttachmentRequest(
+                token = TestValues.TOKEN,
+                attachmentId = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                fileType = "image/png",
+                1,
+                null,
+                true,
+            )
 
         val onAttachmentRequest =
             subject.prepare(TestValues.TOKEN, AttachmentValues.ID, givenByteArray, AttachmentValues.FILE_NAME)
@@ -705,17 +727,19 @@ internal class AttachmentHandlerTest {
 
     @Test
     fun `when onAttachmentRefreshed()`() {
-        val givenPresignedUrlResponse = PresignedUrlResponse(
-            attachmentId = AttachmentValues.ID,
-            fileName = AttachmentValues.FILE_NAME,
-            url = "https://refreshedUrl.com",
-            headers = emptyMap(),
-        )
-        val expectedAttachment = Attachment(
-            id = AttachmentValues.ID,
-            fileName = AttachmentValues.FILE_NAME,
-            state = State.Refreshed("https://refreshedUrl.com")
-        )
+        val givenPresignedUrlResponse =
+            PresignedUrlResponse(
+                attachmentId = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                url = "https://refreshedUrl.com",
+                headers = emptyMap(),
+            )
+        val expectedAttachment =
+            Attachment(
+                id = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                state = State.Refreshed("https://refreshedUrl.com")
+            )
 
         subject.onAttachmentRefreshed(givenPresignedUrlResponse)
 

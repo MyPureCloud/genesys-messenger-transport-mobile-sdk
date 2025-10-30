@@ -104,11 +104,12 @@ internal class PushServiceImpl(
         when (val result = api.performDeviceTokenOperation(pushConfig, Delete)) {
             is Result.Success -> handleSuccessForDeleteOperation(pushConfig, clearStoredPushConfigUponSuccess)
 
-            is Result.Failure -> if (result.errorCode == ErrorCode.DeviceNotFound) {
-                handleSuccessForDeleteOperation(pushConfig, clearStoredPushConfigUponSuccess)
-            } else {
-                handleRequestError(result, pushConfig, Delete)
-            }
+            is Result.Failure ->
+                if (result.errorCode == ErrorCode.DeviceNotFound) {
+                    handleSuccessForDeleteOperation(pushConfig, clearStoredPushConfigUponSuccess)
+                } else {
+                    handleRequestError(result, pushConfig, Delete)
+                }
         }
     }
 

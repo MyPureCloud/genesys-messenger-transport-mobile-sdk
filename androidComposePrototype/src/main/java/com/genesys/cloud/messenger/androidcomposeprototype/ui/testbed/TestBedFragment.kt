@@ -23,10 +23,11 @@ import kotlinx.coroutines.launch
 class TestBedFragment : Fragment() {
 
     private val viewModel: TestBedViewModel by activityViewModels()
-    private val selectFileResult = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult(),
-        ::handleFileSelectionResult
-    )
+    private val selectFileResult =
+        registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult(),
+            ::handleFileSelectionResult
+        )
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -62,11 +63,12 @@ class TestBedFragment : Fragment() {
         }
         val filesWithType =
             if (fileAttachmentProfile.hasWildCard) arrayOf("*/*") else fileAttachmentProfile.allowedFileTypes.toTypedArray()
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = filesWithType[0]
-            putExtra(Intent.EXTRA_MIME_TYPES, filesWithType)
-        }
+        val intent =
+            Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = filesWithType[0]
+                putExtra(Intent.EXTRA_MIME_TYPES, filesWithType)
+            }
         selectFileResult.launch(intent)
     }
 

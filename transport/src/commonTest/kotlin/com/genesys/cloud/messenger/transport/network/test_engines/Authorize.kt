@@ -29,21 +29,24 @@ internal fun HttpClientConfig<MockEngineConfig>.authorizeEngine() {
             when (request.url.fullPath) {
                 BASIC_OAUTH_CODE_EXCHANGE_PATH -> {
                     if (request.method == HttpMethod.Post && request.body is TextContent) {
-                        val requestBody = Json.decodeFromString(
-                            AuthJwtRequest.serializer(),
-                            (request.body as TextContent).text
-                        )
+                        val requestBody =
+                            Json.decodeFromString(
+                                AuthJwtRequest.serializer(),
+                                (request.body as TextContent).text
+                            )
                         if (requestBody.deploymentId == TestValues.DEPLOYMENT_ID && requestBody.oauth.code == AuthTest.AUTH_CODE) {
                             respond(
                                 status = HttpStatusCode.OK,
-                                headers = headersOf(
-                                    HttpHeaders.ContentType,
-                                    "application/json"
-                                ),
-                                content = Json.encodeToString(
-                                    AuthJwt.serializer(),
-                                    AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN)
-                                )
+                                headers =
+                                    headersOf(
+                                        HttpHeaders.ContentType,
+                                        "application/json"
+                                    ),
+                                content =
+                                    Json.encodeToString(
+                                        AuthJwt.serializer(),
+                                        AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN)
+                                    )
                             )
                         } else {
                             when (requestBody.deploymentId) {

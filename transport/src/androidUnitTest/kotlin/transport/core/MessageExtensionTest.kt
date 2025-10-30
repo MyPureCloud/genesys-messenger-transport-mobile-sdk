@@ -60,38 +60,42 @@ internal class MessageExtensionTest {
 
     @Test
     fun `when MessageEntityList toMessageList()`() {
-        val expectedMessage1 = Message(
-            id = "5befde6373a23f32f20b59b4e1cba0e6",
-            direction = Direction.Outbound,
-            state = State.Sent,
-            messageType = Type.Text,
-            text = "\uD83E\uDD2A",
-            timeStamp = 1398892191411L,
-            from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
-        )
-        val expectedMessage2 = Message(
-            id = "1234567890",
-            direction = Direction.Inbound,
-            state = State.Sent,
-            messageType = Type.Event,
-            text = "customer msg 7",
-            timeStamp = null,
-            events = listOf(Event.ConversationAutostart),
-            from = Participant(originatingEntity = Participant.OriginatingEntity.Human),
-        )
-        val expectedMessage3 = Message(
-            id = "1234567890",
-            direction = Direction.Outbound,
-            state = State.Sent,
-            messageType = Type.QuickReply,
-            text = "quick reply text",
-            timeStamp = null,
-            quickReplies = listOf(
-                QuickReplyTestValues.buttonResponse_a,
-                QuickReplyTestValues.buttonResponse_b,
-            ),
-            from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
-        )
+        val expectedMessage1 =
+            Message(
+                id = "5befde6373a23f32f20b59b4e1cba0e6",
+                direction = Direction.Outbound,
+                state = State.Sent,
+                messageType = Type.Text,
+                text = "\uD83E\uDD2A",
+                timeStamp = 1398892191411L,
+                from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
+            )
+        val expectedMessage2 =
+            Message(
+                id = "1234567890",
+                direction = Direction.Inbound,
+                state = State.Sent,
+                messageType = Type.Event,
+                text = "customer msg 7",
+                timeStamp = null,
+                events = listOf(Event.ConversationAutostart),
+                from = Participant(originatingEntity = Participant.OriginatingEntity.Human),
+            )
+        val expectedMessage3 =
+            Message(
+                id = "1234567890",
+                direction = Direction.Outbound,
+                state = State.Sent,
+                messageType = Type.QuickReply,
+                text = "quick reply text",
+                timeStamp = null,
+                quickReplies =
+                    listOf(
+                        QuickReplyTestValues.buttonResponse_a,
+                        QuickReplyTestValues.buttonResponse_b,
+                    ),
+                from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
+            )
 
         val result = TestWebMessagingApiResponses.testMessageEntityList.entities.toMessageList()
 
@@ -100,43 +104,49 @@ internal class MessageExtensionTest {
 
     @Test
     fun `when inbound StructuredMessage toMessage()`() {
-        val givenStructuredMessage = StructuredMessage(
-            id = "id",
-            channel = StructuredMessage.Channel(
-                time = isoTestTimestamp,
-                from = StructuredMessage.Participant(
-                    nickname = "Bob",
-                    firstName = MessageValues.PARTICIPANT_NAME,
-                    lastName = MessageValues.PARTICIPANT_LAST_NAME,
-                    image = "http://image.png",
-                )
-            ),
-            type = StructuredMessage.Type.Text,
-            text = "test text",
-            content = listOf(
-                StructuredMessage.Content.AttachmentContent(
-                    contentType = "Attachment",
-                    attachment = StructuredMessage.Content.AttachmentContent.Attachment(
-                        id = "test attachment id",
-                        url = "http://test.com",
-                        filename = "test.png",
-                        mediaType = "image/png",
+        val givenStructuredMessage =
+            StructuredMessage(
+                id = "id",
+                channel =
+                    StructuredMessage.Channel(
+                        time = isoTestTimestamp,
+                        from =
+                            StructuredMessage.Participant(
+                                nickname = "Bob",
+                                firstName = MessageValues.PARTICIPANT_NAME,
+                                lastName = MessageValues.PARTICIPANT_LAST_NAME,
+                                image = "http://image.png",
+                            )
+                    ),
+                type = StructuredMessage.Type.Text,
+                text = "test text",
+                content =
+                    listOf(
+                        StructuredMessage.Content.AttachmentContent(
+                            contentType = "Attachment",
+                            attachment =
+                                StructuredMessage.Content.AttachmentContent.Attachment(
+                                    id = "test attachment id",
+                                    url = "http://test.com",
+                                    filename = "test.png",
+                                    mediaType = "image/png",
+                                )
+                        )
+                    ),
+                direction = "Inbound",
+                metadata = mapOf("customMessageId" to "test custom id"),
+                events =
+                    listOf(
+                        PresenceEvent(
+                            eventType = StructuredMessageEvent.Type.Presence,
+                            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Join)
+                        ),
+                        PresenceEvent(
+                            eventType = StructuredMessageEvent.Type.Presence,
+                            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.SignIn)
+                        )
                     )
-                )
-            ),
-            direction = "Inbound",
-            metadata = mapOf("customMessageId" to "test custom id"),
-            events = listOf(
-                PresenceEvent(
-                    eventType = StructuredMessageEvent.Type.Presence,
-                    presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Join)
-                ),
-                PresenceEvent(
-                    eventType = StructuredMessageEvent.Type.Presence,
-                    presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.SignIn)
-                )
             )
-        )
         val expectedMessage =
             Message(
                 id = "test custom id",
@@ -145,25 +155,29 @@ internal class MessageExtensionTest {
                 messageType = Type.Text,
                 text = "test text",
                 timeStamp = 1398892191411L,
-                attachments = mapOf(
-                    "test attachment id" to Attachment(
-                        id = "test attachment id",
-                        fileName = "test.png",
-                        state = Attachment.State.Sent("http://test.com")
-                    )
-                ),
-                events = listOf(
-                    Event.ConversationAutostart,
-                    Event.SignedIn(
-                        MessageValues.PARTICIPANT_NAME,
-                        MessageValues.PARTICIPANT_LAST_NAME
-                    )
-                ),
-                from = Participant(
-                    name = "Bob",
-                    imageUrl = "http://image.png",
-                    originatingEntity = Participant.OriginatingEntity.Human
-                ),
+                attachments =
+                    mapOf(
+                        "test attachment id" to
+                            Attachment(
+                                id = "test attachment id",
+                                fileName = "test.png",
+                                state = Attachment.State.Sent("http://test.com")
+                            )
+                    ),
+                events =
+                    listOf(
+                        Event.ConversationAutostart,
+                        Event.SignedIn(
+                            MessageValues.PARTICIPANT_NAME,
+                            MessageValues.PARTICIPANT_LAST_NAME
+                        )
+                    ),
+                from =
+                    Participant(
+                        name = "Bob",
+                        imageUrl = "http://image.png",
+                        originatingEntity = Participant.OriginatingEntity.Human
+                    ),
             )
 
         givenStructuredMessage.toMessage().run {
@@ -189,30 +203,35 @@ internal class MessageExtensionTest {
                 id = "test custom id",
                 direction = Direction.Inbound,
                 state = State.Sent,
-                attachments = mapOf(
-                    "first test attachment id" to Attachment(
+                attachments =
+                    mapOf(
+                        "first test attachment id" to
+                            Attachment(
+                                id = "first test attachment id",
+                                fileName = "test.png",
+                                fileSizeInBytes = AttachmentValues.FILE_SIZE,
+                                Attachment.State.Uploaded("http://test.com")
+                            ),
+                        "second test attachment id" to
+                            Attachment(
+                                id = "second test attachment id",
+                                fileName = "test2.png",
+                                fileSizeInBytes = null,
+                                Attachment.State.Detached,
+                            )
+                    )
+            )
+        val expectedContent =
+            Message.Content(
+                contentType = Message.Content.Type.Attachment,
+                attachment =
+                    Attachment(
                         id = "first test attachment id",
                         fileName = "test.png",
                         fileSizeInBytes = AttachmentValues.FILE_SIZE,
-                        Attachment.State.Uploaded("http://test.com")
-                    ),
-                    "second test attachment id" to Attachment(
-                        id = "second test attachment id",
-                        fileName = "test2.png",
-                        fileSizeInBytes = null,
-                        Attachment.State.Detached,
+                        state = Attachment.State.Uploaded("http://test.com")
                     )
-                )
             )
-        val expectedContent = Message.Content(
-            contentType = Message.Content.Type.Attachment,
-            attachment = Attachment(
-                id = "first test attachment id",
-                fileName = "test.png",
-                fileSizeInBytes = AttachmentValues.FILE_SIZE,
-                state = Attachment.State.Uploaded("http://test.com")
-            )
-        )
 
         assertThat(givenMessage.getUploadedAttachments()).containsExactly(expectedContent)
     }
@@ -232,20 +251,22 @@ internal class MessageExtensionTest {
 
     @Test
     fun `when outbound StructuredMessage toMessage() from participant with unknown info`() {
-        val givenStructuredMessage = StructuredMessage(
-            id = "id",
-            type = StructuredMessage.Type.Text,
-            direction = "Outbound",
-        )
+        val givenStructuredMessage =
+            StructuredMessage(
+                id = "id",
+                type = StructuredMessage.Type.Text,
+                direction = "Outbound",
+            )
         val expectedMessage =
             Message(
                 id = "id",
                 direction = Direction.Outbound,
                 state = State.Sent,
                 messageType = Type.Text,
-                from = Participant(
-                    originatingEntity = Participant.OriginatingEntity.Unknown
-                ),
+                from =
+                    Participant(
+                        originatingEntity = Participant.OriginatingEntity.Unknown
+                    ),
             )
 
         assertThat(givenStructuredMessage.toMessage()).isEqualTo(expectedMessage)
@@ -276,44 +297,48 @@ internal class MessageExtensionTest {
 
     @Test
     fun `when outbound StructuredMessage checked for isOutbound()`() {
-        val givenStructuredMessage = StructuredMessage(
-            id = "some_id",
-            type = StructuredMessage.Type.Text,
-            direction = "Outbound"
-        )
+        val givenStructuredMessage =
+            StructuredMessage(
+                id = "some_id",
+                type = StructuredMessage.Type.Text,
+                direction = "Outbound"
+            )
 
         assertThat(givenStructuredMessage.isOutbound()).isTrue()
     }
 
     @Test
     fun `when inbound StructuredMessage checked for isOutbound()`() {
-        val givenStructuredMessage = StructuredMessage(
-            id = "some_id",
-            type = StructuredMessage.Type.Text,
-            direction = "Inbound"
-        )
+        val givenStructuredMessage =
+            StructuredMessage(
+                id = "some_id",
+                type = StructuredMessage.Type.Text,
+                direction = "Inbound"
+            )
 
         assertThat(givenStructuredMessage.isOutbound()).isFalse()
     }
 
     @Test
     fun `when inbound StructuredMessage checked for isInbound()`() {
-        val givenStructuredMessage = StructuredMessage(
-            id = "some_id",
-            type = StructuredMessage.Type.Text,
-            direction = "Inbound"
-        )
+        val givenStructuredMessage =
+            StructuredMessage(
+                id = "some_id",
+                type = StructuredMessage.Type.Text,
+                direction = "Inbound"
+            )
 
         assertThat(givenStructuredMessage.isInbound()).isTrue()
     }
 
     @Test
     fun `when outbound StructuredMessage checked for isInbound()`() {
-        val givenStructuredMessage = StructuredMessage(
-            id = "some_id",
-            type = StructuredMessage.Type.Text,
-            direction = "Outbound"
-        )
+        val givenStructuredMessage =
+            StructuredMessage(
+                id = "some_id",
+                type = StructuredMessage.Type.Text,
+                direction = "Outbound"
+            )
 
         assertThat(givenStructuredMessage.isInbound()).isFalse()
     }
@@ -404,22 +429,25 @@ internal class MessageExtensionTest {
 
     @Test
     fun `when StructureMessage toMessage() has Content with QuickReplyContent`() {
-        val givenStructuredMessage = StructuredMessageValues.createStructuredMessageForTesting(
-            type = StructuredMessage.Type.Structured,
-            content = listOf(QuickReplyTestValues.createQuickReplyContentForTesting())
-        )
-        val expectedButtonResponse = ButtonResponse(
-            text = QuickReplyTestValues.TEXT_A,
-            payload = QuickReplyTestValues.PAYLOAD_A,
-            type = QuickReplyTestValues.QUICK_REPLY
-        )
-        val expectedMessage = Message(
-            id = MessageValues.ID,
-            state = State.Sent,
-            type = Type.QuickReply.name,
-            messageType = Type.QuickReply,
-            quickReplies = listOf(expectedButtonResponse)
-        )
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                content = listOf(QuickReplyTestValues.createQuickReplyContentForTesting())
+            )
+        val expectedButtonResponse =
+            ButtonResponse(
+                text = QuickReplyTestValues.TEXT_A,
+                payload = QuickReplyTestValues.PAYLOAD_A,
+                type = QuickReplyTestValues.QUICK_REPLY
+            )
+        val expectedMessage =
+            Message(
+                id = MessageValues.ID,
+                state = State.Sent,
+                type = Type.QuickReply.name,
+                messageType = Type.QuickReply,
+                quickReplies = listOf(expectedButtonResponse)
+            )
 
         val result = givenStructuredMessage.toMessage()
 
@@ -428,22 +456,25 @@ internal class MessageExtensionTest {
 
     @Test
     fun `when StructureMessage toMessage() has Content with ButtonResponseContent`() {
-        val givenStructuredMessage = StructuredMessageValues.createStructuredMessageForTesting(
-            type = StructuredMessage.Type.Structured,
-            content = listOf(QuickReplyTestValues.createButtonResponseContentForTesting())
-        )
-        val expectedButtonResponse = ButtonResponse(
-            text = QuickReplyTestValues.TEXT_A,
-            payload = QuickReplyTestValues.PAYLOAD_A,
-            type = QuickReplyTestValues.QUICK_REPLY
-        )
-        val expectedMessage = Message(
-            id = MessageValues.ID,
-            state = State.Sent,
-            type = Type.QuickReply.name,
-            messageType = Type.QuickReply,
-            quickReplies = listOf(expectedButtonResponse)
-        )
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                content = listOf(QuickReplyTestValues.createButtonResponseContentForTesting())
+            )
+        val expectedButtonResponse =
+            ButtonResponse(
+                text = QuickReplyTestValues.TEXT_A,
+                payload = QuickReplyTestValues.PAYLOAD_A,
+                type = QuickReplyTestValues.QUICK_REPLY
+            )
+        val expectedMessage =
+            Message(
+                id = MessageValues.ID,
+                state = State.Sent,
+                type = Type.QuickReply.name,
+                messageType = Type.QuickReply,
+                quickReplies = listOf(expectedButtonResponse)
+            )
 
         val result = givenStructuredMessage.toMessage()
 
@@ -452,25 +483,29 @@ internal class MessageExtensionTest {
 
     @Test
     fun `when StructureMessage toMessage() has Content with QuickReplyContent and ButtonResponseContent`() {
-        val givenStructuredMessage = StructuredMessageValues.createStructuredMessageForTesting(
-            type = StructuredMessage.Type.Structured,
-            content = listOf(
-                QuickReplyTestValues.createQuickReplyContentForTesting(),
-                QuickReplyTestValues.createButtonResponseContentForTesting(),
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                content =
+                    listOf(
+                        QuickReplyTestValues.createQuickReplyContentForTesting(),
+                        QuickReplyTestValues.createButtonResponseContentForTesting(),
+                    )
             )
-        )
-        val expectedButtonResponse = ButtonResponse(
-            text = QuickReplyTestValues.TEXT_A,
-            payload = QuickReplyTestValues.PAYLOAD_A,
-            type = QuickReplyTestValues.QUICK_REPLY
-        )
-        val expectedMessage = Message(
-            id = MessageValues.ID,
-            state = State.Sent,
-            type = Type.QuickReply.name,
-            messageType = Type.QuickReply,
-            quickReplies = listOf(expectedButtonResponse)
-        )
+        val expectedButtonResponse =
+            ButtonResponse(
+                text = QuickReplyTestValues.TEXT_A,
+                payload = QuickReplyTestValues.PAYLOAD_A,
+                type = QuickReplyTestValues.QUICK_REPLY
+            )
+        val expectedMessage =
+            Message(
+                id = MessageValues.ID,
+                state = State.Sent,
+                type = Type.QuickReply.name,
+                messageType = Type.QuickReply,
+                quickReplies = listOf(expectedButtonResponse)
+            )
 
         val result = givenStructuredMessage.toMessage()
 
@@ -479,16 +514,18 @@ internal class MessageExtensionTest {
 
     @Test
     fun `when StructureMessage toMessage() has Content without QuickReplyContent or ButtonResponseContent`() {
-        val givenStructuredMessage = StructuredMessageValues.createStructuredMessageForTesting(
-            type = StructuredMessage.Type.Structured
-        )
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured
+            )
 
-        val expectedMessage = Message(
-            id = MessageValues.ID,
-            state = State.Sent,
-            type = Type.Unknown.name,
-            messageType = Type.Unknown,
-        )
+        val expectedMessage =
+            Message(
+                id = MessageValues.ID,
+                state = State.Sent,
+                type = Type.Unknown.name,
+                messageType = Type.Unknown,
+            )
 
         val result = givenStructuredMessage.toMessage()
 
@@ -497,11 +534,12 @@ internal class MessageExtensionTest {
 
     @Test
     fun `when MessageEntityList toMessageList() has message with type Unknown`() {
-        val givenStructuredMessageList = listOf(
-            StructuredMessageValues.createStructuredMessageForTesting(
-                type = StructuredMessage.Type.Structured
+        val givenStructuredMessageList =
+            listOf(
+                StructuredMessageValues.createStructuredMessageForTesting(
+                    type = StructuredMessage.Type.Structured
+                )
             )
-        )
 
         val result = givenStructuredMessageList.toMessageList()
 
@@ -510,18 +548,20 @@ internal class MessageExtensionTest {
 
     @Test
     fun `when MessageEntityList serialized`() {
-        val givenStructuredMessage = StructuredMessage(
-            id = "some_id",
-            type = StructuredMessage.Type.Text,
-            direction = "Inbound"
-        )
-        val givenMessageEntityList = MessageEntityList(
-            entities = listOf(givenStructuredMessage),
-            pageSize = MessageValues.PAGE_SIZE,
-            pageNumber = MessageValues.PAGE_NUMBER,
-            total = MessageValues.TOTAL,
-            pageCount = MessageValues.PAGE_COUNT,
-        )
+        val givenStructuredMessage =
+            StructuredMessage(
+                id = "some_id",
+                type = StructuredMessage.Type.Text,
+                direction = "Inbound"
+            )
+        val givenMessageEntityList =
+            MessageEntityList(
+                entities = listOf(givenStructuredMessage),
+                pageSize = MessageValues.PAGE_SIZE,
+                pageNumber = MessageValues.PAGE_NUMBER,
+                total = MessageValues.TOTAL,
+                pageCount = MessageValues.PAGE_COUNT,
+            )
 
         val expectedMessageEntityListAsJson =
             """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
@@ -535,18 +575,20 @@ internal class MessageExtensionTest {
     fun `when MessageEntityList deserialized`() {
         val givenMessageEntityListAsJson =
             """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
-        val expectedStructuredMessage = StructuredMessage(
-            id = "some_id",
-            type = StructuredMessage.Type.Text,
-            direction = "Inbound"
-        )
-        val expectedMessageEntityList = MessageEntityList(
-            entities = listOf(expectedStructuredMessage),
-            pageSize = MessageValues.PAGE_SIZE,
-            pageNumber = MessageValues.PAGE_NUMBER,
-            total = MessageValues.TOTAL,
-            pageCount = MessageValues.PAGE_COUNT,
-        )
+        val expectedStructuredMessage =
+            StructuredMessage(
+                id = "some_id",
+                type = StructuredMessage.Type.Text,
+                direction = "Inbound"
+            )
+        val expectedMessageEntityList =
+            MessageEntityList(
+                entities = listOf(expectedStructuredMessage),
+                pageSize = MessageValues.PAGE_SIZE,
+                pageNumber = MessageValues.PAGE_NUMBER,
+                total = MessageValues.TOTAL,
+                pageCount = MessageValues.PAGE_COUNT,
+            )
 
         val result =
             WebMessagingJson.json.decodeFromString<MessageEntityList>(givenMessageEntityListAsJson)
@@ -563,23 +605,25 @@ internal class MessageExtensionTest {
 
     @Test
     fun `validate default constructor of MessageEntityList`() {
-        val givenMessageEntityList = MessageEntityList(
-            pageSize = MessageValues.PAGE_SIZE,
-            pageNumber = MessageValues.PAGE_NUMBER,
-            total = MessageValues.TOTAL,
-            pageCount = MessageValues.PAGE_COUNT,
-        )
+        val givenMessageEntityList =
+            MessageEntityList(
+                pageSize = MessageValues.PAGE_SIZE,
+                pageNumber = MessageValues.PAGE_NUMBER,
+                total = MessageValues.TOTAL,
+                pageCount = MessageValues.PAGE_COUNT,
+            )
 
         assertThat(givenMessageEntityList.entities).isEmpty()
     }
 
     @Test
     fun `when PreIdentifiedWebMessagingMessage serialized`() {
-        val givenMPreIdentifiedWebMessagingMessage = PreIdentifiedWebMessagingMessage(
-            type = MessageValues.PRE_IDENTIFIED_MESSAGE_TYPE,
-            code = MessageValues.PRE_IDENTIFIED_MESSAGE_CODE,
-            className = MessageValues.PRE_IDENTIFIED_MESSAGE_CLASS,
-        )
+        val givenMPreIdentifiedWebMessagingMessage =
+            PreIdentifiedWebMessagingMessage(
+                type = MessageValues.PRE_IDENTIFIED_MESSAGE_TYPE,
+                code = MessageValues.PRE_IDENTIFIED_MESSAGE_CODE,
+                className = MessageValues.PRE_IDENTIFIED_MESSAGE_CLASS,
+            )
 
         val expectedPreIdentifiedWebMessagingMessageAsJson =
             """{"type":"type","code":200,"class":"clazz"}"""
@@ -594,9 +638,10 @@ internal class MessageExtensionTest {
         val givenPreIdentifiedWebMessagingMessageAsJson =
             """{"type":"type","code":200,"class":"clazz"}"""
 
-        val result = WebMessagingJson.json.decodeFromString<PreIdentifiedWebMessagingMessage>(
-            givenPreIdentifiedWebMessagingMessageAsJson
-        )
+        val result =
+            WebMessagingJson.json.decodeFromString<PreIdentifiedWebMessagingMessage>(
+                givenPreIdentifiedWebMessagingMessageAsJson
+            )
 
         result.run {
             assertThat(type).isEqualTo(MessageValues.PRE_IDENTIFIED_MESSAGE_TYPE)
@@ -607,18 +652,20 @@ internal class MessageExtensionTest {
 
     @Test
     fun `when Channel serialized`() {
-        val givenChannel = StructuredMessage.Channel(
-            time = TestValues.TIME_STAMP,
-            messageId = MessageValues.ID,
-            type = MessageValues.TYPE,
-            to = StructuredMessage.Participant(
-                firstName = MessageValues.PARTICIPANT_NAME,
-                lastName = MessageValues.PARTICIPANT_LAST_NAME,
-                nickname = MessageValues.PARTICIPANT_NICKNAME,
-                image = MessageValues.PARTICIPANT_IMAGE_URL,
-            ),
-            from = StructuredMessage.Participant(),
-        )
+        val givenChannel =
+            StructuredMessage.Channel(
+                time = TestValues.TIME_STAMP,
+                messageId = MessageValues.ID,
+                type = MessageValues.TYPE,
+                to =
+                    StructuredMessage.Participant(
+                        firstName = MessageValues.PARTICIPANT_NAME,
+                        lastName = MessageValues.PARTICIPANT_LAST_NAME,
+                        nickname = MessageValues.PARTICIPANT_NICKNAME,
+                        image = MessageValues.PARTICIPANT_IMAGE_URL,
+                    ),
+                from = StructuredMessage.Participant(),
+            )
 
         val expectedChannelAsJson =
             """{"time":"2022-08-22T19:24:26.704Z","messageId":"test_message_id","type":"Text","to":{"firstName":"participant_name","lastName":"participant_last_name","nickname":"participant_nickname","image":"http://participant.image"},"from":{}}"""
@@ -633,18 +680,20 @@ internal class MessageExtensionTest {
         val givenChannelDefaultConstructor = StructuredMessage.Channel()
         val givenChannelAsJson =
             """{"time":"2022-08-22T19:24:26.704Z","messageId":"test_message_id","type":"Text","to":{"firstName":"participant_name","lastName":"participant_last_name","nickname":"participant_nickname","image":"http://participant.image"},"from":{}}"""
-        val expectedChannel = StructuredMessage.Channel(
-            time = TestValues.TIME_STAMP,
-            messageId = MessageValues.ID,
-            type = MessageValues.TYPE,
-            to = StructuredMessage.Participant(
-                firstName = MessageValues.PARTICIPANT_NAME,
-                lastName = MessageValues.PARTICIPANT_LAST_NAME,
-                nickname = MessageValues.PARTICIPANT_NICKNAME,
-                image = MessageValues.PARTICIPANT_IMAGE_URL,
-            ),
-            from = StructuredMessage.Participant(),
-        )
+        val expectedChannel =
+            StructuredMessage.Channel(
+                time = TestValues.TIME_STAMP,
+                messageId = MessageValues.ID,
+                type = MessageValues.TYPE,
+                to =
+                    StructuredMessage.Participant(
+                        firstName = MessageValues.PARTICIPANT_NAME,
+                        lastName = MessageValues.PARTICIPANT_LAST_NAME,
+                        nickname = MessageValues.PARTICIPANT_NICKNAME,
+                        image = MessageValues.PARTICIPANT_IMAGE_URL,
+                    ),
+                from = StructuredMessage.Participant(),
+            )
 
         val result =
             WebMessagingJson.json.decodeFromString<StructuredMessage.Channel>(givenChannelAsJson)
@@ -710,23 +759,27 @@ internal class MessageExtensionTest {
 
     @Test
     fun `when SessionResponse toFileAttachmentProfile() and AllowedMedia has filetypes without wildcard with size limits`() {
-        val givenSessionResponse = SessionResponse(
-            connected = true,
-            allowedMedia = AllowedMedia(
-                inbound = Inbound(
-                    fileTypes = listOf(FileType("video/mpg"), FileType("video/3gpp")),
-                    maxFileSizeKB = 10240,
-                )
-            ),
-            blockedExtensions = listOf(".ade", ".adp")
-        )
-        val expectedFileAttachmentProfile = FileAttachmentProfile(
-            enabled = true,
-            allowedFileTypes = listOf("video/mpg", "video/3gpp"),
-            blockedFileTypes = listOf(".ade", ".adp"),
-            maxFileSizeKB = 10240,
-            hasWildCard = false,
-        )
+        val givenSessionResponse =
+            SessionResponse(
+                connected = true,
+                allowedMedia =
+                    AllowedMedia(
+                        inbound =
+                            Inbound(
+                                fileTypes = listOf(FileType("video/mpg"), FileType("video/3gpp")),
+                                maxFileSizeKB = 10240,
+                            )
+                    ),
+                blockedExtensions = listOf(".ade", ".adp")
+            )
+        val expectedFileAttachmentProfile =
+            FileAttachmentProfile(
+                enabled = true,
+                allowedFileTypes = listOf("video/mpg", "video/3gpp"),
+                blockedFileTypes = listOf(".ade", ".adp"),
+                maxFileSizeKB = 10240,
+                hasWildCard = false,
+            )
 
         val result = givenSessionResponse.toFileAttachmentProfile()
 
@@ -735,23 +788,27 @@ internal class MessageExtensionTest {
 
     @Test
     fun `when SessionResponse toFileAttachmentProfile() and AllowedMedia has filetypes with wildcard and size limits`() {
-        val givenSessionResponse = SessionResponse(
-            connected = true,
-            allowedMedia = AllowedMedia(
-                inbound = Inbound(
-                    fileTypes = listOf(FileType("*/*"), FileType("video/3gpp")),
-                    maxFileSizeKB = 10240,
-                ),
-            ),
-            blockedExtensions = listOf(".ade", ".adp")
-        )
-        val expectedFileAttachmentProfile = FileAttachmentProfile(
-            enabled = true,
-            allowedFileTypes = listOf("video/3gpp"),
-            blockedFileTypes = listOf(".ade", ".adp"),
-            maxFileSizeKB = 10240,
-            hasWildCard = true,
-        )
+        val givenSessionResponse =
+            SessionResponse(
+                connected = true,
+                allowedMedia =
+                    AllowedMedia(
+                        inbound =
+                            Inbound(
+                                fileTypes = listOf(FileType("*/*"), FileType("video/3gpp")),
+                                maxFileSizeKB = 10240,
+                            ),
+                    ),
+                blockedExtensions = listOf(".ade", ".adp")
+            )
+        val expectedFileAttachmentProfile =
+            FileAttachmentProfile(
+                enabled = true,
+                allowedFileTypes = listOf("video/3gpp"),
+                blockedFileTypes = listOf(".ade", ".adp"),
+                maxFileSizeKB = 10240,
+                hasWildCard = true,
+            )
 
         val result = givenSessionResponse.toFileAttachmentProfile()
 
@@ -760,12 +817,13 @@ internal class MessageExtensionTest {
 
     @Test
     fun `when PresignedUrlResponse isRefreshUrl() and headers are empty and fileSize is null`() {
-        val givenPresignedUrlResponse = PresignedUrlResponse(
-            attachmentId = "99999999-9999-9999-9999-999999999999",
-            headers = emptyMap(),
-            url = "https://downloadUrl.com",
-            fileSize = null,
-        )
+        val givenPresignedUrlResponse =
+            PresignedUrlResponse(
+                attachmentId = "99999999-9999-9999-9999-999999999999",
+                headers = emptyMap(),
+                url = "https://downloadUrl.com",
+                fileSize = null,
+            )
 
         val result = givenPresignedUrlResponse.isRefreshUrl()
 
@@ -774,12 +832,13 @@ internal class MessageExtensionTest {
 
     @Test
     fun `when PresignedUrlResponse isRefreshUrl() and headers are NOT empty and fileSize is null`() {
-        val givenPresignedUrlResponse = PresignedUrlResponse(
-            attachmentId = "99999999-9999-9999-9999-999999999999",
-            headers = mapOf("A" to "B"),
-            url = "https://downloadUrl.com",
-            fileSize = null,
-        )
+        val givenPresignedUrlResponse =
+            PresignedUrlResponse(
+                attachmentId = "99999999-9999-9999-9999-999999999999",
+                headers = mapOf("A" to "B"),
+                url = "https://downloadUrl.com",
+                fileSize = null,
+            )
 
         val result = givenPresignedUrlResponse.isRefreshUrl()
 
@@ -788,12 +847,13 @@ internal class MessageExtensionTest {
 
     @Test
     fun `when PresignedUrlResponse isRefreshUrl() and headers are NOT empty and fileSize has value`() {
-        val givenPresignedUrlResponse = PresignedUrlResponse(
-            attachmentId = "99999999-9999-9999-9999-999999999999",
-            headers = mapOf("A" to "B"),
-            url = "https://downloadUrl.com",
-            fileSize = 1,
-        )
+        val givenPresignedUrlResponse =
+            PresignedUrlResponse(
+                attachmentId = "99999999-9999-9999-9999-999999999999",
+                headers = mapOf("A" to "B"),
+                url = "https://downloadUrl.com",
+                fileSize = 1,
+            )
 
         val result = givenPresignedUrlResponse.isRefreshUrl()
 
@@ -802,12 +862,13 @@ internal class MessageExtensionTest {
 
     @Test
     fun `when PresignedUrlResponse isRefreshUrl() and headers are empty and fileSize has value`() {
-        val givenPresignedUrlResponse = PresignedUrlResponse(
-            attachmentId = "99999999-9999-9999-9999-999999999999",
-            headers = emptyMap(),
-            url = "https://downloadUrl.com",
-            fileSize = 1,
-        )
+        val givenPresignedUrlResponse =
+            PresignedUrlResponse(
+                attachmentId = "99999999-9999-9999-9999-999999999999",
+                headers = emptyMap(),
+                url = "https://downloadUrl.com",
+                fileSize = 1,
+            )
 
         val result = givenPresignedUrlResponse.isRefreshUrl()
 

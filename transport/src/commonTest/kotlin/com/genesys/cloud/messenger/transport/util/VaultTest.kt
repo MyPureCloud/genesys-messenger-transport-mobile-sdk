@@ -92,14 +92,15 @@ class VaultTest {
 
     @Test
     fun `when getPushConfig after it was set`() {
-        val givenPushConfig = PushConfig(
-            token = TestValues.TOKEN,
-            deviceToken = TestValues.DEVICE_TOKEN,
-            preferredLanguage = TestValues.PREFERRED_LANGUAGE,
-            lastSyncTimestamp = TestValues.PUSH_SYNC_TIMESTAMP,
-            deviceType = TestValues.DEVICE_TYPE,
-            pushProvider = PushProvider.APNS,
-        )
+        val givenPushConfig =
+            PushConfig(
+                token = TestValues.TOKEN,
+                deviceToken = TestValues.DEVICE_TOKEN,
+                preferredLanguage = TestValues.PREFERRED_LANGUAGE,
+                lastSyncTimestamp = TestValues.PUSH_SYNC_TIMESTAMP,
+                deviceType = TestValues.DEVICE_TYPE,
+                pushProvider = PushProvider.APNS,
+            )
         subject.pushConfig = givenPushConfig
 
         val result = subject.pushConfig

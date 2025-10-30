@@ -13,12 +13,13 @@ internal data class UserTypingRequest(
     override val action: String = RequestAction.ON_MESSAGE.value
 
     @Required
-    val message = EventMessage(
-        listOf(
-            TypingEvent(
-                eventType = StructuredMessageEvent.Type.Typing,
-                typing = TypingEvent.Typing(type = "On"),
+    val message =
+        EventMessage(
+            listOf(
+                TypingEvent(
+                    eventType = StructuredMessageEvent.Type.Typing,
+                    typing = TypingEvent.Typing(type = "On"),
+                )
             )
         )
-    )
 }
