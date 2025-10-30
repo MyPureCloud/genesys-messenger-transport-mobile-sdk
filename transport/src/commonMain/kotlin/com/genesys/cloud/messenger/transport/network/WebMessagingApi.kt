@@ -37,7 +37,6 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import kotlinx.serialization.encodeToString
 import kotlin.coroutines.cancellation.CancellationException
 
 internal class WebMessagingApi(
@@ -107,8 +106,8 @@ internal class WebMessagingApi(
 
     suspend fun fetchAuthJwt(
         authCode: String,
-        redirectUri: String,
-        codeVerifier: String?,
+        redirectUri: String? = null,
+        codeVerifier: String? = null,
     ): Result<AuthJwt> =
         try {
             val requestBody = AuthJwtRequest(

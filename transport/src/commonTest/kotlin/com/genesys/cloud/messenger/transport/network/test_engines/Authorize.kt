@@ -33,18 +33,38 @@ internal fun HttpClientConfig<MockEngineConfig>.authorizeEngine() {
                             AuthJwtRequest.serializer(),
                             (request.body as TextContent).text
                         )
-                        if (requestBody.deploymentId == TestValues.DEPLOYMENT_ID && requestBody.oauth.code == AuthTest.AUTH_CODE) {
-                            respond(
-                                status = HttpStatusCode.OK,
-                                headers = headersOf(
-                                    HttpHeaders.ContentType,
-                                    "application/json"
-                                ),
-                                content = Json.encodeToString(
-                                    AuthJwt.serializer(),
-                                    AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN)
-                                )
-                            )
+                        if (requestBody.deploymentId == TestValues.DEPLOYMENT_ID) {
+                            when (requestBody.oauth.code) {
+                                AuthTest.AUTH_CODE -> {
+                                    respond(
+                                        status = HttpStatusCode.OK,
+                                        headers = headersOf(
+                                            HttpHeaders.ContentType,
+                                            "application/json"
+                                        ),
+                                        content = Json.encodeToString(
+                                            AuthJwt.serializer(),
+                                            AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN)
+                                        )
+                                    )
+                                }
+                                AuthTest.ID_TOKEN -> {
+                                    respond(
+                                        status = HttpStatusCode.OK,
+                                        headers = headersOf(
+                                            HttpHeaders.ContentType,
+                                            "application/json"
+                                        ),
+                                        content = Json.encodeToString(
+                                            AuthJwt.serializer(),
+                                            AuthJwt(AuthTest.JWT_TOKEN, null)
+                                        )
+                                    )
+                                }
+                                else -> {
+                                    respondBadRequest()
+                                }
+                            }
                         } else {
                             when (requestBody.deploymentId) {
                                 InvalidValues.CANCELLATION_EXCEPTION -> {

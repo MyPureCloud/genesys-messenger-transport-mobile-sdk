@@ -584,4 +584,68 @@ class AuthHandlerTest {
                 coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
             }
         }
+
+    @Test
+    fun `when authorizeImplicit() success`() {
+        coEvery { mockWebMessagingApi.fetchAuthJwt(AuthTest.ID_TOKEN) } returns Result.Success(
+            AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN)
+        )
+        val expectedAuthJwt = AuthJwt(AuthTest.JWT_TOKEN, NO_REFRESH_TOKEN)
+
+        subject.authorizeImplicit(AuthTest.ID_TOKEN)
+
+        coVerify { mockWebMessagingApi.fetchAuthJwt(AuthTest.ID_TOKEN) }
+        verify { mockEventHandler.onEvent(Event.Authorized) }
+        assertThat(subject.jwt).isEqualTo(expectedAuthJwt.jwt)
+        assertThat(fakeVault.authRefreshToken).isEqualTo(expectedAuthJwt.refreshToken)
+    }
+
+    @Test
+    fun `when authorizeImplicit() failure`() {
+        coEvery { mockWebMessagingApi.fetchAuthJwt(AuthTest.ID_TOKEN) } returns Result.Failure(
+            ErrorCode.AuthFailed,
+            ErrorTest.MESSAGE
+        )
+
+        val expectedAuthJwt = AuthJwt(NO_JWT, NO_REFRESH_TOKEN)
+
+        subject.authorizeImplicit(AuthTest.ID_TOKEN)
+
+        coVerify { mockWebMessagingApi.fetchAuthJwt(AuthTest.ID_TOKEN) }
+        verify {
+            mockLogger.e(capture(logSlot))
+            mockEventHandler.onEvent(
+                Event.Error(
+                    ErrorCode.AuthFailed,
+                    ErrorTest.MESSAGE,
+                    CorrectiveAction.ReAuthenticate
+                )
+            )
+        }
+        assertThat(subject.jwt).isEqualTo(expectedAuthJwt.jwt)
+        assertThat(fakeVault.authRefreshToken).isEqualTo(expectedAuthJwt.refreshToken)
+        assertThat(logSlot.captured.invoke()).isEqualTo(LogMessages.requestError("authorizeImplicit()", ErrorCode.AuthFailed, ErrorTest.MESSAGE))
+    }
+
+    @Test
+    fun `when authorizeImplicit() failure with CancellationException`() {
+        coEvery { mockWebMessagingApi.fetchAuthJwt(AuthTest.ID_TOKEN) } returns Result.Failure(
+            ErrorCode.CancellationError,
+            ErrorTest.MESSAGE
+        )
+
+        subject.authorizeImplicit(AuthTest.ID_TOKEN)
+
+        verify { mockLogger.w(capture(logSlot)) }
+        verify(exactly = 0) {
+            mockEventHandler.onEvent(
+                Event.Error(
+                    ErrorCode.CancellationError,
+                    ErrorTest.MESSAGE,
+                    CorrectiveAction.ReAuthenticate
+                )
+            )
+        }
+        assertThat(logSlot.captured.invoke()).isEqualTo(LogMessages.cancellationExceptionRequestName("authorizeImplicit()"))
+    }
 }
