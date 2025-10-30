@@ -517,12 +517,8 @@ internal class MessagingClientImpl(
             when (result) {
                 is Result.Success -> action()
                 is Result.Failure -> {
-                    if (result.errorCode is ErrorCode.RefreshAuthTokenFailure && result.message == ErrorMessage.NoRefreshToken) {
-                        eventHandler.onEvent(Event.AuthorizationRequired)
-                        transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
-                    } else {
-                        transitionToStateError(result.errorCode, result.message)
-                    }
+                    eventHandler.onEvent(Event.AuthorizationRequired)
+                    transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
                 }
             }
         }
