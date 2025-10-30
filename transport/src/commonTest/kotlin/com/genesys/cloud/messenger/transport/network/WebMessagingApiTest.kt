@@ -173,7 +173,6 @@ class WebMessagingApiTest {
 
     @Test
     fun `when fetchAuthJwt request body has invalid params`() {
-
         subject = buildWebMessagingApiWith(InvalidValues.configuration) { authorizeEngine() }
 
         val expectedResult = Result.Failure(ErrorCode.AuthFailed, "Bad Request")

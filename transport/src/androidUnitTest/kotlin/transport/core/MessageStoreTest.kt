@@ -86,7 +86,6 @@ internal class MessageStoreTest {
 
     @Test
     fun `when prepareMessage() is called twice`() {
-
         subject.prepareMessage(TestValues.TOKEN, "message 1")
         subject.prepareMessage(TestValues.TOKEN, "message 2")
 
