@@ -22,7 +22,6 @@ internal interface PushConfigComparator {
 }
 
 internal class PushConfigComparatorImpl : PushConfigComparator {
-
     @Throws(IllegalArgumentException::class)
     override fun compare(
         userConfig: PushConfig,

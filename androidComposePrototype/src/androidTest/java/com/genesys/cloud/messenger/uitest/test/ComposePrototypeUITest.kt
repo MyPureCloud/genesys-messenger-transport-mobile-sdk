@@ -280,10 +280,11 @@ class ComposePrototypeUITest : BaseTests() {
             verifyPageIsVisible()
             enterCommand(historyText)
             waitForProperResponse(startOfConversationText)
-            if (withConversationDisconnectEvent)
+            if (withConversationDisconnectEvent) {
                 checkHistoryForAutoStartAndDisconnectEventsResponse()
-            else
+            } else {
                 checkHistoryDoesNotContainDisconnectEventOrReadOnlyResponse()
+            }
         }
     }
 
@@ -594,10 +595,11 @@ class ComposePrototypeUITest : BaseTests() {
                 AssertionError("Unable to answer conversation.")
             } else {
                 Log.i(TAG, "Conversation started successfully.")
-                if (conversationInfo.id != conversation2Info.id)
+                if (conversationInfo.id != conversation2Info.id) {
                     AssertionError("Reconnecting a conversation may not have matching conversation IDs.")
-                else
+                } else {
                     (Log.i(TAG, "Conversation ids matched as expected."))
+                }
                 apiHelper.sendConnectOrDisconnect(conversation2Info)
                 // wait for agent to disconnect
                 apiHelper.waitForParticipantToConnectOrDisconnect(conversation2Info.id)

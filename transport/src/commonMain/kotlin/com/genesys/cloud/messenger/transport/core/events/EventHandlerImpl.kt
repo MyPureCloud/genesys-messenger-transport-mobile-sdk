@@ -14,7 +14,6 @@ private const val FALLBACK_TYPING_INDICATOR_DURATION = 5000L
 internal class EventHandlerImpl(
     internal val log: Log = Log(enableLogs = false, LogTag.EVENT_HANDLER),
 ) : EventHandler {
-
     override var eventListener: ((Event) -> Unit)? = null
 
     override fun onEvent(event: Event) {

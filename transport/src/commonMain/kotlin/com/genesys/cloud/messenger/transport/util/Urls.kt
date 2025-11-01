@@ -12,7 +12,6 @@ internal class Urls(
     val deploymentId: String,
     val application: String
 ) {
-
     internal val webSocketUrl: Url by lazy {
         URLBuilder("wss://webmessaging.$domain")
             .apply {

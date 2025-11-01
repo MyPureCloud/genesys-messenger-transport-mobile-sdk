@@ -14,7 +14,6 @@ import transport.util.Response
 import kotlin.test.assertFailsWith
 
 class MessagingClientHistoryTest : BaseMessagingClientTest() {
-
     @Test
     fun `when fetchNextPage but session is not configured`() {
         assertFailsWith<IllegalStateException> { runBlocking { subject.fetchNextPage() } }

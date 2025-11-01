@@ -55,7 +55,6 @@ data class Conversations(
         val enabled: Boolean = false,
         val type: Type = Type.Send
     ) {
-
         @Serializable
         enum class Type {
             ReadOnly,
@@ -71,7 +70,6 @@ data class Conversations(
         val enabled: Boolean = false,
         val notificationContentType: NotificationContentType = NotificationContentType.ExcludeMessagesContent,
     ) {
-
         @Serializable
         enum class NotificationContentType {
             IncludeMessagesContent,

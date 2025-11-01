@@ -25,25 +25,27 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class HistoryHandlerImplTest {
-
-    private val messageStore = mockk<MessageStore>(relaxed = true) {
-        every { startOfConversation } returns false
-        every { nextPage } returns TestValues.HISTORY_PAGE_ONE
-    }
+    private val messageStore =
+        mockk<MessageStore>(relaxed = true) {
+            every { startOfConversation } returns false
+            every { nextPage } returns TestValues.HISTORY_PAGE_ONE
+        }
     private val api = mockk<WebMessagingApi>(relaxed = true)
     private val eventHandler = mockk<EventHandler>(relaxed = true)
     private val log = mockk<Log>(relaxed = true)
-    private val tokenProvider = mockk<suspend () -> String> {
-        coEvery { this@mockk() } returns TestValues.TOKEN
-    }
+    private val tokenProvider =
+        mockk<suspend () -> String> {
+            coEvery { this@mockk() } returns TestValues.TOKEN
+        }
     private val logSlot = mutableListOf<() -> String>()
-    private val subject = HistoryHandlerImpl(
-        messageStore = messageStore,
-        api = api,
-        eventHandler = eventHandler,
-        log = log,
-        jwtTokenProvider = tokenProvider
-    )
+    private val subject =
+        HistoryHandlerImpl(
+            messageStore = messageStore,
+            api = api,
+            eventHandler = eventHandler,
+            log = log,
+            jwtTokenProvider = tokenProvider
+        )
 
     @Test
     fun `when all history fetched`() =

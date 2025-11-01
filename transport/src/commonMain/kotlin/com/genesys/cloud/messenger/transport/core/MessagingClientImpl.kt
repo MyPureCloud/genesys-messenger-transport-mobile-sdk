@@ -81,34 +81,39 @@ internal class MessagingClientImpl(
     private val stateMachine: StateMachine = StateMachineImpl(log.withTag(LogTag.STATE_MACHINE)),
     private val eventHandler: EventHandler = EventHandlerImpl(log.withTag(LogTag.EVENT_HANDLER)),
     private val healthCheckProvider: HealthCheckProvider = HealthCheckProvider(log.withTag(LogTag.HEALTH_CHECK_PROVIDER)),
-    private val userTypingProvider: UserTypingProvider = UserTypingProvider(
-        log.withTag(LogTag.TYPING_INDICATOR_PROVIDER),
-        { deploymentConfig.isShowUserTypingEnabled() },
-    ),
-    private val authHandler: AuthHandler = AuthHandlerImpl(
-        configuration.autoRefreshTokenWhenExpired,
-        eventHandler,
-        api,
-        vault,
-        log.withTag(LogTag.AUTH_HANDLER),
-        isAuthEnabled = { deploymentConfig.isAuthEnabled(api) }
-    ),
-    private val internalCustomAttributesStore: CustomAttributesStoreImpl = CustomAttributesStoreImpl(
-        log.withTag(LogTag.CUSTOM_ATTRIBUTES_STORE),
-        eventHandler
-    ),
-    private val pushService: PushService = PushServiceImpl(
-        vault = vault,
-        api = api,
-        log = log.withTag(LogTag.PUSH_SERVICE),
-    ),
-    private val historyHandler: HistoryHandler = HistoryHandlerImpl(
-        messageStore,
-        api,
-        eventHandler,
-        log.withTag(LogTag.HISTORY_HANDLER),
-        suspend { jwtHandler.withJwt(token) { it } }
-    ),
+    private val userTypingProvider: UserTypingProvider =
+        UserTypingProvider(
+            log.withTag(LogTag.TYPING_INDICATOR_PROVIDER),
+            { deploymentConfig.isShowUserTypingEnabled() },
+        ),
+    private val authHandler: AuthHandler =
+        AuthHandlerImpl(
+            configuration.autoRefreshTokenWhenExpired,
+            eventHandler,
+            api,
+            vault,
+            log.withTag(LogTag.AUTH_HANDLER),
+            isAuthEnabled = { deploymentConfig.isAuthEnabled(api) }
+        ),
+    private val internalCustomAttributesStore: CustomAttributesStoreImpl =
+        CustomAttributesStoreImpl(
+            log.withTag(LogTag.CUSTOM_ATTRIBUTES_STORE),
+            eventHandler
+        ),
+    private val pushService: PushService =
+        PushServiceImpl(
+            vault = vault,
+            api = api,
+            log = log.withTag(LogTag.PUSH_SERVICE),
+        ),
+    private val historyHandler: HistoryHandler =
+        HistoryHandlerImpl(
+            messageStore,
+            api,
+            eventHandler,
+            log.withTag(LogTag.HISTORY_HANDLER),
+            suspend { jwtHandler.withJwt(token) { it } }
+        ),
     private val defaultDispatcher: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
 ) : MessagingClient {
     private var connectAuthenticated = false
@@ -210,22 +215,23 @@ internal class MessagingClientImpl(
     }
 
     private fun configureSession(startNew: Boolean = false) {
-        val encodedJson = if (connectAuthenticated) {
-            log.i { LogMessages.configureAuthenticatedSession(token, startNew) }
-            if (authHandler.jwt == NO_JWT) {
-                if (reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
-                    reconfigureAttempts++
-                    refreshTokenAndPerform { configureSession(startNew) }
+        val encodedJson =
+            if (connectAuthenticated) {
+                log.i { LogMessages.configureAuthenticatedSession(token, startNew) }
+                if (authHandler.jwt == NO_JWT) {
+                    if (reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
+                        reconfigureAttempts++
+                        refreshTokenAndPerform { configureSession(startNew) }
+                        return
+                    }
+                    transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
                     return
                 }
-                transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
-                return
+                encodeConfigureAuthenticatedSessionRequest(startNew)
+            } else {
+                log.i { LogMessages.configureSession(token, startNew) }
+                encodeConfigureGuestSessionRequest(startNew)
             }
-            encodeConfigureAuthenticatedSessionRequest(startNew)
-        } else {
-            log.i { LogMessages.configureSession(token, startNew) }
-            encodeConfigureGuestSessionRequest(startNew)
-        }
         webSocket.sendMessage(encodedJson)
     }
 
@@ -268,13 +274,14 @@ internal class MessagingClientImpl(
         uploadProgress: ((Float) -> Unit)?,
     ): String {
         log.i { LogMessages.attach(fileName) }
-        val request = attachmentHandler.prepare(
-            token,
-            Platform().randomUUID(),
-            byteArray,
-            fileName,
-            uploadProgress,
-        )
+        val request =
+            attachmentHandler.prepare(
+                token,
+                Platform().randomUUID(),
+                byteArray,
+                fileName,
+                uploadProgress,
+            )
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         send(encodedJson)
         return request.attachmentId
@@ -661,10 +668,11 @@ internal class MessagingClientImpl(
                 token = token,
                 deploymentId = configuration.deploymentId,
                 startNew = startNew,
-                journeyContext = JourneyContext(
-                    JourneyCustomer(token, "cookie"),
-                    JourneyCustomerSession("", "web")
-                )
+                journeyContext =
+                    JourneyContext(
+                        JourneyCustomer(token, "cookie"),
+                        JourneyCustomerSession("", "web")
+                    )
             )
         )
 
@@ -674,10 +682,11 @@ internal class MessagingClientImpl(
                 token = token,
                 deploymentId = configuration.deploymentId,
                 startNew = startNew,
-                journeyContext = JourneyContext(
-                    JourneyCustomer(token, "cookie"),
-                    JourneyCustomerSession("", "web")
-                ),
+                journeyContext =
+                    JourneyContext(
+                        JourneyCustomer(token, "cookie"),
+                        JourneyCustomerSession("", "web")
+                    ),
                 data = ConfigureAuthenticatedSessionRequest.Data(authHandler.jwt)
             )
         )
@@ -687,14 +696,14 @@ internal class MessagingClientImpl(
             internalCustomAttributesStore.onSending()
         }
 
-    private val socketListener = SocketListener(
-        log = log.withTag(LogTag.WEBSOCKET)
-    )
+    private val socketListener =
+        SocketListener(
+            log = log.withTag(LogTag.WEBSOCKET)
+        )
 
     private inner class SocketListener(
         private val log: Log,
     ) : PlatformSocketListener {
-
         override fun onOpen() {
             log.i { LogMessages.ON_OPEN }
             stateMachine.onConnectionOpened()
@@ -743,9 +752,10 @@ internal class MessagingClientImpl(
                             val message = this.toMessage()
                             when (type) {
                                 StructuredMessage.Type.Text -> message.handleAsTextMessage()
-                                StructuredMessage.Type.Event -> message.handleAsEvent(
-                                    metadata["readOnly"].toBoolean()
-                                )
+                                StructuredMessage.Type.Event ->
+                                    message.handleAsEvent(
+                                        metadata["readOnly"].toBoolean()
+                                    )
 
                                 StructuredMessage.Type.Structured -> message.handleAsStructuredMessage()
                             }
@@ -776,9 +786,10 @@ internal class MessagingClientImpl(
                     }
 
                     is ConnectionClosedEvent -> {
-                        val reason = decoded.body.reason.toTransportConnectionClosedReason(
-                            clearingConversation
-                        )
+                        val reason =
+                            decoded.body.reason.toTransportConnectionClosedReason(
+                                clearingConversation
+                            )
                         if (reason == Event.ConnectionClosed.Reason.UserSignedIn) {
                             invalidateSessionToken()
                             vault.wasAuthenticated = false

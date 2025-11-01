@@ -15,7 +15,6 @@ internal class HistoryHandlerImpl(
     private val log: Log,
     private val jwtTokenProvider: suspend () -> String,
 ) : HistoryHandler {
-
     override suspend fun fetchNextPage() {
         if (messageStore.startOfConversation) {
             handleStartOfConversation()

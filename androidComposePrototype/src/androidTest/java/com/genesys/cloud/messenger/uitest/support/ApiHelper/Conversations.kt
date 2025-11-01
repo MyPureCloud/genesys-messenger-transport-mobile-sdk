@@ -221,9 +221,10 @@ fun API.checkForConversationMessages(conversationId: String) {
 fun API.attachImage(conversationInfo: Conversation) {
     val agentParticipant = conversationInfo.getParticipantFromPurpose("agent")
     val communicationId = conversationInfo.getCommunicationId(agentParticipant!!)
-    val mediaResult = publicApiCall(
-        "POST",
-        "/api/v2/conversations/messages/${conversationInfo.id}/communications/$communicationId/messages/media"
-    )
+    val mediaResult =
+        publicApiCall(
+            "POST",
+            "/api/v2/conversations/messages/${conversationInfo.id}/communications/$communicationId/messages/media"
+        )
     val result: Media = parseJsonToClass(mediaResult)
 }

@@ -13,7 +13,6 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 
 internal class JwtHandler(private val webSocket: PlatformSocket) {
-
     private val jwtChannel = Channel<String>()
     private val socketDispatcher = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
