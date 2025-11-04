@@ -63,23 +63,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             for item in queryItems {
                 if item.name == "code", let code = item.value {
                     rootViewController.setAuthCode(code)
-                } else if item.name == "error_description", let error = item.value {
-                    print("Error: \(error)")
+                    rootViewController.setIdToken(nil)
+                } else if item.name == "id_token", let idToken = item.value {
+                    rootViewController.setIdToken(idToken)
+                    rootViewController.setAuthCode(nil)
                 }
-            }
-        }
-
-        if let fragment = url.fragment {
-            var fragmentComponents = URLComponents()
-            fragmentComponents.query = fragment
-            if let fragmentItems = fragmentComponents.queryItems {
-                for item in fragmentItems {
-                    if item.name == "id_token", let idToken = item.value {
-                        rootViewController.setIdToken(idToken)
-                    } else if item.name == "error_description", let error = item.value {
-                        print("Error: \(error)")
-                    }
-                }
+                break
             }
         }
     }

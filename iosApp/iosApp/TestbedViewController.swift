@@ -16,18 +16,7 @@ class TestbedViewController: UIViewController {
     private var cancellables = Set<AnyCancellable>()
     private var pkceEnabled = false
     private var authCode: String? = nil
-    private var idToken: String = "" {
-        didSet {
-            if !idToken.isEmpty {
-                info.text = "ID Token: \(idToken)"
-                authState = AuthState.idTokenReceived(idToken: idToken)
-                updateAuthStateView()
-            } else {
-                authState = AuthState.noAuth
-                updateAuthStateView()
-            }
-        }
-    }
+    private var idToken: String? = nil
     private var authState: AuthState = AuthState.noAuth
     private var quickRepliesMap = [String: ButtonResponse]()
 
@@ -409,7 +398,7 @@ class TestbedViewController: UIViewController {
         return URL(string: url.absoluteString)
     }
 
-    private func buildImplicitOktaAuthorizeUrl() -> URL? {
+    private func buildImplicitAuthorizeUrl() -> URL? {
         guard let plistPath = Bundle.main.path(forResource: "Okta", ofType: "plist"),
                 let plistData = FileManager.default.contents(atPath: plistPath),
                 let plistDictionary = try? PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any],
@@ -439,7 +428,7 @@ class TestbedViewController: UIViewController {
     }
 
     private func implicitSignIn() {
-        guard let authUrl = buildImplicitOktaAuthorizeUrl() else {
+        guard let authUrl = buildImplicitAuthorizeUrl() else {
             authState = AuthState.error(errorCode: ErrorCode.AuthFailed.shared, message: "Failed to build Okta implicit authorize URL.", correctiveAction: CorrectiveAction.ReAuthenticate.shared)
             updateAuthStateView()
             return
@@ -451,14 +440,24 @@ class TestbedViewController: UIViewController {
         }
     }
 
-    func setAuthCode(_ authCode: String) {
+    func setAuthCode(_ authCode: String?) {
         self.authCode = authCode
-        authState = AuthState.authCodeReceived(authCode: authCode)
+        if let authCode = authCode {
+            authState = AuthState.authCodeReceived(authCode: authCode)
+        } else {
+            authState = AuthState.noAuth
+        }
         updateAuthStateView()
     }
 
-    func setIdToken(_ idToken: String) {
+    func setIdToken(_ idToken: String?) {
         self.idToken = idToken
+        if let idToken = idToken {
+            authState = AuthState.idTokenReceived(idToken: idToken)
+        } else {
+            authState = AuthState.noAuth
+        }
+        updateAuthStateView()
     }
 }
 
@@ -566,11 +565,7 @@ extension TestbedViewController : UITextFieldDelegate {
             case (.implicitLogin, _):
                 implicitSignIn()
             case (.implicitAuthorize, _):
-                if idToken.isEmpty {
-                    info.text = "Please, first obtain id token from login."
-                    break
-                }
-                messenger.authorizeImplicit(idToken: idToken)
+                messenger.authorizeImplicit(idToken: self.idToken ?? "")
             case (.clearConversation, _):
                 try messenger.clearConversation()
             case (.removeToken, _):
