@@ -19,6 +19,7 @@ private const val EXPONENTIAL_DELAY_BASE = 3.0
 
 private val RETRYABLE_STATUS_CODES =
     setOf(
+        HttpStatusCode.InternalServerError,
         HttpStatusCode.BadGateway,
         HttpStatusCode.ServiceUnavailable,
         HttpStatusCode.GatewayTimeout,
