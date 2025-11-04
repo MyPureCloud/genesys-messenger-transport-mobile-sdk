@@ -37,7 +37,6 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import kotlinx.serialization.encodeToString
 import kotlin.coroutines.cancellation.CancellationException
 
 internal class WebMessagingApi(
@@ -65,7 +64,8 @@ internal class WebMessagingApi(
             if (response.status.isSuccess()) {
                 Result.Success(response.body())
             } else {
-                Result.Failure(ErrorCode.mapFrom(response.status.value), response.body())
+                val code = ErrorCode.mapFrom(response.status.value)
+                Result.Failure(code, response.body())
             }
         } catch (cancellationException: CancellationException) {
             Result.Failure(ErrorCode.CancellationError, cancellationException.message)
@@ -98,7 +98,8 @@ internal class WebMessagingApi(
             if (response.status.isSuccess()) {
                 Result.Success(Empty())
             } else {
-                Result.Failure(ErrorCode.mapFrom(response.status.value), response.body<String>())
+                val code = ErrorCode.mapFrom(response.status.value)
+                Result.Failure(code, response.body<String>())
             }
         } catch (cancellationException: CancellationException) {
             Result.Failure(ErrorCode.CancellationError, cancellationException.message)
@@ -126,7 +127,6 @@ internal class WebMessagingApi(
                 client.post(urls.jwtAuthUrl.toString()) {
                     header("content-type", ContentType.Application.Json)
                     setBody(requestBody)
-                    retryOnServerErrors()
                 }
             if (response.status.isSuccess()) {
                 Result.Success(response.body())
@@ -201,7 +201,6 @@ internal class WebMessagingApi(
                     this.method = operation.httpMethod
                     header("content-type", ContentType.Application.Json)
                     setBody(userPushConfig.toDeviceTokenRequestBody(operation))
-                    retryOnServerErrors()
                 }
 
             if (response.status.isSuccess()) {
