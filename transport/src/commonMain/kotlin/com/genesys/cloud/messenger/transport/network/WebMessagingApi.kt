@@ -42,7 +42,7 @@ import kotlin.coroutines.cancellation.CancellationException
 internal class WebMessagingApi(
     private val urls: Urls,
     private val configuration: Configuration,
-    private val client: HttpClient = defaultHttpClient(configuration),
+    private val client: HttpClient = defaultHttpClient(configuration.logging),
 ) {
 
     /**
@@ -60,7 +60,6 @@ internal class WebMessagingApi(
                 headerOrigin(configuration.domain)
                 parameter("pageNumber", pageNumber)
                 parameter("pageSize", pageSize)
-                // Retries enabled by default for data-fetching operations
             }
             if (response.status.isSuccess()) {
                 Result.Success(response.body())
@@ -173,8 +172,7 @@ internal class WebMessagingApi(
 
     suspend fun fetchDeploymentConfig(): Result<DeploymentConfig> =
         try {
-            val response = client.get(urls.deploymentConfigUrl.toString()) {
-            }
+            val response = client.get(urls.deploymentConfigUrl.toString())
             if (response.status.isSuccess()) {
                 Result.Success(response.body())
             } else {

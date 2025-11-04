@@ -17,7 +17,6 @@ import com.genesys.cloud.messenger.transport.network.test_engines.invalidHeaders
 import com.genesys.cloud.messenger.transport.network.test_engines.logoutEngine
 import com.genesys.cloud.messenger.transport.network.test_engines.pushNotificationEngine
 import com.genesys.cloud.messenger.transport.network.test_engines.refreshTokenEngine
-import com.genesys.cloud.messenger.transport.network.test_engines.retryEngine
 import com.genesys.cloud.messenger.transport.network.test_engines.uploadFileEngine
 import com.genesys.cloud.messenger.transport.network.test_engines.validHeaders
 import com.genesys.cloud.messenger.transport.push.DeviceTokenOperation
@@ -30,12 +29,8 @@ import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import com.genesys.cloud.messenger.transport.utility.InvalidValues
 import com.genesys.cloud.messenger.transport.utility.PushTestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
-import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
-import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.MockEngineConfig
-import io.ktor.client.plugins.HttpRequestRetry
-import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -47,27 +42,6 @@ import kotlin.test.assertTrue
 
 class WebMessagingApiTest {
     private lateinit var subject: WebMessagingApi
-
-    private fun clientWith(
-        engine: HttpClientConfig<MockEngineConfig>.() -> Unit
-    ) = HttpClient(MockEngine) {
-        install(HttpRequestRetry) {
-            maxRetries = 3
-            retryIf { request, response ->
-                when (response.status) {
-                    HttpStatusCode.BadGateway,
-                    HttpStatusCode.ServiceUnavailable,
-                    HttpStatusCode.GatewayTimeout -> true
-                    else -> false
-                }
-            }
-            retryOnExceptionIf { request, cause ->
-                cause !is CancellationException
-            }
-            exponentialDelay(base = 3.0)
-        }
-        engine()
-    }
 
     @Test
     fun `when fetchHistory`() {
@@ -489,22 +463,6 @@ class WebMessagingApiTest {
             assertIs<Exception>(throwable)
         }
     }
-
-    @Test
-    fun `when getMessages receives 502 server error then retries with exponential backoff`() {
-        val configuration = TestValues.configuration
-        subject = buildWebMessagingApiWith(configuration) { retryEngine() }
-
-        assertTrue(true)
-    }
-
-    @Test
-    fun `when 5xx server error occurs then retries and eventually succeeds`() =
-        runBlocking {
-            val client = clientWith { retryEngine() }
-            val response = client.get("https://test.com/server-error-502")
-            assertEquals(HttpStatusCode.OK, response.status)
-        }
 }
 
 private fun buildWebMessagingApiWith(

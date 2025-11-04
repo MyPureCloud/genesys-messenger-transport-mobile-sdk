@@ -1,6 +1,5 @@
 package com.genesys.cloud.messenger.transport.network
 
-import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
@@ -13,15 +12,18 @@ import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.SerializationException
+import kotlin.coroutines.cancellation.CancellationException
 
 private const val TIMEOUT_IN_MS = 30000L
 private const val MAX_RETRIES_ON_SERVER_ERRORS = 3
+private const val EXPONENTIAL_DELAY_BASE = 3.0
 
-internal fun defaultHttpClient(configuration: Configuration): HttpClient =
+internal fun defaultHttpClient(logging: Boolean = false): HttpClient =
     HttpClient {
-        if (configuration.logging) {
+        if (logging) {
             install(Logging) {
-                logger = Log(configuration.logging, LogTag.HTTP_CLIENT).ktorLogger
+                logger = Log(logging, LogTag.HTTP_CLIENT).ktorLogger
                 level = LogLevel.INFO
             }
         }
@@ -44,9 +46,9 @@ internal fun defaultHttpClient(configuration: Configuration): HttpClient =
             }
 
             retryOnExceptionIf { request, cause ->
-                cause !is kotlin.coroutines.cancellation.CancellationException
+                cause !is CancellationException && cause !is SerializationException
             }
 
-            exponentialDelay(base = 3.0)
+            exponentialDelay(base = EXPONENTIAL_DELAY_BASE)
         }
     }
