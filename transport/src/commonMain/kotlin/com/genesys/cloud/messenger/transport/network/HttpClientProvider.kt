@@ -12,12 +12,17 @@ import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.serialization.SerializationException
-import kotlin.coroutines.cancellation.CancellationException
 
 private const val TIMEOUT_IN_MS = 30000L
 private const val MAX_RETRIES_ON_SERVER_ERRORS = 3
 private const val EXPONENTIAL_DELAY_BASE = 3.0
+
+private val RETRYABLE_STATUS_CODES =
+    setOf(
+        HttpStatusCode.BadGateway,
+        HttpStatusCode.ServiceUnavailable,
+        HttpStatusCode.GatewayTimeout,
+    )
 
 internal fun defaultHttpClient(logging: Boolean = false): HttpClient =
     HttpClient {
@@ -37,16 +42,7 @@ internal fun defaultHttpClient(logging: Boolean = false): HttpClient =
             maxRetries = MAX_RETRIES_ON_SERVER_ERRORS
 
             retryIf { request, response ->
-                when (response.status) {
-                    HttpStatusCode.BadGateway,
-                    HttpStatusCode.ServiceUnavailable,
-                    HttpStatusCode.GatewayTimeout -> true
-                    else -> false
-                }
-            }
-
-            retryOnExceptionIf { request, cause ->
-                cause !is CancellationException && cause !is SerializationException
+                response.status in RETRYABLE_STATUS_CODES
             }
 
             exponentialDelay(base = EXPONENTIAL_DELAY_BASE)

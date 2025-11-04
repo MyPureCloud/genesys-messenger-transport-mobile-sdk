@@ -123,11 +123,11 @@ internal class WebMessagingApi(
                             codeVerifier = codeVerifier,
                         )
                 )
-            )
-            val response = client.post(urls.jwtAuthUrl.toString()) {
-                header("content-type", ContentType.Application.Json)
-                setBody(requestBody)
-            }
+            val response =
+                client.post(urls.jwtAuthUrl.toString()) {
+                    header("content-type", ContentType.Application.Json)
+                    setBody(requestBody)
+                }
             if (response.status.isSuccess()) {
                 Result.Success(response.body())
             } else {
@@ -196,11 +196,12 @@ internal class WebMessagingApi(
     ): Result<Empty> =
         try {
             val url = urls.deviceTokenUrl(configuration.deploymentId, userPushConfig.token.lowercase())
-            val response = client.request(url) {
-                this.method = operation.httpMethod
-                header("content-type", ContentType.Application.Json)
-                setBody(userPushConfig.toDeviceTokenRequestBody(operation))
-            }
+            val response =
+                client.request(url) {
+                    this.method = operation.httpMethod
+                    header("content-type", ContentType.Application.Json)
+                    setBody(userPushConfig.toDeviceTokenRequestBody(operation))
+                }
 
             if (response.status.isSuccess()) {
                 Result.Success(Empty())
