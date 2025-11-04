@@ -21,9 +21,10 @@ import kotlin.test.assertTrue
 class HealthCheckProviderTest {
     internal val mockLogger: Log = mockk(relaxed = true)
     internal val logSlot = mutableListOf<() -> String>()
-    private val mockTimestampFunction: () -> Long = spyk<() -> Long>().also {
-        every { it.invoke() } answers { Platform().epochMillis() }
-    }
+    private val mockTimestampFunction: () -> Long =
+        spyk<() -> Long>().also {
+            every { it.invoke() } answers { Platform().epochMillis() }
+        }
 
     private val subject = HealthCheckProvider(mockLogger, mockTimestampFunction)
 

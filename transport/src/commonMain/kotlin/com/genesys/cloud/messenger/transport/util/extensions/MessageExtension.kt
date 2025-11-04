@@ -34,13 +34,15 @@ internal fun StructuredMessage.toMessage(): Message {
         attachments = content.filterIsInstance<AttachmentContent>().toAttachments(),
         quickReplies = quickReplies,
         events = events.mapNotNull { it.toTransportEvent(channel?.from) },
-        from = Message.Participant(
-            name = channel?.from?.nickname,
-            imageUrl = channel?.from?.image,
-            originatingEntity = originatingEntity.mapOriginatingEntity {
-                isInbound()
-            }
-        ),
+        from =
+            Message.Participant(
+                name = channel?.from?.nickname,
+                imageUrl = channel?.from?.image,
+                originatingEntity =
+                    originatingEntity.mapOriginatingEntity {
+                        isInbound()
+                    }
+            ),
         authenticated = metadata["authenticated"].toBoolean()
     )
 }
@@ -75,12 +77,13 @@ internal fun String?.mapOriginatingEntity(isInbound: () -> Boolean): Message.Par
 private fun List<AttachmentContent>.toAttachments(): Map<String, Attachment> {
     return this.associate {
         it.run {
-            attachment.id to Attachment(
-                id = attachment.id,
-                fileName = attachment.filename,
-                fileSizeInBytes = attachment.fileSize,
-                state = Attachment.State.Sent(attachment.url),
-            )
+            attachment.id to
+                Attachment(
+                    id = attachment.id,
+                    fileName = attachment.filename,
+                    fileSizeInBytes = attachment.fileSize,
+                    state = Attachment.State.Sent(attachment.url),
+                )
         }
     }
 }
@@ -89,13 +92,15 @@ private fun List<StructuredMessage.Content>.toQuickReplies(): List<ButtonRespons
     val filteredQuickReply = this.filterIsInstance<QuickReplyContent>()
     val filteredButtonResponse = this.filterIsInstance<ButtonResponseContent>()
     return when {
-        filteredQuickReply.isNotEmpty() -> filteredQuickReply.map {
-            it.quickReply.run { ButtonResponse(text, payload, "QuickReply") }
-        }
+        filteredQuickReply.isNotEmpty() ->
+            filteredQuickReply.map {
+                it.quickReply.run { ButtonResponse(text, payload, "QuickReply") }
+            }
 
-        filteredButtonResponse.isNotEmpty() -> filteredButtonResponse.map {
-            it.buttonResponse.run { ButtonResponse(text, payload, type) }
-        }
+        filteredButtonResponse.isNotEmpty() ->
+            filteredButtonResponse.map {
+                it.buttonResponse.run { ButtonResponse(text, payload, type) }
+            }
 
         else -> emptyList()
     }
@@ -113,11 +118,12 @@ internal fun String.isHealthCheckResponseId(): Boolean = this == HealthCheckID
 internal fun Message.isOutbound(): Boolean = this.direction == Direction.Outbound
 
 internal fun SessionResponse.toFileAttachmentProfile(): FileAttachmentProfile {
-    val allowedFileTypes = allowedMedia
-        ?.inbound
-        ?.fileTypes
-        ?.map { it.type }
-        ?.toMutableList() ?: mutableListOf()
+    val allowedFileTypes =
+        allowedMedia
+            ?.inbound
+            ?.fileTypes
+            ?.map { it.type }
+            ?.toMutableList() ?: mutableListOf()
     val maxFileSize = allowedMedia?.inbound?.maxFileSizeKB ?: 0
     val enabled = allowedFileTypes.isNotEmpty() && maxFileSize > 0
     val hasWildcard = allowedFileTypes.remove(WILD_CARD)
@@ -171,13 +177,15 @@ internal fun String.sanitizeCustomAttributes(): String {
 
 internal fun String.sanitizeText(): String {
     var regex = """("text":")([^"]*)(")""".toRegex()
-    var sanitizedInput = this.replace(regex) {
-        """${it.groupValues[1]}${it.groupValues[2].sanitize()}${it.groupValues[3]}"""
-    }
+    var sanitizedInput =
+        this.replace(regex) {
+            """${it.groupValues[1]}${it.groupValues[2].sanitize()}${it.groupValues[3]}"""
+        }
     regex = """(text=)(.*?)(?=(?:, \w+:)|$|[)])""".toRegex()
-    sanitizedInput = sanitizedInput.replace(regex) {
-        """${it.groupValues[1]}${it.groupValues[2].sanitize()}"""
-    }
+    sanitizedInput =
+        sanitizedInput.replace(regex) {
+            """${it.groupValues[1]}${it.groupValues[2].sanitize()}"""
+        }
     return sanitizedInput
 }
 

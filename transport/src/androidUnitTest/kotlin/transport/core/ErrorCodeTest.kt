@@ -13,7 +13,6 @@ import org.junit.Test
 import kotlin.random.Random
 
 internal class ErrorCodeTest {
-
     @Test
     fun `when ErrorCode mapFrom`() {
         assertThat(ErrorCode.mapFrom(4000)).isEqualTo(ErrorCode.FeatureUnavailable)

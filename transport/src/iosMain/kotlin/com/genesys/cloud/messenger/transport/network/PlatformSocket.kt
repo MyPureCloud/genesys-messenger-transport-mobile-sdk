@@ -55,37 +55,39 @@ internal actual class PlatformSocket actual constructor(
         urlRequest.setValue(url.host, forHTTPHeaderField = "Origin")
         urlRequest.setValue(Platform().platform, forHTTPHeaderField = "User-Agent")
         urlRequest.setTimeoutInterval(TIMEOUT_INTERVAL)
-        val urlSession = NSURLSession.sessionWithConfiguration(
-            configuration = NSURLSessionConfiguration.defaultSessionConfiguration(),
-            delegate = object : NSObject(), NSURLSessionWebSocketDelegateProtocol {
-                override fun URLSession(
-                    session: NSURLSession,
-                    webSocketTask: NSURLSessionWebSocketTask,
-                    didOpenWithProtocol: String?,
-                ) {
-                    log.i { LogMessages.socketDidOpen(active) }
-                    if (webSocketTask == webSocket) {
-                        keepAlive()
-                        listener.onOpen()
-                    }
-                }
+        val urlSession =
+            NSURLSession.sessionWithConfiguration(
+                configuration = NSURLSessionConfiguration.defaultSessionConfiguration(),
+                delegate =
+                    object : NSObject(), NSURLSessionWebSocketDelegateProtocol {
+                        override fun URLSession(
+                            session: NSURLSession,
+                            webSocketTask: NSURLSessionWebSocketTask,
+                            didOpenWithProtocol: String?,
+                        ) {
+                            log.i { LogMessages.socketDidOpen(active) }
+                            if (webSocketTask == webSocket) {
+                                keepAlive()
+                                listener.onOpen()
+                            }
+                        }
 
-                override fun URLSession(
-                    session: NSURLSession,
-                    webSocketTask: NSURLSessionWebSocketTask,
-                    didCloseWithCode: NSURLSessionWebSocketCloseCode,
-                    reason: NSData?,
-                ) {
-                    val why = reason?.string() ?: "Reason not specified."
-                    log.i { LogMessages.socketDidClose(didCloseWithCode, why, active) }
-                    if (webSocketTask == webSocket) {
-                        deactivate()
-                        listener.onClosed(code = didCloseWithCode.toInt(), reason = why)
-                    }
-                }
-            },
-            delegateQueue = NSOperationQueue.currentQueue()
-        )
+                        override fun URLSession(
+                            session: NSURLSession,
+                            webSocketTask: NSURLSessionWebSocketTask,
+                            didCloseWithCode: NSURLSessionWebSocketCloseCode,
+                            reason: NSData?,
+                        ) {
+                            val why = reason?.string() ?: "Reason not specified."
+                            log.i { LogMessages.socketDidClose(didCloseWithCode, why, active) }
+                            if (webSocketTask == webSocket) {
+                                deactivate()
+                                listener.onClosed(code = didCloseWithCode.toInt(), reason = why)
+                            }
+                        }
+                    },
+                delegateQueue = NSOperationQueue.currentQueue()
+            )
         webSocket = urlSession.webSocketTaskWithRequest(urlRequest)
         webSocket?.resume()
         this.listener = listener
@@ -133,32 +135,34 @@ internal actual class PlatformSocket actual constructor(
     private fun keepAlive() {
         if (!pingTimer.isScheduled() && pingInterval > 0) {
             waitingOnPong = false
-            pingTimer = NSTimer.scheduledTimerWithTimeInterval(
-                interval = pingInterval.toDouble(),
-                repeats = true
-            ) {
-                if (waitingOnPong) {
-                    // Prior pong not received within pingInterval. Assume connectivity is lost.
-                    val nsError = NSError(
-                        domain = NSPOSIXErrorDomain,
-                        code = ETIMEDOUT.convert(),
-                        userInfo = null
-                    )
-                    handleError(nsError, "Pong not received within interval [$pingInterval]")
-                    return@scheduledTimerWithTimeInterval
-                }
-
-                waitingOnPong = true
-                log.i { LogMessages.SENDING_PING }
-                sendPing { nsError ->
-                    if (nsError != null) {
-                        handleError(nsError, "Pong handler failure")
-                        return@sendPing
+            pingTimer =
+                NSTimer.scheduledTimerWithTimeInterval(
+                    interval = pingInterval.toDouble(),
+                    repeats = true
+                ) {
+                    if (waitingOnPong) {
+                        // Prior pong not received within pingInterval. Assume connectivity is lost.
+                        val nsError =
+                            NSError(
+                                domain = NSPOSIXErrorDomain,
+                                code = ETIMEDOUT.convert(),
+                                userInfo = null
+                            )
+                        handleError(nsError, "Pong not received within interval [$pingInterval]")
+                        return@scheduledTimerWithTimeInterval
                     }
-                    waitingOnPong = false
-                    log.i { LogMessages.RECEIVED_PONG }
+
+                    waitingOnPong = true
+                    log.i { LogMessages.SENDING_PING }
+                    sendPing { nsError ->
+                        if (nsError != null) {
+                            handleError(nsError, "Pong handler failure")
+                            return@sendPing
+                        }
+                        waitingOnPong = false
+                        log.i { LogMessages.RECEIVED_PONG }
+                    }
                 }
-            }
         }
     }
 

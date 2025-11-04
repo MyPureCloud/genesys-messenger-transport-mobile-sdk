@@ -22,21 +22,25 @@ import transport.util.Response
 import kotlin.test.assertFailsWith
 
 class MessagingClientAutostartTest : BaseMessagingClientTest() {
-
     @Test
     fun `when new session and autostart enabled`() {
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns emptyMap()
-        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
-            messenger = createMessengerVOForTesting(
-                apps = Apps(
-                    conversations = createConversationsVOForTesting(
-                        autoStart = Conversations.AutoStart(
-                            enabled = true
-                        )
+        every { mockDeploymentConfig.get() } returns
+            createDeploymentConfigForTesting(
+                messenger =
+                    createMessengerVOForTesting(
+                        apps =
+                            Apps(
+                                conversations =
+                                    createConversationsVOForTesting(
+                                        autoStart =
+                                            Conversations.AutoStart(
+                                                enabled = true
+                                            )
+                                    )
+                            )
                     )
-                )
             )
-        )
 
         subject.connect()
 
@@ -58,17 +62,22 @@ class MessagingClientAutostartTest : BaseMessagingClientTest() {
         every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             slot.captured.onMessage(Response.configureSuccessWithNewSessionFalse)
         }
-        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
-            messenger = createMessengerVOForTesting(
-                apps = Apps(
-                    conversations = createConversationsVOForTesting(
-                        autoStart = Conversations.AutoStart(
-                            enabled = true
-                        )
+        every { mockDeploymentConfig.get() } returns
+            createDeploymentConfigForTesting(
+                messenger =
+                    createMessengerVOForTesting(
+                        apps =
+                            Apps(
+                                conversations =
+                                    createConversationsVOForTesting(
+                                        autoStart =
+                                            Conversations.AutoStart(
+                                                enabled = true
+                                            )
+                                    )
+                            )
                     )
-                )
             )
-        )
 
         subject.connect()
 
@@ -105,9 +114,10 @@ class MessagingClientAutostartTest : BaseMessagingClientTest() {
     fun `when new session and deploymentConfig not set`() {
         every { mockDeploymentConfig.get() } returns null
 
-        val exception = assertFailsWith<TransportSDKException> {
-            subject.connect()
-        }
+        val exception =
+            assertFailsWith<TransportSDKException> {
+                subject.connect()
+            }
 
         assertThat(exception.errorCode).isEqualTo(ErrorCode.MissingDeploymentConfig)
         assertThat(exception.message).isEqualTo(ErrorMessage.MissingDeploymentConfig)

@@ -45,21 +45,24 @@ internal class MessageStoreTest {
     private val logSlot = mutableListOf<() -> String>()
     private val mockMessageListener: ((MessageEvent) -> Unit) = mockk(relaxed = true)
 
-    private val subject = MessageStore(mockLogger).also {
-        it.messageListener = mockMessageListener
-    }
+    private val subject =
+        MessageStore(mockLogger).also {
+            it.messageListener = mockMessageListener
+        }
 
     @Test
     fun `when prepareMessage()`() {
         val expectedMessage =
             subject.pendingMessage.copy(state = State.Sending, text = "test message")
-        val expectedOnMessageRequest = OnMessageRequest(
-            givenToken,
-            message = TextMessage(
-                "test message",
-                metadata = mapOf("customMessageId" to expectedMessage.id)
-            ),
-        )
+        val expectedOnMessageRequest =
+            OnMessageRequest(
+                givenToken,
+                message =
+                    TextMessage(
+                        "test message",
+                        metadata = mapOf("customMessageId" to expectedMessage.id)
+                    ),
+            )
 
         subject.prepareMessage(TestValues.TOKEN, "test message").run {
             assertThat(token).isEqualTo(expectedOnMessageRequest.token)
@@ -83,7 +86,6 @@ internal class MessageStoreTest {
 
     @Test
     fun `when prepareMessage() is called twice`() {
-
         subject.prepareMessage(TestValues.TOKEN, "message 1")
         subject.prepareMessage(TestValues.TOKEN, "message 2")
 
@@ -121,11 +123,12 @@ internal class MessageStoreTest {
 
     @Test
     fun `when update() inbound message`() {
-        val sentMessageId = subject
-            .prepareMessage(TestValues.TOKEN, "test message")
-            .message.metadata
-            ?.get("customMessageId")
-            ?: "empty"
+        val sentMessageId =
+            subject
+                .prepareMessage(TestValues.TOKEN, "test message")
+                .message.metadata
+                ?.get("customMessageId")
+                ?: "empty"
         val givenMessage =
             Message(id = sentMessageId, state = State.Sent, text = "test message")
         clearMocks(mockMessageListener)
@@ -159,11 +162,12 @@ internal class MessageStoreTest {
 
     @Test
     fun `when update() inbound and then outbound messages`() {
-        val sentMessageId = subject
-            .prepareMessage(TestValues.TOKEN, "test message")
-            .message.metadata
-            ?.get("customMessageId")
-            ?: "empty"
+        val sentMessageId =
+            subject
+                .prepareMessage(TestValues.TOKEN, "test message")
+                .message.metadata
+                ?.get("customMessageId")
+                ?: "empty"
         val expectedConversationSize = 2
         val givenMessage =
             Message(id = sentMessageId, state = State.Sent, text = "test message")
@@ -335,10 +339,11 @@ internal class MessageStoreTest {
     fun `when onMessageError() happens after message being Sent`() {
         val errorMessage = "some test error message"
         val testMessage = "test message"
-        val expectedState = State.Error(
-            ErrorCode.MessageTooLong,
-            errorMessage
-        )
+        val expectedState =
+            State.Error(
+                ErrorCode.MessageTooLong,
+                errorMessage
+            )
         val expectedMessage =
             subject.pendingMessage.copy(
                 state = expectedState,
@@ -386,14 +391,16 @@ internal class MessageStoreTest {
     fun `when prepareMessage() with channel that has customAttributes`() {
         val expectedMessage =
             subject.pendingMessage.copy(state = State.Sending, text = "test message")
-        val expectedOnMessageRequest = OnMessageRequest(
-            givenToken,
-            message = TextMessage(
-                "test message",
-                metadata = mapOf("customMessageId" to expectedMessage.id),
-                channel = Channel(Channel.Metadata(mapOf("A" to "B"))),
-            ),
-        )
+        val expectedOnMessageRequest =
+            OnMessageRequest(
+                givenToken,
+                message =
+                    TextMessage(
+                        "test message",
+                        metadata = mapOf("customMessageId" to expectedMessage.id),
+                        channel = Channel(Channel.Metadata(mapOf("A" to "B"))),
+                    ),
+            )
 
         val onMessageRequest =
             subject.prepareMessage(TestValues.TOKEN, "test message", Channel(Channel.Metadata(mapOf("A" to "B"))))
@@ -416,21 +423,23 @@ internal class MessageStoreTest {
 
     @Test
     fun `when update() message with Direction=Outbound and quick replies`() {
-        val expectedMessage = Message(
-            id = "0",
-            direction = Direction.Outbound,
-            state = State.Sent,
-            messageType = Type.QuickReply,
-            text = "message from bot",
-            timeStamp = 0,
-            attachments = emptyMap(),
-            events = emptyList(),
-            quickReplies = listOf(
-                QuickReplyTestValues.buttonResponse_a,
-                QuickReplyTestValues.buttonResponse_b,
-            ),
-            from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
-        )
+        val expectedMessage =
+            Message(
+                id = "0",
+                direction = Direction.Outbound,
+                state = State.Sent,
+                messageType = Type.QuickReply,
+                text = "message from bot",
+                timeStamp = 0,
+                attachments = emptyMap(),
+                events = emptyList(),
+                quickReplies =
+                    listOf(
+                        QuickReplyTestValues.buttonResponse_a,
+                        QuickReplyTestValues.buttonResponse_b,
+                    ),
+                from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
+            )
 
         subject.update(expectedMessage)
 
@@ -442,20 +451,22 @@ internal class MessageStoreTest {
 
     @Test
     fun `when update() message with Direction=Inbound and quick replies`() {
-        val expectedMessage = Message(
-            id = "0",
-            direction = Direction.Inbound,
-            state = State.Sent,
-            messageType = Type.QuickReply,
-            timeStamp = 0,
-            attachments = emptyMap(),
-            events = emptyList(),
-            quickReplies = listOf(
-                QuickReplyTestValues.buttonResponse_a,
-                QuickReplyTestValues.buttonResponse_b,
-            ),
-            from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
-        )
+        val expectedMessage =
+            Message(
+                id = "0",
+                direction = Direction.Inbound,
+                state = State.Sent,
+                messageType = Type.QuickReply,
+                timeStamp = 0,
+                attachments = emptyMap(),
+                events = emptyList(),
+                quickReplies =
+                    listOf(
+                        QuickReplyTestValues.buttonResponse_a,
+                        QuickReplyTestValues.buttonResponse_b,
+                    ),
+                from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
+            )
 
         subject.update(expectedMessage)
 
@@ -476,20 +487,23 @@ internal class MessageStoreTest {
                 type = Type.QuickReply.name,
                 quickReplies = listOf(givenButtonResponse)
             )
-        val expectedOnMessageRequest = OnMessageRequest(
-            givenToken,
-            message = TextMessage(
-                text = "",
-                content = listOf(
-                    Content(
-                        contentType = Content.Type.ButtonResponse,
-                        buttonResponse = givenButtonResponse
-                    )
-                ),
-                metadata = mapOf("customMessageId" to expectedMessage.id),
-                channel = givenChannel
-            ),
-        )
+        val expectedOnMessageRequest =
+            OnMessageRequest(
+                givenToken,
+                message =
+                    TextMessage(
+                        text = "",
+                        content =
+                            listOf(
+                                Content(
+                                    contentType = Content.Type.ButtonResponse,
+                                    buttonResponse = givenButtonResponse
+                                )
+                            ),
+                        metadata = mapOf("customMessageId" to expectedMessage.id),
+                        channel = givenChannel
+                    ),
+            )
 
         subject.prepareMessageWith(TestValues.TOKEN, givenButtonResponse, givenChannel).run {
             assertThat(token).isEqualTo(expectedOnMessageRequest.token)
@@ -514,19 +528,22 @@ internal class MessageStoreTest {
                 type = Type.QuickReply.name,
                 quickReplies = listOf(givenButtonResponse)
             )
-        val expectedOnMessageRequest = OnMessageRequest(
-            givenToken,
-            message = TextMessage(
-                text = "",
-                content = listOf(
-                    Content(
-                        contentType = Content.Type.ButtonResponse,
-                        buttonResponse = givenButtonResponse
-                    )
-                ),
-                metadata = mapOf("customMessageId" to expectedMessage.id)
-            ),
-        )
+        val expectedOnMessageRequest =
+            OnMessageRequest(
+                givenToken,
+                message =
+                    TextMessage(
+                        text = "",
+                        content =
+                            listOf(
+                                Content(
+                                    contentType = Content.Type.ButtonResponse,
+                                    buttonResponse = givenButtonResponse
+                                )
+                            ),
+                        metadata = mapOf("customMessageId" to expectedMessage.id)
+                    ),
+            )
 
         subject.prepareMessageWith(TestValues.TOKEN, givenButtonResponse).run {
             assertThat(token).isEqualTo(expectedOnMessageRequest.token)
@@ -549,12 +566,13 @@ internal class MessageStoreTest {
     fun `when pending message has uploaded attachment and prepareMessageWith() ButtonResponse`() {
         val givenButtonResponse = QuickReplyTestValues.buttonResponse_a
         val givenAttachment = attachment(state = Attachment.State.Uploaded("http://someurl.com"))
-        val expectedContent = listOf(
-            Content(
-                contentType = Content.Type.ButtonResponse,
-                buttonResponse = givenButtonResponse
+        val expectedContent =
+            listOf(
+                Content(
+                    contentType = Content.Type.ButtonResponse,
+                    buttonResponse = givenButtonResponse
+                )
             )
-        )
         subject.updateAttachmentStateWith(givenAttachment)
 
         val result = subject.prepareMessageWith(TestValues.TOKEN, givenButtonResponse)

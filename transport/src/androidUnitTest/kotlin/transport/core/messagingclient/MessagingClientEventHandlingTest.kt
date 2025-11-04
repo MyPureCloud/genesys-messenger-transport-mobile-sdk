@@ -15,7 +15,6 @@ import transport.util.Response
 import transport.util.fromConfiguredToError
 
 class MessagingClientEventHandlingTest : BaseMessagingClientTest() {
-
     @Test
     fun `when eventListener is set`() {
         val givenEventListener: (Event) -> Unit = {}
@@ -120,10 +119,11 @@ class MessagingClientEventHandlingTest : BaseMessagingClientTest() {
 
     @Test
     fun `when StructuredMessage with inbound event PresenceJoin is received`() {
-        val givenStructuredMessage = Response.structuredMessageWithEvents(
-            direction = Message.Direction.Inbound,
-            events = Response.StructuredEvent.presenceJoin,
-        )
+        val givenStructuredMessage =
+            Response.structuredMessageWithEvents(
+                direction = Message.Direction.Inbound,
+                events = Response.StructuredEvent.presenceJoin,
+            )
         subject.connect()
 
         slot.captured.onMessage(givenStructuredMessage)
@@ -137,10 +137,11 @@ class MessagingClientEventHandlingTest : BaseMessagingClientTest() {
 
     @Test
     fun `when StructuredMessage with inbound event SignIn is received`() {
-        val givenStructuredMessage = Response.structuredMessageWithEvents(
-            direction = Message.Direction.Inbound,
-            events = Response.StructuredEvent.presenceSignIn,
-        )
+        val givenStructuredMessage =
+            Response.structuredMessageWithEvents(
+                direction = Message.Direction.Inbound,
+                events = Response.StructuredEvent.presenceSignIn,
+            )
         subject.connect()
 
         slot.captured.onMessage(givenStructuredMessage)

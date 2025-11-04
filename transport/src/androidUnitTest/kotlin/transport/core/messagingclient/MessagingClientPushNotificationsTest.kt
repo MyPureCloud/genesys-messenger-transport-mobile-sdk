@@ -31,7 +31,6 @@ import transport.util.fromConnectedToConfigured
 import kotlin.coroutines.cancellation.CancellationException
 
 class MessagingClientPushNotificationsTest : BaseMessagingClientTest() {
-
     private val dispatcher: CoroutineDispatcher = Dispatchers.Unconfined
 
     @ExperimentalCoroutinesApi
@@ -49,7 +48,6 @@ class MessagingClientPushNotificationsTest : BaseMessagingClientTest() {
 
     @Test
     fun `when connect() but notifications are disabled in DeploymentConfig`() {
-
         subject.connect()
 
         verifySequence {
@@ -184,18 +182,23 @@ class MessagingClientPushNotificationsTest : BaseMessagingClientTest() {
     }
 
     private fun turnOnNotificationsInDeploymentConfig() {
-        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
-            messenger = createMessengerVOForTesting(
-                apps = Apps(
-                    conversations = createConversationsVOForTesting(
-                        notifications = Conversations.Notifications(
-                            enabled = true,
-                            notificationContentType = NotificationContentType.IncludeMessagesContent
-                        )
+        every { mockDeploymentConfig.get() } returns
+            createDeploymentConfigForTesting(
+                messenger =
+                    createMessengerVOForTesting(
+                        apps =
+                            Apps(
+                                conversations =
+                                    createConversationsVOForTesting(
+                                        notifications =
+                                            Conversations.Notifications(
+                                                enabled = true,
+                                                notificationContentType = NotificationContentType.IncludeMessagesContent
+                                            )
+                                    )
+                            )
                     )
-                )
             )
-        )
     }
 
     private fun assertLogsForPushConfig() {

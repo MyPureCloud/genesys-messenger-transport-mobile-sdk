@@ -30,13 +30,13 @@ data class Message(
     val attachments: Map<String, Attachment> = emptyMap(),
     val events: List<Event> = emptyList(),
     val quickReplies: List<ButtonResponse> = emptyList(),
-    val from: Participant = Participant(
-        originatingEntity = Participant.OriginatingEntity.Human
-    ),
+    val from: Participant =
+        Participant(
+            originatingEntity = Participant.OriginatingEntity.Human
+        ),
     val authenticated: Boolean = false,
     val text: String? = null,
 ) {
-
     /**
      * The enum type representation of the message.
      *

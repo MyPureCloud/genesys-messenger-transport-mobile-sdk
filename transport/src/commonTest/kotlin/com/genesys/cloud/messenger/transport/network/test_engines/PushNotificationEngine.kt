@@ -64,9 +64,10 @@ private fun MockRequestHandleScope.respondToRegisterDeviceToken(request: HttpReq
     } else {
         respondWithPushErrorResponse(
             statusCode = HttpStatusCode.InternalServerError,
-            content = PushTestValues.pushErrorResponseWith(
-                PushTestValues.PUSH_CODE_DEVICE_REGISTRATION_FAILURE
-            )
+            content =
+                PushTestValues.pushErrorResponseWith(
+                    PushTestValues.PUSH_CODE_DEVICE_REGISTRATION_FAILURE
+                )
         )
     }
 }
@@ -79,9 +80,10 @@ private fun MockRequestHandleScope.respondToUpdateDeviceToken(request: HttpReque
     } else {
         respondWithPushErrorResponse(
             statusCode = HttpStatusCode.InternalServerError,
-            content = PushTestValues.pushErrorResponseWith(
-                PushTestValues.PUSH_CODE_DEVICE_UPDATE_FAILURE
-            )
+            content =
+                PushTestValues.pushErrorResponseWith(
+                    PushTestValues.PUSH_CODE_DEVICE_UPDATE_FAILURE
+                )
         )
     }
 }
@@ -92,9 +94,10 @@ private fun MockRequestHandleScope.respondToDeleteDeviceToken(request: HttpReque
     } else {
         respondWithPushErrorResponse(
             statusCode = HttpStatusCode.InternalServerError,
-            content = PushTestValues.pushErrorResponseWith(
-                PushTestValues.PUSH_CODE_DEVICE_DELETE_FAILURE
-            )
+            content =
+                PushTestValues.pushErrorResponseWith(
+                    PushTestValues.PUSH_CODE_DEVICE_DELETE_FAILURE
+                )
         )
     }
 }
@@ -102,10 +105,11 @@ private fun MockRequestHandleScope.respondToDeleteDeviceToken(request: HttpReque
 private fun MockRequestHandleScope.respondSuccess(): HttpResponseData =
     respond(
         status = HttpStatusCode.NoContent,
-        headers = headersOf(
-            HttpHeaders.ContentType,
-            MockEngineValues.CONTENT_TYPE_JSON
-        ),
+        headers =
+            headersOf(
+                HttpHeaders.ContentType,
+                MockEngineValues.CONTENT_TYPE_JSON
+            ),
         content = MockEngineValues.NO_CONTENT
     )
 
@@ -115,9 +119,10 @@ private fun MockRequestHandleScope.respondWithPushErrorResponse(
 ): HttpResponseData =
     respond(
         status = statusCode,
-        headers = headersOf(
-            HttpHeaders.ContentType,
-            MockEngineValues.CONTENT_TYPE_JSON
-        ),
+        headers =
+            headersOf(
+                HttpHeaders.ContentType,
+                MockEngineValues.CONTENT_TYPE_JSON
+            ),
         content = WebMessagingJson.json.encodeToString(content)
     )
