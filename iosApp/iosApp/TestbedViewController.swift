@@ -16,6 +16,7 @@ class TestbedViewController: UIViewController {
     private var cancellables = Set<AnyCancellable>()
     private var pkceEnabled = false
     private var authCode: String? = nil
+    private var idToken: String? = nil
     private var authState: AuthState = AuthState.noAuth
     private var quickRepliesMap = [String: ButtonResponse]()
 
@@ -60,6 +61,8 @@ class TestbedViewController: UIViewController {
         case shouldAuthorize
         case synchronizePush
         case unregisterPush
+        case implicitLogin
+        case implicitAuthorize
 
         var helpDescription: String {
             switch self {
@@ -395,9 +398,65 @@ class TestbedViewController: UIViewController {
         return URL(string: url.absoluteString)
     }
 
-    func setAuthCode(_ authCode: String) {
+    private func buildImplicitAuthorizeUrl() -> URL? {
+        guard let plistPath = Bundle.main.path(forResource: "Okta", ofType: "plist"),
+                let plistData = FileManager.default.contents(atPath: plistPath),
+                let plistDictionary = try? PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any],
+                let oktaDomain = plistDictionary["oktaDomain"] as? String,
+                let clientId = plistDictionary["clientId"] as? String,
+                let signInRedirectURI = plistDictionary["signInRedirectURI"] as? String,
+                let oktaState = plistDictionary["oktaState"] as? String
+        else {
+            return nil
+        }
+
+        var urlComponents = URLComponents(string: "https://\(oktaDomain)/oauth2/default/v1/authorize")!
+        urlComponents.queryItems = [
+            URLQueryItem(name: "client_id", value: clientId),
+            URLQueryItem(name: "response_type", value: "id_token"),
+            URLQueryItem(name: "scope", value: "openid profile email"),
+            URLQueryItem(name: "redirect_uri", value: signInRedirectURI),
+            URLQueryItem(name: "state", value: oktaState),
+            URLQueryItem(name: "nonce", value: UUID().uuidString)
+        ]
+
+        guard let url = urlComponents.url else {
+            return nil
+        }
+
+        return URL(string: url.absoluteString)
+    }
+
+    private func implicitSignIn() {
+        guard let authUrl = buildImplicitAuthorizeUrl() else {
+            authState = AuthState.error(errorCode: ErrorCode.AuthFailed.shared, message: "Failed to build Okta implicit authorize URL.", correctiveAction: CorrectiveAction.ReAuthenticate.shared)
+            updateAuthStateView()
+            return
+        }
+
+        print("doImplicitOktaSignIn: \(authUrl.absoluteString)")
+        if UIApplication.shared.canOpenURL(authUrl) {
+            UIApplication.shared.open(authUrl)
+        }
+    }
+
+    func setAuthCode(_ authCode: String?) {
         self.authCode = authCode
-        authState = AuthState.authCodeReceived(authCode: authCode)
+        if let authCode = authCode {
+            authState = AuthState.authCodeReceived(authCode: authCode)
+        } else {
+            authState = AuthState.noAuth
+        }
+        updateAuthStateView()
+    }
+
+    func setIdToken(_ idToken: String?) {
+        self.idToken = idToken
+        if let idToken = idToken {
+            authState = AuthState.idTokenReceived(idToken: idToken)
+        } else {
+            authState = AuthState.noAuth
+        }
         updateAuthStateView()
     }
 }
@@ -503,6 +562,10 @@ extension TestbedViewController : UITextFieldDelegate {
                 }
                 
                 messenger.authorize(authCode: self.authCode ?? "", redirectUri: signInRedirectURI, codeVerifier: codeVerifier)
+            case (.implicitLogin, _):
+                implicitSignIn()
+            case (.implicitAuthorize, _):
+                messenger.authorizeImplicit(idToken: self.idToken ?? "")
             case (.clearConversation, _):
                 try messenger.clearConversation()
             case (.removeToken, _):
@@ -577,6 +640,7 @@ extension TestbedViewController : UITextFieldDelegate {
 enum AuthState {
     case noAuth
     case authCodeReceived(authCode: String)
+    case idTokenReceived(idToken: String)
     case authorized
     case loggedOut
     case error(errorCode: ErrorCode, message: String?, correctiveAction: CorrectiveAction)

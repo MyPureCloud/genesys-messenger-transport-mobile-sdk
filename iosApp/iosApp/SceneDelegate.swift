@@ -51,18 +51,25 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             return
         }
 
-        if let components = URLComponents(url: urlContext.url, resolvingAgainstBaseURL: false),
+        guard let windowScene = scene as? UIWindowScene,
+              let rootViewController = windowScene.windows.first?.rootViewController as? TestbedViewController else {
+            return
+        }
+
+        let url = urlContext.url
+
+        if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
            let queryItems = components.queryItems {
             for item in queryItems {
                 if item.name == "code", let code = item.value {
-                    if let windowScene = scene as? UIWindowScene,
-                       let rootViewController = windowScene.windows.first?.rootViewController as? TestbedViewController {
-                        rootViewController.setAuthCode(code)
-                    }
+                    rootViewController.setAuthCode(code)
+                    rootViewController.setIdToken(nil)
+                } else if item.name == "id_token", let idToken = item.value {
+                    rootViewController.setIdToken(idToken)
+                    rootViewController.setAuthCode(nil)
                 }
                 break
             }
         }
     }
 }
-
