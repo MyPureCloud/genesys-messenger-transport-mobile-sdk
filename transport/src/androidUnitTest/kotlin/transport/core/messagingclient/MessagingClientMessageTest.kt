@@ -25,7 +25,6 @@ import transport.util.Response
 import kotlin.test.assertFailsWith
 
 class MessagingClientMessageTest : BaseMessagingClientTest() {
-
     @Test
     fun `when messageListener is set`() {
         val givenMessageListener: (MessageEvent) -> Unit = {}

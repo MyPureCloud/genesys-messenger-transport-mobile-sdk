@@ -19,7 +19,6 @@ import transport.util.fromConnectingToConnected
 import kotlin.test.assertFailsWith
 
 class MessagingClientHealthCheckTest : BaseMessagingClientTest() {
-
     @Test
     fun `when send HealthCheck`() {
         val expectedMessage = Request.echo

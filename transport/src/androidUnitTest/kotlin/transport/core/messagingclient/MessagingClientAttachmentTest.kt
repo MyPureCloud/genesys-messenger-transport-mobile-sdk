@@ -36,7 +36,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 class MessagingClientAttachmentTest : BaseMessagingClientTest() {
-
     @Test
     fun `when attach()`() {
         val expectedAttachmentId = "88888888-8888-8888-8888-888888888888"
@@ -88,9 +87,10 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
         clearMocks(mockPlatformSocket)
         every { mockAttachmentHandler.detach(any(), any()) } throws IllegalArgumentException(ErrorMessage.detachFailed(givenAttachmentId))
 
-        val exception = assertFailsWith<IllegalArgumentException> {
-            subject.detach(givenAttachmentId)
-        }
+        val exception =
+            assertFailsWith<IllegalArgumentException> {
+                subject.detach(givenAttachmentId)
+            }
 
         assertThat(exception.message).isEqualTo(ErrorMessage.detachFailed(givenAttachmentId))
 
@@ -141,22 +141,24 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
 
     @Test
     fun `when SocketListener invoke onMessage with Inbound StructuredMessage that contains attachment`() {
-        val expectedAttachment = Attachment(
-            "attachment_id",
-            "image.png",
-            AttachmentValues.FILE_SIZE,
-            Attachment.State.Sent("https://downloadurl.com")
-        )
-        val expectedMessage = Message(
-            id = "msg_id",
-            direction = Direction.Inbound,
-            state = State.Sent,
-            messageType = Type.Text,
-            type = "Text",
-            timeStamp = null,
-            attachments = mapOf("attachment_id" to expectedAttachment),
-            text = "Hi"
-        )
+        val expectedAttachment =
+            Attachment(
+                "attachment_id",
+                "image.png",
+                AttachmentValues.FILE_SIZE,
+                Attachment.State.Sent("https://downloadurl.com")
+            )
+        val expectedMessage =
+            Message(
+                id = "msg_id",
+                direction = Direction.Inbound,
+                state = State.Sent,
+                messageType = Type.Text,
+                type = "Text",
+                timeStamp = null,
+                attachments = mapOf("attachment_id" to expectedAttachment),
+                text = "Hi"
+            )
 
         subject.connect()
 
@@ -229,13 +231,14 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
                 )
             )
         }
-        val expectedFileAttachmentProfile = FileAttachmentProfile(
-            enabled = true,
-            allowedFileTypes = listOf("video/mpg", "video/3gpp"),
-            blockedFileTypes = listOf(".ade", ".adp"),
-            maxFileSizeKB = 10240,
-            hasWildCard = false,
-        )
+        val expectedFileAttachmentProfile =
+            FileAttachmentProfile(
+                enabled = true,
+                allowedFileTypes = listOf("video/mpg", "video/3gpp"),
+                blockedFileTypes = listOf(".ade", ".adp"),
+                maxFileSizeKB = 10240,
+                hasWildCard = false,
+            )
         subject.connect()
         slot.captured.onMessage(Response.configureSuccess())
         every { mockAttachmentHandler.fileAttachmentProfile } returns expectedFileAttachmentProfile
@@ -255,13 +258,14 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
                 )
             )
         }
-        val expectedFileAttachmentProfile = FileAttachmentProfile(
-            enabled = true,
-            allowedFileTypes = listOf("video/3gpp"),
-            blockedFileTypes = listOf(".ade", ".adp"),
-            maxFileSizeKB = 10240,
-            hasWildCard = true,
-        )
+        val expectedFileAttachmentProfile =
+            FileAttachmentProfile(
+                enabled = true,
+                allowedFileTypes = listOf("video/3gpp"),
+                blockedFileTypes = listOf(".ade", ".adp"),
+                maxFileSizeKB = 10240,
+                hasWildCard = true,
+            )
         subject.connect()
         slot.captured.onMessage(Response.configureSuccess())
         every { mockAttachmentHandler.fileAttachmentProfile } returns expectedFileAttachmentProfile
@@ -273,14 +277,16 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
 
     @Test
     fun `when enableAttachments is null and FileUpload Mode is empty`() {
-        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
-            createMessengerVOForTesting(
-                fileUpload = createFileUploadVOForTesting(
-                    enableAttachments = null,
-                    modes = emptyList(),
+        every { mockDeploymentConfig.get() } returns
+            createDeploymentConfigForTesting(
+                createMessengerVOForTesting(
+                    fileUpload =
+                        createFileUploadVOForTesting(
+                            enableAttachments = null,
+                            modes = emptyList(),
+                        )
                 )
             )
-        )
         val fileAttachmentProfileSlot = createFileAttachmentProfileSlot()
         every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             slot.captured.onMessage(
@@ -357,14 +363,15 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
         every { mockPlatformSocket.sendMessage(Request.refreshAttachmentUrl) } answers {
             slot.captured.onMessage(Response.presignedUrlResponse(headers = "", fileSize = 1))
         }
-        val expectedPresignedUrlResponse = PresignedUrlResponse(
-            attachmentId = "88888888-8888-8888-8888-888888888888",
-            headers = emptyMap(),
-            url = "https://downloadUrl.com",
-            fileSize = 1,
-            fileName = "test_asset.png",
-            fileType = "image/jpeg"
-        )
+        val expectedPresignedUrlResponse =
+            PresignedUrlResponse(
+                attachmentId = "88888888-8888-8888-8888-888888888888",
+                headers = emptyMap(),
+                url = "https://downloadUrl.com",
+                fileSize = 1,
+                fileName = "test_asset.png",
+                fileType = "image/jpeg"
+            )
         subject.connect()
 
         subject.refreshAttachmentUrl("88888888-8888-8888-8888-888888888888")
@@ -396,21 +403,23 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
 
     @Test
     fun `when SocketListener invoke onMessage with Outbound StructuredMessage that contains attachment`() {
-        val expectedAttachment = Attachment(
-            "attachment_id",
-            "image.png",
-            AttachmentValues.FILE_SIZE,
-            Attachment.State.Sent("https://downloadurl.com")
-        )
-        val expectedMessage = Message(
-            id = "msg_id",
-            direction = Direction.Outbound,
-            state = State.Sent,
-            messageType = Type.Text,
-            timeStamp = null,
-            attachments = mapOf("attachment_id" to expectedAttachment),
-            text = "Hi"
-        )
+        val expectedAttachment =
+            Attachment(
+                "attachment_id",
+                "image.png",
+                AttachmentValues.FILE_SIZE,
+                Attachment.State.Sent("https://downloadurl.com")
+            )
+        val expectedMessage =
+            Message(
+                id = "msg_id",
+                direction = Direction.Outbound,
+                state = State.Sent,
+                messageType = Type.Text,
+                timeStamp = null,
+                attachments = mapOf("attachment_id" to expectedAttachment),
+                text = "Hi"
+            )
 
         subject.connect()
 
@@ -429,11 +438,12 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
 
     @Test
     fun `when SocketListener invoke OnMessage with UploadSuccessEvent response`() {
-        val expectedEvent = UploadSuccessEvent(
-            attachmentId = AttachmentValues.ID,
-            downloadUrl = AttachmentValues.DOWNLOAD_URL,
-            timestamp = TestValues.TIME_STAMP,
-        )
+        val expectedEvent =
+            UploadSuccessEvent(
+                attachmentId = AttachmentValues.ID,
+                downloadUrl = AttachmentValues.DOWNLOAD_URL,
+                timestamp = TestValues.TIME_STAMP,
+            )
 
         subject.connect()
 
@@ -447,11 +457,12 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
 
     @Test
     fun `when SocketListener invoke OnMessage with PresignedUrlResponse response`() {
-        val expectedEvent = PresignedUrlResponse(
-            attachmentId = AttachmentValues.ID,
-            headers = mapOf(AttachmentValues.PRESIGNED_HEADER_KEY to AttachmentValues.PRESIGNED_HEADER_VALUE),
-            url = AttachmentValues.DOWNLOAD_URL,
-        )
+        val expectedEvent =
+            PresignedUrlResponse(
+                attachmentId = AttachmentValues.ID,
+                headers = mapOf(AttachmentValues.PRESIGNED_HEADER_KEY to AttachmentValues.PRESIGNED_HEADER_VALUE),
+                url = AttachmentValues.DOWNLOAD_URL,
+            )
 
         subject.connect()
 

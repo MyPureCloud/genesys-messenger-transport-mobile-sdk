@@ -25,12 +25,13 @@ internal actual class ReconnectionHandlerImpl actual constructor(
     actual override fun reconnect(reconnectFun: () -> Unit) {
         if (!shouldReconnect) return
         resetDispatcher()
-        reconnectJob = dispatcher.launch {
-            log.i { LogMessages.tryingToReconnect(attempts, maxAttempts) }
-            delay(TIMEOUT_INTERVAL_IN_SECONDS.toMilliseconds())
-            attempts++
-            reconnectFun()
-        }
+        reconnectJob =
+            dispatcher.launch {
+                log.i { LogMessages.tryingToReconnect(attempts, maxAttempts) }
+                delay(TIMEOUT_INTERVAL_IN_SECONDS.toMilliseconds())
+                attempts++
+                reconnectFun()
+            }
     }
 
     actual override fun clear() {

@@ -131,19 +131,21 @@ open class BaseMessagingClientTest {
         }
     }
 
-    private val mockWebMessagingApi: WebMessagingApi = mockk {
-        coEvery {
-            getMessages(
-                any(),
-                any(),
-                any()
-            )
-        } returns Result.Success(TestWebMessagingApiResponses.testMessageEntityList)
-    }
+    private val mockWebMessagingApi: WebMessagingApi =
+        mockk {
+            coEvery {
+                getMessages(
+                    any(),
+                    any(),
+                    any()
+                )
+            } returns Result.Success(TestWebMessagingApiResponses.testMessageEntityList)
+        }
 
-    internal val mockReconnectionHandler: ReconnectionHandlerImpl = mockk(relaxed = true) {
-        every { shouldReconnect } returns false
-    }
+    internal val mockReconnectionHandler: ReconnectionHandlerImpl =
+        mockk(relaxed = true) {
+            every { shouldReconnect } returns false
+        }
 
     internal val mockEventHandler: EventHandler = mockk(relaxed = true)
     protected val mockTimestampFunction: () -> Long = spyk<() -> Long>().also {
@@ -168,52 +170,56 @@ open class BaseMessagingClientTest {
         }
     }
 
-    internal val mockCustomAttributesStore: CustomAttributesStoreImpl = mockk(relaxed = true) {
-        val dummyCustomAttributes = mutableMapOf("A" to "B")
-        every { get() } returns dummyCustomAttributes
-        every { getCustomAttributesToSend() } returns dummyCustomAttributes
-        every { add(eq(emptyMap())) } returns true.also { dummyCustomAttributes.clear() }
-    }
+    internal val mockCustomAttributesStore: CustomAttributesStoreImpl =
+        mockk(relaxed = true) {
+            val dummyCustomAttributes = mutableMapOf("A" to "B")
+            every { get() } returns dummyCustomAttributes
+            every { getCustomAttributesToSend() } returns dummyCustomAttributes
+            every { add(eq(emptyMap())) } returns true.also { dummyCustomAttributes.clear() }
+        }
 
-    internal val mockVault: DefaultVault = mockk {
-        every { fetch(TOKEN_KEY) } returns testToken
-        every { token } returns testToken
-        every { remove(TOKEN_KEY) } answers { testToken = TestValues.SECONDARY_TOKEN }
-        every { keys } returns TestValues.vaultKeys
-        justRun { wasAuthenticated = any() }
-        every { pushConfig } returns DEFAULT_PUSH_CONFIG
-    }
+    internal val mockVault: DefaultVault =
+        mockk {
+            every { fetch(TOKEN_KEY) } returns testToken
+            every { token } returns testToken
+            every { remove(TOKEN_KEY) } answers { testToken = TestValues.SECONDARY_TOKEN }
+            every { keys } returns TestValues.vaultKeys
+            justRun { wasAuthenticated = any() }
+            every { pushConfig } returns DEFAULT_PUSH_CONFIG
+        }
     internal val mockJwtHandler: JwtHandler = mockk(relaxed = true)
     internal val mockHistoryHandler: HistoryHandler = mockk(relaxed = true)
 
     internal val mockLogger: Log = mockk(relaxed = true)
     internal val logSlot = mutableListOf<() -> String>()
-    internal val mockPushService: PushService = mockk {
-        coEvery { synchronize(any(), any()) } just Runs
-    }
+    internal val mockPushService: PushService =
+        mockk {
+            coEvery { synchronize(any(), any()) } just Runs
+        }
 
-    internal val subject = MessagingClientImpl(
-        log = mockLogger,
-        configuration = TestValues.configuration,
-        webSocket = mockPlatformSocket,
-        api = mockWebMessagingApi,
-        token = testToken,
-        jwtHandler = mockJwtHandler,
-        vault = mockVault,
-        attachmentHandler = mockAttachmentHandler,
-        messageStore = mockMessageStore,
-        reconnectionHandler = mockReconnectionHandler,
-        eventHandler = mockEventHandler,
-        userTypingProvider = userTypingProvider,
-        healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),
-        deploymentConfig = mockDeploymentConfig,
-        authHandler = mockAuthHandler,
-        internalCustomAttributesStore = mockCustomAttributesStore,
-        pushService = mockPushService,
-        historyHandler = mockHistoryHandler,
-    ).also {
-        it.stateChangedListener = mockStateChangedListener
-    }
+    internal val subject =
+        MessagingClientImpl(
+            log = mockLogger,
+            configuration = TestValues.configuration,
+            webSocket = mockPlatformSocket,
+            api = mockWebMessagingApi,
+            token = testToken,
+            jwtHandler = mockJwtHandler,
+            vault = mockVault,
+            attachmentHandler = mockAttachmentHandler,
+            messageStore = mockMessageStore,
+            reconnectionHandler = mockReconnectionHandler,
+            eventHandler = mockEventHandler,
+            userTypingProvider = userTypingProvider,
+            healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),
+            deploymentConfig = mockDeploymentConfig,
+            authHandler = mockAuthHandler,
+            internalCustomAttributesStore = mockCustomAttributesStore,
+            pushService = mockPushService,
+            historyHandler = mockHistoryHandler,
+        ).also {
+            it.stateChangedListener = mockStateChangedListener
+        }
 
     @AfterTest
     fun resetTracingIds() {
@@ -275,14 +281,16 @@ open class BaseMessagingClientTest {
         expectedCloseCode: Int = 1000,
         expectedCloseReason: String = "The user has closed the connection.",
     ) {
-        val fromConfiguredToClosing = StateChange(
-            oldState = MessagingClient.State.Configured(connected = true, newSession = true),
-            newState = MessagingClient.State.Closing(expectedCloseCode, expectedCloseReason)
-        )
-        val fromClosingToClosed = StateChange(
-            oldState = MessagingClient.State.Closing(expectedCloseCode, expectedCloseReason),
-            newState = MessagingClient.State.Closed(expectedCloseCode, expectedCloseReason)
-        )
+        val fromConfiguredToClosing =
+            StateChange(
+                oldState = MessagingClient.State.Configured(connected = true, newSession = true),
+                newState = MessagingClient.State.Closing(expectedCloseCode, expectedCloseReason)
+            )
+        val fromClosingToClosed =
+            StateChange(
+                oldState = MessagingClient.State.Closing(expectedCloseCode, expectedCloseReason),
+                newState = MessagingClient.State.Closed(expectedCloseCode, expectedCloseReason)
+            )
         mockLogger.i(capture(logSlot))
         mockReconnectionHandler.clear()
         mockStateChangedListener(fromConfiguredToClosing)
@@ -313,5 +321,4 @@ open class BaseMessagingClientTest {
         mockJwtHandler.clear()
         mockCustomAttributesStore.onSessionClosed()
     }
-
 }

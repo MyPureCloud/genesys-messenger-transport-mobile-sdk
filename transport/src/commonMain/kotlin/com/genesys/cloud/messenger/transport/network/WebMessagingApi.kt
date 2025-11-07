@@ -37,7 +37,6 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import kotlinx.serialization.encodeToString
 import kotlin.coroutines.cancellation.CancellationException
 
 internal class WebMessagingApi(
@@ -45,7 +44,6 @@ internal class WebMessagingApi(
     private val configuration: Configuration,
     private val client: HttpClient = defaultHttpClient(configuration.logging),
 ) {
-
     /**
      * Returns Result.Success<MessageEntityList> upon successful response and parsing.
      * Otherwise, return Result.Failure with description the failure.
@@ -56,16 +54,18 @@ internal class WebMessagingApi(
         pageSize: Int = DEFAULT_PAGE_SIZE,
     ): Result<MessageEntityList> =
         try {
-            val response = client.get(urls.history.toString()) {
-                headerAuthorizationBearer(jwt)
-                headerOrigin(configuration.domain)
-                parameter("pageNumber", pageNumber)
-                parameter("pageSize", pageSize)
-            }
+            val response =
+                client.get(urls.history.toString()) {
+                    headerAuthorizationBearer(jwt)
+                    headerOrigin(configuration.domain)
+                    parameter("pageNumber", pageNumber)
+                    parameter("pageSize", pageSize)
+                }
             if (response.status.isSuccess()) {
                 Result.Success(response.body())
             } else {
-                Result.Failure(ErrorCode.mapFrom(response.status.value), response.body())
+                val code = ErrorCode.mapFrom(response.status.value)
+                Result.Failure(code, response.body())
             }
         } catch (cancellationException: CancellationException) {
             Result.Failure(ErrorCode.CancellationError, cancellationException.message)
@@ -79,25 +79,27 @@ internal class WebMessagingApi(
         progressCallback: ((Float) -> Unit)?,
     ): Result<Empty> =
         try {
-            val response = client.put(presignedUrlResponse.url) {
-                presignedUrlResponse.headers.forEach {
-                    header(it.key, it.value)
-                }
-                presignedUrlResponse.fileName?.let {
-                    val resolvedType = resolveContentType(it)
-                    contentType(resolvedType)
-                }
-                onUpload { bytesSendTotal: Long, contentLength: Long? ->
-                    progressCallback?.let {
-                        it((bytesSendTotal / (contentLength ?: bytesSendTotal).toFloat()) * 100)
+            val response =
+                client.put(presignedUrlResponse.url) {
+                    presignedUrlResponse.headers.forEach {
+                        header(it.key, it.value)
                     }
+                    presignedUrlResponse.fileName?.let {
+                        val resolvedType = resolveContentType(it)
+                        contentType(resolvedType)
+                    }
+                    onUpload { bytesSendTotal: Long, contentLength: Long? ->
+                        progressCallback?.let {
+                            it((bytesSendTotal / (contentLength ?: bytesSendTotal).toFloat()) * 100)
+                        }
+                    }
+                    setBody(byteArray)
                 }
-                setBody(byteArray)
-            }
             if (response.status.isSuccess()) {
                 Result.Success(Empty())
             } else {
-                Result.Failure(ErrorCode.mapFrom(response.status.value), response.body<String>())
+                val code = ErrorCode.mapFrom(response.status.value)
+                Result.Failure(code, response.body<String>())
             }
         } catch (cancellationException: CancellationException) {
             Result.Failure(ErrorCode.CancellationError, cancellationException.message)
@@ -111,19 +113,21 @@ internal class WebMessagingApi(
         codeVerifier: String?,
     ): Result<AuthJwt> =
         try {
-            val requestBody = AuthJwtRequest(
-                deploymentId = configuration.deploymentId,
-                oauth = OAuth(
-                    code = authCode,
-                    redirectUri = redirectUri,
-                    codeVerifier = codeVerifier,
+            val requestBody =
+                AuthJwtRequest(
+                    deploymentId = configuration.deploymentId,
+                    oauth =
+                        OAuth(
+                            code = authCode,
+                            redirectUri = redirectUri,
+                            codeVerifier = codeVerifier,
+                        )
                 )
-            )
-            val response = client.post(urls.jwtAuthUrl.toString()) {
-                header("content-type", ContentType.Application.Json)
-                setBody(requestBody)
-                retryOnServerErrors()
-            }
+            val response =
+                client.post(urls.jwtAuthUrl.toString()) {
+                    header("content-type", ContentType.Application.Json)
+                    setBody(requestBody)
+                }
             if (response.status.isSuccess()) {
                 Result.Success(response.body())
             } else {
@@ -137,9 +141,10 @@ internal class WebMessagingApi(
 
     suspend fun logoutFromAuthenticatedSession(jwt: String): Result<Empty> =
         try {
-            val response = client.delete(urls.logoutUrl.toString()) {
-                headerAuthorizationBearer(jwt)
-            }
+            val response =
+                client.delete(urls.logoutUrl.toString()) {
+                    headerAuthorizationBearer(jwt)
+                }
             if (response.status.isSuccess()) {
                 Result.Success(Empty())
             } else {
@@ -155,10 +160,11 @@ internal class WebMessagingApi(
 
     suspend fun refreshAuthJwt(refreshToken: String): Result<AuthJwt> =
         try {
-            val response = client.post(urls.refreshAuthTokenUrl.toString()) {
-                header("content-type", ContentType.Application.Json)
-                setBody(RefreshToken(refreshToken))
-            }
+            val response =
+                client.post(urls.refreshAuthTokenUrl.toString()) {
+                    header("content-type", ContentType.Application.Json)
+                    setBody(RefreshToken(refreshToken))
+                }
             if (response.status.isSuccess()) {
                 Result.Success(response.body())
             } else {
@@ -190,12 +196,12 @@ internal class WebMessagingApi(
     ): Result<Empty> =
         try {
             val url = urls.deviceTokenUrl(configuration.deploymentId, userPushConfig.token.lowercase())
-            val response = client.request(url) {
-                this.method = operation.httpMethod
-                header("content-type", ContentType.Application.Json)
-                setBody(userPushConfig.toDeviceTokenRequestBody(operation))
-                retryOnServerErrors()
-            }
+            val response =
+                client.request(url) {
+                    this.method = operation.httpMethod
+                    header("content-type", ContentType.Application.Json)
+                    setBody(userPushConfig.toDeviceTokenRequestBody(operation))
+                }
 
             if (response.status.isSuccess()) {
                 Result.Success(Empty())
@@ -222,21 +228,23 @@ private fun HttpRequestBuilder.headerOrigin(origin: String) = header(HttpHeaders
 
 internal fun PushConfig.toDeviceTokenRequestBody(operation: DeviceTokenOperation): String =
     when (operation) {
-        DeviceTokenOperation.Register -> WebMessagingJson.json.encodeToString(
-            DeviceTokenRequestBody(
-                deviceToken = deviceToken,
-                notificationProvider = pushProvider,
-                language = preferredLanguage,
-                deviceType = deviceType,
+        DeviceTokenOperation.Register ->
+            WebMessagingJson.json.encodeToString(
+                DeviceTokenRequestBody(
+                    deviceToken = deviceToken,
+                    notificationProvider = pushProvider,
+                    language = preferredLanguage,
+                    deviceType = deviceType,
+                )
             )
-        )
 
-        DeviceTokenOperation.Update -> WebMessagingJson.json.encodeToString(
-            DeviceTokenRequestBody(
-                deviceToken = deviceToken,
-                language = preferredLanguage,
+        DeviceTokenOperation.Update ->
+            WebMessagingJson.json.encodeToString(
+                DeviceTokenRequestBody(
+                    deviceToken = deviceToken,
+                    language = preferredLanguage,
+                )
             )
-        )
 
         DeviceTokenOperation.Delete -> ""
     }

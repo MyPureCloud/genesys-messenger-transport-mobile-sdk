@@ -57,26 +57,29 @@ object TestValues {
     internal const val TRACING_ID = "test-tracing-id"
 
     internal const val HISTORY_PAGE_ONE = 1
-    internal val vaultKeys = Vault.Keys(
-        vaultKey = VAULT_KEY,
-        tokenKey = TOKEN_KEY,
-        authRefreshTokenKey = AUTH_REFRESH_TOKEN_KEY,
-        wasAuthenticated = WAS_AUTHENTICATED,
-        pushConfigKey = PUSH_CONFIG_KEY,
-    )
-    internal val migrationTestData = mapOf(
-        TOKEN_KEY to TOKEN,
-        AUTH_REFRESH_TOKEN_KEY to SECONDARY_TOKEN,
-        WAS_AUTHENTICATED to TRUE_STRING,
-        CUSTOM_KEY to DEFAULT_STRING,
-        INT_KEY to 123,
-        BOOLEAN_KEY to false
-    )
+    internal val vaultKeys =
+        Vault.Keys(
+            vaultKey = VAULT_KEY,
+            tokenKey = TOKEN_KEY,
+            authRefreshTokenKey = AUTH_REFRESH_TOKEN_KEY,
+            wasAuthenticated = WAS_AUTHENTICATED,
+            pushConfigKey = PUSH_CONFIG_KEY,
+        )
+    internal val migrationTestData =
+        mapOf(
+            TOKEN_KEY to TOKEN,
+            AUTH_REFRESH_TOKEN_KEY to SECONDARY_TOKEN,
+            WAS_AUTHENTICATED to TRUE_STRING,
+            CUSTOM_KEY to DEFAULT_STRING,
+            INT_KEY to 123,
+            BOOLEAN_KEY to false
+        )
 
-    internal val configuration = Configuration(
-        deploymentId = DEPLOYMENT_ID,
-        domain = DOMAIN,
-    )
+    internal val configuration =
+        Configuration(
+            deploymentId = DEPLOYMENT_ID,
+            domain = DOMAIN,
+        )
 
     internal val application = "TransportSDK-${MessengerTransportSDK.sdkVersion}"
 }
@@ -107,10 +110,11 @@ object InvalidValues {
     internal const val CANCELLATION_EXCEPTION = "cancellation_exception"
     internal const val UNKNOWN_EXCEPTION = "unknown_exception"
 
-    internal val configuration = Configuration(
-        deploymentId = DEPLOYMENT_ID,
-        domain = DOMAIN,
-    )
+    internal val configuration =
+        Configuration(
+            deploymentId = DEPLOYMENT_ID,
+            domain = DOMAIN,
+        )
 }
 
 object MessageValues {
@@ -178,28 +182,31 @@ object QuickReplyTestValues {
     internal const val QUICK_REPLY = "QuickReply"
     internal const val BUTTON_RESPONSE = "ButtonResponse"
 
-    internal val buttonResponse_a = ButtonResponse(
-        text = TEXT_A,
-        payload = PAYLOAD_A,
-        type = QUICK_REPLY
-    )
+    internal val buttonResponse_a =
+        ButtonResponse(
+            text = TEXT_A,
+            payload = PAYLOAD_A,
+            type = QUICK_REPLY
+        )
 
-    internal val buttonResponse_b = ButtonResponse(
-        text = TEXT_B,
-        payload = PAYLOAD_B,
-        type = QUICK_REPLY
-    )
+    internal val buttonResponse_b =
+        ButtonResponse(
+            text = TEXT_B,
+            payload = PAYLOAD_B,
+            type = QUICK_REPLY
+        )
 
     internal fun createQuickReplyContentForTesting(
         text: String = TEXT_A,
         payload: String = PAYLOAD_A,
     ) = QuickReplyContent(
         contentType = StructuredMessage.Content.Type.QuickReply.name,
-        quickReply = QuickReplyContent.QuickReply(
-            text = text,
-            payload = payload,
-            action = "action"
-        )
+        quickReply =
+            QuickReplyContent.QuickReply(
+                text = text,
+                payload = payload,
+                action = "action"
+            )
     )
 
     internal fun createButtonResponseContentForTesting(
@@ -207,11 +214,12 @@ object QuickReplyTestValues {
         payload: String = PAYLOAD_A,
     ) = ButtonResponseContent(
         contentType = StructuredMessage.Content.Type.ButtonResponse.name,
-        buttonResponse = ButtonResponseContent.ButtonResponse(
-            text = text,
-            payload = payload,
-            type = QUICK_REPLY,
-        )
+        buttonResponse =
+            ButtonResponseContent.ButtonResponse(
+                text = text,
+                payload = payload,
+                type = QUICK_REPLY,
+            )
     )
 }
 
@@ -230,14 +238,15 @@ object StructuredMessageValues {
 }
 
 object PushTestValues {
-    internal val CONFIG = PushConfig(
-        token = TestValues.TOKEN,
-        deviceToken = TestValues.DEVICE_TOKEN,
-        preferredLanguage = TestValues.PREFERRED_LANGUAGE,
-        lastSyncTimestamp = TestValues.PUSH_SYNC_TIMESTAMP,
-        deviceType = TestValues.DEVICE_TYPE,
-        pushProvider = TestValues.PUSH_PROVIDER,
-    )
+    internal val CONFIG =
+        PushConfig(
+            token = TestValues.TOKEN,
+            deviceToken = TestValues.DEVICE_TOKEN,
+            preferredLanguage = TestValues.PREFERRED_LANGUAGE,
+            lastSyncTimestamp = TestValues.PUSH_SYNC_TIMESTAMP,
+            deviceType = TestValues.DEVICE_TYPE,
+            pushProvider = TestValues.PUSH_PROVIDER,
+        )
 
     internal fun pushErrorResponseWith(
         code: String,
@@ -249,11 +258,12 @@ object PushTestValues {
         contextId = TestValues.DEFAULT_STRING,
     )
 
-    internal val DEVICE_TOKEN_EXCEPTION = DeviceTokenException(
-        errorCode = ErrorCode.DeviceTokenOperationFailure,
-        message = TestValues.DEFAULT_STRING,
-        cause = null,
-    )
+    internal val DEVICE_TOKEN_EXCEPTION =
+        DeviceTokenException(
+            errorCode = ErrorCode.DeviceTokenOperationFailure,
+            message = TestValues.DEFAULT_STRING,
+            cause = null,
+        )
     const val PUSH_CODE_DEPLOYMENT_NOT_FOUND = "deployment.not.found"
     const val PUSH_CODE_DEVICE_REGISTRATION_FAILURE = "device.registration.failure"
     const val PUSH_CODE_DEVICE_UPDATE_FAILURE = "device.update.failure"

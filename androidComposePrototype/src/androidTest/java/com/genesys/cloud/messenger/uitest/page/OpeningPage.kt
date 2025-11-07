@@ -10,7 +10,6 @@ import com.genesys.cloud.messenger.uitest.support.testConfig
 import java.lang.Thread.sleep
 
 class OpeningPage(activity: Activity) : BasePage(activity) {
-
     val title = "Deployment ID"
     val regionDefault = "inindca.com"
     val tcaEnvironment = "inintca.com"

@@ -215,11 +215,12 @@ internal fun PushErrorResponse.toErrorCode(): ErrorCode =
         "too.many.requests.retry.after" -> ErrorCode.RequestRateTooHigh
         "identity.resolution.disabled" -> ErrorCode.DeviceRegistrationFailure
         "required.fields.missing", "update.fields.missing" -> ErrorCode.MissingParameter
-        "invalid.path.parameter" -> if (message == DEPLOYMENT_ID_MISMATCH_ERROR_MESSAGE) {
-            ErrorCode.DeploymentIdMismatch
-        } else {
-            ErrorCode.DeviceTokenOperationFailure
-        }
+        "invalid.path.parameter" ->
+            if (message == DEPLOYMENT_ID_MISMATCH_ERROR_MESSAGE) {
+                ErrorCode.DeploymentIdMismatch
+            } else {
+                ErrorCode.DeviceTokenOperationFailure
+            }
 
         else -> ErrorCode.DeviceTokenOperationFailure
     }

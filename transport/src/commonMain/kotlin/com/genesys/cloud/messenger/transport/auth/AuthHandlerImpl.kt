@@ -80,11 +80,12 @@ internal class AuthHandlerImpl(
 
     override fun refreshToken(callback: (Result<Empty>) -> Unit) {
         if (!autoRefreshTokenWhenExpired || !authJwt.hasRefreshToken()) {
-            val message = if (!autoRefreshTokenWhenExpired) {
-                ErrorMessage.AutoRefreshTokenDisabled
-            } else {
-                ErrorMessage.NoRefreshToken
-            }
+            val message =
+                if (!autoRefreshTokenWhenExpired) {
+                    ErrorMessage.AutoRefreshTokenDisabled
+                } else {
+                    ErrorMessage.NoRefreshToken
+                }
             log.e { LogMessages.couldNotRefreshAuthToken(message) }
             callback(Result.Failure(ErrorCode.RefreshAuthTokenFailure, message))
             return

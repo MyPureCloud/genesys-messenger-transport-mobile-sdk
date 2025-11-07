@@ -10,44 +10,42 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
-import io.ktor.client.plugins.retry
-import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 
 private const val TIMEOUT_IN_MS = 30000L
 private const val MAX_RETRIES_ON_SERVER_ERRORS = 3
-private const val DELAY_BETWEEN_RETRIES_IN_MILLISECONDS = 5000L
-private val RETRYABLE_STATUS_CODES = setOf(
-    HttpStatusCode.InternalServerError,
-    HttpStatusCode.BadGateway,
-    HttpStatusCode.ServiceUnavailable,
-    HttpStatusCode.GatewayTimeout,
-)
+private const val EXPONENTIAL_DELAY_BASE = 3.0
+
+private val RETRYABLE_STATUS_CODES =
+    setOf(
+        HttpStatusCode.InternalServerError,
+        HttpStatusCode.BadGateway,
+        HttpStatusCode.ServiceUnavailable,
+        HttpStatusCode.GatewayTimeout,
+    )
 
 internal fun defaultHttpClient(logging: Boolean = false): HttpClient =
     HttpClient {
         if (logging) {
             install(Logging) {
-                this.logger = Log(logging, LogTag.HTTP_CLIENT).ktorLogger
+                logger = Log(logging, LogTag.HTTP_CLIENT).ktorLogger
                 level = LogLevel.INFO
             }
         }
-        install(ContentNegotiation) {
-            json(WebMessagingJson.json)
-        }
+        install(ContentNegotiation) { json(WebMessagingJson.json) }
         install(HttpCallValidator)
         install(HttpTimeout) {
             socketTimeoutMillis = TIMEOUT_IN_MS
             connectTimeoutMillis = TIMEOUT_IN_MS
         }
-        install(HttpRequestRetry)
-    }
+        install(HttpRequestRetry) {
+            maxRetries = MAX_RETRIES_ON_SERVER_ERRORS
 
-internal fun HttpRequestBuilder.retryOnServerErrors() {
-    retry {
-        maxRetries = MAX_RETRIES_ON_SERVER_ERRORS
-        constantDelay(DELAY_BETWEEN_RETRIES_IN_MILLISECONDS)
-        retryIf { _, response -> response.status in RETRYABLE_STATUS_CODES }
+            retryIf { request, response ->
+                response.status in RETRYABLE_STATUS_CODES
+            }
+
+            exponentialDelay(base = EXPONENTIAL_DELAY_BASE)
+        }
     }
-}

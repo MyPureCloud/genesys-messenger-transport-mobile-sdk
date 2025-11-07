@@ -27,7 +27,6 @@ import transport.util.Request
 import transport.util.Response
 
 class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
-
     @Test
     fun `when getCustomAttributesStore()`() {
         val result = subject.customAttributesStore
@@ -95,15 +94,19 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
 
     @Test
     fun `when autostart request is sent with customAttributes`() {
-        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
-            messenger = createMessengerVOForTesting(
-                apps = Apps(
-                    conversations = createConversationsVOForTesting(
-                        autoStart = Conversations.AutoStart(enabled = true)
+        every { mockDeploymentConfig.get() } returns
+            createDeploymentConfigForTesting(
+                messenger =
+                    createMessengerVOForTesting(
+                        apps =
+                            Apps(
+                                conversations =
+                                    createConversationsVOForTesting(
+                                        autoStart = Conversations.AutoStart(enabled = true)
+                                    )
+                            )
                     )
-                )
             )
-        )
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mapOf("A" to "B")
 
         subject.connect()
@@ -122,15 +125,19 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
     fun `when autostart request is sent with customAttributes size that is too large`() {
         val expectedCustomAttributesErrorMessage = "Custom Attributes in channel metadata is larger than 2048 bytes"
         val fakeLargeCustomAttribute = "This Custom Attribute is too large and will be rejected."
-        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
-            messenger = createMessengerVOForTesting(
-                apps = Apps(
-                    conversations = createConversationsVOForTesting(
-                        autoStart = Conversations.AutoStart(enabled = true)
+        every { mockDeploymentConfig.get() } returns
+            createDeploymentConfigForTesting(
+                messenger =
+                    createMessengerVOForTesting(
+                        apps =
+                            Apps(
+                                conversations =
+                                    createConversationsVOForTesting(
+                                        autoStart = Conversations.AutoStart(enabled = true)
+                                    )
+                            )
                     )
-                )
             )
-        )
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mutableMapOf("A" to fakeLargeCustomAttribute)
         every { mockPlatformSocket.sendMessage(Request.autostart(""""channel":{"metadata":{"customAttributes":{"A":"$fakeLargeCustomAttribute"}}},""")) } answers {
             slot.captured.onMessage(Response.customAttributeSizeTooLarge)

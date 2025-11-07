@@ -38,14 +38,16 @@ internal fun HttpClientConfig<MockEngineConfig>.deploymentConfigEngine() {
                             else -> {
                                 respond(
                                     status = HttpStatusCode.OK,
-                                    headers = headersOf(
-                                        HttpHeaders.ContentType,
-                                        "application/json"
-                                    ),
-                                    content = Json.encodeToString(
-                                        DeploymentConfig.serializer(),
-                                        createDeploymentConfigForTesting()
-                                    )
+                                    headers =
+                                        headersOf(
+                                            HttpHeaders.ContentType,
+                                            "application/json"
+                                        ),
+                                    content =
+                                        Json.encodeToString(
+                                            DeploymentConfig.serializer(),
+                                            createDeploymentConfigForTesting()
+                                        )
                                 )
                             }
                         }

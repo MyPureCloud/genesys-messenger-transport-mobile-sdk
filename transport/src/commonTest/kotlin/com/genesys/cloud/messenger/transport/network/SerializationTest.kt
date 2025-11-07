@@ -43,7 +43,6 @@ import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
 class SerializationTest {
-
     @Test
     fun `when ConfigureSessionRequest then encodes`() {
         val journeyContext = JourneyContext(
@@ -187,24 +186,27 @@ class SerializationTest {
               }
             }
             """.trimIndent()
-        val expectedSessionResponseMessage = WebMessagingMessage(
-            type = MessageType.Response.value,
-            code = 200,
-            body = SessionResponse(
-                connected = true,
-                newSession = true,
-                readOnly = false,
-                maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES,
-                allowedMedia = AllowedMedia(
-                    Inbound(
-                        fileTypes = listOf(FileType("*/*"), FileType("video/3gpp")),
-                        maxFileSizeKB = 10240,
-                    ),
-                ),
-                blockedExtensions = listOf(".ade"),
-                clearedExistingSession = false,
+        val expectedSessionResponseMessage =
+            WebMessagingMessage(
+                type = MessageType.Response.value,
+                code = 200,
+                body =
+                    SessionResponse(
+                        connected = true,
+                        newSession = true,
+                        readOnly = false,
+                        maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES,
+                        allowedMedia =
+                            AllowedMedia(
+                                Inbound(
+                                    fileTypes = listOf(FileType("*/*"), FileType("video/3gpp")),
+                                    maxFileSizeKB = 10240,
+                                ),
+                            ),
+                        blockedExtensions = listOf(".ade"),
+                        clearedExistingSession = false,
+                    )
             )
-        )
 
         val message = decode(json)
 
@@ -277,16 +279,18 @@ class SerializationTest {
     fun `when PresignedUrlResponse then decodes`() {
         val json =
             """{"type":"response","class":"PresignedUrlResponse","code":200,"body":{"attachmentId":"abcd-1234","headers":{"x-amz-tagging":"organizationId=1234&originPlatform=PureCloud&role=Darth&owner=Dev-CloudAppsDarth@genesys.com"},"url":"https://uploads.url/foo.png"}}"""
-        val presignedUrlResponse = PresignedUrlResponse(
-            attachmentId = "abcd-1234",
-            headers = mapOf("x-amz-tagging" to "organizationId=1234&originPlatform=PureCloud&role=Darth&owner=Dev-CloudAppsDarth@genesys.com"),
-            url = "https://uploads.url/foo.png"
-        )
-        val expectedPresignedUrlResponseMessage = WebMessagingMessage(
-            type = MessageType.Response.value,
-            code = 200,
-            body = presignedUrlResponse
-        )
+        val presignedUrlResponse =
+            PresignedUrlResponse(
+                attachmentId = "abcd-1234",
+                headers = mapOf("x-amz-tagging" to "organizationId=1234&originPlatform=PureCloud&role=Darth&owner=Dev-CloudAppsDarth@genesys.com"),
+                url = "https://uploads.url/foo.png"
+            )
+        val expectedPresignedUrlResponseMessage =
+            WebMessagingMessage(
+                type = MessageType.Response.value,
+                code = 200,
+                body = presignedUrlResponse
+            )
 
         val message = decode(json)
 
@@ -300,16 +304,18 @@ class SerializationTest {
     fun `when UploadSuccessEvent then decodes`() {
         val json =
             """{"type":"message","class":"UploadSuccessEvent","code":200,"body":{"attachmentId":"abcd-1234","downloadUrl":"https://uploads.url/foo.png","timestamp":"2021-04-21T14:03:09.581Z"}}"""
-        val uploadSuccessEvent = UploadSuccessEvent(
-            attachmentId = "abcd-1234",
-            downloadUrl = "https://uploads.url/foo.png",
-            timestamp = "2021-04-21T14:03:09.581Z"
-        )
-        val expectedUploadSuccessEventMessage = WebMessagingMessage(
-            type = MessageType.Message.value,
-            code = 200,
-            body = uploadSuccessEvent
-        )
+        val uploadSuccessEvent =
+            UploadSuccessEvent(
+                attachmentId = "abcd-1234",
+                downloadUrl = "https://uploads.url/foo.png",
+                timestamp = "2021-04-21T14:03:09.581Z"
+            )
+        val expectedUploadSuccessEventMessage =
+            WebMessagingMessage(
+                type = MessageType.Message.value,
+                code = 200,
+                body = uploadSuccessEvent
+            )
 
         val message = decode(json)
 
@@ -323,15 +329,17 @@ class SerializationTest {
     fun `when JwtResponse then decodes`() {
         val json =
             """{"type":"response","class":"JwtResponse","code":200,"body":{"jwt":"expected-jwt-token","exp":1623675564}}"""
-        val jwtResponse = JwtResponse(
-            jwt = "expected-jwt-token",
-            exp = 1623675564
-        )
-        val expectedJwtResponse = WebMessagingMessage(
-            type = MessageType.Response.value,
-            code = 200,
-            body = jwtResponse
-        )
+        val jwtResponse =
+            JwtResponse(
+                jwt = "expected-jwt-token",
+                exp = 1623675564
+            )
+        val expectedJwtResponse =
+            WebMessagingMessage(
+                type = MessageType.Response.value,
+                code = 200,
+                body = jwtResponse
+            )
 
         val message = decode(json)
 
@@ -351,17 +359,19 @@ class SerializationTest {
     fun `when UploadFailureEvent then decodes`() {
         val json =
             """{"type":"message","class":"UploadFailureEvent","code":200,"body":{"attachmentId":"abcd-1234","errorCode":4001,"errorMessage":"error message", "timestamp":"2021-04-21T14:03:09.581Z"}}"""
-        val uploadFailureEvent = UploadFailureEvent(
-            attachmentId = "abcd-1234",
-            errorCode = 4001,
-            errorMessage = "error message",
-            timestamp = "2021-04-21T14:03:09.581Z"
-        )
-        val expectedUploadFailureEventMessage = WebMessagingMessage(
-            type = MessageType.Message.value,
-            code = 200,
-            body = uploadFailureEvent
-        )
+        val uploadFailureEvent =
+            UploadFailureEvent(
+                attachmentId = "abcd-1234",
+                errorCode = 4001,
+                errorMessage = "error message",
+                timestamp = "2021-04-21T14:03:09.581Z"
+            )
+        val expectedUploadFailureEventMessage =
+            WebMessagingMessage(
+                type = MessageType.Message.value,
+                code = 200,
+                body = uploadFailureEvent
+            )
 
         val message = decode(json)
 
@@ -375,16 +385,18 @@ class SerializationTest {
     fun `when GenerateUrlErrorEvent then decodes`() {
         val json =
             """{"type":"message","class":"GenerateUrlError","code":200,"body":{"attachmentId":"abcd-1234","errorCode":4001,"errorMessage":"error message"}}"""
-        val generateUrlError = GenerateUrlError(
-            attachmentId = "abcd-1234",
-            errorCode = 4001,
-            errorMessage = "error message",
-        )
-        val expectedGenerateUrlErrorMessage = WebMessagingMessage(
-            type = MessageType.Message.value,
-            code = 200,
-            body = generateUrlError
-        )
+        val generateUrlError =
+            GenerateUrlError(
+                attachmentId = "abcd-1234",
+                errorCode = 4001,
+                errorMessage = "error message",
+            )
+        val expectedGenerateUrlErrorMessage =
+            WebMessagingMessage(
+                type = MessageType.Message.value,
+                code = 200,
+                body = generateUrlError
+            )
 
         val message = decode(json)
 
@@ -400,16 +412,18 @@ class SerializationTest {
             """
             {"type":"response","class":"TooManyRequestsErrorMessage","code":429,"body":{"retryAfter":3,"errorCode":4029,"errorMessage":"Message rate too high for this session"}}
             """.trimIndent()
-        val expectedTooManyRequestsErrorBody = TooManyRequestsErrorMessage(
-            retryAfter = 3,
-            errorCode = 4029,
-            errorMessage = "Message rate too high for this session"
-        )
-        val expectedTooManyRequestsError = WebMessagingMessage(
-            type = MessageType.Response.value,
-            code = 429,
-            body = expectedTooManyRequestsErrorBody
-        )
+        val expectedTooManyRequestsErrorBody =
+            TooManyRequestsErrorMessage(
+                retryAfter = 3,
+                errorCode = 4029,
+                errorMessage = "Message rate too high for this session"
+            )
+        val expectedTooManyRequestsError =
+            WebMessagingMessage(
+                type = MessageType.Response.value,
+                code = 429,
+                body = expectedTooManyRequestsErrorBody
+            )
 
         val message = decode(json)
 
@@ -443,10 +457,11 @@ class SerializationTest {
 
     @Test
     fun `when ConfigureAuthenticatedSessionRequest then encodes`() {
-        val journeyContext = JourneyContext(
-            JourneyCustomer("00000000-0000-0000-0000-000000000000", "cookie"),
-            JourneyCustomerSession("", "web"),
-        )
+        val journeyContext =
+            JourneyContext(
+                JourneyCustomer("00000000-0000-0000-0000-000000000000", "cookie"),
+                JourneyCustomerSession("", "web"),
+            )
         val data = ConfigureAuthenticatedSessionRequest.Data("<auth_token>")
         val encodedString = WebMessagingJson.json.encodeToString(
             ConfigureAuthenticatedSessionRequest(

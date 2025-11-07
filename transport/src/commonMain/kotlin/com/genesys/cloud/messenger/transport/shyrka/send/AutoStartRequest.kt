@@ -18,13 +18,14 @@ internal data class AutoStartRequest(
     @Required
     override val action: String = RequestAction.ON_MESSAGE.value
     @Required
-    val message: EventMessage = EventMessage(
-        listOf(
-            PresenceEvent(
-                eventType = StructuredMessageEvent.Type.Presence,
-                presence = PresenceEvent.Presence(type = PresenceEvent.Presence.Type.Join),
-            )
-        ),
-        channel = channel,
-    )
+    val message: EventMessage =
+        EventMessage(
+            listOf(
+                PresenceEvent(
+                    eventType = StructuredMessageEvent.Type.Presence,
+                    presence = PresenceEvent.Presence(type = PresenceEvent.Presence.Type.Join),
+                )
+            ),
+            channel = channel,
+        )
 }

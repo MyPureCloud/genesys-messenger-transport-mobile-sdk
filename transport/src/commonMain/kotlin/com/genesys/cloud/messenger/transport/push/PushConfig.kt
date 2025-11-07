@@ -16,11 +16,12 @@ internal data class PushConfig(
     val pushProvider: PushProvider?,
 )
 
-internal val DEFAULT_PUSH_CONFIG = PushConfig(
-    token = UNKNOWN,
-    deviceToken = UNKNOWN,
-    preferredLanguage = UNKNOWN,
-    lastSyncTimestamp = UNKNOWN_LONG,
-    deviceType = UNKNOWN,
-    pushProvider = null,
-)
+internal val DEFAULT_PUSH_CONFIG =
+    PushConfig(
+        token = UNKNOWN,
+        deviceToken = UNKNOWN,
+        preferredLanguage = UNKNOWN,
+        lastSyncTimestamp = UNKNOWN_LONG,
+        deviceType = UNKNOWN,
+        pushProvider = null,
+    )
