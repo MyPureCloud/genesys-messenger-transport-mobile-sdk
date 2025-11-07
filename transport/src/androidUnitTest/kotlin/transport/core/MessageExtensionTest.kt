@@ -59,38 +59,42 @@ import org.junit.Test
 internal class MessageExtensionTest {
     @Test
     fun `when MessageEntityList toMessageList()`() {
-        val expectedMessage1 = Message(
-            id = "message1_id",
-            direction = Direction.Outbound,
-            state = State.Sent,
-            messageType = Type.Text,
-            text = "\uD83E\uDD2A",
-            timeStamp = 1398892191411L,
-            from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
-        )
-        val expectedMessage2 = Message(
-            id = "message2_id",
-            direction = Direction.Inbound,
-            state = State.Sent,
-            messageType = Type.Event,
-            text = "customer msg 7",
-            timeStamp = null,
-            events = listOf(Event.ConversationAutostart),
-            from = Participant(originatingEntity = Participant.OriginatingEntity.Human),
-        )
-        val expectedMessage3 = Message(
-            id = "message3_id",
-            direction = Direction.Outbound,
-            state = State.Sent,
-            messageType = Type.QuickReply,
-            text = "quick reply text",
-            timeStamp = null,
-            quickReplies = listOf(
-                QuickReplyTestValues.buttonResponse_a,
-                QuickReplyTestValues.buttonResponse_b,
-            ),
-            from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
-        )
+        val expectedMessage1 =
+            Message(
+                id = "message1_id",
+                direction = Direction.Outbound,
+                state = State.Sent,
+                messageType = Type.Text,
+                text = "\uD83E\uDD2A",
+                timeStamp = 1398892191411L,
+                from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
+            )
+        val expectedMessage2 =
+            Message(
+                id = "message2_id",
+                direction = Direction.Inbound,
+                state = State.Sent,
+                messageType = Type.Event,
+                text = "customer msg 7",
+                timeStamp = null,
+                events = listOf(Event.ConversationAutostart),
+                from = Participant(originatingEntity = Participant.OriginatingEntity.Human),
+            )
+        val expectedMessage3 =
+            Message(
+                id = "message3_id",
+                direction = Direction.Outbound,
+                state = State.Sent,
+                messageType = Type.QuickReply,
+                text = "quick reply text",
+                timeStamp = null,
+                quickReplies =
+                    listOf(
+                        QuickReplyTestValues.buttonResponse_a,
+                        QuickReplyTestValues.buttonResponse_b,
+                    ),
+                from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
+            )
 
         val result = TestWebMessagingApiResponses.testMessageEntityList.entities.toMessageList()
 
@@ -99,44 +103,50 @@ internal class MessageExtensionTest {
 
     @Test
     fun `when inbound StructuredMessage toMessage()`() {
-        val givenStructuredMessage = StructuredMessage(
-            id = "id",
-            channel = StructuredMessage.Channel(
-                time = isoTestTimestamp,
-                from = StructuredMessage.Participant(
-                    nickname = "Bob",
-                    firstName = MessageValues.PARTICIPANT_NAME,
-                    lastName = MessageValues.PARTICIPANT_LAST_NAME,
-                    image = "http://image.png",
-                )
-            ),
-            type = StructuredMessage.Type.Text,
-            text = "test text",
-            content = listOf(
-                StructuredMessage.Content.AttachmentContent(
-                    contentType = "Attachment",
-                    attachment = StructuredMessage.Content.AttachmentContent.Attachment(
-                        id = "test attachment id",
-                        url = "http://test.com",
-                        filename = "test.png",
-                        mediaType = "image/png",
-                    )
-                )
-            ),
-            direction = "Inbound",
-            metadata = emptyMap(),
-            events = listOf(
-                PresenceEvent(
-                    eventType = StructuredMessageEvent.Type.Presence,
-                    presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Join)
-                ),
-                PresenceEvent(
-                    eventType = StructuredMessageEvent.Type.Presence,
-                    presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.SignIn)
-                )
-            ),
-            tracingId = "test custom id"
-        )
+        val givenStructuredMessage =
+            StructuredMessage(
+                id = "id",
+                channel =
+                    StructuredMessage.Channel(
+                        time = isoTestTimestamp,
+                        from =
+                            StructuredMessage.Participant(
+                                nickname = "Bob",
+                                firstName = MessageValues.PARTICIPANT_NAME,
+                                lastName = MessageValues.PARTICIPANT_LAST_NAME,
+                                image = "http://image.png",
+                            )
+                    ),
+                type = StructuredMessage.Type.Text,
+                text = "test text",
+                content =
+                    listOf(
+                        StructuredMessage.Content.AttachmentContent(
+                            contentType = "Attachment",
+                            attachment =
+                                StructuredMessage.Content.AttachmentContent.Attachment(
+                                    id = "test attachment id",
+                                    url = "http://test.com",
+                                    filename = "test.png",
+                                    mediaType = "image/png",
+                                )
+                        )
+                    ),
+                direction = "Inbound",
+                metadata = emptyMap(),
+                events =
+                    listOf(
+                        PresenceEvent(
+                            eventType = StructuredMessageEvent.Type.Presence,
+                            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Join)
+                        ),
+                        PresenceEvent(
+                            eventType = StructuredMessageEvent.Type.Presence,
+                            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.SignIn)
+                        )
+                    ),
+                tracingId = "test custom id"
+            )
         val expectedMessage =
             Message(
                 id = "id",
@@ -538,19 +548,21 @@ internal class MessageExtensionTest {
 
     @Test
     fun `when MessageEntityList serialized`() {
-        val givenStructuredMessage = StructuredMessage(
-            id = "some_id",
-            type = StructuredMessage.Type.Text,
-            direction = "Inbound",
-            tracingId = TestValues.TRACING_ID
-        )
-        val givenMessageEntityList = MessageEntityList(
-            entities = listOf(givenStructuredMessage),
-            pageSize = MessageValues.PAGE_SIZE,
-            pageNumber = MessageValues.PAGE_NUMBER,
-            total = MessageValues.TOTAL,
-            pageCount = MessageValues.PAGE_COUNT,
-        )
+        val givenStructuredMessage =
+            StructuredMessage(
+                id = "some_id",
+                type = StructuredMessage.Type.Text,
+                direction = "Inbound",
+                tracingId = TestValues.TRACING_ID
+            )
+        val givenMessageEntityList =
+            MessageEntityList(
+                entities = listOf(givenStructuredMessage),
+                pageSize = MessageValues.PAGE_SIZE,
+                pageNumber = MessageValues.PAGE_NUMBER,
+                total = MessageValues.TOTAL,
+                pageCount = MessageValues.PAGE_COUNT,
+            )
 
         val expectedMessageEntityListAsJson =
             """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound","tracingId":"${TestValues.TRACING_ID}"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
@@ -564,19 +576,21 @@ internal class MessageExtensionTest {
     fun `when MessageEntityList deserialized`() {
         val givenMessageEntityListAsJson =
             """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound","tracingId":"${TestValues.TRACING_ID}"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
-        val expectedStructuredMessage = StructuredMessage(
-            id = "some_id",
-            type = StructuredMessage.Type.Text,
-            direction = "Inbound",
-            tracingId = TestValues.TRACING_ID
-        )
-        val expectedMessageEntityList = MessageEntityList(
-            entities = listOf(expectedStructuredMessage),
-            pageSize = MessageValues.PAGE_SIZE,
-            pageNumber = MessageValues.PAGE_NUMBER,
-            total = MessageValues.TOTAL,
-            pageCount = MessageValues.PAGE_COUNT,
-        )
+        val expectedStructuredMessage =
+            StructuredMessage(
+                id = "some_id",
+                type = StructuredMessage.Type.Text,
+                direction = "Inbound",
+                tracingId = TestValues.TRACING_ID
+            )
+        val expectedMessageEntityList =
+            MessageEntityList(
+                entities = listOf(expectedStructuredMessage),
+                pageSize = MessageValues.PAGE_SIZE,
+                pageNumber = MessageValues.PAGE_NUMBER,
+                total = MessageValues.TOTAL,
+                pageCount = MessageValues.PAGE_COUNT,
+            )
 
         val result =
             WebMessagingJson.json.decodeFromString<MessageEntityList>(givenMessageEntityListAsJson)

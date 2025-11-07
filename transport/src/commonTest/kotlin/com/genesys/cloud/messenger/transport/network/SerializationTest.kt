@@ -45,19 +45,21 @@ import kotlin.test.assertFailsWith
 class SerializationTest {
     @Test
     fun `when ConfigureSessionRequest then encodes`() {
-        val journeyContext = JourneyContext(
-            JourneyCustomer("00000000-0000-0000-0000-000000000000", "cookie"),
-            JourneyCustomerSession("", "web"),
-        )
-        val encodedString = WebMessagingJson.json.encodeToString(
-            ConfigureSessionRequest(
-                token = "<token>",
-                deploymentId = "<deploymentId>",
-                startNew = false,
-                journeyContext = journeyContext,
-                tracingId = TestValues.TRACING_ID,
+        val journeyContext =
+            JourneyContext(
+                JourneyCustomer("00000000-0000-0000-0000-000000000000", "cookie"),
+                JourneyCustomerSession("", "web"),
             )
-        )
+        val encodedString =
+            WebMessagingJson.json.encodeToString(
+                ConfigureSessionRequest(
+                    token = "<token>",
+                    deploymentId = "<deploymentId>",
+                    startNew = false,
+                    journeyContext = journeyContext,
+                    tracingId = TestValues.TRACING_ID,
+                )
+            )
 
         assertThat(encodedString, "encoded ConfigureSessionRequest")
             .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","startNew":false,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"tracingId":"${TestValues.TRACING_ID}","action":"configureSession"}""")
@@ -82,21 +84,24 @@ class SerializationTest {
         assertThat(encodedString, "encoded OnMessageRequest")
             .isEqualTo("""{"token":"<token>","message":{"text":"Hello world","type":"Text"},"tracingId":"${TestValues.TRACING_ID}","action":"onMessage"}""")
 
-        val messageWithAttachmentAndCustomAttributesRequest = OnMessageRequest(
-            token = "<token>",
-            message = TextMessage(
-                text = "Hello world",
-                metadata = mapOf("id" to "aaa-bbb-ccc"),
-                content = listOf(
-                    Message.Content(
-                        contentType = Message.Content.Type.Attachment,
-                        attachment = Attachment("abcd-1234"),
-                    )
-                ),
-                channel = Channel(Channel.Metadata(mapOf("A" to "B"))),
-            ),
-            tracingId = TestValues.TRACING_ID,
-        )
+        val messageWithAttachmentAndCustomAttributesRequest =
+            OnMessageRequest(
+                token = "<token>",
+                message =
+                    TextMessage(
+                        text = "Hello world",
+                        metadata = mapOf("id" to "aaa-bbb-ccc"),
+                        content =
+                            listOf(
+                                Message.Content(
+                                    contentType = Message.Content.Type.Attachment,
+                                    attachment = Attachment("abcd-1234"),
+                                )
+                            ),
+                        channel = Channel(Channel.Metadata(mapOf("A" to "B"))),
+                    ),
+                tracingId = TestValues.TRACING_ID,
+            )
 
         encodedString =
             WebMessagingJson.json.encodeToString(messageWithAttachmentAndCustomAttributesRequest)
@@ -107,15 +112,16 @@ class SerializationTest {
 
     @Test
     fun `when OnAttachmentRequest then encodes`() {
-        val attachmentRequest = OnAttachmentRequest(
-            token = "<token>",
-            attachmentId = "00000000-0000-0000-0000-000000000001",
-            fileName = "foo.png",
-            fileType = "image/png",
-            fileSize = 424242,
-            errorsAsJson = true,
-            tracingId = TestValues.TRACING_ID,
-        )
+        val attachmentRequest =
+            OnAttachmentRequest(
+                token = "<token>",
+                attachmentId = "00000000-0000-0000-0000-000000000001",
+                fileName = "foo.png",
+                fileType = "image/png",
+                fileSize = 424242,
+                errorsAsJson = true,
+                tracingId = TestValues.TRACING_ID,
+            )
 
         val encodedString = WebMessagingJson.json.encodeToString(attachmentRequest)
 
@@ -246,26 +252,29 @@ class SerializationTest {
               }
             }
             """.trimIndent()
-        val channel = StructuredMessage.Channel(
-            time = "2020-12-09T15:40:07.247Z",
-            type = "Private",
-            to = StructuredMessage.Participant(firstName = "Peter", lastName = "Parker"),
-            from = StructuredMessage.Participant(firstName = "Tony", lastName = "Stark")
-        )
-        val structuredMessage = StructuredMessage(
-            text = "This is the message from another participant",
-            direction = "Outbound",
-            id = "00000000-0000-0000-0000-000000000000",
-            channel = channel,
-            type = StructuredMessage.Type.Text,
-            content = listOf(),
-            tracingId = TestValues.TRACING_ID
-        )
-        val expectedUnsolicitedMessage = WebMessagingMessage(
-            type = MessageType.Message.value,
-            code = 200,
-            body = structuredMessage
-        )
+        val channel =
+            StructuredMessage.Channel(
+                time = "2020-12-09T15:40:07.247Z",
+                type = "Private",
+                to = StructuredMessage.Participant(firstName = "Peter", lastName = "Parker"),
+                from = StructuredMessage.Participant(firstName = "Tony", lastName = "Stark")
+            )
+        val structuredMessage =
+            StructuredMessage(
+                text = "This is the message from another participant",
+                direction = "Outbound",
+                id = "00000000-0000-0000-0000-000000000000",
+                channel = channel,
+                type = StructuredMessage.Type.Text,
+                content = listOf(),
+                tracingId = TestValues.TRACING_ID
+            )
+        val expectedUnsolicitedMessage =
+            WebMessagingMessage(
+                type = MessageType.Message.value,
+                code = 200,
+                body = structuredMessage
+            )
 
         val message = decode(json)
 
@@ -443,13 +452,14 @@ class SerializationTest {
 
     @Test
     fun `when CloseSessionRequest then encodes`() {
-        val encodedString = WebMessagingJson.json.encodeToString(
-            CloseSessionRequest(
-                token = "<token>",
-                closeAllConnections = true,
-                tracingId = TestValues.TRACING_ID,
+        val encodedString =
+            WebMessagingJson.json.encodeToString(
+                CloseSessionRequest(
+                    token = "<token>",
+                    closeAllConnections = true,
+                    tracingId = TestValues.TRACING_ID,
+                )
             )
-        )
 
         assertThat(encodedString, "encoded CloseSessionRequest")
             .isEqualTo("""{"token":"<token>","closeAllConnections":true,"tracingId":"${TestValues.TRACING_ID}","action":"closeSession"}""")
@@ -463,16 +473,17 @@ class SerializationTest {
                 JourneyCustomerSession("", "web"),
             )
         val data = ConfigureAuthenticatedSessionRequest.Data("<auth_token>")
-        val encodedString = WebMessagingJson.json.encodeToString(
-            ConfigureAuthenticatedSessionRequest(
-                token = "<token>",
-                deploymentId = "<deploymentId>",
-                startNew = false,
-                journeyContext = journeyContext,
-                data = data,
-                tracingId = TestValues.TRACING_ID,
+        val encodedString =
+            WebMessagingJson.json.encodeToString(
+                ConfigureAuthenticatedSessionRequest(
+                    token = "<token>",
+                    deploymentId = "<deploymentId>",
+                    startNew = false,
+                    journeyContext = journeyContext,
+                    data = data,
+                    tracingId = TestValues.TRACING_ID,
+                )
             )
-        )
 
         assertThat(encodedString, "encoded ConfigureAuthenticatedSessionRequest")
             .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","startNew":false,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"data":{"code":"<auth_token>"},"tracingId":"${TestValues.TRACING_ID}","action":"configureAuthenticatedSession"}""")
@@ -492,30 +503,34 @@ class SerializationTest {
     @Test
     fun `when StructuredMessage with attachment and unknown content`() {
         val givenStructuredMessage = """{"type":"message","class":"StructuredMessage","code":200,"body":{"direction":"Outbound","id":"msg_id","type":"Text","text":"Hi","content":[{"fakeContent":{"foo":"bar"},"contentType":"FakeContent"},{"attachment":{"id":"attachment_id","filename":"image.png","mediaType":"Image","url":"https://downloadurl.com"},"contentType":"Attachment"}],"originatingEntity":"Human","tracingId":"${TestValues.TRACING_ID}"}}"""
-        val expectedStructuredMessage = WebMessagingMessage(
-            type = "message",
-            code = 200,
-            body = StructuredMessage(
-                id = "msg_id",
-                type = StructuredMessage.Type.Text,
-                text = "Hi",
-                direction = "Outbound",
-                content = listOf(
-                    StructuredMessage.Content.UnknownContent,
-                    StructuredMessage.Content.AttachmentContent(
-                        contentType = "Attachment",
-                        attachment = StructuredMessage.Content.AttachmentContent.Attachment(
-                            id = "attachment_id",
-                            url = "https://downloadurl.com",
-                            filename = "image.png",
-                            mediaType = "Image",
-                        )
+        val expectedStructuredMessage =
+            WebMessagingMessage(
+                type = "message",
+                code = 200,
+                body =
+                    StructuredMessage(
+                        id = "msg_id",
+                        type = StructuredMessage.Type.Text,
+                        text = "Hi",
+                        direction = "Outbound",
+                        content =
+                            listOf(
+                                StructuredMessage.Content.UnknownContent,
+                                StructuredMessage.Content.AttachmentContent(
+                                    contentType = "Attachment",
+                                    attachment =
+                                        StructuredMessage.Content.AttachmentContent.Attachment(
+                                            id = "attachment_id",
+                                            url = "https://downloadurl.com",
+                                            filename = "image.png",
+                                            mediaType = "Image",
+                                        )
+                                )
+                            ),
+                        originatingEntity = "Human",
+                        tracingId = TestValues.TRACING_ID
                     )
-                ),
-                originatingEntity = "Human",
-                tracingId = TestValues.TRACING_ID
             )
-        )
         val result = WebMessagingJson.decodeFromString(givenStructuredMessage)
 
         assertThat(result).isEqualTo(expectedStructuredMessage)
@@ -523,12 +538,13 @@ class SerializationTest {
 
     @Test
     fun `when ClearConversationRequest then encodes`() {
-        val encodedString = WebMessagingJson.json.encodeToString(
-            ClearConversationRequest(
-                token = "<token>",
-                tracingId = TestValues.TRACING_ID,
+        val encodedString =
+            WebMessagingJson.json.encodeToString(
+                ClearConversationRequest(
+                    token = "<token>",
+                    tracingId = TestValues.TRACING_ID,
+                )
             )
-        )
 
         assertThat(encodedString, "encoded ClearConversationRequest")
             .isEqualTo("""{"token":"<token>","tracingId":"${TestValues.TRACING_ID}","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Clear"}}],"type":"Event"}}""")

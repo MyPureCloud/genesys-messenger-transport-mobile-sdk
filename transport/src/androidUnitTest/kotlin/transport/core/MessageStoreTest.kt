@@ -44,21 +44,24 @@ internal class MessageStoreTest {
     private val mockLogger: Log = mockk(relaxed = true)
     private val logSlot = mutableListOf<() -> String>()
     private val mockMessageListener: ((MessageEvent) -> Unit) = mockk(relaxed = true)
-    private val subject = MessageStore(mockLogger).also {
-        it.messageListener = mockMessageListener
-    }
+    private val subject =
+        MessageStore(mockLogger).also {
+            it.messageListener = mockMessageListener
+        }
 
     @Test
     fun `when prepareMessage()`() {
         val expectedMessage =
             subject.pendingMessage.copy(state = State.Sending, text = "test message")
-        val expectedOnMessageRequest = OnMessageRequest(
-            givenToken,
-            message = TextMessage(
-                "test message",
-            ),
-            tracingId = TestValues.TRACING_ID
-        )
+        val expectedOnMessageRequest =
+            OnMessageRequest(
+                givenToken,
+                message =
+                    TextMessage(
+                        "test message",
+                    ),
+                tracingId = TestValues.TRACING_ID
+            )
 
         subject.prepareMessage(TestValues.TOKEN, "test message").run {
             assertThat(token).isEqualTo(expectedOnMessageRequest.token)
@@ -347,7 +350,7 @@ internal class MessageStoreTest {
         (messageSlot.captured as MessageEvent.MessageUpdated).message.run {
             assertThat(this).isEqualTo(expectedMessage)
             assertThat((state as State.Error).code).isEqualTo(expectedState.code)
-            assertThat((state as State.Error).message).isEqualTo(expectedState.message)
+            assertThat(state.message).isEqualTo(expectedState.message)
         }
     }
 
@@ -379,14 +382,16 @@ internal class MessageStoreTest {
     fun `when prepareMessage() with channel that has customAttributes`() {
         val expectedMessage =
             subject.pendingMessage.copy(state = State.Sending, text = "test message")
-        val expectedOnMessageRequest = OnMessageRequest(
-            givenToken,
-            message = TextMessage(
-                "test message",
-                channel = Channel(Channel.Metadata(mapOf("A" to "B"))),
-            ),
-            tracingId = TestValues.TRACING_ID
-        )
+        val expectedOnMessageRequest =
+            OnMessageRequest(
+                givenToken,
+                message =
+                    TextMessage(
+                        "test message",
+                        channel = Channel(Channel.Metadata(mapOf("A" to "B"))),
+                    ),
+                tracingId = TestValues.TRACING_ID
+            )
 
         val onMessageRequest =
             subject.prepareMessage(TestValues.TOKEN, "test message", Channel(Channel.Metadata(mapOf("A" to "B"))))
@@ -473,20 +478,23 @@ internal class MessageStoreTest {
                 type = Type.QuickReply.name,
                 quickReplies = listOf(givenButtonResponse)
             )
-        val expectedOnMessageRequest = OnMessageRequest(
-            givenToken,
-            message = TextMessage(
-                text = "",
-                content = listOf(
-                    Content(
-                        contentType = Content.Type.ButtonResponse,
-                        buttonResponse = givenButtonResponse
-                    )
-                ),
-                channel = givenChannel
-            ),
-            tracingId = TestValues.TRACING_ID
-        )
+        val expectedOnMessageRequest =
+            OnMessageRequest(
+                givenToken,
+                message =
+                    TextMessage(
+                        text = "",
+                        content =
+                            listOf(
+                                Content(
+                                    contentType = Content.Type.ButtonResponse,
+                                    buttonResponse = givenButtonResponse
+                                )
+                            ),
+                        channel = givenChannel
+                    ),
+                tracingId = TestValues.TRACING_ID
+            )
 
         subject.prepareMessageWith(TestValues.TOKEN, givenButtonResponse, givenChannel).run {
             assertThat(token).isEqualTo(expectedOnMessageRequest.token)
@@ -511,19 +519,22 @@ internal class MessageStoreTest {
                 type = Type.QuickReply.name,
                 quickReplies = listOf(givenButtonResponse)
             )
-        val expectedOnMessageRequest = OnMessageRequest(
-            givenToken,
-            message = TextMessage(
-                text = "",
-                content = listOf(
-                    Content(
-                        contentType = Content.Type.ButtonResponse,
-                        buttonResponse = givenButtonResponse
-                    )
-                ),
-            ),
-            tracingId = TestValues.TRACING_ID
-        )
+        val expectedOnMessageRequest =
+            OnMessageRequest(
+                givenToken,
+                message =
+                    TextMessage(
+                        text = "",
+                        content =
+                            listOf(
+                                Content(
+                                    contentType = Content.Type.ButtonResponse,
+                                    buttonResponse = givenButtonResponse
+                                )
+                            ),
+                    ),
+                tracingId = TestValues.TRACING_ID
+            )
 
         subject.prepareMessageWith(TestValues.TOKEN, givenButtonResponse).run {
             assertThat(token).isEqualTo(expectedOnMessageRequest.token)

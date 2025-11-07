@@ -103,16 +103,17 @@ internal class AttachmentHandlerTest {
                 State.Presigning
             )
         val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(AttachmentValues.FILE_SIZE))
-        val expectedOnAttachmentRequest = OnAttachmentRequest(
-            token = TestValues.TOKEN,
-            attachmentId = AttachmentValues.ID,
-            fileName = AttachmentValues.FILE_NAME,
-            fileType = "image/png",
-            fileSize = AttachmentValues.FILE_SIZE,
-            null,
-            true,
-            tracingId = TestValues.TRACING_ID
-        )
+        val expectedOnAttachmentRequest =
+            OnAttachmentRequest(
+                token = TestValues.TOKEN,
+                attachmentId = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                fileType = "image/png",
+                fileSize = AttachmentValues.FILE_SIZE,
+                null,
+                true,
+                tracingId = TestValues.TRACING_ID
+            )
 
         val onAttachmentRequest =
             subject.prepare(TestValues.TOKEN, AttachmentValues.ID, ByteArray(AttachmentValues.FILE_SIZE), AttachmentValues.FILE_NAME)
@@ -141,16 +142,17 @@ internal class AttachmentHandlerTest {
                 State.Presigning
             )
         val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(AttachmentValues.FILE_SIZE))
-        val expectedOnAttachmentRequest = OnAttachmentRequest(
-            token = TestValues.TOKEN,
-            attachmentId = AttachmentValues.ID,
-            fileName = AttachmentValues.TXT_FILE_NAME,
-            fileType = "text/plain",
-            fileSize = AttachmentValues.FILE_SIZE,
-            null,
-            true,
-            tracingId = TestValues.TRACING_ID
-        )
+        val expectedOnAttachmentRequest =
+            OnAttachmentRequest(
+                token = TestValues.TOKEN,
+                attachmentId = AttachmentValues.ID,
+                fileName = AttachmentValues.TXT_FILE_NAME,
+                fileType = "text/plain",
+                fileSize = AttachmentValues.FILE_SIZE,
+                null,
+                true,
+                tracingId = TestValues.TRACING_ID
+            )
 
         val onAttachmentRequest =
             subject.prepare(TestValues.TOKEN, AttachmentValues.ID, ByteArray(AttachmentValues.FILE_SIZE), AttachmentValues.TXT_FILE_NAME)
@@ -591,16 +593,17 @@ internal class AttachmentHandlerTest {
 
     @Test
     fun `when prepare() but fileAttachmentProfile is not set`() {
-        val expectedOnAttachmentRequest = OnAttachmentRequest(
-            token = TestValues.TOKEN,
-            attachmentId = AttachmentValues.ID,
-            fileName = AttachmentValues.FILE_NAME,
-            fileType = "image/png",
-            2000,
-            null,
-            true,
-            tracingId = TestValues.TRACING_ID
-        )
+        val expectedOnAttachmentRequest =
+            OnAttachmentRequest(
+                token = TestValues.TOKEN,
+                attachmentId = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                fileType = "image/png",
+                2000,
+                null,
+                true,
+                tracingId = TestValues.TRACING_ID
+            )
 
         val givenByteArray = ByteArray(2000)
 
@@ -627,16 +630,17 @@ internal class AttachmentHandlerTest {
         val givenByteArray = ByteArray(2000)
         subject.fileAttachmentProfile = FileAttachmentProfile(enabled = true, maxFileSizeKB = 2)
         val expectedFileSizeInKB = 2L
-        val expectedOnAttachmentRequest = OnAttachmentRequest(
-            token = TestValues.TOKEN,
-            attachmentId = AttachmentValues.ID,
-            fileName = AttachmentValues.FILE_NAME,
-            fileType = "image/png",
-            2000,
-            null,
-            true,
-            tracingId = TestValues.TRACING_ID
-        )
+        val expectedOnAttachmentRequest =
+            OnAttachmentRequest(
+                token = TestValues.TOKEN,
+                attachmentId = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                fileType = "image/png",
+                2000,
+                null,
+                true,
+                tracingId = TestValues.TRACING_ID
+            )
 
         val onAttachmentRequest =
             subject.prepare(TestValues.TOKEN, AttachmentValues.ID, givenByteArray, AttachmentValues.FILE_NAME)
@@ -661,16 +665,17 @@ internal class AttachmentHandlerTest {
         val givenByteArray = ByteArray(2000)
         subject.fileAttachmentProfile = FileAttachmentProfile(enabled = true, maxFileSizeKB = 100)
         val expectedFileSizeInKB = 100L
-        val expectedOnAttachmentRequest = OnAttachmentRequest(
-            token = TestValues.TOKEN,
-            attachmentId = AttachmentValues.ID,
-            fileName = AttachmentValues.FILE_NAME,
-            fileType = "image/png",
-            2000,
-            null,
-            true,
-            tracingId = TestValues.TRACING_ID
-        )
+        val expectedOnAttachmentRequest =
+            OnAttachmentRequest(
+                token = TestValues.TOKEN,
+                attachmentId = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                fileType = "image/png",
+                2000,
+                null,
+                true,
+                tracingId = TestValues.TRACING_ID
+            )
 
         val onAttachmentRequest =
             subject.prepare(TestValues.TOKEN, AttachmentValues.ID, givenByteArray, AttachmentValues.FILE_NAME)
@@ -704,16 +709,17 @@ internal class AttachmentHandlerTest {
                 maxFileSizeKB = 100,
                 blockedFileTypes = listOf(".exe")
             )
-        val expectedOnAttachmentRequest = OnAttachmentRequest(
-            token = TestValues.TOKEN,
-            attachmentId = AttachmentValues.ID,
-            fileName = AttachmentValues.FILE_NAME,
-            fileType = "image/png",
-            1,
-            null,
-            true,
-            tracingId = TestValues.TRACING_ID
-        )
+        val expectedOnAttachmentRequest =
+            OnAttachmentRequest(
+                token = TestValues.TOKEN,
+                attachmentId = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                fileType = "image/png",
+                1,
+                null,
+                true,
+                tracingId = TestValues.TRACING_ID
+            )
 
         val onAttachmentRequest =
             subject.prepare(TestValues.TOKEN, AttachmentValues.ID, givenByteArray, AttachmentValues.FILE_NAME)

@@ -124,10 +124,11 @@ class UserTypingProviderTest {
 
     @Test
     fun `when encode with default getCurrentTimestamp function`() {
-        val subject = UserTypingProvider(
-            log = mockLogger,
-            showUserTypingEnabled = { true },
-        )
+        val subject =
+            UserTypingProvider(
+                log = mockLogger,
+                showUserTypingEnabled = { true },
+            )
 
         val result = subject.encodeRequest(token = Request.token)
 

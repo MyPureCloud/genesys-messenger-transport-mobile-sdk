@@ -4,6 +4,7 @@ import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
+import com.genesys.cloud.messenger.transport.util.TracingIds
 import com.genesys.cloud.messenger.transport.util.extensions.getUploadedAttachments
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
@@ -37,11 +38,13 @@ internal class MessageStore(
             }
         return OnMessageRequest(
             token = token,
-            message = TextMessage(
-                text,
-                content = messageToSend.getUploadedAttachments(),
-                channel = channel,
-            )
+            message =
+                TextMessage(
+                    text,
+                    content = messageToSend.getUploadedAttachments(),
+                    channel = channel,
+                ),
+            tracingId = TracingIds.newId()
         )
     }
 
@@ -63,19 +66,22 @@ internal class MessageStore(
                 publish(MessageEvent.MessageInserted(it))
                 pendingMessage = Message(attachments = it.attachments)
             }
-        val content = listOf(
-            Message.Content(
-                contentType = Message.Content.Type.ButtonResponse,
-                buttonResponse = buttonResponse,
+        val content =
+            listOf(
+                Message.Content(
+                    contentType = Message.Content.Type.ButtonResponse,
+                    buttonResponse = buttonResponse,
+                )
             )
-        )
         return OnMessageRequest(
             token = token,
-            message = TextMessage(
-                text = "",
-                content = content,
-                channel = channel,
-            )
+            message =
+                TextMessage(
+                    text = "",
+                    content = content,
+                    channel = channel,
+                ),
+            tracingId = TracingIds.newId()
         )
     }
 

@@ -308,18 +308,21 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
 
     @Test
     fun `when enableAttachments is null and FileUpload Mode has entries`() {
-        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
-            createMessengerVOForTesting(
-                fileUpload = createFileUploadVOForTesting(
-                    enableAttachments = null,
+        every { mockDeploymentConfig.get() } returns
+            createDeploymentConfigForTesting(
+                createMessengerVOForTesting(
+                    fileUpload =
+                        createFileUploadVOForTesting(
+                            enableAttachments = null,
+                        )
                 )
             )
-        )
-        val expectedFileAttachmentProfile = FileAttachmentProfile(
-            enabled = true,
-            allowedFileTypes = listOf("png"),
-            maxFileSizeKB = 100
-        )
+        val expectedFileAttachmentProfile =
+            FileAttachmentProfile(
+                enabled = true,
+                allowedFileTypes = listOf("png"),
+                maxFileSizeKB = 100
+            )
         subject.connect()
         slot.captured.onMessage(Response.configureSuccess())
         every { mockAttachmentHandler.fileAttachmentProfile } returns expectedFileAttachmentProfile

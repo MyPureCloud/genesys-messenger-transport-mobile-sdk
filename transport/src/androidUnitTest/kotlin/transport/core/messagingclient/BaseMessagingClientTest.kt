@@ -68,68 +68,77 @@ open class BaseMessagingClientTest {
     private var testToken = Request.token
     internal val slot = slot<PlatformSocketListener>()
     protected val mockStateChangedListener: (StateChange) -> Unit = spyk()
-    internal val mockMessageStore: MessageStore = mockk(relaxed = true) {
-        every { prepareMessage(any(), any(), any()) } returns OnMessageRequest(
-            token = testToken,
-            message = TextMessage("Hello world!"),
-            tracingId = TestValues.TRACING_ID
-        )
-        every { prepareMessageWith(any(), any(), null) } returns OnMessageRequest(
-            token = testToken,
-            message = TextMessage(
-                text = "",
-                content = listOf(
-                    Message.Content(
-                        contentType = Message.Content.Type.ButtonResponse,
-                        buttonResponse = QuickReplyTestValues.buttonResponse_a,
-                    )
-                ),
-            ),
-            tracingId = TestValues.TRACING_ID
-        )
-    }
-    internal val mockAttachmentHandler: AttachmentHandler = mockk(relaxed = true) {
-        every {
-            prepare(
-                any(),
-                any(),
-                any(),
-                any(),
-                any()
-            )
-        } returns OnAttachmentRequest(
-            token = Request.token,
-            attachmentId = "88888888-8888-8888-8888-888888888888",
-            fileName = "test_attachment.png",
-            fileType = "image/png",
-            errorsAsJson = true,
-            tracingId = TestValues.TRACING_ID
-        )
+    internal val mockMessageStore: MessageStore =
+        mockk(relaxed = true) {
+            every { prepareMessage(any(), any(), any()) } returns
+                OnMessageRequest(
+                    token = testToken,
+                    message = TextMessage("Hello world!"),
+                    tracingId = TestValues.TRACING_ID
+                )
+            every { prepareMessageWith(any(), any(), null) } returns
+                OnMessageRequest(
+                    token = testToken,
+                    message =
+                        TextMessage(
+                            text = "",
+                            content =
+                                listOf(
+                                    Message.Content(
+                                        contentType = Message.Content.Type.ButtonResponse,
+                                        buttonResponse = QuickReplyTestValues.buttonResponse_a,
+                                    )
+                                ),
+                        ),
+                    tracingId = TestValues.TRACING_ID
+                )
+        }
+    internal val mockAttachmentHandler: AttachmentHandler =
+        mockk(relaxed = true) {
+            every {
+                prepare(
+                    any(),
+                    any(),
+                    any(),
+                    any(),
+                    any()
+                )
+            } returns
+                OnAttachmentRequest(
+                    token = Request.token,
+                    attachmentId = "88888888-8888-8888-8888-888888888888",
+                    fileName = "test_attachment.png",
+                    fileType = "image/png",
+                    errorsAsJson = true,
+                    tracingId = TestValues.TRACING_ID
+                )
 
-        every { detach(any(), any()) } returns DeleteAttachmentRequest(
-            token = Request.token,
-            attachmentId = "88888888-8888-8888-8888-888888888888",
-            tracingId = TestValues.TRACING_ID
-        )
-        every { fileAttachmentProfile } returns null
-    }
-    internal val mockPlatformSocket: PlatformSocket = mockk {
-        every { openSocket(capture(slot)) } answers {
-            slot.captured.onOpen()
+            every { detach(any(), any()) } returns
+                DeleteAttachmentRequest(
+                    token = Request.token,
+                    attachmentId = "88888888-8888-8888-8888-888888888888",
+                    tracingId = TestValues.TRACING_ID
+                )
+            every { fileAttachmentProfile } returns null
         }
-        every { closeSocket(any(), any()) } answers {
-            slot.captured.onClosed(1000, "The user has closed the connection.")
+    internal val mockPlatformSocket: PlatformSocket =
+        mockk {
+            every { openSocket(capture(slot)) } answers {
+                slot.captured.onOpen()
+            }
+            every { closeSocket(any(), any()) } answers {
+                slot.captured.onClosed(1000, "The user has closed the connection.")
+            }
+            every { sendMessage(any()) } answers {
+                slot.captured.onMessage("")
+            }
+            every { sendMessage(Request.configureRequest()) } answers {
+                slot.captured.onMessage(Response.configureSuccess())
+            }
+            every { sendMessage(Request.configureAuthenticatedRequest()) } answers {
+                slot.captured.onMessage(Response.configureSuccess())
+            }
         }
-        every { sendMessage(any()) } answers {
-            slot.captured.onMessage("")
-        }
-        every { sendMessage(Request.configureRequest()) } answers {
-            slot.captured.onMessage(Response.configureSuccess())
-        }
-        every { sendMessage(Request.configureAuthenticatedRequest()) } answers {
-            slot.captured.onMessage(Response.configureSuccess())
-        }
-    }
 
     private val mockWebMessagingApi: WebMessagingApi =
         mockk {
@@ -148,27 +157,32 @@ open class BaseMessagingClientTest {
         }
 
     internal val mockEventHandler: EventHandler = mockk(relaxed = true)
-    protected val mockTimestampFunction: () -> Long = spyk<() -> Long>().also {
-        every { it.invoke() } answers { Platform().epochMillis() }
-    }
-    protected val mockShowUserTypingIndicatorFunction: () -> Boolean = spyk<() -> Boolean>().also {
-        every { it.invoke() } returns true
-    }
-    protected val mockDeploymentConfig = mockk<KProperty0<DeploymentConfig?>> {
-        every { get() } returns createDeploymentConfigForTesting()
-    }
-
-    internal val userTypingProvider = UserTypingProvider(
-        log = mockk(relaxed = true),
-        showUserTypingEnabled = mockShowUserTypingIndicatorFunction,
-        getCurrentTimestamp = mockTimestampFunction,
-    )
-    internal val mockAuthHandler: AuthHandler = mockk(relaxed = true) {
-        every { jwt } returns AuthTest.JWT_TOKEN
-        every { refreshToken(captureLambda<(Result<Any>) -> Unit>()) } answers {
-            lambda<(Result<Any>) -> Unit>().invoke(Result.Success(Empty()))
+    protected val mockTimestampFunction: () -> Long =
+        spyk<() -> Long>().also {
+            every { it.invoke() } answers { Platform().epochMillis() }
         }
-    }
+    protected val mockShowUserTypingIndicatorFunction: () -> Boolean =
+        spyk<() -> Boolean>().also {
+            every { it.invoke() } returns true
+        }
+    protected val mockDeploymentConfig =
+        mockk<KProperty0<DeploymentConfig?>> {
+            every { get() } returns createDeploymentConfigForTesting()
+        }
+
+    internal val userTypingProvider =
+        UserTypingProvider(
+            log = mockk(relaxed = true),
+            showUserTypingEnabled = mockShowUserTypingIndicatorFunction,
+            getCurrentTimestamp = mockTimestampFunction,
+        )
+    internal val mockAuthHandler: AuthHandler =
+        mockk(relaxed = true) {
+            every { jwt } returns AuthTest.JWT_TOKEN
+            every { refreshToken(captureLambda<(Result<Any>) -> Unit>()) } answers {
+                lambda<(Result<Any>) -> Unit>().invoke(Result.Success(Empty()))
+            }
+        }
 
     internal val mockCustomAttributesStore: CustomAttributesStoreImpl =
         mockk(relaxed = true) {

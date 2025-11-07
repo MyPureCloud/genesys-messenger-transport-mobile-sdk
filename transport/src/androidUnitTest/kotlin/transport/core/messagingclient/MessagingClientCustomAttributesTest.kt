@@ -41,14 +41,16 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
         val expectedText = MessageValues.TEXT
         val expectedCustomAttributes = mapOf("A" to "B")
         val expectedChannel = Channel(Channel.Metadata(expectedCustomAttributes))
-        every { mockMessageStore.prepareMessage(any(), any(), any()) } returns OnMessageRequest(
-            token = Request.token,
-            message = TextMessage(
-                text = MessageValues.TEXT,
-                channel = expectedChannel,
-            ),
-            tracingId = TestValues.TRACING_ID
-        )
+        every { mockMessageStore.prepareMessage(any(), any(), any()) } returns
+            OnMessageRequest(
+                token = Request.token,
+                message =
+                    TextMessage(
+                        text = MessageValues.TEXT,
+                        channel = expectedChannel,
+                    ),
+                tracingId = TestValues.TRACING_ID
+            )
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mapOf("A" to "B")
         subject.connect()
 
@@ -173,20 +175,23 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
         val expectedButtonResponse = QuickReplyTestValues.buttonResponse_a
         val expectedCustomAttributes = mapOf("A" to "B")
         val expectedChannel = Channel(Channel.Metadata(expectedCustomAttributes))
-        every { mockMessageStore.prepareMessageWith(Request.token, any(), expectedChannel) } returns OnMessageRequest(
-            token = Request.token,
-            message = TextMessage(
-                text = "",
-                channel = expectedChannel,
-                content = listOf(
-                    Message.Content(
-                        contentType = Message.Content.Type.ButtonResponse,
-                        buttonResponse = QuickReplyTestValues.buttonResponse_a,
-                    )
-                ),
-            ),
-            tracingId = TestValues.TRACING_ID
-        )
+        every { mockMessageStore.prepareMessageWith(Request.token, any(), expectedChannel) } returns
+            OnMessageRequest(
+                token = Request.token,
+                message =
+                    TextMessage(
+                        text = "",
+                        channel = expectedChannel,
+                        content =
+                            listOf(
+                                Message.Content(
+                                    contentType = Message.Content.Type.ButtonResponse,
+                                    buttonResponse = QuickReplyTestValues.buttonResponse_a,
+                                )
+                            ),
+                    ),
+                tracingId = TestValues.TRACING_ID
+            )
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mapOf("A" to "B")
         subject.connect()
 

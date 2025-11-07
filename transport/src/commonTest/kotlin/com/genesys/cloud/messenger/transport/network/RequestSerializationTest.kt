@@ -115,11 +115,12 @@ class RequestSerializationTest {
 
     @Test
     fun `validate CloseSessionRequest serialization`() {
-        val expectedRequest = CloseSessionRequest(
-            token = TestValues.TOKEN,
-            closeAllConnections = true,
-            tracingId = TestValues.TRACING_ID
-        )
+        val expectedRequest =
+            CloseSessionRequest(
+                token = TestValues.TOKEN,
+                closeAllConnections = true,
+                tracingId = TestValues.TRACING_ID
+            )
         val expectedJson =
             """{"token":"token","closeAllConnections":true,"tracingId":"${TestValues.TRACING_ID}","action":"closeSession"}"""
 
@@ -137,13 +138,14 @@ class RequestSerializationTest {
     @Test
     fun `validate ConfigureAuthenticatedSessionRequest serialization`() {
         val expectedData = ConfigureAuthenticatedSessionRequest.Data(AuthTest.JWT_TOKEN)
-        val expectedRequest = ConfigureAuthenticatedSessionRequest(
-            token = TestValues.TOKEN,
-            deploymentId = TestValues.DEPLOYMENT_ID,
-            startNew = false,
-            data = expectedData,
-            tracingId = TestValues.TRACING_ID
-        )
+        val expectedRequest =
+            ConfigureAuthenticatedSessionRequest(
+                token = TestValues.TOKEN,
+                deploymentId = TestValues.DEPLOYMENT_ID,
+                startNew = false,
+                data = expectedData,
+                tracingId = TestValues.TRACING_ID
+            )
         val expectedJson =
             """{"token":"token","deploymentId":"deploymentId","startNew":false,"data":{"code":"jwt_Token"},"tracingId":"${TestValues.TRACING_ID}","action":"configureAuthenticatedSession"}"""
         val expectedDataJson = """{"code":"jwt_Token"}"""
@@ -177,12 +179,13 @@ class RequestSerializationTest {
 
     @Test
     fun `validate ConfigureSessionRequest serialization`() {
-        val expectedRequest = ConfigureSessionRequest(
-            token = TestValues.TOKEN,
-            deploymentId = TestValues.DEPLOYMENT_ID,
-            startNew = true,
-            tracingId = TestValues.TRACING_ID
-        )
+        val expectedRequest =
+            ConfigureSessionRequest(
+                token = TestValues.TOKEN,
+                deploymentId = TestValues.DEPLOYMENT_ID,
+                startNew = true,
+                tracingId = TestValues.TRACING_ID
+            )
         val expectedJson =
             """{"token":"token","deploymentId":"deploymentId","startNew":true,"tracingId":"${TestValues.TRACING_ID}","action":"configureSession"}"""
 
@@ -201,11 +204,12 @@ class RequestSerializationTest {
 
     @Test
     fun `validate DeleteAttachmentRequest serialization`() {
-        val expectedRequest = DeleteAttachmentRequest(
-            token = TestValues.TOKEN,
-            attachmentId = AttachmentValues.ID,
-            tracingId = TestValues.TRACING_ID
-        )
+        val expectedRequest =
+            DeleteAttachmentRequest(
+                token = TestValues.TOKEN,
+                attachmentId = AttachmentValues.ID,
+                tracingId = TestValues.TRACING_ID
+            )
         val expectedJson =
             """{"token":"token","attachmentId":"test_attachment_id","tracingId":"${TestValues.TRACING_ID}","action":"deleteAttachment"}"""
 
@@ -223,10 +227,11 @@ class RequestSerializationTest {
     @Test
     fun `validate EchoRequest serialization`() {
         val expectedTextMessage = TextMessage("ping")
-        val expectedRequest = EchoRequest(
-            token = TestValues.TOKEN,
-            tracingId = HealthCheckID
-        )
+        val expectedRequest =
+            EchoRequest(
+                token = TestValues.TOKEN,
+                tracingId = HealthCheckID
+            )
         val expectedJson =
             """{"token":"token","tracingId":"SGVhbHRoQ2hlY2tNZXNzYWdlSWQ=","action":"echo","message":{"text":"ping","type":"Text"}}"""
 
@@ -273,11 +278,12 @@ class RequestSerializationTest {
 
     @Test
     fun `validate GetAttachmentRequest serialization`() {
-        val expectedRequest = GetAttachmentRequest(
-            token = TestValues.TOKEN,
-            attachmentId = AttachmentValues.ID,
-            tracingId = TestValues.TRACING_ID
-        )
+        val expectedRequest =
+            GetAttachmentRequest(
+                token = TestValues.TOKEN,
+                attachmentId = AttachmentValues.ID,
+                tracingId = TestValues.TRACING_ID
+            )
         val expectedJson =
             """{"token":"token","attachmentId":"test_attachment_id","tracingId":"${TestValues.TRACING_ID}","action":"getAttachment"}"""
 
@@ -422,16 +428,17 @@ class RequestSerializationTest {
 
     @Test
     fun `validate OnAttachmentRequest serialization`() {
-        val expectedRequest = OnAttachmentRequest(
-            token = TestValues.TOKEN,
-            attachmentId = AttachmentValues.ID,
-            fileName = AttachmentValues.FILE_NAME,
-            fileType = AttachmentValues.FILE_TYPE,
-            fileSize = AttachmentValues.FILE_SIZE,
-            fileMd5 = AttachmentValues.FILE_MD5,
-            tracingId = TestValues.TRACING_ID,
-            errorsAsJson = false,
-        )
+        val expectedRequest =
+            OnAttachmentRequest(
+                token = TestValues.TOKEN,
+                attachmentId = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                fileType = AttachmentValues.FILE_TYPE,
+                fileSize = AttachmentValues.FILE_SIZE,
+                fileMd5 = AttachmentValues.FILE_MD5,
+                tracingId = TestValues.TRACING_ID,
+                errorsAsJson = false,
+            )
         val expectedJson =
             """{"token":"${TestValues.TOKEN}","attachmentId":"${AttachmentValues.ID}","fileName":"${AttachmentValues.FILE_NAME}","fileType":"${AttachmentValues.FILE_TYPE}","fileSize":${AttachmentValues.FILE_SIZE},"fileMd5":"${AttachmentValues.FILE_MD5}","errorsAsJson":false,"tracingId":"${TestValues.TRACING_ID}","action":"onAttachment"}"""
 

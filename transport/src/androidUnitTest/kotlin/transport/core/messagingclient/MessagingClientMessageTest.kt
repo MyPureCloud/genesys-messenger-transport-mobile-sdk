@@ -57,14 +57,15 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
         }
         val expectedMessageRequest =
             """{"token":"${Request.token}","message":{"text":"${MessageValues.TEXT}","type":"Text"},"tracingId":"${TestValues.TRACING_ID}","action":"onMessage"}"""
-        val expectedMessage = Message(
-            id = "test_id",
-            state = State.Sent,
-            messageType = Type.Text,
-            type = "Text",
-            text = MessageValues.TEXT,
-            timeStamp = 1661196266704,
-        )
+        val expectedMessage =
+            Message(
+                id = "test_id",
+                state = State.Sent,
+                messageType = Type.Text,
+                type = "Text",
+                text = MessageValues.TEXT,
+                timeStamp = 1661196266704,
+            )
         subject.connect()
 
         subject.sendMessage("Hello world!")
@@ -199,16 +200,17 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
 
     @Test
     fun `when SocketListener invoke onMessage with Outbound text message`() {
-        val expectedMessage = Message(
-            id = "test_id",
-            direction = Direction.Outbound,
-            state = State.Sent,
-            messageType = Type.Text,
-            type = "Text",
-            text = "Hello world!",
-            timeStamp = 1661196266704,
-            from = Participant(originatingEntity = Participant.OriginatingEntity.Unknown)
-        )
+        val expectedMessage =
+            Message(
+                id = "test_id",
+                direction = Direction.Outbound,
+                state = State.Sent,
+                messageType = Type.Text,
+                type = "Text",
+                text = "Hello world!",
+                timeStamp = 1661196266704,
+                from = Participant(originatingEntity = Participant.OriginatingEntity.Unknown)
+            )
         subject.connect()
 
         slot.captured.onMessage(Response.onMessage(Direction.Outbound))

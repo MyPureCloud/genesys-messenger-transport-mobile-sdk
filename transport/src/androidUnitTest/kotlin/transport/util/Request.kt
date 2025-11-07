@@ -15,31 +15,35 @@ internal object Request {
     const val token = "00000000-0000-0000-0000-000000000000"
 
     fun configureRequest(startNew: Boolean = false): String {
-        val request = ConfigureSessionRequest(
-            token = token,
-            deploymentId = "deploymentId",
-            startNew = startNew,
-            journeyContext = JourneyContext(
-                JourneyCustomer("00000000-0000-0000-0000-000000000000", "cookie"),
-                JourneyCustomerSession("", "web")
-            ),
-            tracingId = TestValues.TRACING_ID
-        )
+        val request =
+            ConfigureSessionRequest(
+                token = token,
+                deploymentId = "deploymentId",
+                startNew = startNew,
+                journeyContext =
+                    JourneyContext(
+                        JourneyCustomer("00000000-0000-0000-0000-000000000000", "cookie"),
+                        JourneyCustomerSession("", "web")
+                    ),
+                tracingId = TestValues.TRACING_ID
+            )
         return WebMessagingJson.json.encodeToString(request)
     }
 
     fun configureAuthenticatedRequest(startNew: Boolean = false): String {
-        val request = ConfigureAuthenticatedSessionRequest(
-            token = token,
-            deploymentId = "deploymentId",
-            startNew = startNew,
-            journeyContext = JourneyContext(
-                JourneyCustomer("00000000-0000-0000-0000-000000000000", "cookie"),
-                JourneyCustomerSession("", "web")
-            ),
-            data = ConfigureAuthenticatedSessionRequest.Data(AuthTest.JWT_TOKEN),
-            tracingId = TestValues.TRACING_ID
-        )
+        val request =
+            ConfigureAuthenticatedSessionRequest(
+                token = token,
+                deploymentId = "deploymentId",
+                startNew = startNew,
+                journeyContext =
+                    JourneyContext(
+                        JourneyCustomer("00000000-0000-0000-0000-000000000000", "cookie"),
+                        JourneyCustomerSession("", "web")
+                    ),
+                data = ConfigureAuthenticatedSessionRequest.Data(AuthTest.JWT_TOKEN),
+                tracingId = TestValues.TRACING_ID
+            )
         return WebMessagingJson.json.encodeToString(request)
     }
 

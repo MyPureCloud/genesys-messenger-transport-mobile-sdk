@@ -113,12 +113,13 @@ object TestWebMessagingApiResponses {
                 type = StructuredMessage.Type.Event,
                 text = "customer msg 7",
                 tracingId = "test-tracing-id-2",
-                events = listOf(
-                    PresenceEvent(
-                        eventType = StructuredMessageEvent.Type.Presence,
-                        presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Join)
-                    )
-                ),
+                events =
+                    listOf(
+                        PresenceEvent(
+                            eventType = StructuredMessageEvent.Type.Presence,
+                            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Join)
+                        )
+                    ),
                 originatingEntity = "Human",
             ),
             // Structured message with Quick Replies

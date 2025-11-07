@@ -1,6 +1,5 @@
 package com.genesys.cloud.messenger.transport.shyrka.send
 
-import com.genesys.cloud.messenger.transport.util.TracingIds
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 
@@ -10,7 +9,7 @@ internal class OnMessageRequest(
     val message: TextMessage,
     val time: String? = null,
     @Required
-    override val tracingId: String = TracingIds.newId(),
+    override val tracingId: String,
 ) : BaseWebMessagingRequest() {
     @Required override val action: String = RequestAction.ON_MESSAGE.value
 }
