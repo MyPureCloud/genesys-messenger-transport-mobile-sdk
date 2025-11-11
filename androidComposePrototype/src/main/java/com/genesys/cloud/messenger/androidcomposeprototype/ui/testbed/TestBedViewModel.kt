@@ -443,10 +443,7 @@ class TestBedViewModel :
             onSocketMessageReceived("Please, first obtain id token from login.")
             return
         }
-        // TODO: Replace with actual client.authorizeImplicit(idToken) when branch is merged
-        // Mock implementation for testing until authorizeImplicit is available
-        onSocketMessageReceived("Mock: authorizeImplicit called with ID token (length: ${idToken.length})")
-        commandWaiting = false
+        client.authorizeImplicit(idToken)
     }
 
     private fun doRemoveTokenFromVault() {
@@ -637,7 +634,7 @@ class TestBedViewModel :
 
     private fun buildImplicitOktaAuthorizeUrl(): String {
         val builder =
-            URLBuilder("https://${BuildConfig.OKTA_DOMAIN}/oauth2/default/v1/authorize").apply {
+            URLBuilder("https://${BuildConfig.OKTA_DOMAIN}/oauth2/v1/authorize").apply {
                 parameters.append("client_id", BuildConfig.CLIENT_ID)
                 parameters.append("response_type", "id_token")
                 parameters.append("scope", "openid profile email")

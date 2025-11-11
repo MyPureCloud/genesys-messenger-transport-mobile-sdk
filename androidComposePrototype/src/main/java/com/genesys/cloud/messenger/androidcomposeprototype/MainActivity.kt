@@ -30,6 +30,10 @@ class MainActivity :
         super.onCreate(savedInstanceState)
         setPrototypeLauncherView()
         WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        intent?.data?.doIfRedirectedFromOkta { uri ->
+            handleOktaRedirect(uri)
+        }
     }
 
     private fun setPrototypeLauncherView() {
@@ -66,21 +70,48 @@ class MainActivity :
 
     private inline fun Uri?.doIfRedirectedFromOkta(block: (uri: Uri) -> Unit) {
         // Check with scheme from AndroidManifest.MainActivity
-        if (this?.scheme == "com.okta.dev-14718840") {
+        if (this?.scheme == "com.okta.integrator-8231776") {
             block(this)
         }
     }
 
     private fun handleOktaRedirect(data: Uri) {
+        Log.d(TAG, "handleOktaRedirect uri: $data")
+
         data.getQueryParameter("code")?.let { authCode ->
             viewModel.authCode = authCode
+            viewModel.idToken = ""
+        } ?: run {
+            data.fragment?.let { fragment ->
+                parseFragmentParameters(fragment)
+            }
         }
-        data.getQueryParameter("id_token")?.let { idToken ->
+        data.getQueryParameter("error")?.let { error ->
+            val errorDescription = data.getQueryParameter("error_description") ?: error
+            Log.e(TAG, "Okta error: $error - $errorDescription")
+            Toast.makeText(applicationContext, errorDescription, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun parseFragmentParameters(fragment: String) {
+        val params = mutableMapOf<String, String>()
+        fragment.split("&").forEach { param ->
+            val parts = param.split("=", limit = 2)
+            if (parts.size == 2) {
+                val key = Uri.decode(parts[0])
+                val value = Uri.decode(parts[1])
+                params[key] = value
+            }
+        }
+        params["id_token"]?.let { idToken ->
+            Log.d(TAG, "handleOktaRedirect id token: $idToken")
             viewModel.idToken = idToken
+            viewModel.authCode = ""
         }
-        data.getQueryParameter("error_description")?.let { error ->
-            Log.e(TAG, error)
-            Toast.makeText(applicationContext, error, Toast.LENGTH_LONG).show()
+        params["error"]?.let { error ->
+            val errorDescription = params["error_description"] ?: error
+            Log.e(TAG, "Okta error: $error - $errorDescription")
+            Toast.makeText(applicationContext, errorDescription, Toast.LENGTH_LONG).show()
         }
     }
 }
