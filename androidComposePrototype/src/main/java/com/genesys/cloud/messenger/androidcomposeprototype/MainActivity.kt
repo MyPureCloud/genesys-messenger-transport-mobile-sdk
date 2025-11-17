@@ -70,7 +70,7 @@ class MainActivity :
 
     private inline fun Uri?.doIfRedirectedFromOkta(block: (uri: Uri) -> Unit) {
         // Check with scheme from AndroidManifest.MainActivity
-        if (this?.scheme == "com.okta.integrator-8231776") {
+        if (this?.scheme == "com.oktapreview.genesys-cloud") {
             block(this)
         }
     }

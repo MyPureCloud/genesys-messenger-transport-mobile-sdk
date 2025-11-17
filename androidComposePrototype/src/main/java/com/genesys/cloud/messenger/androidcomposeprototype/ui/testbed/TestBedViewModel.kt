@@ -634,7 +634,7 @@ class TestBedViewModel :
 
     private fun buildImplicitOktaAuthorizeUrl(): String {
         val builder =
-            URLBuilder("https://${BuildConfig.OKTA_DOMAIN}/oauth2/v1/authorize").apply {
+            URLBuilder("https://${BuildConfig.OKTA_DOMAIN}/oauth2/default/v1/authorize").apply {
                 parameters.append("client_id", BuildConfig.CLIENT_ID)
                 parameters.append("response_type", "id_token")
                 parameters.append("scope", "openid profile email")
