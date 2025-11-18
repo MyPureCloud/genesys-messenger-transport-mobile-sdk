@@ -16,20 +16,20 @@ actual class DefaultVault actual constructor(keys: Keys) : Vault(keys) {
         key: String,
         value: String
     ) {
-        with(sharedPreferences.edit()) {
-            putString(key, value)
-            apply()
+        synchronized(sharedPreferences) {
+            sharedPreferences.edit().putString(key, value).commit()
         }
     }
 
     actual override fun fetch(key: String): String? {
-        return sharedPreferences.getString(key, null)
+        synchronized(sharedPreferences) {
+            return sharedPreferences.getString(key, null)
+        }
     }
 
     actual override fun remove(key: String) {
-        with(sharedPreferences.edit()) {
-            remove(key)
-            apply()
+        synchronized(sharedPreferences) {
+            sharedPreferences.edit().remove(key).commit()
         }
     }
 

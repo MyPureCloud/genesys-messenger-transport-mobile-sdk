@@ -48,9 +48,8 @@ internal class InternalVault(
     ) {
         try {
             val encryptedData = encrypt(value)
-            with(sharedPreferences.edit()) {
-                putString(key, encryptedData)
-                apply()
+            synchronized(sharedPreferences) {
+                sharedPreferences.edit().putString(key, encryptedData).commit()
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -64,7 +63,9 @@ internal class InternalVault(
      * @return The decrypted string value, or null if it is missing or cannot be decrypted
      */
     fun fetch(key: String): String? {
-        val encryptedData = sharedPreferences.getString(key, null) ?: return null
+        val encryptedData = synchronized(sharedPreferences) {
+            sharedPreferences.getString(key, null)
+        } ?: return null
         return try {
             decrypt(encryptedData)
         } catch (e: Exception) {
@@ -79,9 +80,8 @@ internal class InternalVault(
      * @param key The key to remove
      */
     fun remove(key: String) {
-        with(sharedPreferences.edit()) {
-            remove(key)
-            apply()
+        synchronized(sharedPreferences) {
+            sharedPreferences.edit().remove(key).commit()
         }
     }
 
