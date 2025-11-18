@@ -65,7 +65,8 @@ internal class InternalVault(
      * @return The decrypted string value, or null if it is missing or cannot be decrypted
      */
     fun fetch(key: String): String? {
-        val encryptedData = sharedPreferences.getString(key, null) ?: return null
+        val encryptedData =
+            sharedPreferences.getString(key, null).takeUnless { it.isNullOrEmpty() } ?: return null
         return try {
             decrypt(encryptedData)
         } catch (e: Exception) {
@@ -125,6 +126,7 @@ internal class InternalVault(
         UnrecoverableKeyException::class
     )
     private fun decrypt(encryptedData: String): String {
+        if(encryptedData.isEmpty()) return ""
         val combined = Base64.decode(encryptedData, Base64.DEFAULT)
 
         // Split the combined array into IV and encrypted data

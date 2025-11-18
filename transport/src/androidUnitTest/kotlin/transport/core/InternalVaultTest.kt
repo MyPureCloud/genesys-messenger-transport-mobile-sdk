@@ -158,6 +158,15 @@ class InternalVaultTest {
     }
 
     @Test
+    fun `test fetch with empty data returns null`() {
+        every { mockSharedPreferences.getString(testKey, null) } returns null
+
+        val result = subject.fetch(testKey)
+
+        assertThat(result).isNull()
+    }
+
+    @Test
     fun `test store with empty value`() {
         val emptyValue = ""
         every { mockCipher.iv } returns givenTestIv

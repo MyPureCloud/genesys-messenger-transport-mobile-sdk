@@ -26,7 +26,7 @@ import com.genesys.cloud.messenger.transport.util.logs.LogTag
 class MessengerTransportSDK(
     private val configuration: Configuration,
     @Deprecated("Use Vault instead.") private val tokenStore: TokenStore?,
-    val vault: Vault,
+    val vault: Vault = getVault(configuration),
 ) {
     private var deploymentConfig: DeploymentConfig? = null
     private val urls = Urls(configuration.domain, configuration.deploymentId, configuration.application)
