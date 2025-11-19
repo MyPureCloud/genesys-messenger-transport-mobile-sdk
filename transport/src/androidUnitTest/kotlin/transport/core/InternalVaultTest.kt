@@ -86,7 +86,7 @@ class InternalVaultTest {
             mockCipher.doFinal(testValue.toByteArray(Charsets.UTF_8))
             Base64.encodeToString(any(), Base64.DEFAULT)
             mockSharedPreferencesEditor.putString(testKey, testBase64)
-            mockSharedPreferencesEditor.apply()
+            mockSharedPreferencesEditor.commit()
         }
     }
 
@@ -143,7 +143,7 @@ class InternalVaultTest {
         subject.remove(testKey)
 
         verify { mockSharedPreferencesEditor.remove(testKey) }
-        verify { mockSharedPreferencesEditor.apply() }
+        verify { mockSharedPreferencesEditor.commit() }
     }
 
     @Test
