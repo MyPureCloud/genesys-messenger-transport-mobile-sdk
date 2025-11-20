@@ -25,6 +25,7 @@ internal class AuthHandlerImpl(
     private val api: WebMessagingApi,
     private val vault: Vault,
     private val log: Log,
+    private val authStorage: AuthStorage,
     private val isAuthEnabled: suspend () -> Boolean,
     private val dispatcher: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
 ) : AuthHandler {
@@ -47,6 +48,7 @@ internal class AuthHandlerImpl(
                         if (autoRefreshTokenWhenExpired) {
                             vault.authRefreshToken = it.refreshToken ?: NO_REFRESH_TOKEN
                         }
+                        authStorage.markAuthorized()
                         eventHandler.onEvent(Event.Authorized)
                     }
                 }
@@ -103,6 +105,13 @@ internal class AuthHandlerImpl(
                 callback(true)
                 return@launch
             }
+
+            if (!authStorage.previouslyAuthorized) {
+                clear()
+                callback(true)
+                return@launch
+            }
+
             performTokenRefresh { result ->
                 when (result) {
                     is Result.Success -> callback(false)

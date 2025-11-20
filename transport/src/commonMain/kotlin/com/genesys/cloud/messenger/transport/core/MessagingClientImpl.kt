@@ -2,6 +2,7 @@ package com.genesys.cloud.messenger.transport.core
 
 import com.genesys.cloud.messenger.transport.auth.AuthHandler
 import com.genesys.cloud.messenger.transport.auth.AuthHandlerImpl
+import com.genesys.cloud.messenger.transport.auth.AuthStorage
 import com.genesys.cloud.messenger.transport.auth.NO_JWT
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.events.Event
@@ -75,6 +76,7 @@ internal class MessagingClientImpl(
     private val log: Log,
     private val jwtHandler: JwtHandler,
     private var token: String,
+    private val authStorage: AuthStorage,
     private val deploymentConfig: KProperty0<DeploymentConfig?>,
     private val attachmentHandler: AttachmentHandler,
     private val messageStore: MessageStore,
@@ -92,7 +94,8 @@ internal class MessagingClientImpl(
         api,
         vault,
         log.withTag(LogTag.AUTH_HANDLER),
-        isAuthEnabled = { deploymentConfig.isAuthEnabled(api) }
+        isAuthEnabled = { deploymentConfig.isAuthEnabled(api) },
+        authStorage = authStorage
     ),
     private val internalCustomAttributesStore: CustomAttributesStoreImpl = CustomAttributesStoreImpl(
         log.withTag(LogTag.CUSTOM_ATTRIBUTES_STORE),

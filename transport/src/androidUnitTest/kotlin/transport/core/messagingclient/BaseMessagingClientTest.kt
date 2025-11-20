@@ -1,6 +1,7 @@
 package transport.core.messagingclient
 
 import com.genesys.cloud.messenger.transport.auth.AuthHandler
+import com.genesys.cloud.messenger.transport.auth.AuthStorage
 import com.genesys.cloud.messenger.transport.core.AttachmentHandler
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.CustomAttributesStoreImpl
@@ -195,7 +196,7 @@ open class BaseMessagingClientTest {
     internal val mockPushService: PushService = mockk {
         coEvery { synchronize(any(), any()) } just Runs
     }
-
+    internal val mockAuthStorage: AuthStorage = mockk(relaxed = true)
     internal val subject = MessagingClientImpl(
         log = mockLogger,
         configuration = TestValues.configuration,
@@ -214,6 +215,7 @@ open class BaseMessagingClientTest {
         authHandler = mockAuthHandler,
         internalCustomAttributesStore = mockCustomAttributesStore,
         pushService = mockPushService,
+        authStorage = mockAuthStorage
     ).also {
         it.stateChangedListener = mockStateChangedListener
     }
