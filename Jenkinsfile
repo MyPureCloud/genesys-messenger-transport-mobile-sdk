@@ -104,7 +104,7 @@ pipeline {
                         snykTokenId: 'snyk-global-api-token',
                         severity: 'high', 
                         organisation: 'digital-mobile-sdk',
-                        targetFile: 'build.gradle.kts',
+                        targetFile: 'transport/build.gradle.kts',
                         additionalArguments: '--package-manager=gradle --sub-project="transport" --configuration-matching="releaseRuntimeClasspath"'
                     )
                 }
