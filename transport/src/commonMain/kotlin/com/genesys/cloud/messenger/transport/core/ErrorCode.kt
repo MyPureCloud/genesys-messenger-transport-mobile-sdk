@@ -180,6 +180,8 @@ sealed class CorrectiveAction(val message: String) {
 
     object CustomAttributeSizeTooLarge : CorrectiveAction("Shorten the custom attributes.")
 
+    object CheckNetwork : CorrectiveAction("Check your internet connection and try again.")
+
     override fun toString(): String {
         return message
     }
@@ -197,6 +199,8 @@ internal fun ErrorCode.toCorrectiveAction(): CorrectiveAction =
         ErrorCode.AuthLogoutFailed.code,
         ErrorCode.RefreshAuthTokenFailure.code,
         -> CorrectiveAction.ReAuthenticate
+
+        ErrorCode.NetworkDisabled.code -> CorrectiveAction.CheckNetwork
 
         else -> CorrectiveAction.Unknown
     }

@@ -8,6 +8,7 @@ import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.isUnauthorized
+import com.genesys.cloud.messenger.transport.core.toCorrectiveAction
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.logs.Log
@@ -125,7 +126,12 @@ internal class AuthHandlerImpl(
 
                     is Result.Failure -> {
                         log.e { LogMessages.couldNotRefreshAuthToken(result.message) }
-                        clear()
+                        if (result.errorCode != ErrorCode.NetworkDisabled) {
+                            clear()
+                        }
+                        eventHandler.onEvent(
+                            Event.Error(result.errorCode, result.message, result.errorCode.toCorrectiveAction())
+                        )
                         callback(result)
                     }
                 }
@@ -148,7 +154,7 @@ internal class AuthHandlerImpl(
         }
         log.e { LogMessages.requestError(requestName, result.errorCode, result.message) }
         eventHandler.onEvent(
-            Event.Error(result.errorCode, result.message, CorrectiveAction.ReAuthenticate)
+            Event.Error(result.errorCode, result.message, result.errorCode.toCorrectiveAction())
         )
     }
 

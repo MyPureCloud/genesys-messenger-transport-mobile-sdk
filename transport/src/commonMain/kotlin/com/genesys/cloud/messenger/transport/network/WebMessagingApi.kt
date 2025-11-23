@@ -20,6 +20,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.PushErrorResponse
 import com.genesys.cloud.messenger.transport.shyrka.send.AuthJwtRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OAuth
 import com.genesys.cloud.messenger.transport.util.Urls
+import com.genesys.cloud.messenger.transport.util.isNetworkException
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.onUpload
@@ -136,7 +137,11 @@ internal class WebMessagingApi(
         } catch (cancellationException: CancellationException) {
             Result.Failure(ErrorCode.CancellationError, cancellationException.message)
         } catch (exception: Exception) {
-            Result.Failure(ErrorCode.AuthFailed, exception.message)
+            if (exception.isNetworkException()) {
+                Result.Failure(ErrorCode.NetworkDisabled, exception.message)
+            } else {
+                Result.Failure(ErrorCode.AuthFailed, exception.message)
+            }
         }
 
     suspend fun logoutFromAuthenticatedSession(jwt: String): Result<Empty> =
@@ -173,7 +178,11 @@ internal class WebMessagingApi(
         } catch (cancellationException: CancellationException) {
             Result.Failure(ErrorCode.CancellationError, cancellationException.message)
         } catch (exception: Exception) {
-            Result.Failure(ErrorCode.RefreshAuthTokenFailure, exception.message)
+            if (exception.isNetworkException()) {
+                Result.Failure(ErrorCode.NetworkDisabled, exception.message)
+            } else {
+                Result.Failure(ErrorCode.RefreshAuthTokenFailure, exception.message)
+            }
         }
 
     suspend fun fetchDeploymentConfig(): Result<DeploymentConfig> =
