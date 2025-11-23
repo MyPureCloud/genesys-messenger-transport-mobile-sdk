@@ -52,6 +52,9 @@ internal fun HttpClientConfig<MockEngineConfig>.refreshTokenEngine() {
                                 InvalidValues.CANCELLATION_EXCEPTION -> {
                                     throw CancellationException(ErrorTest.MESSAGE)
                                 }
+                                InvalidValues.NETWORK_EXCEPTION -> {
+                                    throw NetworkExceptionForTesting(ErrorTest.MESSAGE)
+                                }
                                 InvalidValues.UNKNOWN_EXCEPTION -> {
                                     error(ErrorTest.MESSAGE)
                                 }

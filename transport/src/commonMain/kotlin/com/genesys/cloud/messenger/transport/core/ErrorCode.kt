@@ -190,6 +190,7 @@ sealed class CorrectiveAction(val message: String) {
 internal fun ErrorCode.toCorrectiveAction(): CorrectiveAction =
     when (this.code) {
         400 -> CorrectiveAction.BadRequest
+        401 -> CorrectiveAction.ReAuthenticate
         403 -> CorrectiveAction.Forbidden
         404 -> CorrectiveAction.NotFound
         408 -> CorrectiveAction.RequestTimeOut

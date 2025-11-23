@@ -108,6 +108,7 @@ object InvalidValues {
     internal const val INVALID_REFRESH_TOKEN = "invalid_refresh_token"
     internal const val CANCELLATION_EXCEPTION = "cancellation_exception"
     internal const val UNKNOWN_EXCEPTION = "unknown_exception"
+    internal const val NETWORK_EXCEPTION = "network_exception"
 
     internal val configuration =
         Configuration(
