@@ -9,12 +9,13 @@ import platform.Foundation.NSURLErrorDomain
  */
 internal actual fun Exception.isNetworkException(): Boolean {
     // Check if this exception or its cause is an NSError with network error codes
-    val nsError = when {
-        this is NSError -> this
-        this.cause is NSError -> this.cause as NSError
-        else -> null
-    }
-    
+    val nsError =
+        when {
+            this is NSError -> this
+            this.cause is NSError -> this.cause as NSError
+            else -> null
+        }
+
     if (nsError != null && nsError.domain == NSURLErrorDomain) {
         // Check for network-related error codes
         return when (nsError.code) {
@@ -22,13 +23,11 @@ internal actual fun Exception.isNetworkException(): Boolean {
             -1004L, // NSURLErrorCannotConnectToHost
             -1003L, // NSURLErrorCannotFindHost
             -1005L, // NSURLErrorNetworkConnectionLost
-            -1001L  // NSURLErrorTimedOut
+            -1001L // NSURLErrorTimedOut
             -> true
             else -> false
         }
     }
-    
+
     return false
 }
-
-

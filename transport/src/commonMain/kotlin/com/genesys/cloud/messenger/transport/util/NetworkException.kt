@@ -5,4 +5,3 @@ package com.genesys.cloud.messenger.transport.util
  * Platform-specific implementations will check for appropriate exception types.
  */
 internal expect fun Exception.isNetworkException(): Boolean
-
