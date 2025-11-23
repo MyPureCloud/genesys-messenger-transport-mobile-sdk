@@ -3,10 +3,6 @@ package com.genesys.cloud.messenger.transport.util
 import kotlin.test.Test
 import kotlin.test.assertFalse
 
-/**
- * Common tests for network exception detection.
- * Platform-specific tests are in androidUnitTest and iosTest.
- */
 class NetworkExceptionTest {
     @Test
     fun `when exception is not a network exception`() {

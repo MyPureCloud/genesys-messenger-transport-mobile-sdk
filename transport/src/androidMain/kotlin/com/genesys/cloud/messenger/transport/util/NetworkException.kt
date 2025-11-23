@@ -5,10 +5,6 @@ import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
-/**
- * Android implementation to check if an exception is caused by network connectivity issues.
- * Checks for specific network-related exception types.
- */
 internal actual fun Exception.isNetworkException(): Boolean {
     return when (this) {
         is UnknownHostException -> true
