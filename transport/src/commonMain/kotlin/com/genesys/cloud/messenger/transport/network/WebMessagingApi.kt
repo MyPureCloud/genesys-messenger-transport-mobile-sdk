@@ -134,12 +134,16 @@ internal class WebMessagingApi(
             Result.Failure(ErrorCode.AuthFailed, exception.message)
         }
 
-    suspend fun fetchAuthJwt(idToken: String): Result<AuthJwt> =
+    suspend fun fetchAuthJwt(
+        idToken: String,
+        nonce: String
+    ): Result<AuthJwt> =
         try {
             val requestBody = AuthJwtRequest(
                 deploymentId = configuration.deploymentId,
                 oauth = OAuth(
-                    code = idToken,
+                    idToken = idToken,
+                    nonce = nonce,
                 )
             )
             val response = client.post(urls.jwtAuthUrl.toString()) {

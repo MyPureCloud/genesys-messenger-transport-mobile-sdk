@@ -61,10 +61,10 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
 
     @Test
     fun `when authorizeImplicit is called`() {
-        subject.authorizeImplicit(AuthTest.ID_TOKEN)
+        subject.authorizeImplicit(AuthTest.ID_TOKEN, AuthTest.NONCE)
 
         verify {
-            mockAuthHandler.authorizeImplicit(AuthTest.ID_TOKEN)
+            mockAuthHandler.authorizeImplicit(AuthTest.ID_TOKEN, AuthTest.NONCE)
         }
     }
 

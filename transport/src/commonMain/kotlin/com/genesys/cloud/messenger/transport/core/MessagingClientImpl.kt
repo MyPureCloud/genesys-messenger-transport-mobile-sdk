@@ -365,9 +365,12 @@ internal class MessagingClientImpl(
         authHandler.authorize(authCode, redirectUri, codeVerifier)
     }
 
-    override fun authorizeImplicit(idToken: String) {
+    override fun authorizeImplicit(
+        idToken: String,
+        nonce: String
+    ) {
         invalidateSessionToken()
-        authHandler.authorizeImplicit(idToken)
+        authHandler.authorizeImplicit(idToken, nonce)
     }
 
     @Throws(IllegalStateException::class)

@@ -90,6 +90,7 @@ object AuthTest {
     internal const val REFRESHED_JWT_TOKEN = "jwt_token_that_was_refreshed"
     internal const val JWT_EXPIRY = 100L
     internal const val ID_TOKEN = "id_token_implicit_flow"
+    internal const val NONCE = "test_nonce_value"
 }
 
 object ErrorTest {

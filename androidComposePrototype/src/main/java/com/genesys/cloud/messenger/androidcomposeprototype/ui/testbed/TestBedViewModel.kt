@@ -89,6 +89,8 @@ class TestBedViewModel :
             this.authState = authState
         }
 
+    var nonce: String = ""
+
     val regions = listOf(
         "inindca.com",
         "inintca.com",
@@ -443,7 +445,11 @@ class TestBedViewModel :
             onSocketMessageReceived("Please, first obtain id token from login.")
             return
         }
-        client.authorizeImplicit(idToken)
+        if (nonce.isEmpty()) {
+            onSocketMessageReceived("Please, first obtain nonce from login.")
+            return
+        }
+        client.authorizeImplicit(idToken, nonce)
     }
 
     private fun doRemoveTokenFromVault() {
@@ -633,6 +639,8 @@ class TestBedViewModel :
     }
 
     private fun buildImplicitOktaAuthorizeUrl(): String {
+        val generatedNonce = UUID.randomUUID().toString()
+        nonce = generatedNonce
         val builder =
             URLBuilder("https://${BuildConfig.OKTA_DOMAIN}/oauth2/default/v1/authorize").apply {
                 parameters.append("client_id", BuildConfig.CLIENT_ID)
@@ -640,7 +648,7 @@ class TestBedViewModel :
                 parameters.append("scope", "openid profile email")
                 parameters.append("redirect_uri", BuildConfig.SIGN_IN_REDIRECT_URI)
                 parameters.append("state", BuildConfig.OKTA_STATE)
-                parameters.append("nonce", UUID.randomUUID().toString())
+                parameters.append("nonce", generatedNonce)
             }
         return builder.build().toString()
     }

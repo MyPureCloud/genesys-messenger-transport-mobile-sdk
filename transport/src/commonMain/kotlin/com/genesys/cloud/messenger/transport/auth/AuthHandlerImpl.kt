@@ -56,9 +56,12 @@ internal class AuthHandlerImpl(
         }
     }
 
-    override fun authorizeImplicit(idToken: String) {
+    override fun authorizeImplicit(
+        idToken: String,
+        nonce: String
+    ) {
         dispatcher.launch {
-            when (val result = api.fetchAuthJwt(idToken)) {
+            when (val result = api.fetchAuthJwt(idToken, nonce)) {
                 is Result.Success -> {
                     result.value.let {
                         authJwt = it
