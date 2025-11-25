@@ -9,7 +9,6 @@ import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.auth.AuthHandlerImpl
 import com.genesys.cloud.messenger.transport.auth.AuthJwt
-import com.genesys.cloud.messenger.transport.auth.AuthStorage
 import com.genesys.cloud.messenger.transport.auth.MAX_LOGOUT_ATTEMPTS
 import com.genesys.cloud.messenger.transport.auth.NO_JWT
 import com.genesys.cloud.messenger.transport.auth.NO_REFRESH_TOKEN
@@ -53,7 +52,6 @@ class AuthHandlerTest {
     @MockK(relaxed = true)
     private val mockEventHandler: EventHandler = mockk(relaxed = true)
     private val mockLogger: Log = mockk(relaxed = true)
-    private val mockAuthStorage: AuthStorage = mockk(relaxed = true)
     private val logSlot = slot<() -> String>()
 
     @MockK(relaxed = true)
@@ -520,7 +518,6 @@ class AuthHandlerTest {
             vault = fakeVault,
             log = mockLogger,
             isAuthEnabled = isAuthEnabled,
-            authStorage = mockAuthStorage
         )
     }
 

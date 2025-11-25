@@ -5,8 +5,11 @@ package com.genesys.cloud.messenger.transport.core
  * KVault, Copyright 2021 Liftric, MIT license
  */
 
+import com.genesys.cloud.messenger.transport.util.LaunchStorage
 import com.genesys.cloud.messenger.transport.util.extensions.string
 import com.genesys.cloud.messenger.transport.util.extensions.toNSData
+import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.alloc
@@ -43,6 +46,19 @@ import platform.darwin.noErr
 
 @OptIn(ExperimentalForeignApi::class)
 internal class InternalVault(private val serviceName: String) {
+    private val launchStorage = LaunchStorage()
+    private val log: Log = Log(true, LogTag.MESSAGING_CLIENT)
+
+    init {
+        platform.Foundation.NSOperationQueue.mainQueue.addOperationWithBlock {
+            if (!launchStorage.didLaunchPreviously) {
+                removeAll()
+                launchStorage.markLaunched()
+                log.i { "First launch detected, clearing KeyChain" }
+            }
+        }
+    }
+
     /**
      * Saves a string value in the Keychain.
      * @param key The key to store
@@ -74,6 +90,19 @@ internal class InternalVault(private val serviceName: String) {
             SecItemDelete(query)
                 .validate()
         }
+
+    /**
+     * Removes all items stored by this vault from the Keychain.
+     */
+    @OptIn(BetaInteropApi::class)
+    private fun removeAll() {
+        context {
+            val query = query(
+                kSecClass to kSecClassGenericPassword
+            )
+            SecItemDelete(query)
+        }
+    }
 
     private fun existsObject(forKey: String): Boolean =
         context(forKey) { (account) ->

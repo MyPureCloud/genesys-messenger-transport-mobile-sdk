@@ -1,6 +1,5 @@
 package com.genesys.cloud.messenger.transport.core
 
-import com.genesys.cloud.messenger.transport.auth.AuthStorage
 import com.genesys.cloud.messenger.transport.config.BuildKonfig
 import com.genesys.cloud.messenger.transport.network.DEFAULT_PING_INTERVAL_IN_SECONDS
 import com.genesys.cloud.messenger.transport.network.DeploymentConfigUseCase
@@ -105,8 +104,7 @@ class MessengerTransportSDK(
                 configuration.reconnectionTimeoutInSeconds,
                 log.withTag(LogTag.RECONNECTION_HANDLER),
             ),
-            deploymentConfig = this::deploymentConfig,
-            authStorage = AuthStorage(),
+            deploymentConfig = this::deploymentConfig
         )
     }
 
