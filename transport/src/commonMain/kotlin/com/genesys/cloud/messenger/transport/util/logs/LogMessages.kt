@@ -158,6 +158,7 @@ internal object LogMessages {
     const val FORCE_CLOSE_WEB_SOCKET = "Force close web socket."
     const val ON_OPEN = "onOpen"
     const val INVALIDATE_SESSION_TOKEN = "invalidate session token"
+    const val CLEAR_KEYCHAIN = "First launch detected, clearing KeyChain"
 
     fun failedFetchDeploymentConfig(error: Throwable) = "Failed to fetch deployment config: $error"
 
