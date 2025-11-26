@@ -562,7 +562,7 @@ class LogMessagesTest {
     @Test
     fun `when sendQuickReply is called then it logs correctly`() {
         val givenButtonResponse = QuickReplyTestValues.buttonResponse_a
-        val expectedMessage = "sendQuickReply(buttonResponse: $givenButtonResponse)"
+        val expectedMessage = "sendQuickReply(buttonResponse: ${givenButtonResponse.sanitize()})"
 
         val result = LogMessages.sendQuickReply(givenButtonResponse)
 

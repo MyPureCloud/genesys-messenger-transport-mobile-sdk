@@ -94,17 +94,18 @@ class TestBedViewModel :
             "apne3.pure.cloud",
             "euc2.pure.cloud"
         )
-    private lateinit var onOktaSingIn: (url: String) -> Unit
+    private lateinit var onOpenUrl: (url: String) -> Unit
     private val quickRepliesMap = mutableMapOf<String, ButtonResponse>()
+    private val cardActionsMap = mutableMapOf<String, ButtonResponse>()
     private lateinit var selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit
 
     fun init(
         context: Context,
         selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit,
-        onOktaSignIn: (url: String) -> Unit,
+        onOpenUrl: (url: String) -> Unit,
     ) {
         println("Messenger Transport sdkVersion: ${MessengerTransportSDK.sdkVersion}")
-        this.onOktaSingIn = onOktaSignIn
+        this.onOpenUrl = onOpenUrl
         this.selectFile = selectFile
         val mmsdkConfiguration =
             Configuration(
@@ -169,6 +170,8 @@ class TestBedViewModel :
             "bye" -> doDisconnect()
             "send" -> doSendMessage(input)
             "sendQuickReply" -> doSendQuickReply(input)
+            "sendAction" -> doSendAction(input)
+            "listActions" -> doListActions()
             "history" -> fetchNextPage()
             "healthCheck" -> doSendHealthCheck()
             "attach" -> doAttach()
@@ -215,7 +218,7 @@ class TestBedViewModel :
 
     private fun doOktaSignIn(withPKCE: Boolean) {
         pkceEnabled = withPKCE
-        onOktaSingIn(buildOktaAuthorizeUrl())
+        onOpenUrl(buildOktaAuthorizeUrl())
         commandWaiting = false
     }
 
@@ -296,6 +299,26 @@ class TestBedViewModel :
                 handleException(t, "send quickReply")
             }
         } ?: onSocketMessageReceived("Selected quickReply option: $quickReply does not exist.")
+    }
+
+    private fun doSendAction(action: String) {
+        cardActionsMap[action]?.let { buttonResponse ->
+            try {
+                if (buttonResponse.type == "Link") {
+                    onOpenUrl(buttonResponse.payload)
+                    commandWaiting = false
+                } else {
+                    client.sendCardReply(buttonResponse)
+                }
+            } catch (t: Throwable) {
+                handleException(t, "send card action")
+            }
+        } ?: onSocketMessageReceived("Selected card action: $action does not exist.")
+    }
+
+    private fun doListActions() {
+        onSocketMessageReceived("Available card actions: ${cardActionsMap.keys}")
+        commandWaiting = false
     }
 
     private fun fetchNextPage() {
@@ -478,7 +501,6 @@ class TestBedViewModel :
             when (newState) {
                 is State.Configured ->
                     "connected: ${newState.connected}," + " newSession: ${newState.newSession}," + " wasReconnecting: ${oldState is State.Reconnecting}"
-
                 is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
                 is State.Closed -> "code: ${newState.code}, reason: ${newState.reason}"
                 is State.Error -> "code: ${newState.code}, message: ${newState.message}"
@@ -532,6 +554,17 @@ class TestBedViewModel :
                         quickRepliesMap.putAll(quickReplies.associateBy { it.text })
                         "QuickReplyReceived: text: $text | quick reply options: $quickReplies"
                     }
+
+            is MessageEvent.CardMessageReceived -> event.message.run {
+                val tempActionsMap = mutableMapOf<String, ButtonResponse>()
+                cards.forEach { card ->
+                    card.actions.forEach { action ->
+                        tempActionsMap.put(action.text, action)
+                        cardActionsMap[action.text] = action
+                    }
+                }
+                "CardMessageReceived with actions: $tempActionsMap"
+            }
             }
         onSocketMessageReceived(eventMessage)
     }
@@ -554,12 +587,10 @@ class TestBedViewModel :
             -> {
                 authState = AuthState.Error(event.errorCode, event.message, event.correctiveAction)
             }
-
             is ErrorCode.CustomAttributeSizeTooLarge
             -> {
                 onSocketMessageReceived(event.message ?: "CA size too large")
             }
-
             else -> {
                 println("Handle Event.Error here.")
             }

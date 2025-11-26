@@ -49,7 +49,7 @@ import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.extensions.isHealthCheckResponseId
 import com.genesys.cloud.messenger.transport.util.extensions.isOutbound
 import com.genesys.cloud.messenger.transport.util.extensions.isRefreshUrl
-import com.genesys.cloud.messenger.transport.util.extensions.sanitize
+import com.genesys.cloud.messenger.transport.util.extensions.sanitizeText
 import com.genesys.cloud.messenger.transport.util.extensions.toFileAttachmentProfile
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.logs.Log
@@ -241,7 +241,7 @@ internal class MessagingClientImpl(
         customAttributes: Map<String, String>
     ) {
         stateMachine.checkIfConfigured()
-        log.i { LogMessages.sendMessage(text.sanitize(), customAttributes) }
+        log.i { LogMessages.sendMessage(text.sanitizeText(), customAttributes) }
         internalCustomAttributesStore.add(customAttributes)
         val channel = prepareCustomAttributesForSending()
         val request = messageStore.prepareMessage(token, text, channel)
@@ -255,6 +255,15 @@ internal class MessagingClientImpl(
         log.i { LogMessages.sendQuickReply(buttonResponse) }
         val channel = prepareCustomAttributesForSending()
         val request = messageStore.prepareMessageWith(token, buttonResponse, channel)
+        val encodedJson = WebMessagingJson.json.encodeToString(request)
+        send(encodedJson)
+    }
+
+    override fun sendCardReply(postbackResponse: ButtonResponse) {
+        stateMachine.checkIfConfigured()
+        log.i { LogMessages.sendCardReply(postbackResponse) }
+        val channel = prepareCustomAttributesForSending()
+        val request = messageStore.preparePostbackMessage(token, postbackResponse, channel)
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         send(encodedJson)
     }
@@ -623,6 +632,7 @@ internal class MessagingClientImpl(
     private fun Message.handleAsStructuredMessage() {
         when (messageType) {
             Message.Type.QuickReply -> messageStore.update(this)
+            Message.Type.Cards -> messageStore.update(this)
             Message.Type.Unknown -> log.w { LogMessages.unsupportedMessageType(messageType) }
             else -> log.w { "Should not happen." }
         }
