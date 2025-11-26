@@ -64,6 +64,8 @@ internal data class StructuredMessage(
             Attachment,
             QuickReply,
             ButtonResponse,
+            Card,
+            Carousel,
         }
 
         @Serializable
@@ -111,6 +113,40 @@ internal data class StructuredMessage(
         }
 
         @Serializable
+        data class CardContent(
+            val contentType: String,
+            val card: Card,
+        ) : Content() {
+            @Serializable
+            data class Card(
+                val title: String,
+                val description: String,
+                val image: String? = null,
+                val defaultAction: Action? = null,
+                val actions: List<Action>
+            )
+        }
+
+        @Serializable
+        data class Action(
+            val type: String,
+            val text: String,
+            val url: String? = null,
+            val payload: String? = null,
+        )
+
+        @Serializable
+        data class CarouselContent(
+            val contentType: String,
+            val carousel: Carousel,
+        ) : Content() {
+            @Serializable
+            data class Carousel(
+                val cards: List<CardContent.Card>
+            )
+        }
+
+        @Serializable
         internal data object UnknownContent : Content()
     }
 
@@ -121,6 +157,8 @@ internal data class StructuredMessage(
                 Content.Type.Attachment.name -> Content.AttachmentContent.serializer()
                 Content.Type.QuickReply.name -> Content.QuickReplyContent.serializer()
                 Content.Type.ButtonResponse.name -> Content.ButtonResponseContent.serializer()
+                Content.Type.Card.name -> Content.CardContent.serializer()
+                Content.Type.Carousel.name -> Content.CarouselContent.serializer()
                 else -> Content.UnknownContent.serializer()
             }
         }

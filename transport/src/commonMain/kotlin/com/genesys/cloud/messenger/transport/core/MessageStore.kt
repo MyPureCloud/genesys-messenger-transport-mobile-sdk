@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.core
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.extensions.getUploadedAttachments
 import com.genesys.cloud.messenger.transport.util.logs.Log
@@ -26,20 +27,22 @@ internal class MessageStore(private val log: Log) {
         text: String,
         channel: Channel? = null
     ): OnMessageRequest {
-        val messageToSend = pendingMessage.copy(text = text, state = Message.State.Sending).also {
-            log.i { LogMessages.messagePreparedToSend(it) }
-            activeConversation.add(it)
-            publish(MessageEvent.MessageInserted(it))
-            pendingMessage = Message()
-        }
+        val messageToSend =
+            pendingMessage.copy(text = text, state = Message.State.Sending).also {
+                log.i { LogMessages.messagePreparedToSend(it) }
+                activeConversation.add(it)
+                publish(MessageEvent.MessageInserted(it))
+                pendingMessage = Message()
+            }
         return OnMessageRequest(
             token = token,
-            message = TextMessage(
-                text,
-                metadata = mapOf("customMessageId" to messageToSend.id),
-                content = messageToSend.getUploadedAttachments(),
-                channel = channel,
-            )
+            message =
+                TextMessage(
+                    text,
+                    metadata = mapOf("customMessageId" to messageToSend.id),
+                    content = messageToSend.getUploadedAttachments(),
+                    channel = channel,
+                )
         )
     }
 
@@ -49,6 +52,45 @@ internal class MessageStore(private val log: Log) {
         channel: Channel? = null,
     ): OnMessageRequest {
         val type = Message.Type.QuickReply
+        val messageToSend =
+            pendingMessage
+                .copy(
+                    messageType = type,
+                    type = type.name,
+                    state = Message.State.Sending,
+                    quickReplies = listOf(buttonResponse),
+                ).also {
+                    log.i { LogMessages.quickReplyPrepareToSend(it) }
+                    activeConversation.add(it)
+                    publish(MessageEvent.MessageInserted(it))
+                    pendingMessage = Message(attachments = it.attachments)
+                }
+        val content =
+            listOf(
+                Message.Content(
+                    contentType = Message.Content.Type.ButtonResponse,
+                    buttonResponse = buttonResponse,
+                )
+            )
+        return OnMessageRequest(
+            token = token,
+            message =
+                TextMessage(
+                    text = "",
+                    metadata = mapOf("customMessageId" to messageToSend.id),
+                    content = content,
+                    channel = channel,
+                )
+        )
+    }
+
+    fun preparePostbackMessage(
+        token: String,
+        buttonResponse: ButtonResponse,
+        channel: Channel? = null,
+    ): OnMessageRequest {
+        val type = Message.Type.Cards
+
         val messageToSend = pendingMessage
             .copy(
                 messageType = type,
@@ -56,24 +98,26 @@ internal class MessageStore(private val log: Log) {
                 state = Message.State.Sending,
                 quickReplies = listOf(buttonResponse),
             ).also {
-                log.i { LogMessages.quickReplyPrepareToSend(it) }
+                log.i { LogMessages.postbackPrepareToSend(it) }
                 activeConversation.add(it)
                 publish(MessageEvent.MessageInserted(it))
                 pendingMessage = Message(attachments = it.attachments)
             }
+
         val content = listOf(
             Message.Content(
                 contentType = Message.Content.Type.ButtonResponse,
                 buttonResponse = buttonResponse,
             )
         )
+
         return OnMessageRequest(
             token = token,
-            message = TextMessage(
-                text = "",
+            message = StructuredMessage(
+                text = buttonResponse.text,
                 metadata = mapOf("customMessageId" to messageToSend.id),
                 content = content,
-                channel = channel,
+                channel = channel
             )
         )
     }
@@ -93,10 +137,11 @@ internal class MessageStore(private val log: Log) {
 
     private fun update(attachment: Attachment) {
         log.i { LogMessages.attachmentStateUpdated(attachment) }
-        val attachments = pendingMessage.attachments
-            .toMutableMap()
-            .also { it[attachment.id] = attachment }
-            .filterNot { it.value.state is Attachment.State.Sent }
+        val attachments =
+            pendingMessage.attachments
+                .toMutableMap()
+                .also { it[attachment.id] = attachment }
+                .filterNot { it.value.state is Attachment.State.Sent }
         pendingMessage = pendingMessage.copy(attachments = attachments)
         publish(MessageEvent.AttachmentUpdated(attachment))
     }
@@ -165,10 +210,10 @@ internal class MessageStore(private val log: Log) {
 }
 
 private fun Message.toMessageEvent(): MessageEvent =
-    if (messageType == Message.Type.QuickReply) {
-        MessageEvent.QuickReplyReceived(this)
-    } else {
-        MessageEvent.MessageInserted(this)
+    when (messageType) {
+        Message.Type.QuickReply -> MessageEvent.QuickReplyReceived(this)
+        Message.Type.Cards -> MessageEvent.CardMessageReceived(this)
+        else -> MessageEvent.MessageInserted(this)
     }
 
 /**
@@ -219,4 +264,13 @@ sealed class MessageEvent {
      * @property message is the [Message] object with all the details.
      */
     class QuickReplyReceived(val message: Message) : MessageEvent()
+
+    /**
+     * Dispatched when a card or carousel message was sent by the Bot.
+     * Card messages may include one or more cards, with each card containing title, description, image, and actions.
+     * To access the card data, refer to [Message.cards].
+     *
+     * @property message is the [Message] object with all the card details.
+     */
+    class CardMessageReceived(val message: Message) : MessageEvent()
 }

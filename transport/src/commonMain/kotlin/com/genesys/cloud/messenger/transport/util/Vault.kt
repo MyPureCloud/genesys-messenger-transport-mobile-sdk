@@ -20,9 +20,10 @@ abstract class Vault(val keys: Keys) {
      * The token is stored in the vault for future retrieval.
      */
     internal val token: String
-        get() = fetch(keys.tokenKey) ?: TokenGenerator.generate().also {
-            store(keys.tokenKey, it)
-        }
+        get() =
+            fetch(keys.tokenKey) ?: TokenGenerator.generate().also {
+                store(keys.tokenKey, it)
+            }
 
     /**
      * Retrieves the auth refresh token value from the vault or returns a default value if it doesn't exist.
@@ -49,9 +50,10 @@ abstract class Vault(val keys: Keys) {
      * The PushConfig can also be set to a new value, which will then be stored in the vault.
      */
     internal var pushConfig: PushConfig
-        get() = fetch(keys.pushConfigKey)?.let {
-            WebMessagingJson.json.decodeFromString<PushConfig>(it)
-        } ?: DEFAULT_PUSH_CONFIG
+        get() =
+            fetch(keys.pushConfigKey)?.let {
+                WebMessagingJson.json.decodeFromString<PushConfig>(it)
+            } ?: DEFAULT_PUSH_CONFIG
         set(value) {
             store(keys.pushConfigKey, WebMessagingJson.json.encodeToString(value))
         }

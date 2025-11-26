@@ -20,7 +20,7 @@ internal actual class Platform {
     /**
      * The name of the OS currently running on this device.
      */
-    actual val os: String = UIDevice.currentDevice.systemName()
+    actual val os: String = "ios"
 
     /**
      * The device name and system version currently running on this device.

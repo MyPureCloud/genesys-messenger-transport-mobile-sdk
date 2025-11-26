@@ -76,19 +76,21 @@ class MessengerTransportSDK(
     fun createMessagingClient(): MessagingClient {
         val log = Log(configuration.logging, LogTag.MESSAGING_CLIENT)
         val api = WebMessagingApi(urls, configuration)
-        val webSocket = PlatformSocket(
-            log.withTag(LogTag.WEBSOCKET),
-            urls.webSocketUrl,
-            DEFAULT_PING_INTERVAL_IN_SECONDS,
-        )
+        val webSocket =
+            PlatformSocket(
+                log.withTag(LogTag.WEBSOCKET),
+                urls.webSocketUrl,
+                DEFAULT_PING_INTERVAL_IN_SECONDS,
+            )
         // Support old TokenStore. If TokenStore not present fallback to the Vault.
         val token = tokenStore?.token ?: vault.token
         val messageStore = MessageStore(log.withTag(LogTag.MESSAGE_STORE))
-        val attachmentHandler = AttachmentHandlerImpl(
-            api,
-            log.withTag(LogTag.ATTACHMENT_HANDLER),
-            messageStore.updateAttachmentStateWith,
-        )
+        val attachmentHandler =
+            AttachmentHandlerImpl(
+                api,
+                log.withTag(LogTag.ATTACHMENT_HANDLER),
+                messageStore.updateAttachmentStateWith,
+            )
 
         return MessagingClientImpl(
             api = api,
@@ -100,10 +102,11 @@ class MessengerTransportSDK(
             jwtHandler = JwtHandler(webSocket),
             attachmentHandler = attachmentHandler,
             messageStore = messageStore,
-            reconnectionHandler = ReconnectionHandlerImpl(
-                configuration.reconnectionTimeoutInSeconds,
-                log.withTag(LogTag.RECONNECTION_HANDLER),
-            ),
+            reconnectionHandler =
+                ReconnectionHandlerImpl(
+                    configuration.reconnectionTimeoutInSeconds,
+                    log.withTag(LogTag.RECONNECTION_HANDLER),
+                ),
             deploymentConfig = this::deploymentConfig,
         )
     }

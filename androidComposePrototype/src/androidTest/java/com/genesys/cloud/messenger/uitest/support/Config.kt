@@ -28,9 +28,10 @@ data class Config(
 
 private fun pullConfig(): Config {
     val mapper = jacksonObjectMapper()
-    val configInputStream = InstrumentationRegistry
-        .getInstrumentation()
-        .context.assets
-        .open("testConfig.json")
+    val configInputStream =
+        InstrumentationRegistry
+            .getInstrumentation()
+            .context.assets
+            .open("testConfig.json")
     return mapper.readValue(configInputStream)
 }

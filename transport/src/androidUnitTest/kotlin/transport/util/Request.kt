@@ -32,4 +32,6 @@ internal object Request {
     const val jwt = """{"token":"00000000-0000-0000-0000-000000000000","action":"getJwt"}"""
     const val refreshAttachmentUrl =
         """{"token":"$token","attachmentId":"88888888-8888-8888-8888-888888888888","action":"getAttachment"}"""
+    val expectedPostbackRequestJson =
+        """{"token":"$token","message":{"text":"Postback button text","metadata":{"customMessageId":"card-123"},"content":[{"contentType":"ButtonResponse","buttonResponse":{"text":"Postback button text","payload":"some_payload_value","type":"Postback"}}],"type":"Structured"},"action":"onMessage"}"""
 }

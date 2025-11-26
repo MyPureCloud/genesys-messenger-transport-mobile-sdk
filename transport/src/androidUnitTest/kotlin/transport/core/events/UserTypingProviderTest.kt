@@ -18,18 +18,21 @@ import transport.util.Request
 class UserTypingProviderTest {
     private val mockLogger: Log = mockk(relaxed = true)
     private val logSlot = mutableListOf<() -> String>()
-    private val mockTimestampFunction: () -> Long = spyk<() -> Long>().also {
-        every { it.invoke() } answers { Platform().epochMillis() }
-    }
-    private val mockShowUserTypingIndicatorFunction: () -> Boolean = spyk<() -> Boolean>().also {
-        every { it.invoke() } returns true
-    }
+    private val mockTimestampFunction: () -> Long =
+        spyk<() -> Long>().also {
+            every { it.invoke() } answers { Platform().epochMillis() }
+        }
+    private val mockShowUserTypingIndicatorFunction: () -> Boolean =
+        spyk<() -> Boolean>().also {
+            every { it.invoke() } returns true
+        }
 
-    private val subject = UserTypingProvider(
-        log = mockLogger,
-        showUserTypingEnabled = mockShowUserTypingIndicatorFunction,
-        getCurrentTimestamp = mockTimestampFunction,
-    )
+    private val subject =
+        UserTypingProvider(
+            log = mockLogger,
+            showUserTypingEnabled = mockShowUserTypingIndicatorFunction,
+            getCurrentTimestamp = mockTimestampFunction,
+        )
 
     @Test
     fun `when encode`() {
@@ -104,10 +107,11 @@ class UserTypingProviderTest {
 
     @Test
     fun `when encode with default getCurrentTimestamp function`() {
-        val subject = UserTypingProvider(
-            log = mockLogger,
-            showUserTypingEnabled = { true }
-        )
+        val subject =
+            UserTypingProvider(
+                log = mockLogger,
+                showUserTypingEnabled = { true }
+            )
 
         val result = subject.encodeRequest(token = Request.token)
 

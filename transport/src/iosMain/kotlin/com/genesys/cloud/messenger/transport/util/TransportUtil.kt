@@ -7,7 +7,6 @@ import platform.Foundation.NSData
 import platform.posix.memcpy
 
 class TransportUtil {
-
     /**
      * Utility function that helps with conversion of NSData to KotlinByteArray.
      *

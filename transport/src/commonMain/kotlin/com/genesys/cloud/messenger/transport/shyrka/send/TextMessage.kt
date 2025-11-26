@@ -10,7 +10,7 @@ internal data class TextMessage(
     val metadata: Map<String, String>? = null,
     val content: List<Message.Content> = emptyList(),
     val channel: Channel? = null,
-) : BaseMessageProtocol {
+) : BaseMessageProtocol() {
     @Required
     override val type = BaseMessageProtocol.Type.Text
 }

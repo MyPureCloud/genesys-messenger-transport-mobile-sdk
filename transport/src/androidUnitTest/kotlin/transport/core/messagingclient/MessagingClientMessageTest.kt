@@ -13,6 +13,7 @@ import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.isClosed
+import com.genesys.cloud.messenger.transport.util.extensions.sanitizeText
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import io.mockk.every
@@ -24,7 +25,6 @@ import transport.util.Response
 import kotlin.test.assertFailsWith
 
 class MessagingClientMessageTest : BaseMessagingClientTest() {
-
     @Test
     fun `when messageListener is set`() {
         val givenMessageListener: (MessageEvent) -> Unit = {}
@@ -56,18 +56,19 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
             slot.captured.onMessage(Response.onMessage())
         }
         val expectedMessageRequest =
-            """{"token":"${Request.token}","message":{"text":"${MessageValues.TEXT}","type":"Text"},"action":"onMessage"}"""
-        val expectedMessage = Message(
-            id = "some_custom_message_id",
-            state = State.Sent,
-            messageType = Type.Text,
-            type = "Text",
-            text = MessageValues.TEXT,
-            timeStamp = 1661196266704,
-        )
+            """{"token":"${Request.token}","message":{"text":"${MessageValues.TEXT.sanitizeText()}","type":"Text"},"action":"onMessage"}"""
+        val expectedMessage =
+            Message(
+                id = "some_custom_message_id",
+                state = State.Sent,
+                messageType = Type.Text,
+                type = "Text",
+                text = MessageValues.TEXT,
+                timeStamp = 1661196266704,
+            )
         subject.connect()
 
-        subject.sendMessage("Hello world!")
+        subject.sendMessage(MessageValues.TEXT)
 
         verifySequence {
             connectSequence()
@@ -87,9 +88,12 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
             mockCustomAttributesStore.onSending()
             mockEventHandler.onEvent(Event.HealthChecked)
         }
+
+        val sanitizedText = MessageValues.TEXT.sanitizeText()
+
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessage(MessageValues.TEXT_SANITIZED))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.sendMessage(sanitizedText))
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.WILL_SEND_MESSAGE)
     }
 
@@ -199,16 +203,17 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
 
     @Test
     fun `when SocketListener invoke onMessage with Outbound text message`() {
-        val expectedMessage = Message(
-            id = "some_custom_message_id",
-            direction = Direction.Outbound,
-            state = State.Sent,
-            messageType = Type.Text,
-            type = "Text",
-            text = "Hello world!",
-            timeStamp = 1661196266704,
-            from = Participant(originatingEntity = Participant.OriginatingEntity.Unknown)
-        )
+        val expectedMessage =
+            Message(
+                id = "some_custom_message_id",
+                direction = Direction.Outbound,
+                state = State.Sent,
+                messageType = Type.Text,
+                type = "Text",
+                text = "Hello world!",
+                timeStamp = 1661196266704,
+                from = Participant(originatingEntity = Participant.OriginatingEntity.Unknown)
+            )
         subject.connect()
 
         slot.captured.onMessage(Response.onMessage(Direction.Outbound))

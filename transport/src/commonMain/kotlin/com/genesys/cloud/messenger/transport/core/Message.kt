@@ -30,19 +30,22 @@ data class Message(
     val attachments: Map<String, Attachment> = emptyMap(),
     val events: List<Event> = emptyList(),
     val quickReplies: List<ButtonResponse> = emptyList(),
-    val from: Participant = Participant(
-        originatingEntity = Participant.OriginatingEntity.Human
-    ),
+    val cards: List<Card> = emptyList(),
+
+    val from: Participant =
+        Participant(
+            originatingEntity = Participant.OriginatingEntity.Human
+        ),
     val authenticated: Boolean = false,
     val text: String? = null,
 ) {
-
     /**
      * The enum type representation of the message.
      *
      * @property Text when message is a text.
      * @property Event when message is an event.
      * @property QuickReply when message is a quick reply.
+     * @property Cards when message contains rich content in the form of one or more cards.
      * @property Unknown when system could not recognize the message type.
      */
     @Serializable
@@ -50,6 +53,7 @@ data class Message(
         Text,
         Event,
         QuickReply,
+        Cards,
         Unknown,
     }
 
@@ -143,4 +147,13 @@ data class Message(
             Unknown,
         }
     }
+
+    @Serializable
+    data class Card(
+        val title: String,
+        val description: String,
+        val imageUrl: String? = null,
+        val actions: List<ButtonResponse>,
+        val defaultAction: ButtonResponse? = null,
+    )
 }
