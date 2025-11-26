@@ -9,8 +9,8 @@ import com.genesys.cloud.messenger.transport.util.LaunchStorage
 import com.genesys.cloud.messenger.transport.util.extensions.string
 import com.genesys.cloud.messenger.transport.util.extensions.toNSData
 import com.genesys.cloud.messenger.transport.util.logs.Log
-import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
+import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.alloc

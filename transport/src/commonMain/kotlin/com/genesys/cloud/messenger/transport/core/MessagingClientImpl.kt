@@ -92,7 +92,7 @@ internal class MessagingClientImpl(
         api,
         vault,
         log.withTag(LogTag.AUTH_HANDLER),
-        isAuthEnabled = { deploymentConfig.isAuthEnabled(api) },
+        isAuthEnabled = { deploymentConfig.isAuthEnabled(api) }
     ),
     private val internalCustomAttributesStore: CustomAttributesStoreImpl = CustomAttributesStoreImpl(
         log.withTag(LogTag.CUSTOM_ATTRIBUTES_STORE),

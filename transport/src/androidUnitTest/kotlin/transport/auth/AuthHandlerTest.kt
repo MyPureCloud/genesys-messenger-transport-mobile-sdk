@@ -517,7 +517,7 @@ class AuthHandlerTest {
             api = mockWebMessagingApi,
             vault = fakeVault,
             log = mockLogger,
-            isAuthEnabled = isAuthEnabled,
+            isAuthEnabled = isAuthEnabled
         )
     }
 
