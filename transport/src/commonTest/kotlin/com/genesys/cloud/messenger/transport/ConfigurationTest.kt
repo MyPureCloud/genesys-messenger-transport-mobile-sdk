@@ -8,7 +8,6 @@ import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlin.test.Test
 
 class ConfigurationTest {
-
     @Test
     fun `validate default constructor`() {
         val expectedDeploymentId = TestValues.DEPLOYMENT_ID

@@ -26,13 +26,15 @@ internal fun String.sanitizeCustomAttributes(): String {
 
 internal fun String.sanitizeText(): String {
     var regex = """("text":")([^"]*)(")""".toRegex()
-    var sanitizedInput = this.replace(regex) {
-        """${it.groupValues[1]}${it.groupValues[2].sanitize()}${it.groupValues[3]}"""
-    }
+    var sanitizedInput =
+        this.replace(regex) {
+            """${it.groupValues[1]}${it.groupValues[2].sanitize()}${it.groupValues[3]}"""
+        }
     regex = """(text=)(.*?)(?=, \w+:|$|[)])""".toRegex()
-    sanitizedInput = sanitizedInput.replace(regex) {
-        """${it.groupValues[1]}${it.groupValues[2].sanitize()}"""
-    }
+    sanitizedInput =
+        sanitizedInput.replace(regex) {
+            """${it.groupValues[1]}${it.groupValues[2].sanitize()}"""
+        }
     return sanitizedInput
 }
 

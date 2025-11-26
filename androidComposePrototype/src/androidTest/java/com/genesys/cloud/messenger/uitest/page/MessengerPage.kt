@@ -15,7 +15,6 @@ import java.lang.Thread.sleep
 import java.util.concurrent.TimeUnit.SECONDS
 
 class MessengerPage(activity: Activity) : BasePage(activity) {
-
     private val title = "Web Messaging Testbed"
     private val sendText = "Send"
     private val messageResultText1 = "direction=Inbound"
@@ -43,43 +42,49 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     // Send a command in command field
     fun enterCommand(command: String) {
         val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        val commandBox = mDevice.findObject(
-            UiSelector().className(commandClass).index(1)
-        )
+        val commandBox =
+            mDevice.findObject(
+                UiSelector().className(commandClass).index(1)
+            )
         commandBox.click()
         commandBox.clearTextField()
         mDevice.executeShellCommand("input text $command")
         UiObject(UiSelector().className(commandClass)).setText(command)
 
         sleep(3000)
-        val sendButton = mDevice.findObject(
-            UiSelector().text(sendText)
-        )
+        val sendButton =
+            mDevice.findObject(
+                UiSelector().text(sendText)
+            )
         sendButton.click()
     }
 
     // Grab the client response in client field
     fun getClientResponse(): String {
-        val mDevice = UiDevice.getInstance(
-            InstrumentationRegistry.getInstrumentation()
-        )
-        val commandBox = mDevice.findObject(
-            UiSelector()
-                .className(commandClass)
-                .index(1)
-        )
+        val mDevice =
+            UiDevice.getInstance(
+                InstrumentationRegistry.getInstrumentation()
+            )
+        val commandBox =
+            mDevice.findObject(
+                UiSelector()
+                    .className(commandClass)
+                    .index(1)
+            )
         return commandBox.getText()
     }
 
     fun getAuthStateResponse(): String {
-        val mDevice = UiDevice.getInstance(
-            InstrumentationRegistry.getInstrumentation()
-        )
-        val commandBox = mDevice.findObject(
-            UiSelector()
-                .className(commandClass)
-                .index(2)
-        )
+        val mDevice =
+            UiDevice.getInstance(
+                InstrumentationRegistry.getInstrumentation()
+            )
+        val commandBox =
+            mDevice.findObject(
+                UiSelector()
+                    .className(commandClass)
+                    .index(2)
+            )
         return commandBox.getText()
     }
 
@@ -159,9 +164,10 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     // Get text from response field
     fun getFullResponse(): String {
         val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        val responseBox = mDevice.findObject(
-            UiSelector().index(3)
-        )
+        val responseBox =
+            mDevice.findObject(
+                UiSelector().index(3)
+            )
         return responseBox.getText()
     }
 
@@ -242,9 +248,10 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
         text: String
     ) {
         val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        val responseBox = mDevice.findObject(
-            UiSelector().index(index)
-        )
+        val responseBox =
+            mDevice.findObject(
+                UiSelector().index(index)
+            )
         responseBox.click()
         responseBox.clearTextField()
         mDevice.executeShellCommand("input text $text")

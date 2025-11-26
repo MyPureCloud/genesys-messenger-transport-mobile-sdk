@@ -27,20 +27,22 @@ internal class MessageStore(private val log: Log) {
         text: String,
         channel: Channel? = null
     ): OnMessageRequest {
-        val messageToSend = pendingMessage.copy(text = text, state = Message.State.Sending).also {
-            log.i { LogMessages.messagePreparedToSend(it) }
-            activeConversation.add(it)
-            publish(MessageEvent.MessageInserted(it))
-            pendingMessage = Message()
-        }
+        val messageToSend =
+            pendingMessage.copy(text = text, state = Message.State.Sending).also {
+                log.i { LogMessages.messagePreparedToSend(it) }
+                activeConversation.add(it)
+                publish(MessageEvent.MessageInserted(it))
+                pendingMessage = Message()
+            }
         return OnMessageRequest(
             token = token,
-            message = TextMessage(
-                text,
-                metadata = mapOf("customMessageId" to messageToSend.id),
-                content = messageToSend.getUploadedAttachments(),
-                channel = channel,
-            )
+            message =
+                TextMessage(
+                    text,
+                    metadata = mapOf("customMessageId" to messageToSend.id),
+                    content = messageToSend.getUploadedAttachments(),
+                    channel = channel,
+                )
         )
     }
 
@@ -50,32 +52,35 @@ internal class MessageStore(private val log: Log) {
         channel: Channel? = null,
     ): OnMessageRequest {
         val type = Message.Type.QuickReply
-        val messageToSend = pendingMessage
-            .copy(
-                messageType = type,
-                type = type.name,
-                state = Message.State.Sending,
-                quickReplies = listOf(buttonResponse),
-            ).also {
-                log.i { LogMessages.quickReplyPrepareToSend(it) }
-                activeConversation.add(it)
-                publish(MessageEvent.MessageInserted(it))
-                pendingMessage = Message(attachments = it.attachments)
-            }
-        val content = listOf(
-            Message.Content(
-                contentType = Message.Content.Type.ButtonResponse,
-                buttonResponse = buttonResponse,
+        val messageToSend =
+            pendingMessage
+                .copy(
+                    messageType = type,
+                    type = type.name,
+                    state = Message.State.Sending,
+                    quickReplies = listOf(buttonResponse),
+                ).also {
+                    log.i { LogMessages.quickReplyPrepareToSend(it) }
+                    activeConversation.add(it)
+                    publish(MessageEvent.MessageInserted(it))
+                    pendingMessage = Message(attachments = it.attachments)
+                }
+        val content =
+            listOf(
+                Message.Content(
+                    contentType = Message.Content.Type.ButtonResponse,
+                    buttonResponse = buttonResponse,
+                )
             )
-        )
         return OnMessageRequest(
             token = token,
-            message = TextMessage(
-                text = "",
-                metadata = mapOf("customMessageId" to messageToSend.id),
-                content = content,
-                channel = channel,
-            )
+            message =
+                TextMessage(
+                    text = "",
+                    metadata = mapOf("customMessageId" to messageToSend.id),
+                    content = content,
+                    channel = channel,
+                )
         )
     }
 
@@ -86,34 +91,37 @@ internal class MessageStore(private val log: Log) {
     ): OnMessageRequest {
         val type = Message.Type.Cards
 
-        val messageToSend = pendingMessage
-            .copy(
-                messageType = type,
-                type = type.name,
-                state = Message.State.Sending,
-                quickReplies = listOf(buttonResponse),
-            ).also {
-                log.i { LogMessages.postbackPrepareToSend(it) }
-                activeConversation.add(it)
-                publish(MessageEvent.MessageInserted(it))
-                pendingMessage = Message(attachments = it.attachments)
-            }
+        val messageToSend =
+            pendingMessage
+                .copy(
+                    messageType = type,
+                    type = type.name,
+                    state = Message.State.Sending,
+                    quickReplies = listOf(buttonResponse),
+                ).also {
+                    log.i { LogMessages.postbackPrepareToSend(it) }
+                    activeConversation.add(it)
+                    publish(MessageEvent.MessageInserted(it))
+                    pendingMessage = Message(attachments = it.attachments)
+                }
 
-        val content = listOf(
-            Message.Content(
-                contentType = Message.Content.Type.ButtonResponse,
-                buttonResponse = buttonResponse,
+        val content =
+            listOf(
+                Message.Content(
+                    contentType = Message.Content.Type.ButtonResponse,
+                    buttonResponse = buttonResponse,
+                )
             )
-        )
 
         return OnMessageRequest(
             token = token,
-            message = StructuredMessage(
-                text = buttonResponse.text,
-                metadata = mapOf("customMessageId" to messageToSend.id),
-                content = content,
-                channel = channel
-            )
+            message =
+                StructuredMessage(
+                    text = buttonResponse.text,
+                    metadata = mapOf("customMessageId" to messageToSend.id),
+                    content = content,
+                    channel = channel
+                )
         )
     }
 
@@ -132,10 +140,11 @@ internal class MessageStore(private val log: Log) {
 
     private fun update(attachment: Attachment) {
         log.i { LogMessages.attachmentStateUpdated(attachment) }
-        val attachments = pendingMessage.attachments
-            .toMutableMap()
-            .also { it[attachment.id] = attachment }
-            .filterNot { it.value.state is Attachment.State.Sent }
+        val attachments =
+            pendingMessage.attachments
+                .toMutableMap()
+                .also { it[attachment.id] = attachment }
+                .filterNot { it.value.state is Attachment.State.Sent }
         pendingMessage = pendingMessage.copy(attachments = attachments)
         publish(MessageEvent.AttachmentUpdated(attachment))
     }

@@ -8,9 +8,10 @@ package com.genesys.cloud.messenger.transport.util
 @Deprecated("Use [Vault] instead.")
 abstract class TokenStore {
     internal val token: String
-        get() = fetch() ?: TokenGenerator.generate().also {
-            store(it)
-        }
+        get() =
+            fetch() ?: TokenGenerator.generate().also {
+                store(it)
+            }
 
     /**
      * Stores the token into the storage for later fetching.

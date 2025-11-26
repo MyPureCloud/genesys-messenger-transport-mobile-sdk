@@ -261,11 +261,12 @@ class CustomAttributesStoreTest {
 
     @Test
     fun `when customAttributes size exceeds maxCustomDataBytes`() {
-        val expectedEvent = Event.Error(
-            ErrorCode.CustomAttributeSizeTooLarge,
-            ErrorMessage.customAttributesSizeError(0),
-            CorrectiveAction.CustomAttributeSizeTooLarge
-        )
+        val expectedEvent =
+            Event.Error(
+                ErrorCode.CustomAttributeSizeTooLarge,
+                ErrorMessage.customAttributesSizeError(0),
+                CorrectiveAction.CustomAttributeSizeTooLarge
+            )
         subject.maxCustomDataBytes = 0
 
         val result = subject.add(TestValues.defaultMap)

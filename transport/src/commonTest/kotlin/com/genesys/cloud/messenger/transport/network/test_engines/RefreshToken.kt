@@ -28,26 +28,32 @@ internal fun HttpClientConfig<MockEngineConfig>.refreshTokenEngine() {
             when (request.url.fullPath) {
                 BASIC_REFRESH_TOKEN_PATH -> {
                     if (request.method == HttpMethod.Post && request.body is TextContent) {
-                        val requestBody = Json.decodeFromString(
-                            RefreshToken.serializer(),
-                            (request.body as TextContent).text
-                        )
+                        val requestBody =
+                            Json.decodeFromString(
+                                RefreshToken.serializer(),
+                                (request.body as TextContent).text
+                            )
                         if (requestBody.refreshToken == AuthTest.REFRESH_TOKEN) {
                             respond(
                                 status = HttpStatusCode.OK,
-                                headers = headersOf(
-                                    HttpHeaders.ContentType,
-                                    "application/json"
-                                ),
-                                content = Json.encodeToString(
-                                    AuthJwt.serializer(),
-                                    AuthJwt(AuthTest.REFRESHED_JWT_TOKEN, null)
-                                )
+                                headers =
+                                    headersOf(
+                                        HttpHeaders.ContentType,
+                                        "application/json"
+                                    ),
+                                content =
+                                    Json.encodeToString(
+                                        AuthJwt.serializer(),
+                                        AuthJwt(AuthTest.REFRESHED_JWT_TOKEN, null)
+                                    )
                             )
                         } else {
                             when (requestBody.refreshToken) {
                                 InvalidValues.CANCELLATION_EXCEPTION -> {
                                     throw CancellationException(ErrorTest.MESSAGE)
+                                }
+                                InvalidValues.NETWORK_EXCEPTION -> {
+                                    throw NetworkExceptionForTesting(ErrorTest.MESSAGE)
                                 }
                                 InvalidValues.UNKNOWN_EXCEPTION -> {
                                     error(ErrorTest.MESSAGE)

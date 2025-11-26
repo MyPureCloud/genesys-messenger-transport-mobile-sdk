@@ -84,10 +84,11 @@ internal class InternalVault(private val serviceName: String) {
     @OptIn(BetaInteropApi::class)
     fun remove(key: String) =
         context(key) { (account) ->
-            val query = query(
-                kSecClass to kSecClassGenericPassword,
-                kSecAttrAccount to account
-            )
+            val query =
+                query(
+                    kSecClass to kSecClassGenericPassword,
+                    kSecAttrAccount to account
+                )
 
             SecItemDelete(query)
                 .validate()
@@ -99,20 +100,22 @@ internal class InternalVault(private val serviceName: String) {
     @OptIn(BetaInteropApi::class)
     private fun removeAll() {
         context {
-            val query = query(
-                kSecClass to kSecClassGenericPassword
-            )
+            val query =
+                query(
+                    kSecClass to kSecClassGenericPassword
+                )
             SecItemDelete(query)
         }
     }
 
     private fun existsObject(forKey: String): Boolean =
         context(forKey) { (account) ->
-            val query = query(
-                kSecClass to kSecClassGenericPassword,
-                kSecAttrAccount to account,
-                kSecReturnData to kCFBooleanFalse
-            )
+            val query =
+                query(
+                    kSecClass to kSecClassGenericPassword,
+                    kSecAttrAccount to account,
+                    kSecReturnData to kCFBooleanFalse
+                )
 
             SecItemCopyMatching(query, null)
                 .validate()
@@ -134,11 +137,12 @@ internal class InternalVault(private val serviceName: String) {
         value: NSData?
     ): Boolean =
         context(key, value) { (account, data) ->
-            val query = query(
-                kSecClass to kSecClassGenericPassword,
-                kSecAttrAccount to account,
-                kSecValueData to data
-            )
+            val query =
+                query(
+                    kSecClass to kSecClassGenericPassword,
+                    kSecAttrAccount to account,
+                    kSecValueData to data
+                )
 
             SecItemAdd(query, null)
                 .validate()
@@ -149,15 +153,17 @@ internal class InternalVault(private val serviceName: String) {
         value: Any?
     ): Boolean =
         context(key, value) { (account, data) ->
-            val query = query(
-                kSecClass to kSecClassGenericPassword,
-                kSecAttrAccount to account,
-                kSecReturnData to kCFBooleanFalse
-            )
+            val query =
+                query(
+                    kSecClass to kSecClassGenericPassword,
+                    kSecAttrAccount to account,
+                    kSecReturnData to kCFBooleanFalse
+                )
 
-            val updateQuery = query(
-                kSecValueData to data
-            )
+            val updateQuery =
+                query(
+                    kSecValueData to data
+                )
 
             SecItemUpdate(query, updateQuery)
                 .validate()
@@ -165,12 +171,13 @@ internal class InternalVault(private val serviceName: String) {
 
     private fun value(forKey: String): NSData? =
         context(forKey) { (account) ->
-            val query = query(
-                kSecClass to kSecClassGenericPassword,
-                kSecAttrAccount to account,
-                kSecReturnData to kCFBooleanTrue,
-                kSecMatchLimit to kSecMatchLimitOne
-            )
+            val query =
+                query(
+                    kSecClass to kSecClassGenericPassword,
+                    kSecAttrAccount to account,
+                    kSecReturnData to kCFBooleanTrue,
+                    kSecMatchLimit to kSecMatchLimitOne
+                )
 
             memScoped {
                 val result = alloc<CFTypeRefVar>()
@@ -199,9 +206,10 @@ internal class InternalVault(private val serviceName: String) {
         vararg values: Any?,
         block: Context.(List<CFTypeRef?>) -> T
     ): T {
-        val standard = mapOf(
-            kSecAttrService to CFBridgingRetain(serviceName)
-        )
+        val standard =
+            mapOf(
+                kSecAttrService to CFBridgingRetain(serviceName)
+            )
         val custom = arrayOf(*values).map { CFBridgingRetain(it) }
         return block.invoke(Context(standard), custom).apply {
             standard.values.plus(custom).forEach { CFBridgingRelease(it) }

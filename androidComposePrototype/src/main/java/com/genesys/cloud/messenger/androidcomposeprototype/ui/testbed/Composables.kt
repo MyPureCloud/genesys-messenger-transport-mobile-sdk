@@ -74,13 +74,14 @@ fun TestBedScreen(testBedViewModel: TestBedViewModel) {
         }
     ) { innerPadding ->
         TestBedContent(
-            modifier = Modifier
-                .padding(innerPadding)
-                .windowInsetsPadding(
-                    WindowInsets.safeDrawing.only(
-                        WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal
-                    )
-                ),
+            modifier =
+                Modifier
+                    .padding(innerPadding)
+                    .windowInsetsPadding(
+                        WindowInsets.safeDrawing.only(
+                            WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal
+                        )
+                    ),
             command = testBedViewModel.command,
             onCommandChange = testBedViewModel::onCommandChanged,
             onCommandSend = testBedViewModel::onCommandSend,
@@ -117,10 +118,11 @@ fun TestBedContent(
 @Composable
 fun DrawerContent(onCommandSelected: (String) -> Unit) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .padding(16.dp)
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .padding(16.dp)
     ) {
         Text("Commands", style = MaterialTheme.typography.h6)
         Spacer(modifier = Modifier.height(16.dp))
@@ -146,11 +148,12 @@ private fun CommandView(
         value = command,
         onValueChange = { onCommandChange(it) },
         label = { Text("Command") },
-        keyboardOptions = KeyboardOptions(
-            autoCorrect = false,
-            capitalization = KeyboardCapitalization.None,
-            imeAction = ImeAction.Send
-        ),
+        keyboardOptions =
+            KeyboardOptions(
+                autoCorrect = false,
+                capitalization = KeyboardCapitalization.None,
+                imeAction = ImeAction.Send
+            ),
         keyboardActions = KeyboardActions(onSend = { onCommandSend() }),
         modifier = Modifier.fillMaxWidth(),
         trailingIcon = {
@@ -173,8 +176,9 @@ private fun ConnectionStateView(clientState: MessagingClient.State) {
         label = { Text("Client") },
         readOnly = true,
         textStyle = MaterialTheme.typography.body2,
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier =
+            Modifier
+                .fillMaxWidth()
     )
 }
 
@@ -186,8 +190,9 @@ fun AuthStateView(authState: AuthState) {
         label = { Text("Auth state") },
         readOnly = true,
         textStyle = MaterialTheme.typography.body2,
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier =
+            Modifier
+                .fillMaxWidth()
     )
 }
 
@@ -199,9 +204,10 @@ private fun SocketMessageView(socketMessage: String) {
         label = { Text("Response") },
         readOnly = true,
         textStyle = MaterialTheme.typography.body2,
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(state = ScrollState(0)),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(state = ScrollState(0)),
     )
 }
 

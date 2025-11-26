@@ -1,5 +1,5 @@
 PODS:
-  - transport (2.10.0-rc6)
+  - transport (2.10.0)
 
 DEPENDENCIES:
   - transport (from `../transport`)
@@ -13,4 +13,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: 10743e43aeaf72bb49673a0e57360c028906ace5
 
-COCOAPODS: 1.12.1
+COCOAPODS: 1.16.2

@@ -8,7 +8,6 @@ import java.util.UUID
  * Android platform-specific implementations of common utility functions.
  */
 internal actual class Platform {
-
     /**
      * The name of the OS currently running on this device.
      */

@@ -3,7 +3,6 @@ package com.genesys.cloud.messenger.transport.utility
 import com.genesys.cloud.messenger.transport.util.Vault
 
 class FakeVault(keys: Keys) : Vault(keys) {
-
     private var fakeJwtToken: String? = null
     private var fakeAuthRefreshToken: String? = null
 

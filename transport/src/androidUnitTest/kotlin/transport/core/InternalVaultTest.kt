@@ -27,7 +27,6 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 class InternalVaultTest {
-
     // Mocks
     private val mockSharedPreferences = mockk<SharedPreferences>(relaxed = true)
     private val mockSharedPreferencesEditor = mockk<SharedPreferences.Editor>(relaxed = true)

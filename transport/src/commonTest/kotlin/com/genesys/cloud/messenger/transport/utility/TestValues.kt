@@ -57,26 +57,31 @@ object TestValues {
     internal val PUSH_PROVIDER = PushProvider.APNS
     internal const val DEVICE_TYPE = "android"
     internal const val PREFERRED_LANGUAGE = "Eng"
-    internal val vaultKeys = Vault.Keys(
-        vaultKey = VAULT_KEY,
-        tokenKey = TOKEN_KEY,
-        authRefreshTokenKey = AUTH_REFRESH_TOKEN_KEY,
-        wasAuthenticated = WAS_AUTHENTICATED,
-        pushConfigKey = PUSH_CONFIG_KEY,
-    )
-    internal val migrationTestData = mapOf(
-        TOKEN_KEY to TOKEN,
-        AUTH_REFRESH_TOKEN_KEY to SECONDARY_TOKEN,
-        WAS_AUTHENTICATED to TRUE_STRING,
-        CUSTOM_KEY to DEFAULT_STRING,
-        INT_KEY to 123,
-        BOOLEAN_KEY to false
-    )
 
-    internal val configuration = Configuration(
-        deploymentId = DEPLOYMENT_ID,
-        domain = DOMAIN,
-    )
+    internal const val HISTORY_PAGE_ONE = 1
+    internal val vaultKeys =
+        Vault.Keys(
+            vaultKey = VAULT_KEY,
+            tokenKey = TOKEN_KEY,
+            authRefreshTokenKey = AUTH_REFRESH_TOKEN_KEY,
+            wasAuthenticated = WAS_AUTHENTICATED,
+            pushConfigKey = PUSH_CONFIG_KEY,
+        )
+    internal val migrationTestData =
+        mapOf(
+            TOKEN_KEY to TOKEN,
+            AUTH_REFRESH_TOKEN_KEY to SECONDARY_TOKEN,
+            WAS_AUTHENTICATED to TRUE_STRING,
+            CUSTOM_KEY to DEFAULT_STRING,
+            INT_KEY to 123,
+            BOOLEAN_KEY to false
+        )
+
+    internal val configuration =
+        Configuration(
+            deploymentId = DEPLOYMENT_ID,
+            domain = DOMAIN,
+        )
 
     internal val application = "TransportSDK-${MessengerTransportSDK.sdkVersion}"
 }
@@ -106,11 +111,13 @@ object InvalidValues {
     internal const val INVALID_REFRESH_TOKEN = "invalid_refresh_token"
     internal const val CANCELLATION_EXCEPTION = "cancellation_exception"
     internal const val UNKNOWN_EXCEPTION = "unknown_exception"
+    internal const val NETWORK_EXCEPTION = "network_exception"
 
-    internal val configuration = Configuration(
-        deploymentId = DEPLOYMENT_ID,
-        domain = DOMAIN,
-    )
+    internal val configuration =
+        Configuration(
+            deploymentId = DEPLOYMENT_ID,
+            domain = DOMAIN,
+        )
 }
 
 object MessageValues {
@@ -179,28 +186,31 @@ object QuickReplyTestValues {
     internal const val BUTTON = "Button"
     internal const val BUTTON_RESPONSE = "ButtonResponse"
 
-    internal val buttonResponse_a = ButtonResponse(
-        text = TEXT_A,
-        payload = PAYLOAD_A,
-        type = QUICK_REPLY
-    )
+    internal val buttonResponse_a =
+        ButtonResponse(
+            text = TEXT_A,
+            payload = PAYLOAD_A,
+            type = QUICK_REPLY
+        )
 
-    internal val buttonResponse_b = ButtonResponse(
-        text = TEXT_B,
-        payload = PAYLOAD_B,
-        type = QUICK_REPLY
-    )
+    internal val buttonResponse_b =
+        ButtonResponse(
+            text = TEXT_B,
+            payload = PAYLOAD_B,
+            type = QUICK_REPLY
+        )
 
     internal fun createQuickReplyContentForTesting(
         text: String = TEXT_A,
         payload: String = PAYLOAD_A,
     ) = QuickReplyContent(
         contentType = StructuredMessage.Content.Type.QuickReply.name,
-        quickReply = QuickReplyContent.QuickReply(
-            text = text,
-            payload = payload,
-            action = "action"
-        )
+        quickReply =
+            QuickReplyContent.QuickReply(
+                text = text,
+                payload = payload,
+                action = "action"
+            )
     )
 
     internal fun createButtonResponseContentForTesting(
@@ -208,11 +218,12 @@ object QuickReplyTestValues {
         payload: String = PAYLOAD_A,
     ) = ButtonResponseContent(
         contentType = StructuredMessage.Content.Type.ButtonResponse.name,
-        buttonResponse = ButtonResponseContent.ButtonResponse(
-            text = text,
-            payload = payload,
-            type = QUICK_REPLY,
-        )
+        buttonResponse =
+            ButtonResponseContent.ButtonResponse(
+                text = text,
+                payload = payload,
+                type = QUICK_REPLY,
+            )
     )
 }
 
@@ -257,38 +268,43 @@ object CardTestValues {
     internal const val customMessageId = "customMessageId"
     internal const val LINK_TYPE = "Link"
 
-    val cardWithPostbackAction = Message.Card(
-        title = "Title",
-        description = "Description",
-        imageUrl = "http://image.com/image.png",
-        actions = listOf(
-            ButtonResponse(
-                type = "Postback",
-                text = "Select this option",
-                payload = "postback_payload"
-            )
+    val cardWithPostbackAction =
+        Message.Card(
+            title = "Title",
+            description = "Description",
+            imageUrl = "http://image.com/image.png",
+            actions =
+                listOf(
+                    ButtonResponse(
+                        type = "Postback",
+                        text = "Select this option",
+                        payload = "postback_payload"
+                    )
+                )
         )
-    )
-    val postbackButtonResponse = ButtonResponse(
-        text = POSTBACK_TEXT,
-        type = QuickReplyTestValues.BUTTON,
-        payload = POSTBACK_PAYLOAD
-    )
+    val postbackButtonResponse =
+        ButtonResponse(
+            text = POSTBACK_TEXT,
+            type = QuickReplyTestValues.BUTTON,
+            payload = POSTBACK_PAYLOAD
+        )
 
-    internal val structuredAction = StructuredMessage.Content.Action(
-        type = "link",
-        text = text,
-        url = url,
-        payload = payload
-    )
+    internal val structuredAction =
+        StructuredMessage.Content.Action(
+            type = "link",
+            text = text,
+            url = url,
+            payload = payload
+        )
 
-    internal val structuredCard = StructuredMessage.Content.CardContent.Card(
-        title = title,
-        description = description,
-        image = image,
-        defaultAction = null,
-        actions = listOf(structuredAction)
-    )
+    internal val structuredCard =
+        StructuredMessage.Content.CardContent.Card(
+            title = title,
+            description = description,
+            image = image,
+            defaultAction = null,
+            actions = listOf(structuredAction)
+        )
 
     internal fun createCard(
         title: String,
@@ -300,13 +316,14 @@ object CardTestValues {
         description = description,
         image = null,
         defaultAction = null,
-        actions = listOf(
-            StructuredMessage.Content.Action(
-                type = LINK_TYPE,
-                text = actionText,
-                url = linkUrl
+        actions =
+            listOf(
+                StructuredMessage.Content.Action(
+                    type = LINK_TYPE,
+                    text = actionText,
+                    url = linkUrl
+                )
             )
-        )
     )
 
     internal fun createCardContent(
@@ -323,9 +340,10 @@ object CardTestValues {
     ): StructuredMessage.Content.CarouselContent {
         return StructuredMessage.Content.CarouselContent(
             contentType = "Carousel",
-            carousel = StructuredMessage.Content.CarouselContent.Carousel(
-                cards = cards.toList()
-            )
+            carousel =
+                StructuredMessage.Content.CarouselContent.Carousel(
+                    cards = cards.toList()
+                )
         )
     }
 
@@ -334,17 +352,19 @@ object CardTestValues {
         title: String = CardTestValues.title,
         actionText: String = text,
     ): StructuredMessage {
-        val card = structuredCard.copy(
-            title = title,
-            actions = listOf(
-                StructuredMessage.Content.Action(
-                    type = "link",
-                    text = actionText,
-                    url = url,
-                    payload = payload
-                )
+        val card =
+            structuredCard.copy(
+                title = title,
+                actions =
+                    listOf(
+                        StructuredMessage.Content.Action(
+                            type = "link",
+                            text = actionText,
+                            url = url,
+                            payload = payload
+                        )
+                    )
             )
-        )
 
         return StructuredMessageValues.createStructuredMessageForTesting(
             id = id,
@@ -359,14 +379,18 @@ object CardTestValues {
         titles: List<String>,
         lastCardActionText: String = "Open"
     ): StructuredMessage {
-        val cards = titles.mapIndexed { index, title ->
-            structuredCard.copy(
-                title = title,
-                actions = if (index == titles.lastIndex)
-                    listOf(StructuredMessage.Content.Action(type = "Link", text = lastCardActionText, url = "http://example.org"))
-                else emptyList()
-            )
-        }
+        val cards =
+            titles.mapIndexed { index, title ->
+                structuredCard.copy(
+                    title = title,
+                    actions =
+                        if (index == titles.lastIndex) {
+                            listOf(StructuredMessage.Content.Action(type = "Link", text = lastCardActionText, url = "http://example.org"))
+                        } else {
+                            emptyList()
+                        }
+                )
+            }
 
         return StructuredMessageValues.createStructuredMessageForTesting(
             id = id,
@@ -381,58 +405,65 @@ object CardTestValues {
         cardCount: Int = 2,
         linkUrl: String = url
     ): StructuredMessage {
-        val cards = (1..cardCount).map {
-            StructuredMessage.Content.CardContent.Card(
-                title = title,
-                description = description,
-                image = image,
-                defaultAction = StructuredMessage.Content.Action(
-                    type = LINK_TYPE,
-                    text = "",
-                    url = linkUrl
-                ),
-                actions = listOf(
-                    StructuredMessage.Content.Action(type = LINK_TYPE, text = text, url = linkUrl),
-                    StructuredMessage.Content.Action(type = POSTBACK_TYPE, text = POSTBACK_TEXT, payload = POSTBACK_PAYLOAD)
+        val cards =
+            (1..cardCount).map {
+                StructuredMessage.Content.CardContent.Card(
+                    title = title,
+                    description = description,
+                    image = image,
+                    defaultAction =
+                        StructuredMessage.Content.Action(
+                            type = LINK_TYPE,
+                            text = "",
+                            url = linkUrl
+                        ),
+                    actions =
+                        listOf(
+                            StructuredMessage.Content.Action(type = LINK_TYPE, text = text, url = linkUrl),
+                            StructuredMessage.Content.Action(type = POSTBACK_TYPE, text = POSTBACK_TEXT, payload = POSTBACK_PAYLOAD)
+                        )
                 )
-            )
-        }
+            }
         return StructuredMessageValues.createStructuredMessageForTesting(
             id = id,
             type = StructuredMessage.Type.Structured,
             direction = com.genesys.cloud.messenger.transport.core.Message.Direction.Outbound.name,
-            content = listOf(
-                StructuredMessage.Content.CarouselContent(
-                    contentType = "Carousel",
-                    carousel = StructuredMessage.Content.CarouselContent.Carousel(cards)
+            content =
+                listOf(
+                    StructuredMessage.Content.CarouselContent(
+                        contentType = "Carousel",
+                        carousel = StructuredMessage.Content.CarouselContent.Carousel(cards)
+                    )
                 )
-            )
         )
     }
 
-    internal val action = ButtonResponse(
-        type = "link",
-        text = text,
-        payload = payload
-    )
+    internal val action =
+        ButtonResponse(
+            type = "link",
+            text = text,
+            payload = payload
+        )
 
-    internal val card = Message.Card(
-        title = title,
-        description = description,
-        imageUrl = image,
-        actions = listOf(action)
-    )
+    internal val card =
+        Message.Card(
+            title = title,
+            description = description,
+            imageUrl = image,
+            actions = listOf(action)
+        )
 }
 
 object PushTestValues {
-    internal val CONFIG = PushConfig(
-        token = TestValues.TOKEN,
-        deviceToken = TestValues.DEVICE_TOKEN,
-        preferredLanguage = TestValues.PREFERRED_LANGUAGE,
-        lastSyncTimestamp = TestValues.PUSH_SYNC_TIMESTAMP,
-        deviceType = TestValues.DEVICE_TYPE,
-        pushProvider = TestValues.PUSH_PROVIDER,
-    )
+    internal val CONFIG =
+        PushConfig(
+            token = TestValues.TOKEN,
+            deviceToken = TestValues.DEVICE_TOKEN,
+            preferredLanguage = TestValues.PREFERRED_LANGUAGE,
+            lastSyncTimestamp = TestValues.PUSH_SYNC_TIMESTAMP,
+            deviceType = TestValues.DEVICE_TYPE,
+            pushProvider = TestValues.PUSH_PROVIDER,
+        )
 
     internal fun pushErrorResponseWith(
         code: String,
@@ -444,11 +475,12 @@ object PushTestValues {
         contextId = TestValues.DEFAULT_STRING,
     )
 
-    internal val DEVICE_TOKEN_EXCEPTION = DeviceTokenException(
-        errorCode = ErrorCode.DeviceTokenOperationFailure,
-        message = TestValues.DEFAULT_STRING,
-        cause = null,
-    )
+    internal val DEVICE_TOKEN_EXCEPTION =
+        DeviceTokenException(
+            errorCode = ErrorCode.DeviceTokenOperationFailure,
+            message = TestValues.DEFAULT_STRING,
+            cause = null,
+        )
     const val PUSH_CODE_DEPLOYMENT_NOT_FOUND = "deployment.not.found"
     const val PUSH_CODE_DEVICE_REGISTRATION_FAILURE = "device.registration.failure"
     const val PUSH_CODE_DEVICE_UPDATE_FAILURE = "device.update.failure"

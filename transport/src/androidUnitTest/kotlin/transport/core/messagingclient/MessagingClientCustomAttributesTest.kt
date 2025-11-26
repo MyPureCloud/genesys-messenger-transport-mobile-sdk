@@ -29,7 +29,6 @@ import transport.util.Request
 import transport.util.Response
 
 class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
-
     @Test
     fun `when getCustomAttributesStore()`() {
         val result = subject.customAttributesStore
@@ -44,13 +43,15 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
         val expectedText = MessageValues.TEXT
         val expectedCustomAttributes = mapOf("A" to "B")
         val expectedChannel = Channel(Channel.Metadata(expectedCustomAttributes))
-        every { mockMessageStore.prepareMessage(any(), any(), any()) } returns OnMessageRequest(
-            token = Request.token,
-            message = TextMessage(
-                text = MessageValues.TEXT,
-                channel = expectedChannel,
-            ),
-        )
+        every { mockMessageStore.prepareMessage(any(), any(), any()) } returns
+            OnMessageRequest(
+                token = Request.token,
+                message =
+                    TextMessage(
+                        text = MessageValues.TEXT,
+                        channel = expectedChannel,
+                    ),
+            )
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mapOf("A" to "B")
         subject.connect()
 
@@ -96,15 +97,19 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
 
     @Test
     fun `when autostart request is sent with customAttributes`() {
-        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
-            messenger = createMessengerVOForTesting(
-                apps = Apps(
-                    conversations = createConversationsVOForTesting(
-                        autoStart = Conversations.AutoStart(enabled = true)
+        every { mockDeploymentConfig.get() } returns
+            createDeploymentConfigForTesting(
+                messenger =
+                    createMessengerVOForTesting(
+                        apps =
+                            Apps(
+                                conversations =
+                                    createConversationsVOForTesting(
+                                        autoStart = Conversations.AutoStart(enabled = true)
+                                    )
+                            )
                     )
-                )
             )
-        )
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mapOf("A" to "B")
 
         subject.connect()
@@ -123,15 +128,19 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
     fun `when autostart request is sent with customAttributes size that is too large`() {
         val expectedCustomAttributesErrorMessage = "Custom Attributes in channel metadata is larger than 2048 bytes"
         val fakeLargeCustomAttribute = "This Custom Attribute is too large and will be rejected."
-        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
-            messenger = createMessengerVOForTesting(
-                apps = Apps(
-                    conversations = createConversationsVOForTesting(
-                        autoStart = Conversations.AutoStart(enabled = true)
+        every { mockDeploymentConfig.get() } returns
+            createDeploymentConfigForTesting(
+                messenger =
+                    createMessengerVOForTesting(
+                        apps =
+                            Apps(
+                                conversations =
+                                    createConversationsVOForTesting(
+                                        autoStart = Conversations.AutoStart(enabled = true)
+                                    )
+                            )
                     )
-                )
             )
-        )
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mutableMapOf("A" to fakeLargeCustomAttribute)
         every { mockPlatformSocket.sendMessage(Request.autostart(""""channel":{"metadata":{"customAttributes":{"A":"$fakeLargeCustomAttribute"}}},""")) } answers {
             slot.captured.onMessage(Response.customAttributeSizeTooLarge)
@@ -167,19 +176,22 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
         val expectedButtonResponse = QuickReplyTestValues.buttonResponse_a
         val expectedCustomAttributes = mapOf("A" to "B")
         val expectedChannel = Channel(Channel.Metadata(expectedCustomAttributes))
-        every { mockMessageStore.prepareMessageWith(Request.token, any(), expectedChannel) } returns OnMessageRequest(
-            token = Request.token,
-            message = TextMessage(
-                text = "",
-                channel = expectedChannel,
-                content = listOf(
-                    Message.Content(
-                        contentType = Message.Content.Type.ButtonResponse,
-                        buttonResponse = QuickReplyTestValues.buttonResponse_a,
-                    )
-                ),
-            ),
-        )
+        every { mockMessageStore.prepareMessageWith(Request.token, any(), expectedChannel) } returns
+            OnMessageRequest(
+                token = Request.token,
+                message =
+                    TextMessage(
+                        text = "",
+                        channel = expectedChannel,
+                        content =
+                            listOf(
+                                Message.Content(
+                                    contentType = Message.Content.Type.ButtonResponse,
+                                    buttonResponse = QuickReplyTestValues.buttonResponse_a,
+                                )
+                            ),
+                    ),
+            )
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mapOf("A" to "B")
         subject.connect()
 
@@ -209,20 +221,23 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
                 expectedButtonResponse,
                 expectedChannel
             )
-        } returns OnMessageRequest(
-            token = Request.token,
-            message = StructuredMessage(
-                text = expectedButtonResponse.text,
-                metadata = mapOf("customMessageId" to "card-123"),
-                content = listOf(
-                    Message.Content(
-                        contentType = Message.Content.Type.ButtonResponse,
-                        buttonResponse = expectedButtonResponse
+        } returns
+            OnMessageRequest(
+                token = Request.token,
+                message =
+                    StructuredMessage(
+                        text = expectedButtonResponse.text,
+                        metadata = mapOf("customMessageId" to "card-123"),
+                        content =
+                            listOf(
+                                Message.Content(
+                                    contentType = Message.Content.Type.ButtonResponse,
+                                    buttonResponse = expectedButtonResponse
+                                )
+                            ),
+                        channel = expectedChannel
                     )
-                ),
-                channel = expectedChannel
             )
-        )
 
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mapOf("A" to "B")
         subject.connect()
