@@ -21,7 +21,6 @@ import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import org.junit.Test
 
 class MessageTest {
-
     @Test
     fun `validate default constructor`() {
         val expectedDirection = Direction.Inbound
@@ -68,29 +67,32 @@ class MessageTest {
         val expectedEvents = listOf(Event.ConversationAutostart)
         val expectedQuickReplies = listOf(QuickReplyTestValues.buttonResponse_a)
         val expectedCards = listOf(CardTestValues.card)
-        val expectedParticipant = Participant(
-            name = MessageValues.PARTICIPANT_NAME,
-            imageUrl = MessageValues.PARTICIPANT_IMAGE_URL,
-            originatingEntity = Participant.OriginatingEntity.Bot
-        )
-
-        val subject = Message(
-            id = MessageValues.ID,
-            direction = Direction.Outbound,
-            state = State.Sending,
-            type = "QuickReply",
-            messageType = Message.Type.QuickReply,
-            text = MessageValues.TEXT,
-            timeStamp = MessageValues.TIME_STAMP,
-            attachments = mapOf(AttachmentValues.ID to Attachment(AttachmentValues.ID)),
-            events = listOf(Event.ConversationAutostart),
-            quickReplies = listOf(QuickReplyTestValues.buttonResponse_a),
-            cards = listOf(CardTestValues.card),
-            from = Participant(
+        val expectedParticipant =
+            Participant(
                 name = MessageValues.PARTICIPANT_NAME,
                 imageUrl = MessageValues.PARTICIPANT_IMAGE_URL,
-                originatingEntity = Participant.OriginatingEntity.Bot,
-            ),
+                originatingEntity = Participant.OriginatingEntity.Bot
+            )
+
+        val subject =
+            Message(
+                id = MessageValues.ID,
+                direction = Direction.Outbound,
+                state = State.Sending,
+                type = "QuickReply",
+                messageType = Message.Type.QuickReply,
+                text = MessageValues.TEXT,
+                timeStamp = MessageValues.TIME_STAMP,
+                attachments = mapOf(AttachmentValues.ID to Attachment(AttachmentValues.ID)),
+                events = listOf(Event.ConversationAutostart),
+                quickReplies = listOf(QuickReplyTestValues.buttonResponse_a),
+            cards = listOf(CardTestValues.card),
+            from =
+                Participant(
+                    name = MessageValues.PARTICIPANT_NAME,
+                    imageUrl = MessageValues.PARTICIPANT_IMAGE_URL,
+                    originatingEntity = Participant.OriginatingEntity.Bot,
+                ),
             authenticated = true
         )
 
@@ -113,15 +115,17 @@ class MessageTest {
 
     @Test
     fun `validate Content with Attachment serialization`() {
-        val expectedAttachment = Attachment(
-            id = AttachmentValues.ID,
-            fileName = null,
-            state = Attachment.State.Presigning
-        )
-        val expectedRequest = Message.Content(
-            contentType = Message.Content.Type.Attachment,
-            attachment = Attachment(AttachmentValues.ID)
-        )
+        val expectedAttachment =
+            Attachment(
+                id = AttachmentValues.ID,
+                fileName = null,
+                state = Attachment.State.Presigning
+            )
+        val expectedRequest =
+            Message.Content(
+                contentType = Message.Content.Type.Attachment,
+                attachment = Attachment(AttachmentValues.ID)
+            )
         val expectedJson =
             """{"contentType":"Attachment","attachment":{"id":"test_attachment_id"}}"""
 
@@ -139,10 +143,11 @@ class MessageTest {
     @Test
     fun `validate Content with ButtonResponse serialization`() {
         val expectedButtonResponse = QuickReplyTestValues.buttonResponse_a
-        val expectedRequest = Message.Content(
-            contentType = Message.Content.Type.ButtonResponse,
-            buttonResponse = QuickReplyTestValues.buttonResponse_a
-        )
+        val expectedRequest =
+            Message.Content(
+                contentType = Message.Content.Type.ButtonResponse,
+                buttonResponse = QuickReplyTestValues.buttonResponse_a
+            )
         val expectedJson =
             """{"contentType":"ButtonResponse","buttonResponse":{"text":"text_a","payload":"payload_a","type":"QuickReply"}}"""
 
@@ -183,11 +188,12 @@ class MessageTest {
 
     @Test
     fun `validate Participant serialization`() {
-        val expectedRequest = Participant(
-            name = MessageValues.PARTICIPANT_NAME,
-            imageUrl = MessageValues.PARTICIPANT_IMAGE_URL,
-            originatingEntity = Participant.OriginatingEntity.Human
-        )
+        val expectedRequest =
+            Participant(
+                name = MessageValues.PARTICIPANT_NAME,
+                imageUrl = MessageValues.PARTICIPANT_IMAGE_URL,
+                originatingEntity = Participant.OriginatingEntity.Human
+            )
         val expectedJson =
             """{"name":"participant_name","imageUrl":"http://participant.image","originatingEntity":"Human"}"""
 

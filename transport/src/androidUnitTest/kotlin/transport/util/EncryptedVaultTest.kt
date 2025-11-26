@@ -23,19 +23,19 @@ import org.junit.Before
 import org.junit.Test
 
 class EncryptedVaultTest {
-
     private val mockContext = mockk<Context>(relaxed = true)
     private val mockApplicationContext = mockk<Context>(relaxed = true)
     private val mockSharedPreferences = mockk<SharedPreferences>(relaxed = true)
     private val mockSharedPreferencesEditor = mockk<SharedPreferences.Editor>(relaxed = true)
 
-    private val testKeys = Vault.Keys(
-        vaultKey = TestValues.VAULT_KEY,
-        tokenKey = TestValues.TOKEN_KEY,
-        authRefreshTokenKey = TestValues.AUTH_REFRESH_TOKEN_KEY,
-        wasAuthenticated = TestValues.WAS_AUTHENTICATED,
-        pushConfigKey = TestValues.PUSH_CONFIG_KEY
-    )
+    private val testKeys =
+        Vault.Keys(
+            vaultKey = TestValues.VAULT_KEY,
+            tokenKey = TestValues.TOKEN_KEY,
+            authRefreshTokenKey = TestValues.AUTH_REFRESH_TOKEN_KEY,
+            wasAuthenticated = TestValues.WAS_AUTHENTICATED,
+            pushConfigKey = TestValues.PUSH_CONFIG_KEY
+        )
     private val testKey = TestValues.VAULT_KEY
     private val testValue = TestValues.VAULT_VALUE
 

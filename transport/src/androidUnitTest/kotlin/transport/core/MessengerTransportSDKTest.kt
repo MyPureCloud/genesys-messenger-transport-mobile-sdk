@@ -17,7 +17,6 @@ import org.junit.Before
 import org.junit.Test
 
 class MessengerTransportSDKTest {
-
     private val mockContext = mockk<Context>(relaxed = true)
     private val mockApplicationContext = mockk<Context>(relaxed = true)
 

@@ -34,22 +34,24 @@ import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
 class PushServiceTest {
-
-    private val mockVault: Vault = mockk {
-        every { pushConfig } returns DEFAULT_PUSH_CONFIG
-        every { pushConfig = any() } just Runs
-        every { token } returns TestValues.TOKEN
-        every { keys } returns TestValues.vaultKeys
-        every { remove(any()) } just Runs
-    }
-    private val mockApi: WebMessagingApi = mockk {
-        coEvery { performDeviceTokenOperation(any(), any()) } returns Result.Success(Empty())
-    }
-    private val mockPlatform: Platform = mockk {
-        every { preferredLanguage() } returns TestValues.PREFERRED_LANGUAGE
-        every { epochMillis() } returns TestValues.PUSH_SYNC_TIMESTAMP
-        every { os } returns TestValues.DEVICE_TYPE
-    }
+    private val mockVault: Vault =
+        mockk {
+            every { pushConfig } returns DEFAULT_PUSH_CONFIG
+            every { pushConfig = any() } just Runs
+            every { token } returns TestValues.TOKEN
+            every { keys } returns TestValues.vaultKeys
+            every { remove(any()) } just Runs
+        }
+    private val mockApi: WebMessagingApi =
+        mockk {
+            coEvery { performDeviceTokenOperation(any(), any()) } returns Result.Success(Empty())
+        }
+    private val mockPlatform: Platform =
+        mockk {
+            every { preferredLanguage() } returns TestValues.PREFERRED_LANGUAGE
+            every { epochMillis() } returns TestValues.PUSH_SYNC_TIMESTAMP
+            every { os } returns TestValues.DEVICE_TYPE
+        }
     private val mockPushConfigComparator: PushConfigComparator = mockk()
     private val mockLogger: Log = mockk(relaxed = true)
     private val logSlot = mutableListOf<() -> String>()
@@ -212,7 +214,6 @@ class PushServiceTest {
     @Test
     fun `when unregister but device was not registered before`() =
         runTest {
-
             subject.unregister()
 
             coVerifySequence {
@@ -257,11 +258,12 @@ class PushServiceTest {
                     any(),
                     DeviceTokenOperation.Register
                 )
-            } returns Result.Failure(
-                ErrorCode.CancellationError,
-                ErrorTest.MESSAGE,
-                CancellationException()
-            )
+            } returns
+                Result.Failure(
+                    ErrorCode.CancellationError,
+                    ErrorTest.MESSAGE,
+                    CancellationException()
+                )
             val expectedUserConfig = PushTestValues.CONFIG
             val expectedStoredConfig = DEFAULT_PUSH_CONFIG
             val expectedOperation = DeviceTokenOperation.Register

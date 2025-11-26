@@ -44,11 +44,12 @@ internal class AttachmentHandlerImpl(
         Attachment(id = attachmentId, fileName = fileName, state = Presigning).also {
             log.i { LogMessages.presigningAttachment(it) }
             updateAttachmentStateWith(it)
-            processedAttachments[it.id] = ProcessedAttachment(
-                attachment = it,
-                byteArray = byteArray,
-                uploadProgress = uploadProgress,
-            )
+            processedAttachments[it.id] =
+                ProcessedAttachment(
+                    attachment = it,
+                    byteArray = byteArray,
+                    uploadProgress = uploadProgress,
+                )
         }
         return OnAttachmentRequest(
             token,
@@ -63,24 +64,27 @@ internal class AttachmentHandlerImpl(
     override fun upload(presignedUrlResponse: PresignedUrlResponse) {
         processedAttachments[presignedUrlResponse.attachmentId]?.let {
             log.i { LogMessages.uploadingAttachment(it.attachment) }
-            it.attachment = it.attachment
-                .copy(state = Uploading)
-                .also(updateAttachmentStateWith)
-            it.job = uploadDispatcher.launch {
-                when (val result = api.uploadFile(presignedUrlResponse.copy(fileName = it.attachment.fileName), it.byteArray, it.uploadProgress)) {
-                    is Result.Success -> {} // Nothing to do here. We are waiting for UploadSuccess/Failure Event from Shyrka.
-                    is Result.Failure -> handleUploadFailure(presignedUrlResponse.attachmentId, result)
+            it.attachment =
+                it.attachment
+                    .copy(state = Uploading)
+                    .also(updateAttachmentStateWith)
+            it.job =
+                uploadDispatcher.launch {
+                    when (val result = api.uploadFile(presignedUrlResponse.copy(fileName = it.attachment.fileName), it.byteArray, it.uploadProgress)) {
+                        is Result.Success -> {} // Nothing to do here. We are waiting for UploadSuccess/Failure Event from Shyrka.
+                        is Result.Failure -> handleUploadFailure(presignedUrlResponse.attachmentId, result)
+                    }
                 }
-            }
         }
     }
 
     override fun onUploadSuccess(uploadSuccessEvent: UploadSuccessEvent) {
         processedAttachments[uploadSuccessEvent.attachmentId]?.let {
             log.i { LogMessages.attachmentUploaded(it.attachment) }
-            it.attachment = it.attachment
-                .copy(state = Uploaded(uploadSuccessEvent.downloadUrl))
-                .also(updateAttachmentStateWith)
+            it.attachment =
+                it.attachment
+                    .copy(state = Uploaded(uploadSuccessEvent.downloadUrl))
+                    .also(updateAttachmentStateWith)
             it.job = null
         }
     }
@@ -141,9 +145,10 @@ internal class AttachmentHandlerImpl(
         processedAttachments.forEach { entry ->
             entry.value.takeUploaded()?.let {
                 log.i { LogMessages.sendingAttachment(it.attachment.id) }
-                it.attachment = it.attachment
-                    .copy(state = Sending)
-                    .also(updateAttachmentStateWith)
+                it.attachment =
+                    it.attachment
+                        .copy(state = Sending)
+                        .also(updateAttachmentStateWith)
             }
         }
     }

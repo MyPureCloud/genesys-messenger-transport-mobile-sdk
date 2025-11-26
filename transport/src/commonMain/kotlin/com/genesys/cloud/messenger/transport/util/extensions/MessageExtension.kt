@@ -38,13 +38,15 @@ internal fun StructuredMessage.toMessage(): Message {
         quickReplies = quickReplies,
         cards = cards,
         events = events.mapNotNull { it.toTransportEvent(channel?.from) },
-        from = Message.Participant(
-            name = channel?.from?.nickname,
-            imageUrl = channel?.from?.image,
-            originatingEntity = originatingEntity.mapOriginatingEntity {
-                isInbound()
-            }
-        ),
+        from =
+            Message.Participant(
+                name = channel?.from?.nickname,
+                imageUrl = channel?.from?.image,
+                originatingEntity =
+                    originatingEntity.mapOriginatingEntity {
+                        isInbound()
+                    }
+            ),
         authenticated = metadata["authenticated"]?.toBoolean() ?: false
     )
 }
@@ -79,12 +81,13 @@ internal fun String?.mapOriginatingEntity(isInbound: () -> Boolean): Message.Par
 private fun List<AttachmentContent>.toAttachments(): Map<String, Attachment> {
     return this.associate {
         it.run {
-            attachment.id to Attachment(
-                id = attachment.id,
-                fileName = attachment.filename,
-                fileSizeInBytes = attachment.fileSize,
-                state = Attachment.State.Sent(attachment.url),
-            )
+            attachment.id to
+                Attachment(
+                    id = attachment.id,
+                    fileName = attachment.filename,
+                    fileSizeInBytes = attachment.fileSize,
+                    state = Attachment.State.Sent(attachment.url),
+                )
         }
     }
 }
@@ -182,11 +185,12 @@ internal fun String.isHealthCheckResponseId(): Boolean = this == HealthCheckID
 internal fun Message.isOutbound(): Boolean = this.direction == Direction.Outbound
 
 internal fun SessionResponse.toFileAttachmentProfile(): FileAttachmentProfile {
-    val allowedFileTypes = allowedMedia
-        ?.inbound
-        ?.fileTypes
-        ?.map { it.type }
-        ?.toMutableList() ?: mutableListOf()
+    val allowedFileTypes =
+        allowedMedia
+            ?.inbound
+            ?.fileTypes
+            ?.map { it.type }
+            ?.toMutableList() ?: mutableListOf()
     val maxFileSize = allowedMedia?.inbound?.maxFileSizeKB ?: 0
     val enabled = allowedFileTypes.isNotEmpty() && maxFileSize > 0
     val hasWildcard = allowedFileTypes.remove(WILD_CARD)

@@ -32,7 +32,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
-
     @Test
     fun `when event Presence Disconnect received and there is no readOnly field in metadata`() {
         val expectedEvent = Event.ConversationDisconnect
@@ -103,15 +102,19 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         }
-        every { mockDeploymentConfig.get() } returns createDeploymentConfigForTesting(
-            messenger = createMessengerVOForTesting(
-                apps = Apps(
-                    conversations = createConversationsVOForTesting(
-                        autoStart = Conversations.AutoStart(enabled = true),
+        every { mockDeploymentConfig.get() } returns
+            createDeploymentConfigForTesting(
+                messenger =
+                    createMessengerVOForTesting(
+                        apps =
+                            Apps(
+                                conversations =
+                                    createConversationsVOForTesting(
+                                        autoStart = Conversations.AutoStart(enabled = true),
+                                    )
+                            )
                     )
-                )
             )
-        )
 
         subject.connect()
 

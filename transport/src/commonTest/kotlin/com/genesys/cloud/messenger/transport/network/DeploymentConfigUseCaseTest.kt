@@ -24,11 +24,12 @@ class DeploymentConfigUseCaseTest {
     fun `when fetch deployment config`() {
         val expectedTestDeploymentConfig = TestWebMessagingApiResponses.testDeploymentConfig
 
-        val result = runBlocking {
-            withTimeout(DEFAULT_TIMEOUT) {
-                subject.fetch()
+        val result =
+            runBlocking {
+                withTimeout(DEFAULT_TIMEOUT) {
+                    subject.fetch()
+                }
             }
-        }
         assertEquals(expectedTestDeploymentConfig, result)
     }
 
