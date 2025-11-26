@@ -30,6 +30,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.TracingIds
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import com.genesys.cloud.messenger.transport.utility.AuthTest
@@ -45,8 +46,10 @@ import io.mockk.invoke
 import io.mockk.just
 import io.mockk.justRun
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.slot
 import io.mockk.spyk
+import io.mockk.unmockkObject
 import transport.util.Request
 import transport.util.Response
 import transport.util.fromConnectedToConfigured
@@ -57,6 +60,11 @@ import kotlin.reflect.KProperty0
 import kotlin.test.AfterTest
 
 open class BaseMessagingClientTest {
+    init {
+        mockkObject(TracingIds)
+        every { TracingIds.newId() } returns TestValues.TRACING_ID
+    }
+
     private var testToken = Request.token
     internal val slot = slot<PlatformSocketListener>()
     protected val mockStateChangedListener: (StateChange) -> Unit = spyk()
@@ -65,7 +73,8 @@ open class BaseMessagingClientTest {
             every { prepareMessage(any(), any(), any()) } returns
                 OnMessageRequest(
                     token = testToken,
-                    message = TextMessage("Hello world!")
+                    message = TextMessage("Hello world!"),
+                    tracingId = TestValues.TRACING_ID
                 )
             every { prepareMessageWith(any(), any(), null) } returns
                 OnMessageRequest(
@@ -81,6 +90,7 @@ open class BaseMessagingClientTest {
                                     )
                                 ),
                         ),
+                    tracingId = TestValues.TRACING_ID
                 )
         }
     internal val mockAttachmentHandler: AttachmentHandler =
@@ -100,12 +110,14 @@ open class BaseMessagingClientTest {
                     fileName = "test_attachment.png",
                     fileType = "image/png",
                     errorsAsJson = true,
+                    tracingId = TestValues.TRACING_ID
                 )
 
             every { detach(any(), any()) } returns
                 DeleteAttachmentRequest(
                     token = Request.token,
-                    attachmentId = "88888888-8888-8888-8888-888888888888"
+                    attachmentId = "88888888-8888-8888-8888-888888888888",
+                    tracingId = TestValues.TRACING_ID
                 )
             every { fileAttachmentProfile } returns null
         }
@@ -157,6 +169,7 @@ open class BaseMessagingClientTest {
         mockk<KProperty0<DeploymentConfig?>> {
             every { get() } returns createDeploymentConfigForTesting()
         }
+
     internal val userTypingProvider =
         UserTypingProvider(
             log = mockk(relaxed = true),
@@ -223,7 +236,10 @@ open class BaseMessagingClientTest {
         }
 
     @AfterTest
-    fun after() = clearAllMocks()
+    fun resetTracingIds() {
+        unmockkObject(TracingIds)
+        clearAllMocks()
+    }
 
     protected fun MockKVerificationScope.fromIdleToConnectedSequence() {
         mockLogger.withTag(LogTag.STATE_MACHINE)
@@ -240,6 +256,25 @@ open class BaseMessagingClientTest {
         mockStateChangedListener(fromConnectedToConfigured)
     }
 
+    protected fun MockKVerificationScope.connectWithFailedConfigureSequence() {
+        fromIdleToConnectedSequence()
+        mockLogger.i(capture(logSlot))
+        mockPlatformSocket.sendMessage(Request.configureRequest())
+        mockLogger.i(capture(logSlot))
+    }
+
+    protected fun MockKVerificationScope.connectToReadOnlySequence() {
+        fromIdleToConnectedSequence()
+        mockLogger.i(capture(logSlot))
+        mockPlatformSocket.sendMessage(Request.configureRequest())
+        mockVault.wasAuthenticated = false
+        mockAttachmentHandler.fileAttachmentProfile = any()
+        mockReconnectionHandler.clear()
+        mockJwtHandler.clear()
+        mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
+        mockStateChangedListener(fromConnectedToReadOnly)
+    }
+
     protected fun MockKVerificationScope.configureSequence(shouldConfigureAuth: Boolean = false) {
         val configureRequest =
             if (shouldConfigureAuth) Request.configureAuthenticatedRequest() else Request.configureRequest()
@@ -254,17 +289,6 @@ open class BaseMessagingClientTest {
         mockReconnectionHandler.clear()
         mockJwtHandler.clear()
         mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
-    }
-
-    protected fun MockKVerificationScope.connectToReadOnlySequence() {
-        fromIdleToConnectedSequence()
-        mockLogger.i(capture(logSlot))
-        mockPlatformSocket.sendMessage(Request.configureRequest())
-        mockAttachmentHandler.fileAttachmentProfile = any()
-        mockReconnectionHandler.clear()
-        mockJwtHandler.clear()
-        mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
-        mockStateChangedListener(fromConnectedToReadOnly)
     }
 
     protected fun MockKVerificationScope.disconnectSequence(
@@ -288,15 +312,6 @@ open class BaseMessagingClientTest {
         mockStateChangedListener(fromClosingToClosed)
         mockLogger.i(capture(logSlot))
         verifyCleanUp()
-    }
-
-    protected fun MockKVerificationScope.connectWithFailedConfigureSequence(shouldConfigureAuth: Boolean = false) {
-        val configureRequest =
-            if (shouldConfigureAuth) Request.configureAuthenticatedRequest() else Request.configureRequest()
-        mockStateChangedListener(fromIdleToConnecting)
-        mockPlatformSocket.openSocket(any())
-        mockStateChangedListener(fromConnectingToConnected)
-        mockPlatformSocket.sendMessage(configureRequest)
     }
 
     protected fun errorSequence(stateChange: StateChange) {

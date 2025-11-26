@@ -319,7 +319,6 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
                 metadata = mapOf("readOnly" to "true"),
             )
         )
-
         subject.startNewChat()
 
         assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
@@ -338,6 +337,9 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
             mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest(startNew = true))
             mockStateChangedListener(fromReadOnlyToConfigured)
         }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT_AUTHENTICATED_SESSION)
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(Request.token, false))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLOSE_SESSION)
     }
 
     @Test

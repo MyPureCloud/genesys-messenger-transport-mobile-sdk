@@ -17,6 +17,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
+import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.MockKVerificationScope
 import io.mockk.every
 import io.mockk.verify
@@ -36,7 +37,7 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
     @Test
     fun `when sendMessage with customAttributes`() {
         val expectedMessage =
-            """{"token":"${Request.token}","message":{"text":"${MessageValues.TEXT}","channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"action":"onMessage"}"""
+            """{"token":"${Request.token}","message":{"text":"${MessageValues.TEXT}","channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"tracingId":"${TestValues.TRACING_ID}","action":"onMessage"}"""
         val expectedText = MessageValues.TEXT
         val expectedCustomAttributes = mapOf("A" to "B")
         val expectedChannel = Channel(Channel.Metadata(expectedCustomAttributes))
@@ -48,6 +49,7 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
                         text = MessageValues.TEXT,
                         channel = expectedChannel,
                     ),
+                tracingId = TestValues.TRACING_ID
             )
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mapOf("A" to "B")
         subject.connect()
@@ -188,6 +190,7 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
                                 )
                             ),
                     ),
+                tracingId = TestValues.TRACING_ID
             )
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mapOf("A" to "B")
         subject.connect()
@@ -201,7 +204,7 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
             mockCustomAttributesStore.onSending()
             mockMessageStore.prepareMessageWith(Request.token, expectedButtonResponse, expectedChannel)
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(Request.quickReplyWith(channel = """"channel":{"metadata":{"customAttributes":{"A":"B"}}},"""))
+            mockPlatformSocket.sendMessage("""{"token":"00000000-0000-0000-0000-000000000000","message":{"text":"","content":[{"contentType":"ButtonResponse","buttonResponse":{"text":"text_a","payload":"payload_a","type":"QuickReply"}}],"channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"tracingId":"${TestValues.TRACING_ID}","action":"onMessage"}""")
         }
     }
 

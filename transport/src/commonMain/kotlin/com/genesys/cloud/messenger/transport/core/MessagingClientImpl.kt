@@ -44,6 +44,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.TracingIds
 import com.genesys.cloud.messenger.transport.util.UNKNOWN
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.extensions.isHealthCheckResponseId
@@ -61,7 +62,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.encodeToString
 import kotlin.reflect.KProperty0
 
 private const val MAX_RECONFIGURE_ATTEMPTS = 3
@@ -302,7 +302,8 @@ internal class MessagingClientImpl(
             .encodeToString(
                 GetAttachmentRequest(
                     token = token,
-                    attachmentId = attachmentId
+                    attachmentId = attachmentId,
+                    tracingId = TracingIds.newId()
                 )
             ).also {
                 log.i { "getAttachmentRequest()" }
@@ -344,7 +345,7 @@ internal class MessagingClientImpl(
             )
             return
         }
-        WebMessagingJson.json.encodeToString(ClearConversationRequest(token)).let {
+        WebMessagingJson.json.encodeToString(ClearConversationRequest(token, TracingIds.newId())).let {
             log.i { LogMessages.SEND_CLEAR_CONVERSATION }
             webSocket.sendMessage(it)
         }
@@ -376,7 +377,7 @@ internal class MessagingClientImpl(
     private fun sendAutoStart() {
         sendingAutostart = true
         val channel = prepareCustomAttributesForSending()
-        WebMessagingJson.json.encodeToString(AutoStartRequest(token, channel)).let {
+        WebMessagingJson.json.encodeToString(AutoStartRequest(token, channel, TracingIds.newId())).let {
             log.i { LogMessages.SEND_AUTO_START }
             send(it)
         }
@@ -394,7 +395,8 @@ internal class MessagingClientImpl(
             .encodeToString(
                 CloseSessionRequest(
                     token = token,
-                    closeAllConnections = true
+                    closeAllConnections = true,
+                    tracingId = TracingIds.newId()
                 )
             ).also {
                 log.i { LogMessages.CLOSE_SESSION }
@@ -672,7 +674,8 @@ internal class MessagingClientImpl(
                     JourneyContext(
                         JourneyCustomer(token, "cookie"),
                         JourneyCustomerSession("", "web")
-                    )
+                    ),
+                tracingId = TracingIds.newId()
             )
         )
 
@@ -687,7 +690,8 @@ internal class MessagingClientImpl(
                         JourneyCustomer(token, "cookie"),
                         JourneyCustomerSession("", "web")
                     ),
-                data = ConfigureAuthenticatedSessionRequest.Data(authHandler.jwt)
+                data = ConfigureAuthenticatedSessionRequest.Data(authHandler.jwt),
+                tracingId = TracingIds.newId()
             )
         )
 

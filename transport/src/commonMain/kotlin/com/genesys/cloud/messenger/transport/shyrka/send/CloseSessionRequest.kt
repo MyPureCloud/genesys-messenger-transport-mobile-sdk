@@ -7,7 +7,9 @@ import kotlinx.serialization.Serializable
 internal data class CloseSessionRequest(
     override val token: String,
     val closeAllConnections: Boolean,
-) : WebMessagingRequest {
+    @Required
+    override val tracingId: String,
+) : BaseWebMessagingRequest() {
     @Required
     override val action: String = RequestAction.CLOSE_SESSION.value
 }

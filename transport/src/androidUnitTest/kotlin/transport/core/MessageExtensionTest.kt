@@ -61,7 +61,7 @@ internal class MessageExtensionTest {
     fun `when MessageEntityList toMessageList()`() {
         val expectedMessage1 =
             Message(
-                id = "5befde6373a23f32f20b59b4e1cba0e6",
+                id = "message1_id",
                 direction = Direction.Outbound,
                 state = State.Sent,
                 messageType = Type.Text,
@@ -71,7 +71,7 @@ internal class MessageExtensionTest {
             )
         val expectedMessage2 =
             Message(
-                id = "1234567890",
+                id = "message2_id",
                 direction = Direction.Inbound,
                 state = State.Sent,
                 messageType = Type.Event,
@@ -82,7 +82,7 @@ internal class MessageExtensionTest {
             )
         val expectedMessage3 =
             Message(
-                id = "1234567890",
+                id = "message3_id",
                 direction = Direction.Outbound,
                 state = State.Sent,
                 messageType = Type.QuickReply,
@@ -133,7 +133,7 @@ internal class MessageExtensionTest {
                         )
                     ),
                 direction = "Inbound",
-                metadata = mapOf("customMessageId" to "test custom id"),
+                metadata = emptyMap(),
                 events =
                     listOf(
                         PresenceEvent(
@@ -144,11 +144,12 @@ internal class MessageExtensionTest {
                             eventType = StructuredMessageEvent.Type.Presence,
                             presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.SignIn)
                         )
-                    )
+                    ),
+                tracingId = "test custom id"
             )
         val expectedMessage =
             Message(
-                id = "test custom id",
+                id = "id",
                 direction = Direction.Inbound,
                 state = State.Sent,
                 messageType = Type.Text,
@@ -184,7 +185,7 @@ internal class MessageExtensionTest {
             assertThat(id).isEqualTo(expectedMessage.id)
             assertThat(direction).isEqualTo(expectedMessage.direction)
             assertThat(state).isEqualTo(expectedMessage.state)
-            assertThat(type).isEqualTo(expectedMessage.type)
+            assertThat(messageType).isEqualTo(expectedMessage.messageType)
             assertThat(timeStamp).isEqualTo(expectedMessage.timeStamp)
             assertThat(events).containsExactly(*expectedMessage.events.toTypedArray())
             from.run {
@@ -551,7 +552,8 @@ internal class MessageExtensionTest {
             StructuredMessage(
                 id = "some_id",
                 type = StructuredMessage.Type.Text,
-                direction = "Inbound"
+                direction = "Inbound",
+                tracingId = TestValues.TRACING_ID
             )
         val givenMessageEntityList =
             MessageEntityList(
@@ -563,7 +565,7 @@ internal class MessageExtensionTest {
             )
 
         val expectedMessageEntityListAsJson =
-            """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
+            """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound","tracingId":"${TestValues.TRACING_ID}"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
 
         val result = WebMessagingJson.json.encodeToString(givenMessageEntityList)
 
@@ -573,12 +575,13 @@ internal class MessageExtensionTest {
     @Test
     fun `when MessageEntityList deserialized`() {
         val givenMessageEntityListAsJson =
-            """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
+            """{"entities":[{"id":"some_id","type":"Text","direction":"Inbound","tracingId":"${TestValues.TRACING_ID}"}],"pageSize":25,"pageNumber":1,"total":25,"pageCount":1}"""
         val expectedStructuredMessage =
             StructuredMessage(
                 id = "some_id",
                 type = StructuredMessage.Type.Text,
-                direction = "Inbound"
+                direction = "Inbound",
+                tracingId = TestValues.TRACING_ID
             )
         val expectedMessageEntityList =
             MessageEntityList(

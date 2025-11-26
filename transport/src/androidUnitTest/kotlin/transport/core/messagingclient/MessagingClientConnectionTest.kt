@@ -147,7 +147,9 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
 
         assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
         verifySequence {
-            connectWithFailedConfigureSequence()
+            fromIdleToConnectedSequence()
+            mockLogger.i(capture(logSlot))
+            mockPlatformSocket.sendMessage(eq(Request.configureRequest()))
             errorSequence(fromConnectedToError(expectedErrorState))
         }
     }
@@ -237,7 +239,9 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         subject.connect()
 
         verifySequence {
-            connectWithFailedConfigureSequence()
+            fromIdleToConnectedSequence()
+            mockLogger.i(capture(logSlot))
+            mockPlatformSocket.sendMessage(eq(Request.configureRequest()))
             errorSequence(fromConnectedToError(expectedErrorState))
         }
     }

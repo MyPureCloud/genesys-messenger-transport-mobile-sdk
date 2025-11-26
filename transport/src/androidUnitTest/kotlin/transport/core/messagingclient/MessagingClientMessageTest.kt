@@ -15,6 +15,7 @@ import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.isClosed
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.MessageValues
+import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
@@ -55,10 +56,10 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
             slot.captured.onMessage(Response.onMessage())
         }
         val expectedMessageRequest =
-            """{"token":"${Request.token}","message":{"text":"${MessageValues.TEXT}","type":"Text"},"action":"onMessage"}"""
+            """{"token":"${Request.token}","message":{"text":"${MessageValues.TEXT}","type":"Text"},"tracingId":"${TestValues.TRACING_ID}","action":"onMessage"}"""
         val expectedMessage =
             Message(
-                id = "some_custom_message_id",
+                id = "test_id",
                 state = State.Sent,
                 messageType = Type.Text,
                 type = "Text",
@@ -74,7 +75,7 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockCustomAttributesStore.add(emptyMap())
             mockCustomAttributesStore.getCustomAttributesToSend()
-            mockMessageStore.prepareMessage(Request.token, MessageValues.TEXT)
+            mockMessageStore.prepareMessage(Request.token, MessageValues.TEXT, null)
             mockAttachmentHandler.onSending()
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessageRequest)
@@ -201,7 +202,7 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
     fun `when SocketListener invoke onMessage with Outbound text message`() {
         val expectedMessage =
             Message(
-                id = "some_custom_message_id",
+                id = "test_id",
                 direction = Direction.Outbound,
                 state = State.Sent,
                 messageType = Type.Text,

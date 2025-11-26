@@ -5,12 +5,12 @@ import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
 import com.genesys.cloud.messenger.transport.shyrka.send.JwtRequest
 import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.TracingIds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
 
 internal class JwtHandler(private val webSocket: PlatformSocket) {
     private val jwtChannel = Channel<String>()
@@ -43,7 +43,7 @@ internal class JwtHandler(private val webSocket: PlatformSocket) {
     }
 
     private fun fetchJwt(token: String) {
-        val request = JwtRequest(token)
+        val request = JwtRequest(token, TracingIds.newId())
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         webSocket.sendMessage(encodedJson)
     }

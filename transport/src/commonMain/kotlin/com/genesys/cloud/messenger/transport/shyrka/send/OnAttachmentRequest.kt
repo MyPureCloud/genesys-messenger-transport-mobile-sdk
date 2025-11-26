@@ -12,7 +12,9 @@ internal data class OnAttachmentRequest(
     val fileSize: Int? = null,
     val fileMd5: String? = null,
     val errorsAsJson: Boolean,
-) : WebMessagingRequest {
+    @Required
+    override val tracingId: String,
+) : BaseWebMessagingRequest() {
     @Required
     override val action: String = RequestAction.ON_ATTACHMENT.value
 }

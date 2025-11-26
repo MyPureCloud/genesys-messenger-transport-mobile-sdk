@@ -40,7 +40,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
     fun `when attach()`() {
         val expectedAttachmentId = "88888888-8888-8888-8888-888888888888"
         val expectedMessage =
-            """{"token":"${Request.token}","attachmentId":"88888888-8888-8888-8888-888888888888","fileName":"test_attachment.png","fileType":"image/png","errorsAsJson":true,"action":"onAttachment"}"""
+            """{"token":"${Request.token}","attachmentId":"88888888-8888-8888-8888-888888888888","fileName":"test_attachment.png","fileType":"image/png","errorsAsJson":true,"tracingId":"${TestValues.TRACING_ID}","action":"onAttachment"}"""
         subject.connect()
 
         val result = subject.attach(ByteArray(1), "test.png")
@@ -63,7 +63,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
     fun `when detach()`() {
         val expectedAttachmentId = "88888888-8888-8888-8888-888888888888"
         val expectedMessage =
-            """{"token":"${Request.token}","attachmentId":"88888888-8888-8888-8888-888888888888","action":"deleteAttachment"}"""
+            """{"token":"${Request.token}","attachmentId":"88888888-8888-8888-8888-888888888888","tracingId":"${TestValues.TRACING_ID}","action":"deleteAttachment"}"""
         val attachmentIdSlot = slot<String>()
         subject.connect()
 
@@ -180,6 +180,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
         }
         val expectedFileAttachmentProfile = FileAttachmentProfile()
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
         // FileAttachmentProfileSlot captured value has to be returned after "connect" sequence, as it is initialized from SessionResponse.
         every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
 
@@ -190,13 +191,13 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
 
     @Test
     fun `when AllowedMedia in SessionResponse has no inbound and blockedExtensions entries`() {
-        val fileAttachmentProfileSlot = createFileAttachmentProfileSlot()
         every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             slot.captured.onMessage(Response.configureSuccess(allowedMedia = Response.AllowedMedia.noInbound))
         }
         val expectedFileAttachmentProfile = FileAttachmentProfile()
         subject.connect()
-        every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
+        slot.captured.onMessage(Response.configureSuccess())
+        every { mockAttachmentHandler.fileAttachmentProfile } returns expectedFileAttachmentProfile
 
         slot.captured.onMessage(Response.onMessageWithAttachment())
 
@@ -211,6 +212,8 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
         }
         val expectedFileAttachmentProfile = FileAttachmentProfile()
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
+
         every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
 
         slot.captured.onMessage(Response.onMessageWithAttachment())
@@ -219,8 +222,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
     }
 
     @Test
-    fun `when AllowedMedia has filetypes without wildcard with maxFileSizeKB and blockedExtensions`() {
-        val fileAttachmentProfileSlot = createFileAttachmentProfileSlot()
+    fun `when AllowedMedia in SessionResponse has filetypes without wildcard but with maxFileSizeKB and blockedExtensions entries`() {
         every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             slot.captured.onMessage(
                 Response.configureSuccess(
@@ -238,7 +240,8 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
                 hasWildCard = false,
             )
         subject.connect()
-        every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
+        slot.captured.onMessage(Response.configureSuccess())
+        every { mockAttachmentHandler.fileAttachmentProfile } returns expectedFileAttachmentProfile
 
         slot.captured.onMessage(Response.onMessageWithAttachment())
 
@@ -247,7 +250,6 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
 
     @Test
     fun `when AllowedMedia in SessionResponse has filetypes with wildcard,maxFileSizeKB and blockedExtensions entries`() {
-        val fileAttachmentProfileSlot = createFileAttachmentProfileSlot()
         every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
             slot.captured.onMessage(
                 Response.configureSuccess(
@@ -265,7 +267,8 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
                 hasWildCard = true,
             )
         subject.connect()
-        every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
+        slot.captured.onMessage(Response.configureSuccess())
+        every { mockAttachmentHandler.fileAttachmentProfile } returns expectedFileAttachmentProfile
 
         slot.captured.onMessage(Response.onMessageWithAttachment())
 
@@ -295,6 +298,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
         }
         val expectedFileAttachmentProfile = FileAttachmentProfile()
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
         every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
 
         slot.captured.onMessage(Response.onMessageWithAttachment())
@@ -313,7 +317,6 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
                         )
                 )
             )
-        val fileAttachmentProfileSlot = createFileAttachmentProfileSlot()
         val expectedFileAttachmentProfile =
             FileAttachmentProfile(
                 enabled = true,
@@ -321,7 +324,8 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
                 maxFileSizeKB = 100
             )
         subject.connect()
-        every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
+        slot.captured.onMessage(Response.configureSuccess())
+        every { mockAttachmentHandler.fileAttachmentProfile } returns expectedFileAttachmentProfile
 
         slot.captured.onMessage(Response.onMessageWithAttachment())
 
@@ -350,6 +354,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
             )
         } throws IllegalArgumentException(ErrorMessage.fileSizeIsTooBig(null))
         subject.connect()
+        slot.captured.onMessage(Response.configureSuccess())
 
         assertFailsWith<IllegalArgumentException>(ErrorMessage.fileSizeIsTooBig(null)) {
             subject.attach(givenByteArray, "test.png")

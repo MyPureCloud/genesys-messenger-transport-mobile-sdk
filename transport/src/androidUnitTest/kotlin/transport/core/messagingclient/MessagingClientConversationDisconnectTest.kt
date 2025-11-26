@@ -238,17 +238,19 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         subject.startNewChat()
 
         assertThat(subject.currentState).isReadOnly()
-        verifySequence {
-            connectToReadOnlySequence()
+        verify {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()
             mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
-            mockLogger.i(capture(logSlot))
-            verifyCleanUp()
-            mockLogger.i(capture(logSlot))
+        }
+        verify {
+            mockMessageStore.invalidateConversationCache()
+            mockAttachmentHandler.clearAll()
+        }
+        verify {
             mockPlatformSocket.sendMessage(Request.configureRequest(startNew = true))
         }
     }
@@ -266,10 +268,11 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         subject.startNewChat()
 
         assertThat(subject.currentState).isReadOnly()
-        verifySequence {
-            connectToReadOnlySequence()
+        verify {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
+        }
+        verify {
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()

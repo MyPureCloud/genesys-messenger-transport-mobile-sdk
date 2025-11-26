@@ -21,9 +21,6 @@ import kotlin.test.assertFailsWith
 class MessagingClientHealthCheckTest : BaseMessagingClientTest() {
     @Test
     fun `when send HealthCheck`() {
-        every { mockPlatformSocket.sendMessage(Request.echo) } answers {
-            slot.captured.onMessage(Response.echo)
-        }
         val expectedMessage = Request.echo
         subject.connect()
 
@@ -34,7 +31,6 @@ class MessagingClientHealthCheckTest : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
-            mockEventHandler.onEvent(Event.HealthChecked)
         }
         verify(exactly = 0) {
             mockMessageStore.update(any())

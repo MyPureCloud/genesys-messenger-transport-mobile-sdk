@@ -10,7 +10,9 @@ internal data class ConfigureAuthenticatedSessionRequest(
     val startNew: Boolean,
     val journeyContext: JourneyContext? = null,
     val data: Data,
-) : WebMessagingRequest {
+    @Required
+    override val tracingId: String,
+) : BaseWebMessagingRequest() {
     @Required
     override val action: String = RequestAction.CONFIGURE_AUTHENTICATED_SESSION.value
 

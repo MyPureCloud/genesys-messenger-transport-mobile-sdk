@@ -9,6 +9,8 @@ internal data class ConfigureSessionRequest(
     val deploymentId: String,
     val startNew: Boolean,
     val journeyContext: JourneyContext? = null,
-) : WebMessagingRequest {
+    @Required
+    override val tracingId: String,
+) : BaseWebMessagingRequest() {
     @Required override val action: String = RequestAction.CONFIGURE_SESSION.value
 }

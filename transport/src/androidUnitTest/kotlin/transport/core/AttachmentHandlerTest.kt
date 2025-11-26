@@ -23,6 +23,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
+import com.genesys.cloud.messenger.transport.util.TracingIds
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
@@ -32,9 +33,12 @@ import io.mockk.Called
 import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.slot
 import io.mockk.spyk
+import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -77,12 +81,15 @@ internal class AttachmentHandlerTest {
     @ExperimentalCoroutinesApi
     @Before
     fun setup() {
+        mockkObject(TracingIds)
+        every { TracingIds.newId() } returns TestValues.TRACING_ID
         Dispatchers.setMain(dispatcher)
     }
 
     @ExperimentalCoroutinesApi
     @After
     fun tearDown() {
+        unmockkObject(TracingIds)
         Dispatchers.resetMain()
     }
 
@@ -105,6 +112,7 @@ internal class AttachmentHandlerTest {
                 fileSize = AttachmentValues.FILE_SIZE,
                 null,
                 true,
+                tracingId = TestValues.TRACING_ID
             )
 
         val onAttachmentRequest =
@@ -143,6 +151,7 @@ internal class AttachmentHandlerTest {
                 fileSize = AttachmentValues.FILE_SIZE,
                 null,
                 true,
+                tracingId = TestValues.TRACING_ID
             )
 
         val onAttachmentRequest =
@@ -305,7 +314,7 @@ internal class AttachmentHandlerTest {
             Attachment(AttachmentValues.ID, AttachmentValues.FILE_NAME, null, State.Detaching)
         val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(1))
         val expectedDeleteAttachmentRequest =
-            DeleteAttachmentRequest(TestValues.TOKEN, AttachmentValues.ID)
+            DeleteAttachmentRequest(TestValues.TOKEN, AttachmentValues.ID, TestValues.TRACING_ID)
         givenPrepareCalled()
         givenUploadSuccessCalled()
 
@@ -392,7 +401,7 @@ internal class AttachmentHandlerTest {
             assertThat(id).isEqualTo(expectedAttachment.id)
             assertThat(fileName).isNull()
             assertThat((state as State.Error).errorCode).isEqualTo(expectedState.errorCode)
-            assertThat((state as State.Error).errorMessage).isEqualTo(expectedState.errorMessage)
+            assertThat(state.errorMessage).isEqualTo(expectedState.errorMessage)
         }
         assertThat(processedAttachments.containsKey(AttachmentValues.ID)).isFalse()
         assertThat(logSlot[0].invoke()).isEqualTo(
@@ -427,7 +436,7 @@ internal class AttachmentHandlerTest {
             assertThat(id).isEqualTo(expectedAttachment.id)
             assertThat(fileName).isNull()
             assertThat((state as State.Error).errorCode).isEqualTo(expectedState.errorCode)
-            assertThat((state as State.Error).errorMessage).isEqualTo(expectedState.errorMessage)
+            assertThat(state.errorMessage).isEqualTo(expectedState.errorMessage)
         }
         assertThat(processedAttachments.containsKey(AttachmentValues.ID)).isFalse()
         assertThat(logSlot[0].invoke()).isEqualTo(
@@ -462,7 +471,7 @@ internal class AttachmentHandlerTest {
             assertThat(id).isEqualTo(expectedAttachment.id)
             assertThat(fileName).isNull()
             assertThat((state as State.Error).errorCode).isEqualTo(expectedState.errorCode)
-            assertThat((state as State.Error).errorMessage).isEqualTo(expectedState.errorMessage)
+            assertThat(state.errorMessage).isEqualTo(expectedState.errorMessage)
         }
         assertThat(processedAttachments.containsKey(AttachmentValues.ID)).isFalse()
         assertThat(logSlot[0].invoke()).isEqualTo(
@@ -593,6 +602,7 @@ internal class AttachmentHandlerTest {
                 2000,
                 null,
                 true,
+                tracingId = TestValues.TRACING_ID
             )
 
         val givenByteArray = ByteArray(2000)
@@ -629,6 +639,7 @@ internal class AttachmentHandlerTest {
                 2000,
                 null,
                 true,
+                tracingId = TestValues.TRACING_ID
             )
 
         val onAttachmentRequest =
@@ -663,6 +674,7 @@ internal class AttachmentHandlerTest {
                 2000,
                 null,
                 true,
+                tracingId = TestValues.TRACING_ID
             )
 
         val onAttachmentRequest =
@@ -706,6 +718,7 @@ internal class AttachmentHandlerTest {
                 1,
                 null,
                 true,
+                tracingId = TestValues.TRACING_ID
             )
 
         val onAttachmentRequest =

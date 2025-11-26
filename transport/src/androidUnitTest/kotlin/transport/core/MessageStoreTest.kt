@@ -44,7 +44,6 @@ internal class MessageStoreTest {
     private val mockLogger: Log = mockk(relaxed = true)
     private val logSlot = mutableListOf<() -> String>()
     private val mockMessageListener: ((MessageEvent) -> Unit) = mockk(relaxed = true)
-
     private val subject =
         MessageStore(mockLogger).also {
             it.messageListener = mockMessageListener
@@ -60,8 +59,8 @@ internal class MessageStoreTest {
                 message =
                     TextMessage(
                         "test message",
-                        metadata = mapOf("customMessageId" to expectedMessage.id)
                     ),
+                tracingId = TestValues.TRACING_ID
             )
 
         subject.prepareMessage(TestValues.TOKEN, "test message").run {
@@ -123,14 +122,10 @@ internal class MessageStoreTest {
 
     @Test
     fun `when update() inbound message`() {
-        val sentMessageId =
-            subject
-                .prepareMessage(TestValues.TOKEN, "test message")
-                .message.metadata
-                ?.get("customMessageId")
-                ?: "empty"
+        subject.prepareMessage(TestValues.TOKEN, "test message")
+        val sentMessage = subject.getConversation().first()
         val givenMessage =
-            Message(id = sentMessageId, state = State.Sent, text = "test message")
+            Message(id = sentMessage.id, state = State.Sent, text = "test message")
         clearMocks(mockMessageListener)
 
         subject.update(givenMessage)
@@ -162,15 +157,11 @@ internal class MessageStoreTest {
 
     @Test
     fun `when update() inbound and then outbound messages`() {
-        val sentMessageId =
-            subject
-                .prepareMessage(TestValues.TOKEN, "test message")
-                .message.metadata
-                ?.get("customMessageId")
-                ?: "empty"
+        subject.prepareMessage(TestValues.TOKEN, "test message")
+        val sentMessage = subject.getConversation().first()
         val expectedConversationSize = 2
         val givenMessage =
-            Message(id = sentMessageId, state = State.Sent, text = "test message")
+            Message(id = sentMessage.id, state = State.Sent, text = "test message")
         subject.update(outboundMessage())
         clearMocks(mockMessageListener)
 
@@ -354,12 +345,12 @@ internal class MessageStoreTest {
 
         subject.onMessageError(ErrorCode.MessageTooLong, errorMessage)
 
-        assertThat { subject.getConversation().contains(expectedMessage) }
+        assertThat(subject.getConversation()).contains(expectedMessage)
         verify { mockMessageListener.invoke(capture(messageSlot)) }
         (messageSlot.captured as MessageEvent.MessageUpdated).message.run {
             assertThat(this).isEqualTo(expectedMessage)
             assertThat((state as State.Error).code).isEqualTo(expectedState.code)
-            assertThat((state as State.Error).message).isEqualTo(expectedState.message)
+            assertThat(state.message).isEqualTo(expectedState.message)
         }
     }
 
@@ -397,9 +388,9 @@ internal class MessageStoreTest {
                 message =
                     TextMessage(
                         "test message",
-                        metadata = mapOf("customMessageId" to expectedMessage.id),
                         channel = Channel(Channel.Metadata(mapOf("A" to "B"))),
                     ),
+                tracingId = TestValues.TRACING_ID
             )
 
         val onMessageRequest =
@@ -500,9 +491,9 @@ internal class MessageStoreTest {
                                     buttonResponse = givenButtonResponse
                                 )
                             ),
-                        metadata = mapOf("customMessageId" to expectedMessage.id),
                         channel = givenChannel
                     ),
+                tracingId = TestValues.TRACING_ID
             )
 
         subject.prepareMessageWith(TestValues.TOKEN, givenButtonResponse, givenChannel).run {
@@ -541,8 +532,8 @@ internal class MessageStoreTest {
                                     buttonResponse = givenButtonResponse
                                 )
                             ),
-                        metadata = mapOf("customMessageId" to expectedMessage.id)
                     ),
+                tracingId = TestValues.TRACING_ID
             )
 
         subject.prepareMessageWith(TestValues.TOKEN, givenButtonResponse).run {

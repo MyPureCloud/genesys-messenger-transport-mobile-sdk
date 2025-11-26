@@ -12,6 +12,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
+import com.genesys.cloud.messenger.transport.util.TracingIds
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.ktor.http.ContentType
@@ -58,6 +59,7 @@ internal class AttachmentHandlerImpl(
             fileType = resolveContentType(fileName).toString(),
             fileSize = byteArray.size,
             errorsAsJson = true,
+            tracingId = TracingIds.newId()
         )
     }
 
@@ -106,7 +108,8 @@ internal class AttachmentHandlerImpl(
                     it.attachment.copy(state = Detaching).also(updateAttachmentStateWith)
                 return DeleteAttachmentRequest(
                     token = token,
-                    attachmentId = attachmentId
+                    attachmentId = attachmentId,
+                    tracingId = TracingIds.newId()
                 )
             } else {
                 onDetached(attachmentId)
