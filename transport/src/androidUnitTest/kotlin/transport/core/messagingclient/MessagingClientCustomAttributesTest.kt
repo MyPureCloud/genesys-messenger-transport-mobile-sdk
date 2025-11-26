@@ -221,20 +221,23 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
                 expectedButtonResponse,
                 expectedChannel
             )
-        } returns OnMessageRequest(
-            token = Request.token,
-            message = StructuredMessage(
-                text = expectedButtonResponse.text,
-                metadata = mapOf("customMessageId" to "card-123"),
-                content = listOf(
-                    Message.Content(
-                        contentType = Message.Content.Type.ButtonResponse,
-                        buttonResponse = expectedButtonResponse
+        } returns
+            OnMessageRequest(
+                token = Request.token,
+                message =
+                    StructuredMessage(
+                        text = expectedButtonResponse.text,
+                        metadata = mapOf("customMessageId" to "card-123"),
+                        content =
+                            listOf(
+                                Message.Content(
+                                    contentType = Message.Content.Type.ButtonResponse,
+                                    buttonResponse = expectedButtonResponse
+                                )
+                            ),
+                        channel = expectedChannel
                     )
-                ),
-                channel = expectedChannel
             )
-        )
 
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mapOf("A" to "B")
         subject.connect()

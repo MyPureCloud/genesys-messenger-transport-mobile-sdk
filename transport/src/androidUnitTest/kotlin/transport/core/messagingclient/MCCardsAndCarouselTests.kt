@@ -18,7 +18,6 @@ import transport.util.Response
 import kotlin.test.assertFailsWith
 
 class MCCardsAndCarouselTests : BaseMessagingClientTest() {
-
     @Test
     fun `when connect() and then sendCardReply() but no custom attributes`() {
         val givenPostbackResponse = CardTestValues.postbackButtonResponse
@@ -62,20 +61,23 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
                 expectedButtonResponse,
                 expectedChannel
             )
-        } returns OnMessageRequest(
-            token = Request.token,
-            message = StructuredMessage(
-                text = expectedButtonResponse.text,
-                metadata = mapOf("customMessageId" to "card-123"),
-                content = listOf(
-                    Message.Content(
-                        contentType = Message.Content.Type.ButtonResponse,
-                        buttonResponse = expectedButtonResponse
+        } returns
+            OnMessageRequest(
+                token = Request.token,
+                message =
+                    StructuredMessage(
+                        text = expectedButtonResponse.text,
+                        metadata = mapOf("customMessageId" to "card-123"),
+                        content =
+                            listOf(
+                                Message.Content(
+                                    contentType = Message.Content.Type.ButtonResponse,
+                                    buttonResponse = expectedButtonResponse
+                                )
+                            ),
+                        channel = expectedChannel
                     )
-                ),
-                channel = expectedChannel
             )
-        )
 
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns expectedCustomAttributes
 
@@ -95,28 +97,31 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
 
     @Test
     fun `when SocketListener invoke onMessage with Structured message that contains Postback card reply`() {
-        val expectedCard = Message.Card(
-            title = "Title",
-            description = "Description",
-            imageUrl = "http://image.com/image.png",
-            actions = listOf(
-                ButtonResponse(
-                    type = "Button",
-                    text = "Select this option",
-                    payload = "postback_payload"
-                )
+        val expectedCard =
+            Message.Card(
+                title = "Title",
+                description = "Description",
+                imageUrl = "http://image.com/image.png",
+                actions =
+                    listOf(
+                        ButtonResponse(
+                            type = "Button",
+                            text = "Select this option",
+                            payload = "postback_payload"
+                        )
+                    )
             )
-        )
 
-        val expectedMessage = Message(
-            id = "msg_id",
-            direction = Message.Direction.Outbound,
-            state = Message.State.Sent,
-            messageType = Message.Type.Cards,
-            text = "You selected this card option",
-            cards = listOf(expectedCard),
-            from = Message.Participant(originatingEntity = Message.Participant.OriginatingEntity.Bot),
-        )
+        val expectedMessage =
+            Message(
+                id = "msg_id",
+                direction = Message.Direction.Outbound,
+                state = Message.State.Sent,
+                messageType = Message.Type.Cards,
+                text = "You selected this card option",
+                cards = listOf(expectedCard),
+                from = Message.Participant(originatingEntity = Message.Participant.OriginatingEntity.Bot),
+            )
 
         subject.connect()
 
@@ -149,11 +154,12 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
 
     @Test
     fun `when sendCardReply() with Link button then payload value is not serialized`() {
-        val givenLinkButton = ButtonResponse(
-            text = CardTestValues.text,
-            payload = "",
-            type = CardTestValues.LINK_TYPE
-        )
+        val givenLinkButton =
+            ButtonResponse(
+                text = CardTestValues.text,
+                payload = "",
+                type = CardTestValues.LINK_TYPE
+            )
         val givenCustomAttributes = mapOf("source" to "card")
         val givenChannel = Channel(Channel.Metadata(givenCustomAttributes))
 
@@ -164,26 +170,30 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
                 match { it.type == CardTestValues.LINK_TYPE },
                 givenChannel
             )
-        } returns OnMessageRequest(
-            token = Request.token,
-            message = StructuredMessage(
-                text = givenLinkButton.text,
-                metadata = mapOf("customMessageId" to MessageValues.ID),
-                content = listOf(
-                    Message.Content(
-                        contentType = Message.Content.Type.ButtonResponse,
-                        buttonResponse = givenLinkButton
+        } returns
+            OnMessageRequest(
+                token = Request.token,
+                message =
+                    StructuredMessage(
+                        text = givenLinkButton.text,
+                        metadata = mapOf("customMessageId" to MessageValues.ID),
+                        content =
+                            listOf(
+                                Message.Content(
+                                    contentType = Message.Content.Type.ButtonResponse,
+                                    buttonResponse = givenLinkButton
+                                )
+                            ),
+                        channel = givenChannel
                     )
-                ),
-                channel = givenChannel
             )
-        )
 
-        val expectedJson = listOf(
-            "\"type\":\"Structured\"",
-            "\"type\":\"${CardTestValues.LINK_TYPE}\"",
-            "\"text\":\"${CardTestValues.text}\""
-        )
+        val expectedJson =
+            listOf(
+                "\"type\":\"Structured\"",
+                "\"type\":\"${CardTestValues.LINK_TYPE}\"",
+                "\"text\":\"${CardTestValues.text}\""
+            )
         val nonEmptyPayloadRegex = Regex("\"payload\":\"[^\"]+\"")
 
         subject.connect()

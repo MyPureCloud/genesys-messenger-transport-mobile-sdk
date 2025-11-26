@@ -84,23 +84,27 @@ open class BaseMessagingClientTest {
                                 ),
                         ),
                 )
-        every { preparePostbackMessage(any(), any(), any()) } returns OnMessageRequest(
-            token = Request.token,
-            message = StructuredMessage(
-                text = "Postback button text",
-                metadata = mapOf("customMessageId" to "card-123"),
-                content = listOf(
-                    Message.Content(
-                        contentType = Message.Content.Type.ButtonResponse,
-                        buttonResponse = ButtonResponse(
+            every { preparePostbackMessage(any(), any(), any()) } returns
+                OnMessageRequest(
+                    token = Request.token,
+                    message =
+                        StructuredMessage(
                             text = "Postback button text",
-                            payload = "some_payload_value",
-                            type = "Postback"
+                            metadata = mapOf("customMessageId" to "card-123"),
+                            content =
+                                listOf(
+                                    Message.Content(
+                                        contentType = Message.Content.Type.ButtonResponse,
+                                        buttonResponse =
+                                            ButtonResponse(
+                                                text = "Postback button text",
+                                                payload = "some_payload_value",
+                                                type = "Postback"
+                                            )
+                                    )
+                                )
                         )
-                    )
                 )
-            )
-        )
         }
     internal val mockAttachmentHandler: AttachmentHandler =
         mockk(relaxed = true) {
