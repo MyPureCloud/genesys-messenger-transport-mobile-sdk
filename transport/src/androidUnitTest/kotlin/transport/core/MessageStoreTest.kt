@@ -650,15 +650,16 @@ internal class MessageStoreTest {
     @Test
     fun `when update called with card message, then CardMessageReceived is published`() {
         val givenCard = CardTestValues.cardWithPostbackAction
-        val givenMessage = Message(
-            id = "msg_id",
-            direction = Direction.Outbound,
-            state = State.Sent,
-            messageType = Type.Cards,
-            text = "You selected this card option",
-            cards = listOf(givenCard),
-            from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
-        )
+        val givenMessage =
+            Message(
+                id = "msg_id",
+                direction = Direction.Outbound,
+                state = State.Sent,
+                messageType = Type.Cards,
+                text = "You selected this card option",
+                cards = listOf(givenCard),
+                from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
+            )
 
         subject.update(givenMessage)
 
@@ -671,15 +672,16 @@ internal class MessageStoreTest {
 
     @Test
     fun `when updateMessageHistory is called with card selections then history is merged`() {
-        val givenMessage = Message(
-            id = "history-card-1",
-            direction = Direction.Inbound,
-            state = State.Sent,
-            messageType = Type.Cards,
-            text = CardTestValues.postbackButtonResponse.text,
-            quickReplies = listOf(CardTestValues.postbackButtonResponse),
-            timeStamp = 123L
-        )
+        val givenMessage =
+            Message(
+                id = "history-card-1",
+                direction = Direction.Inbound,
+                state = State.Sent,
+                messageType = Type.Cards,
+                text = CardTestValues.postbackButtonResponse.text,
+                quickReplies = listOf(CardTestValues.postbackButtonResponse),
+                timeStamp = 123L
+            )
         val givenHistory = listOf(givenMessage)
 
         clearMocks(mockLogger, mockMessageListener)
@@ -707,25 +709,27 @@ internal class MessageStoreTest {
 
     @Test
     fun `when updateMessageHistory contains mixed messages then history ordering is preserved`() {
-        val givenExistingMessage = Message(
-            id = "1",
-            direction = Direction.Inbound,
-            state = State.Sent,
-            messageType = Type.Text,
-            text = "Hello",
-            timeStamp = 100L
-        )
+        val givenExistingMessage =
+            Message(
+                id = "1",
+                direction = Direction.Inbound,
+                state = State.Sent,
+                messageType = Type.Text,
+                text = "Hello",
+                timeStamp = 100L
+            )
         subject.update(givenExistingMessage)
 
-        val givenCardSelection = Message(
-            id = "history-card-1",
-            direction = Direction.Inbound,
-            state = State.Sent,
-            messageType = Type.Cards,
-            text = CardTestValues.postbackButtonResponse.text,
-            quickReplies = listOf(CardTestValues.postbackButtonResponse),
-            timeStamp = 200L
-        )
+        val givenCardSelection =
+            Message(
+                id = "history-card-1",
+                direction = Direction.Inbound,
+                state = State.Sent,
+                messageType = Type.Cards,
+                text = CardTestValues.postbackButtonResponse.text,
+                quickReplies = listOf(CardTestValues.postbackButtonResponse),
+                timeStamp = 200L
+            )
         val givenHistory = listOf(givenCardSelection)
 
         clearMocks(mockLogger, mockMessageListener)
@@ -767,23 +771,26 @@ internal class MessageStoreTest {
 
     @Test
     fun `when preparePostbackMessage() then logs and publishes MessageInserted`() {
-        val expectedMessage = subject.pendingMessage.copy(
-            state = State.Sending,
-            messageType = Type.Cards,
-            type = Type.Cards.name,
-            quickReplies = listOf(
-                ButtonResponse(
-                    text = CardTestValues.POSTBACK_TEXT,
-                    payload = CardTestValues.POSTBACK_PAYLOAD,
-                    type = QuickReplyTestValues.BUTTON
-                )
+        val expectedMessage =
+            subject.pendingMessage.copy(
+                state = State.Sending,
+                messageType = Type.Cards,
+                type = Type.Cards.name,
+                quickReplies =
+                    listOf(
+                        ButtonResponse(
+                            text = CardTestValues.POSTBACK_TEXT,
+                            payload = CardTestValues.POSTBACK_PAYLOAD,
+                            type = QuickReplyTestValues.BUTTON
+                        )
+                    )
             )
-        )
 
-        val result = subject.preparePostbackMessage(
-            TestValues.TOKEN,
-            CardTestValues.postbackButtonResponse
-        )
+        val result =
+            subject.preparePostbackMessage(
+                TestValues.TOKEN,
+                CardTestValues.postbackButtonResponse
+            )
 
         verify {
             mockLogger.i(capture(logSlot))

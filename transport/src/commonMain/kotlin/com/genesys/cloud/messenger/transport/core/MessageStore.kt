@@ -91,34 +91,37 @@ internal class MessageStore(private val log: Log) {
     ): OnMessageRequest {
         val type = Message.Type.Cards
 
-        val messageToSend = pendingMessage
-            .copy(
-                messageType = type,
-                type = type.name,
-                state = Message.State.Sending,
-                quickReplies = listOf(buttonResponse),
-            ).also {
-                log.i { LogMessages.postbackPrepareToSend(it) }
-                activeConversation.add(it)
-                publish(MessageEvent.MessageInserted(it))
-                pendingMessage = Message(attachments = it.attachments)
-            }
+        val messageToSend =
+            pendingMessage
+                .copy(
+                    messageType = type,
+                    type = type.name,
+                    state = Message.State.Sending,
+                    quickReplies = listOf(buttonResponse),
+                ).also {
+                    log.i { LogMessages.postbackPrepareToSend(it) }
+                    activeConversation.add(it)
+                    publish(MessageEvent.MessageInserted(it))
+                    pendingMessage = Message(attachments = it.attachments)
+                }
 
-        val content = listOf(
-            Message.Content(
-                contentType = Message.Content.Type.ButtonResponse,
-                buttonResponse = buttonResponse,
+        val content =
+            listOf(
+                Message.Content(
+                    contentType = Message.Content.Type.ButtonResponse,
+                    buttonResponse = buttonResponse,
+                )
             )
-        )
 
         return OnMessageRequest(
             token = token,
-            message = StructuredMessage(
-                text = buttonResponse.text,
-                metadata = mapOf("customMessageId" to messageToSend.id),
-                content = content,
-                channel = channel
-            )
+            message =
+                StructuredMessage(
+                    text = buttonResponse.text,
+                    metadata = mapOf("customMessageId" to messageToSend.id),
+                    content = content,
+                    channel = channel
+                )
         )
     }
 

@@ -31,7 +31,6 @@ data class Message(
     val events: List<Event> = emptyList(),
     val quickReplies: List<ButtonResponse> = emptyList(),
     val cards: List<Card> = emptyList(),
-
     val from: Participant =
         Participant(
             originatingEntity = Participant.OriginatingEntity.Human
