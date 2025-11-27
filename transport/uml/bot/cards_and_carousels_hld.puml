@@ -1,0 +1,103 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+!theme bluegray
+!pragma teoz true
+
+skinparam backgroundColor #whitesmoke
+title Cards and Carousels
+
+participant App
+box TransportSDK #lightcyan
+participant MessagingClient
+participant MessageStore
+end box
+box BackEnd
+participant Shyrka
+participant GenesysCloud
+end box
+
+rnote over MessagingClient
+  Given:
+  * Cards and Carousels flow is configured in Architect.
+  * newSession=true
+end rnote
+
+App -> MessagingClient: connect()
+MessagingClient -> Shyrka: configureSession(startNew=true)
+Shyrka --> MessagingClient: SessionConfigured(newSession=true)
+alt #aaff8833 Welcome "Outbound Message" (optional)
+Shyrka -> MessagingClient: onMessage(Message("Welcome Message from bot"))
+MessagingClient -> MessageStore: update(Message)
+MessageStore -> MessageStore: add message to Conversation
+MessageStore -> App: messageListener(MessageUpdated(Type.Text,"Welcome Message from bot"))
+App -> App: display text message in UI
+end
+Shyrka -> MessagingClient: onMessage(type=Structured, text=String, content=listOf(Carousel/Cards))
+MessagingClient -> MessagingClient : Normalize the (Carousel/Cards) to listOf(Cards)
+rnote over MessagingClient
+  Card mapping:
+  * actions = ButtonResponse list
+    - Link → ButtonResponse(type="Link", text, payload=url)
+    - Button/Postback → ButtonResponse(type="Button", text, payload or "")
+  * defaultAction = Link only (if url not blank)
+end rnote
+MessagingClient -> MessageStore: update(Message)
+MessageStore -> MessageStore: add message to Conversation
+MessageStore -> App: messageListener(CardsReceived(Message(type=Type.Cards, content=List))))
+App -> App: Display cards in UI
+alt #aaff8833 user selects cards option with "Button"
+App -> App: User taps a Card Action (type="Button")
+rnote over App
+  The SDK exposes the Card and its Actions.
+  App constructs a ButtonResponse using the selected Action.
+end rnote
+App -> MessagingClient: sendCardReply(postbackResponse: ButtonResponse(type="Button"))
+MessagingClient -> MessageStore: sendCardReply(postbackResponse: ButtonResponse)
+MessageStore -> MessageStore: add message to Conversation
+MessageStore --> MessagingClient: OnMessageRequest(type="button", text, payload)
+MessageStore -> App: messageListener(MessageInserted(Message(Type.Cards, ButtonResponse("Button"), State.Sending)))
+MessagingClient -> Shyrka: send(OnMessageRequest)
+alt #aaff8833 response (Success)
+Shyrka -> MessagingClient: response 200 to OnMessageRequest
+MessagingClient -> MessageStore: update(Message)
+MessageStore -> MessageStore: update message state in Conversation(Message)
+MessageStore -> App: messageListener(MessageUpdated(Message(Type.Cards, ButtonResponse("Button"), State.Sent))
+else #ffaaff33 Failure (MessageTooLong,RequestRateTooHigh,CustomAttributeSizeTooLarge)
+MessagingClient -> MessageStore: updateMessageState(Message(State.Error))
+MessageStore -> App: messageListener(MessageUpdated(Message(Type.Cards,State.Error)))
+App -> App: Display error message
+else #aaff8833 user selects cards option with "Link"
+App -> App: Open link (no outbound message)
+else #aaff8833 user sends a direct message
+App -> MessagingClient: sendMessage("user message")
+rnote over MessagingClient
+  handle as regular text message
+  user is redirected to agent
+end rnote
+end
+
+rnote over MessagingClient
+  Given:
+  * newSession=false
+end rnote
+alt #aaff8833 Connection lost/ Session reconfigured
+App -> MessagingClient: connect
+MessagingClient -> Shyrka: configureSession
+Shyrka --> MessagingClient: SessionConfigured(newSession=false)
+App -> MessagingClient: fetchNextPage()
+MessagingClient -> Shyrka: getJwtToken
+Shyrka --> MessagingClient:  jwt
+MessagingClient -> GenesysCloud: fetch history
+GenesysCloud --> MessagingClient: history response
+MessagingClient -> MessagingClient: parse history response.
+ rnote over App
+   * All non-consumed (Carousel/Cards) will be part of history response, including actions + defaultAction.
+ end rnote
+MessagingClient -> MessageStore: updateMessageHistory
+MessageStore -> MessageStore: add messages to Conversation
+MessageStore -> App: messageListener(MessageEvent.HistoryFetched)
+
+end
+
+@enduml

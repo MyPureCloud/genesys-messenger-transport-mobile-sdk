@@ -15,6 +15,7 @@ import com.genesys.cloud.messenger.transport.core.Message.State
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
+import com.genesys.cloud.messenger.transport.utility.CardTestValues
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import org.junit.Test
@@ -41,6 +42,7 @@ class MessageTest {
             assertThat(attachments).isEmpty()
             assertThat(events).isEmpty()
             assertThat(quickReplies).isEmpty()
+            assertThat(cards).isEmpty()
             from.run {
                 assertThat(this).isEqualTo(expectedParticipant)
                 assertThat(name).isNull()
@@ -64,6 +66,7 @@ class MessageTest {
         val expectedAttachments = mapOf(AttachmentValues.ID to Attachment(AttachmentValues.ID))
         val expectedEvents = listOf(Event.ConversationAutostart)
         val expectedQuickReplies = listOf(QuickReplyTestValues.buttonResponse_a)
+        val expectedCards = listOf(CardTestValues.card)
         val expectedParticipant =
             Participant(
                 name = MessageValues.PARTICIPANT_NAME,
@@ -83,6 +86,7 @@ class MessageTest {
                 attachments = mapOf(AttachmentValues.ID to Attachment(AttachmentValues.ID)),
                 events = listOf(Event.ConversationAutostart),
                 quickReplies = listOf(QuickReplyTestValues.buttonResponse_a),
+                cards = listOf(CardTestValues.card),
                 from =
                     Participant(
                         name = MessageValues.PARTICIPANT_NAME,
@@ -103,6 +107,7 @@ class MessageTest {
             assertThat(attachments).isEqualTo(expectedAttachments)
             assertThat(events).containsExactly(*expectedEvents.toTypedArray())
             assertThat(quickReplies).containsExactly(*expectedQuickReplies.toTypedArray())
+            assertThat(cards).containsExactly(*expectedCards.toTypedArray())
             assertThat(from).isEqualTo(expectedParticipant)
             assertThat(authenticated).isTrue()
         }

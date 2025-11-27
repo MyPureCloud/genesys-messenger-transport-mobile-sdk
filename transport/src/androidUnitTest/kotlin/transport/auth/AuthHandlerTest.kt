@@ -381,6 +381,9 @@ class AuthHandlerTest {
         coVerify(exactly = 1) {
             mockWebMessagingApi.logoutFromAuthenticatedSession(AuthTest.JWT_TOKEN)
             mockWebMessagingApi.refreshAuthJwt(AuthTest.REFRESH_TOKEN)
+        }
+        // Event is fired twice: once in performTokenRefresh and once in handleRequestError (logout)
+        coVerify(exactly = 2) {
             mockEventHandler.onEvent(
                 Event.Error(
                     expectedErrorCode,

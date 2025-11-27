@@ -122,6 +122,15 @@ final class MessengerInteractor {
         }
     }
 
+    func sendCardReply(buttonResponse: ButtonResponse) throws {
+        do {
+            try messagingClient.sendCardReply(postbackResponse: buttonResponse)
+        } catch {
+            print("sendCardReply(buttonResponse:) failed. \(error.localizedDescription)")
+            throw error
+        }
+    }
+
     func fetchNextPage(completion: ((Error?) -> Void)? = nil) {
         messagingClient.fetchNextPage() { error in
             completion?(error)

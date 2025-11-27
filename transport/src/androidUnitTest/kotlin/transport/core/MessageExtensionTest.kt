@@ -5,8 +5,10 @@ import assertk.assertions.containsExactly
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import assertk.assertions.size
 import com.genesys.cloud.messenger.transport.core.Attachment
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
@@ -49,6 +51,7 @@ import com.genesys.cloud.messenger.transport.util.extensions.toFileAttachmentPro
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
+import com.genesys.cloud.messenger.transport.utility.CardTestValues
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.StructuredMessageValues
@@ -184,7 +187,7 @@ internal class MessageExtensionTest {
             assertThat(id).isEqualTo(expectedMessage.id)
             assertThat(direction).isEqualTo(expectedMessage.direction)
             assertThat(state).isEqualTo(expectedMessage.state)
-            assertThat(type).isEqualTo(expectedMessage.type)
+            assertThat(messageType).isEqualTo(expectedMessage.messageType)
             assertThat(timeStamp).isEqualTo(expectedMessage.timeStamp)
             assertThat(events).containsExactly(*expectedMessage.events.toTypedArray())
             from.run {
@@ -1016,5 +1019,432 @@ internal class MessageExtensionTest {
         val result = givenText.sanitizeCustomAttributes()
 
         assertThat(result).isEqualTo(expectedText)
+    }
+
+    @Test
+    fun `when StructuredMessage has CardContent then messageType is Carousel and card is mapped`() {
+        val givenStructuredMessage = CardTestValues.createStructuredMessageWithCardContent()
+
+        val expectedMessageType = Type.Cards
+        val expectedCardTitle = CardTestValues.title
+        val expectedActionText = CardTestValues.text
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result.messageType).isEqualTo(expectedMessageType)
+        assertThat(result.cards).size().isEqualTo(TestValues.DEFAULT_NUMBER)
+        assertThat(result.cards.first().title).isEqualTo(expectedCardTitle)
+        assertThat(
+            result.cards
+                .first()
+                .actions
+                .first()
+                .text
+        ).isEqualTo(expectedActionText)
+    }
+
+    @Test
+    fun `when StructuredMessage has CarouselContent then messageType is Carousel and cards are mapped`() {
+        val givenTitles = listOf("Card One", "Card Two")
+        val expectedTitles = listOf("Card One", "Card Two")
+        val expectedActionText = "Open"
+
+        val givenStructuredMessage =
+            CardTestValues.createStructuredMessageWithCarouselContent(
+                titles = givenTitles,
+                lastCardActionText = expectedActionText
+            )
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result.messageType).isEqualTo(Type.Cards)
+        assertThat(result.cards).size().isEqualTo(givenTitles.size)
+        assertThat(result.cards[0].title).isEqualTo(expectedTitles[0])
+        assertThat(result.cards[1].title).isEqualTo(expectedTitles[1])
+        assertThat(
+            result.cards[1]
+                .actions
+                .first()
+                .text
+        ).isEqualTo(expectedActionText)
+    }
+
+    @Test
+    fun `when flattening carousel then keep link defaultAction on each card`() {
+        val givenStructuredMessage: StructuredMessage =
+            CardTestValues.createStructuredMessageWithCarouselDefaultActionLinks(cardCount = 2)
+        val expectedUrl = CardTestValues.url
+        val expectedCards = 2
+
+        val message: Message = givenStructuredMessage.toMessage()
+        val cards = message.cards
+
+        assertThat(message.messageType).isEqualTo(Type.Cards)
+        assertThat(cards.size).isEqualTo(expectedCards)
+        cards.forEach { card ->
+            val defaultAction = card.defaultAction
+            assertThat(defaultAction).isNotNull()
+            assertThat(defaultAction?.type).isEqualTo(CardTestValues.LINK_TYPE)
+            assertThat(defaultAction?.payload).isEqualTo(expectedUrl)
+        }
+    }
+
+    @Test
+    fun `when mapping carousel actions then link has url and postback has payload`() {
+        val givenCard =
+            StructuredMessage.Content.CardContent.Card(
+                title = CardTestValues.title,
+                description = CardTestValues.description,
+                image = CardTestValues.image,
+                defaultAction =
+                    StructuredMessage.Content.Action(
+                        type = CardTestValues.LINK_TYPE,
+                        text = "",
+                        url = CardTestValues.url
+                    ),
+                actions =
+                    listOf(
+                        StructuredMessage.Content.Action(
+                            type = CardTestValues.LINK_TYPE,
+                            text = CardTestValues.text,
+                            url = CardTestValues.url,
+                        ),
+                        StructuredMessage.Content.Action(
+                            type = CardTestValues.POSTBACK_TYPE,
+                            text = CardTestValues.POSTBACK_TEXT,
+                            payload = CardTestValues.POSTBACK_PAYLOAD,
+                        )
+                    )
+            )
+        val givenStructuredMessage: StructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                direction = Direction.Outbound.name,
+                content =
+                    listOf(
+                        StructuredMessage.Content.CarouselContent(
+                            contentType = "Carousel",
+                            carousel = StructuredMessage.Content.CarouselContent.Carousel(listOf(givenCard))
+                        )
+                    )
+            )
+        val expectedUrl = CardTestValues.url
+        val expectedPayload = CardTestValues.POSTBACK_PAYLOAD
+
+        val message = givenStructuredMessage.toMessage()
+        val card = message.cards.single()
+        val linkAction = card.actions.first { it.type == CardTestValues.LINK_TYPE }
+        val postbackAction = card.actions.first { it.type == QuickReplyTestValues.BUTTON }
+
+        assertThat(linkAction.payload).isEqualTo(expectedUrl)
+
+        assertThat(postbackAction.payload).isEqualTo(expectedPayload)
+    }
+
+    @Test
+    fun `when card has unsupported action then else branch drops it`() {
+        val givenUnsupportedAction =
+            StructuredMessage.Content.Action(
+                type = "Unsupported",
+                text = CardTestValues.text
+            )
+        val givenCard =
+            StructuredMessage.Content.CardContent.Card(
+                title = CardTestValues.title,
+                description = CardTestValues.description,
+                image = CardTestValues.image,
+                actions = listOf(givenUnsupportedAction)
+            )
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                direction = Direction.Outbound.name,
+                content = listOf(CardTestValues.createCardContent(givenCard))
+            )
+
+        val expectedMessageType = Type.Cards
+
+        val actualMessage: Message = givenStructuredMessage.toMessage()
+
+        assertThat(actualMessage.messageType).isEqualTo(expectedMessageType)
+        assertThat(actualMessage.cards.first().actions).isEmpty()
+    }
+
+    @Test
+    fun `when defaultAction is not Link then else branch returns null`() {
+        val givenNonLinkDefault =
+            StructuredMessage.Content.Action(
+                type = CardTestValues.POSTBACK_TYPE,
+                text = CardTestValues.POSTBACK_TEXT,
+                payload = CardTestValues.POSTBACK_PAYLOAD
+            )
+        val givenCard =
+            StructuredMessage.Content.CardContent.Card(
+                title = CardTestValues.title,
+                description = CardTestValues.description,
+                image = CardTestValues.image,
+                defaultAction = givenNonLinkDefault,
+                actions = emptyList()
+            )
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                direction = Direction.Outbound.name,
+                content = listOf(CardTestValues.createCardContent(givenCard))
+            )
+
+        val actualMessage: Message = givenStructuredMessage.toMessage()
+
+        assertThat(actualMessage.cards.first().defaultAction).isNull()
+    }
+
+    @Test
+    fun `when carousel contains cards with unsupported actions then else branch drops them as well`() {
+        val givenUnsupportedAction =
+            StructuredMessage.Content.Action(
+                type = "Unsupported",
+                text = CardTestValues.text
+            )
+        val givenCard1 =
+            StructuredMessage.Content.CardContent.Card(
+                title = "${CardTestValues.title}-1",
+                description = CardTestValues.description,
+                image = CardTestValues.image,
+                actions = listOf(givenUnsupportedAction)
+            )
+        val givenCard2 =
+            StructuredMessage.Content.CardContent.Card(
+                title = "${CardTestValues.title}-2",
+                description = CardTestValues.description,
+                image = CardTestValues.image,
+                actions = listOf(givenUnsupportedAction)
+            )
+        val givenCarousel = CardTestValues.createCarouselContent(givenCard1, givenCard2)
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                direction = Direction.Outbound.name,
+                content = listOf(givenCarousel)
+            )
+
+        val expectedCardCount = 2
+        val expectedActions = emptyList<ButtonResponse>()
+
+        val actualMessage: Message = givenStructuredMessage.toMessage()
+
+        assertThat(actualMessage.cards.size).isEqualTo(expectedCardCount)
+        assertThat(actualMessage.cards[0].actions).isEmpty()
+        assertThat(actualMessage.cards[1].actions).isEqualTo(expectedActions)
+    }
+
+    @Test
+    fun `when StructuredMessage has QuickReplyContent then messageType is QuickReply and quickReplies mapped`() {
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                content = listOf(QuickReplyTestValues.createQuickReplyContentForTesting())
+            )
+        val expectedMessageType = Type.QuickReply
+        val expectedQuickReply =
+            ButtonResponse(
+                text = QuickReplyTestValues.TEXT_A,
+                payload = QuickReplyTestValues.PAYLOAD_A,
+                type = QuickReplyTestValues.QUICK_REPLY
+            )
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result.messageType).isEqualTo(expectedMessageType)
+        assertThat(result.quickReplies).containsExactly(expectedQuickReply)
+        assertThat(result.cards).isEmpty()
+    }
+
+    @Test
+    fun `when StructuredMessage has ButtonResponseContent with type QuickReply then messageType is QuickReply and quickReplies mapped`() {
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                content = listOf(QuickReplyTestValues.createButtonResponseContentForTesting())
+            )
+        val expectedMessageType = Type.QuickReply
+        val expectedQuickReply =
+            ButtonResponse(
+                text = QuickReplyTestValues.TEXT_A,
+                payload = QuickReplyTestValues.PAYLOAD_A,
+                type = QuickReplyTestValues.QUICK_REPLY
+            )
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result.messageType).isEqualTo(expectedMessageType)
+        assertThat(result.quickReplies).containsExactly(expectedQuickReply)
+        assertThat(result.cards).isEmpty()
+    }
+
+    @Test
+    fun `when StructuredMessage has ButtonResponseContent with type Button then messageType is Cards and quickReplies empty`() {
+        val givenButton =
+            StructuredMessage.Content.ButtonResponseContent.ButtonResponse(
+                text = QuickReplyTestValues.TEXT_A,
+                payload = QuickReplyTestValues.PAYLOAD_A,
+                type = QuickReplyTestValues.BUTTON
+            )
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                content =
+                    listOf(
+                        StructuredMessage.Content.ButtonResponseContent(
+                            contentType = StructuredMessage.Content.Type.ButtonResponse.name,
+                            buttonResponse = givenButton
+                        )
+                    )
+            )
+        val expectedMessageType = Type.Cards
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result.messageType).isEqualTo(expectedMessageType)
+        assertThat(result.quickReplies).isEmpty()
+        assertThat(result.cards).isEmpty()
+    }
+
+    @Test
+    fun `when StructuredMessage has CardContent with Button action in mixed case then maps to Button`() {
+        val givenAction =
+            StructuredMessage.Content.Action(
+                type = "bUtToN",
+                text = CardTestValues.POSTBACK_TEXT,
+                payload = CardTestValues.POSTBACK_PAYLOAD
+            )
+        val givenCard =
+            StructuredMessage.Content.CardContent.Card(
+                title = CardTestValues.title,
+                description = CardTestValues.description,
+                image = CardTestValues.image,
+                defaultAction = null,
+                actions = listOf(givenAction)
+            )
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                direction = Direction.Outbound.name,
+                content =
+                    listOf(
+                        StructuredMessage.Content.CardContent(
+                            contentType = "Card",
+                            card = givenCard
+                        )
+                    )
+            )
+
+        val decodedMessage = givenStructuredMessage.toMessage()
+
+        assertThat(decodedMessage.messageType).isEqualTo(Type.Cards)
+        val mappedAction =
+            decodedMessage.cards
+                .single()
+                .actions
+                .single()
+        assertThat(mappedAction.type).isEqualTo(QuickReplyTestValues.BUTTON)
+        assertThat(mappedAction.text).isEqualTo(CardTestValues.POSTBACK_TEXT)
+        assertThat(mappedAction.payload).isEqualTo(CardTestValues.POSTBACK_PAYLOAD)
+    }
+
+    @Test
+    fun `when StructuredMessage has CardContent with Link action in mixed case then maps to Link with url payload`() {
+        val givenAction =
+            StructuredMessage.Content.Action(
+                type = "lInK",
+                text = CardTestValues.text,
+                url = CardTestValues.url
+            )
+        val givenCard =
+            StructuredMessage.Content.CardContent.Card(
+                title = CardTestValues.title,
+                description = CardTestValues.description,
+                image = CardTestValues.image,
+                defaultAction = null,
+                actions = listOf(givenAction)
+            )
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                direction = Direction.Outbound.name,
+                content =
+                    listOf(
+                        StructuredMessage.Content.CardContent(
+                            contentType = "Card",
+                            card = givenCard
+                        )
+                    )
+            )
+
+        val decodedMessage: Message = givenStructuredMessage.toMessage()
+
+        assertThat(decodedMessage.messageType).isEqualTo(Type.Cards)
+        val mappedAction =
+            decodedMessage.cards
+                .single()
+                .actions
+                .single()
+        assertThat(mappedAction.type).isEqualTo(CardTestValues.LINK_TYPE)
+        assertThat(mappedAction.payload).isEqualTo(CardTestValues.url)
+        assertThat(mappedAction.text).isEqualTo(CardTestValues.text)
+    }
+
+    @Test
+    fun `when StructuredMessage toMessage() has no quick replies or cards then messageType is Unknown`() {
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                content = emptyList()
+            )
+        val expectedMessageType = Type.Unknown
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result.messageType).isEqualTo(expectedMessageType)
+    }
+
+    @Test
+    fun `when StructuredMessage has CardContent with link action lowercase then maps to Link`() {
+        val givenAction =
+            StructuredMessage.Content.Action(
+                type = "link",
+                text = "Open",
+                url = CardTestValues.url
+            )
+        val givenCard =
+            StructuredMessage.Content.CardContent.Card(
+                title = "T",
+                description = "D",
+                actions = listOf(givenAction)
+            )
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                direction = Direction.Outbound.name,
+                content =
+                    listOf(
+                        StructuredMessage.Content.CardContent(
+                            contentType = "Card",
+                            card = givenCard
+                        )
+                    )
+            )
+        val expectedActionType = CardTestValues.LINK_TYPE
+        val expectedPayload = CardTestValues.url
+
+        val decodedMessage: Message = givenStructuredMessage.toMessage()
+
+        assertThat(decodedMessage.messageType).isEqualTo(Type.Cards)
+        val mappedAction =
+            decodedMessage.cards
+                .single()
+                .actions
+                .single()
+        assertThat(mappedAction.type).isEqualTo(expectedActionType)
+        assertThat(mappedAction.payload).isEqualTo(expectedPayload)
     }
 }

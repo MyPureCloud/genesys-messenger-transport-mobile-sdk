@@ -2,6 +2,7 @@ package transport.core.messagingclient
 
 import com.genesys.cloud.messenger.transport.auth.AuthHandler
 import com.genesys.cloud.messenger.transport.core.AttachmentHandler
+import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.CustomAttributesStoreImpl
 import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.HistoryHandler
@@ -27,6 +28,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConf
 import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.Platform
@@ -81,6 +83,27 @@ open class BaseMessagingClientTest {
                                     )
                                 ),
                         ),
+                )
+            every { preparePostbackMessage(any(), any(), any()) } returns
+                OnMessageRequest(
+                    token = Request.token,
+                    message =
+                        StructuredMessage(
+                            text = "Postback button text",
+                            metadata = mapOf("customMessageId" to "card-123"),
+                            content =
+                                listOf(
+                                    Message.Content(
+                                        contentType = Message.Content.Type.ButtonResponse,
+                                        buttonResponse =
+                                            ButtonResponse(
+                                                text = "Postback button text",
+                                                payload = "some_payload_value",
+                                                type = "Postback"
+                                            )
+                                    )
+                                )
+                        )
                 )
         }
     internal val mockAttachmentHandler: AttachmentHandler =
