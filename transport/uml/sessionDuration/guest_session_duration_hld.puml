@@ -92,6 +92,6 @@ end
 alt Clear Conversation
     Shyrka [#999]--> MessagingClient: Clear Conversation
     MessagingClient [#999]-> MessagingClient: invalidateConversationCache()
-    Me0ssagingClient [#999]--> App: eventListener.onEvent(Event.ConversationCleared)
+    MessagingClient [#999]--> App: eventListener.onEvent(Event.ConversationCleared)
 end
 @enduml
