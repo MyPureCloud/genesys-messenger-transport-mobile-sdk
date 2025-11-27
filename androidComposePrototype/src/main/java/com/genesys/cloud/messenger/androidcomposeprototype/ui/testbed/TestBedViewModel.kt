@@ -446,8 +446,7 @@ class TestBedViewModel :
             return
         }
         if (nonce.isEmpty()) {
-            onSocketMessageReceived("Please, first obtain nonce from login.")
-            return
+            nonce = UUID.randomUUID().toString()
         }
         client.authorizeImplicit(idToken, nonce)
     }
