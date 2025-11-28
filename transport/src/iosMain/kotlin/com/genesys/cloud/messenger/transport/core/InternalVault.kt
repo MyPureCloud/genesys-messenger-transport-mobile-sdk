@@ -46,17 +46,70 @@ import platform.darwin.OSStatus
 import platform.darwin.noErr
 
 @OptIn(ExperimentalForeignApi::class)
-internal class InternalVault(private val serviceName: String) {
+internal class InternalVault(private val serviceName: String, private val tokenKey: String? = null) {
     private val launchStorage = LaunchStorage(serviceName)
     private val log: Log = Log(true, LogTag.MESSAGING_CLIENT)
 
     init {
         if (!launchStorage.didLaunchPreviously) {
+            handleFirstLaunchOrMigration()
+        }
+    }
+
+    /**
+     * Handles the first launch scenario or migration from older versions.
+     *
+     * Migration logic:
+     * - If didLaunchPreviously flag doesn't exist in UserDefaults, we need to determine if this is:
+     *   1. Fresh install -> clear vault
+     *   2. Reinstall after deletion -> clear vault
+     *   3. Upgrade from old version -> preserve vault
+     *
+     * We use two markers:
+     * - Install marker in keychain (persists across app updates)
+     * - Session token in keychain (indicates active session)
+     *
+     * Decision tree:
+     * - If install marker exists -> Already launched new version before, clear vault
+     * - If no install marker:
+     *   - If session token exists -> Upgrade from old version, preserve vault
+     *   - If no session token -> Fresh install or reinstall, clear vault
+     */
+    private fun handleFirstLaunchOrMigration() {
+        val hasInstallMarker = launchStorage.hasInstallMarker { key -> existsObject(key) }
+
+        if (hasInstallMarker) {
+            // Install marker exists but didLaunchPreviously is false
             removeAll()
             launchStorage.markLaunched()
+            launchStorage.setInstallMarker { key, value -> set(key, value) }
 
             platform.Foundation.NSOperationQueue.mainQueue.addOperationWithBlock {
                 log.i { LogMessages.CLEAR_KEYCHAIN }
+            }
+        } else {
+            // No install marker - check for existing session token to detect upgrade
+            val hasSessionToken = tokenKey?.let { existsObject(it) } ?: false
+
+            if (hasSessionToken) {
+                // Session token exists -> this is an upgrade from old version
+                // Preserve the vault and set migration markers
+                launchStorage.markLaunched()
+                launchStorage.setInstallMarker { key, value -> set(key, value) }
+
+                platform.Foundation.NSOperationQueue.mainQueue.addOperationWithBlock {
+                    log.i { LogMessages.MIGRATE_SESSION_FROM_OLD_VERSION }
+                }
+            } else {
+                // No session token -> fresh install or reinstall
+                // Safe to clear vault
+                removeAll()
+                launchStorage.markLaunched()
+                launchStorage.setInstallMarker { key, value -> set(key, value) }
+
+                platform.Foundation.NSOperationQueue.mainQueue.addOperationWithBlock {
+                    log.i { LogMessages.CLEAR_KEYCHAIN }
+                }
             }
         }
     }
