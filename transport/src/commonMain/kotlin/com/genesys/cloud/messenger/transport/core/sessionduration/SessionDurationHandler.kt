@@ -69,9 +69,6 @@ internal class SessionDurationHandler(
         }
     }
 
-    /**
-     * Emits a SessionExpirationNotice event to the messaging client.
-     */
     private fun emitSessionExpirationNotice() {
         eventHandler.onEvent(Event.SessionExpirationNotice)
     }
