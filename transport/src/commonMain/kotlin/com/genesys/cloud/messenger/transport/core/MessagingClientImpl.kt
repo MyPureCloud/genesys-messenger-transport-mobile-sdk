@@ -9,7 +9,7 @@ import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
-import com.genesys.cloud.messenger.transport.core.sessionduration.SessionDurationUseCase
+import com.genesys.cloud.messenger.transport.core.sessionduration.SessionDurationHandler
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
@@ -116,6 +116,10 @@ internal class MessagingClientImpl(
             suspend { jwtHandler.withJwt(token) { it } }
         ),
     private val defaultDispatcher: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
+    private val sessionDurationHandler: SessionDurationHandler =
+        SessionDurationHandler(
+            sessionExpirationNoticeInterval = configuration.sessionExpirationNoticeInterval
+        ),
 ) : MessagingClient {
     private var connectAuthenticated = false
     private var isStartingANewSession = false
@@ -419,7 +423,7 @@ internal class MessagingClientImpl(
             reconnectionHandler.clear()
             jwtHandler.clear()
             internalCustomAttributesStore.maxCustomDataBytes = this.maxCustomDataBytes
-            SessionDurationUseCase.updateSessionExpirationNoticeInterval(configuration.sessionExpirationNoticeInterval)
+            sessionDurationHandler.updateSession(durationSeconds, expirationDate)
             synchronizePushService()
             if (readOnly) {
                 stateMachine.onReadOnly()
@@ -648,6 +652,7 @@ internal class MessagingClientImpl(
         attachmentHandler.clearAll()
         reconnectionHandler.clear()
         jwtHandler.clear()
+        sessionDurationHandler.clear()
         reconfigureAttempts = 0
         sendingAutostart = false
         clearingConversation = false
