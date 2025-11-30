@@ -134,9 +134,6 @@ internal class MessageStoreTest {
         val messageRequest =
             subject
                 .prepareMessage(TestValues.TOKEN, "test message")
-                .message.metadata
-                ?.get("customMessageId")
-                ?: "empty"
         assertThat(messageRequest.message).isInstanceOf(TextMessage::class)
         val textMessage = messageRequest.message as TextMessage
         val sentMessageId = textMessage.metadata?.get("customMessageId") ?: "empty"
@@ -176,9 +173,6 @@ internal class MessageStoreTest {
         val messageRequest =
             subject
                 .prepareMessage(TestValues.TOKEN, "test message")
-                .message.metadata
-                ?.get("customMessageId")
-                ?: "empty"
         assertThat(messageRequest.message).isInstanceOf(TextMessage::class)
         val textMessage = messageRequest.message as TextMessage
         val sentMessageId = textMessage.metadata?.get("customMessageId") ?: "empty"
