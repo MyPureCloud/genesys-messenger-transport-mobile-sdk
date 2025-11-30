@@ -2,6 +2,8 @@ package com.genesys.cloud.messenger.transport.core.sessionduration
 
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
+import com.genesys.cloud.messenger.transport.util.ActionTimer
+import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.logs.Log
 
 /**
@@ -11,15 +13,22 @@ import com.genesys.cloud.messenger.transport.util.logs.Log
  * should be shown before the expiration date.
  * @param eventHandler Handler for emitting events to the messaging client.
  * @param log Logger instance for logging session duration events.
+ * @param getCurrentTimestamp Function to get the current timestamp in milliseconds.
  */
 internal class SessionDurationHandler(
     private val sessionExpirationNoticeInterval: Long,
     private val eventHandler: EventHandler,
     private val log: Log,
+    private val getCurrentTimestamp: () -> Long = { Platform().epochMillis() },
 ) {
 
     private var currentDurationSeconds: Long? = null
     private var currentExpirationDate: Long? = null
+
+    private val expirationTimer: ActionTimer = ActionTimer(
+        log = log,
+        action = { emitSessionExpirationNotice() }
+    )
 
     /**
      * Updates the session duration parameters.
@@ -49,14 +58,30 @@ internal class SessionDurationHandler(
     }
 
     private fun handleExpirationDateChange(expirationDate: Long) {
-        // Implementation will be done later
+        val noticeTimeSeconds = expirationDate - sessionExpirationNoticeInterval
+        val noticeTimeMillis = noticeTimeSeconds * 1000
+        val currentTimeMillis = getCurrentTimestamp()
+        val delayMillis = noticeTimeMillis - currentTimeMillis
+
+        if (delayMillis > 0) {
+            log.i { "Starting expiration timer with delay: $delayMillis ms (${delayMillis / 1000} seconds)" }
+            expirationTimer.start(delayMillis)
+        } else {
+            log.w { "Notice time has already passed (delay: $delayMillis ms)" }
+        }
+    }
+    /**
+     * Emits a SessionExpirationNotice event to the messaging client.
+     */
+    private fun emitSessionExpirationNotice() {
+        log.i { "Emitting SessionExpirationNotice event" }
+        eventHandler.onEvent(Event.SessionExpirationNotice)
     }
 
     fun clear() {
-        log.i { "Clearing session duration handler" }
         currentDurationSeconds = null
         currentExpirationDate = null
-        // Additional cleanup will be done later
+        expirationTimer.cancel()
     }
 }
 
