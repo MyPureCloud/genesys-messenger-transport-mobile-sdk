@@ -30,14 +30,12 @@ internal class SessionDurationHandler(
     fun updateSessionDuration(durationSeconds: Long?, expirationDate: Long?) {
         log.i { "updateSessionDuration(durationSeconds=$durationSeconds, expirationDate=$expirationDate)" }
 
-        // Check if duration seconds has changed
         if (durationSeconds != null && durationSeconds != currentDurationSeconds) {
             log.i { "Duration seconds changed from $currentDurationSeconds to $durationSeconds" }
             currentDurationSeconds = durationSeconds
             emitSessionDurationEvent(durationSeconds)
         }
 
-        // Check if expiration date has changed
         if (expirationDate != null && expirationDate != currentExpirationDate) {
             log.i { "Expiration date changed from $currentExpirationDate to $expirationDate" }
             currentExpirationDate = expirationDate
