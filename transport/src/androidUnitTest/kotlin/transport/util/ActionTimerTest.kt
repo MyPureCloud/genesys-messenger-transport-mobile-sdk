@@ -6,6 +6,7 @@ import assertk.assertions.isFalse
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.util.ActionTimer
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.mockk.MockKAnnotations
 import io.mockk.mockk
 import io.mockk.verify
@@ -61,8 +62,8 @@ class ActionTimerTest {
 
         assertThat(actionExecuted).isTrue()
         verify { mockLogger.i(capture(logSlot)) }
-        assertThat(logSlot[0].invoke()).isEqualTo("Starting timer with delay: 100 ms")
-        assertThat(logSlot[1].invoke()).isEqualTo("Timer expired, executing action")
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.startingTimer(100))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.TIMER_EXPIRED_EXECUTING_ACTION)
     }
 
     @Test
@@ -83,8 +84,8 @@ class ActionTimerTest {
 
         assertThat(actionExecuted).isFalse()
         verify { mockLogger.i(capture(logSlot)) }
-        assertThat(logSlot[0].invoke()).isEqualTo("Starting timer with delay: 1000 ms")
-        assertThat(logSlot[1].invoke()).isEqualTo("Cancelling timer")
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.startingTimer(1000))
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.CANCELLING_TIMER)
     }
 
     @Test
