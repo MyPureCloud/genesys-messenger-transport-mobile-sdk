@@ -234,4 +234,23 @@ internal object LogMessages {
     const val DEVICE_NOT_REGISTERED = "Device is not registered."
     const val DEVICE_ALREADY_REGISTERED = "Device is already registered. Performing update."
     const val NO_DEVICE_TOKEN_OR_PUSH_PROVIDER = "Skipping push service synchronization: Missing device token or push provider."
+
+    // Session Duration
+    fun updateSessionDuration(
+        durationSeconds: Long?,
+        expirationDate: Long?
+    ) = "updateSessionDuration(durationSeconds=$durationSeconds, expirationDate=$expirationDate)"
+
+    fun startingExpirationTimer(
+        delayMillis: Long,
+        delaySeconds: Long
+    ) = "Starting expiration timer with delay: $delayMillis ms ($delaySeconds seconds)"
+
+    fun noticeTimeAlreadyPassed(delayMillis: Long) = "Notice time has already passed (delay: $delayMillis ms)"
+
+    // Action Timer
+    fun startingTimer(delayMillis: Long) = "Starting timer with delay: $delayMillis ms"
+
+    const val TIMER_EXPIRED_EXECUTING_ACTION = "Timer expired, executing action"
+    const val CANCELLING_TIMER = "Cancelling timer"
 }

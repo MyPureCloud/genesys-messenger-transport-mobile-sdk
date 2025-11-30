@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.util
 
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -24,11 +25,11 @@ internal class ActionTimer(
     private var timerJob: Job? = null
 
     fun start(delayMillis: Long) {
-        log.i { "Starting timer with delay: $delayMillis ms" }
+        log.i { LogMessages.startingTimer(delayMillis) }
         cancel()
         timerJob = dispatcher.launch {
             delay(delayMillis)
-            log.i { "Timer expired, executing action" }
+            log.i { LogMessages.TIMER_EXPIRED_EXECUTING_ACTION }
             action()
         }
     }
@@ -36,7 +37,7 @@ internal class ActionTimer(
     fun cancel() {
         timerJob?.let {
             if (it.isActive) {
-                log.i { "Cancelling timer" }
+                log.i { LogMessages.CANCELLING_TIMER }
                 it.cancel()
             }
         }
