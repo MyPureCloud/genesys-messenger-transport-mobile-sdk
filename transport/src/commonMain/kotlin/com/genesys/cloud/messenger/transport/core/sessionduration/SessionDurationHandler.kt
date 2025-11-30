@@ -22,14 +22,14 @@ internal class SessionDurationHandler(
     private val log: Log,
     private val getCurrentTimestamp: () -> Long = { Platform().epochMillis() },
 ) {
-
     private var currentDurationSeconds: Long? = null
     private var currentExpirationDate: Long? = null
 
-    private val expirationTimer: ActionTimer = ActionTimer(
-        log = log,
-        action = { emitSessionExpirationNotice() }
-    )
+    private val expirationTimer: ActionTimer =
+        ActionTimer(
+            log = log,
+            action = { emitSessionExpirationNotice() }
+        )
 
     /**
      * Updates the session duration parameters.
@@ -68,6 +68,7 @@ internal class SessionDurationHandler(
             log.w { LogMessages.noticeTimeAlreadyPassed(delayMillis) }
         }
     }
+
     /**
      * Emits a SessionExpirationNotice event to the messaging client.
      */
@@ -81,4 +82,3 @@ internal class SessionDurationHandler(
         expirationTimer.cancel()
     }
 }
-

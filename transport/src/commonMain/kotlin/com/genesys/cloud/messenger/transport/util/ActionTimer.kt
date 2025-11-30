@@ -21,17 +21,17 @@ internal class ActionTimer(
     private val action: () -> Unit,
     private val dispatcher: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
 ) {
-
     private var timerJob: Job? = null
 
     fun start(delayMillis: Long) {
         log.i { LogMessages.startingTimer(delayMillis) }
         cancel()
-        timerJob = dispatcher.launch {
-            delay(delayMillis)
-            log.i { LogMessages.TIMER_EXPIRED_EXECUTING_ACTION }
-            action()
-        }
+        timerJob =
+            dispatcher.launch {
+                delay(delayMillis)
+                log.i { LogMessages.TIMER_EXPIRED_EXECUTING_ACTION }
+                action()
+            }
     }
 
     fun cancel() {
@@ -46,4 +46,3 @@ internal class ActionTimer(
 
     fun isActive(): Boolean = timerJob?.isActive == true
 }
-

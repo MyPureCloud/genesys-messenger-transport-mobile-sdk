@@ -8,13 +8,11 @@ import com.genesys.cloud.messenger.transport.util.ActionTimer
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import io.mockk.MockKAnnotations
 import io.mockk.mockk
-import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -40,11 +38,12 @@ class ActionTimerTest {
         MockKAnnotations.init(this)
         Dispatchers.setMain(dispatcher)
         actionExecuted = false
-        subject = ActionTimer(
-            log = mockLogger,
-            action = givenAction,
-            dispatcher = givenDispatcher,
-        )
+        subject =
+            ActionTimer(
+                log = mockLogger,
+                action = givenAction,
+                dispatcher = givenDispatcher,
+            )
     }
 
     @ExperimentalCoroutinesApi
@@ -102,11 +101,12 @@ class ActionTimerTest {
     fun `when start() is called multiple times cancels previous timer`() {
         var executionCount = 0
         val countingAction: () -> Unit = { executionCount++ }
-        subject = ActionTimer(
-            log = mockLogger,
-            action = countingAction,
-            dispatcher = givenDispatcher,
-        )
+        subject =
+            ActionTimer(
+                log = mockLogger,
+                action = countingAction,
+                dispatcher = givenDispatcher,
+            )
 
         runBlocking {
             subject.start(delayMillis = 500)
@@ -139,4 +139,3 @@ class ActionTimerTest {
         assertThat(actionExecuted).isTrue()
     }
 }
-
