@@ -15,11 +15,11 @@ internal class LaunchStorage(
         userDefaults.setBool(true, previouslyLaunched)
     }
 
-    internal fun hasInstallMarker(keychainChecker: (String) -> Boolean): Boolean {
+    internal fun wasInstalled(keychainChecker: (String) -> Boolean): Boolean {
         return keychainChecker(INSTALL_MARKER_KEY)
     }
 
-    internal fun setInstallMarker(keychainSetter: (String, String) -> Unit) {
+    internal fun markInstalled(keychainSetter: (String, String) -> Unit) {
         keychainSetter(INSTALL_MARKER_KEY, "true")
     }
 
