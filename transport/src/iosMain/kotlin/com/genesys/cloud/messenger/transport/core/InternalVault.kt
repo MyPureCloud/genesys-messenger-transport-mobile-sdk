@@ -53,22 +53,6 @@ internal class InternalVault(private val serviceName: String, private val tokenK
 
     /**
      * Handles the first launch scenario or migration from older versions.
-     *
-     * Migration logic:
-     * - If didLaunchPreviously flag doesn't exist in UserDefaults, we need to determine if this is:
-     *   1. Fresh install -> clear vault
-     *   2. Reinstall after deletion -> clear vault
-     *   3. Upgrade from old version -> preserve vault
-     *
-     * We use two markers:
-     * - Install marker in keychain (persists across app updates)
-     * - Session token in keychain (indicates active session)
-     *
-     * Decision tree:
-     * - If install marker exists -> Already launched new version before, clear vault
-     * - If no install marker:
-     *   - If session token exists -> Upgrade from old version, preserve vault
-     *   - If no session token -> Fresh install or reinstall, clear vault
      */
     private fun handleFirstLaunchOrMigration() {
         val hasInstallMarker = launchStorage.wasInstalled { key -> existsObject(key) }
