@@ -45,6 +45,7 @@ import platform.darwin.noErr
 @OptIn(ExperimentalForeignApi::class)
 internal class InternalVault(private val serviceName: String, private val tokenKey: String) {
     private val launchStorage = LaunchStorage(serviceName)
+
     init {
         if (!launchStorage.didLaunchPreviously) {
             handleFirstLaunchOrMigration()
