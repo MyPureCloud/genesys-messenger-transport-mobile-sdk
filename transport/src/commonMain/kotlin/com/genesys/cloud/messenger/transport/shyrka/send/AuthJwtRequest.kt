@@ -10,8 +10,7 @@ internal data class AuthJwtRequest(
 
 @Serializable
 internal data class OAuth(
-    val code: String? = null,
-    val idToken: String? = null,
+    val code: String,
     val redirectUri: String? = null,
     val codeVerifier: String? = null,
     val nonce: String? = null,
