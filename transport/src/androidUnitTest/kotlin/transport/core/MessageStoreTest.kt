@@ -131,9 +131,9 @@ internal class MessageStoreTest {
 
     @Test
     fun `when update() inbound message`() {
-        val onMessageRequest = subject.prepareMessage(TestValues.TOKEN, "test message")
-        assertThat(onMessageRequest.message).isInstanceOf(TextMessage::class)
-        val textMessage = onMessageRequest.message as TextMessage
+        val messageRequest = subject.prepareMessage(TestValues.TOKEN, "test message")
+        assertThat(messageRequest.message).isInstanceOf(TextMessage::class)
+        val textMessage = messageRequest.message as TextMessage
         val sentMessageId = textMessage.metadata?.get("customMessageId") ?: "empty"
         val givenMessage =
             Message(id = sentMessageId, state = State.Sent, text = "test message")
@@ -168,9 +168,9 @@ internal class MessageStoreTest {
 
     @Test
     fun `when update() inbound and then outbound messages`() {
-        val onMessageRequest = subject.prepareMessage(TestValues.TOKEN, "test message")
-        assertThat(onMessageRequest.message).isInstanceOf(TextMessage::class)
-        val textMessage = onMessageRequest.message as TextMessage
+        val messageRequest = subject.prepareMessage(TestValues.TOKEN, "test message")
+        assertThat(messageRequest.message).isInstanceOf(TextMessage::class)
+        val textMessage = messageRequest.message as TextMessage
         val sentMessageId = textMessage.metadata?.get("customMessageId") ?: "empty"
         val expectedConversationSize = 2
         val givenMessage =
