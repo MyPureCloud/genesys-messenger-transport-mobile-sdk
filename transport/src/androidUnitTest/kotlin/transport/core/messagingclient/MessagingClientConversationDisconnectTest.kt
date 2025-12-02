@@ -242,10 +242,12 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
             connectToReadOnlySequence()
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
+            mockVault.wasAuthenticated = false
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()
             mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
+            mockSessionDurationHandler.updateSessionDuration(any(), any())
             mockLogger.i(capture(logSlot))
             verifyCleanUp()
             mockLogger.i(capture(logSlot))
@@ -270,10 +272,12 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
             connectToReadOnlySequence()
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(Request.closeAllConnections)
+            mockVault.wasAuthenticated = false
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()
             mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
+            mockSessionDurationHandler.updateSessionDuration(any(), any())
         }
         verify(exactly = 0) {
             mockMessageStore.invalidateConversationCache()
@@ -296,6 +300,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()
             mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
+            mockSessionDurationHandler.updateSessionDuration(any(), any())
             mockStateChangedListener(fromConfiguredToReadOnly())
         }
         verify(exactly = 0) {
