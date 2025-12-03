@@ -439,7 +439,7 @@ class TestbedViewController: UIViewController {
 
         print("doImplicitOktaSignIn: \(authUrl.absoluteString)")
         if UIApplication.shared.canOpenURL(authUrl) {
-            UIApplication.shared.open(authUrl, options: [:], completionHandler: nil)
+            UIApplication.shared.open(authUrl)
         }
     }
 
