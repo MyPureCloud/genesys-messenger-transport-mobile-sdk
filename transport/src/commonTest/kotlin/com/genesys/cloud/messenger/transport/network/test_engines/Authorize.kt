@@ -39,29 +39,31 @@ internal fun HttpClientConfig<MockEngineConfig>.authorizeEngine() {
                                 AuthTest.AUTH_CODE -> {
                                     respond(
                                         status = HttpStatusCode.OK,
-                                headers =
-                                    headersOf(
-                                            HttpHeaders.ContentType,
-                                            "application/json"
-                                        ),
-                                content =
-                                    Json.encodeToString(
-                                            AuthJwt.serializer(),
-                                            AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN)
-                                        )
+                                        headers =
+                                            headersOf(
+                                                HttpHeaders.ContentType,
+                                                "application/json"
+                                            ),
+                                        content =
+                                            Json.encodeToString(
+                                                AuthJwt.serializer(),
+                                                AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN)
+                                            )
                                     )
                                 }
                                 AuthTest.ID_TOKEN -> {
                                     respond(
                                         status = HttpStatusCode.OK,
-                                        headers = headersOf(
-                                            HttpHeaders.ContentType,
-                                            "application/json"
-                                        ),
-                                        content = Json.encodeToString(
-                                            AuthJwt.serializer(),
-                                            AuthJwt(AuthTest.JWT_TOKEN, null)
-                                        )
+                                        headers =
+                                            headersOf(
+                                                HttpHeaders.ContentType,
+                                                "application/json"
+                                            ),
+                                        content =
+                                            Json.encodeToString(
+                                                AuthJwt.serializer(),
+                                                AuthJwt(AuthTest.JWT_TOKEN, null)
+                                            )
                                     )
                                 }
                                 else -> {

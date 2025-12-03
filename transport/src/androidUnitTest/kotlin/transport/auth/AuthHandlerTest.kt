@@ -602,9 +602,10 @@ class AuthHandlerTest {
 
     @Test
     fun `when authorizeImplicit() success`() {
-        coEvery { mockWebMessagingApi.fetchAuthJwt(AuthTest.ID_TOKEN, AuthTest.NONCE) } returns Result.Success(
-            AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN)
-        )
+        coEvery { mockWebMessagingApi.fetchAuthJwt(AuthTest.ID_TOKEN, AuthTest.NONCE) } returns
+            Result.Success(
+                AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN)
+            )
         val expectedAuthJwt = AuthJwt(AuthTest.JWT_TOKEN, NO_REFRESH_TOKEN)
 
         subject.authorizeImplicit(AuthTest.ID_TOKEN, AuthTest.NONCE)
@@ -617,10 +618,11 @@ class AuthHandlerTest {
 
     @Test
     fun `when authorizeImplicit() failure`() {
-        coEvery { mockWebMessagingApi.fetchAuthJwt(AuthTest.ID_TOKEN, AuthTest.NONCE) } returns Result.Failure(
-            ErrorCode.AuthFailed,
-            ErrorTest.MESSAGE
-        )
+        coEvery { mockWebMessagingApi.fetchAuthJwt(AuthTest.ID_TOKEN, AuthTest.NONCE) } returns
+            Result.Failure(
+                ErrorCode.AuthFailed,
+                ErrorTest.MESSAGE
+            )
 
         val expectedAuthJwt = AuthJwt(NO_JWT, NO_REFRESH_TOKEN)
 
@@ -644,10 +646,11 @@ class AuthHandlerTest {
 
     @Test
     fun `when authorizeImplicit() failure with CancellationException`() {
-        coEvery { mockWebMessagingApi.fetchAuthJwt(AuthTest.ID_TOKEN, AuthTest.NONCE) } returns Result.Failure(
-            ErrorCode.CancellationError,
-            ErrorTest.MESSAGE
-        )
+        coEvery { mockWebMessagingApi.fetchAuthJwt(AuthTest.ID_TOKEN, AuthTest.NONCE) } returns
+            Result.Failure(
+                ErrorCode.CancellationError,
+                ErrorTest.MESSAGE
+            )
 
         subject.authorizeImplicit(AuthTest.ID_TOKEN, AuthTest.NONCE)
 

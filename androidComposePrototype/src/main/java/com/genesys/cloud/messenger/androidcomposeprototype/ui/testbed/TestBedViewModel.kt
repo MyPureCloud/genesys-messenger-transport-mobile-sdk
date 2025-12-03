@@ -80,12 +80,13 @@ class TestBedViewModel :
     var idToken: String = ""
         set(value) {
             field = value
-            val authState = if (value.isNotEmpty()) {
-                onSocketMessageReceived("ID Token: $value")
-                AuthState.IdTokenReceived(value)
-            } else {
-                AuthState.NoAuth
-            }
+            val authState =
+                if (value.isNotEmpty()) {
+                    onSocketMessageReceived("ID Token: $value")
+                    AuthState.IdTokenReceived(value)
+                } else {
+                    AuthState.NoAuth
+                }
             this.authState = authState
         }
 
@@ -236,7 +237,7 @@ class TestBedViewModel :
     private fun doImplicitSignIn() {
         val url = buildImplicitOktaAuthorizeUrl()
         Log.d(TAG, "doImplicitOktaSignIn: $url")
-        onOktaSingIn(url)
+        onOpenUrl(url)
         commandWaiting = false
     }
 

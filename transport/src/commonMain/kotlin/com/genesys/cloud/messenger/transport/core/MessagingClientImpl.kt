@@ -223,7 +223,7 @@ internal class MessagingClientImpl(
                         refreshTokenAndPerform { configureSession(startNew) }
                         return
                     }
-                eventHandler.onEvent(Event.AuthorizationRequired)
+                    eventHandler.onEvent(Event.AuthorizationRequired)
                     transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
                     return
                 }

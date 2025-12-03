@@ -149,18 +149,20 @@ internal class WebMessagingApi(
         nonce: String
     ): Result<AuthJwt> =
         try {
-            val requestBody = AuthJwtRequest(
-                deploymentId = configuration.deploymentId,
-                oauth = OAuth(
-                    idToken = idToken,
-                    nonce = nonce,
+            val requestBody =
+                AuthJwtRequest(
+                    deploymentId = configuration.deploymentId,
+                    oauth =
+                        OAuth(
+                            idToken = idToken,
+                            nonce = nonce,
+                        )
                 )
-            )
-            val response = client.post(urls.jwtAuthUrl.toString()) {
-                header("content-type", ContentType.Application.Json)
-                setBody(requestBody)
-                retryOnServerErrors()
-            }
+            val response =
+                client.post(urls.jwtAuthUrl.toString()) {
+                    header("content-type", ContentType.Application.Json)
+                    setBody(requestBody)
+                }
             if (response.status.isSuccess()) {
                 Result.Success(response.body())
             } else {
