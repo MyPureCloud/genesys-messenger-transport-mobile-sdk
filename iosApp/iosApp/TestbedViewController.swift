@@ -17,6 +17,7 @@ class TestbedViewController: UIViewController {
     private var pkceEnabled = false
     private var authCode: String? = nil
     private var idToken: String? = nil
+    private var nonce: String? = nil
     private var authState: AuthState = AuthState.noAuth
     private var quickRepliesMap = [String: ButtonResponse]()
 
@@ -410,6 +411,8 @@ class TestbedViewController: UIViewController {
             return nil
         }
 
+        let generatedNonce = UUID().uuidString
+        self.nonce = generatedNonce
         var urlComponents = URLComponents(string: "https://\(oktaDomain)/oauth2/default/v1/authorize")!
         urlComponents.queryItems = [
             URLQueryItem(name: "client_id", value: clientId),
@@ -417,7 +420,7 @@ class TestbedViewController: UIViewController {
             URLQueryItem(name: "scope", value: "openid profile email"),
             URLQueryItem(name: "redirect_uri", value: signInRedirectURI),
             URLQueryItem(name: "state", value: oktaState),
-            URLQueryItem(name: "nonce", value: UUID().uuidString)
+            URLQueryItem(name: "nonce", value: generatedNonce)
         ]
 
         guard let url = urlComponents.url else {
@@ -558,14 +561,18 @@ extension TestbedViewController : UITextFieldDelegate {
                 else {
                     authState = AuthState.error(errorCode: ErrorCode.AuthFailed.shared, message: "Unable to read Okta.plist or missing required key", correctiveAction: CorrectiveAction.ReAuthenticate.shared)
                     updateAuthStateView()
-                return true
+                    return true
                 }
                 
                 messenger.authorize(authCode: self.authCode ?? "", redirectUri: signInRedirectURI, codeVerifier: codeVerifier)
             case (.implicitLogin, _):
                 implicitSignIn()
             case (.implicitAuthorize, _):
-                messenger.authorizeImplicit(idToken: self.idToken ?? "")
+                guard let nonce = self.nonce else {
+                    self.info.text = "Please, first obtain nonce from login."
+                    return true
+                }
+                messenger.authorizeImplicit(idToken: self.idToken ?? "", nonce: nonce)
             case (.clearConversation, _):
                 try messenger.clearConversation()
             case (.removeToken, _):

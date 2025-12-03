@@ -18,17 +18,17 @@ participant Agent
 
 group Implicit Authorization flow
     group Option A: Having valid login (not expired)
-        App -> "Auth Server" : **Implicit** authentication request with clientId, scopes, redirectUri etc. ("id_token as "response type))
+        App -> "Auth Server" : **Implicit** authentication request with clientId, scopes, redirectUri, nonce etc. ("id_token" as response type)
         "Auth Server" --> App : Redirect back to App with **idToken** response.
     else Option B: Login is expired
-        App -> "Auth Server" : **Implicit** authentication request with clientId, scopes, redirectUri etc. ("id_token as "response type))
+        App -> "Auth Server" : **Implicit** authentication request with clientId, scopes, redirectUri, nonce etc. ("id_token" as response type)
         "Auth Server" --> App : 302 Redirect to authentication prompt / login page
         App -> "Auth Server" : Login and consent.
         "Auth Server" --> App : Redirect back to App with **idToken** response.
     end
-    App -> "Transport SDK" : **authorizeImplicit(idToken)**
-    "Transport SDK" -> "Genesys Cloud Platform API" : authCode to jwt exchange.
-    "Genesys Cloud Platform API" -> "Auth Server" : Exchange authorization code for tokens using pre-stored clientSecret.
+    App -> "Transport SDK" : **authorizeImplicit(idToken, nonce)**
+    "Transport SDK" -> "Genesys Cloud Platform API" : idToken and nonce to jwt exchange.
+    "Genesys Cloud Platform API" -> "Auth Server" : Validate idToken and nonce.
     "Auth Server" --> "Genesys Cloud Platform API" : Return tokens.
     "Genesys Cloud Platform API" --> "Transport SDK" : Returns Genesys Cloud authentication JWT and RefreshToken
     "Transport SDK" -> "Transport SDK" : Store JWT/RefreshToken

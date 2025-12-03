@@ -30,9 +30,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data
-                    android:host="oauth2"
-                    android:pathPrefix="/code"
-                    android:scheme="com.okta.dev-14718840" />
+                    android:scheme="com.oktapreview.genesys-cloud" />
             </intent-filter>
         </activity>
 

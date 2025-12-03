@@ -64,11 +64,31 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                 if item.name == "code", let code = item.value {
                     rootViewController.setAuthCode(code)
                     rootViewController.setIdToken(nil)
-                } else if item.name == "id_token", let idToken = item.value {
-                    rootViewController.setIdToken(idToken)
-                    rootViewController.setAuthCode(nil)
+                    return
+                } else if item.name == "error" {
+                    let errorDescription = queryItems.first(where: { $0.name == "error_description" })?.value ?? item.value ?? "Unknown error"
+                    print("Okta error: \(errorDescription)")
+                    return
                 }
-                break
+            }
+        }
+
+        if let fragment = url.fragment {
+            let params = fragment.split(separator: "&").reduce(into: [String: String]()) { dict, pair in
+                let parts = pair.split(separator: "=", maxSplits: 1)
+                if parts.count == 2 {
+                    let key = String(parts[0]).removingPercentEncoding ?? String(parts[0])
+                    let value = String(parts[1]).removingPercentEncoding ?? String(parts[1])
+                    dict[key] = value
+                }
+            }
+
+            if let idToken = params["id_token"] {
+                rootViewController.setIdToken(idToken)
+                rootViewController.setAuthCode(nil)
+            } else if let error = params["error"] {
+                let errorDescription = params["error_description"] ?? error
+                print("Okta error: \(errorDescription)")
             }
         }
     }
