@@ -34,6 +34,7 @@ internal class SessionDurationHandler(
         if (durationSeconds != null && durationSeconds != currentDurationSeconds) {
             log.i { "Duration seconds changed from $currentDurationSeconds to $durationSeconds" }
             currentDurationSeconds = durationSeconds
+            emitSessionDurationEvent(durationSeconds)
         }
 
         // Check if expiration date has changed
@@ -42,6 +43,11 @@ internal class SessionDurationHandler(
             currentExpirationDate = expirationDate
             handleExpirationDateChange(expirationDate)
         }
+    }
+
+    private fun emitSessionDurationEvent(durationSeconds: Long) {
+        log.i { "Emitting SessionDuration event with duration: $durationSeconds seconds" }
+        eventHandler.onEvent(Event.SessionDuration(durationSeconds))
     }
 
     private fun handleExpirationDateChange(expirationDate: Long) {

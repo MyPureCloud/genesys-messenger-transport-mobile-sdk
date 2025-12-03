@@ -93,4 +93,11 @@ sealed class Event {
      *  Sent as confirmation when existing authenticated session was cleared on other devices as a result of step-up.
      */
     data object ExistingAuthSessionCleared : Event()
+
+    /**
+     * Sent when the session duration has been updated.
+     *
+     * @param durationInSeconds The duration of the session in seconds.
+     */
+    data class SessionDuration(val durationInSeconds: Long) : Event()
 }
