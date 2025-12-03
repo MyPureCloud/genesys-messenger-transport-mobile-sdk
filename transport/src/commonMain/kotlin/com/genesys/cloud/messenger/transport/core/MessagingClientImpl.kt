@@ -62,7 +62,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.encodeToString
 import kotlin.reflect.KProperty0
 
 private const val MAX_RECONFIGURE_ATTEMPTS = 3
@@ -118,7 +117,9 @@ internal class MessagingClientImpl(
     private val defaultDispatcher: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
     private val sessionDurationHandler: SessionDurationHandler =
         SessionDurationHandler(
-            sessionExpirationNoticeInterval = configuration.sessionExpirationNoticeInterval
+            sessionExpirationNoticeInterval = configuration.sessionExpirationNoticeInterval,
+            eventHandler = eventHandler,
+            log = log.withTag(LogTag.SESSION_DURATION),
         ),
 ) : MessagingClient {
     private var connectAuthenticated = false
@@ -423,7 +424,7 @@ internal class MessagingClientImpl(
             reconnectionHandler.clear()
             jwtHandler.clear()
             internalCustomAttributesStore.maxCustomDataBytes = this.maxCustomDataBytes
-            sessionDurationHandler.updateSession(durationSeconds, expirationDate)
+            sessionDurationHandler.updateSessionDuration(durationSeconds, expirationDate)
             synchronizePushService()
             if (readOnly) {
                 stateMachine.onReadOnly()

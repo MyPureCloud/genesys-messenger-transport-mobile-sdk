@@ -16,4 +16,5 @@ internal object LogTag {
     const val CUSTOM_ATTRIBUTES_STORE = "MMSDKCustomAttributesStore"
     const val PUSH_SERVICE = "MMSDKPushService"
     const val HISTORY_HANDLER = "MMSDKHistoryHandler"
+    const val SESSION_DURATION = "MMSDKSessionDurationHandler"
 }
