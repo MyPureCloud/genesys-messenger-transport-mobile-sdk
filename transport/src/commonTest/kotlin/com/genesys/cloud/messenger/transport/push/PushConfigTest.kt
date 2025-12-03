@@ -12,7 +12,6 @@ import kotlinx.serialization.encodeToString
 import kotlin.test.Test
 
 class PushConfigTest {
-
     @Test
     fun `test PushConfig serialization`() {
         val expectedPushConfigString =

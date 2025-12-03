@@ -39,7 +39,6 @@ private const val SAVED_ATTACHMENT_FILE_NAME = "test_asset.png"
 class TestBedViewModel :
     ViewModel(),
     CoroutineScope {
-
     override val coroutineContext = Dispatchers.IO + Job()
 
     private val TAG = TestBedViewModel::class.simpleName
@@ -68,12 +67,13 @@ class TestBedViewModel :
     var authCode: String = ""
         set(value) {
             field = value
-            val authState = if (value.isNotEmpty()) {
-                onSocketMessageReceived("AuthCode: $value")
-                AuthState.AuthCodeReceived(value)
-            } else {
-                AuthState.NoAuth
-            }
+            val authState =
+                if (value.isNotEmpty()) {
+                    onSocketMessageReceived("AuthCode: $value")
+                    AuthState.AuthCodeReceived(value)
+                } else {
+                    AuthState.NoAuth
+                }
             this.authState = authState
         }
 
@@ -91,41 +91,44 @@ class TestBedViewModel :
 
     var nonce: String = ""
 
-    val regions = listOf(
-        "inindca.com",
-        "inintca.com",
-        "mypurecloud.com",
-        "usw2.pure.cloud",
-        "mypurecloud.jp",
-        "mypurecloud.com.au",
-        "mypurecloud.de",
-        "euw2.pure.cloud",
-        "cac1.pure.cloud",
-        "apne2.pure.cloud",
-        "aps1.pure.cloud",
-        "sae1.pure.cloud",
-        "mec1.pure.cloud",
-        "apne3.pure.cloud",
-        "euc2.pure.cloud"
-    )
-    private lateinit var onOktaSingIn: (url: String) -> Unit
+    val regions =
+        listOf(
+            "inindca.com",
+            "inintca.com",
+            "mypurecloud.com",
+            "usw2.pure.cloud",
+            "mypurecloud.jp",
+            "mypurecloud.com.au",
+            "mypurecloud.de",
+            "euw2.pure.cloud",
+            "cac1.pure.cloud",
+            "apne2.pure.cloud",
+            "aps1.pure.cloud",
+            "sae1.pure.cloud",
+            "mec1.pure.cloud",
+            "apne3.pure.cloud",
+            "euc2.pure.cloud"
+        )
+    private lateinit var onOpenUrl: (url: String) -> Unit
     private val quickRepliesMap = mutableMapOf<String, ButtonResponse>()
+    private val cardActionsMap = mutableMapOf<String, ButtonResponse>()
     private lateinit var selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit
 
     fun init(
         context: Context,
         selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit,
-        onOktaSignIn: (url: String) -> Unit,
+        onOpenUrl: (url: String) -> Unit,
     ) {
         println("Messenger Transport sdkVersion: ${MessengerTransportSDK.sdkVersion}")
-        this.onOktaSingIn = onOktaSignIn
+        this.onOpenUrl = onOpenUrl
         this.selectFile = selectFile
-        val mmsdkConfiguration = Configuration(
-            deploymentId = deploymentId.ifEmpty { BuildConfig.DEPLOYMENT_ID },
-            domain = region.ifEmpty { BuildConfig.DEPLOYMENT_DOMAIN },
-            logging = true,
-            encryptedVault = true
-        )
+        val mmsdkConfiguration =
+            Configuration(
+                deploymentId = deploymentId.ifEmpty { BuildConfig.DEPLOYMENT_ID },
+                domain = region.ifEmpty { BuildConfig.DEPLOYMENT_DOMAIN },
+                logging = true,
+                encryptedVault = true
+            )
 
         if (mmsdkConfiguration.encryptedVault) {
             EncryptedVault.context = context
@@ -182,6 +185,8 @@ class TestBedViewModel :
             "bye" -> doDisconnect()
             "send" -> doSendMessage(input)
             "sendQuickReply" -> doSendQuickReply(input)
+            "sendAction" -> doSendAction(input)
+            "listActions" -> doListActions()
             "history" -> fetchNextPage()
             "healthCheck" -> doSendHealthCheck()
             "attach" -> doAttach()
@@ -237,7 +242,7 @@ class TestBedViewModel :
 
     private fun doOktaSignIn(withPKCE: Boolean) {
         pkceEnabled = withPKCE
-        onOktaSingIn(buildOktaAuthorizeUrl())
+        onOpenUrl(buildOktaAuthorizeUrl())
         commandWaiting = false
     }
 
@@ -318,6 +323,26 @@ class TestBedViewModel :
                 handleException(t, "send quickReply")
             }
         } ?: onSocketMessageReceived("Selected quickReply option: $quickReply does not exist.")
+    }
+
+    private fun doSendAction(action: String) {
+        cardActionsMap[action]?.let { buttonResponse ->
+            try {
+                if (buttonResponse.type == "Link") {
+                    onOpenUrl(buttonResponse.payload)
+                    commandWaiting = false
+                } else {
+                    client.sendCardReply(buttonResponse)
+                }
+            } catch (t: Throwable) {
+                handleException(t, "send card action")
+            }
+        } ?: onSocketMessageReceived("Selected card action: $action does not exist.")
+    }
+
+    private fun doListActions() {
+        onSocketMessageReceived("Available card actions: ${cardActionsMap.keys}")
+        commandWaiting = false
     }
 
     private fun fetchNextPage() {
@@ -507,15 +532,15 @@ class TestBedViewModel :
     ) {
         Log.v(TAG, "onClientStateChanged(oldState = $oldState, newState = $newState)")
         clientState = newState
-        val statePayloadMessage = when (newState) {
-            is State.Configured ->
-                "connected: ${newState.connected}," + " newSession: ${newState.newSession}," + " wasReconnecting: ${oldState is State.Reconnecting}"
-
-            is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
-            is State.Closed -> "code: ${newState.code}, reason: ${newState.reason}"
-            is State.Error -> "code: ${newState.code}, message: ${newState.message}"
-            else -> ""
-        }
+        val statePayloadMessage =
+            when (newState) {
+                is State.Configured ->
+                    "connected: ${newState.connected}," + " newSession: ${newState.newSession}," + " wasReconnecting: ${oldState is State.Reconnecting}"
+                is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
+                is State.Closed -> "code: ${newState.code}, reason: ${newState.reason}"
+                is State.Error -> "code: ${newState.code}, message: ${newState.message}"
+                else -> ""
+            }
         onSocketMessageReceived(statePayloadMessage)
         commandWaiting = false
     }
@@ -542,27 +567,41 @@ class TestBedViewModel :
     }
 
     private fun onMessage(event: MessageEvent) {
-        val eventMessage = when (event) {
-            is MessageEvent.MessageUpdated -> "MessageUpdated: ${event.message}"
-            is MessageEvent.MessageInserted -> "MessageInserted: ${event.message}"
-            is MessageEvent.HistoryFetched -> "start of conversation: ${event.startOfConversation}, messages: ${event.messages}"
-            is AttachmentUpdated -> {
-                when (event.attachment.state) {
-                    Detached -> {
-                        attachedIds.remove(event.attachment.id)
-                        event.attachment.toString()
+        val eventMessage =
+            when (event) {
+                is MessageEvent.MessageUpdated -> "MessageUpdated: ${event.message}"
+                is MessageEvent.MessageInserted -> "MessageInserted: ${event.message}"
+                is MessageEvent.HistoryFetched -> "start of conversation: ${event.startOfConversation}, messages: ${event.messages}"
+                is AttachmentUpdated -> {
+                    when (event.attachment.state) {
+                        Detached -> {
+                            attachedIds.remove(event.attachment.id)
+                            event.attachment.toString()
+                        }
+
+                        else -> event.attachment.toString()
+                    }
+                }
+
+                is MessageEvent.QuickReplyReceived ->
+                    event.message.run {
+                        quickRepliesMap.clear()
+                        quickRepliesMap.putAll(quickReplies.associateBy { it.text })
+                        "QuickReplyReceived: text: $text | quick reply options: $quickReplies"
                     }
 
-                    else -> event.attachment.toString()
-                }
+                is MessageEvent.CardMessageReceived ->
+                    event.message.run {
+                        val tempActionsMap = mutableMapOf<String, ButtonResponse>()
+                        cards.forEach { card ->
+                            card.actions.forEach { action ->
+                                tempActionsMap.put(action.text, action)
+                                cardActionsMap[action.text] = action
+                            }
+                        }
+                        "CardMessageReceived with actions: $tempActionsMap"
+                    }
             }
-
-            is MessageEvent.QuickReplyReceived -> event.message.run {
-                quickRepliesMap.clear()
-                quickRepliesMap.putAll(quickReplies.associateBy { it.text })
-                "QuickReplyReceived: text: $text | quick reply options: $quickReplies"
-            }
-        }
         onSocketMessageReceived(eventMessage)
     }
 
@@ -584,12 +623,10 @@ class TestBedViewModel :
             -> {
                 authState = AuthState.Error(event.errorCode, event.message, event.correctiveAction)
             }
-
             is ErrorCode.CustomAttributeSizeTooLarge
             -> {
                 onSocketMessageReceived(event.message ?: "CA size too large")
             }
-
             else -> {
                 println("Handle Event.Error here.")
             }

@@ -11,13 +11,14 @@ internal const val PUSH_CONFIG_KEY = "push_config"
  * SDK.
  */
 expect class DefaultVault(
-    keys: Keys = Keys(
-        vaultKey = VAULT_KEY,
-        tokenKey = TOKEN_KEY,
-        authRefreshTokenKey = AUTH_REFRESH_TOKEN_KEY,
-        wasAuthenticated = WAS_AUTHENTICATED,
-        pushConfigKey = PUSH_CONFIG_KEY,
-    ),
+    keys: Keys =
+        Keys(
+            vaultKey = VAULT_KEY,
+            tokenKey = TOKEN_KEY,
+            authRefreshTokenKey = AUTH_REFRESH_TOKEN_KEY,
+            wasAuthenticated = WAS_AUTHENTICATED,
+            pushConfigKey = PUSH_CONFIG_KEY,
+        ),
 ) : Vault {
     override fun store(
         key: String,

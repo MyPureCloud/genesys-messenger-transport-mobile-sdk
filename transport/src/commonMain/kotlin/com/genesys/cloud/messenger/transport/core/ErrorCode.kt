@@ -180,6 +180,8 @@ sealed class CorrectiveAction(val message: String) {
 
     object CustomAttributeSizeTooLarge : CorrectiveAction("Shorten the custom attributes.")
 
+    object CheckNetwork : CorrectiveAction("Check your internet connection and try again.")
+
     override fun toString(): String {
         return message
     }
@@ -188,6 +190,7 @@ sealed class CorrectiveAction(val message: String) {
 internal fun ErrorCode.toCorrectiveAction(): CorrectiveAction =
     when (this.code) {
         400 -> CorrectiveAction.BadRequest
+        401 -> CorrectiveAction.ReAuthenticate
         403 -> CorrectiveAction.Forbidden
         404 -> CorrectiveAction.NotFound
         408 -> CorrectiveAction.RequestTimeOut
@@ -197,6 +200,8 @@ internal fun ErrorCode.toCorrectiveAction(): CorrectiveAction =
         ErrorCode.AuthLogoutFailed.code,
         ErrorCode.RefreshAuthTokenFailure.code,
         -> CorrectiveAction.ReAuthenticate
+
+        ErrorCode.NetworkDisabled.code -> CorrectiveAction.CheckNetwork
 
         else -> CorrectiveAction.Unknown
     }
@@ -215,11 +220,12 @@ internal fun PushErrorResponse.toErrorCode(): ErrorCode =
         "too.many.requests.retry.after" -> ErrorCode.RequestRateTooHigh
         "identity.resolution.disabled" -> ErrorCode.DeviceRegistrationFailure
         "required.fields.missing", "update.fields.missing" -> ErrorCode.MissingParameter
-        "invalid.path.parameter" -> if (message == DEPLOYMENT_ID_MISMATCH_ERROR_MESSAGE) {
-            ErrorCode.DeploymentIdMismatch
-        } else {
-            ErrorCode.DeviceTokenOperationFailure
-        }
+        "invalid.path.parameter" ->
+            if (message == DEPLOYMENT_ID_MISMATCH_ERROR_MESSAGE) {
+                ErrorCode.DeploymentIdMismatch
+            } else {
+                ErrorCode.DeviceTokenOperationFailure
+            }
 
         else -> ErrorCode.DeviceTokenOperationFailure
     }

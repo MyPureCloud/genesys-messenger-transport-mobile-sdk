@@ -15,7 +15,6 @@ data class Configuration(
     val autoRefreshTokenWhenExpired: Boolean = true,
     val encryptedVault: Boolean = false
 ) {
-
     /**
      * Secondary constructor to avoid breaking changes on iOS platform.
      *

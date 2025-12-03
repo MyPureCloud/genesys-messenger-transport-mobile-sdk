@@ -7,7 +7,6 @@ import com.genesys.cloud.messenger.transport.core.events.Event
  * via Web Messaging service.
  */
 interface MessagingClient {
-
     /**
      * Container that holds all possible MessagingClient states.
      */
@@ -199,6 +198,15 @@ interface MessagingClient {
      */
     @Throws(IllegalStateException::class)
     fun sendQuickReply(buttonResponse: ButtonResponse)
+
+    /**
+     * Send a card reply to the Agent/Bot.
+     *
+     * @param postbackResponse the card button the user clicked.
+     * @throws IllegalStateException If the client is not connected.
+     */
+    @Throws(IllegalStateException::class)
+    fun sendCardReply(postbackResponse: ButtonResponse)
 
     /**
      * Perform a health check of the connection by sending an echo message.

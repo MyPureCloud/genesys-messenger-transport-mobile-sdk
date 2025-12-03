@@ -48,11 +48,12 @@ class WebMessagingApiTest {
         subject = buildWebMessagingApiWith { historyEngine() }
         val expectedEntityList = Result.Success(TestWebMessagingApiResponses.testMessageEntityList)
 
-        val result = runBlocking {
-            withTimeout(DEFAULT_TIMEOUT) {
-                subject.getMessages(jwt = "abc-123", pageNumber = 1)
+        val result =
+            runBlocking {
+                withTimeout(DEFAULT_TIMEOUT) {
+                    subject.getMessages(jwt = "abc-123", pageNumber = 1)
+                }
             }
-        }
 
         assertEquals(expectedEntityList, result)
     }
@@ -63,11 +64,12 @@ class WebMessagingApiTest {
 
         val expectedEntityList = Result.Success(TestWebMessagingApiResponses.emptyMessageEntityList)
 
-        val result = runBlocking {
-            withTimeout(DEFAULT_TIMEOUT) {
-                subject.getMessages(jwt = "abc-123", pageNumber = 0, pageSize = 0)
+        val result =
+            runBlocking {
+                withTimeout(DEFAULT_TIMEOUT) {
+                    subject.getMessages(jwt = "abc-123", pageNumber = 0, pageSize = 0)
+                }
             }
-        }
 
         assertEquals(expectedEntityList, result)
     }
@@ -77,11 +79,12 @@ class WebMessagingApiTest {
         subject = buildWebMessagingApiWith { historyEngine() }
         val expectedEntityList = Result.Failure(ErrorCode.UnexpectedError, ErrorTest.MESSAGE)
 
-        val result = runBlocking {
-            withTimeout(DEFAULT_TIMEOUT) {
-                subject.getMessages(jwt = "abc-123", pageNumber = -1)
+        val result =
+            runBlocking {
+                withTimeout(DEFAULT_TIMEOUT) {
+                    subject.getMessages(jwt = "abc-123", pageNumber = -1)
+                }
             }
-        }
 
         assertEquals(expectedEntityList, result)
     }
@@ -91,11 +94,12 @@ class WebMessagingApiTest {
         subject = buildWebMessagingApiWith { historyEngine() }
         val expectedEntityList = Result.Failure(ErrorCode.CancellationError, ErrorTest.MESSAGE)
 
-        val result = runBlocking {
-            withTimeout(DEFAULT_TIMEOUT) {
-                subject.getMessages(jwt = InvalidValues.CANCELLATION_EXCEPTION, pageNumber = -1)
+        val result =
+            runBlocking {
+                withTimeout(DEFAULT_TIMEOUT) {
+                    subject.getMessages(jwt = InvalidValues.CANCELLATION_EXCEPTION, pageNumber = -1)
+                }
             }
-        }
 
         assertEquals(expectedEntityList, result)
     }
@@ -105,20 +109,22 @@ class WebMessagingApiTest {
         subject = buildWebMessagingApiWith { uploadFileEngine() }
         val expectedSuccess = Result.Success(Empty())
 
-        val givenPresignedUrlResponse = PresignedUrlResponse(
-            attachmentId = "99999999-9999-9999-9999-999999999999",
-            url = UPLOAD_FILE_PATH,
-            fileName = "image.png",
-            headers = validHeaders
-        )
-
-        val result = runBlocking {
-            subject.uploadFile(
-                presignedUrlResponse = givenPresignedUrlResponse,
-                byteArray = ByteArray(UPLOAD_FILE_SIZE.toInt()),
-                progressCallback = { /* mock progress callback */ }
+        val givenPresignedUrlResponse =
+            PresignedUrlResponse(
+                attachmentId = "99999999-9999-9999-9999-999999999999",
+                url = UPLOAD_FILE_PATH,
+                fileName = "image.png",
+                headers = validHeaders
             )
-        }
+
+        val result =
+            runBlocking {
+                subject.uploadFile(
+                    presignedUrlResponse = givenPresignedUrlResponse,
+                    byteArray = ByteArray(UPLOAD_FILE_SIZE.toInt()),
+                    progressCallback = { /* mock progress callback */ }
+                )
+            }
 
         assertThat(result).isEqualToWithGivenProperties(expectedSuccess)
     }
@@ -126,22 +132,24 @@ class WebMessagingApiTest {
     @Test
     fun `when uploadFile with invalid headers`() {
         subject = buildWebMessagingApiWith { uploadFileEngine() }
-        val givenPresignedUrlResponse = PresignedUrlResponse(
-            attachmentId = "99999999-9999-9999-9999-999999999999",
-            url = UPLOAD_FILE_PATH,
-            fileName = "image.png",
-            headers = invalidHeaders
-        )
+        val givenPresignedUrlResponse =
+            PresignedUrlResponse(
+                attachmentId = "99999999-9999-9999-9999-999999999999",
+                url = UPLOAD_FILE_PATH,
+                fileName = "image.png",
+                headers = invalidHeaders
+            )
 
         val expectedResult = Result.Failure(ErrorCode.mapFrom(HttpStatusCode.NotFound.value), "Not found")
 
-        val result = runBlocking {
-            subject.uploadFile(
-                presignedUrlResponse = givenPresignedUrlResponse,
-                byteArray = ByteArray(UPLOAD_FILE_SIZE.toInt()),
-                progressCallback = { /* mock progress callback */ }
-            )
-        }
+        val result =
+            runBlocking {
+                subject.uploadFile(
+                    presignedUrlResponse = givenPresignedUrlResponse,
+                    byteArray = ByteArray(UPLOAD_FILE_SIZE.toInt()),
+                    progressCallback = { /* mock progress callback */ }
+                )
+            }
 
         assertThat(result).isEqualToWithGivenProperties(expectedResult)
     }
@@ -151,13 +159,14 @@ class WebMessagingApiTest {
         subject = buildWebMessagingApiWith { authorizeEngine() }
         val expectedResult = Result.Success(AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN))
 
-        val result = runBlocking {
-            subject.fetchAuthJwt(
-                authCode = AuthTest.AUTH_CODE,
-                redirectUri = AuthTest.REDIRECT_URI,
-                codeVerifier = AuthTest.CODE_VERIFIER,
-            )
-        }
+        val result =
+            runBlocking {
+                subject.fetchAuthJwt(
+                    authCode = AuthTest.AUTH_CODE,
+                    redirectUri = AuthTest.REDIRECT_URI,
+                    codeVerifier = AuthTest.CODE_VERIFIER,
+                )
+            }
 
         assertEquals(expectedResult, result)
     }
@@ -198,18 +207,18 @@ class WebMessagingApiTest {
 
     @Test
     fun `when fetchAuthJwt request body has invalid params`() {
-
         subject = buildWebMessagingApiWith(InvalidValues.configuration) { authorizeEngine() }
 
         val expectedResult = Result.Failure(ErrorCode.AuthFailed, "Bad Request")
 
-        val result = runBlocking {
-            subject.fetchAuthJwt(
-                authCode = AuthTest.AUTH_CODE,
-                redirectUri = AuthTest.REDIRECT_URI,
-                codeVerifier = AuthTest.CODE_VERIFIER,
-            )
-        }
+        val result =
+            runBlocking {
+                subject.fetchAuthJwt(
+                    authCode = AuthTest.AUTH_CODE,
+                    redirectUri = AuthTest.REDIRECT_URI,
+                    codeVerifier = AuthTest.CODE_VERIFIER,
+                )
+            }
 
         assertEquals(expectedResult, result)
     }
@@ -221,13 +230,14 @@ class WebMessagingApiTest {
 
         val expectedResult = Result.Failure(ErrorCode.CancellationError, ErrorTest.MESSAGE)
 
-        val result = runBlocking {
-            subject.fetchAuthJwt(
-                authCode = AuthTest.AUTH_CODE,
-                redirectUri = AuthTest.REDIRECT_URI,
-                codeVerifier = AuthTest.CODE_VERIFIER,
-            )
-        }
+        val result =
+            runBlocking {
+                subject.fetchAuthJwt(
+                    authCode = AuthTest.AUTH_CODE,
+                    redirectUri = AuthTest.REDIRECT_URI,
+                    codeVerifier = AuthTest.CODE_VERIFIER,
+                )
+            }
 
         assertEquals(expectedResult, result)
     }
@@ -239,13 +249,14 @@ class WebMessagingApiTest {
 
         val expectedResult = Result.Failure(ErrorCode.AuthFailed, ErrorTest.MESSAGE)
 
-        val result = runBlocking {
-            subject.fetchAuthJwt(
-                authCode = AuthTest.AUTH_CODE,
-                redirectUri = AuthTest.REDIRECT_URI,
-                codeVerifier = AuthTest.CODE_VERIFIER,
-            )
-        }
+        val result =
+            runBlocking {
+                subject.fetchAuthJwt(
+                    authCode = AuthTest.AUTH_CODE,
+                    redirectUri = AuthTest.REDIRECT_URI,
+                    codeVerifier = AuthTest.CODE_VERIFIER,
+                )
+            }
 
         assertEquals(expectedResult, result)
     }
@@ -358,9 +369,10 @@ class WebMessagingApiTest {
 
     @Test
     fun `when fetchDeploymentConfig fails with bad request`() {
-        val brokenConfiguration = InvalidValues.configuration.copy(
-            deploymentId = TestValues.DEPLOYMENT_ID
-        )
+        val brokenConfiguration =
+            InvalidValues.configuration.copy(
+                deploymentId = TestValues.DEPLOYMENT_ID
+            )
         subject = buildWebMessagingApiWith(brokenConfiguration) { deploymentConfigEngine() }
         val expectedResult = Result.Failure(ErrorCode.DeploymentConfigFetchFailed, "Bad Request")
 
@@ -371,10 +383,11 @@ class WebMessagingApiTest {
 
     @Test
     fun `when fetchDeploymentConfig result in CancellationException`() {
-        val brokenConfiguration = InvalidValues.configuration.copy(
-            deploymentId = TestValues.DEPLOYMENT_ID,
-            domain = InvalidValues.CANCELLATION_EXCEPTION,
-        )
+        val brokenConfiguration =
+            InvalidValues.configuration.copy(
+                deploymentId = TestValues.DEPLOYMENT_ID,
+                domain = InvalidValues.CANCELLATION_EXCEPTION,
+            )
         subject = buildWebMessagingApiWith(brokenConfiguration) { deploymentConfigEngine() }
         val expectedResult = Result.Failure(ErrorCode.CancellationError, ErrorTest.MESSAGE)
 
@@ -385,10 +398,11 @@ class WebMessagingApiTest {
 
     @Test
     fun `when fetchDeploymentConfig result in UnknownException`() {
-        val brokenConfiguration = InvalidValues.configuration.copy(
-            deploymentId = TestValues.DEPLOYMENT_ID,
-            domain = InvalidValues.UNKNOWN_EXCEPTION,
-        )
+        val brokenConfiguration =
+            InvalidValues.configuration.copy(
+                deploymentId = TestValues.DEPLOYMENT_ID,
+                domain = InvalidValues.UNKNOWN_EXCEPTION,
+            )
         subject = buildWebMessagingApiWith(brokenConfiguration) { deploymentConfigEngine() }
         val expectedResult = Result.Failure(ErrorCode.DeploymentConfigFetchFailed, ErrorTest.MESSAGE)
 
@@ -455,10 +469,11 @@ class WebMessagingApiTest {
 
     @Test
     fun `when performDeviceTokenOperation any result in CancellationException`() {
-        val brokenConfigurations = InvalidValues.configuration.copy(
-            deploymentId = InvalidValues.CANCELLATION_EXCEPTION,
-            domain = InvalidValues.CANCELLATION_EXCEPTION,
-        )
+        val brokenConfigurations =
+            InvalidValues.configuration.copy(
+                deploymentId = InvalidValues.CANCELLATION_EXCEPTION,
+                domain = InvalidValues.CANCELLATION_EXCEPTION,
+            )
 
         subject = buildWebMessagingApiWith(brokenConfigurations) { pushNotificationEngine() }
         val givenUserPushConfig = PushTestValues.CONFIG.copy(token = InvalidValues.CANCELLATION_EXCEPTION)
@@ -478,10 +493,11 @@ class WebMessagingApiTest {
 
     @Test
     fun `when performDeviceTokenOperation any result in general Exception`() {
-        val brokenConfigurations = InvalidValues.configuration.copy(
-            deploymentId = InvalidValues.UNKNOWN_EXCEPTION,
-            domain = InvalidValues.UNKNOWN_EXCEPTION,
-        )
+        val brokenConfigurations =
+            InvalidValues.configuration.copy(
+                deploymentId = InvalidValues.UNKNOWN_EXCEPTION,
+                domain = InvalidValues.UNKNOWN_EXCEPTION,
+            )
         subject = buildWebMessagingApiWith(brokenConfigurations) { pushNotificationEngine() }
         val givenUserPushConfig = PushTestValues.CONFIG.copy(token = InvalidValues.UNKNOWN_EXCEPTION)
         val givenOperation = DeviceTokenOperation.Register

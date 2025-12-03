@@ -6,7 +6,6 @@ internal actual class Logger actual constructor(
     private val enableLogs: Boolean,
     val tag: String
 ) {
-
     actual fun d(message: () -> String) {
         if (enableLogs) NSLog("DEBUG: [$tag] ${message()}")
     }

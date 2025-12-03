@@ -10,7 +10,6 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 
 open class BasePage(val activity: Activity) {
-
     val waitTime = 100.toLong()
     val shortWaitTime = 5.toLong()
 

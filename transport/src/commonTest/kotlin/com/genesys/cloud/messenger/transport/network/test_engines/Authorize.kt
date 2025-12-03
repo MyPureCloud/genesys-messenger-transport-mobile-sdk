@@ -29,20 +29,23 @@ internal fun HttpClientConfig<MockEngineConfig>.authorizeEngine() {
             when (request.url.fullPath) {
                 BASIC_OAUTH_CODE_EXCHANGE_PATH -> {
                     if (request.method == HttpMethod.Post && request.body is TextContent) {
-                        val requestBody = Json.decodeFromString(
-                            AuthJwtRequest.serializer(),
-                            (request.body as TextContent).text
-                        )
+                        val requestBody =
+                            Json.decodeFromString(
+                                AuthJwtRequest.serializer(),
+                                (request.body as TextContent).text
+                            )
                         if (requestBody.deploymentId == TestValues.DEPLOYMENT_ID) {
                             when (requestBody.oauth.code) {
                                 AuthTest.AUTH_CODE -> {
                                     respond(
                                         status = HttpStatusCode.OK,
-                                        headers = headersOf(
+                                headers =
+                                    headersOf(
                                             HttpHeaders.ContentType,
                                             "application/json"
                                         ),
-                                        content = Json.encodeToString(
+                                content =
+                                    Json.encodeToString(
                                             AuthJwt.serializer(),
                                             AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN)
                                         )
@@ -69,6 +72,10 @@ internal fun HttpClientConfig<MockEngineConfig>.authorizeEngine() {
                             when (requestBody.deploymentId) {
                                 InvalidValues.CANCELLATION_EXCEPTION -> {
                                     throw CancellationException(ErrorTest.MESSAGE)
+                                }
+
+                                InvalidValues.NETWORK_EXCEPTION -> {
+                                    throw NetworkExceptionForTesting(ErrorTest.MESSAGE)
                                 }
 
                                 InvalidValues.UNKNOWN_EXCEPTION -> {

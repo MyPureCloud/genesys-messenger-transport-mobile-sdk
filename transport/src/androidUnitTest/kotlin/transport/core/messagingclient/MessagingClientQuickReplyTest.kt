@@ -11,22 +11,23 @@ import transport.util.Response
 import kotlin.test.assertFailsWith
 
 class MessagingClientQuickReplyTest : BaseMessagingClientTest() {
-
     @Test
     fun `when SocketListener invoke onMessage with Structured message that contains QuickReplies`() {
-        val expectedMessage = Message(
-            id = "msg_id",
-            direction = Message.Direction.Outbound,
-            state = Message.State.Sent,
-            messageType = Message.Type.QuickReply,
-            text = "Hi",
-            timeStamp = null,
-            quickReplies = listOf(
-                QuickReplyTestValues.buttonResponse_a,
-                QuickReplyTestValues.buttonResponse_b,
-            ),
-            from = Message.Participant(originatingEntity = Message.Participant.OriginatingEntity.Bot),
-        )
+        val expectedMessage =
+            Message(
+                id = "msg_id",
+                direction = Message.Direction.Outbound,
+                state = Message.State.Sent,
+                messageType = Message.Type.QuickReply,
+                text = "Hi",
+                timeStamp = null,
+                quickReplies =
+                    listOf(
+                        QuickReplyTestValues.buttonResponse_a,
+                        QuickReplyTestValues.buttonResponse_b,
+                    ),
+                from = Message.Participant(originatingEntity = Message.Participant.OriginatingEntity.Bot),
+            )
         subject.connect()
 
         slot.captured.onMessage(Response.onMessageWithQuickReplies)

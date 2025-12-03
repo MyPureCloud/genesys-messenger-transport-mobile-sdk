@@ -17,9 +17,10 @@ import io.mockk.verify
 import org.junit.Test
 
 class LogsTest {
-    private val mockLogger: Logger = mockk(relaxed = true) {
-        every { tag } returns TestValues.LOG_TAG
-    }
+    private val mockLogger: Logger =
+        mockk(relaxed = true) {
+            every { tag } returns TestValues.LOG_TAG
+        }
     val logSlot = mutableListOf<() -> String>()
 
     internal var subject = Log(true, TestValues.LOG_TAG, mockLogger)

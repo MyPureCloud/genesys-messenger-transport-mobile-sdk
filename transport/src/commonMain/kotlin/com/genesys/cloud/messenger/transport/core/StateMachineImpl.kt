@@ -8,7 +8,6 @@ import com.genesys.cloud.messenger.transport.util.logs.LogTag
 internal class StateMachineImpl(
     internal val log: Log = Log(enableLogs = false, LogTag.STATE_MACHINE),
 ) : StateMachine {
-
     override var currentState: State = State.Idle
         set(value) {
             if (field != value) {

@@ -38,7 +38,6 @@ import transport.util.fromReconnectingToError
 import kotlin.test.assertFailsWith
 
 class MessagingClientAuthTest : BaseMessagingClientTest() {
-
     @Test
     fun `when authorize is called`() {
         subject.authorize(AuthTest.AUTH_CODE, AuthTest.JWT_AUTH_URL, AuthTest.CODE_VERIFIER)
