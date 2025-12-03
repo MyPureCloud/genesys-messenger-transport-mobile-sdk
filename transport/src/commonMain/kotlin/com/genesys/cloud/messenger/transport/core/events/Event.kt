@@ -100,4 +100,10 @@ sealed class Event {
      * @param durationInSeconds The duration of the session in seconds.
      */
     data class SessionDuration(val durationInSeconds: Long) : Event()
+
+    /**
+     * Sent when the session is about to expire.
+     * This event is triggered before the session expires based on the configured notice interval.
+     */
+    data object SessionExpirationNotice : Event()
 }

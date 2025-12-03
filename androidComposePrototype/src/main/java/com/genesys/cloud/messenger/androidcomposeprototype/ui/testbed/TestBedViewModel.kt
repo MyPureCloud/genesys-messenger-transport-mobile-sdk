@@ -555,16 +555,17 @@ class TestBedViewModel :
                         "QuickReplyReceived: text: $text | quick reply options: $quickReplies"
                     }
 
-            is MessageEvent.CardMessageReceived -> event.message.run {
-                val tempActionsMap = mutableMapOf<String, ButtonResponse>()
-                cards.forEach { card ->
-                    card.actions.forEach { action ->
-                        tempActionsMap.put(action.text, action)
-                        cardActionsMap[action.text] = action
+                is MessageEvent.CardMessageReceived ->
+                    event.message.run {
+                        val tempActionsMap = mutableMapOf<String, ButtonResponse>()
+                        cards.forEach { card ->
+                            card.actions.forEach { action ->
+                                tempActionsMap.put(action.text, action)
+                                cardActionsMap[action.text] = action
+                            }
+                        }
+                        "CardMessageReceived with actions: $tempActionsMap"
                     }
-                }
-                "CardMessageReceived with actions: $tempActionsMap"
-            }
             }
         onSocketMessageReceived(eventMessage)
     }

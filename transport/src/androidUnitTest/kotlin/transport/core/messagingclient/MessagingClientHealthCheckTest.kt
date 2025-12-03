@@ -98,6 +98,7 @@ class MessagingClientHealthCheckTest : BaseMessagingClientTest() {
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()
             mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
+            mockSessionDurationHandler.updateSessionDuration(any(), any())
             mockStateChangedListener(fromConnectedToConfigured)
             mockLogger.i(capture(logSlot))
             mockLogger.i(capture(logSlot))
