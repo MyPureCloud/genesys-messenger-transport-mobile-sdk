@@ -13,10 +13,10 @@ import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessagingClientImpl
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.StateChange
-import com.genesys.cloud.messenger.transport.core.sessionduration.SessionDurationHandler
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
+import com.genesys.cloud.messenger.transport.core.sessionduration.SessionDurationHandler
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
