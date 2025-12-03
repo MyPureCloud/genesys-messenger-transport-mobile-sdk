@@ -10,133 +10,128 @@ import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.mockk.MockKAnnotations
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ActionTimerTest {
     private val mockLogger: Log = mockk(relaxed = true)
     private val logSlot = mutableListOf<() -> String>()
     private var actionExecuted = false
     private val givenAction: () -> Unit = { actionExecuted = true }
-    private val dispatcher: CoroutineDispatcher = Dispatchers.Unconfined
-    private val givenDispatcher = CoroutineScope(dispatcher + SupervisorJob())
+    private val testDispatcher = StandardTestDispatcher()
+    private val testScope = TestScope(testDispatcher)
 
     private lateinit var subject: ActionTimer
 
-    @ExperimentalCoroutinesApi
     @Before
     fun setup() {
         MockKAnnotations.init(this)
-        Dispatchers.setMain(dispatcher)
+        Dispatchers.setMain(testDispatcher)
         actionExecuted = false
         subject =
             ActionTimer(
                 log = mockLogger,
                 action = givenAction,
-                dispatcher = givenDispatcher,
+                dispatcher = testScope,
             )
     }
 
-    @ExperimentalCoroutinesApi
     @After
     fun tearDown() {
         Dispatchers.resetMain()
     }
 
     @Test
-    fun `when start() executes action after delay`() {
-        runBlocking {
+    fun `when start() executes action after delay`() =
+        testScope.runTest {
             subject.start(delayMillis = 100)
-            delay(150)
+            advanceTimeBy(150)
+
+            assertThat(actionExecuted).isTrue()
+            verify { mockLogger.i(capture(logSlot)) }
+            assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.startingTimer(100))
+            assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.TIMER_EXPIRED_EXECUTING_ACTION)
         }
 
-        assertThat(actionExecuted).isTrue()
-        verify { mockLogger.i(capture(logSlot)) }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.startingTimer(100))
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.TIMER_EXPIRED_EXECUTING_ACTION)
-    }
+    @Test
+    fun `when start() timer is active`() =
+        testScope.runTest {
+            subject.start(delayMillis = 5000)
+
+            assertThat(subject.isActive()).isTrue()
+        }
 
     @Test
-    fun `when start() timer is active`() {
-        subject.start(delayMillis = 5000)
-
-        assertThat(subject.isActive()).isTrue()
-    }
-
-    @Test
-    fun `when cancel() before timer expires`() {
-        runBlocking {
+    fun `when cancel() before timer expires`() =
+        testScope.runTest {
             subject.start(delayMillis = 1000)
-            delay(50)
+            advanceTimeBy(50)
             subject.cancel()
-            delay(1000)
+            advanceTimeBy(1000)
+
+            assertThat(actionExecuted).isFalse()
+            verify { mockLogger.i(capture(logSlot)) }
+            assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.startingTimer(1000))
+            assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.CANCELLING_TIMER)
         }
 
-        assertThat(actionExecuted).isFalse()
-        verify { mockLogger.i(capture(logSlot)) }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.startingTimer(1000))
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.CANCELLING_TIMER)
-    }
-
     @Test
-    fun `when cancel() timer is not active`() {
-        runBlocking {
+    fun `when cancel() timer is not active`() =
+        testScope.runTest {
             subject.start(delayMillis = 1000)
             subject.cancel()
+
+            assertThat(subject.isActive()).isFalse()
         }
 
-        assertThat(subject.isActive()).isFalse()
-    }
-
     @Test
-    fun `when start() is called multiple times cancels previous timer`() {
-        var executionCount = 0
-        val countingAction: () -> Unit = { executionCount++ }
-        subject =
-            ActionTimer(
-                log = mockLogger,
-                action = countingAction,
-                dispatcher = givenDispatcher,
-            )
+    fun `when start() is called multiple times cancels previous timer`() =
+        testScope.runTest {
+            var executionCount = 0
+            val countingAction: () -> Unit = { executionCount++ }
+            subject =
+                ActionTimer(
+                    log = mockLogger,
+                    action = countingAction,
+                    dispatcher = testScope,
+                )
 
-        runBlocking {
             subject.start(delayMillis = 500)
-            delay(100)
+            advanceTimeBy(100)
             subject.start(delayMillis = 500)
-            delay(100)
+            advanceTimeBy(100)
             subject.start(delayMillis = 100)
-            delay(150)
+            advanceTimeBy(150)
+
+            assertThat(executionCount).isEqualTo(1)
         }
 
-        assertThat(executionCount).isEqualTo(1)
-    }
-
     @Test
-    fun `when cancel() on inactive timer does nothing`() {
-        subject.cancel()
+    fun `when cancel() on inactive timer does nothing`() =
+        testScope.runTest {
+            subject.cancel()
 
-        assertThat(subject.isActive()).isFalse()
-        verify(exactly = 0) { mockLogger.i(any()) }
-    }
-
-    @Test
-    fun `when isActive() returns false after timer expires`() {
-        runBlocking {
-            subject.start(delayMillis = 100)
-            delay(150)
+            assertThat(subject.isActive()).isFalse()
+            verify(exactly = 0) { mockLogger.i(any()) }
         }
 
-        assertThat(subject.isActive()).isFalse()
-        assertThat(actionExecuted).isTrue()
-    }
+    @Test
+    fun `when isActive() returns false after timer expires`() =
+        testScope.runTest {
+            subject.start(delayMillis = 100)
+            advanceTimeBy(150)
+
+            assertThat(subject.isActive()).isFalse()
+            assertThat(actionExecuted).isTrue()
+        }
 }
