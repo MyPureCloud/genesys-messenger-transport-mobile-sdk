@@ -29,6 +29,10 @@ class MainActivity :
         super.onCreate(savedInstanceState)
         setPrototypeLauncherView()
         WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        intent?.data?.doIfRedirectedFromOkta { uri ->
+            handleOktaRedirect(uri)
+        }
     }
 
     private fun setPrototypeLauncherView() {
@@ -71,14 +75,42 @@ class MainActivity :
     }
 
     private fun handleOktaRedirect(data: Uri) {
-        // If authcode is present.
+        Log.d(TAG, "handleOktaRedirect uri: $data")
+
         data.getQueryParameter("code")?.let { authCode ->
             viewModel.authCode = authCode
+            viewModel.idToken = ""
+        } ?: run {
+            data.fragment?.let { fragment ->
+                parseFragmentParameters(fragment)
+            }
         }
-        // Otherwise there will be an error.
-        data.getQueryParameter("error_description")?.let { error ->
-            Log.e(TAG, error)
-            Toast.makeText(applicationContext, error, Toast.LENGTH_LONG).show()
+        data.getQueryParameter("error")?.let { error ->
+            val errorDescription = data.getQueryParameter("error_description") ?: error
+            Log.e(TAG, "Okta error: $error - $errorDescription")
+            Toast.makeText(applicationContext, errorDescription, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun parseFragmentParameters(fragment: String) {
+        val params = mutableMapOf<String, String>()
+        fragment.split("&").forEach { param ->
+            val parts = param.split("=", limit = 2)
+            if (parts.size == 2) {
+                val key = Uri.decode(parts[0])
+                val value = Uri.decode(parts[1])
+                params[key] = value
+            }
+        }
+        params["id_token"]?.let { idToken ->
+            Log.d(TAG, "handleOktaRedirect id token: $idToken")
+            viewModel.idToken = idToken
+            viewModel.authCode = ""
+        }
+        params["error"]?.let { error ->
+            val errorDescription = params["error_description"] ?: error
+            Log.e(TAG, "Okta error: $error - $errorDescription")
+            Toast.makeText(applicationContext, errorDescription, Toast.LENGTH_LONG).show()
         }
     }
 }

@@ -3,6 +3,7 @@ package transport.core.messagingclient
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.auth.NO_JWT
+import com.genesys.cloud.messenger.transport.auth.NO_REFRESH_TOKEN
 import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
@@ -58,6 +59,38 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
     }
 
     @Test
+    fun `when authorizeImplicit is called`() {
+        subject.authorizeImplicit(AuthTest.ID_TOKEN, AuthTest.NONCE)
+
+        verify {
+            mockAuthHandler.authorizeImplicit(AuthTest.ID_TOKEN, AuthTest.NONCE)
+        }
+    }
+
+    @Test
+    fun `when connectAuthenticatedSession and no JWT and no refresh token`() {
+        every { mockAuthHandler.jwt } returns NO_JWT
+        every { mockVault.authRefreshToken } returns NO_REFRESH_TOKEN
+        every { mockAuthHandler.refreshToken(captureLambda()) } answers {
+            lambda<(Result<Empty>) -> Unit>().invoke(
+                Result.Failure(ErrorCode.RefreshAuthTokenFailure, ErrorMessage.NoRefreshToken)
+            )
+        }
+
+        subject.connectAuthenticatedSession()
+
+        verifySequence {
+            mockStateChangedListener(fromIdleToConnecting)
+            mockPlatformSocket.openSocket(any())
+            mockStateChangedListener(fromConnectingToConnected)
+            mockAuthHandler.jwt
+            mockAuthHandler.refreshToken(any())
+            mockEventHandler.onEvent(Event.AuthorizationRequired)
+            errorSequence(fromConnectedToError(MessagingClient.State.Error(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)))
+        }
+    }
+
+    @Test
     fun `when connectAuthenticatedSession`() {
         subject.connectAuthenticatedSession()
 
@@ -69,6 +102,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
 
     @Test
     fun `when connectAuthenticatedSession and AuthHandler has no Jwt and refreshToken was successful`() {
+        every { mockVault.authRefreshToken } returns AuthTest.REFRESH_TOKEN
         every { mockAuthHandler.jwt } returns NO_JWT
         every { mockAuthHandler.refreshToken(captureLambda()) } answers {
             every { mockAuthHandler.jwt } returns AuthTest.JWT_TOKEN
@@ -94,14 +128,15 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
 
     @Test
     fun `when connectAuthenticatedSession and AuthHandler has no Jwt and refreshToken fails`() {
-        val givenFailure = Result.Failure(ErrorCode.AuthFailed, ErrorTest.MESSAGE)
+        every { mockVault.authRefreshToken } returns AuthTest.REFRESH_TOKEN
+        val givenResult = Result.Failure(ErrorCode.AuthFailed, ErrorTest.MESSAGE)
         every { mockAuthHandler.refreshToken(captureLambda()) } answers {
-            lambda<(Result<Empty>) -> Unit>().invoke(givenFailure)
+            lambda<(Result<Empty>) -> Unit>().invoke(givenResult)
         }
         every { mockAuthHandler.jwt } returns NO_JWT
 
         val expectedErrorState =
-            MessagingClient.State.Error(ErrorCode.AuthFailed, ErrorTest.MESSAGE)
+            MessagingClient.State.Error(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
 
         subject.connectAuthenticatedSession()
 
@@ -115,6 +150,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
             mockStateChangedListener(fromConnectingToConnected)
             mockAuthHandler.jwt
             mockAuthHandler.refreshToken(any())
+            mockEventHandler.onEvent(Event.AuthorizationRequired)
             errorSequence(fromConnectedToError(expectedErrorState))
         }
     }

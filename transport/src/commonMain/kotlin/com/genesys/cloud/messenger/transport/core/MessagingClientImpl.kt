@@ -61,7 +61,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.encodeToString
 import kotlin.reflect.KProperty0
 
 private const val MAX_RECONFIGURE_ATTEMPTS = 3
@@ -224,6 +223,7 @@ internal class MessagingClientImpl(
                         refreshTokenAndPerform { configureSession(startNew) }
                         return
                     }
+                    eventHandler.onEvent(Event.AuthorizationRequired)
                     transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
                     return
                 }
@@ -381,6 +381,14 @@ internal class MessagingClientImpl(
         authHandler.authorize(authCode, redirectUri, codeVerifier)
     }
 
+    override fun authorizeImplicit(
+        idToken: String,
+        nonce: String
+    ) {
+        invalidateSessionToken()
+        authHandler.authorizeImplicit(idToken, nonce)
+    }
+
     @Throws(IllegalStateException::class)
     private fun sendAutoStart() {
         sendingAutostart = true
@@ -527,7 +535,10 @@ internal class MessagingClientImpl(
         authHandler.refreshToken { result ->
             when (result) {
                 is Result.Success -> action()
-                is Result.Failure -> transitionToStateError(result.errorCode, result.message)
+                is Result.Failure -> {
+                    eventHandler.onEvent(Event.AuthorizationRequired)
+                    transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
+                }
             }
         }
     }

@@ -110,8 +110,8 @@ internal class WebMessagingApi(
 
     suspend fun fetchAuthJwt(
         authCode: String,
-        redirectUri: String,
-        codeVerifier: String?,
+        redirectUri: String? = null,
+        codeVerifier: String? = null,
     ): Result<AuthJwt> =
         try {
             val requestBody =
@@ -142,6 +142,36 @@ internal class WebMessagingApi(
             } else {
                 Result.Failure(ErrorCode.AuthFailed, exception.message)
             }
+        }
+
+    suspend fun fetchAuthJwt(
+        idToken: String,
+        nonce: String
+    ): Result<AuthJwt> =
+        try {
+            val requestBody =
+                AuthJwtRequest(
+                    deploymentId = configuration.deploymentId,
+                    oauth =
+                        OAuth(
+                            idToken = idToken,
+                            nonce = nonce,
+                        )
+                )
+            val response =
+                client.post(urls.jwtAuthUrl.toString()) {
+                    header("content-type", ContentType.Application.Json)
+                    setBody(requestBody)
+                }
+            if (response.status.isSuccess()) {
+                Result.Success(response.body())
+            } else {
+                Result.Failure(ErrorCode.AuthFailed, response.body<String>())
+            }
+        } catch (cancellationException: CancellationException) {
+            Result.Failure(ErrorCode.CancellationError, cancellationException.message)
+        } catch (exception: Exception) {
+            Result.Failure(ErrorCode.AuthFailed, exception.message)
         }
 
     suspend fun logoutFromAuthenticatedSession(jwt: String): Result<Empty> =
