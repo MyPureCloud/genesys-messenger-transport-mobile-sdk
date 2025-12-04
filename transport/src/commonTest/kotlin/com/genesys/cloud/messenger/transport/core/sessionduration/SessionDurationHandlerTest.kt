@@ -201,10 +201,11 @@ class SessionDurationHandlerTest {
                 val givenNoticeInterval = 1L
                 val givenHealthCheckLeadTime = 500L
                 val givenExpirationDate = currentTime + 3L
-                val subject = createSubject(
-                    sessionExpirationNoticeInterval = givenNoticeInterval,
-                    healthCheckLeadTimeMillis = givenHealthCheckLeadTime
-                )
+                val subject =
+                    createSubject(
+                        sessionExpirationNoticeInterval = givenNoticeInterval,
+                        healthCheckLeadTimeMillis = givenHealthCheckLeadTime
+                    )
 
                 subject.updateSessionDuration(null, givenExpirationDate)
 
@@ -221,10 +222,11 @@ class SessionDurationHandlerTest {
             val givenNoticeInterval = 1L
             val givenHealthCheckLeadTime = 5000L // 5 seconds lead time
             val givenExpirationDate = currentTime + 2L // Only 1 second until notice time
-            val subject = createSubject(
-                sessionExpirationNoticeInterval = givenNoticeInterval,
-                healthCheckLeadTimeMillis = givenHealthCheckLeadTime
-            )
+            val subject =
+                createSubject(
+                    sessionExpirationNoticeInterval = givenNoticeInterval,
+                    healthCheckLeadTimeMillis = givenHealthCheckLeadTime
+                )
 
             subject.updateSessionDuration(null, givenExpirationDate)
 
@@ -239,10 +241,11 @@ class SessionDurationHandlerTest {
                 val givenNoticeInterval = 1L
                 val givenHealthCheckLeadTime = 300L
                 healthCheckTriggered = false
-                val subject = createSubject(
-                    sessionExpirationNoticeInterval = givenNoticeInterval,
-                    healthCheckLeadTimeMillis = givenHealthCheckLeadTime
-                )
+                val subject =
+                    createSubject(
+                        sessionExpirationNoticeInterval = givenNoticeInterval,
+                        healthCheckLeadTimeMillis = givenHealthCheckLeadTime
+                    )
 
                 // Set initial expiration date
                 subject.updateSessionDuration(null, currentTime + 2L)
@@ -266,10 +269,11 @@ class SessionDurationHandlerTest {
                 val givenNoticeInterval = 1L
                 val givenHealthCheckLeadTime = 300L
                 val givenExpirationDate = currentTime + 2L
-                val subject = createSubject(
-                    sessionExpirationNoticeInterval = givenNoticeInterval,
-                    healthCheckLeadTimeMillis = givenHealthCheckLeadTime
-                )
+                val subject =
+                    createSubject(
+                        sessionExpirationNoticeInterval = givenNoticeInterval,
+                        healthCheckLeadTimeMillis = givenHealthCheckLeadTime
+                    )
 
                 subject.updateSessionDuration(null, givenExpirationDate)
 
@@ -290,13 +294,14 @@ class SessionDurationHandlerTest {
                 val givenNoticeInterval = 1L
                 val givenHealthCheckLeadTime = 500L
                 val givenExpirationDate = currentTime + 3L
-                val subject = SessionDurationHandler(
-                    sessionExpirationNoticeInterval = givenNoticeInterval,
-                    healthCheckPreNoticeTimeMillis = givenHealthCheckLeadTime,
-                    eventHandler = mockEventHandler,
-                    log = mockLog,
-                    getCurrentTimestamp = { currentTime * 1000 }
-                )
+                val subject =
+                    SessionDurationHandler(
+                        sessionExpirationNoticeInterval = givenNoticeInterval,
+                        healthCheckPreNoticeTimeMillis = givenHealthCheckLeadTime,
+                        eventHandler = mockEventHandler,
+                        log = mockLog,
+                        getCurrentTimestamp = { currentTime * 1000 }
+                    )
 
                 subject.triggerHealthCheck = { customCallbackTriggered = true }
 
@@ -317,13 +322,14 @@ class SessionDurationHandlerTest {
                 var secondCallbackTriggered = false
                 val givenNoticeInterval = 1L
                 val givenHealthCheckLeadTime = 500L
-                val subject = SessionDurationHandler(
-                    sessionExpirationNoticeInterval = givenNoticeInterval,
-                    healthCheckPreNoticeTimeMillis = givenHealthCheckLeadTime,
-                    eventHandler = mockEventHandler,
-                    log = mockLog,
-                    getCurrentTimestamp = { currentTime * 1000 }
-                )
+                val subject =
+                    SessionDurationHandler(
+                        sessionExpirationNoticeInterval = givenNoticeInterval,
+                        healthCheckPreNoticeTimeMillis = givenHealthCheckLeadTime,
+                        eventHandler = mockEventHandler,
+                        log = mockLog,
+                        getCurrentTimestamp = { currentTime * 1000 }
+                    )
 
                 subject.triggerHealthCheck = { firstCallbackTriggered = true }
                 // Reassign to a different callback
@@ -348,14 +354,15 @@ class SessionDurationHandlerTest {
                 val givenNoticeInterval = 1L
                 val givenHealthCheckLeadTime = 300L
                 val givenExpirationDate = currentTime + 2L
-                val subject = SessionDurationHandler(
-                    sessionExpirationNoticeInterval = givenNoticeInterval,
-                    healthCheckPreNoticeTimeMillis = givenHealthCheckLeadTime,
-                    eventHandler = mockEventHandler,
-                    log = mockLog,
-                    triggerHealthCheck = { healthCheckCount++ },
-                    getCurrentTimestamp = { currentTime * 1000 }
-                )
+                val subject =
+                    SessionDurationHandler(
+                        sessionExpirationNoticeInterval = givenNoticeInterval,
+                        healthCheckPreNoticeTimeMillis = givenHealthCheckLeadTime,
+                        eventHandler = mockEventHandler,
+                        log = mockLog,
+                        triggerHealthCheck = { healthCheckCount++ },
+                        getCurrentTimestamp = { currentTime * 1000 }
+                    )
 
                 subject.updateSessionDuration(null, givenExpirationDate)
                 subject.updateSessionDuration(null, givenExpirationDate)

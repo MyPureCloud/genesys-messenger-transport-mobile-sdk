@@ -88,6 +88,7 @@ internal object Response {
         val metadata = metadataEntries.joinToString(",")
         return """{"type":"response","class":"StructuredMessage","code":200,"body":{"text":"ping","type":"Text","direction":"Inbound","id":"ebb7e3aa5829c0fed0f43ccbcca4ade7","metadata":{$metadata}}}"""
     }
+
     const val jwtResponse =
         """{"type":"response","class":"JwtResponse","code":200,"body":{"jwt":"some_jwt","exp":333}}"""
 

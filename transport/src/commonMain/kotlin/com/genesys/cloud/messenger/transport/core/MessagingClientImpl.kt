@@ -615,7 +615,7 @@ internal class MessagingClientImpl(
         }
     }
 
-    private fun handleHealthCheck(message: Message){
+    private fun handleHealthCheck(message: Message) {
         val durationSeconds = message.metadata[DURATION_SECONDS_KEY]?.toLongOrNull()
         val expirationDate = message.metadata[EXPIRATION_DATE_KEY]?.toLongOrNull()
         sessionDurationHandler.updateSessionDuration(durationSeconds, expirationDate)
