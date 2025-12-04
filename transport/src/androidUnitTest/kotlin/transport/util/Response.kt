@@ -73,6 +73,21 @@ internal object Response {
         """{"type":"message","class":"UploadFailureEvent","code":200,"body":{"attachmentId":"test_attachment_id","errorCode":4001,"errorMessage":"This is a generic error message for testing.","timestamp":"2022-08-22T19:24:26.704Z"}}"""
     const val healthCheckResponse =
         """{"type":"response","class":"StructuredMessage","code":200,"body":{"text":"ping","type":"Text","direction":"Inbound","id":"ebb7e3aa5829c0fed0f43ccbcca4ade7","metadata":{"customMessageId":"SGVhbHRoQ2hlY2tNZXNzYWdlSWQ="}}}"""
+
+    fun healthCheckResponseWithSessionDuration(
+        durationSeconds: Long? = null,
+        expirationDate: Long? = null
+    ): String {
+        val metadataEntries = mutableListOf(""""customMessageId":"SGVhbHRoQ2hlY2tNZXNzYWdlSWQ="""")
+        if (durationSeconds != null) {
+            metadataEntries.add(""""durationSeconds":"$durationSeconds"""")
+        }
+        if (expirationDate != null) {
+            metadataEntries.add(""""expirationDate":"$expirationDate"""")
+        }
+        val metadata = metadataEntries.joinToString(",")
+        return """{"type":"response","class":"StructuredMessage","code":200,"body":{"text":"ping","type":"Text","direction":"Inbound","id":"ebb7e3aa5829c0fed0f43ccbcca4ade7","metadata":{$metadata}}}"""
+    }
     const val jwtResponse =
         """{"type":"response","class":"JwtResponse","code":200,"body":{"jwt":"some_jwt","exp":333}}"""
 

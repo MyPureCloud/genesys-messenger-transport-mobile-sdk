@@ -136,4 +136,47 @@ class MessagingClientHealthCheckTest : BaseMessagingClientTest() {
             mockEventHandler.onEvent(Event.HealthChecked)
         }
     }
+
+    @Test
+    fun `when SocketListener invoke onMessage with HealthCheck response containing durationSeconds and expirationDate`() {
+        val givenDurationSeconds = 3600L
+        val givenExpirationDate = 1700000000L
+        subject.connect()
+
+        slot.captured.onMessage(Response.healthCheckResponseWithSessionDuration(givenDurationSeconds, givenExpirationDate))
+
+        verifySequence {
+            connectSequence()
+            mockSessionDurationHandler.updateSessionDuration(givenDurationSeconds, givenExpirationDate)
+            mockEventHandler.onEvent(Event.HealthChecked)
+        }
+    }
+
+    @Test
+    fun `when SocketListener invoke onMessage with HealthCheck response containing only durationSeconds`() {
+        val givenDurationSeconds = 7200L
+        subject.connect()
+
+        slot.captured.onMessage(Response.healthCheckResponseWithSessionDuration(durationSeconds = givenDurationSeconds))
+
+        verifySequence {
+            connectSequence()
+            mockSessionDurationHandler.updateSessionDuration(givenDurationSeconds, null)
+            mockEventHandler.onEvent(Event.HealthChecked)
+        }
+    }
+
+    @Test
+    fun `when SocketListener invoke onMessage with HealthCheck response containing only expirationDate`() {
+        val givenExpirationDate = 1700000000L
+        subject.connect()
+
+        slot.captured.onMessage(Response.healthCheckResponseWithSessionDuration(expirationDate = givenExpirationDate))
+
+        verifySequence {
+            connectSequence()
+            mockSessionDurationHandler.updateSessionDuration(null, givenExpirationDate)
+            mockEventHandler.onEvent(Event.HealthChecked)
+        }
+    }
 }

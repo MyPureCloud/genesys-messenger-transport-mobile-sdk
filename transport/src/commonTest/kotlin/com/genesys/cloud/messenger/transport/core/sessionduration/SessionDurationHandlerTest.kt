@@ -281,4 +281,89 @@ class SessionDurationHandlerTest {
                 assertThat(healthCheckTriggered).isEqualTo(false)
             }
         }
+
+    @Test
+    fun `when triggerHealthCheck is set after construction then timer uses updated callback`() =
+        runBlocking {
+            withTimeout(DEFAULT_TIMEOUT) {
+                var customCallbackTriggered = false
+                val givenNoticeInterval = 1L
+                val givenHealthCheckLeadTime = 500L
+                val givenExpirationDate = currentTime + 3L
+                val subject = SessionDurationHandler(
+                    sessionExpirationNoticeInterval = givenNoticeInterval,
+                    healthCheckLeadTimeMillis = givenHealthCheckLeadTime,
+                    eventHandler = mockEventHandler,
+                    log = mockLog,
+                    getCurrentTimestamp = { currentTime * 1000 }
+                )
+
+                subject.triggerHealthCheck = { customCallbackTriggered = true }
+
+                subject.updateSessionDuration(null, givenExpirationDate)
+
+                // Wait for health check timer to fire
+                delay(1600)
+
+                assertThat(customCallbackTriggered).isEqualTo(true)
+            }
+        }
+
+    @Test
+    fun `when triggerHealthCheck is reassigned then new callback is used`() =
+        runBlocking {
+            withTimeout(DEFAULT_TIMEOUT) {
+                var firstCallbackTriggered = false
+                var secondCallbackTriggered = false
+                val givenNoticeInterval = 1L
+                val givenHealthCheckLeadTime = 500L
+                val subject = SessionDurationHandler(
+                    sessionExpirationNoticeInterval = givenNoticeInterval,
+                    healthCheckLeadTimeMillis = givenHealthCheckLeadTime,
+                    eventHandler = mockEventHandler,
+                    log = mockLog,
+                    getCurrentTimestamp = { currentTime * 1000 }
+                )
+
+                subject.triggerHealthCheck = { firstCallbackTriggered = true }
+                // Reassign to a different callback
+                subject.triggerHealthCheck = { secondCallbackTriggered = true }
+
+                val givenExpirationDate = currentTime + 3L
+                subject.updateSessionDuration(null, givenExpirationDate)
+
+                // Wait for health check timer to fire
+                delay(1600)
+
+                assertThat(firstCallbackTriggered).isEqualTo(false)
+                assertThat(secondCallbackTriggered).isEqualTo(true)
+            }
+        }
+
+    @Test
+    fun `when same expirationDate is provided twice then timer is not rescheduled`() =
+        runBlocking {
+            withTimeout(DEFAULT_TIMEOUT) {
+                var healthCheckCount = 0
+                val givenNoticeInterval = 1L
+                val givenHealthCheckLeadTime = 300L
+                val givenExpirationDate = currentTime + 2L
+                val subject = SessionDurationHandler(
+                    sessionExpirationNoticeInterval = givenNoticeInterval,
+                    healthCheckLeadTimeMillis = givenHealthCheckLeadTime,
+                    eventHandler = mockEventHandler,
+                    log = mockLog,
+                    triggerHealthCheck = { healthCheckCount++ },
+                    getCurrentTimestamp = { currentTime * 1000 }
+                )
+
+                subject.updateSessionDuration(null, givenExpirationDate)
+                subject.updateSessionDuration(null, givenExpirationDate)
+
+                // Wait for timer to fire
+                delay(1000)
+
+                assertThat(healthCheckCount).isEqualTo(1)
+            }
+        }
 }
