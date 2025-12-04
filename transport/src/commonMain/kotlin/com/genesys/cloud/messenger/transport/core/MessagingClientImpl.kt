@@ -44,6 +44,9 @@ import com.genesys.cloud.messenger.transport.shyrka.send.GetAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
+import com.genesys.cloud.messenger.transport.util.DEFAULT_HEALTH_CHECK_LEAD_TIME_MILLIS
+import com.genesys.cloud.messenger.transport.util.DURATION_SECONDS_KEY
+import com.genesys.cloud.messenger.transport.util.EXPIRATION_DATE_KEY
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.UNKNOWN
 import com.genesys.cloud.messenger.transport.util.Vault
@@ -117,7 +120,7 @@ internal class MessagingClientImpl(
     private val defaultDispatcher: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
     private val sessionDurationHandler: SessionDurationHandler =
         SessionDurationHandler(
-            sessionExpirationNoticeInterval = configuration.sessionExpirationNoticeInterval,
+            sessionExpirationNoticeInterval = configuration.sessionExpirationNoticeInterval - 10L,
             eventHandler = eventHandler,
             log = log.withTag(LogTag.SESSION_DURATION),
         ),
@@ -165,6 +168,10 @@ internal class MessagingClientImpl(
 
     override val wasAuthenticated: Boolean
         get() = vault.wasAuthenticated
+
+    init {
+        sessionDurationHandler.triggerHealthCheck = { sendHealthCheck() }
+    }
 
     @Throws(IllegalStateException::class, TransportSDKException::class)
     override fun connect() {
@@ -598,15 +605,22 @@ internal class MessagingClientImpl(
 
     private fun Message.handleAsTextMessage() {
         if (id.isHealthCheckResponseId()) {
-            eventHandler.onEvent(Event.HealthChecked)
-            return
+            handleHealthCheck(this)
+        } else {
+            messageStore.update(this)
+            if (direction == Message.Direction.Inbound) {
+                internalCustomAttributesStore.onSent()
+                attachmentHandler.onSent(attachments)
+                userTypingProvider.clear()
+            }
         }
-        messageStore.update(this)
-        if (direction == Message.Direction.Inbound) {
-            internalCustomAttributesStore.onSent()
-            attachmentHandler.onSent(attachments)
-            userTypingProvider.clear()
-        }
+    }
+
+    private fun handleHealthCheck(message: Message){
+        val durationSeconds = message.metadata[DURATION_SECONDS_KEY]?.toLongOrNull()
+        val expirationDate = message.metadata[EXPIRATION_DATE_KEY]?.toLongOrNull()
+        sessionDurationHandler.updateSessionDuration(durationSeconds, expirationDate)
+        eventHandler.onEvent(Event.HealthChecked)
     }
 
     private fun Message.handleAsEvent(isReadOnly: Boolean) =
