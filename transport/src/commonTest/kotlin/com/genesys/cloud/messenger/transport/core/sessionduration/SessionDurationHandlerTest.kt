@@ -16,6 +16,7 @@ import kotlin.test.Test
 class SessionDurationHandlerTest {
     private var capturedEvent: Event? = null
     private var currentTime: Long = 1000000000L // Initial timestamp in seconds
+    private var healthCheckTriggered: Boolean = false
 
     private val mockEventHandler =
         object : EventHandler {
@@ -38,22 +39,29 @@ class SessionDurationHandlerTest {
     fun setUp() {
         capturedEvent = null
         currentTime = 1000000000L
+        healthCheckTriggered = false
         subject =
             SessionDurationHandler(
                 sessionExpirationNoticeInterval = 60L,
+                healthCheckLeadTimeMillis = 500L,
                 eventHandler = mockEventHandler,
                 log = mockLog,
+                triggerHealthCheck = { healthCheckTriggered = true },
                 getCurrentTimestamp = { currentTime * 1000 }
             )
     }
 
     private fun createSubject(
         sessionExpirationNoticeInterval: Long = 60L,
-        getCurrentTime: () -> Long = { currentTime * 1000 }
+        healthCheckLeadTimeMillis: Long = 500L,
+        getCurrentTime: () -> Long = { currentTime * 1000 },
+        onHealthCheckTriggered: () -> Unit = { healthCheckTriggered = true }
     ) = SessionDurationHandler(
         sessionExpirationNoticeInterval = sessionExpirationNoticeInterval,
+        healthCheckLeadTimeMillis = healthCheckLeadTimeMillis,
         eventHandler = mockEventHandler,
         log = mockLog,
+        triggerHealthCheck = onHealthCheckTriggered,
         getCurrentTimestamp = getCurrentTime
     )
 
@@ -185,4 +193,92 @@ class SessionDurationHandlerTest {
 
         assertThat(capturedEvent).isNull()
     }
+
+    @Test
+    fun `when health check timer fires then triggers health check callback`() =
+        runBlocking {
+            withTimeout(DEFAULT_TIMEOUT) {
+                val givenNoticeInterval = 1L
+                val givenHealthCheckLeadTime = 500L
+                val givenExpirationDate = currentTime + 3L
+                val subject = createSubject(
+                    sessionExpirationNoticeInterval = givenNoticeInterval,
+                    healthCheckLeadTimeMillis = givenHealthCheckLeadTime
+                )
+
+                subject.updateSessionDuration(null, givenExpirationDate)
+
+                // Wait for health check timer to fire (should fire 500ms before expiration notice)
+                delay(1600)
+
+                assertThat(healthCheckTriggered).isEqualTo(true)
+            }
+        }
+
+    @Test
+    fun `when health check lead time is too short then triggers health check immediately`() =
+        runBlocking {
+            val givenNoticeInterval = 1L
+            val givenHealthCheckLeadTime = 5000L // 5 seconds lead time
+            val givenExpirationDate = currentTime + 2L // Only 1 second until notice time
+            val subject = createSubject(
+                sessionExpirationNoticeInterval = givenNoticeInterval,
+                healthCheckLeadTimeMillis = givenHealthCheckLeadTime
+            )
+
+            subject.updateSessionDuration(null, givenExpirationDate)
+
+            // Health check should be triggered immediately since lead time is too short
+            assertThat(healthCheckTriggered).isEqualTo(true)
+        }
+
+    @Test
+    fun `when updateSessionDuration with new expirationDate then reschedules both timers`() =
+        runBlocking {
+            withTimeout(DEFAULT_TIMEOUT) {
+                val givenNoticeInterval = 1L
+                val givenHealthCheckLeadTime = 300L
+                healthCheckTriggered = false
+                val subject = createSubject(
+                    sessionExpirationNoticeInterval = givenNoticeInterval,
+                    healthCheckLeadTimeMillis = givenHealthCheckLeadTime
+                )
+
+                // Set initial expiration date
+                subject.updateSessionDuration(null, currentTime + 2L)
+
+                // Update to a later expiration date before timers fire
+                subject.updateSessionDuration(null, currentTime + 10L)
+
+                // Wait for when first timers would have expired
+                delay(1200)
+
+                // Neither timer should have fired yet since they were rescheduled
+                assertThat(healthCheckTriggered).isEqualTo(false)
+                assertThat(capturedEvent).isNull()
+            }
+        }
+
+    @Test
+    fun `when clear then cancels health check timer`() =
+        runBlocking {
+            withTimeout(DEFAULT_TIMEOUT) {
+                val givenNoticeInterval = 1L
+                val givenHealthCheckLeadTime = 300L
+                val givenExpirationDate = currentTime + 2L
+                val subject = createSubject(
+                    sessionExpirationNoticeInterval = givenNoticeInterval,
+                    healthCheckLeadTimeMillis = givenHealthCheckLeadTime
+                )
+
+                subject.updateSessionDuration(null, givenExpirationDate)
+
+                subject.clear()
+
+                // Wait for when health check timer would have fired
+                delay(1000)
+
+                assertThat(healthCheckTriggered).isEqualTo(false)
+            }
+        }
 }

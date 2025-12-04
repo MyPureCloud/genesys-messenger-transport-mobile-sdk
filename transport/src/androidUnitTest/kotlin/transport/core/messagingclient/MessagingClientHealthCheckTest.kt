@@ -34,6 +34,7 @@ class MessagingClientHealthCheckTest : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(expectedMessage)
+            mockSessionDurationHandler.updateSessionDuration(null, null)
             mockEventHandler.onEvent(Event.HealthChecked)
         }
         verify(exactly = 0) {
@@ -131,6 +132,7 @@ class MessagingClientHealthCheckTest : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
+            mockSessionDurationHandler.updateSessionDuration(null, null)
             mockEventHandler.onEvent(Event.HealthChecked)
         }
     }
