@@ -246,6 +246,12 @@ internal object LogMessages {
         delaySeconds: Long
     ) = "Starting expiration timer with delay: $delayMillis ms ($delaySeconds seconds)"
 
+    fun startingHealthCheckTimer(delayMillis: Long) =
+        "Starting health check timer with delay: $delayMillis ms (${delayMillis / 1000} seconds)"
+
+    fun healthCheckLeadTimeTooShort(delayMillis: Long) =
+        "Health check lead time too short (delay: $delayMillis ms), triggering health check immediately"
+
     fun noticeTimeAlreadyPassed(delayMillis: Long) = "Notice time has already passed (delay: $delayMillis ms)"
 
     // Action Timer

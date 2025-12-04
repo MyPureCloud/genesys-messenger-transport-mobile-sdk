@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.core.sessionduration
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.util.ActionTimer
+import com.genesys.cloud.messenger.transport.util.DEFAULT_HEALTH_CHECK_LEAD_TIME_MILLIS
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
@@ -12,8 +13,11 @@ import com.genesys.cloud.messenger.transport.util.logs.LogMessages
  *
  * @param sessionExpirationNoticeInterval The time in seconds when the session expiration notice
  * should be shown before the expiration date.
+ * @param healthCheckLeadTimeMillis The time in milliseconds before the expiration notice
+ * when a health check should be triggered to verify if the session is still valid.
  * @param eventHandler Handler for emitting events to the messaging client.
  * @param log Logger instance for logging session duration events.
+ * @param triggerHealthCheck Callback to trigger a health check request.
  * @param getCurrentTimestamp Function to get the current timestamp in milliseconds.
  */
 internal class SessionDurationHandler(
@@ -21,6 +25,8 @@ internal class SessionDurationHandler(
     private val eventHandler: EventHandler,
     private val log: Log,
     private val getCurrentTimestamp: () -> Long = { Platform().epochMillis() },
+    private val healthCheckLeadTimeMillis: Long = DEFAULT_HEALTH_CHECK_LEAD_TIME_MILLIS,
+    var triggerHealthCheck: () -> Unit = {},
 ) {
     private var currentDurationSeconds: Long? = null
     private var currentExpirationDate: Long? = null
@@ -29,6 +35,12 @@ internal class SessionDurationHandler(
         ActionTimer(
             log = log,
             action = { emitSessionExpirationNotice() }
+        )
+
+    private val healthCheckTimer: ActionTimer =
+        ActionTimer(
+            log = log,
+            action = { triggerHealthCheck() }
         )
 
     /**
@@ -59,14 +71,30 @@ internal class SessionDurationHandler(
         val noticeTimeSeconds = expirationDate - sessionExpirationNoticeInterval
         val noticeTimeMillis = noticeTimeSeconds * 1000
         val currentTimeMillis = getCurrentTimestamp()
-        val delayMillis = noticeTimeMillis - currentTimeMillis
+        val expirationNoticeDelayMillis = noticeTimeMillis - currentTimeMillis
 
-        if (delayMillis > 0) {
-            log.i { LogMessages.startingExpirationTimer(delayMillis, delayMillis / 1000) }
-            expirationTimer.start(delayMillis)
+        if (expirationNoticeDelayMillis > 0) {
+            scheduleHealthCheckTimer(expirationNoticeDelayMillis)
+            scheduleExpirationNoticeTimer(expirationNoticeDelayMillis)
         } else {
-            log.w { LogMessages.noticeTimeAlreadyPassed(delayMillis) }
+            log.w { LogMessages.noticeTimeAlreadyPassed(expirationNoticeDelayMillis) }
         }
+    }
+
+    private fun scheduleHealthCheckTimer(expirationNoticeDelayMillis: Long) {
+        val healthCheckDelayMillis = expirationNoticeDelayMillis - healthCheckLeadTimeMillis
+        if (healthCheckDelayMillis > 0) {
+            log.i { LogMessages.startingHealthCheckTimer(healthCheckDelayMillis) }
+            healthCheckTimer.start(healthCheckDelayMillis)
+        } else {
+            log.i { LogMessages.healthCheckLeadTimeTooShort(healthCheckDelayMillis) }
+            triggerHealthCheck()
+        }
+    }
+
+    private fun scheduleExpirationNoticeTimer(expirationNoticeDelayMillis: Long) {
+        log.i { LogMessages.startingExpirationTimer(expirationNoticeDelayMillis, expirationNoticeDelayMillis / 1000) }
+        expirationTimer.start(expirationNoticeDelayMillis)
     }
 
     private fun emitSessionExpirationNotice() {
@@ -77,5 +105,6 @@ internal class SessionDurationHandler(
         currentDurationSeconds = null
         currentExpirationDate = null
         expirationTimer.cancel()
+        healthCheckTimer.cancel()
     }
 }
