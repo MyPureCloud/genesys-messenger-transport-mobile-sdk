@@ -13,7 +13,7 @@ enum class Command(val description: String) {
     FILE_ATTACHMENT_PROFILE("fileAttachmentProfile"),
     DEPLOYMENT("deployment"),
     DETACH("detach <attachmentId>"),
-    HEALTH_CHECK("healthcheck"),
+    HEALTH_CHECK("healthCheck"),
     HISTORY("history"),
     INVALIDATE_CONVERSATION_CACHE("invalidateConversationCache"),
     NEW_CHAT("newChat"),

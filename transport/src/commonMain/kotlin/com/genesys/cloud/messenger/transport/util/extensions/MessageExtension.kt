@@ -47,7 +47,8 @@ internal fun StructuredMessage.toMessage(): Message {
                         isInbound()
                     }
             ),
-        authenticated = metadata["authenticated"]?.toBoolean() ?: false
+        authenticated = metadata["authenticated"]?.toBoolean() ?: false,
+        metadata = metadata,
     )
 }
 

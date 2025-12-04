@@ -82,6 +82,7 @@ internal class MessageExtensionTest {
                 timeStamp = null,
                 events = listOf(Event.ConversationAutostart),
                 from = Participant(originatingEntity = Participant.OriginatingEntity.Human),
+                metadata = mapOf("customMessageId" to "1234567890"),
             )
         val expectedMessage3 =
             Message(
@@ -97,6 +98,7 @@ internal class MessageExtensionTest {
                         QuickReplyTestValues.buttonResponse_b,
                     ),
                 from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
+                metadata = mapOf("customMessageId" to "1234567890"),
             )
 
         val result = TestWebMessagingApiResponses.testMessageEntityList.entities.toMessageList()
@@ -180,6 +182,7 @@ internal class MessageExtensionTest {
                         imageUrl = "http://image.png",
                         originatingEntity = Participant.OriginatingEntity.Human
                     ),
+                metadata = mapOf("customMessageId" to "test custom id"),
             )
 
         givenStructuredMessage.toMessage().run {
