@@ -6,4 +6,4 @@ internal const val UNKNOWN = "unknown"
 internal const val UNKNOWN_LONG = -1L
 internal const val DURATION_SECONDS_KEY = "durationSeconds"
 internal const val EXPIRATION_DATE_KEY = "expirationDate"
-internal const val DEFAULT_HEALTH_CHECK_LEAD_TIME_MILLIS = 10000L
+internal const val DEFAULT_HEALTH_CHECK_PRE_NOTICE_TIME_MILLIS = 10000L

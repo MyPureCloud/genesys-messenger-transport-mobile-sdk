@@ -43,7 +43,7 @@ class SessionDurationHandlerTest {
         subject =
             SessionDurationHandler(
                 sessionExpirationNoticeInterval = 60L,
-                healthCheckLeadTimeMillis = 500L,
+                healthCheckPreNoticeTimeMillis = 500L,
                 eventHandler = mockEventHandler,
                 log = mockLog,
                 triggerHealthCheck = { healthCheckTriggered = true },
@@ -58,7 +58,7 @@ class SessionDurationHandlerTest {
         onHealthCheckTriggered: () -> Unit = { healthCheckTriggered = true }
     ) = SessionDurationHandler(
         sessionExpirationNoticeInterval = sessionExpirationNoticeInterval,
-        healthCheckLeadTimeMillis = healthCheckLeadTimeMillis,
+        healthCheckPreNoticeTimeMillis = healthCheckLeadTimeMillis,
         eventHandler = mockEventHandler,
         log = mockLog,
         triggerHealthCheck = onHealthCheckTriggered,
@@ -292,7 +292,7 @@ class SessionDurationHandlerTest {
                 val givenExpirationDate = currentTime + 3L
                 val subject = SessionDurationHandler(
                     sessionExpirationNoticeInterval = givenNoticeInterval,
-                    healthCheckLeadTimeMillis = givenHealthCheckLeadTime,
+                    healthCheckPreNoticeTimeMillis = givenHealthCheckLeadTime,
                     eventHandler = mockEventHandler,
                     log = mockLog,
                     getCurrentTimestamp = { currentTime * 1000 }
@@ -319,7 +319,7 @@ class SessionDurationHandlerTest {
                 val givenHealthCheckLeadTime = 500L
                 val subject = SessionDurationHandler(
                     sessionExpirationNoticeInterval = givenNoticeInterval,
-                    healthCheckLeadTimeMillis = givenHealthCheckLeadTime,
+                    healthCheckPreNoticeTimeMillis = givenHealthCheckLeadTime,
                     eventHandler = mockEventHandler,
                     log = mockLog,
                     getCurrentTimestamp = { currentTime * 1000 }
@@ -350,7 +350,7 @@ class SessionDurationHandlerTest {
                 val givenExpirationDate = currentTime + 2L
                 val subject = SessionDurationHandler(
                     sessionExpirationNoticeInterval = givenNoticeInterval,
-                    healthCheckLeadTimeMillis = givenHealthCheckLeadTime,
+                    healthCheckPreNoticeTimeMillis = givenHealthCheckLeadTime,
                     eventHandler = mockEventHandler,
                     log = mockLog,
                     triggerHealthCheck = { healthCheckCount++ },

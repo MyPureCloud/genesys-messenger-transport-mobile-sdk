@@ -3,7 +3,7 @@ package com.genesys.cloud.messenger.transport.core.sessionduration
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.util.ActionTimer
-import com.genesys.cloud.messenger.transport.util.DEFAULT_HEALTH_CHECK_LEAD_TIME_MILLIS
+import com.genesys.cloud.messenger.transport.util.DEFAULT_HEALTH_CHECK_PRE_NOTICE_TIME_MILLIS
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
@@ -13,7 +13,7 @@ import com.genesys.cloud.messenger.transport.util.logs.LogMessages
  *
  * @param sessionExpirationNoticeInterval The time in seconds when the session expiration notice
  * should be shown before the expiration date.
- * @param healthCheckLeadTimeMillis The time in milliseconds before the expiration notice
+ * @param healthCheckPreNoticeTimeMillis The time in milliseconds before the expiration notice
  * when a health check should be triggered to verify if the session is still valid.
  * @param eventHandler Handler for emitting events to the messaging client.
  * @param log Logger instance for logging session duration events.
@@ -25,7 +25,7 @@ internal class SessionDurationHandler(
     private val eventHandler: EventHandler,
     private val log: Log,
     private val getCurrentTimestamp: () -> Long = { Platform().epochMillis() },
-    private val healthCheckLeadTimeMillis: Long = DEFAULT_HEALTH_CHECK_LEAD_TIME_MILLIS,
+    private val healthCheckPreNoticeTimeMillis: Long = DEFAULT_HEALTH_CHECK_PRE_NOTICE_TIME_MILLIS,
     var triggerHealthCheck: () -> Unit = {},
 ) {
     private var currentDurationSeconds: Long? = null
@@ -82,7 +82,7 @@ internal class SessionDurationHandler(
     }
 
     private fun scheduleHealthCheckTimer(expirationNoticeDelayMillis: Long) {
-        val healthCheckDelayMillis = expirationNoticeDelayMillis - healthCheckLeadTimeMillis
+        val healthCheckDelayMillis = expirationNoticeDelayMillis - healthCheckPreNoticeTimeMillis
         if (healthCheckDelayMillis > 0) {
             log.i { LogMessages.startingHealthCheckTimer(healthCheckDelayMillis) }
             healthCheckTimer.start(healthCheckDelayMillis)

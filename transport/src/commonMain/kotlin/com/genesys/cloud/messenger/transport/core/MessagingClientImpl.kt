@@ -44,7 +44,6 @@ import com.genesys.cloud.messenger.transport.shyrka.send.GetAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
-import com.genesys.cloud.messenger.transport.util.DEFAULT_HEALTH_CHECK_LEAD_TIME_MILLIS
 import com.genesys.cloud.messenger.transport.util.DURATION_SECONDS_KEY
 import com.genesys.cloud.messenger.transport.util.EXPIRATION_DATE_KEY
 import com.genesys.cloud.messenger.transport.util.Platform
@@ -120,7 +119,7 @@ internal class MessagingClientImpl(
     private val defaultDispatcher: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
     private val sessionDurationHandler: SessionDurationHandler =
         SessionDurationHandler(
-            sessionExpirationNoticeInterval = configuration.sessionExpirationNoticeInterval - 10L,
+            sessionExpirationNoticeInterval = configuration.sessionExpirationNoticeInterval,
             eventHandler = eventHandler,
             log = log.withTag(LogTag.SESSION_DURATION),
         ),
