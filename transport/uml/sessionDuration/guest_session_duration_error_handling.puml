@@ -10,7 +10,7 @@ title Guest Session Duration - Error Handling
 participant App
 box TransportSDK #lightcyan
 participant MessagingClient
-participant SessionDurationUseCase
+participant SessionDurationHandler
 end box
 box BackEnd
 participant Shyrka
@@ -26,14 +26,14 @@ alt Cases when the session end timer should be stopped
     else Error state
         MessagingClient [#999]-> MessagingClient: transitionToStateError(errorCode, errorMessage)
     end
-    MessagingClient -> SessionDurationUseCase: clear()
-    SessionDurationUseCase -> SessionDurationUseCase: stopHealthCheckTimer()
-    SessionDurationUseCase -> SessionDurationUseCase: stopExpirationTimer()
+    MessagingClient -> SessionDurationHandler: clear()
+    SessionDurationHandler -> SessionDurationHandler: stopHealthCheckTimer()
+    SessionDurationHandler -> SessionDurationHandler: stopExpirationTimer()
     alt expiration dialog is shown
-        rnote over SessionDurationUseCase
+        rnote over SessionDurationHandler
           Given: session expiration notice is sent but we are before the timeout
         end rnote
-        SessionDurationUseCase --> MessagingClient: onRemoveExpirationNotice()
+        SessionDurationHandler --> MessagingClient: onRemoveExpirationNotice()
         MessagingClient -> App: eventListener.onEvent(RemoveSessionExpirationNotice)
     end
     alt Connection closed
