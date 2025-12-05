@@ -268,38 +268,43 @@ object CardTestValues {
     internal const val customMessageId = "customMessageId"
     internal const val LINK_TYPE = "Link"
 
-    val cardWithPostbackAction = Message.Card(
-        title = "Title",
-        description = "Description",
-        imageUrl = "http://image.com/image.png",
-        actions = listOf(
-            ButtonResponse(
-                type = "Postback",
-                text = "Select this option",
-                payload = "postback_payload"
-            )
+    val cardWithPostbackAction =
+        Message.Card(
+            title = "Title",
+            description = "Description",
+            imageUrl = "http://image.com/image.png",
+            actions =
+                listOf(
+                    ButtonResponse(
+                        type = "Postback",
+                        text = "Select this option",
+                        payload = "postback_payload"
+                    )
+                )
         )
-    )
-    val postbackButtonResponse = ButtonResponse(
-        text = POSTBACK_TEXT,
-        type = QuickReplyTestValues.BUTTON,
-        payload = POSTBACK_PAYLOAD
-    )
+    val postbackButtonResponse =
+        ButtonResponse(
+            text = POSTBACK_TEXT,
+            type = QuickReplyTestValues.BUTTON,
+            payload = POSTBACK_PAYLOAD
+        )
 
-    internal val structuredAction = StructuredMessage.Content.Action(
-        type = "link",
-        text = text,
-        url = url,
-        payload = payload
-    )
+    internal val structuredAction =
+        StructuredMessage.Content.Action(
+            type = "link",
+            text = text,
+            url = url,
+            payload = payload
+        )
 
-    internal val structuredCard = StructuredMessage.Content.CardContent.Card(
-        title = title,
-        description = description,
-        image = image,
-        defaultAction = null,
-        actions = listOf(structuredAction)
-    )
+    internal val structuredCard =
+        StructuredMessage.Content.CardContent.Card(
+            title = title,
+            description = description,
+            image = image,
+            defaultAction = null,
+            actions = listOf(structuredAction)
+        )
 
     internal fun createCard(
         title: String,
@@ -311,13 +316,14 @@ object CardTestValues {
         description = description,
         image = null,
         defaultAction = null,
-        actions = listOf(
-            StructuredMessage.Content.Action(
-                type = LINK_TYPE,
-                text = actionText,
-                url = linkUrl
+        actions =
+            listOf(
+                StructuredMessage.Content.Action(
+                    type = LINK_TYPE,
+                    text = actionText,
+                    url = linkUrl
+                )
             )
-        )
     )
 
     internal fun createCardContent(
@@ -334,9 +340,10 @@ object CardTestValues {
     ): StructuredMessage.Content.CarouselContent {
         return StructuredMessage.Content.CarouselContent(
             contentType = "Carousel",
-            carousel = StructuredMessage.Content.CarouselContent.Carousel(
-                cards = cards.toList()
-            )
+            carousel =
+                StructuredMessage.Content.CarouselContent.Carousel(
+                    cards = cards.toList()
+                )
         )
     }
 
@@ -345,17 +352,19 @@ object CardTestValues {
         title: String = CardTestValues.title,
         actionText: String = text,
     ): StructuredMessage {
-        val card = structuredCard.copy(
-            title = title,
-            actions = listOf(
-                StructuredMessage.Content.Action(
-                    type = "link",
-                    text = actionText,
-                    url = url,
-                    payload = payload
-                )
+        val card =
+            structuredCard.copy(
+                title = title,
+                actions =
+                    listOf(
+                        StructuredMessage.Content.Action(
+                            type = "link",
+                            text = actionText,
+                            url = url,
+                            payload = payload
+                        )
+                    )
             )
-        )
 
         return StructuredMessageValues.createStructuredMessageForTesting(
             id = id,
@@ -370,14 +379,18 @@ object CardTestValues {
         titles: List<String>,
         lastCardActionText: String = "Open"
     ): StructuredMessage {
-        val cards = titles.mapIndexed { index, title ->
-            structuredCard.copy(
-                title = title,
-                actions = if (index == titles.lastIndex)
-                    listOf(StructuredMessage.Content.Action(type = "Link", text = lastCardActionText, url = "http://example.org"))
-                else emptyList()
-            )
-        }
+        val cards =
+            titles.mapIndexed { index, title ->
+                structuredCard.copy(
+                    title = title,
+                    actions =
+                        if (index == titles.lastIndex) {
+                            listOf(StructuredMessage.Content.Action(type = "Link", text = lastCardActionText, url = "http://example.org"))
+                        } else {
+                            emptyList()
+                        }
+                )
+            }
 
         return StructuredMessageValues.createStructuredMessageForTesting(
             id = id,
@@ -392,47 +405,53 @@ object CardTestValues {
         cardCount: Int = 2,
         linkUrl: String = url
     ): StructuredMessage {
-        val cards = (1..cardCount).map {
-            StructuredMessage.Content.CardContent.Card(
-                title = title,
-                description = description,
-                image = image,
-                defaultAction = StructuredMessage.Content.Action(
-                    type = LINK_TYPE,
-                    text = "",
-                    url = linkUrl
-                ),
-                actions = listOf(
-                    StructuredMessage.Content.Action(type = LINK_TYPE, text = text, url = linkUrl),
-                    StructuredMessage.Content.Action(type = POSTBACK_TYPE, text = POSTBACK_TEXT, payload = POSTBACK_PAYLOAD)
+        val cards =
+            (1..cardCount).map {
+                StructuredMessage.Content.CardContent.Card(
+                    title = title,
+                    description = description,
+                    image = image,
+                    defaultAction =
+                        StructuredMessage.Content.Action(
+                            type = LINK_TYPE,
+                            text = "",
+                            url = linkUrl
+                        ),
+                    actions =
+                        listOf(
+                            StructuredMessage.Content.Action(type = LINK_TYPE, text = text, url = linkUrl),
+                            StructuredMessage.Content.Action(type = POSTBACK_TYPE, text = POSTBACK_TEXT, payload = POSTBACK_PAYLOAD)
+                        )
                 )
-            )
-        }
+            }
         return StructuredMessageValues.createStructuredMessageForTesting(
             id = id,
             type = StructuredMessage.Type.Structured,
             direction = com.genesys.cloud.messenger.transport.core.Message.Direction.Outbound.name,
-            content = listOf(
-                StructuredMessage.Content.CarouselContent(
-                    contentType = "Carousel",
-                    carousel = StructuredMessage.Content.CarouselContent.Carousel(cards)
+            content =
+                listOf(
+                    StructuredMessage.Content.CarouselContent(
+                        contentType = "Carousel",
+                        carousel = StructuredMessage.Content.CarouselContent.Carousel(cards)
+                    )
                 )
-            )
         )
     }
 
-    internal val action = ButtonResponse(
-        type = "link",
-        text = text,
-        payload = payload
-    )
+    internal val action =
+        ButtonResponse(
+            type = "link",
+            text = text,
+            payload = payload
+        )
 
-    internal val card = Message.Card(
-        title = title,
-        description = description,
-        imageUrl = image,
-        actions = listOf(action)
-    )
+    internal val card =
+        Message.Card(
+            title = title,
+            description = description,
+            imageUrl = image,
+            actions = listOf(action)
+        )
 }
 
 object PushTestValues {

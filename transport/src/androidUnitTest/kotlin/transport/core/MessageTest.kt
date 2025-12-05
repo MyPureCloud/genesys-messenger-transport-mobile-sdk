@@ -86,15 +86,15 @@ class MessageTest {
                 attachments = mapOf(AttachmentValues.ID to Attachment(AttachmentValues.ID)),
                 events = listOf(Event.ConversationAutostart),
                 quickReplies = listOf(QuickReplyTestValues.buttonResponse_a),
-            cards = listOf(CardTestValues.card),
-            from =
-                Participant(
-                    name = MessageValues.PARTICIPANT_NAME,
-                    imageUrl = MessageValues.PARTICIPANT_IMAGE_URL,
-                    originatingEntity = Participant.OriginatingEntity.Bot,
-                ),
-            authenticated = true
-        )
+                cards = listOf(CardTestValues.card),
+                from =
+                    Participant(
+                        name = MessageValues.PARTICIPANT_NAME,
+                        imageUrl = MessageValues.PARTICIPANT_IMAGE_URL,
+                        originatingEntity = Participant.OriginatingEntity.Bot,
+                    ),
+                authenticated = true
+            )
 
         subject.run {
             assertThat(id).isEqualTo(expectedId)

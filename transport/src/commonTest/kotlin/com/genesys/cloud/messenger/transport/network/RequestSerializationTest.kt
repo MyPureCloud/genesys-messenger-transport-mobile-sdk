@@ -511,22 +511,25 @@ class RequestSerializationTest {
     fun `StructuredMessage with ButtonResponse serializes correctly`() {
         val expectedButtonResponse = CardTestValues.postbackButtonResponse
 
-        val structuredMessage = StructuredMessage(
-            text = expectedButtonResponse.text,
-            content = listOf(
-                Message.Content(
-                    contentType = Message.Content.Type.ButtonResponse,
-                    buttonResponse = expectedButtonResponse
-                )
-            ),
-            metadata = mapOf("customMessageId" to "12345")
-        )
+        val structuredMessage =
+            StructuredMessage(
+                text = expectedButtonResponse.text,
+                content =
+                    listOf(
+                        Message.Content(
+                            contentType = Message.Content.Type.ButtonResponse,
+                            buttonResponse = expectedButtonResponse
+                        )
+                    ),
+                metadata = mapOf("customMessageId" to "12345")
+            )
 
-        val messageJson = WebMessagingJson.json
-            .encodeToJsonElement(
-                StructuredMessage.serializer(),
-                structuredMessage
-            ).jsonObject
+        val messageJson =
+            WebMessagingJson.json
+                .encodeToJsonElement(
+                    StructuredMessage.serializer(),
+                    structuredMessage
+                ).jsonObject
 
         val text = messageJson["text"]?.jsonPrimitive?.content
         val content = messageJson["content"]?.jsonArray?.firstOrNull()?.jsonObject
