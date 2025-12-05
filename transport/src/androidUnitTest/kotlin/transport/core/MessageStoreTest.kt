@@ -131,12 +131,7 @@ internal class MessageStoreTest {
 
     @Test
     fun `when update() inbound message`() {
-        val messageRequest =
-            subject
-                .prepareMessage(TestValues.TOKEN, "test message")
-                .message.metadata
-                ?.get("customMessageId")
-                ?: "empty"
+        val messageRequest = subject.prepareMessage(TestValues.TOKEN, "test message")
         assertThat(messageRequest.message).isInstanceOf(TextMessage::class)
         val textMessage = messageRequest.message as TextMessage
         val sentMessageId = textMessage.metadata?.get("customMessageId") ?: "empty"
@@ -173,12 +168,7 @@ internal class MessageStoreTest {
 
     @Test
     fun `when update() inbound and then outbound messages`() {
-        val messageRequest =
-            subject
-                .prepareMessage(TestValues.TOKEN, "test message")
-                .message.metadata
-                ?.get("customMessageId")
-                ?: "empty"
+        val messageRequest = subject.prepareMessage(TestValues.TOKEN, "test message")
         assertThat(messageRequest.message).isInstanceOf(TextMessage::class)
         val textMessage = messageRequest.message as TextMessage
         val sentMessageId = textMessage.metadata?.get("customMessageId") ?: "empty"
