@@ -18,6 +18,7 @@ import kotlinx.serialization.Serializable
  *  @property events a list of events related to this message. Empty by default.
  *  @property from the [Participant] that sends a message.
  *  @property authenticated indicates if this message was sent from authenticated user.
+ *  @property tracingId optional tracing identifier for the message, used for debugging and tracking purposes.
  */
 @Serializable
 data class Message(
@@ -37,6 +38,7 @@ data class Message(
         ),
     val authenticated: Boolean = false,
     val text: String? = null,
+    val tracingId: String? = null,
 ) {
     /**
      * The enum type representation of the message.
