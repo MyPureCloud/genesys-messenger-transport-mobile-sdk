@@ -537,7 +537,6 @@ class RequestSerializationTest {
                             buttonResponse = expectedButtonResponse
                         )
                     ),
-                metadata = mapOf("customMessageId" to "12345")
             )
 
         val messageJson =

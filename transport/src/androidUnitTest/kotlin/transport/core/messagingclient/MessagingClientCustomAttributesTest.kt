@@ -211,8 +211,6 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
         val expectedButtonResponse = CardTestValues.postbackButtonResponse
         val expectedCustomAttributes = mapOf("A" to "B")
         val expectedChannel = Channel(Channel.Metadata(expectedCustomAttributes))
-        val expectedRequest =
-            """{"token":"${Request.token}","message":{"text":"${expectedButtonResponse.text}","metadata":{"customMessageId":"card-123"},"content":[{"contentType":"ButtonResponse","buttonResponse":{"text":"${expectedButtonResponse.text}","payload":"${expectedButtonResponse.payload}","type":"${expectedButtonResponse.type}"}}],"channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Structured"},"action":"onMessage"}"""
         every {
             mockMessageStore.preparePostbackMessage(
                 Request.token,
@@ -225,7 +223,6 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
                 message =
                     StructuredMessage(
                         text = expectedButtonResponse.text,
-                        metadata = mapOf("customMessageId" to "card-123"),
                         content =
                             listOf(
                                 Message.Content(

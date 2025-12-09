@@ -64,7 +64,6 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
                 message =
                     StructuredMessage(
                         text = expectedButtonResponse.text,
-                        metadata = mapOf("customMessageId" to "card-123"),
                         content =
                             listOf(
                                 Message.Content(
@@ -179,7 +178,6 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
                 message =
                     StructuredMessage(
                         text = givenLinkButton.text,
-                        metadata = mapOf("customMessageId" to MessageValues.ID),
                         content =
                             listOf(
                                 Message.Content(

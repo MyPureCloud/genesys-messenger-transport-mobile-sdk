@@ -90,7 +90,6 @@ open class BaseMessagingClientTest {
                     message =
                         StructuredMessage(
                             text = "Postback button text",
-                            metadata = mapOf("customMessageId" to "card-123"),
                             content =
                                 listOf(
                                     Message.Content(

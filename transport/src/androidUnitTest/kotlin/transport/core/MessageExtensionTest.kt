@@ -136,7 +136,6 @@ internal class MessageExtensionTest {
                         )
                     ),
                 direction = "Inbound",
-                metadata = mapOf("customMessageId" to "test custom id"),
                 events =
                     listOf(
                         PresenceEvent(

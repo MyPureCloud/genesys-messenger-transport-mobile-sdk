@@ -15,7 +15,6 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ButtonResponseContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.QuickReplyContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
-import com.genesys.cloud.messenger.transport.util.PUSH_CONFIG_KEY
 import com.genesys.cloud.messenger.transport.util.Vault
 
 internal const val DEFAULT_TIMEOUT = 10000L
@@ -266,7 +265,6 @@ object CardTestValues {
     internal const val POSTBACK_TEXT = "Book Now"
     internal const val POSTBACK_TYPE = "Postback"
     internal const val POSTBACK_PAYLOAD = "I want it"
-    internal const val customMessageId = "customMessageId"
     internal const val LINK_TYPE = "Link"
 
     val cardWithPostbackAction =
@@ -428,7 +426,7 @@ object CardTestValues {
         return StructuredMessageValues.createStructuredMessageForTesting(
             id = id,
             type = StructuredMessage.Type.Structured,
-            direction = com.genesys.cloud.messenger.transport.core.Message.Direction.Outbound.name,
+            direction = Message.Direction.Outbound.name,
             content =
                 listOf(
                     StructuredMessage.Content.CarouselContent(
