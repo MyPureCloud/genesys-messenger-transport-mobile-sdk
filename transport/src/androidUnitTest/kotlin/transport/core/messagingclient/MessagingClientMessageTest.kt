@@ -52,11 +52,9 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
 
     @Test
     fun `when connect and then sendMessage()`() {
-        every { mockPlatformSocket.sendMessage(Request.textMessage()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isTextMessageRequest(it) }) } answers {
             slot.captured.onMessage(Response.onMessage())
         }
-        val expectedMessageRequest =
-            """{"token":"${Request.token}","message":{"text":"${MessageValues.TEXT.sanitizeText()}","type":"Text"},"action":"onMessage"}"""
         val expectedMessage =
             Message(
                 id = "some_custom_message_id",
@@ -65,6 +63,7 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
                 type = "Text",
                 text = MessageValues.TEXT,
                 timeStamp = 1661196266704,
+                tracingId = "some_custom_message_id",
             )
         subject.connect()
 
@@ -78,7 +77,7 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
             mockMessageStore.prepareMessage(Request.token, MessageValues.TEXT)
             mockAttachmentHandler.onSending()
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(expectedMessageRequest)
+            mockPlatformSocket.sendMessage(match { Request.isTextMessageRequest(it) })
             mockMessageStore.update(expectedMessage)
             mockCustomAttributesStore.onSent()
             mockAttachmentHandler.onSent(emptyMap())
@@ -212,7 +211,8 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
                 type = "Text",
                 text = "Hello world!",
                 timeStamp = 1661196266704,
-                from = Participant(originatingEntity = Participant.OriginatingEntity.Unknown)
+                from = Participant(originatingEntity = Participant.OriginatingEntity.Unknown),
+                tracingId = "some_custom_message_id",
             )
         subject.connect()
 

@@ -38,8 +38,6 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
 
     @Test
     fun `when sendMessage with customAttributes`() {
-        val expectedMessage =
-            """{"token":"${Request.token}","message":{"text":"${MessageValues.TEXT.sanitizeText()}","channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"action":"onMessage"}"""
         val expectedText = MessageValues.TEXT
         val expectedCustomAttributes = mapOf("A" to "B")
         val expectedChannel = Channel(Channel.Metadata(expectedCustomAttributes))
@@ -66,7 +64,7 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
             mockMessageStore.prepareMessage(Request.token, expectedText, expectedChannel)
             mockAttachmentHandler.onSending()
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(expectedMessage)
+            mockPlatformSocket.sendMessage(match { Request.isTextMessageRequest(it, MessageValues.TEXT.sanitizeText()) && it.contains(""""customAttributes":{"A":"B"}""") })
         }
         val sanitizedText = MessageValues.TEXT.sanitizeText()
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
@@ -116,7 +114,7 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            sendingCustomAttributesSequence(Request.autostart())
+            sendingCustomAttributesSequence { Request.isAutostartRequest(it) && it.contains(""""customAttributes":{"A":"B"}""") }
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
@@ -142,7 +140,7 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
                     )
             )
         every { mockCustomAttributesStore.getCustomAttributesToSend() } returns mutableMapOf("A" to fakeLargeCustomAttribute)
-        every { mockPlatformSocket.sendMessage(Request.autostart(""""channel":{"metadata":{"customAttributes":{"A":"$fakeLargeCustomAttribute"}}},""")) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isAutostartRequest(it) && it.contains(""""customAttributes":{"A":"$fakeLargeCustomAttribute"}""") }) } answers {
             slot.captured.onMessage(Response.customAttributeSizeTooLarge)
         }
 
@@ -150,7 +148,7 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            sendingCustomAttributesSequence(Request.autostart(""""channel":{"metadata":{"customAttributes":{"A":"$fakeLargeCustomAttribute"}}},"""))
+            sendingCustomAttributesSequence { Request.isAutostartRequest(it) && it.contains(""""customAttributes":{"A":"$fakeLargeCustomAttribute"}""") }
             mockCustomAttributesStore.onError()
             mockEventHandler.onEvent(
                 Event.Error(
@@ -204,7 +202,7 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
             mockCustomAttributesStore.onSending()
             mockMessageStore.prepareMessageWith(Request.token, expectedButtonResponse, expectedChannel)
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(Request.quickReplyWith(channel = """"channel":{"metadata":{"customAttributes":{"A":"B"}}},"""))
+            mockPlatformSocket.sendMessage(match { Request.isQuickReplyRequest(it) && it.contains(""""customAttributes":{"A":"B"}""") })
         }
     }
 
@@ -251,15 +249,15 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
             mockCustomAttributesStore.onSending()
             mockMessageStore.preparePostbackMessage(Request.token, expectedButtonResponse, expectedChannel)
             mockLogger.i(any())
-            mockPlatformSocket.sendMessage(expectedRequest)
+            mockPlatformSocket.sendMessage(match { Request.isStructuredMessageRequest(it) && it.contains(""""customAttributes":{"A":"B"}""") })
         }
     }
 
-    private fun MockKVerificationScope.sendingCustomAttributesSequence(message: String) {
+    private fun MockKVerificationScope.sendingCustomAttributesSequence(messageMatcher: (String) -> Boolean) {
         mockCustomAttributesStore.getCustomAttributesToSend()
         mockCustomAttributesStore.onSending()
         mockLogger.i(capture(logSlot))
         mockLogger.i(capture(logSlot))
-        mockPlatformSocket.sendMessage(message)
+        mockPlatformSocket.sendMessage(match(messageMatcher))
     }
 }

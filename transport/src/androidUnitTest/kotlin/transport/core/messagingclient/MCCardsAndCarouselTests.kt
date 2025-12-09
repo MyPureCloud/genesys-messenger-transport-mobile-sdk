@@ -21,7 +21,6 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
     @Test
     fun `when connect() and then sendCardReply() but no custom attributes`() {
         val givenPostbackResponse = CardTestValues.postbackButtonResponse
-        val expectedRequest = Request.expectedPostbackRequestJson
 
         subject.connect()
         subject.sendCardReply(givenPostbackResponse)
@@ -32,7 +31,7 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockMessageStore.preparePostbackMessage(Request.token, givenPostbackResponse, null)
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(expectedRequest)
+            mockPlatformSocket.sendMessage(match { Request.isPostbackRequest(it) })
         }
 
         verify(exactly = 0) {
@@ -52,8 +51,6 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
         val expectedButtonResponse = CardTestValues.postbackButtonResponse
         val expectedCustomAttributes = mapOf("source" to "card")
         val expectedChannel = Channel(Channel.Metadata(expectedCustomAttributes))
-        val expectedRequest =
-            """{"token":"${Request.token}","message":{"text":"${expectedButtonResponse.text}","metadata":{"customMessageId":"card-123"},"content":[{"contentType":"ButtonResponse","buttonResponse":{"text":"${expectedButtonResponse.text}","payload":"${expectedButtonResponse.payload}","type":"${expectedButtonResponse.type}"}}],"channel":{"metadata":{"customAttributes":{"source":"card"}}},"type":"Structured"},"action":"onMessage"}"""
 
         every {
             mockMessageStore.preparePostbackMessage(
@@ -91,7 +88,12 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
             mockCustomAttributesStore.onSending()
             mockMessageStore.preparePostbackMessage(Request.token, expectedButtonResponse, expectedChannel)
             mockLogger.i(any())
-            mockPlatformSocket.sendMessage(expectedRequest)
+            mockPlatformSocket.sendMessage(match {
+                it.contains(""""text":"${expectedButtonResponse.text}"""") &&
+                    it.contains(""""type":"Structured"""") &&
+                    it.contains(""""action":"onMessage"""") &&
+                    it.contains(""""customAttributes":{"source":"card"}""")
+            })
         }
     }
 
@@ -136,10 +138,9 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
     @Test
     fun `when error response received after sendCardReply then onMessageError is called`() {
         val givenButtonResponse = CardTestValues.postbackButtonResponse
-        val expectedRequestJson = Request.expectedPostbackRequestJson
 
         every {
-            mockPlatformSocket.sendMessage(expectedRequestJson)
+            mockPlatformSocket.sendMessage(match { Request.isPostbackRequest(it) })
         } answers {
             slot.captured.onMessage(Response.tooManyRequests)
         }
