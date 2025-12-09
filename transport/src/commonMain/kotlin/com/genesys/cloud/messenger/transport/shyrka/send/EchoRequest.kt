@@ -1,6 +1,5 @@
 package com.genesys.cloud.messenger.transport.shyrka.send
 
-import com.genesys.cloud.messenger.transport.util.Platform
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 

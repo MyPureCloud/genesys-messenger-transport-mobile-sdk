@@ -88,12 +88,14 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
             mockCustomAttributesStore.onSending()
             mockMessageStore.preparePostbackMessage(Request.token, expectedButtonResponse, expectedChannel)
             mockLogger.i(any())
-            mockPlatformSocket.sendMessage(match {
-                it.contains(""""text":"${expectedButtonResponse.text}"""") &&
-                    it.contains(""""type":"Structured"""") &&
-                    it.contains(""""action":"onMessage"""") &&
-                    it.contains(""""customAttributes":{"source":"card"}""")
-            })
+            mockPlatformSocket.sendMessage(
+                match {
+                    it.contains(""""text":"${expectedButtonResponse.text}"""") &&
+                        it.contains(""""type":"Structured"""") &&
+                        it.contains(""""action":"onMessage"""") &&
+                        it.contains(""""customAttributes":{"source":"card"}""")
+                }
+            )
         }
     }
 

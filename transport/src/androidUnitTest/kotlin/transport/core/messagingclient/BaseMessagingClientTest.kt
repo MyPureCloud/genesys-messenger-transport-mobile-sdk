@@ -269,10 +269,15 @@ open class BaseMessagingClientTest {
             mockAuthHandler.jwt // check if jwt is valid
             mockAuthHandler.jwt // use jwt for request
         }
-        mockPlatformSocket.sendMessage(match {
-            if (shouldConfigureAuth) Request.isConfigureAuthenticatedRequest(it, startNew)
-            else Request.isConfigureRequest(it, startNew)
-        })
+        mockPlatformSocket.sendMessage(
+            match {
+                if (shouldConfigureAuth) {
+                    Request.isConfigureAuthenticatedRequest(it, startNew)
+                } else {
+                    Request.isConfigureRequest(it, startNew)
+                }
+            }
+        )
         mockVault.wasAuthenticated = shouldConfigureAuth
         mockAttachmentHandler.fileAttachmentProfile = any()
         mockReconnectionHandler.clear()
@@ -318,10 +323,15 @@ open class BaseMessagingClientTest {
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
-        mockPlatformSocket.sendMessage(match {
-            if (shouldConfigureAuth) Request.isConfigureAuthenticatedRequest(it)
-            else Request.isConfigureRequest(it)
-        })
+        mockPlatformSocket.sendMessage(
+            match {
+                if (shouldConfigureAuth) {
+                    Request.isConfigureAuthenticatedRequest(it)
+                } else {
+                    Request.isConfigureRequest(it)
+                }
+            }
+        )
     }
 
     protected fun errorSequence(stateChange: StateChange) {

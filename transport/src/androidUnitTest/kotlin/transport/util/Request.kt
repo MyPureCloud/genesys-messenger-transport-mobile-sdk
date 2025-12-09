@@ -49,7 +49,9 @@ internal object Request {
         """{"token":"$token","closeAllConnections":true,"action":"closeSession"}"""
     const val clearConversation =
         """{"token":"$token","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Clear"}}],"type":"Event"}}"""
+
     fun isJwtRequest(json: String) = json.contains(""""token":"$token"""") && json.contains(""""action":"getJwt"""")
+
     const val refreshAttachmentUrl =
         """{"token":"$token","attachmentId":"88888888-8888-8888-8888-888888888888","action":"getAttachment"}"""
     val expectedPostbackRequestJson =
