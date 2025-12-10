@@ -63,7 +63,6 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
                 type = "Text",
                 text = MessageValues.TEXT,
                 timeStamp = 1661196266704,
-                tracingId = "some_custom_message_id",
             )
         subject.connect()
 
@@ -212,7 +211,6 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
                 text = "Hello world!",
                 timeStamp = 1661196266704,
                 from = Participant(originatingEntity = Participant.OriginatingEntity.Unknown),
-                tracingId = "some_custom_message_id",
             )
         subject.connect()
 
