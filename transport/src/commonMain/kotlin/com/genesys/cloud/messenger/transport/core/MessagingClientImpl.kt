@@ -606,12 +606,7 @@ internal class MessagingClientImpl(
         if (id.isHealthCheckResponseId()) {
             handleHealthCheck(this)
         } else {
-            messageStore.update(this)
-            if (direction == Message.Direction.Inbound) {
-                internalCustomAttributesStore.onSent()
-                attachmentHandler.onSent(attachments)
-                userTypingProvider.clear()
-            }
+            handleTextMessageUpdate(this)
         }
     }
 
@@ -620,6 +615,15 @@ internal class MessagingClientImpl(
         val expirationDate = message.metadata[EXPIRATION_DATE_KEY]?.toLongOrNull()
         sessionDurationHandler.updateSessionDuration(durationSeconds, expirationDate)
         eventHandler.onEvent(Event.HealthChecked)
+    }
+
+    private fun handleTextMessageUpdate(message: Message) {
+        messageStore.update(message)
+        if (message.direction == Message.Direction.Inbound) {
+            internalCustomAttributesStore.onSent()
+            attachmentHandler.onSent(message.attachments)
+            userTypingProvider.clear()
+        }
     }
 
     private fun Message.handleAsEvent(isReadOnly: Boolean) =
