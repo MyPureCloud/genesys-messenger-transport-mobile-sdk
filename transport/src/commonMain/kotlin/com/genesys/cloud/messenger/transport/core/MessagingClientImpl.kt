@@ -169,7 +169,7 @@ internal class MessagingClientImpl(
         get() = vault.wasAuthenticated
 
     init {
-        sessionDurationHandler.triggerHealthCheck = { sendHealthCheck() }
+        sessionDurationHandler.setTriggerHealthCheck { sendHealthCheck() }
     }
 
     @Throws(IllegalStateException::class, TransportSDKException::class)

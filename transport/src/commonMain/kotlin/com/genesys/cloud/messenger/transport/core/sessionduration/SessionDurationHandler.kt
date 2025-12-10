@@ -26,7 +26,7 @@ internal class SessionDurationHandler(
     private val log: Log,
     private val getCurrentTimestamp: () -> Long = { Platform().epochMillis() },
     private val healthCheckPreNoticeTimeMillis: Long = DEFAULT_HEALTH_CHECK_PRE_NOTICE_TIME_MILLIS,
-    var triggerHealthCheck: () -> Unit = {},
+    private var triggerHealthCheck: () -> Unit = {},
 ) {
     private var currentDurationSeconds: Long? = null
     private var currentExpirationDate: Long? = null
@@ -99,6 +99,10 @@ internal class SessionDurationHandler(
 
     private fun emitSessionExpirationNotice() {
         eventHandler.onEvent(Event.SessionExpirationNotice)
+    }
+
+    fun setTriggerHealthCheck(triggerHealthCheck: () -> Unit) {
+        this.triggerHealthCheck = triggerHealthCheck
     }
 
     fun clear() {
