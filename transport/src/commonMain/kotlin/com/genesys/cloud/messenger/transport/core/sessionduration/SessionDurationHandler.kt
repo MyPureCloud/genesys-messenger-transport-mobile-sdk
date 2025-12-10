@@ -2,7 +2,10 @@ package com.genesys.cloud.messenger.transport.core.sessionduration
 
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
+import com.genesys.cloud.messenger.transport.util.ActionTimer
+import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 
 /**
  * Handles session duration tracking and expiration notifications.
@@ -11,15 +14,22 @@ import com.genesys.cloud.messenger.transport.util.logs.Log
  * should be shown before the expiration date.
  * @param eventHandler Handler for emitting events to the messaging client.
  * @param log Logger instance for logging session duration events.
+ * @param getCurrentTimestamp Function to get the current timestamp in milliseconds.
  */
 internal class SessionDurationHandler(
     private val sessionExpirationNoticeInterval: Long,
     private val eventHandler: EventHandler,
     private val log: Log,
+    private val getCurrentTimestamp: () -> Long = { Platform().epochMillis() },
 ) {
-
     private var currentDurationSeconds: Long? = null
     private var currentExpirationDate: Long? = null
+
+    private val expirationTimer: ActionTimer =
+        ActionTimer(
+            log = log,
+            action = { emitSessionExpirationNotice() }
+        )
 
     /**
      * Updates the session duration parameters.
@@ -28,37 +38,44 @@ internal class SessionDurationHandler(
      * @param expirationDate The current expiration date for the session (timestamp).
      */
     fun updateSessionDuration(durationSeconds: Long?, expirationDate: Long?) {
-        log.i { "updateSessionDuration(durationSeconds=$durationSeconds, expirationDate=$expirationDate)" }
+        log.i { LogMessages.updateSessionDuration(durationSeconds, expirationDate) }
 
-        // Check if duration seconds has changed
         if (durationSeconds != null && durationSeconds != currentDurationSeconds) {
-            log.i { "Duration seconds changed from $currentDurationSeconds to $durationSeconds" }
             currentDurationSeconds = durationSeconds
             emitSessionDurationEvent(durationSeconds)
         }
 
-        // Check if expiration date has changed
         if (expirationDate != null && expirationDate != currentExpirationDate) {
-            log.i { "Expiration date changed from $currentExpirationDate to $expirationDate" }
             currentExpirationDate = expirationDate
             handleExpirationDateChange(expirationDate)
         }
     }
 
     private fun emitSessionDurationEvent(durationSeconds: Long) {
-        log.i { "Emitting SessionDuration event with duration: $durationSeconds seconds" }
         eventHandler.onEvent(Event.SessionDuration(durationSeconds))
     }
 
     private fun handleExpirationDateChange(expirationDate: Long) {
-        // Implementation will be done later
+        val noticeTimeSeconds = expirationDate - sessionExpirationNoticeInterval
+        val noticeTimeMillis = noticeTimeSeconds * 1000
+        val currentTimeMillis = getCurrentTimestamp()
+        val delayMillis = noticeTimeMillis - currentTimeMillis
+
+        if (delayMillis > 0) {
+            log.i { LogMessages.startingExpirationTimer(delayMillis, delayMillis / 1000) }
+            expirationTimer.start(delayMillis)
+        } else {
+            log.w { LogMessages.noticeTimeAlreadyPassed(delayMillis) }
+        }
+    }
+
+    private fun emitSessionExpirationNotice() {
+        eventHandler.onEvent(Event.SessionExpirationNotice)
     }
 
     fun clear() {
-        log.i { "Clearing session duration handler" }
         currentDurationSeconds = null
         currentExpirationDate = null
-        // Additional cleanup will be done later
+        expirationTimer.cancel()
     }
 }
-
