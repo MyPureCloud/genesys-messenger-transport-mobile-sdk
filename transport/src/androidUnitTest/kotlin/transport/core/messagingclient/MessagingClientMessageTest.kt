@@ -65,6 +65,7 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
                 type = "Text",
                 text = MessageValues.TEXT,
                 timeStamp = 1661196266704,
+                metadata = mapOf("customMessageId" to "some_custom_message_id"),
             )
         subject.connect()
 
@@ -212,7 +213,8 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
                 type = "Text",
                 text = "Hello world!",
                 timeStamp = 1661196266704,
-                from = Participant(originatingEntity = Participant.OriginatingEntity.Unknown)
+                from = Participant(originatingEntity = Participant.OriginatingEntity.Unknown),
+                metadata = mapOf("customMessageId" to "some_custom_message_id"),
             )
         subject.connect()
 

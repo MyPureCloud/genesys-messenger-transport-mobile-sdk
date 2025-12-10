@@ -30,7 +30,7 @@ internal fun String.sanitizeText(): String {
         this.replace(regex) {
             """${it.groupValues[1]}${it.groupValues[2].sanitize()}${it.groupValues[3]}"""
         }
-    regex = """(text=)(.*?)(?=, \w+:|$|[)])""".toRegex()
+    regex = """(text=)(.*?)(?=, \w+[=:]|$|[)])""".toRegex()
     sanitizedInput =
         sanitizedInput.replace(regex) {
             """${it.groupValues[1]}${it.groupValues[2].sanitize()}"""
