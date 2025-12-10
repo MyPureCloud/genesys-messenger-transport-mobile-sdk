@@ -253,7 +253,7 @@ open class BaseMessagingClientTest {
 
     protected fun MockKVerificationScope.fromIdleToConnectedSequence() {
         mockLogger.withTag(LogTag.STATE_MACHINE)
-        mockSessionDurationHandler.triggerHealthCheck = any()
+        mockSessionDurationHandler.setTriggerHealthCheck(any())
         mockLogger.withTag(LogTag.WEBSOCKET)
         mockLogger.i(capture(logSlot))
         mockStateChangedListener(fromIdleToConnecting)

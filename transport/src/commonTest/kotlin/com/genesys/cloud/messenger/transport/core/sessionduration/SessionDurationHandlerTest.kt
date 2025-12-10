@@ -303,7 +303,7 @@ class SessionDurationHandlerTest {
                         getCurrentTimestamp = { currentTime * 1000 }
                     )
 
-                subject.triggerHealthCheck = { customCallbackTriggered = true }
+                subject.setTriggerHealthCheck { customCallbackTriggered = true }
 
                 subject.updateSessionDuration(null, givenExpirationDate)
 
@@ -331,9 +331,9 @@ class SessionDurationHandlerTest {
                         getCurrentTimestamp = { currentTime * 1000 }
                     )
 
-                subject.triggerHealthCheck = { firstCallbackTriggered = true }
+                subject.setTriggerHealthCheck { firstCallbackTriggered = true }
                 // Reassign to a different callback
-                subject.triggerHealthCheck = { secondCallbackTriggered = true }
+                subject.setTriggerHealthCheck { secondCallbackTriggered = true }
 
                 val givenExpirationDate = currentTime + 3L
                 subject.updateSessionDuration(null, givenExpirationDate)
