@@ -30,6 +30,7 @@ internal class SessionDurationHandler(
 ) {
     private var currentDurationSeconds: Long? = null
     private var currentExpirationDate: Long? = null
+    private var sessionExpirationNoticeSent: Boolean = false
 
     private val expirationTimer: ActionTimer =
         ActionTimer(
@@ -99,6 +100,8 @@ internal class SessionDurationHandler(
 
     private fun emitSessionExpirationNotice() {
         val expiresInSeconds = calculateTimeToExpiration()
+        sessionExpirationNoticeSent = true
+        log.i { LogMessages.sessionExpirationNoticeSent(expiresInSeconds) }
         eventHandler.onEvent(Event.SessionExpirationNotice(expiresInSeconds))
     }
 
@@ -111,9 +114,24 @@ internal class SessionDurationHandler(
         this.triggerHealthCheck = triggerHealthCheck
     }
 
+    /**
+     * Called when a message is sent or received.
+     * If a session expiration notice was previously sent, this will emit a RemoveSessionExpirationNotice
+     * event and trigger a health check to refresh session duration data.
+     */
+    fun onMessage() {
+        if (sessionExpirationNoticeSent) {
+            log.i { LogMessages.REMOVING_SESSION_EXPIRATION_NOTICE }
+            sessionExpirationNoticeSent = false
+            eventHandler.onEvent(Event.RemoveSessionExpirationNotice)
+            triggerHealthCheck()
+        }
+    }
+
     fun clear() {
         currentDurationSeconds = null
         currentExpirationDate = null
+        sessionExpirationNoticeSent = false
         expirationTimer.cancel()
         healthCheckTimer.cancel()
     }
