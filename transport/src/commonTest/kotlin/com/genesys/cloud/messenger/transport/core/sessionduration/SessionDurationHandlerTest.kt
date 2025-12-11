@@ -119,19 +119,20 @@ class SessionDurationHandlerTest {
         }
 
     @Test
-    fun `when timer expires then emits SessionExpirationNotice event`() =
+    fun `when timer expires then emits SessionExpirationNotice event with time to expiration`() =
         runBlocking {
             withTimeout(DEFAULT_TIMEOUT) {
                 val givenNoticeInterval = 1L
                 val givenExpirationDate = currentTime + 2L
+                val expectedTimeToExpiration = givenExpirationDate - currentTime
                 val subject = createSubject(sessionExpirationNoticeInterval = givenNoticeInterval)
 
                 subject.updateSessionDuration(null, givenExpirationDate)
 
                 delay(1200)
 
-                val expectedEvent = Event.SessionExpirationNotice
-                assertThat(capturedEvent).isEqualTo(expectedEvent)
+                val capturedExpirationNotice = capturedEvent as? Event.SessionExpirationNotice
+                assertThat(capturedExpirationNotice).isEqualTo(Event.SessionExpirationNotice(expectedTimeToExpiration))
             }
         }
 
@@ -149,7 +150,7 @@ class SessionDurationHandlerTest {
                 subject.clear()
 
                 // Wait to ensure timer would have fired if not cancelled
-                kotlinx.coroutines.delay(1500)
+                delay(1500)
 
                 // Timer should be cancelled, so no event should be emitted
                 assertThat(capturedEvent).isNull()
