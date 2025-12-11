@@ -104,6 +104,8 @@ sealed class Event {
     /**
      * Sent when the session is about to expire.
      * This event is triggered before the session expires based on the configured notice interval.
+     *
+     * @param expiresInSeconds The time remaining until the session expires, in seconds.
      */
-    data object SessionExpirationNotice : Event()
+    data class SessionExpirationNotice(val expiresInSeconds: Long) : Event()
 }
