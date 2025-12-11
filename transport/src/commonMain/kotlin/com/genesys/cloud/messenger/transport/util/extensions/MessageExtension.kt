@@ -22,13 +22,13 @@ internal fun List<StructuredMessage>.toMessageList(): List<Message> =
     map { it.toMessage() }
         .filter { it.messageType != Message.Type.Unknown }
 
-internal fun StructuredMessage.toMessage(): Message {
+internal fun StructuredMessage.toMessage(tracingId: String? = null): Message {
     val quickReplies = content.toQuickReplies()
     val cards = content.toCards()
     val hasCardSelection = content.hasCardSelection()
 
     return Message(
-        id = metadata["customMessageId"] ?: id,
+        id = tracingId ?: id,
         direction = if (isInbound()) Direction.Inbound else Direction.Outbound,
         state = Message.State.Sent,
         messageType = type.toMessageType(quickReplies.isNotEmpty(), cards.isNotEmpty(), hasCardSelection),
@@ -47,7 +47,7 @@ internal fun StructuredMessage.toMessage(): Message {
                         isInbound()
                     }
             ),
-        authenticated = metadata["authenticated"]?.toBoolean() ?: false
+        authenticated = metadata["authenticated"]?.toBoolean() ?: false,
     )
 }
 

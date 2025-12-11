@@ -49,7 +49,7 @@ class MessagingClientAutostartTest : BaseMessagingClientTest() {
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockLogger.i(capture(logSlot))
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(Request.autostart(""))
+            mockPlatformSocket.sendMessage(match { Request.isAutostartRequest(it) })
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
@@ -59,7 +59,7 @@ class MessagingClientAutostartTest : BaseMessagingClientTest() {
 
     @Test
     fun `when old session and autostart enabled`() {
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onMessage(Response.configureSuccessWithNewSessionFalse)
         }
         every { mockDeploymentConfig.get() } returns
@@ -84,19 +84,19 @@ class MessagingClientAutostartTest : BaseMessagingClientTest() {
         verify(exactly = 0) {
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockCustomAttributesStore.onSending()
-            mockPlatformSocket.sendMessage(Request.autostart())
+            mockPlatformSocket.sendMessage(match { Request.isAutostartRequest(it) })
         }
     }
 
     @Test
     fun `when old session and autostart disabled`() {
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onMessage(Response.configureSuccessWithNewSessionFalse)
         }
 
         subject.connect()
 
-        verify(exactly = 0) { mockPlatformSocket.sendMessage(Request.autostart()) }
+        verify(exactly = 0) { mockPlatformSocket.sendMessage(match { Request.isAutostartRequest(it) }) }
     }
 
     @Test
@@ -106,7 +106,7 @@ class MessagingClientAutostartTest : BaseMessagingClientTest() {
         verify(exactly = 0) {
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockCustomAttributesStore.onSending()
-            mockPlatformSocket.sendMessage(Request.autostart())
+            mockPlatformSocket.sendMessage(match { Request.isAutostartRequest(it) })
         }
     }
 
@@ -125,7 +125,7 @@ class MessagingClientAutostartTest : BaseMessagingClientTest() {
         verify(exactly = 0) {
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockCustomAttributesStore.onSending()
-            mockPlatformSocket.sendMessage(Request.autostart())
+            mockPlatformSocket.sendMessage(match { Request.isAutostartRequest(it) })
         }
     }
 

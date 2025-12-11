@@ -57,7 +57,7 @@ class JwtHandlerTest {
             subject.withJwt(Request.token, mockJwtFn)
 
             coVerify { mockJwtFn(AuthTest.JWT_TOKEN) }
-            coVerify(exactly = 0) { mockWebSocket.sendMessage(Request.jwt) }
+            coVerify(exactly = 0) { mockWebSocket.sendMessage(match { Request.isJwtRequest(it) }) }
             assertThat(slot.captured).isEqualTo(AuthTest.JWT_TOKEN)
             subject.jwtResponse.run {
                 assertThat(this).isEqualTo(givenJwtResponse)
@@ -76,7 +76,7 @@ class JwtHandlerTest {
 
             coVerify {
                 mockJwtFn(AuthTest.JWT_TOKEN)
-                mockWebSocket.sendMessage(Request.jwt)
+                mockWebSocket.sendMessage(match { Request.isJwtRequest(it) })
             }
             assertThat(slot.captured).isEqualTo(AuthTest.JWT_TOKEN)
             subject.jwtResponse.run {

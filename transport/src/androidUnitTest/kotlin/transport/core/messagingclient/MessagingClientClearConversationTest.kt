@@ -48,7 +48,7 @@ class MessagingClientClearConversationTest : BaseMessagingClientTest() {
         assertFailsWith<IllegalStateException>("MessagingClient is not in Configured or ReadOnly state.") { subject.clearConversation() }
 
         // currentState = Error
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onMessage(Response.sessionNotFound)
         }
         subject.connect()
@@ -86,7 +86,7 @@ class MessagingClientClearConversationTest : BaseMessagingClientTest() {
             mockEventHandler.onEvent(eq(expectedEvent))
         }
         verify(exactly = 0) {
-            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+            mockPlatformSocket.sendMessage(match { Request.isClearConversationRequest(it) })
         }
     }
 
@@ -100,7 +100,7 @@ class MessagingClientClearConversationTest : BaseMessagingClientTest() {
         verifySequence {
             connectSequence()
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+            mockPlatformSocket.sendMessage(match { Request.isClearConversationRequest(it) })
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
@@ -109,7 +109,7 @@ class MessagingClientClearConversationTest : BaseMessagingClientTest() {
 
     @Test
     fun `when session is readOnly and clearConversation api is called`() {
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         }
         subject.connect()
@@ -120,7 +120,7 @@ class MessagingClientClearConversationTest : BaseMessagingClientTest() {
         verifySequence {
             connectToReadOnlySequence()
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+            mockPlatformSocket.sendMessage(match { Request.isClearConversationRequest(it) })
         }
     }
 
@@ -139,7 +139,7 @@ class MessagingClientClearConversationTest : BaseMessagingClientTest() {
 
     @Test
     fun `when clearConversation request fails and error message contains Conversation Clear String`() {
-        every { mockPlatformSocket.sendMessage(Request.clearConversation) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isClearConversationRequest(it) }) } answers {
             slot.captured.onMessage(Response.clearConversationForbidden())
         }
         val expectedEvent =
@@ -156,7 +156,7 @@ class MessagingClientClearConversationTest : BaseMessagingClientTest() {
         verifySequence {
             connectSequence()
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+            mockPlatformSocket.sendMessage(match { Request.isClearConversationRequest(it) })
             mockEventHandler.onEvent(expectedEvent)
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
@@ -167,7 +167,7 @@ class MessagingClientClearConversationTest : BaseMessagingClientTest() {
     @Test
     fun `when clearConversation request fails and error message contains Conversation Clear String in wrong order`() {
         // Test incorrect order of "Conversation" and "Clear".
-        every { mockPlatformSocket.sendMessage(Request.clearConversation) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isClearConversationRequest(it) }) } answers {
             slot.captured.onMessage(Response.clearConversationForbidden("Presence events Clear Conversation are not supported"))
         }
         val expectedEventCase1 =
@@ -181,12 +181,12 @@ class MessagingClientClearConversationTest : BaseMessagingClientTest() {
         subject.clearConversation()
 
         verify {
-            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+            mockPlatformSocket.sendMessage(match { Request.isClearConversationRequest(it) })
             mockEventHandler.onEvent(expectedEventCase1)
         }
 
         // Test "Conversation" and "Clear" Strings have word between them.
-        every { mockPlatformSocket.sendMessage(Request.clearConversation) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isClearConversationRequest(it) }) } answers {
             slot.captured.onMessage(Response.clearConversationForbidden("Presence events Clear THE Conversation are not supported"))
         }
         val expectedEventCase2 =
@@ -198,12 +198,12 @@ class MessagingClientClearConversationTest : BaseMessagingClientTest() {
         subject.clearConversation()
 
         verify {
-            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+            mockPlatformSocket.sendMessage(match { Request.isClearConversationRequest(it) })
             mockEventHandler.onEvent(expectedEventCase2)
         }
 
         // Test "Conversation" and "Clear" has no space between them.
-        every { mockPlatformSocket.sendMessage(Request.clearConversation) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isClearConversationRequest(it) }) } answers {
             slot.captured.onMessage(Response.clearConversationForbidden("Presence events ClearConversation are not supported"))
         }
         val expectedEventCase3 =
@@ -215,7 +215,7 @@ class MessagingClientClearConversationTest : BaseMessagingClientTest() {
         subject.clearConversation()
 
         verify {
-            mockPlatformSocket.sendMessage(eq(Request.clearConversation))
+            mockPlatformSocket.sendMessage(match { Request.isClearConversationRequest(it) })
             mockEventHandler.onEvent(expectedEventCase3)
         }
     }

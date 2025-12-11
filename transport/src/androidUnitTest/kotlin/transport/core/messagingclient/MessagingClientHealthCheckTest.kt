@@ -21,10 +21,9 @@ import kotlin.test.assertFailsWith
 class MessagingClientHealthCheckTest : BaseMessagingClientTest() {
     @Test
     fun `when send HealthCheck`() {
-        every { mockPlatformSocket.sendMessage(Request.echo) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isEchoRequest(it) }) } answers {
             slot.captured.onMessage(Response.echo)
         }
-        val expectedMessage = Request.echo
         subject.connect()
 
         subject.sendHealthCheck()
@@ -33,7 +32,7 @@ class MessagingClientHealthCheckTest : BaseMessagingClientTest() {
             connectSequence()
             mockLogger.i(capture(logSlot))
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(expectedMessage)
+            mockPlatformSocket.sendMessage(match { Request.isEchoRequest(it) })
             mockEventHandler.onEvent(Event.HealthChecked)
         }
         verify(exactly = 0) {
@@ -46,20 +45,17 @@ class MessagingClientHealthCheckTest : BaseMessagingClientTest() {
 
     @Test
     fun `when send HealthCheck twice without cool down`() {
-        val expectedMessage = Request.echo
-
         subject.connect()
 
         subject.sendHealthCheck()
         subject.sendHealthCheck()
 
-        verify(exactly = 1) { mockPlatformSocket.sendMessage(expectedMessage) }
+        verify(exactly = 1) { mockPlatformSocket.sendMessage(match { Request.isEchoRequest(it) }) }
     }
 
     @Test
     fun `when send HealthCheck twice with cool down`() {
         val healthCheckCoolDownInMilliseconds = HEALTH_CHECK_COOL_DOWN_MILLISECONDS + 250
-        val expectedMessage = Request.echo
 
         subject.connect()
 
@@ -68,13 +64,11 @@ class MessagingClientHealthCheckTest : BaseMessagingClientTest() {
         every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + healthCheckCoolDownInMilliseconds }
         subject.sendHealthCheck()
 
-        verify(exactly = 2) { mockPlatformSocket.sendMessage(expectedMessage) }
+        verify(exactly = 2) { mockPlatformSocket.sendMessage(match { Request.isEchoRequest(it) }) }
     }
 
     @Test
     fun `when connect send HealthCheck reconnect and send HealthCheck again without delay`() {
-        val expectedMessage = Request.echo
-
         subject.connect()
         subject.sendHealthCheck()
         subject.disconnect()
@@ -85,14 +79,14 @@ class MessagingClientHealthCheckTest : BaseMessagingClientTest() {
             connectSequence()
             mockLogger.i(capture(logSlot))
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(expectedMessage)
+            mockPlatformSocket.sendMessage(match { Request.isEchoRequest(it) })
             disconnectSequence()
             mockLogger.i(capture(logSlot))
             mockStateChangedListener(fromClosedToConnecting)
             mockPlatformSocket.openSocket(any())
             mockStateChangedListener(fromConnectingToConnected)
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(Request.configureRequest())
+            mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) })
             mockVault.wasAuthenticated = false
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
@@ -101,7 +95,7 @@ class MessagingClientHealthCheckTest : BaseMessagingClientTest() {
             mockStateChangedListener(fromConnectedToConfigured)
             mockLogger.i(capture(logSlot))
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(expectedMessage)
+            mockPlatformSocket.sendMessage(match { Request.isEchoRequest(it) })
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
@@ -126,7 +120,7 @@ class MessagingClientHealthCheckTest : BaseMessagingClientTest() {
     fun `when SocketListener invoke onMessage with HealthCheck response message`() {
         subject.connect()
 
-        slot.captured.onMessage(Response.healthCheckResponse)
+        slot.captured.onMessage(Response.echo)
 
         verifySequence {
             connectSequence()

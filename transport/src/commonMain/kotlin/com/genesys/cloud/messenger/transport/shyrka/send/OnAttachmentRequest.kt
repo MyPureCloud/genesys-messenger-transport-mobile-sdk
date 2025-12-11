@@ -1,5 +1,6 @@
 package com.genesys.cloud.messenger.transport.shyrka.send
 
+import com.genesys.cloud.messenger.transport.util.Platform
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 
@@ -12,6 +13,7 @@ internal data class OnAttachmentRequest(
     val fileSize: Int? = null,
     val fileMd5: String? = null,
     val errorsAsJson: Boolean,
+    override val tracingId: String = Platform().randomUUID(),
 ) : WebMessagingRequest {
     @Required
     override val action: String = RequestAction.ON_ATTACHMENT.value

@@ -39,8 +39,6 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
     @Test
     fun `when attach()`() {
         val expectedAttachmentId = "88888888-8888-8888-8888-888888888888"
-        val expectedMessage =
-            """{"token":"${Request.token}","attachmentId":"88888888-8888-8888-8888-888888888888","fileName":"test_attachment.png","fileType":"image/png","errorsAsJson":true,"action":"onAttachment"}"""
         subject.connect()
 
         val result = subject.attach(ByteArray(1), "test.png")
@@ -51,7 +49,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockAttachmentHandler.prepare(Request.token, any(), any(), any())
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(expectedMessage)
+            mockPlatformSocket.sendMessage(match { Request.isAttachmentRequest(it, expectedAttachmentId) })
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
@@ -62,8 +60,6 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
     @Test
     fun `when detach()`() {
         val expectedAttachmentId = "88888888-8888-8888-8888-888888888888"
-        val expectedMessage =
-            """{"token":"${Request.token}","attachmentId":"88888888-8888-8888-8888-888888888888","action":"deleteAttachment"}"""
         val attachmentIdSlot = slot<String>()
         subject.connect()
 
@@ -72,7 +68,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
         verify {
             mockLogger.i(capture(logSlot))
             mockAttachmentHandler.detach(Request.token, capture(attachmentIdSlot))
-            mockPlatformSocket.sendMessage(expectedMessage)
+            mockPlatformSocket.sendMessage(match { Request.isDeleteAttachmentRequest(it, expectedAttachmentId) })
         }
         assertThat(attachmentIdSlot.captured).isEqualTo(expectedAttachmentId)
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
@@ -221,7 +217,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
     @Test
     fun `when AllowedMedia has filetypes without wildcard with maxFileSizeKB and blockedExtensions`() {
         val fileAttachmentProfileSlot = createFileAttachmentProfileSlot()
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onMessage(
                 Response.configureSuccess(
                     allowedMedia = Response.AllowedMedia.listOfFileTypesWithMaxSize,
@@ -248,7 +244,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
     @Test
     fun `when AllowedMedia in SessionResponse has filetypes with wildcard,maxFileSizeKB and blockedExtensions entries`() {
         val fileAttachmentProfileSlot = createFileAttachmentProfileSlot()
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onMessage(
                 Response.configureSuccess(
                     allowedMedia = Response.AllowedMedia.listOfFileTypesWithWildcardAndMaxSize,
@@ -358,7 +354,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
 
     @Test
     fun `when refreshAttachmentUrl()`() {
-        every { mockPlatformSocket.sendMessage(Request.refreshAttachmentUrl) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isRefreshAttachmentUrlRequest(it) }) } answers {
             slot.captured.onMessage(Response.presignedUrlResponse(headers = "", fileSize = 1))
         }
         val expectedPresignedUrlResponse =
@@ -376,7 +372,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
 
         verify {
             connectSequence()
-            mockPlatformSocket.sendMessage(Request.refreshAttachmentUrl)
+            mockPlatformSocket.sendMessage(match { Request.isRefreshAttachmentUrlRequest(it) })
             mockAttachmentHandler.onAttachmentRefreshed(expectedPresignedUrlResponse)
         }
         verify(exactly = 0) {

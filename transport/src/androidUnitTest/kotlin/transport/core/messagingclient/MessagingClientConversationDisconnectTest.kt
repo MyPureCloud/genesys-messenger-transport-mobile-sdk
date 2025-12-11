@@ -85,7 +85,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
 
     @Test
     fun `when configured session is ReadOnly`() {
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         }
 
@@ -99,7 +99,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
 
     @Test
     fun `when configured Session is ReadOnly and autostart enabled`() {
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         }
         every { mockDeploymentConfig.get() } returns
@@ -127,7 +127,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
 
     @Test
     fun `when configured session is ReadOnly and send actions are performed`() {
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         }
 
@@ -183,7 +183,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
 
     @Test
     fun `when startNewChat from ReadOnly state`() {
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         }
 
@@ -194,7 +194,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         verifySequence {
             connectToReadOnlySequence()
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(Request.closeAllConnections)
+            mockPlatformSocket.sendMessage(match { Request.isCloseAllConnectionsRequest(it) })
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
@@ -203,13 +203,13 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
 
     @Test
     fun `when NetworkRequestError during startNewChat`() {
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         }
         val expectedErrorCode = ErrorCode.ClientResponseError(400)
         val expectedErrorMessage = "Request failed."
         val expectedErrorState = MessagingClient.State.Error(expectedErrorCode, expectedErrorMessage)
-        every { mockPlatformSocket.sendMessage(Request.closeAllConnections) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isCloseAllConnectionsRequest(it) }) } answers {
             slot.captured.onMessage(Response.webSocketRequestFailed)
         }
 
@@ -220,17 +220,17 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         verifySequence {
             connectToReadOnlySequence()
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(Request.closeAllConnections)
+            mockPlatformSocket.sendMessage(match { Request.isCloseAllConnectionsRequest(it) })
             errorSequence(fromReadOnlyToError(errorState = expectedErrorState))
         }
     }
 
     @Test
     fun `when startNewChat and WebSocket receives a SessionResponse that has connected=false and readOnly=true`() {
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         }
-        every { mockPlatformSocket.sendMessage(Request.closeAllConnections) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isCloseAllConnectionsRequest(it) }) } answers {
             slot.captured.onMessage(Response.configureSuccess(connected = false, readOnly = true))
         }
 
@@ -241,7 +241,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         verifySequence {
             connectToReadOnlySequence()
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(Request.closeAllConnections)
+            mockPlatformSocket.sendMessage(match { Request.isCloseAllConnectionsRequest(it) })
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()
@@ -249,16 +249,16 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             verifyCleanUp()
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(Request.configureRequest(startNew = true))
+            mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it, startNew = true) })
         }
     }
 
     @Test
     fun `when startNewChat and WebSocket receives a SessionResponse that has connected=true and readOnly=true`() {
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         }
-        every { mockPlatformSocket.sendMessage(Request.closeAllConnections) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isCloseAllConnectionsRequest(it) }) } answers {
             slot.captured.onMessage(Response.configureSuccess(connected = true, readOnly = true))
         }
 
@@ -269,7 +269,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         verifySequence {
             connectToReadOnlySequence()
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(Request.closeAllConnections)
+            mockPlatformSocket.sendMessage(match { Request.isCloseAllConnectionsRequest(it) })
             mockAttachmentHandler.fileAttachmentProfile = any()
             mockReconnectionHandler.clear()
             mockJwtHandler.clear()
@@ -278,7 +278,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         verify(exactly = 0) {
             mockMessageStore.invalidateConversationCache()
             mockAttachmentHandler.clearAll()
-            mockPlatformSocket.sendMessage(Request.configureRequest(startNew = true))
+            mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it, startNew = true) })
         }
     }
 
@@ -301,7 +301,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         verify(exactly = 0) {
             mockMessageStore.invalidateConversationCache()
             mockAttachmentHandler.clearAll()
-            mockPlatformSocket.sendMessage(Request.configureRequest(startNew = true))
+            mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it, startNew = true) })
         }
     }
 }

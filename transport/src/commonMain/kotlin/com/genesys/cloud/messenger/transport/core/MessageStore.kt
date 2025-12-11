@@ -39,10 +39,10 @@ internal class MessageStore(private val log: Log) {
             message =
                 TextMessage(
                     text,
-                    metadata = mapOf("customMessageId" to messageToSend.id),
                     content = messageToSend.getUploadedAttachments(),
                     channel = channel,
-                )
+                ),
+            tracingId = messageToSend.id
         )
     }
 
@@ -77,10 +77,10 @@ internal class MessageStore(private val log: Log) {
             message =
                 TextMessage(
                     text = "",
-                    metadata = mapOf("customMessageId" to messageToSend.id),
                     content = content,
                     channel = channel,
-                )
+                ),
+            tracingId = messageToSend.id
         )
     }
 
@@ -118,10 +118,10 @@ internal class MessageStore(private val log: Log) {
             message =
                 StructuredMessage(
                     text = buttonResponse.text,
-                    metadata = mapOf("customMessageId" to messageToSend.id),
                     content = content,
                     channel = channel
-                )
+                ),
+            tracingId = messageToSend.id
         )
     }
 

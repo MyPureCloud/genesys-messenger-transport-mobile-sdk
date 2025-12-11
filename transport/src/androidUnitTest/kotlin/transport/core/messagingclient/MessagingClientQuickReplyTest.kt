@@ -69,7 +69,7 @@ class MessagingClientQuickReplyTest : BaseMessagingClientTest() {
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockMessageStore.prepareMessageWith(Request.token, expectedButtonResponse, null)
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(Request.quickReplyWith())
+            mockPlatformSocket.sendMessage(match { Request.isQuickReplyRequest(it) })
         }
 
         verify(exactly = 0) {

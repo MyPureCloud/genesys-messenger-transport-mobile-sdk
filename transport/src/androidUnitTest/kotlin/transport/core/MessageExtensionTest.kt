@@ -74,7 +74,7 @@ internal class MessageExtensionTest {
             )
         val expectedMessage2 =
             Message(
-                id = "1234567890",
+                id = "46e7001c24abed05e9bcd1a006eb54b7",
                 direction = Direction.Inbound,
                 state = State.Sent,
                 messageType = Type.Event,
@@ -85,7 +85,7 @@ internal class MessageExtensionTest {
             )
         val expectedMessage3 =
             Message(
-                id = "1234567890",
+                id = "message3_id",
                 direction = Direction.Outbound,
                 state = State.Sent,
                 messageType = Type.QuickReply,
@@ -136,7 +136,6 @@ internal class MessageExtensionTest {
                         )
                     ),
                 direction = "Inbound",
-                metadata = mapOf("customMessageId" to "test custom id"),
                 events =
                     listOf(
                         PresenceEvent(
@@ -151,7 +150,7 @@ internal class MessageExtensionTest {
             )
         val expectedMessage =
             Message(
-                id = "test custom id",
+                id = "id",
                 direction = Direction.Inbound,
                 state = State.Sent,
                 messageType = Type.Text,
@@ -943,8 +942,8 @@ internal class MessageExtensionTest {
 
     @Test
     fun `when sanitize text field with equation mark, comma and space of toString longer than 4 chars applies mask`() {
-        val givenText = """bla bla text=Yes I did, my secret is 12345, other:etew"""
-        val expectedText = """bla bla text=*************************2345, other:etew"""
+        val givenText = """bla bla text=Yes I did, my secret is 12345, other=etew"""
+        val expectedText = """bla bla text=*************************2345, other=etew"""
 
         val result = givenText.sanitizeText()
 

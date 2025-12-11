@@ -1,5 +1,6 @@
 package com.genesys.cloud.messenger.transport.shyrka.send
 
+import com.genesys.cloud.messenger.transport.util.Platform
 import kotlinx.serialization.Required
 import kotlinx.serialization.Serializable
 
@@ -9,6 +10,7 @@ internal data class ConfigureSessionRequest(
     val deploymentId: String,
     val startNew: Boolean,
     val journeyContext: JourneyContext? = null,
+    override val tracingId: String = Platform().randomUUID(),
 ) : WebMessagingRequest {
     @Required override val action: String = RequestAction.CONFIGURE_SESSION.value
 }
