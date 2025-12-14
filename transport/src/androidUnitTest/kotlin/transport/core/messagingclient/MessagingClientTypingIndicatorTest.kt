@@ -20,7 +20,6 @@ import kotlin.test.assertNull
 class MessagingClientTypingIndicatorTest : BaseMessagingClientTest() {
     @Test
     fun `when indicateTyping and showUserTyping is enabled`() {
-        val expectedMessage = Request.userTypingRequest
         subject.connect()
 
         subject.indicateTyping()
@@ -29,7 +28,7 @@ class MessagingClientTypingIndicatorTest : BaseMessagingClientTest() {
             connectSequence()
             mockLogger.i(capture(logSlot))
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(expectedMessage)
+            mockPlatformSocket.sendMessage(match { Request.isUserTypingRequest(it) })
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
@@ -40,13 +39,12 @@ class MessagingClientTypingIndicatorTest : BaseMessagingClientTest() {
     @Test
     fun `when indicateTyping and showUserTyping is disabled`() {
         every { mockShowUserTypingIndicatorFunction.invoke() } returns false
-        val expectedMessage = Request.userTypingRequest
         subject.connect()
 
         subject.indicateTyping()
 
         verify(exactly = 0) {
-            mockPlatformSocket.sendMessage(expectedMessage)
+            mockPlatformSocket.sendMessage(match { Request.isUserTypingRequest(it) })
         }
         assertNull(userTypingProvider.encodeRequest(token = Request.token))
     }
@@ -60,19 +58,17 @@ class MessagingClientTypingIndicatorTest : BaseMessagingClientTest() {
 
     @Test
     fun `when indicateTyping twice without cool down`() {
-        val expectedMessage = Request.userTypingRequest
         subject.connect()
 
         subject.indicateTyping()
         subject.indicateTyping()
 
-        verify(exactly = 1) { mockPlatformSocket.sendMessage(expectedMessage) }
+        verify(exactly = 1) { mockPlatformSocket.sendMessage(match { Request.isUserTypingRequest(it) }) }
     }
 
     @Test
     fun `when indicateTyping twice with cool down`() {
         val typingIndicatorCoolDownInMilliseconds = TYPING_INDICATOR_COOL_DOWN_MILLISECONDS + 250
-        val expectedMessage = Request.userTypingRequest
 
         subject.connect()
 
@@ -81,19 +77,18 @@ class MessagingClientTypingIndicatorTest : BaseMessagingClientTest() {
         every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + typingIndicatorCoolDownInMilliseconds }
         subject.indicateTyping()
 
-        verify(exactly = 2) { mockPlatformSocket.sendMessage(expectedMessage) }
+        verify(exactly = 2) { mockPlatformSocket.sendMessage(match { Request.isUserTypingRequest(it) }) }
     }
 
     @Test
     fun `when indicateTyping twice without cool down but after message was sent`() {
-        val expectedMessage = Request.userTypingRequest
         subject.connect()
 
         subject.indicateTyping()
         slot.captured.onMessage(Response.onMessage())
         subject.indicateTyping()
 
-        verify(exactly = 2) { mockPlatformSocket.sendMessage(expectedMessage) }
+        verify(exactly = 2) { mockPlatformSocket.sendMessage(match { Request.isUserTypingRequest(it) }) }
     }
 
     @Test

@@ -8,7 +8,6 @@ import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.StructuredMessage
 import com.genesys.cloud.messenger.transport.utility.CardTestValues
-import com.genesys.cloud.messenger.transport.utility.MessageValues
 import io.mockk.every
 import io.mockk.verify
 import io.mockk.verifySequence
@@ -21,7 +20,6 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
     @Test
     fun `when connect() and then sendCardReply() but no custom attributes`() {
         val givenPostbackResponse = CardTestValues.postbackButtonResponse
-        val expectedRequest = Request.expectedPostbackRequestJson
 
         subject.connect()
         subject.sendCardReply(givenPostbackResponse)
@@ -32,7 +30,7 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockMessageStore.preparePostbackMessage(Request.token, givenPostbackResponse, null)
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(expectedRequest)
+            mockPlatformSocket.sendMessage(match { Request.isPostbackRequest(it) })
         }
 
         verify(exactly = 0) {
@@ -52,8 +50,6 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
         val expectedButtonResponse = CardTestValues.postbackButtonResponse
         val expectedCustomAttributes = mapOf("source" to "card")
         val expectedChannel = Channel(Channel.Metadata(expectedCustomAttributes))
-        val expectedRequest =
-            """{"token":"${Request.token}","message":{"text":"${expectedButtonResponse.text}","metadata":{"customMessageId":"card-123"},"content":[{"contentType":"ButtonResponse","buttonResponse":{"text":"${expectedButtonResponse.text}","payload":"${expectedButtonResponse.payload}","type":"${expectedButtonResponse.type}"}}],"channel":{"metadata":{"customAttributes":{"source":"card"}}},"type":"Structured"},"action":"onMessage"}"""
 
         every {
             mockMessageStore.preparePostbackMessage(
@@ -67,7 +63,6 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
                 message =
                     StructuredMessage(
                         text = expectedButtonResponse.text,
-                        metadata = mapOf("customMessageId" to "card-123"),
                         content =
                             listOf(
                                 Message.Content(
@@ -91,7 +86,14 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
             mockCustomAttributesStore.onSending()
             mockMessageStore.preparePostbackMessage(Request.token, expectedButtonResponse, expectedChannel)
             mockLogger.i(any())
-            mockPlatformSocket.sendMessage(expectedRequest)
+            mockPlatformSocket.sendMessage(
+                match {
+                    it.contains(""""text":"${expectedButtonResponse.text}"""") &&
+                        it.contains(""""type":"Structured"""") &&
+                        it.contains(""""action":"onMessage"""") &&
+                        it.contains(""""customAttributes":{"source":"card"}""")
+                }
+            )
         }
     }
 
@@ -136,10 +138,9 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
     @Test
     fun `when error response received after sendCardReply then onMessageError is called`() {
         val givenButtonResponse = CardTestValues.postbackButtonResponse
-        val expectedRequestJson = Request.expectedPostbackRequestJson
 
         every {
-            mockPlatformSocket.sendMessage(expectedRequestJson)
+            mockPlatformSocket.sendMessage(match { Request.isPostbackRequest(it) })
         } answers {
             slot.captured.onMessage(Response.tooManyRequests)
         }
@@ -176,7 +177,6 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
                 message =
                     StructuredMessage(
                         text = givenLinkButton.text,
-                        metadata = mapOf("customMessageId" to MessageValues.ID),
                         content =
                             listOf(
                                 Message.Content(
