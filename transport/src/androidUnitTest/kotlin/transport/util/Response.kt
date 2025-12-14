@@ -85,18 +85,20 @@ internal object Response {
         if (expirationDate != null) {
             metadataEntries.add(""""expirationDate":"$expirationDate"""")
         }
-        val metadataJson = if (metadataEntries.isNotEmpty()) {
-            """"metadata":{${metadataEntries.joinToString(",")}}"""
-        } else {
-            ""
-        }
-        val bodyContent = listOfNotNull(
-            """"text":"ping"""",
-            """"type":"Text"""",
-            """"direction":"Inbound"""",
-            """"id":"echo_id"""",
-            metadataJson.takeIf { it.isNotEmpty() }
-        ).joinToString(",")
+        val metadataJson =
+            if (metadataEntries.isNotEmpty()) {
+                """"metadata":{${metadataEntries.joinToString(",")}}"""
+            } else {
+                ""
+            }
+        val bodyContent =
+            listOfNotNull(
+                """"text":"ping"""",
+                """"type":"Text"""",
+                """"direction":"Inbound"""",
+                """"id":"echo_id"""",
+                metadataJson.takeIf { it.isNotEmpty() }
+            ).joinToString(",")
         return """{"type":"response","class":"StructuredMessage","code":200,"body":{$bodyContent},"tracingId":"SGVhbHRoQ2hlY2tNZXNzYWdlSWQ="}"""
     }
 

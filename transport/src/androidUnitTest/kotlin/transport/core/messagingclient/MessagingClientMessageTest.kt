@@ -63,7 +63,7 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
                 type = "Text",
                 text = MessageValues.TEXT,
                 timeStamp = 1661196266704,
-                )
+            )
         subject.connect()
 
         subject.sendMessage(MessageValues.TEXT)

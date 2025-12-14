@@ -179,7 +179,7 @@ internal class MessageExtensionTest {
                         imageUrl = "http://image.png",
                         originatingEntity = Participant.OriginatingEntity.Human
                     ),
-                )
+            )
 
         givenStructuredMessage.toMessage().run {
             assertThat(this).isEqualTo(expectedMessage)
