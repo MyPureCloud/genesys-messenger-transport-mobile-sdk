@@ -3,7 +3,7 @@ package com.genesys.cloud.messenger.transport.util
 import com.genesys.cloud.messenger.transport.core.InternalVault
 
 actual class DefaultVault actual constructor(keys: Keys) : Vault(keys) {
-    private val vault = InternalVault(keys.vaultKey)
+    private val vault = InternalVault(keys.vaultKey, keys.tokenKey)
 
     actual override fun store(
         key: String,

@@ -39,7 +39,7 @@ pipeline {
         stage('Get secrets from secretstash') {
             agent {
                 node {
-                    label 'dev_mesos_v2'
+                    label 'dev_x86_small'
                     customWorkspace "jenkins-mtsdk-${currentBuild.number}"
                 }
             }

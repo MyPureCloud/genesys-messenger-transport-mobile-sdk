@@ -767,7 +767,7 @@ internal class MessagingClientImpl(
 
                     is StructuredMessage -> {
                         decoded.body.run {
-                            val message = this.toMessage()
+                            val message = this.toMessage(decoded.tracingId)
                             when (type) {
                                 StructuredMessage.Type.Text -> message.handleAsTextMessage()
                                 StructuredMessage.Type.Event ->
