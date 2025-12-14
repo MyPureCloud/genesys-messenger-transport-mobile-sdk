@@ -7,6 +7,9 @@ import com.genesys.cloud.messenger.transport.util.DEFAULT_HEALTH_CHECK_PRE_NOTIC
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 /**
  * Handles session duration tracking and expiration notifications.
@@ -19,6 +22,7 @@ import com.genesys.cloud.messenger.transport.util.logs.LogMessages
  * @param log Logger instance for logging session duration events.
  * @param triggerHealthCheck Callback to trigger a health check request.
  * @param getCurrentTimestamp Function to get the current timestamp in milliseconds.
+ * @param dispatcher The coroutine scope to use for timer execution.
  */
 internal class SessionDurationHandler(
     private val sessionExpirationNoticeInterval: Long,
@@ -27,6 +31,7 @@ internal class SessionDurationHandler(
     private val getCurrentTimestamp: () -> Long = { Platform().epochMillis() },
     private val healthCheckPreNoticeTimeMillis: Long = DEFAULT_HEALTH_CHECK_PRE_NOTICE_TIME_MILLIS,
     private var triggerHealthCheck: () -> Unit = {},
+    dispatcher: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
 ) {
     private var currentDurationSeconds: Long? = null
     private var currentExpirationDate: Long? = null
@@ -34,13 +39,15 @@ internal class SessionDurationHandler(
     private val expirationTimer: ActionTimer =
         ActionTimer(
             log = log,
-            action = { emitSessionExpirationNotice() }
+            action = { emitSessionExpirationNotice() },
+            dispatcher = dispatcher
         )
 
     private val healthCheckTimer: ActionTimer =
         ActionTimer(
             log = log,
-            action = { triggerHealthCheck() }
+            action = { triggerHealthCheck() },
+            dispatcher = dispatcher
         )
 
     /**
