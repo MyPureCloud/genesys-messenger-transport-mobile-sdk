@@ -65,11 +65,12 @@ class SerializationTest {
                     deploymentId = "<deploymentId>",
                     startNew = false,
                     journeyContext = journeyContext,
+                    tracingId = TestValues.TRACING_ID,
                 )
             )
 
         assertThat(encodedString, "encoded ConfigureSessionRequest")
-            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","startNew":false,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"action":"configureSession"}""")
+            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","startNew":false,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"tracingId":"${TestValues.TRACING_ID}","action":"configureSession"}""")
     }
 
     @Test
@@ -79,17 +80,17 @@ class SerializationTest {
         val encodedString = WebMessagingJson.json.encodeToString(echoRequest)
 
         assertThat(encodedString, "encoded EchoRequest")
-            .isEqualTo("""{"token":"<token>","action":"echo","message":{"text":"ping","metadata":{"customMessageId":"$HealthCheckID"},"type":"Text"}}""")
+            .isEqualTo("""{"token":"<token>","tracingId":"$HealthCheckID","action":"echo","message":{"text":"ping","type":"Text"}}""")
     }
 
     @Test
     fun `when OnMessageRequest then encodes`() {
-        val messageRequest = OnMessageRequest("<token>", TextMessage("Hello world"))
+        val messageRequest = OnMessageRequest("<token>", TextMessage("Hello world"), tracingId = TestValues.TRACING_ID)
 
         var encodedString = WebMessagingJson.json.encodeToString(messageRequest)
 
         assertThat(encodedString, "encoded OnMessageRequest")
-            .isEqualTo("""{"token":"<token>","message":{"text":"Hello world","type":"Text"},"action":"onMessage"}""")
+            .isEqualTo("""{"token":"<token>","message":{"text":"Hello world","type":"Text"},"tracingId":"${TestValues.TRACING_ID}","action":"onMessage"}""")
 
         val messageWithAttachmentAndCustomAttributesRequest =
             OnMessageRequest(
@@ -107,6 +108,7 @@ class SerializationTest {
                             ),
                         channel = Channel(Channel.Metadata(mapOf("A" to "B"))),
                     ),
+                tracingId = TestValues.TRACING_ID,
             )
 
         encodedString =
@@ -114,7 +116,7 @@ class SerializationTest {
 
         assertThat(encodedString, "encoded OnMessageRequest with attachment and custom attributes")
             .isEqualTo(
-                """{"token":"<token>","message":{"text":"Hello world","metadata":{"id":"aaa-bbb-ccc"},"content":[{"contentType":"Attachment","attachment":{"id":"abcd-1234"}}],"channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"action":"onMessage"}"""
+                """{"token":"<token>","message":{"text":"Hello world","metadata":{"id":"aaa-bbb-ccc"},"content":[{"contentType":"Attachment","attachment":{"id":"abcd-1234"}}],"channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"tracingId":"${TestValues.TRACING_ID}","action":"onMessage"}"""
             )
     }
 
@@ -128,12 +130,13 @@ class SerializationTest {
                 fileType = "image/png",
                 fileSize = 424242,
                 errorsAsJson = true,
+                tracingId = TestValues.TRACING_ID,
             )
 
         val encodedString = WebMessagingJson.json.encodeToString(attachmentRequest)
 
         assertThat(encodedString, "encoded OnAttachmentRequest")
-            .isEqualTo("""{"token":"<token>","attachmentId":"00000000-0000-0000-0000-000000000001","fileName":"foo.png","fileType":"image/png","fileSize":424242,"errorsAsJson":true,"action":"onAttachment"}""")
+            .isEqualTo("""{"token":"<token>","attachmentId":"00000000-0000-0000-0000-000000000001","fileName":"foo.png","fileType":"image/png","fileSize":424242,"errorsAsJson":true,"tracingId":"${TestValues.TRACING_ID}","action":"onAttachment"}""")
     }
 
     @Test
@@ -462,11 +465,12 @@ class SerializationTest {
                 CloseSessionRequest(
                     token = "<token>",
                     closeAllConnections = true,
+                    tracingId = TestValues.TRACING_ID,
                 )
             )
 
         assertThat(encodedString, "encoded CloseSessionRequest")
-            .isEqualTo("""{"token":"<token>","closeAllConnections":true,"action":"closeSession"}""")
+            .isEqualTo("""{"token":"<token>","closeAllConnections":true,"tracingId":"${TestValues.TRACING_ID}","action":"closeSession"}""")
     }
 
     @Test
@@ -485,11 +489,12 @@ class SerializationTest {
                     startNew = false,
                     journeyContext = journeyContext,
                     data = data,
+                    tracingId = TestValues.TRACING_ID,
                 )
             )
 
         assertThat(encodedString, "encoded ConfigureAuthenticatedSessionRequest")
-            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","startNew":false,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"data":{"code":"<auth_token>"},"action":"configureAuthenticatedSession"}""")
+            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","startNew":false,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"data":{"code":"<auth_token>"},"tracingId":"${TestValues.TRACING_ID}","action":"configureAuthenticatedSession"}""")
     }
 
     @Test
@@ -544,11 +549,12 @@ class SerializationTest {
             WebMessagingJson.json.encodeToString(
                 ClearConversationRequest(
                     token = "<token>",
+                    tracingId = TestValues.TRACING_ID,
                 )
             )
 
         assertThat(encodedString, "encoded ClearConversationRequest")
-            .isEqualTo("""{"token":"<token>","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Clear"}}],"type":"Event"}}""")
+            .isEqualTo("""{"token":"<token>","tracingId":"${TestValues.TRACING_ID}","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Clear"}}],"type":"Event"}}""")
     }
 
     @Test
