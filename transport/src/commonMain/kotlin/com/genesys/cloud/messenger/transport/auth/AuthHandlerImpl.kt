@@ -104,6 +104,7 @@ internal class AuthHandlerImpl(
                 callback(true)
                 return@launch
             }
+
             performTokenRefresh { result ->
                 when (result) {
                     is Result.Success -> callback(false)

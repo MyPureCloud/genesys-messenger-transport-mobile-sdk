@@ -2,7 +2,9 @@ package transport.core.events
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
 import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.events.HEALTH_CHECK_COOL_DOWN_MILLISECONDS
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.util.Platform
@@ -30,16 +32,15 @@ class HealthCheckProviderTest {
 
     @Test
     fun `when encodeRequest()`() {
-        val expected = Request.echo
         val result = subject.encodeRequest(token = Request.token)
 
-        assertThat(result).isEqualTo(expected)
+        assertThat(result).isNotNull()
+        assertThat(Request.isEchoRequest(result!!)).isTrue()
     }
 
     @Test
     fun `when encodeRequest() with cool down`() {
         val healthCheckCoolDownInMilliseconds = HEALTH_CHECK_COOL_DOWN_MILLISECONDS + 250
-        val expected = Request.echo
         val firstResult = subject.encodeRequest(token = Request.token)
         every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + healthCheckCoolDownInMilliseconds }
         val secondResult = subject.encodeRequest(token = Request.token)
@@ -48,20 +49,22 @@ class HealthCheckProviderTest {
             mockTimestampFunction.invoke()
             mockTimestampFunction.invoke()
         }
-        assertThat(firstResult).isEqualTo(expected)
-        assertThat(secondResult).isEqualTo(expected)
+        assertThat(firstResult).isNotNull()
+        assertThat(Request.isEchoRequest(firstResult!!)).isTrue()
+        assertThat(secondResult).isNotNull()
+        assertThat(Request.isEchoRequest(secondResult!!)).isTrue()
     }
 
     @Test
     fun `when encodeRequest() without cool down`() {
-        val expected = Request.echo
         val firstResult = subject.encodeRequest(token = Request.token)
         val secondResult = subject.encodeRequest(token = Request.token)
 
         verify {
             mockLogger.w(capture(logSlot))
         }
-        assertThat(firstResult).isEqualTo(expected)
+        assertThat(firstResult).isNotNull()
+        assertThat(Request.isEchoRequest(firstResult!!)).isTrue()
         assertThat(secondResult).isNull()
         assertThat(logSlot[0].invoke()).isEqualTo(
             LogMessages.healthCheckCoolDown(
@@ -72,13 +75,14 @@ class HealthCheckProviderTest {
 
     @Test
     fun `when encodeRequest() without cool down but with clear`() {
-        val expected = Request.echo
         val firstResult = subject.encodeRequest(token = Request.token)
         subject.clear()
         val secondResult = subject.encodeRequest(token = Request.token)
 
-        assertThat(firstResult).isEqualTo(expected)
-        assertThat(secondResult).isEqualTo(expected)
+        assertThat(firstResult).isNotNull()
+        assertThat(Request.isEchoRequest(firstResult!!)).isTrue()
+        assertThat(secondResult).isNotNull()
+        assertThat(Request.isEchoRequest(secondResult!!)).isTrue()
     }
 
     @Test
