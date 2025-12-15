@@ -132,7 +132,7 @@ class SessionDurationHandlerTest {
         testScope.runTest {
             val givenNoticeInterval = 1L
             val givenExpirationDate = currentTime + 2L
-                val expectedTimeToExpiration = givenExpirationDate - currentTime
+            val expectedTimeToExpiration = givenExpirationDate - currentTime
             val subject = createSubject(sessionExpirationNoticeInterval = givenNoticeInterval)
 
             subject.updateSessionDuration(null, givenExpirationDate)

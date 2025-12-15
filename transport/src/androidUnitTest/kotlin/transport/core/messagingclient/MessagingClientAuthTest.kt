@@ -19,7 +19,6 @@ import com.genesys.cloud.messenger.transport.core.isReconnecting
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
-import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.every
 import io.mockk.invoke
 import io.mockk.verify
