@@ -128,18 +128,19 @@ class SessionDurationHandlerTest {
         }
 
     @Test
-    fun `when timer expires then emits SessionExpirationNotice event`() =
+    fun `when timer expires then emits SessionExpirationNotice event with time to expiration`() =
         testScope.runTest {
             val givenNoticeInterval = 1L
             val givenExpirationDate = currentTime + 2L
+            val expectedTimeToExpiration = givenExpirationDate - currentTime
             val subject = createSubject(sessionExpirationNoticeInterval = givenNoticeInterval)
 
             subject.updateSessionDuration(null, givenExpirationDate)
 
             advanceTimeBy(1100)
 
-            val expectedEvent = Event.SessionExpirationNotice
-            assertThat(capturedEvent).isEqualTo(expectedEvent)
+            val capturedExpirationNotice = capturedEvent as? Event.SessionExpirationNotice
+            assertThat(capturedExpirationNotice).isEqualTo(Event.SessionExpirationNotice(expectedTimeToExpiration))
         }
 
     @Test

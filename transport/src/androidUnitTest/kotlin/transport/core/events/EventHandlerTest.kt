@@ -15,6 +15,8 @@ import com.genesys.cloud.messenger.transport.core.events.Event.Error
 import com.genesys.cloud.messenger.transport.core.events.Event.ExistingAuthSessionCleared
 import com.genesys.cloud.messenger.transport.core.events.Event.HealthChecked
 import com.genesys.cloud.messenger.transport.core.events.Event.Logout
+import com.genesys.cloud.messenger.transport.core.events.Event.SessionDuration
+import com.genesys.cloud.messenger.transport.core.events.Event.SessionExpirationNotice
 import com.genesys.cloud.messenger.transport.core.events.Event.SignedIn
 import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
 import com.genesys.cloud.messenger.transport.core.events.toTransportEvent
@@ -62,6 +64,8 @@ class EventHandlerTest {
                 ConversationCleared,
                 SignedIn(MessageValues.PARTICIPANT_NAME, MessageValues.PARTICIPANT_LAST_NAME),
                 ExistingAuthSessionCleared,
+                SessionDuration(3600),
+                SessionExpirationNotice(300),
             )
 
         events.forEach {
@@ -268,6 +272,42 @@ class EventHandlerTest {
             assertThat(reason).isEqualTo(expectedReason)
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.onEvent(expectedConnectionClosedEvent))
+    }
+
+    @Test
+    fun `validate event SessionDuration payload`() {
+        val expectedDurationInSeconds = 3600L
+        val expectedSessionDurationEvent = SessionDuration(expectedDurationInSeconds)
+        val givenSessionDurationEvent = SessionDuration(3600)
+
+        subject.onEvent(givenSessionDurationEvent)
+
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockEventListener.invoke(capture(eventSlot))
+        }
+        (eventSlot[0] as SessionDuration).run {
+            assertThat(durationInSeconds).isEqualTo(expectedDurationInSeconds)
+        }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.onEvent(expectedSessionDurationEvent))
+    }
+
+    @Test
+    fun `validate event SessionExpirationNotice payload`() {
+        val expectedExpiresInSeconds = 300L
+        val expectedSessionExpirationNoticeEvent = SessionExpirationNotice(expectedExpiresInSeconds)
+        val givenSessionExpirationNoticeEvent = SessionExpirationNotice(300)
+
+        subject.onEvent(givenSessionExpirationNoticeEvent)
+
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockEventListener.invoke(capture(eventSlot))
+        }
+        (eventSlot[0] as SessionExpirationNotice).run {
+            assertThat(expiresInSeconds).isEqualTo(expectedExpiresInSeconds)
+        }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.onEvent(expectedSessionExpirationNoticeEvent))
     }
 
     @Test

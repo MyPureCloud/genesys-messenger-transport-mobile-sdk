@@ -42,7 +42,6 @@ internal class SessionDurationHandler(
             action = { emitSessionExpirationNotice() },
             dispatcher = dispatcher
         )
-
     private val healthCheckTimer: ActionTimer =
         ActionTimer(
             log = log,
@@ -105,7 +104,13 @@ internal class SessionDurationHandler(
     }
 
     private fun emitSessionExpirationNotice() {
-        eventHandler.onEvent(Event.SessionExpirationNotice)
+        val expiresInSeconds = calculateTimeToExpiration()
+        eventHandler.onEvent(Event.SessionExpirationNotice(expiresInSeconds))
+    }
+
+    private fun calculateTimeToExpiration(): Long {
+        val currentTimeSeconds = getCurrentTimestamp() / 1000
+        return currentExpirationDate?.let { it - currentTimeSeconds } ?: sessionExpirationNoticeInterval
     }
 
     fun setTriggerHealthCheck(triggerHealthCheck: () -> Unit) {

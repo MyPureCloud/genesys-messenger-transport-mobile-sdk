@@ -210,7 +210,7 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
                 type = "Text",
                 text = "Hello world!",
                 timeStamp = 1661196266704,
-                from = Participant(originatingEntity = Participant.OriginatingEntity.Unknown)
+                from = Participant(originatingEntity = Participant.OriginatingEntity.Unknown),
             )
         subject.connect()
 
