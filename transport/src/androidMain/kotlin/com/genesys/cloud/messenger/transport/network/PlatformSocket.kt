@@ -56,23 +56,29 @@ internal actual class PlatformSocket actual constructor(
                         response: Response?
                     ) = when (response?.code) {
                         403 -> {
-                            val message:String = response.message
+                            val message: String = response.message
                             when {
-                                message.equals("Session authentication failed, id_token has expired", true) -> {
+                                message.equals(
+                                    "Session authentication failed, id_token has expired",
+                                    true
+                                ) -> {
                                     listener.onEvent(Event.AuthorizationRequired)
                                 }
-                                message.startsWith("Try to authenticate again", true)  -> {
+
+                                message.startsWith("Try to authenticate again", true) -> {
                                     listener.onEvent(Event.AuthorizationRequired)
                                 }
-                                 else -> {
-                                     listener.onFailure(
-                                         Throwable(response.message, t),
-                                         ErrorCode.WebsocketAccessDenied
-                                     )
-                                 }
+
+                                else -> {
+                                    listener.onFailure(
+                                        Throwable(response.message, t),
+                                        ErrorCode.WebsocketAccessDenied
+                                    )
+                                }
                             }
 
                         }
+
                         else -> listener.onFailure(Throwable(ErrorMessage.FailedToReconnect, t))
                     }
 
