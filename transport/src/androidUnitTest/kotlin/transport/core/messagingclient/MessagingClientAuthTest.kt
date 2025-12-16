@@ -329,6 +329,48 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
     }
 
     @Test
+    fun `when SocketListener invoke onMessage with ClientResponseError 403 - normal way`() {
+        val expectedErrorCode = ErrorCode.ClientResponseError(403)
+        val expectedErrorMessage = "HTTP authorization error"
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) }) } answers {
+                slot.captured.onMessage(Response.clientError403Normal)
+        }
+        subject.connectAuthenticatedSession()
+        slot.captured.onMessage("Hi but maybe I get an HTTP 403 error")
+
+        assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
+    }
+
+    @Test
+    fun `when SocketListener invoke onMessage with ClientResponseError 403 - session auth failed`() {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) }) } answers {
+                slot.captured.onMessage(Response.clientError403SessionAuthFailed)
+        }
+        subject.connectAuthenticatedSession()
+        slot.captured.onMessage("Hi, but I may get an HTTP 403 error with session auth failed message")
+
+        assertThat(subject.currentState).isReconnecting()
+        verify {
+            mockEventHandler.onEvent(Event.AuthorizationRequired)
+        }
+    }
+
+    @Test
+    fun `when SocketListener invoke onMessage with ClientResponseError 403 - try authenticate again`() {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) }) } answers {
+                slot.captured.onMessage(Response.clientError403TryAuthenticateAgain)
+        }
+        subject.connectAuthenticatedSession()
+        slot.captured.onMessage("Hi, but I may get an HTTP 403 error with try authenticate again message")
+
+        assertThat(subject.currentState).isReconnecting()
+
+        verify {
+            mockEventHandler.onEvent(Event.AuthorizationRequired)
+        }
+    }
+
+    @Test
     fun `when authenticated conversation was disconnected with ReadOnly and startNewChat resulted in ClientResponseError(401)`() {
         var configureSessionResponsesCounter = 0 // Needed to exit the retry attempts from failing Response.unauthorized
         every {
