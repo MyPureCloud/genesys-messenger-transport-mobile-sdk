@@ -859,6 +859,10 @@ internal class MessagingClientImpl(
             stateMachine.onClosed(code, reason)
             cleanUp()
         }
+
+        override fun onEvent(event: Event) {
+            eventHandler.onEvent(event)
+        }
     }
 
     private fun createFileAttachmentProfile(sessionResponse: SessionResponse): FileAttachmentProfile {
