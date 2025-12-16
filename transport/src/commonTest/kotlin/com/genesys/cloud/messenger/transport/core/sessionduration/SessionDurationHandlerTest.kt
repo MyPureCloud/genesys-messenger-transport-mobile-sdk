@@ -371,26 +371,24 @@ class SessionDurationHandlerTest {
 
     @Test
     fun `when onMessage and session expiration notice was sent then emits RemoveSessionExpirationNotice and triggers health check`() =
-        runBlocking {
-            withTimeout(DEFAULT_TIMEOUT) {
-                val givenNoticeInterval = 1L
-                val givenExpirationDate = currentTime + 2L
-                val subject = createSubject(sessionExpirationNoticeInterval = givenNoticeInterval)
+        testScope.runTest {
+            val givenNoticeInterval = 1L
+            val givenExpirationDate = currentTime + 2L
+            val subject = createSubject(sessionExpirationNoticeInterval = givenNoticeInterval)
 
-                subject.updateSessionDuration(null, givenExpirationDate)
+            subject.updateSessionDuration(null, givenExpirationDate)
 
-                delay(1200)
+            advanceTimeBy(1200)
 
-                assertThat(capturedEvent).isEqualTo(Event.SessionExpirationNotice(givenExpirationDate - currentTime))
+            assertThat(capturedEvent).isEqualTo(Event.SessionExpirationNotice(givenExpirationDate - currentTime))
 
-                capturedEvent = null
-                healthCheckTriggered = false
+            capturedEvent = null
+            healthCheckTriggered = false
 
-                subject.onMessage()
+            subject.onMessage()
 
-                assertThat(capturedEvent).isEqualTo(Event.RemoveSessionExpirationNotice)
-                assertThat(healthCheckTriggered).isEqualTo(true)
-            }
+            assertThat(capturedEvent).isEqualTo(Event.RemoveSessionExpirationNotice)
+            assertThat(healthCheckTriggered).isEqualTo(true)
         }
 
     @Test
@@ -407,57 +405,54 @@ class SessionDurationHandlerTest {
 
     @Test
     fun `when onMessage called twice after expiration notice then only first call emits event`() =
-        runBlocking {
-            withTimeout(DEFAULT_TIMEOUT) {
-                var healthCheckCount = 0
-                val givenNoticeInterval = 1L
-                val givenExpirationDate = currentTime + 2L
-                val subject =
-                    SessionDurationHandler(
-                        sessionExpirationNoticeInterval = givenNoticeInterval,
-                        healthCheckPreNoticeTimeMillis = 300L,
-                        eventHandler = mockEventHandler,
-                        log = mockLog,
-                        triggerHealthCheck = { healthCheckCount++ },
-                        getCurrentTimestamp = { currentTime * 1000 }
-                    )
+        testScope.runTest {
+            var healthCheckCount = 0
+            val givenNoticeInterval = 1L
+            val givenExpirationDate = currentTime + 2L
+            val subject =
+                SessionDurationHandler(
+                    sessionExpirationNoticeInterval = givenNoticeInterval,
+                    healthCheckPreNoticeTimeMillis = 300L,
+                    eventHandler = mockEventHandler,
+                    log = mockLog,
+                    triggerHealthCheck = { healthCheckCount++ },
+                    getCurrentTimestamp = { currentTime * 1000 },
+                    dispatcher = testScope
+                )
 
-                subject.updateSessionDuration(null, givenExpirationDate)
+            subject.updateSessionDuration(null, givenExpirationDate)
 
-                delay(1200)
+            advanceTimeBy(1200)
 
-                subject.onMessage()
-                assertThat(capturedEvent).isEqualTo(Event.RemoveSessionExpirationNotice)
+            subject.onMessage()
+            assertThat(capturedEvent).isEqualTo(Event.RemoveSessionExpirationNotice)
 
-                capturedEvent = null
-                subject.onMessage()
-                assertThat(capturedEvent).isNull()
+            capturedEvent = null
+            subject.onMessage()
+            assertThat(capturedEvent).isNull()
 
-                assertThat(healthCheckCount).isEqualTo(2)
-            }
+            assertThat(healthCheckCount).isEqualTo(2)
         }
 
     @Test
     fun `when clear after expiration notice sent then resets sessionExpirationNoticeSent flag`() =
-        runBlocking {
-            withTimeout(DEFAULT_TIMEOUT) {
-                val givenNoticeInterval = 1L
-                val givenExpirationDate = currentTime + 2L
-                val subject = createSubject(sessionExpirationNoticeInterval = givenNoticeInterval)
+        testScope.runTest {
+            val givenNoticeInterval = 1L
+            val givenExpirationDate = currentTime + 2L
+            val subject = createSubject(sessionExpirationNoticeInterval = givenNoticeInterval)
 
-                subject.updateSessionDuration(null, givenExpirationDate)
+            subject.updateSessionDuration(null, givenExpirationDate)
 
-                delay(1200)
+            advanceTimeBy(1200)
 
-                subject.clear()
+            subject.clear()
 
-                capturedEvent = null
-                healthCheckTriggered = false
+            capturedEvent = null
+            healthCheckTriggered = false
 
-                subject.onMessage()
+            subject.onMessage()
 
-                assertThat(capturedEvent).isNull()
-                assertThat(healthCheckTriggered).isEqualTo(false)
-            }
+            assertThat(capturedEvent).isNull()
+            assertThat(healthCheckTriggered).isEqualTo(false)
         }
 }
