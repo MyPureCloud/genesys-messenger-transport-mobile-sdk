@@ -91,7 +91,6 @@ open class BaseMessagingClientTest {
                     message =
                         StructuredMessage(
                             text = "Postback button text",
-                            metadata = mapOf("customMessageId" to "card-123"),
                             content =
                                 listOf(
                                     Message.Content(
@@ -144,10 +143,10 @@ open class BaseMessagingClientTest {
             every { sendMessage(any()) } answers {
                 slot.captured.onMessage("")
             }
-            every { sendMessage(Request.configureRequest()) } answers {
+            every { sendMessage(match { Request.isConfigureRequest(it) }) } answers {
                 slot.captured.onMessage(Response.configureSuccess())
             }
-            every { sendMessage(Request.configureAuthenticatedRequest()) } answers {
+            every { sendMessage(match { Request.isConfigureAuthenticatedRequest(it) }) } answers {
                 slot.captured.onMessage(Response.configureSuccess())
             }
         }
@@ -267,15 +266,21 @@ open class BaseMessagingClientTest {
         mockStateChangedListener(fromConnectedToConfigured)
     }
 
-    protected fun MockKVerificationScope.configureSequence(shouldConfigureAuth: Boolean = false) {
-        val configureRequest =
-            if (shouldConfigureAuth) Request.configureAuthenticatedRequest() else Request.configureRequest()
+    protected fun MockKVerificationScope.configureSequence(shouldConfigureAuth: Boolean = false, startNew: Boolean = false) {
         mockLogger.i(capture(logSlot))
         if (shouldConfigureAuth) {
             mockAuthHandler.jwt // check if jwt is valid
             mockAuthHandler.jwt // use jwt for request
         }
-        mockPlatformSocket.sendMessage(configureRequest)
+        mockPlatformSocket.sendMessage(
+            match {
+                if (shouldConfigureAuth) {
+                    Request.isConfigureAuthenticatedRequest(it, startNew)
+                } else {
+                    Request.isConfigureRequest(it, startNew)
+                }
+            }
+        )
         mockVault.wasAuthenticated = shouldConfigureAuth
         mockAttachmentHandler.fileAttachmentProfile = any()
         mockReconnectionHandler.clear()
@@ -287,7 +292,7 @@ open class BaseMessagingClientTest {
     protected fun MockKVerificationScope.connectToReadOnlySequence() {
         fromIdleToConnectedSequence()
         mockLogger.i(capture(logSlot))
-        mockPlatformSocket.sendMessage(Request.configureRequest())
+        mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) })
         mockVault.wasAuthenticated = false
         mockAttachmentHandler.fileAttachmentProfile = any()
         mockReconnectionHandler.clear()
@@ -321,12 +326,18 @@ open class BaseMessagingClientTest {
     }
 
     protected fun MockKVerificationScope.connectWithFailedConfigureSequence(shouldConfigureAuth: Boolean = false) {
-        val configureRequest =
-            if (shouldConfigureAuth) Request.configureAuthenticatedRequest() else Request.configureRequest()
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
-        mockPlatformSocket.sendMessage(configureRequest)
+        mockPlatformSocket.sendMessage(
+            match {
+                if (shouldConfigureAuth) {
+                    Request.isConfigureAuthenticatedRequest(it)
+                } else {
+                    Request.isConfigureRequest(it)
+                }
+            }
+        )
     }
 
     protected fun errorSequence(stateChange: StateChange) {

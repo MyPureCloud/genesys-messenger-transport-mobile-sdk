@@ -5,6 +5,7 @@ package com.genesys.cloud.messenger.transport.core
  * KVault, Copyright 2021 Liftric, MIT license
  */
 
+import com.genesys.cloud.messenger.transport.util.LaunchStorage
 import com.genesys.cloud.messenger.transport.util.extensions.string
 import com.genesys.cloud.messenger.transport.util.extensions.toNSData
 import kotlinx.cinterop.BetaInteropApi
@@ -42,7 +43,45 @@ import platform.darwin.OSStatus
 import platform.darwin.noErr
 
 @OptIn(ExperimentalForeignApi::class)
-internal class InternalVault(private val serviceName: String) {
+internal class InternalVault(private val serviceName: String, private val tokenKey: String) {
+    private val launchStorage = LaunchStorage(serviceName)
+
+    init {
+        if (!launchStorage.didLaunchPreviously) {
+            handleFirstLaunchOrMigration()
+        }
+    }
+
+    /**
+     * Handles the first launch scenario or migration from older versions.
+     */
+    private fun handleFirstLaunchOrMigration() {
+        val hasInstallMarker = launchStorage.wasInstalled { key -> existsObject(key) }
+
+        if (hasInstallMarker) {
+            // Install marker exists but didLaunchPreviously is false
+            removeAll()
+            launchStorage.markLaunched()
+            launchStorage.markInstalled { key, value -> set(key, value) }
+        } else {
+            // No install marker - check for existing session token to detect upgrade
+            val hasSessionToken = existsObject(tokenKey)
+
+            if (hasSessionToken) {
+                // Session token exists -> this is an upgrade from old version
+                // Preserve the vault and set migration markers
+                launchStorage.markLaunched()
+                launchStorage.markInstalled { key, value -> set(key, value) }
+            } else {
+                // No session token -> fresh install or reinstall
+                // Safe to clear vault
+                removeAll()
+                launchStorage.markLaunched()
+                launchStorage.markInstalled { key, value -> set(key, value) }
+            }
+        }
+    }
+
     /**
      * Saves a string value in the Keychain.
      * @param key The key to store
@@ -75,6 +114,20 @@ internal class InternalVault(private val serviceName: String) {
             SecItemDelete(query)
                 .validate()
         }
+
+    /**
+     * Removes all items stored by this vault from the Keychain.
+     */
+    @OptIn(BetaInteropApi::class)
+    private fun removeAll() {
+        context {
+            val query =
+                query(
+                    kSecClass to kSecClassGenericPassword
+                )
+            SecItemDelete(query)
+        }
+    }
 
     private fun existsObject(forKey: String): Boolean =
         context(forKey) { (account) ->
