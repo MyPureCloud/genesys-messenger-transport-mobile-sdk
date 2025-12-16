@@ -9,5 +9,6 @@ import kotlinx.serialization.Serializable
 internal data class WebMessagingMessage<T>(
     override val type: String,
     override val code: Int,
-    val body: T
+    val body: T,
+    val tracingId: String? = null,
 ) : WebMessagingMessageProtocol

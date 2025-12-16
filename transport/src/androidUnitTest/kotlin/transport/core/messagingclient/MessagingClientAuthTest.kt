@@ -120,7 +120,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
             mockAuthHandler.refreshToken(any())
             mockAuthHandler.jwt
             mockAuthHandler.jwt
-            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
+            mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
             mockReconnectionHandler.clear()
             mockStateChangedListener(fromConnectedToConfigured)
         }
@@ -172,7 +172,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         verify { mockAuthHandler.logout() }
 
         // Test from Error state
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onMessage(Response.sessionNotFound)
         }
         subject.connect()
@@ -181,7 +181,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         verify(exactly = 2) { mockAuthHandler.logout() }
 
         // Test from ReadOnly state
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         }
         subject.connect()
@@ -225,7 +225,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
     @Test
     fun `when connectAuthenticatedSession respond with Unauthorized all the time`() {
         every {
-            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
+            mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
         } answers {
             slot.captured.onMessage(Response.unauthorized)
         }
@@ -244,19 +244,19 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
             mockStateChangedListener(fromConnectingToConnected)
             mockAuthHandler.jwt
             mockAuthHandler.jwt
-            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
+            mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
             mockAuthHandler.refreshToken(any())
             mockAuthHandler.jwt
             mockAuthHandler.jwt
-            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
+            mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
             mockAuthHandler.refreshToken(any())
             mockAuthHandler.jwt
             mockAuthHandler.jwt
-            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
+            mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
             mockAuthHandler.refreshToken(any())
             mockAuthHandler.jwt
             mockAuthHandler.jwt
-            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
+            mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
             errorSequence(fromConnectedToError(expectedErrorState))
         }
     }
@@ -291,7 +291,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         val expectedErrorCode = ErrorCode.ClientResponseError(400)
         val expectedErrorMessage = "Request failed."
         val expectedErrorState = MessagingClient.State.Error(expectedErrorCode, expectedErrorMessage)
-        every { mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) }) } answers {
             if (subject.currentState == MessagingClient.State.Reconnecting) {
                 slot.captured.onMessage(Response.webSocketRequestFailed)
             } else {
@@ -318,7 +318,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.jwt
-            mockPlatformSocket.sendMessage(eq(Request.configureAuthenticatedRequest()))
+            mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
             errorSequence(fromReconnectingToError(expectedErrorState))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT_AUTHENTICATED_SESSION)
@@ -332,7 +332,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
     fun `when authenticated conversation was disconnected with ReadOnly and startNewChat resulted in ClientResponseError(401)`() {
         var configureSessionResponsesCounter = 0 // Needed to exit the retry attempts from failing Response.unauthorized
         every {
-            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest(startNew = true))
+            mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it, startNew = true) })
         } answers {
             if (configureSessionResponsesCounter < 1) {
                 configureSessionResponsesCounter++
@@ -341,7 +341,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
                 slot.captured.onMessage(Response.configureSuccess())
             }
         }
-        every { mockPlatformSocket.sendMessage(Request.closeAllConnections) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isCloseAllConnectionsRequest(it) }) } answers {
             slot.captured.onMessage(Response.configureSuccess(connected = false, readOnly = true))
         }
         every { mockAuthHandler.refreshToken(captureLambda()) } answers {
@@ -362,16 +362,16 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         verifySequence {
             fromIdleToConnectedSequence()
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest())
+            mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
             mockStateChangedListener(fromConnectedToConfigured)
             mockStateChangedListener(fromConfiguredToReadOnly())
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(Request.closeAllConnections)
+            mockPlatformSocket.sendMessage(match { Request.isCloseAllConnectionsRequest(it) })
             mockLogger.i(capture(logSlot))
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest(startNew = true))
+            mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it, startNew = true) })
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(Request.configureAuthenticatedRequest(startNew = true))
+            mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it, startNew = true) })
             mockStateChangedListener(fromReadOnlyToConfigured)
         }
     }
@@ -429,7 +429,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         assertFailsWith<IllegalStateException>("MessagingClient is not Configured or in ReadOnly state.") { subject.stepUpToAuthenticatedSession() }
 
         // currentState = Error
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onMessage(Response.sessionNotFound)
         }
         subject.connect()
@@ -437,7 +437,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         assertFailsWith<IllegalStateException>("MessagingClient is not Configured or in ReadOnly state.") { subject.stepUpToAuthenticatedSession() }
 
         // currentState = ReadOnly
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onMessage(Response.configureSuccess(readOnly = true))
         }
         subject.connect()
