@@ -476,6 +476,7 @@ internal class MessagingClientImpl(
         code: ErrorCode,
         message: String? = null
     ) {
+        log.i{ "handleError: $code, message: $message"}
         when (code) {
             is ErrorCode.SessionHasExpired,
             is ErrorCode.SessionNotFound,
@@ -507,7 +508,25 @@ internal class MessagingClientImpl(
             is ErrorCode.ClientResponseError,
             is ErrorCode.ServerResponseError,
             is ErrorCode.RedirectResponseError,
-            -> {
+                -> {
+                if ((code as? ErrorCode.ClientResponseError)?.value == 403) {
+                    message?.run {
+                        if (startsWith("Session authentication failed", true)) {
+                            eventHandler.onEvent(Event.AuthorizationRequired)
+                            // TODO move to the correct state plus remove logs
+                            log.i { "implicit auth error message a: $this" }
+                            return
+                        } else if (startsWith("Try to authenticate again", true)) {
+                            eventHandler.onEvent(Event.AuthorizationRequired)
+                            // TODO move to the correct state plus remove logs
+                            log.i { "implicit auth error message b: $this" }
+                            return
+                        } else {
+                            // TODO remove logs
+                            log.i { "implicit auth other error message: $this" }
+                        }
+                    }
+                }
                 if (stateMachine.isConnected() || stateMachine.isReconnecting() || isStartingANewSession) {
                     handleConfigureSessionErrorResponse(code, message)
                 } else {
