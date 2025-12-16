@@ -1,6 +1,5 @@
 package transport.core.messagingclient
 
-import android.graphics.ColorSpace.match
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.auth.NO_JWT
