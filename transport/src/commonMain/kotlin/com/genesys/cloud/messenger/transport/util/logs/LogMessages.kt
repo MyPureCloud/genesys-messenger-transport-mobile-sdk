@@ -256,6 +256,12 @@ internal object LogMessages {
 
     fun noticeTimeAlreadyPassed(delayMillis: Long) = "Notice time has already passed (delay: $delayMillis ms)"
 
+    fun sessionExpirationNoticeSent(expiresInSeconds: Long) =
+        "Session expiration notice sent. Session expires in $expiresInSeconds seconds"
+
+    const val REMOVING_SESSION_EXPIRATION_NOTICE =
+        "Message activity detected during expiration notice period. Removing session expiration notice and triggering health check."
+
     // Action Timer
     fun startingTimer(delayMillis: Long) = "Starting timer with delay: $delayMillis ms"
 

@@ -619,6 +619,7 @@ internal class MessagingClientImpl(
 
     private fun handleTextMessageUpdate(message: Message) {
         messageStore.update(message)
+        sessionDurationHandler.onMessage()
         if (message.direction == Message.Direction.Inbound) {
             internalCustomAttributesStore.onSent()
             attachmentHandler.onSent(message.attachments)

@@ -108,4 +108,11 @@ sealed class Event {
      * @param expiresInSeconds The time remaining until the session expires, in seconds.
      */
     data class SessionExpirationNotice(val expiresInSeconds: Long) : Event()
+
+    /**
+     * Sent when the session expiration notice should be dismissed.
+     * This event is triggered when a message is sent or received after the session expiration
+     * notice was shown, indicating that the session has been extended.
+     */
+    data object RemoveSessionExpirationNotice : Event()
 }

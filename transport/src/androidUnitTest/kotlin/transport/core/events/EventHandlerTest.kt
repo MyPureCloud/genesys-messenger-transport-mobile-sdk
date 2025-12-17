@@ -15,6 +15,7 @@ import com.genesys.cloud.messenger.transport.core.events.Event.Error
 import com.genesys.cloud.messenger.transport.core.events.Event.ExistingAuthSessionCleared
 import com.genesys.cloud.messenger.transport.core.events.Event.HealthChecked
 import com.genesys.cloud.messenger.transport.core.events.Event.Logout
+import com.genesys.cloud.messenger.transport.core.events.Event.RemoveSessionExpirationNotice
 import com.genesys.cloud.messenger.transport.core.events.Event.SessionDuration
 import com.genesys.cloud.messenger.transport.core.events.Event.SessionExpirationNotice
 import com.genesys.cloud.messenger.transport.core.events.Event.SignedIn
@@ -66,6 +67,7 @@ class EventHandlerTest {
                 ExistingAuthSessionCleared,
                 SessionDuration(3600),
                 SessionExpirationNotice(300),
+                RemoveSessionExpirationNotice,
             )
 
         events.forEach {
