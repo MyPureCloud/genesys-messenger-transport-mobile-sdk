@@ -262,6 +262,12 @@ internal object LogMessages {
     const val REMOVING_SESSION_EXPIRATION_NOTICE =
         "Message activity detected during expiration notice period. Removing session expiration notice and triggering health check."
 
+    const val CLEARING_SESSION_DURATION_WITH_ACTIVE_NOTICE =
+        "Clearing session duration handler with active expiration notice. Removing notice."
+
+    const val HEALTH_CHECK_SKIPPED_INVALID_STATE =
+        "Health check skipped: MessagingClient is not in Configured or ReadOnly state."
+
     // Action Timer
     fun startingTimer(delayMillis: Long) = "Starting timer with delay: $delayMillis ms"
 
