@@ -163,6 +163,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
         verifySequence {
             connectSequence()
             mockMessageStore.update(expectedMessage)
+            mockSessionDurationHandler.onMessage()
             mockCustomAttributesStore.onSent()
             mockAttachmentHandler.onSent(mapOf("attachment_id" to expectedAttachment))
         }
@@ -422,6 +423,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
         verifySequence {
             connectSequence()
             mockMessageStore.update(expectedMessage)
+            mockSessionDurationHandler.onMessage()
         }
 
         verify(exactly = 0) {

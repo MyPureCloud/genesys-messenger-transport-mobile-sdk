@@ -78,6 +78,7 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isTextMessageRequest(it) })
             mockMessageStore.update(expectedMessage)
+            mockSessionDurationHandler.onMessage()
             mockCustomAttributesStore.onSent()
             mockAttachmentHandler.onSent(emptyMap())
         }
@@ -219,6 +220,7 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
         verifySequence {
             connectSequence()
             mockMessageStore.update(expectedMessage)
+            mockSessionDurationHandler.onMessage()
         }
         verify(exactly = 0) {
             mockCustomAttributesStore.onSent()
