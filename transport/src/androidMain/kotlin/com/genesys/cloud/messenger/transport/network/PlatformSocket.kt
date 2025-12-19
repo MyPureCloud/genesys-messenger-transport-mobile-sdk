@@ -54,7 +54,13 @@ internal actual class PlatformSocket actual constructor(
                         t: Throwable,
                         response: Response?
                     ) = when (response?.code) {
-                        403 -> listener.onFailure(Throwable(response.message, t), ErrorCode.WebsocketAccessDenied)
+                        403 -> {
+                            listener.onFailure(
+                                Throwable(response.message, t),
+                                ErrorCode.WebsocketAccessDenied
+                            )
+                        }
+
                         else -> listener.onFailure(Throwable(ErrorMessage.FailedToReconnect, t))
                     }
 

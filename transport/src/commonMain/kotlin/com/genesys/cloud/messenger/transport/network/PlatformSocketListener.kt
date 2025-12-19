@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.network
 
 import com.genesys.cloud.messenger.transport.core.ErrorCode
+import com.genesys.cloud.messenger.transport.core.events.Event
 
 internal interface PlatformSocketListener {
     fun onOpen()
