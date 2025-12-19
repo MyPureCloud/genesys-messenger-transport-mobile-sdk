@@ -2,7 +2,6 @@ package com.genesys.cloud.messenger.transport.network
 
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
-import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
@@ -56,27 +55,10 @@ internal actual class PlatformSocket actual constructor(
                         response: Response?
                     ) = when (response?.code) {
                         403 -> {
-                            val message: String = response.message
-                            when {
-                                message.equals(
-                                    "Session authentication failed, id_token has expired",
-                                    true
-                                ) -> {
-                                    listener.onEvent(Event.AuthorizationRequired)
-                                }
-
-                                message.startsWith("Try to authenticate again", true) -> {
-                                    listener.onEvent(Event.AuthorizationRequired)
-                                }
-
-                                else -> {
-                                    listener.onFailure(
-                                        Throwable(response.message, t),
-                                        ErrorCode.WebsocketAccessDenied
-                                    )
-                                }
-                            }
-
+                            listener.onFailure(
+                                Throwable(response.message, t),
+                                ErrorCode.WebsocketAccessDenied
+                            )
                         }
 
                         else -> listener.onFailure(Throwable(ErrorMessage.FailedToReconnect, t))

@@ -22,6 +22,4 @@ internal interface PlatformSocketListener {
         code: Int,
         reason: String
     )
-
-    fun onEvent(event: Event)
 }
