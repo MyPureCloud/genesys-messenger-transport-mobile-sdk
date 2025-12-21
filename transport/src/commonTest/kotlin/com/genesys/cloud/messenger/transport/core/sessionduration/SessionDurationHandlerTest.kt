@@ -465,7 +465,7 @@ class SessionDurationHandlerTest {
 
             subject.updateSessionDuration(null, givenExpirationDate)
 
-            // Wait for expiration notice to be sent
+            // Advance time for expiration notice to be sent
             advanceTimeBy(1200)
 
             assertThat(capturedEvent).isEqualTo(Event.SessionExpirationNotice(givenExpirationDate - currentTime))
@@ -575,7 +575,7 @@ class SessionDurationHandlerTest {
 
             subject.updateSessionDuration(null, givenExpirationDate)
 
-            // Wait for expiration notice to be sent
+            // Advance time for expiration notice to be sent
             advanceTimeBy(1200)
 
             subject.clearAndRemoveNotice()
