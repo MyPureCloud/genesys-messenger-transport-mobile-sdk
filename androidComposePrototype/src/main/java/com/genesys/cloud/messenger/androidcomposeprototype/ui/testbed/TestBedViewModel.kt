@@ -602,12 +602,13 @@ class TestBedViewModel :
     private fun startExpirationCountdown(expiresInSeconds: Long) {
         expirationCountdownJob?.cancel()
         expirationCountdownSeconds = expiresInSeconds
-        expirationCountdownJob = viewModelScope.launch {
-            while (expirationCountdownSeconds != null && expirationCountdownSeconds!! > 0) {
-                delay(1000L)
-                expirationCountdownSeconds = expirationCountdownSeconds?.minus(1)
+        expirationCountdownJob =
+            viewModelScope.launch {
+                while (expirationCountdownSeconds != null && expirationCountdownSeconds!! > 0) {
+                    delay(1000L)
+                    expirationCountdownSeconds = expirationCountdownSeconds?.minus(1)
+                }
             }
-        }
     }
 
     private fun cancelExpirationCountdown() {
