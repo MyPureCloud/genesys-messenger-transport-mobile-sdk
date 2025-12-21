@@ -29,6 +29,7 @@ import io.ktor.http.URLBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -46,6 +47,7 @@ class TestBedViewModel :
     private lateinit var client: MessagingClient
     private lateinit var pushService: PushService
     private val attachedIds = mutableListOf<String>()
+    private var expirationCountdownJob: Job? = null
 
     var command: String by mutableStateOf("")
         private set
@@ -62,6 +64,10 @@ class TestBedViewModel :
     var authState: AuthState by mutableStateOf(AuthState.NoAuth)
         private set
     private var pkceEnabled by mutableStateOf(false)
+    var sessionDurationSeconds: Long? by mutableStateOf(null)
+        private set
+    var expirationCountdownSeconds: Long? by mutableStateOf(null)
+        private set
 
     var authCode: String = ""
         set(value) {
@@ -502,8 +508,18 @@ class TestBedViewModel :
                 is State.Configured ->
                     "connected: ${newState.connected}," + " newSession: ${newState.newSession}," + " wasReconnecting: ${oldState is State.Reconnecting}"
                 is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
-                is State.Closed -> "code: ${newState.code}, reason: ${newState.reason}"
-                is State.Error -> "code: ${newState.code}, message: ${newState.message}"
+                is State.Closed -> {
+                    resetSessionState()
+                    "code: ${newState.code}, reason: ${newState.reason}"
+                }
+                is State.Error -> {
+                    resetSessionState()
+                    "code: ${newState.code}, message: ${newState.message}"
+                }
+                is State.Idle -> {
+                    resetSessionState()
+                    ""
+                }
                 else -> ""
             }
         onSocketMessageReceived(statePayloadMessage)
@@ -575,9 +591,34 @@ class TestBedViewModel :
             is Event.Logout -> authState = AuthState.LoggedOut
             is Event.Authorized -> authState = AuthState.Authorized
             is Event.Error -> handleEventError(event)
+            is Event.SessionDuration -> sessionDurationSeconds = event.durationInSeconds
+            is Event.SessionExpirationNotice -> startExpirationCountdown(event.expiresInSeconds)
+            is Event.RemoveSessionExpirationNotice -> cancelExpirationCountdown()
             else -> println("On event: $event")
         }
         onSocketMessageReceived(event.toString())
+    }
+
+    private fun startExpirationCountdown(expiresInSeconds: Long) {
+        expirationCountdownJob?.cancel()
+        expirationCountdownSeconds = expiresInSeconds
+        expirationCountdownJob = viewModelScope.launch {
+            while (expirationCountdownSeconds != null && expirationCountdownSeconds!! > 0) {
+                delay(1000L)
+                expirationCountdownSeconds = expirationCountdownSeconds?.minus(1)
+            }
+        }
+    }
+
+    private fun cancelExpirationCountdown() {
+        expirationCountdownJob?.cancel()
+        expirationCountdownJob = null
+        expirationCountdownSeconds = null
+    }
+
+    private fun resetSessionState() {
+        sessionDurationSeconds = null
+        cancelExpirationCountdown()
     }
 
     private fun handleEventError(event: Event.Error) {
