@@ -631,19 +631,11 @@ extension TestbedViewController : UITextFieldDelegate {
     // MARK: - Session Duration Methods
 
     private func updateSessionDurationView() {
-        if let duration = sessionDurationSeconds {
-            sessionDurationView.text = "Session Duration: \(duration)s"
-        } else {
-            sessionDurationView.text = "Session Duration: n/a"
-        }
+        sessionDurationView.text = "Session Duration: \(sessionDurationSeconds != nil ? "\(sessionDurationSeconds!)s" : "n/a")"
     }
 
     private func updateExpirationView() {
-        if let expiration = expirationCountdownSeconds {
-            expirationView.text = "Expires In: \(expiration)s"
-        } else {
-            expirationView.text = "Expires In: n/a"
-        }
+        expirationView.text = "Expires In: \(expirationCountdownSeconds != nil ? "\(expirationCountdownSeconds!)s" : "n/a")"
     }
 
     private func startExpirationCountdown(expiresInSeconds: Int64) {
