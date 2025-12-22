@@ -19,6 +19,11 @@ class TestbedViewController: UIViewController {
     private var authState: AuthState = AuthState.noAuth
     private var quickRepliesMap = [String: ButtonResponse]()
     private var cardActionsMap = [String: ButtonResponse]()
+    
+    // Session duration state
+    private var sessionDurationSeconds: Int64? = nil
+    private var expirationCountdownSeconds: Int64? = nil
+    private var countdownTimer: Timer? = nil
 
     init(messenger: MessengerInteractor) {
         self.messenger = messenger
@@ -131,6 +136,49 @@ class TestbedViewController: UIViewController {
         return view
     }()
 
+    private let sessionDurationView: UILabel = {
+        let view = UILabel()
+        view.numberOfLines = 0
+        view.text = "Session Duration: n/a"
+        view.font = UIFont.preferredFont(forTextStyle: .callout)
+        return view
+    }()
+
+    private let expirationView: UILabel = {
+        let view = UILabel()
+        view.numberOfLines = 0
+        view.text = "Expires In: n/a"
+        view.font = UIFont.preferredFont(forTextStyle: .callout)
+        return view
+    }()
+
+    private let stateInfoContainer: UIStackView = {
+        let view = UIStackView()
+        view.axis = .horizontal
+        view.alignment = .top
+        view.distribution = .fillEqually
+        view.spacing = 8
+        return view
+    }()
+
+    private let leftStateColumn: UIStackView = {
+        let view = UIStackView()
+        view.axis = .vertical
+        view.alignment = .fill
+        view.distribution = .fill
+        view.spacing = 4
+        return view
+    }()
+
+    private let rightStateColumn: UIStackView = {
+        let view = UIStackView()
+        view.axis = .vertical
+        view.alignment = .fill
+        view.distribution = .fill
+        view.spacing = 4
+        return view
+    }()
+
     private let info: UILabel = {
         let view = UILabel()
         view.numberOfLines = 0
@@ -144,11 +192,22 @@ class TestbedViewController: UIViewController {
 
         view.backgroundColor = UIColor(white: 0.99, alpha: 1.0)
 
+        // Set up left column (status info)
+        leftStateColumn.addArrangedSubview(status)
+        leftStateColumn.addArrangedSubview(authStateView)
+
+        // Set up right column (session duration info)
+        rightStateColumn.addArrangedSubview(sessionDurationView)
+        rightStateColumn.addArrangedSubview(expirationView)
+
+        // Set up horizontal container
+        stateInfoContainer.addArrangedSubview(leftStateColumn)
+        stateInfoContainer.addArrangedSubview(rightStateColumn)
+
         content.addArrangedSubview(heading)
         content.addArrangedSubview(input)
         content.addArrangedSubview(instructions)
-        content.addArrangedSubview(status)
-        content.addArrangedSubview(authStateView)
+        content.addArrangedSubview(stateInfoContainer)
         content.addArrangedSubview(info)
 
         view.addSubview(content)
@@ -201,9 +260,14 @@ class TestbedViewController: UIViewController {
         case let closing as MessagingClientState.Closing:
             stateMessage = "Closing, code=\(closing.code) reason=\(closing.reason)"
         case let closed as MessagingClientState.Closed:
+            resetSessionState()
             stateMessage = "Closed, code=\(closed.code) reason=\(closed.reason)"
         case let error as MessagingClientState.Error:
+            resetSessionState()
             stateMessage = "Error, code=\(error.code) message=\(error.message?.description ?? "nil")"
+        case is MessagingClientState.Idle:
+            resetSessionState()
+            stateMessage = "Idle"
         case is MessagingClientState.Reconnecting:
             stateMessage = "Reconnecting"
         case is MessagingClientState.ReadOnly:
@@ -283,6 +347,22 @@ class TestbedViewController: UIViewController {
             displayEvent = "Event received: \(signedIn.description)"
         case let existingAuthSessionCleared as Event.ExistingAuthSessionCleared:
             displayEvent = "Event received: \(existingAuthSessionCleared.description)"
+        case let sessionDuration as Event.SessionDuration:
+            sessionDurationSeconds = sessionDuration.durationInSeconds
+            DispatchQueue.main.async {
+                self.updateSessionDurationView()
+            }
+            displayEvent = "Event received: SessionDuration(\(sessionDuration.durationInSeconds)s)"
+        case let sessionExpiration as Event.SessionExpirationNotice:
+            DispatchQueue.main.async {
+                self.startExpirationCountdown(expiresInSeconds: sessionExpiration.expiresInSeconds)
+            }
+            displayEvent = "Event received: SessionExpirationNotice(\(sessionExpiration.expiresInSeconds)s)"
+        case is Event.RemoveSessionExpirationNotice:
+            DispatchQueue.main.async {
+                self.cancelExpirationCountdown()
+            }
+            displayEvent = "Event received: RemoveSessionExpirationNotice"
         default:
             break
         }
@@ -546,6 +626,49 @@ extension TestbedViewController : UITextFieldDelegate {
 
     private func updateAuthStateView() {
         authStateView.text = "Auth State: \(authState)"
+    }
+
+    // MARK: - Session Duration Methods
+
+    private func updateSessionDurationView() {
+        sessionDurationView.text = "Session Duration: \(sessionDurationSeconds != nil ? "\(sessionDurationSeconds!)s" : "n/a")"
+    }
+
+    private func updateExpirationView() {
+        expirationView.text = "Expires In: \(expirationCountdownSeconds != nil ? "\(expirationCountdownSeconds!)s" : "n/a")"
+    }
+
+    private func startExpirationCountdown(expiresInSeconds: Int64) {
+        cancelExpirationCountdown()
+        expirationCountdownSeconds = expiresInSeconds
+        updateExpirationView()
+
+        countdownTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
+            guard let self = self else {
+                timer.invalidate()
+                return
+            }
+
+            if let current = self.expirationCountdownSeconds, current > 0 {
+                self.expirationCountdownSeconds = current - 1
+                self.updateExpirationView()
+            } else {
+                self.cancelExpirationCountdown()
+            }
+        }
+    }
+
+    private func cancelExpirationCountdown() {
+        countdownTimer?.invalidate()
+        countdownTimer = nil
+        expirationCountdownSeconds = nil
+        updateExpirationView()
+    }
+
+    private func resetSessionState() {
+        sessionDurationSeconds = nil
+        updateSessionDurationView()
+        cancelExpirationCountdown()
     }
 }
 
