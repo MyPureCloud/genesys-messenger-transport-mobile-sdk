@@ -25,7 +25,11 @@ Pod::Spec.new do |spec|
             :shell_path => '/bin/sh',
             :script => <<-SCRIPT
                 # Set JAVA_HOME for Xcode environment
-                export JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+                if [[ "$(uname -m)" == arm64 ]]; then
+                    export JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+                else
+                    export JAVA_HOME="/usr/local/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"
+                fi
                 export PATH="$JAVA_HOME/bin:$PATH"
                 if [ "YES" = "$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED" ]; then
                   echo "Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to YES"
