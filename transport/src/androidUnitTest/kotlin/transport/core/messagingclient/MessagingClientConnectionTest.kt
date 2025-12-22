@@ -139,7 +139,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         val expectedErrorCode = ErrorCode.ClientResponseError(400)
         val expectedErrorMessage = "Request failed."
         val expectedErrorState = MessagingClient.State.Error(expectedErrorCode, expectedErrorMessage)
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onMessage(Response.webSocketRequestFailed)
         }
 
@@ -157,7 +157,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         val givenException = Exception(ErrorMessage.InternetConnectionIsOffline)
         val expectedErrorState =
             MessagingClient.State.Error(ErrorCode.NetworkDisabled, ErrorMessage.InternetConnectionIsOffline)
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onFailure(givenException, ErrorCode.NetworkDisabled)
         }
 
@@ -192,7 +192,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         val expectedErrorCode = ErrorCode.ClientResponseError(400)
         val expectedErrorMessage = "Request failed."
         val expectedErrorState = MessagingClient.State.Error(expectedErrorCode, expectedErrorMessage)
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             if (subject.currentState == MessagingClient.State.Reconnecting) {
                 slot.captured.onMessage(Response.webSocketRequestFailed)
             } else {
@@ -216,7 +216,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.openSocket(any())
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(eq(Request.configureRequest()))
+            mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) })
             errorSequence(fromReconnectingToError(expectedErrorState))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
@@ -230,7 +230,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
     fun `when SocketListener invoke onMessage with SessionNotFound error message`() {
         val expectedErrorState =
             MessagingClient.State.Error(ErrorCode.SessionNotFound, "session not found error message")
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onMessage(Response.sessionNotFound)
         }
 
@@ -285,7 +285,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
 
     @Test
     fun `when configure response has clearedExistingSession=true`() {
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onMessage(Response.configureSuccess(clearedExistingSession = true))
         }
         subject.connect()
@@ -324,7 +324,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
 
     @Test
     fun `when unstructured error message with ErrorCode_CannotDowngradeToUnauthenticated is received`() {
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
             slot.captured.onMessage(Response.cannotDowngradeToUnauthenticated)
         }
         subject.connect()
@@ -332,7 +332,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         verifySequence {
             fromIdleToConnectedSequence()
             mockLogger.i(capture(logSlot))
-            mockPlatformSocket.sendMessage(Request.configureRequest())
+            mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) })
             invalidateSessionTokenSequence()
             mockStateChangedListener(fromConnectedToError(MessagingClient.State.Error(ErrorCode.CannotDowngradeToUnauthenticated, ErrorTest.MESSAGE)))
         }
