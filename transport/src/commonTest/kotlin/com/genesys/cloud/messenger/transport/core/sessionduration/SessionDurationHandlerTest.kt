@@ -455,4 +455,133 @@ class SessionDurationHandlerTest {
             assertThat(capturedEvent).isNull()
             assertThat(healthCheckTriggered).isEqualTo(false)
         }
+
+    @Test
+    fun `when clearAndRemoveNotice and expiration notice was sent then emits RemoveSessionExpirationNotice and clears state`() =
+        testScope.runTest {
+            val givenNoticeInterval = 1L
+            val givenExpirationDate = currentTime + 2L
+            val subject = createSubject(sessionExpirationNoticeInterval = givenNoticeInterval)
+
+            subject.updateSessionDuration(null, givenExpirationDate)
+
+            // Advance time for expiration notice to be sent
+            advanceTimeBy(1200)
+
+            assertThat(capturedEvent).isEqualTo(Event.SessionExpirationNotice(givenExpirationDate - currentTime))
+
+            capturedEvent = null
+
+            subject.clearAndRemoveNotice()
+
+            assertThat(capturedEvent).isEqualTo(Event.RemoveSessionExpirationNotice)
+        }
+
+    @Test
+    fun `when clearAndRemoveNotice and expiration notice was not sent then does not emit event but clears state`() {
+        subject.updateSessionDuration(3600L, null)
+        capturedEvent = null
+
+        subject.clearAndRemoveNotice()
+
+        assertThat(capturedEvent).isNull()
+    }
+
+    @Test
+    fun `when clearAndRemoveNotice then subsequent onMessage does not emit RemoveSessionExpirationNotice`() =
+        testScope.runTest {
+            val givenNoticeInterval = 1L
+            val givenExpirationDate = currentTime + 2L
+            val subject = createSubject(sessionExpirationNoticeInterval = givenNoticeInterval)
+
+            subject.updateSessionDuration(null, givenExpirationDate)
+
+            advanceTimeBy(1200)
+
+            subject.clearAndRemoveNotice()
+
+            capturedEvent = null
+            healthCheckTriggered = false
+
+            subject.onMessage()
+
+            // onMessage should not emit event since clearAndRemoveNotice already cleared the flag
+            assertThat(capturedEvent).isNull()
+            assertThat(healthCheckTriggered).isFalse()
+        }
+
+    @Test
+    fun `when clearAndRemoveNotice then cancels pending timers`() =
+        testScope.runTest {
+            val givenNoticeInterval = 1L
+            val givenExpirationDate = currentTime + 3L
+            val subject = createSubject(sessionExpirationNoticeInterval = givenNoticeInterval)
+
+            subject.updateSessionDuration(null, givenExpirationDate)
+
+            // Clear before timers fire
+            subject.clearAndRemoveNotice()
+
+            capturedEvent = null
+
+            // Advance time past when timers would have fired
+            advanceTimeBy(3000)
+
+            // No events should be emitted since timers were cancelled
+            assertThat(capturedEvent).isNull()
+        }
+
+    @Test
+    fun `when notice time has already passed then emits SessionExpirationNotice immediately`() =
+        testScope.runTest {
+            val givenNoticeInterval = 60L // Notice interval is 60 seconds before expiration
+            val givenExpirationDate = currentTime + 30L // Expiration in 30 seconds, notice time already passed
+            val subject = createSubject(sessionExpirationNoticeInterval = givenNoticeInterval)
+
+            subject.updateSessionDuration(null, givenExpirationDate)
+
+            // Event should be emitted immediately without waiting for timer
+            val capturedExpirationNotice = capturedEvent as? Event.SessionExpirationNotice
+            assertThat(capturedExpirationNotice).isEqualTo(Event.SessionExpirationNotice(givenExpirationDate - currentTime))
+        }
+
+    @Test
+    fun `when clearAndRemoveNotice called multiple times then only first call emits event`() =
+        testScope.runTest {
+            var eventCount = 0
+            val countingEventHandler =
+                object : EventHandler {
+                    override var eventListener: ((Event) -> Unit)? = null
+
+                    override fun onEvent(event: Event) {
+                        if (event is Event.RemoveSessionExpirationNotice) {
+                            eventCount++
+                        }
+                        capturedEvent = event
+                    }
+                }
+            val givenNoticeInterval = 1L
+            val givenExpirationDate = currentTime + 2L
+            val subject =
+                SessionDurationHandler(
+                    sessionExpirationNoticeInterval = givenNoticeInterval,
+                    healthCheckPreNoticeTimeMillis = 300L,
+                    eventHandler = countingEventHandler,
+                    log = mockLog,
+                    triggerHealthCheck = { healthCheckTriggered = true },
+                    getCurrentTimestamp = { currentTime * 1000 },
+                    dispatcher = testScope
+                )
+
+            subject.updateSessionDuration(null, givenExpirationDate)
+
+            // Advance time for expiration notice to be sent
+            advanceTimeBy(1200)
+
+            subject.clearAndRemoveNotice()
+            subject.clearAndRemoveNotice()
+            subject.clearAndRemoveNotice()
+
+            assertThat(eventCount).isEqualTo(1)
+        }
 }

@@ -169,7 +169,7 @@ internal class MessagingClientImpl(
         get() = vault.wasAuthenticated
 
     init {
-        sessionDurationHandler.setTriggerHealthCheck { sendHealthCheck() }
+        sessionDurationHandler.setTriggerHealthCheck { sendSafeHealthCheck() }
     }
 
     @Throws(IllegalStateException::class, TransportSDKException::class)
@@ -285,6 +285,14 @@ internal class MessagingClientImpl(
         healthCheckProvider.encodeRequest(token)?.let {
             log.i { LogMessages.SEND_HEALTH_CHECK }
             send(it)
+        }
+    }
+
+    private fun sendSafeHealthCheck() {
+        if (stateMachine.currentState is State.Configured || stateMachine.isReadOnly()) {
+            sendHealthCheck()
+        } else {
+            log.w { LogMessages.HEALTH_CHECK_SKIPPED_INVALID_STATE }
         }
     }
 
@@ -552,6 +560,7 @@ internal class MessagingClientImpl(
         when (errorCode) {
             is ErrorCode.WebsocketError -> {
                 if (reconnectionHandler.shouldReconnect) {
+                    sessionDurationHandler.clearAndRemoveNotice()
                     stateMachine.onReconnect()
                     reconnectionHandler.reconnect { if (connectAuthenticated) connectAuthenticatedSession() else connect() }
                 } else {
@@ -656,8 +665,14 @@ internal class MessagingClientImpl(
 
     private fun Message.handleAsStructuredMessage() {
         when (messageType) {
-            Message.Type.QuickReply -> messageStore.update(this)
-            Message.Type.Cards -> messageStore.update(this)
+            Message.Type.QuickReply -> {
+                messageStore.update(this)
+                sessionDurationHandler.onMessage()
+            }
+            Message.Type.Cards -> {
+                messageStore.update(this)
+                sessionDurationHandler.onMessage()
+            }
             Message.Type.Unknown -> log.w { LogMessages.unsupportedMessageType(messageType) }
             else -> log.w { "Should not happen." }
         }
@@ -685,6 +700,7 @@ internal class MessagingClientImpl(
         stateMachine.onError(errorCode, errorMessage)
         reconnectionHandler.clear()
         jwtHandler.clear()
+        sessionDurationHandler.clearAndRemoveNotice()
         reconfigureAttempts = 0
         sendingAutostart = false
         clearingConversation = false
@@ -830,6 +846,7 @@ internal class MessagingClientImpl(
                             invalidateSessionToken()
                             vault.wasAuthenticated = false
                         }
+                        sessionDurationHandler.clearAndRemoveNotice()
                         eventHandler.onEvent(Event.ConnectionClosed(reason))
                         disconnect()
                     }

@@ -110,9 +110,8 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
             expectedErrorState.message
         )
         verifySequence {
-            mockStateChangedListener(fromIdleToConnecting)
-            mockPlatformSocket.openSocket(any())
-            mockStateChangedListener(fromConnectingToConnected)
+            fromIdleToConnectedSequence()
+            mockLogger.i(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.refreshToken(any())
             errorSequence(fromConnectedToError(expectedErrorState))
@@ -203,21 +202,23 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
             expectedErrorState.message
         )
         verifySequence {
-            mockStateChangedListener(fromIdleToConnecting)
-            mockPlatformSocket.openSocket(any())
-            mockStateChangedListener(fromConnectingToConnected)
+            fromIdleToConnectedSequence()
+            mockLogger.i(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.jwt
             mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
             mockAuthHandler.refreshToken(any())
+            mockLogger.i(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.jwt
             mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
             mockAuthHandler.refreshToken(any())
+            mockLogger.i(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.jwt
             mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
             mockAuthHandler.refreshToken(any())
+            mockLogger.i(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.jwt
             mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
@@ -275,6 +276,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockMessageStore.invalidateConversationCache()
             mockReconnectionHandler.shouldReconnect
+            mockSessionDurationHandler.clearAndRemoveNotice()
             mockStateChangedListener(fromConfiguredToReconnecting())
             mockReconnectionHandler.reconnect(any())
             mockLogger.i(capture(logSlot))
