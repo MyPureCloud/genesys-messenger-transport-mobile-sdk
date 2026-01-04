@@ -16,7 +16,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Co
 import com.genesys.cloud.messenger.transport.shyrka.receive.isInbound
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.util.WILD_CARD
-import com.soywiz.klock.DateTime
+import kotlinx.datetime.Instant
 
 internal fun List<StructuredMessage>.toMessageList(): List<Message> =
     map { it.toMessage() }
@@ -62,7 +62,7 @@ internal fun Message.getUploadedAttachments(): List<Message.Content> {
 internal fun String?.fromIsoToEpochMilliseconds(): Long? {
     return try {
         this?.let {
-            DateTime.fromString(it).local.unixMillisLong
+            Instant.parse(it).toEpochMilliseconds()
         }
     } catch (t: Throwable) {
         null
