@@ -9,6 +9,14 @@ Pod::Spec.new do |spec|
     spec.vendored_frameworks      = 'build/cocoapods/framework/MessengerTransport.framework'
     spec.libraries                = 'c++'
     spec.ios.deployment_target    = '13.0'
+    
+    # Include Kotlin source files for debugging in Xcode (appears in Development Pods like other local pods)
+    # Note: These are Kotlin files, but CocoaPods will still add them to the project navigator
+    spec.source_files = [
+        'src/commonMain/**/*.kt',
+        'src/iosMain/**/*.kt'
+    ]
+    
     spec.xcconfig = {
         'ENABLE_USER_SCRIPT_SANDBOXING' => 'NO',
     }
