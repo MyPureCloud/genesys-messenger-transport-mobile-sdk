@@ -326,9 +326,14 @@ open class BaseMessagingClientTest {
     }
 
     protected fun MockKVerificationScope.connectWithFailedConfigureSequence(shouldConfigureAuth: Boolean = false) {
+        mockLogger.withTag(LogTag.STATE_MACHINE)
+        mockSessionDurationHandler.setTriggerHealthCheck(any())
+        mockLogger.withTag(LogTag.WEBSOCKET)
+        mockLogger.i(capture(logSlot))
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
+        mockLogger.i(capture(logSlot))
         mockPlatformSocket.sendMessage(
             match {
                 if (shouldConfigureAuth) {
@@ -340,10 +345,11 @@ open class BaseMessagingClientTest {
         )
     }
 
-    protected fun errorSequence(stateChange: StateChange) {
-        this.mockStateChangedListener(stateChange)
+    protected fun MockKVerificationScope.errorSequence(stateChange: StateChange) {
+        mockStateChangedListener(stateChange)
         mockReconnectionHandler.clear()
         mockJwtHandler.clear()
+        mockSessionDurationHandler.clearAndRemoveNotice()
     }
 
     protected fun MockKVerificationScope.invalidateSessionTokenSequence() {

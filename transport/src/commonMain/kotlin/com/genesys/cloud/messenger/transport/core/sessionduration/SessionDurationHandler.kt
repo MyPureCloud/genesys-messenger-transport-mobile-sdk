@@ -85,6 +85,7 @@ internal class SessionDurationHandler(
             scheduleExpirationNoticeTimer(expirationNoticeDelayMillis)
         } else {
             log.w { LogMessages.noticeTimeAlreadyPassed(expirationNoticeDelayMillis) }
+            emitSessionExpirationNotice()
         }
     }
 
@@ -132,6 +133,20 @@ internal class SessionDurationHandler(
             eventHandler.onEvent(Event.RemoveSessionExpirationNotice)
             triggerHealthCheck()
         }
+    }
+
+    /**
+     * Clears the session duration handler and emits a RemoveSessionExpirationNotice event
+     * if a session expiration notice was previously sent.
+     * This should be called when the connection is closed or an error occurs to ensure
+     * no stale expiration notices are displayed.
+     */
+    fun clearAndRemoveNotice() {
+        if (sessionExpirationNoticeSent) {
+            log.i { LogMessages.CLEARING_SESSION_DURATION_WITH_ACTIVE_NOTICE }
+            eventHandler.onEvent(Event.RemoveSessionExpirationNotice)
+        }
+        clear()
     }
 
     fun clear() {

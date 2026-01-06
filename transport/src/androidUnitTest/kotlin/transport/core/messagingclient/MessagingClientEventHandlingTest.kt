@@ -82,6 +82,7 @@ class MessagingClientEventHandlingTest : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
+            mockSessionDurationHandler.clearAndRemoveNotice()
             mockEventHandler.onEvent(eq(expectedEvent))
             disconnectSequence()
         }
@@ -98,6 +99,7 @@ class MessagingClientEventHandlingTest : BaseMessagingClientTest() {
             connectSequence()
             invalidateSessionTokenSequence()
             mockVault.wasAuthenticated = false
+            mockSessionDurationHandler.clearAndRemoveNotice()
             mockEventHandler.onEvent(eq(expectedEvent))
             disconnectSequence()
         }
