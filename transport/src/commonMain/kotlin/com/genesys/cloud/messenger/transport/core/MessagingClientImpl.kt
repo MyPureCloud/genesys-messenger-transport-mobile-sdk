@@ -512,9 +512,12 @@ internal class MessagingClientImpl(
                     message?.run {
                         if (startsWith("Session authentication failed", true)) {
                             eventHandler.onEvent(Event.AuthorizationRequired)
+                            stateMachine.onReconnect()
                             return
                         } else if (startsWith("Try to authenticate again", true)) {
                             eventHandler.onEvent(Event.AuthorizationRequired)
+                            stateMachine.onReconnect()
+
                             return
                         }
                     }
