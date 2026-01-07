@@ -1,7 +1,9 @@
 package com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed
 
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -89,6 +91,8 @@ fun TestBedScreen(testBedViewModel: TestBedViewModel) {
             socketMessage = testBedViewModel.socketMessage,
             commandWaiting = testBedViewModel.commandWaiting,
             currentAuthState = testBedViewModel.authState,
+            sessionDurationSeconds = testBedViewModel.sessionDurationSeconds,
+            expirationCountdownSeconds = testBedViewModel.expirationCountdownSeconds,
         )
     }
 }
@@ -103,14 +107,27 @@ fun TestBedContent(
     socketMessage: String,
     commandWaiting: Boolean,
     currentAuthState: AuthState,
+    sessionDurationSeconds: Long?,
+    expirationCountdownSeconds: Long?,
 ) {
     Column(
         modifier = modifier.fillMaxSize().padding(8.dp)
     ) {
         CommandView(command, onCommandChange, onCommandSend, commandWaiting)
         Spacer(modifier = Modifier.height(16.dp))
-        ConnectionStateView(clientState)
-        AuthStateView(currentAuthState)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                StateFieldView("Client", clientState.javaClass.simpleName)
+                StateFieldView("Auth state", currentAuthState.javaClass.simpleName)
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                StateFieldView("Session Duration", sessionDurationSeconds?.let { "${it}s" } ?: "n/a")
+                StateFieldView("Expires In", expirationCountdownSeconds?.let { "${it}s" } ?: "n/a")
+            }
+        }
         SocketMessageView(socketMessage)
     }
 }
@@ -169,30 +186,14 @@ private fun CommandView(
 }
 
 @Composable
-private fun ConnectionStateView(clientState: MessagingClient.State) {
+private fun StateFieldView(label: String, value: String) {
     OutlinedTextField(
-        value = clientState.javaClass.simpleName,
+        value = value,
         onValueChange = { /* no-op */ },
-        label = { Text("Client") },
+        label = { Text(label) },
         readOnly = true,
         textStyle = MaterialTheme.typography.body2,
-        modifier =
-            Modifier
-                .fillMaxWidth()
-    )
-}
-
-@Composable
-fun AuthStateView(authState: AuthState) {
-    OutlinedTextField(
-        value = " ${authState.javaClass.simpleName}",
-        onValueChange = { /* no-op */ },
-        label = { Text("Auth state") },
-        readOnly = true,
-        textStyle = MaterialTheme.typography.body2,
-        modifier =
-            Modifier
-                .fillMaxWidth()
+        modifier = Modifier.fillMaxWidth()
     )
 }
 
