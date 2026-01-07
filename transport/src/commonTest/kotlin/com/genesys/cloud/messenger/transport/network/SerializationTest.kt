@@ -5,6 +5,7 @@ import assertk.assertions.containsExactly
 import assertk.assertions.hasClass
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
+import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.core.Action
 import com.genesys.cloud.messenger.transport.core.Attachment
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
@@ -1405,9 +1406,9 @@ class SerializationTest {
         val quickReply2 = (structuredMessage.content[1] as StructuredMessage.Content.QuickReplyContent).quickReply
         assertThat(quickReply1.text).isEqualTo("Yes")
         assertThat(quickReply1.payload).isEqualTo("cookie1")
-        assertThat(quickReply1.action).isEqualTo(null)
+        assertThat(quickReply1.action).isNull()
         assertThat(quickReply2.text).isEqualTo("No")
         assertThat(quickReply2.payload).isEqualTo("cookie2")
-        assertThat(quickReply2.action).isEqualTo(null)
+        assertThat(quickReply2.action).isNull()
     }
 }
