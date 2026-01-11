@@ -728,4 +728,30 @@ class SessionDurationHandlerTest {
             // Health check should be triggered since updatedExpirationDate was reset by clear
             assertThat(healthCheckTriggered).isTrue()
         }
+
+    @Test
+    fun `when expiration timer fires and updatedExpirationDate is greater than currentExpirationDate then reschedules with updatedExpirationDate`() =
+        testScope.runTest {
+            val givenDurationSeconds = 100L
+            val givenNoticeInterval = 1L
+            val givenExpirationDate = currentTime + 2L
+            val subject =
+                createSubject(
+                    sessionExpirationNoticeInterval = givenNoticeInterval,
+                    healthCheckLeadTimeMillis = 0L // Disable health check timer
+                )
+
+            subject.updateSessionDuration(givenDurationSeconds, givenExpirationDate)
+
+            // Call onMessage to set updatedExpirationDate before any timer fires
+            subject.onMessage()
+
+            capturedEvent = null
+
+            // Advance time to let the expiration timer fire
+            advanceTimeBy(1100)
+
+            // Expiration notice should NOT be emitted because shouldReschedule() returned true
+            assertThat(capturedEvent).isNull()
+        }
 }
