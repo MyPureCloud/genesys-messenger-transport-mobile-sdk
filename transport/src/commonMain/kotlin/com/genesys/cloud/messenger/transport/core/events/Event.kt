@@ -116,7 +116,6 @@ sealed class Event {
      */
     data object RemoveSessionExpirationNotice : Event()
 
-
     /**
      * Sent when authorization is required for authenticated session configuration.
      */

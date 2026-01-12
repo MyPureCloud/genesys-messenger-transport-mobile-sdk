@@ -14,8 +14,8 @@ import kotlinx.coroutines.SupervisorJob
 /**
  * Handles session duration tracking and expiration notifications.
  *
- * @param sessionExpirationNoticeInterval The time in seconds when the session expiration notice
- * should be shown before the expiration date.
+ * @param sessionExpirationNoticeIntervalSeconds How many seconds before the session expires to show
+ * the expiration notice.
  * @param healthCheckPreNoticeTimeMillis The time in milliseconds before the expiration notice
  * when a health check should be triggered to verify if the session is still valid.
  * @param eventHandler Handler for emitting events to the messaging client.
@@ -25,7 +25,7 @@ import kotlinx.coroutines.SupervisorJob
  * @param dispatcher The coroutine scope to use for timer execution.
  */
 internal class SessionDurationHandler(
-    private val sessionExpirationNoticeInterval: Long,
+    private val sessionExpirationNoticeIntervalSeconds: Long,
     private val eventHandler: EventHandler,
     private val log: Log,
     private val getCurrentTimestamp: () -> Long = { Platform().epochMillis() },
@@ -76,7 +76,7 @@ internal class SessionDurationHandler(
     }
 
     private fun handleExpirationDateChange(expirationDate: Long) {
-        val noticeTimeSeconds = expirationDate - sessionExpirationNoticeInterval
+        val noticeTimeSeconds = expirationDate - sessionExpirationNoticeIntervalSeconds
         val noticeTimeMillis = noticeTimeSeconds * 1000
         val currentTimeMillis = getCurrentTimestamp()
         val expirationNoticeDelayMillis = noticeTimeMillis - currentTimeMillis
@@ -137,7 +137,7 @@ internal class SessionDurationHandler(
 
     private fun calculateTimeToExpiration(): Long {
         val currentTimeSeconds = getCurrentTimestamp() / 1000
-        return currentExpirationDate?.let { it - currentTimeSeconds } ?: sessionExpirationNoticeInterval
+        return currentExpirationDate?.let { it - currentTimeSeconds } ?: sessionExpirationNoticeIntervalSeconds
     }
 
     fun setTriggerHealthCheck(triggerHealthCheck: () -> Unit) {
