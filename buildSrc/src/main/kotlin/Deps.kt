@@ -3,11 +3,11 @@ object Deps {
     private const val coroutinesVersion = "1.10.2"
     private const val junitVersion = "4.13.2"
     private const val kotlinxSerializationJsonVersion = "1.8.1"
+    private const val kotlinxDatetimeVersion = "0.6.2"
     private const val ktorVersion = "3.2.3"
     private const val mockWebServerVersion = "4.12.0"
     private const val mockkVersion = "1.14.5"
     private const val okhttpVersion = "4.12.0"
-    private const val klockVersion = "2.4.13"
     const val kotlinVersion = "2.1.21"
     const val kotlinterVersion = "5.0.2"
     const val composeVersion = "1.5.10"
@@ -23,7 +23,6 @@ object Deps {
     object Libs {
         const val junit = "junit:junit:$junitVersion"
         const val mockk = "io.mockk:mockk:$mockkVersion"
-        const val klock = "com.soywiz.korlibs.klock:klock:$klockVersion"
 
         object Assertk {
             const val common = "com.willowtreeapps.assertk:assertk:$assertkVersion"
@@ -39,6 +38,8 @@ object Deps {
         object Kotlinx {
             const val serializationJson =
                 "org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationJsonVersion"
+            const val datetime =
+                "org.jetbrains.kotlinx:kotlinx-datetime:$kotlinxDatetimeVersion"
             const val coroutinesCore =
                 "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion"
             const val coroutinesAndroid =

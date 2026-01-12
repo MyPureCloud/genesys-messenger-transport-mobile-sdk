@@ -56,6 +56,24 @@ internal class AuthHandlerImpl(
         }
     }
 
+    override fun authorizeImplicit(
+        idToken: String,
+        nonce: String
+    ) {
+        dispatcher.launch {
+            when (val result = api.fetchAuthJwt(idToken, nonce)) {
+                is Result.Success -> {
+                    result.value.let {
+                        authJwt = it
+                        vault.authRefreshToken = NO_REFRESH_TOKEN
+                        eventHandler.onEvent(Event.Authorized)
+                    }
+                }
+                is Result.Failure -> handleRequestError(result, "authorizeImplicit()")
+            }
+        }
+    }
+
     override fun logout() {
         dispatcher.launch {
             when (val result = api.logoutFromAuthenticatedSession(authJwt.jwt)) {

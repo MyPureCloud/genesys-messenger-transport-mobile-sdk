@@ -115,4 +115,10 @@ sealed class Event {
      * notice was shown, indicating that the session has been extended.
      */
     data object RemoveSessionExpirationNotice : Event()
+
+
+    /**
+     * Sent when authorization is required for authenticated session configuration.
+     */
+    data object AuthorizationRequired : Event()
 }

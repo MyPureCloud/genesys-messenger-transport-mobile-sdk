@@ -140,7 +140,7 @@ kotlin {
                 implementation(Deps.Libs.Ktor.logging)
                 implementation(Deps.Libs.Ktor.contentNegotiation)
                 implementation(Deps.Libs.Ktor.kotlinxSerialization)
-                implementation(Deps.Libs.klock)
+                implementation(Deps.Libs.Kotlinx.datetime)
             }
         }
         commonTest {

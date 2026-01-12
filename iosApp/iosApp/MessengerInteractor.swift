@@ -59,6 +59,10 @@ final class MessengerInteractor {
         messagingClient.authorize(authCode: authCode, redirectUri: redirectUri, codeVerifier: codeVerifier)
     }
 
+    func authorizeImplicit(idToken: String, nonce: String) {
+        messagingClient.authorizeImplicit(idToken: idToken, nonce: nonce)
+    }
+
     func connect() throws {
         do {
             try messagingClient.connect()

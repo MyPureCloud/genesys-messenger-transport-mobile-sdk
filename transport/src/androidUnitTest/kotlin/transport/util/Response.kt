@@ -1,5 +1,6 @@
 package transport.util
 
+import com.genesys.cloud.messenger.transport.core.ErrorMessage
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.util.SIGNED_IN
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
@@ -21,6 +22,12 @@ internal object Response {
         """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":false}}"""
     const val webSocketRequestFailed =
         """{"type":"response","class":"string","code":400,"body":"Request failed."}"""
+    const val clientError403Normal =
+        """{"type":"response","class":"string","code":403,"body":"HTTP authorization error"}"""
+    const val clientError403SessionAuthFailed =
+        """{"type":"response","class":"string","code":403,"body":"${ErrorMessage.SessionAuthFailed}"}"""
+    const val clientError403TryAuthenticateAgain =
+        """{"type":"response","class":"string","code":403,"body":"${ErrorMessage.TryAuthenticateAgain}"}"""
     const val defaultStructuredEvents = """${StructuredEvent.typingOff},${StructuredEvent.typingOn}"""
 
     fun onMessage(direction: Message.Direction = Message.Direction.Inbound) = """{"type":"message","class":"StructuredMessage","code":200,"body":{"text":"Hello world!","direction":"${direction.name}","id":"test_id","channel":{"time":"2022-08-22T19:24:26.704Z","messageId":"message_id"},"type":"Text"},"tracingId":"some_custom_message_id"}"""

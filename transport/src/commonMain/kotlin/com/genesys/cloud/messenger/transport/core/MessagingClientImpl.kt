@@ -236,6 +236,7 @@ internal class MessagingClientImpl(
                         refreshTokenAndPerform { configureSession(startNew) }
                         return
                     }
+                    eventHandler.onEvent(Event.AuthorizationRequired)
                     transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
                     return
                 }
@@ -401,6 +402,14 @@ internal class MessagingClientImpl(
         authHandler.authorize(authCode, redirectUri, codeVerifier)
     }
 
+    override fun authorizeImplicit(
+        idToken: String,
+        nonce: String
+    ) {
+        invalidateSessionToken()
+        authHandler.authorizeImplicit(idToken, nonce)
+    }
+
     @Throws(IllegalStateException::class)
     private fun sendAutoStart() {
         sendingAutostart = true
@@ -521,6 +530,20 @@ internal class MessagingClientImpl(
             is ErrorCode.ServerResponseError,
             is ErrorCode.RedirectResponseError,
             -> {
+                if ((code as? ErrorCode.ClientResponseError)?.value == 403) {
+                    message?.run {
+                        if (startsWith(ErrorMessage.SessionAuthFailed, true)) {
+                            eventHandler.onEvent(Event.AuthorizationRequired)
+                            stateMachine.onReconnect()
+                            return
+                        } else if (startsWith(ErrorMessage.TryAuthenticateAgain, true)) {
+                            eventHandler.onEvent(Event.AuthorizationRequired)
+                            stateMachine.onReconnect()
+
+                            return
+                        }
+                    }
+                }
                 if (stateMachine.isConnected() || stateMachine.isReconnecting() || isStartingANewSession) {
                     handleConfigureSessionErrorResponse(code, message)
                 } else {
@@ -548,7 +571,10 @@ internal class MessagingClientImpl(
         authHandler.refreshToken { result ->
             when (result) {
                 is Result.Success -> action()
-                is Result.Failure -> transitionToStateError(result.errorCode, result.message)
+                is Result.Failure -> {
+                    eventHandler.onEvent(Event.AuthorizationRequired)
+                    transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
+                }
             }
         }
     }
