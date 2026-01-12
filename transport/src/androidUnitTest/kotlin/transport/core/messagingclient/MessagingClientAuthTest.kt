@@ -80,9 +80,8 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         subject.connectAuthenticatedSession()
 
         verifySequence {
-            mockStateChangedListener(fromIdleToConnecting)
-            mockPlatformSocket.openSocket(any())
-            mockStateChangedListener(fromConnectingToConnected)
+            fromIdleToConnectedSequence()
+            mockLogger.i(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.refreshToken(any())
             mockEventHandler.onEvent(Event.AuthorizationRequired)
