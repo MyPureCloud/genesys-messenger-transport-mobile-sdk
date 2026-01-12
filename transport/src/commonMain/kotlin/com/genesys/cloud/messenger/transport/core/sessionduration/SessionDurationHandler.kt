@@ -35,18 +35,19 @@ internal class SessionDurationHandler(
 ) {
     private var currentDurationSeconds: Long? = null
     private var currentExpirationDate: Long? = null
+    private var updatedExpirationDate: Long? = null
     private var sessionExpirationNoticeSent: Boolean = false
 
     private val expirationTimer: ActionTimer =
         ActionTimer(
             log = log,
-            action = { emitSessionExpirationNotice() },
+            action = { onExpirationTimerFired() },
             dispatcher = dispatcher
         )
     private val healthCheckTimer: ActionTimer =
         ActionTimer(
             log = log,
-            action = { triggerHealthCheck() },
+            action = { onHealthCheckTimerFired() },
             dispatcher = dispatcher
         )
 
@@ -105,6 +106,28 @@ internal class SessionDurationHandler(
         expirationTimer.start(expirationNoticeDelayMillis)
     }
 
+    private fun shouldReschedule(): Boolean {
+        val updated = updatedExpirationDate ?: return false
+        val current = currentExpirationDate ?: return false
+        return updated > current
+    }
+
+    private fun onHealthCheckTimerFired() {
+        if (shouldReschedule()) {
+            updateSessionDuration(null, updatedExpirationDate)
+        } else {
+            triggerHealthCheck()
+        }
+    }
+
+    private fun onExpirationTimerFired() {
+        if (shouldReschedule()) {
+            updateSessionDuration(null, updatedExpirationDate)
+        } else {
+            emitSessionExpirationNotice()
+        }
+    }
+
     private fun emitSessionExpirationNotice() {
         val expiresInSeconds = calculateTimeToExpiration()
         sessionExpirationNoticeSent = true
@@ -123,14 +146,21 @@ internal class SessionDurationHandler(
 
     /**
      * Called when a message is sent or received.
-     * If a session expiration notice was previously sent, this will emit a RemoveSessionExpirationNotice
-     * event and trigger a health check to refresh session duration data.
+     * Calculates and stores the updated expiration date based on current activity.
+     * If a session expiration notice was previously sent, this will emit a RemoveSessionExpirationNotice event
+     * and trigger a health check to get the latest session duration values.
      */
     fun onMessage() {
+        currentDurationSeconds?.let { duration ->
+            updatedExpirationDate = (getCurrentTimestamp() / 1000) + duration
+        }
+
         if (sessionExpirationNoticeSent) {
             log.i { LogMessages.REMOVING_SESSION_EXPIRATION_NOTICE }
             sessionExpirationNoticeSent = false
             eventHandler.onEvent(Event.RemoveSessionExpirationNotice)
+            currentExpirationDate = updatedExpirationDate
+            updateSessionDuration(null, updatedExpirationDate)
             triggerHealthCheck()
         }
     }
@@ -152,6 +182,7 @@ internal class SessionDurationHandler(
     fun clear() {
         currentDurationSeconds = null
         currentExpirationDate = null
+        updatedExpirationDate = null
         sessionExpirationNoticeSent = false
         expirationTimer.cancel()
         healthCheckTimer.cancel()

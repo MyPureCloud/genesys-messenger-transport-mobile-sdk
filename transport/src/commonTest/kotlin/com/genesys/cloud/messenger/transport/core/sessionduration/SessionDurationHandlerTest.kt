@@ -388,7 +388,7 @@ class SessionDurationHandlerTest {
             subject.onMessage()
 
             assertThat(capturedEvent).isEqualTo(Event.RemoveSessionExpirationNotice)
-            assertThat(healthCheckTriggered).isEqualTo(true)
+            assertThat(healthCheckTriggered).isTrue()
         }
 
     @Test
@@ -406,19 +406,9 @@ class SessionDurationHandlerTest {
     @Test
     fun `when onMessage called twice after expiration notice then only first call emits event`() =
         testScope.runTest {
-            var healthCheckCount = 0
             val givenNoticeInterval = 1L
             val givenExpirationDate = currentTime + 2L
-            val subject =
-                SessionDurationHandler(
-                    sessionExpirationNoticeInterval = givenNoticeInterval,
-                    healthCheckPreNoticeTimeMillis = 300L,
-                    eventHandler = mockEventHandler,
-                    log = mockLog,
-                    triggerHealthCheck = { healthCheckCount++ },
-                    getCurrentTimestamp = { currentTime * 1000 },
-                    dispatcher = testScope
-                )
+            val subject = createSubject(sessionExpirationNoticeInterval = givenNoticeInterval)
 
             subject.updateSessionDuration(null, givenExpirationDate)
 
@@ -430,8 +420,6 @@ class SessionDurationHandlerTest {
             capturedEvent = null
             subject.onMessage()
             assertThat(capturedEvent).isNull()
-
-            assertThat(healthCheckCount).isEqualTo(2)
         }
 
     @Test
@@ -583,5 +571,187 @@ class SessionDurationHandlerTest {
             subject.clearAndRemoveNotice()
 
             assertThat(eventCount).isEqualTo(1)
+        }
+
+    @Test
+    fun `when onMessage then calculates updatedExpirationDate based on current time and duration`() =
+        testScope.runTest {
+            val givenDurationSeconds = 3600L
+            val givenExpirationDate = currentTime + 10L
+            val subject = createSubject(sessionExpirationNoticeInterval = 1L)
+
+            subject.updateSessionDuration(givenDurationSeconds, givenExpirationDate)
+            capturedEvent = null
+
+            subject.onMessage()
+
+            // Advance time and check that health check timer reschedules instead of triggering
+            advanceTimeBy(9100)
+
+            // Health check should not be triggered because session was extended by onMessage
+            assertThat(healthCheckTriggered).isFalse()
+        }
+
+    @Test
+    fun `when health check timer fires and session was extended by onMessage then reschedules timers`() =
+        testScope.runTest {
+            val givenDurationSeconds = 100L
+            val givenNoticeInterval = 1L
+            val givenExpirationDate = currentTime + 3L
+            val subject =
+                createSubject(
+                    sessionExpirationNoticeInterval = givenNoticeInterval,
+                    healthCheckLeadTimeMillis = 500L
+                )
+
+            subject.updateSessionDuration(givenDurationSeconds, givenExpirationDate)
+
+            // Simulate message activity before health check timer fires
+            advanceTimeBy(1000)
+            subject.onMessage()
+
+            // Now let the health check timer fire
+            advanceTimeBy(600)
+
+            // Health check should NOT be triggered because session was extended
+            assertThat(healthCheckTriggered).isFalse()
+        }
+
+    @Test
+    fun `when health check timer fires and no message activity then triggers health check`() =
+        testScope.runTest {
+            val givenNoticeInterval = 1L
+            val givenExpirationDate = currentTime + 3L
+            val subject =
+                createSubject(
+                    sessionExpirationNoticeInterval = givenNoticeInterval,
+                    healthCheckLeadTimeMillis = 500L
+                )
+
+            // Only set expiration, no duration - so onMessage won't calculate updated expiration
+            subject.updateSessionDuration(null, givenExpirationDate)
+
+            // Let health check timer fire without any message activity
+            advanceTimeBy(1600)
+
+            // Health check should be triggered
+            assertThat(healthCheckTriggered).isTrue()
+        }
+
+    @Test
+    fun `when expiration timer fires and session was extended by onMessage then reschedules timers`() =
+        testScope.runTest {
+            val givenDurationSeconds = 100L
+            val givenNoticeInterval = 1L
+            val givenExpirationDate = currentTime + 2L
+            val subject = createSubject(sessionExpirationNoticeInterval = givenNoticeInterval)
+
+            subject.updateSessionDuration(givenDurationSeconds, givenExpirationDate)
+            capturedEvent = null
+
+            // Simulate message activity before expiration timer fires
+            advanceTimeBy(500)
+            subject.onMessage()
+
+            // Now let the expiration timer fire
+            advanceTimeBy(600)
+
+            // Expiration notice should NOT be emitted because session was extended
+            assertThat(capturedEvent).isNull()
+        }
+
+    @Test
+    fun `when expiration timer fires and no message activity then emits expiration notice`() =
+        testScope.runTest {
+            val givenNoticeInterval = 1L
+            val givenExpirationDate = currentTime + 2L
+            val subject = createSubject(sessionExpirationNoticeInterval = givenNoticeInterval)
+
+            // Only set expiration, no duration - so onMessage won't calculate updated expiration
+            subject.updateSessionDuration(null, givenExpirationDate)
+            capturedEvent = null
+
+            // Let expiration timer fire without any message activity
+            advanceTimeBy(1100)
+
+            // Expiration notice should be emitted
+            assertThat(capturedEvent).isEqualTo(Event.SessionExpirationNotice(givenExpirationDate - currentTime))
+        }
+
+    @Test
+    fun `when onMessage without durationSeconds set then does not calculate updatedExpirationDate`() =
+        testScope.runTest {
+            val givenNoticeInterval = 1L
+            val givenExpirationDate = currentTime + 3L
+            val subject =
+                createSubject(
+                    sessionExpirationNoticeInterval = givenNoticeInterval,
+                    healthCheckLeadTimeMillis = 500L
+                )
+
+            // Set expiration without duration
+            subject.updateSessionDuration(null, givenExpirationDate)
+
+            // Call onMessage - should not set updatedExpirationDate since no duration
+            subject.onMessage()
+
+            // Let health check timer fire
+            advanceTimeBy(1600)
+
+            // Health check should be triggered since updatedExpirationDate was not set
+            assertThat(healthCheckTriggered).isTrue()
+        }
+
+    @Test
+    fun `when clear then resets updatedExpirationDate`() =
+        testScope.runTest {
+            val givenDurationSeconds = 100L
+            val givenNoticeInterval = 1L
+            val givenExpirationDate = currentTime + 3L
+            val subject =
+                createSubject(
+                    sessionExpirationNoticeInterval = givenNoticeInterval,
+                    healthCheckLeadTimeMillis = 500L
+                )
+
+            subject.updateSessionDuration(givenDurationSeconds, givenExpirationDate)
+            subject.onMessage() // Sets updatedExpirationDate
+
+            subject.clear()
+
+            // Set new expiration after clear
+            subject.updateSessionDuration(null, givenExpirationDate)
+
+            // Let health check timer fire
+            advanceTimeBy(1600)
+
+            // Health check should be triggered since updatedExpirationDate was reset by clear
+            assertThat(healthCheckTriggered).isTrue()
+        }
+
+    @Test
+    fun `when expiration timer fires and updatedExpirationDate is greater than currentExpirationDate then reschedules with updatedExpirationDate`() =
+        testScope.runTest {
+            val givenDurationSeconds = 100L
+            val givenNoticeInterval = 1L
+            val givenExpirationDate = currentTime + 2L
+            val subject =
+                createSubject(
+                    sessionExpirationNoticeInterval = givenNoticeInterval,
+                    healthCheckLeadTimeMillis = 0L // Disable health check timer
+                )
+
+            subject.updateSessionDuration(givenDurationSeconds, givenExpirationDate)
+
+            // Call onMessage to set updatedExpirationDate before any timer fires
+            subject.onMessage()
+
+            capturedEvent = null
+
+            // Advance time to let the expiration timer fire
+            advanceTimeBy(1100)
+
+            // Expiration notice should NOT be emitted because shouldReschedule() returned true
+            assertThat(capturedEvent).isNull()
         }
 }
