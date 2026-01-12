@@ -14,7 +14,7 @@ import kotlinx.coroutines.SupervisorJob
 /**
  * Handles session duration tracking and expiration notifications.
  *
- * @param sessionExpirationNoticeIntervalSeconds How many seconds before the session expires to show 
+ * @param sessionExpirationNoticeIntervalSeconds How many seconds before the session expires to show
  * the expiration notice.
  * @param healthCheckPreNoticeTimeMillis The time in milliseconds before the expiration notice
  * when a health check should be triggered to verify if the session is still valid.

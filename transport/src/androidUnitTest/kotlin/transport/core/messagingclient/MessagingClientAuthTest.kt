@@ -334,7 +334,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         val expectedErrorCode = ErrorCode.ClientResponseError(403)
         val expectedErrorMessage = "HTTP authorization error"
         every { mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) }) } answers {
-                slot.captured.onMessage(Response.clientError403Normal)
+            slot.captured.onMessage(Response.clientError403Normal)
         }
         subject.connectAuthenticatedSession()
         slot.captured.onMessage("Hi but maybe I get an HTTP 403 error")
@@ -345,7 +345,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
     @Test
     fun `when SocketListener invoke onMessage with ClientResponseError 403 - session auth failed`() {
         every { mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) }) } answers {
-                slot.captured.onMessage(Response.clientError403SessionAuthFailed)
+            slot.captured.onMessage(Response.clientError403SessionAuthFailed)
         }
         subject.connectAuthenticatedSession()
         slot.captured.onMessage("Hi, but I may get an HTTP 403 error with session auth failed message")
@@ -359,7 +359,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
     @Test
     fun `when SocketListener invoke onMessage with ClientResponseError 403 - try authenticate again`() {
         every { mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) }) } answers {
-                slot.captured.onMessage(Response.clientError403TryAuthenticateAgain)
+            slot.captured.onMessage(Response.clientError403TryAuthenticateAgain)
         }
         subject.connectAuthenticatedSession()
         slot.captured.onMessage("Hi, but I may get an HTTP 403 error with try authenticate again message")
