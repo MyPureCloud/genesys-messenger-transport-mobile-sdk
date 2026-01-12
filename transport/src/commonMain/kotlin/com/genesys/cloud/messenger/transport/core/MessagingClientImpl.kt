@@ -508,6 +508,20 @@ internal class MessagingClientImpl(
             is ErrorCode.ServerResponseError,
             is ErrorCode.RedirectResponseError,
             -> {
+                if ((code as? ErrorCode.ClientResponseError)?.value == 403) {
+                    message?.run {
+                        if (startsWith(ErrorMessage.SessionAuthFailed, true)) {
+                            eventHandler.onEvent(Event.AuthorizationRequired)
+                            stateMachine.onReconnect()
+                            return
+                        } else if (startsWith(ErrorMessage.TryAuthenticateAgain, true)) {
+                            eventHandler.onEvent(Event.AuthorizationRequired)
+                            stateMachine.onReconnect()
+
+                            return
+                        }
+                    }
+                }
                 if (stateMachine.isConnected() || stateMachine.isReconnecting() || isStartingANewSession) {
                     handleConfigureSessionErrorResponse(code, message)
                 } else {

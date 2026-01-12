@@ -147,6 +147,8 @@ object ErrorMessage {
     const val MissingDeploymentConfig = "DeploymentConfig must be fetched before connecting. Call fetchDeploymentConfig() first."
     const val FileSizeIsToSmall = "Attachment size cannot be less than 1 byte"
     const val FileAttachmentIsDisabled = "File attachment is disabled in Deployment Configuration."
+    const val SessionAuthFailed = "Session authentication failed"
+    const val TryAuthenticateAgain = "Try to authenticate again"
 
     fun detachFailed(attachmentId: String) = "Detach failed: Invalid attachment ID ($attachmentId)"
 
