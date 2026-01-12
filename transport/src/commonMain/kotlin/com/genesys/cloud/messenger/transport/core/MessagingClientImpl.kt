@@ -119,7 +119,7 @@ internal class MessagingClientImpl(
     private val defaultDispatcher: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
     private val sessionDurationHandler: SessionDurationHandler =
         SessionDurationHandler(
-            sessionExpirationNoticeInterval = configuration.sessionExpirationNoticeInterval,
+            sessionExpirationNoticeIntervalSeconds = configuration.sessionExpirationNoticeIntervalSeconds,
             eventHandler = eventHandler,
             log = log.withTag(LogTag.SESSION_DURATION),
         ),

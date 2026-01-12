@@ -28,8 +28,8 @@ rnote over MessagingClient
   * health check
 end rnote
 
-App -> MessagingClient: Configuration(..., **sessionExpirationNoticeInterval = DEFAULT_INTERVAL**)
-MessagingClient -> SessionDurationHandler:  updateSessionExpirationNoticeInterval(sessionExpirationNoticeInterval)
+App -> MessagingClient: Configuration(..., **sessionExpirationNoticeIntervalSeconds = DEFAULT_INTERVAL**)
+MessagingClient -> SessionDurationHandler:  updateSessionExpirationNoticeInterval(sessionExpirationNoticeIntervalSeconds)
 
 App [#999]-> MessagingClient: connect
 MessagingClient [#999]--> Shyrka: configureSession

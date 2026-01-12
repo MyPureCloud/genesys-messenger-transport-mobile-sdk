@@ -6,7 +6,7 @@ package com.genesys.cloud.messenger.transport.core
  * @param logging indicates if logging should be enabled.
  * @param reconnectionTimeoutInSeconds period of time during which Transport will try to reconnect to the web socket in case of connectivity lost.
  * @param autoRefreshTokenWhenExpired indicates if Transport should auto refresh auth token if it was expired.
- * @param sessionExpirationNoticeInterval the time in seconds when the session expiration notice should be shown before the expiration date
+ * @param sessionExpirationNoticeIntervalSeconds how many seconds before the session expires to show the expiration notice
  */
 data class Configuration(
     val deploymentId: String,
@@ -15,7 +15,7 @@ data class Configuration(
     val reconnectionTimeoutInSeconds: Long = 60 * 5,
     val autoRefreshTokenWhenExpired: Boolean = true,
     val encryptedVault: Boolean = false,
-    val sessionExpirationNoticeInterval: Long = DEFAULT_INTERVAL
+    val sessionExpirationNoticeIntervalSeconds: Long = DEFAULT_INTERVAL
 ) {
     /**
      * Secondary constructor to avoid breaking changes on iOS platform.
