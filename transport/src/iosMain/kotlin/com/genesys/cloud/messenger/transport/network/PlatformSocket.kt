@@ -30,6 +30,7 @@ import platform.Foundation.setValue
 import platform.darwin.NSObject
 import platform.posix.ENOTCONN
 import platform.posix.ETIMEDOUT
+import platform.Security.tls_protocol_version_TLSv13
 
 @OptIn(ExperimentalForeignApi::class)
 internal actual class PlatformSocket actual constructor(
@@ -55,8 +56,13 @@ internal actual class PlatformSocket actual constructor(
         urlRequest.setValue(url.host, forHTTPHeaderField = "Origin")
         urlRequest.setValue(Platform().platform, forHTTPHeaderField = "User-Agent")
         urlRequest.setTimeoutInterval(TIMEOUT_INTERVAL)
+        val config = NSURLSessionConfiguration.defaultSessionConfiguration()
+        // Force TLS 1.3
+        config.TLSMinimumSupportedProtocolVersion = tls_protocol_version_TLSv13
+        config.TLSMaximumSupportedProtocolVersion = tls_protocol_version_TLSv13
+        log.i { LogMessages.FORCE_TLS_V13 }
         val urlSession = NSURLSession.sessionWithConfiguration(
-            configuration = NSURLSessionConfiguration.defaultSessionConfiguration(),
+            configuration = config,
             delegate = object : NSObject(), NSURLSessionWebSocketDelegateProtocol {
                 override fun URLSession(
                     session: NSURLSession,
