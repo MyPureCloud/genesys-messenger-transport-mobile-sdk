@@ -41,6 +41,10 @@ internal actual class PlatformSocket actual constructor(
      * client assumes connectivity is lost and will notify [PlatformSocketListener.onFailure].
      */
     actual val pingInterval: Int,
+    /**
+     * Indicates if TLS 1.3 should be forced for WebSocket connections.
+     */
+    private val forceTLSv13: Boolean,
 ) {
     private val socketEndpoint = NSURL.URLWithString(url.toString())!!
     private var webSocket: NSURLSessionWebSocketTask? = null
@@ -57,10 +61,12 @@ internal actual class PlatformSocket actual constructor(
         urlRequest.setValue(Platform().platform, forHTTPHeaderField = "User-Agent")
         urlRequest.setTimeoutInterval(TIMEOUT_INTERVAL)
         val config = NSURLSessionConfiguration.defaultSessionConfiguration()
-        // Force TLS 1.3
-        config.TLSMinimumSupportedProtocolVersion = tls_protocol_version_TLSv13
-        config.TLSMaximumSupportedProtocolVersion = tls_protocol_version_TLSv13
-        log.i { LogMessages.FORCE_TLS_V13 }
+        // Force TLS 1.3 if enabled
+        if (forceTLSv13) {
+            config.TLSMinimumSupportedProtocolVersion = tls_protocol_version_TLSv13
+            config.TLSMaximumSupportedProtocolVersion = tls_protocol_version_TLSv13
+            log.i { LogMessages.FORCE_TLS_V13 }
+        }
         val urlSession = NSURLSession.sessionWithConfiguration(
             configuration = config,
             delegate = object : NSObject(), NSURLSessionWebSocketDelegateProtocol {

@@ -14,6 +14,7 @@ object InternalConfigurationFactory {
      * @param reconnectionTimeoutInSeconds period of time during which Transport will try to reconnect.
      * @param autoRefreshTokenWhenExpired indicates if Transport should auto refresh auth token if expired.
      * @param encryptedVault indicates if encrypted vault should be used.
+     * @param forceTLSv13 indicates if TLS 1.3 should be forced for WebSocket connections (iOS only).
      * @return Configuration instance with proper application parameter formatting.
      */
     fun create(
@@ -24,7 +25,8 @@ object InternalConfigurationFactory {
         logging: Boolean = false,
         reconnectionTimeoutInSeconds: Long = 60 * 5,
         autoRefreshTokenWhenExpired: Boolean = true,
-        encryptedVault: Boolean = false
+        encryptedVault: Boolean = false,
+        forceTLSv13: Boolean = true
     ): Configuration {
 
         val config = Configuration(
@@ -33,7 +35,8 @@ object InternalConfigurationFactory {
             logging = logging,
             reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
             autoRefreshTokenWhenExpired = autoRefreshTokenWhenExpired,
-            encryptedVault = encryptedVault
+            encryptedVault = encryptedVault,
+            forceTLSv13 = forceTLSv13
         )
 
         config.application = when (applicationType) {
