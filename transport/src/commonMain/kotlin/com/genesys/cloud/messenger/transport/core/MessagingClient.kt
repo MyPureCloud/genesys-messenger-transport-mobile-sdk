@@ -7,7 +7,6 @@ import com.genesys.cloud.messenger.transport.core.events.Event
  * via Web Messaging service.
  */
 interface MessagingClient {
-
     /**
      * Container that holds all possible MessagingClient states.
      */
@@ -56,12 +55,18 @@ interface MessagingClient {
         /**
          * Remote peer has indicated that no more incoming messages will be transmitted.
          */
-        data class Closing(val code: Int, val reason: String) : State()
+        data class Closing(
+            val code: Int,
+            val reason: String
+        ) : State()
 
         /**
          * Both peers have indicated that no more messages will be transmitted and the connection has been successfully released.
          */
-        data class Closed(val code: Int, val reason: String) : State()
+        data class Closed(
+            val code: Int,
+            val reason: String
+        ) : State()
 
         /**
          * In case of fatal, unrecoverable errors MessagingClient will transition to this state.
@@ -69,7 +74,10 @@ interface MessagingClient {
          * @property code the [ErrorCode] representing the reason for the failure.
          * @property message an optional message describing the error.
          */
-        data class Error(val code: ErrorCode, val message: String?) : State()
+        data class Error(
+            val code: ErrorCode,
+            val message: String?
+        ) : State()
     }
 
     /**
@@ -134,8 +142,9 @@ interface MessagingClient {
      * deploymentId configured on this MessagingClient instance.
      *
      * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
+     * @throws TransportSDKException If the deployment config is null.
      */
-    @Throws(IllegalStateException::class)
+    @Throws(IllegalStateException::class, TransportSDKException::class)
     fun connect()
 
     /**
@@ -144,8 +153,9 @@ interface MessagingClient {
      * When called on a session that was previously configured as anonymous/guest, it will perform a Step-Up.
      *
      * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
+     * @throws TransportSDKException If the deployment config is null.
      */
-    @Throws(IllegalStateException::class)
+    @Throws(IllegalStateException::class, TransportSDKException::class)
     fun connectAuthenticatedSession()
 
     /**
@@ -175,7 +185,10 @@ interface MessagingClient {
      * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
      */
     @Throws(IllegalStateException::class)
-    fun sendMessage(text: String, customAttributes: Map<String, String> = emptyMap())
+    fun sendMessage(
+        text: String,
+        customAttributes: Map<String, String> = emptyMap()
+    )
 
     /**
      * Send a quick reply to the Agent/Bot.
@@ -185,6 +198,15 @@ interface MessagingClient {
      */
     @Throws(IllegalStateException::class)
     fun sendQuickReply(buttonResponse: ButtonResponse)
+
+    /**
+     * Send a card reply to the Agent/Bot.
+     *
+     * @param postbackResponse the card button the user clicked.
+     * @throws IllegalStateException If the client is not connected.
+     */
+    @Throws(IllegalStateException::class)
+    fun sendCardReply(postbackResponse: ButtonResponse)
 
     /**
      * Perform a health check of the connection by sending an echo message.
@@ -283,7 +305,11 @@ interface MessagingClient {
      * @param redirectUri The redirect URI to use for fetching the Auth JWT.
      * @param codeVerifier The code verifier to use for fetching the Auth JWT (optional).
      */
-    fun authorize(authCode: String, redirectUri: String, codeVerifier: String?)
+    fun authorize(
+        authCode: String,
+        redirectUri: String,
+        codeVerifier: String?
+    )
 
     /**
      * Logs out user from authenticated session on all devices that shares the same auth session.
@@ -293,6 +319,13 @@ interface MessagingClient {
      */
     @Throws(IllegalStateException::class)
     fun logoutFromAuthenticatedSession()
+
+    /**
+     * Check if the user needs to be authorized.
+     *
+     * @param callback A function that receives true if authorization is needed, or false otherwise.
+     */
+    fun shouldAuthorize(callback: (Boolean) -> Unit)
 
     /**
      * Permanently clears the existing conversation history with an agent from all devices that share the same session.

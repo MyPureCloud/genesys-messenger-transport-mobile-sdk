@@ -28,21 +28,22 @@ object InternalConfigurationFactory {
         encryptedVault: Boolean = false,
         forceTLSv13: Boolean = true
     ): Configuration {
+        val config =
+            Configuration(
+                deploymentId = deploymentId,
+                domain = domain,
+                logging = logging,
+                reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
+                autoRefreshTokenWhenExpired = autoRefreshTokenWhenExpired,
+                encryptedVault = encryptedVault,
+                forceTLSv13 = forceTLSv13
+            )
 
-        val config = Configuration(
-            deploymentId = deploymentId,
-            domain = domain,
-            logging = logging,
-            reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
-            autoRefreshTokenWhenExpired = autoRefreshTokenWhenExpired,
-            encryptedVault = encryptedVault,
-            forceTLSv13 = forceTLSv13
-        )
-
-        config.application = when (applicationType) {
-            ApplicationType.TRANSPORT_SDK -> "TransportSDK-${MessengerTransportSDK.sdkVersion}"
-            else -> "${applicationType.title}-$applicationVersion/TransportSDK-${MessengerTransportSDK.sdkVersion}"
-        }
+        config.application =
+            when (applicationType) {
+                ApplicationType.TRANSPORT_SDK -> "TransportSDK-${MessengerTransportSDK.sdkVersion}"
+                else -> "${applicationType.title}-$applicationVersion/TransportSDK-${MessengerTransportSDK.sdkVersion}"
+            }
         return config
     }
 }

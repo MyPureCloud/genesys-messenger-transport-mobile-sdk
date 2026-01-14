@@ -21,14 +21,15 @@ import kotlin.test.assertTrue
 class HealthCheckProviderTest {
     internal val mockLogger: Log = mockk(relaxed = true)
     internal val logSlot = mutableListOf<() -> String>()
-    private val mockTimestampFunction: () -> Long = spyk<() -> Long>().also {
-        every { it.invoke() } answers { Platform().epochMillis() }
-    }
+    private val mockTimestampFunction: () -> Long =
+        spyk<() -> Long>().also {
+            every { it.invoke() } answers { Platform().epochMillis() }
+        }
 
     private val subject = HealthCheckProvider(mockLogger, mockTimestampFunction)
 
     @Test
-    fun whenEncode() {
+    fun `when encodeRequest()`() {
         val expected = Request.echo
         val result = subject.encodeRequest(token = Request.token)
 
@@ -36,7 +37,7 @@ class HealthCheckProviderTest {
     }
 
     @Test
-    fun whenEncodeWithCoolDown() {
+    fun `when encodeRequest() with cool down`() {
         val healthCheckCoolDownInMilliseconds = HEALTH_CHECK_COOL_DOWN_MILLISECONDS + 250
         val expected = Request.echo
         val firstResult = subject.encodeRequest(token = Request.token)
@@ -52,7 +53,7 @@ class HealthCheckProviderTest {
     }
 
     @Test
-    fun whenEncodeWithoutCoolDown() {
+    fun `when encodeRequest() without cool down`() {
         val expected = Request.echo
         val firstResult = subject.encodeRequest(token = Request.token)
         val secondResult = subject.encodeRequest(token = Request.token)
@@ -70,7 +71,7 @@ class HealthCheckProviderTest {
     }
 
     @Test
-    fun whenEncodeWithoutCoolDownButWithClear() {
+    fun `when encodeRequest() without cool down but with clear`() {
         val expected = Request.echo
         val firstResult = subject.encodeRequest(token = Request.token)
         subject.clear()

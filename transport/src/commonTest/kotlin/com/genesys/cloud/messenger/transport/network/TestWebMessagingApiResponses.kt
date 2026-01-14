@@ -17,7 +17,6 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessageEve
 import com.genesys.cloud.messenger.transport.shyrka.receive.Styles
 
 object TestWebMessagingApiResponses {
-
     internal const val isoTestTimestamp = "2014-04-30T21:09:51.411Z"
     internal const val messageEntityResponseWith3Messages =
         """{"entities":[{"id":"5befde6373a23f32f20b59b4e1cba0e6","channel":{"time":"$isoTestTimestamp"},"type":"Text","text":"\uD83E\uDD2A","content":[],"direction":"Outbound","originatingEntity":"Bot"},{"id":"46e7001c24abed05e9bcd1a006eb54b7","channel":{"time":null},"type":"Event","events":[{"eventType":"Presence","presence":{"type":"Join"}}],"metadata":{"customMessageId":"1234567890"},"text":"customer msg 7","content":[],"direction":"Inbound","originatingEntity":"Human"},{"text":"quick reply text","type":"Structured","direction":"Outbound","id":"message3_id","channel":{"time":null},"content":[{"contentType":"QuickReply","quickReply":{"text":"text_a","payload":"payload_a","action":"action_a"}},{"contentType":"QuickReply","quickReply":{"text":"text_b","payload":"payload_b","action":"action_b"}}],"metadata":{"customMessageId":"1234567890"},"originatingEntity":"Bot"}],"pageSize":25,"pageNumber":1, "total": 3, "pageCount": 1}"""
@@ -44,44 +43,57 @@ object TestWebMessagingApiResponses {
             total = 0,
             pageCount = 0
         )
-    internal val testDeploymentConfig: DeploymentConfig = DeploymentConfig(
-        id = "test_config_id",
-        version = "3",
-        languages = listOf("en-us"),
-        defaultLanguage = "en-us",
-        apiEndpoint = "https://api.inindca.com",
-        messenger = Messenger(
-            enabled = true,
-            apps = Apps(
-                conversations = Conversations(
-                    messagingEndpoint = "wss://webmessaging.inindca.com",
-                    conversationDisconnect = Conversations.ConversationDisconnect(
-                        enabled = true,
-                        type = Conversations.ConversationDisconnect.Type.ReadOnly
-                    ),
-                    conversationClear = Conversations.ConversationClear(
-                        enabled = true
-                    )
-                )
-            ),
-            styles = Styles(primaryColor = "#ff0000"),
-            launcherButton = LauncherButton(visibility = "On"),
-            fileUpload = FileUpload(
-                modes = listOf(
-                    Mode(
-                        fileTypes = listOf("image/png", "image/jpeg", "image/gif"),
-                        maxFileSizeKB = 10000
-                    )
-                )
-            )
-        ),
-        journeyEvents = JourneyEvents(enabled = true),
-        status = DeploymentConfig.Status.Active,
-        auth = Auth(
-            enabled = true,
-            allowSessionUpgrade = true,
+    internal val testDeploymentConfig: DeploymentConfig =
+        DeploymentConfig(
+            id = "test_config_id",
+            version = "3",
+            languages = listOf("en-us"),
+            defaultLanguage = "en-us",
+            apiEndpoint = "https://api.inindca.com",
+            messenger =
+                Messenger(
+                    enabled = true,
+                    apps =
+                        Apps(
+                            conversations =
+                                Conversations(
+                                    messagingEndpoint = "wss://webmessaging.inindca.com",
+                                    conversationDisconnect =
+                                        Conversations.ConversationDisconnect(
+                                            enabled = true,
+                                            type = Conversations.ConversationDisconnect.Type.ReadOnly
+                                        ),
+                                    conversationClear =
+                                        Conversations.ConversationClear(
+                                            enabled = true
+                                        ),
+                                    markdown =
+                                        Conversations.Markdown(
+                                            enabled = false
+                                        )
+                                )
+                        ),
+                    styles = Styles(primaryColor = "#ff0000"),
+                    launcherButton = LauncherButton(visibility = "On"),
+                    fileUpload =
+                        FileUpload(
+                            modes =
+                                listOf(
+                                    Mode(
+                                        fileTypes = listOf("image/png", "image/jpeg", "image/gif"),
+                                        maxFileSizeKB = 10000
+                                    )
+                                )
+                        )
+                ),
+            journeyEvents = JourneyEvents(enabled = true),
+            status = DeploymentConfig.Status.Active,
+            auth =
+                Auth(
+                    enabled = true,
+                    allowSessionUpgrade = true,
+                ),
         )
-    )
 
     private fun buildEntities(): List<StructuredMessage> =
         listOf(
@@ -100,12 +112,13 @@ object TestWebMessagingApiResponses {
                 type = StructuredMessage.Type.Event,
                 text = "customer msg 7",
                 customMessageId = "1234567890",
-                events = listOf(
-                    PresenceEvent(
-                        eventType = StructuredMessageEvent.Type.Presence,
-                        presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Join)
-                    )
-                ),
+                events =
+                    listOf(
+                        PresenceEvent(
+                            eventType = StructuredMessageEvent.Type.Presence,
+                            presence = PresenceEvent.Presence(PresenceEvent.Presence.Type.Join)
+                        )
+                    ),
                 originatingEntity = "Human",
             ),
             // Structured message with Quick Replies
@@ -116,24 +129,25 @@ object TestWebMessagingApiResponses {
                 text = "quick reply text",
                 customMessageId = "1234567890",
                 isInbound = false,
-                content = listOf(
-                    StructuredMessage.Content.QuickReplyContent(
-                        contentType = "QuickReply",
-                        QuickReply(
-                            text = "text_a",
-                            payload = "payload_a",
-                            action = "action_a"
-                        )
+                content =
+                    listOf(
+                        StructuredMessage.Content.QuickReplyContent(
+                            contentType = "QuickReply",
+                            QuickReply(
+                                text = "text_a",
+                                payload = "payload_a",
+                                action = "action_a"
+                            )
+                        ),
+                        StructuredMessage.Content.QuickReplyContent(
+                            contentType = "QuickReply",
+                            QuickReply(
+                                text = "text_b",
+                                payload = "payload_b",
+                                action = "action_b"
+                            )
+                        ),
                     ),
-                    StructuredMessage.Content.QuickReplyContent(
-                        contentType = "QuickReply",
-                        QuickReply(
-                            text = "text_b",
-                            payload = "payload_b",
-                            action = "action_b"
-                        )
-                    ),
-                ),
                 originatingEntity = "Bot",
             )
         )

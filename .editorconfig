@@ -1,0 +1,28 @@
+root = true
+[*.{kt,kts}]
+# Necessary rules
+ktlint_function_naming_ignore_when_annotated_with = Composable
+ktlint_standard_function-expression-body = disabled
+ktlint_standard_function-signature = disabled
+ktlint_standard_max-line-length = disabled
+# Enabled Rules
+ktlint_standard_argument-list-wrapping = enabled
+ktlint_standard_blank-line-before-declaration = enabled
+ktlint_standard_block-comment-initial-star-alignment = enabled
+ktlint_standard_chain-method-continuation = enabled
+ktlint_standard_class-signature = enabled
+ktlint_standard_if-else-bracing = enabled
+ktlint_standard_if-else-wrapping = enabled
+ktlint_standard_multiline-expression-wrapping = enabled
+ktlint_standard_multiline-if-else = enabled
+ktlint_standard_no-empty-first-line-in-class-body = enabled
+ktlint_standard_no-empty-first-line-in-method-block = enabled
+# Investigation candidate rules
+ktlint_standard_class-signature = disabled
+ktlint_standard_package-name = disabled
+ktlint_standard_property-naming = disabled
+ktlint_standard_spacing-between-declarations-with-annotations = disabled
+ktlint_standard_spacing-between-declarations-with-comments = disabled
+ktlint_standard_statement-wrapping = disabled
+ktlint_standard_trailing-comma-on-call-site = disabled
+ktlint_standard_trailing-comma-on-declaration-site = disabled

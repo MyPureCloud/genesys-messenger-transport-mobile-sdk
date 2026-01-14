@@ -60,6 +60,7 @@ internal actual class PlatformSocket actual constructor(
         urlRequest.setValue(url.host, forHTTPHeaderField = "Origin")
         urlRequest.setValue(Platform().platform, forHTTPHeaderField = "User-Agent")
         urlRequest.setTimeoutInterval(TIMEOUT_INTERVAL)
+
         val config = NSURLSessionConfiguration.defaultSessionConfiguration()
         // Force TLS 1.3 if enabled
         if (forceTLSv13) {
@@ -67,43 +68,49 @@ internal actual class PlatformSocket actual constructor(
             config.TLSMaximumSupportedProtocolVersion = tls_protocol_version_TLSv13
             log.i { LogMessages.FORCE_TLS_V13 }
         }
-        val urlSession = NSURLSession.sessionWithConfiguration(
-            configuration = config,
-            delegate = object : NSObject(), NSURLSessionWebSocketDelegateProtocol {
-                override fun URLSession(
-                    session: NSURLSession,
-                    webSocketTask: NSURLSessionWebSocketTask,
-                    didOpenWithProtocol: String?,
-                ) {
-                    log.i { LogMessages.socketDidOpen(active) }
-                    if (webSocketTask == webSocket) {
-                        keepAlive()
-                        listener.onOpen()
-                    }
-                }
-                override fun URLSession(
-                    session: NSURLSession,
-                    webSocketTask: NSURLSessionWebSocketTask,
-                    didCloseWithCode: NSURLSessionWebSocketCloseCode,
-                    reason: NSData?,
-                ) {
-                    val why = reason?.string() ?: "Reason not specified."
-                    log.i { LogMessages.socketDidClose(didCloseWithCode, why, active) }
-                    if (webSocketTask == webSocket) {
-                        deactivate()
-                        listener.onClosed(code = didCloseWithCode.toInt(), reason = why)
-                    }
-                }
-            },
-            delegateQueue = NSOperationQueue.currentQueue()
-        )
+        val urlSession =
+            NSURLSession.sessionWithConfiguration(
+                configuration = config,
+                delegate =
+                    object : NSObject(), NSURLSessionWebSocketDelegateProtocol {
+                        override fun URLSession(
+                            session: NSURLSession,
+                            webSocketTask: NSURLSessionWebSocketTask,
+                            didOpenWithProtocol: String?,
+                        ) {
+                            log.i { LogMessages.socketDidOpen(active) }
+                            if (webSocketTask == webSocket) {
+                                keepAlive()
+                                listener.onOpen()
+                            }
+                        }
+
+                        override fun URLSession(
+                            session: NSURLSession,
+                            webSocketTask: NSURLSessionWebSocketTask,
+                            didCloseWithCode: NSURLSessionWebSocketCloseCode,
+                            reason: NSData?,
+                        ) {
+                            val why = reason?.string() ?: "Reason not specified."
+                            log.i { LogMessages.socketDidClose(didCloseWithCode, why, active) }
+                            if (webSocketTask == webSocket) {
+                                deactivate()
+                                listener.onClosed(code = didCloseWithCode.toInt(), reason = why)
+                            }
+                        }
+                    },
+                delegateQueue = NSOperationQueue.currentQueue()
+            )
         webSocket = urlSession.webSocketTaskWithRequest(urlRequest)
         webSocket?.resume()
         this.listener = listener
         listenMessages(listener)
     }
 
-    actual fun closeSocket(code: Int, reason: String) {
+    actual fun closeSocket(
+        code: Int,
+        reason: String
+    ) {
         log.i { LogMessages.closeSocket(code, reason) }
         deactivateAndCancelWebSocket(code, reason)
         listener?.onClosed(code, reason)
@@ -125,7 +132,8 @@ internal actual class PlatformSocket actual constructor(
                 nsError != null -> {
                     log.e { LogMessages.receiveMessageError(nsError.code, nsError.localizedDescription) }
                     handleError(
-                        nsError, "Receive handler error"
+                        nsError,
+                        "Receive handler error"
                     )
                     return@receiveMessageWithCompletionHandler
                 }
@@ -140,32 +148,34 @@ internal actual class PlatformSocket actual constructor(
     private fun keepAlive() {
         if (!pingTimer.isScheduled() && pingInterval > 0) {
             waitingOnPong = false
-            pingTimer = NSTimer.scheduledTimerWithTimeInterval(
-                interval = pingInterval.toDouble(),
-                repeats = true
-            ) {
-                if (waitingOnPong) {
-                    // Prior pong not received within pingInterval. Assume connectivity is lost.
-                    val nsError = NSError(
-                        domain = NSPOSIXErrorDomain,
-                        code = ETIMEDOUT.convert(),
-                        userInfo = null
-                    )
-                    handleError(nsError, "Pong not received within interval [$pingInterval]")
-                    return@scheduledTimerWithTimeInterval
-                }
-
-                waitingOnPong = true
-                log.i { LogMessages.SENDING_PING }
-                sendPing { nsError ->
-                    if (nsError != null) {
-                        handleError(nsError, "Pong handler failure")
-                        return@sendPing
+            pingTimer =
+                NSTimer.scheduledTimerWithTimeInterval(
+                    interval = pingInterval.toDouble(),
+                    repeats = true
+                ) {
+                    if (waitingOnPong) {
+                        // Prior pong not received within pingInterval. Assume connectivity is lost.
+                        val nsError =
+                            NSError(
+                                domain = NSPOSIXErrorDomain,
+                                code = ETIMEDOUT.convert(),
+                                userInfo = null
+                            )
+                        handleError(nsError, "Pong not received within interval [$pingInterval]")
+                        return@scheduledTimerWithTimeInterval
                     }
-                    waitingOnPong = false
-                    log.i { LogMessages.RECEIVED_PONG }
+
+                    waitingOnPong = true
+                    log.i { LogMessages.SENDING_PING }
+                    sendPing { nsError ->
+                        if (nsError != null) {
+                            handleError(nsError, "Pong handler failure")
+                            return@sendPing
+                        }
+                        waitingOnPong = false
+                        log.i { LogMessages.RECEIVED_PONG }
+                    }
                 }
-            }
         }
     }
 
@@ -200,14 +210,20 @@ internal actual class PlatformSocket actual constructor(
      * Attempt to send a final close frame with the given code and reason without `listener.onClosed()` being called.
      */
     @OptIn(BetaInteropApi::class)
-    private fun deactivateAndCancelWebSocket(code: Int, reason: String?) {
+    private fun deactivateAndCancelWebSocket(
+        code: Int,
+        reason: String?
+    ) {
         log.i { LogMessages.deactivateWithCloseCode(code, reason) }
         val webSocketRef = webSocket
         deactivate()
         webSocketRef?.cancelWithCloseCode(code.toLong(), reason?.toNSData())
     }
 
-    private fun handleError(error: NSError, context: String? = null) {
+    private fun handleError(
+        error: NSError,
+        context: String? = null
+    ) {
         log.e { "handleError (${context ?: "no context"}) [${error.code}] $error" }
         if (active) {
             deactivateAndCancelWebSocket(

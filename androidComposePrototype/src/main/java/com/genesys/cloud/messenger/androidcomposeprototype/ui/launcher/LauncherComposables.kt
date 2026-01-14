@@ -34,11 +34,11 @@ fun PrototypeLauncherView(
     testBedBtnOnClick: () -> Unit,
 ) {
     WebMessagingTheme {
-
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -63,9 +63,10 @@ private fun ButtonsColumn(
     testBedBtnOnClick: () -> Unit
 ) {
     Column(
-        modifier = Modifier
-            .height(86.dp)
-            .width(260.dp),
+        modifier =
+            Modifier
+                .height(86.dp)
+                .width(260.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
@@ -74,12 +75,16 @@ private fun ButtonsColumn(
 }
 
 @Composable
-private fun LaunchScreenButton(buttonText: String, btnOnClick: () -> Unit) {
+private fun LaunchScreenButton(
+    buttonText: String,
+    btnOnClick: () -> Unit
+) {
     TextButton(
-        modifier = Modifier
-            .height(40.dp)
-            .border(1.dp, Color.LightGray)
-            .padding(4.dp),
+        modifier =
+            Modifier
+                .height(40.dp)
+                .border(1.dp, Color.LightGray)
+                .padding(4.dp),
         onClick = { btnOnClick() }
     ) {
         Text(buttonText)
@@ -95,18 +100,20 @@ private fun RegionDropDownMenu(
     var expanded by remember { mutableStateOf(false) }
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(50.dp)
-            .padding(8.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+                .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
         TextButton(
-            modifier = Modifier
-                .width(200.dp)
-                .border(1.dp, Color.LightGray)
-                .background(Color.LightGray),
+            modifier =
+                Modifier
+                    .width(200.dp)
+                    .border(1.dp, Color.LightGray)
+                    .background(Color.LightGray),
             onClick = { expanded = true }
         ) {
             Text(text = region)
@@ -130,10 +137,14 @@ private fun RegionDropDownMenu(
 }
 
 @Composable
-private fun DeploymentIdTextField(deploymentId: String, onValueChanged: (String) -> Unit) {
+private fun DeploymentIdTextField(
+    deploymentId: String,
+    onValueChanged: (String) -> Unit
+) {
     OutlinedTextField(
-        modifier = Modifier
-            .fillMaxWidth(0.8f),
+        modifier =
+            Modifier
+                .fillMaxWidth(0.8f),
         value = deploymentId,
         onValueChange = { onValueChanged(it) },
         label = { Text(text = "Deployment ID") }

@@ -10,7 +10,6 @@ import com.genesys.cloud.messenger.uitest.support.testConfig
 import java.lang.Thread.sleep
 
 class OpeningPage(activity: Activity) : BasePage(activity) {
-
     val title = "Deployment ID"
     val regionDefault = "inindca.com"
     val tcaEnvironment = "inintca.com"
@@ -45,25 +44,29 @@ class OpeningPage(activity: Activity) : BasePage(activity) {
         when (testConfig.domain) {
             regionDefault -> {
                 val envView =
-                    listOfSrollView.getChild(UiSelector().className("android.view.View").index(0))!!
+                    listOfSrollView
+                        .getChild(UiSelector().className("android.view.View").index(0))!!
                         .click()
             }
 
             tcaEnvironment -> {
                 val envView =
-                    listOfSrollView.getChild(UiSelector().className("android.view.View").index(1))!!
+                    listOfSrollView
+                        .getChild(UiSelector().className("android.view.View").index(1))!!
                         .click()
             }
 
             prodEnvironment -> {
                 val envView =
-                    listOfSrollView.getChild(UiSelector().className("android.view.View").index(2))!!
+                    listOfSrollView
+                        .getChild(UiSelector().className("android.view.View").index(2))!!
                         .click()
             }
 
             usWestEnvironment -> {
                 val envView =
-                    listOfSrollView.getChild(UiSelector().className("android.view.View").index(3))!!
+                    listOfSrollView
+                        .getChild(UiSelector().className("android.view.View").index(3))!!
                         .click()
             }
             // to do add other regions as needed

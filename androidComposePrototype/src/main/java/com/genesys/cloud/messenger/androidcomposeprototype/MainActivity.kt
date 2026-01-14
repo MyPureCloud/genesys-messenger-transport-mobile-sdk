@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.launcher.PrototypeLauncherView
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed.TestBedFragment
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed.TestBedViewModel
@@ -15,8 +16,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 
-class MainActivity : AppCompatActivity(), CoroutineScope {
-
+class MainActivity :
+    AppCompatActivity(),
+    CoroutineScope {
     private val TAG = MainActivity::class.simpleName
 
     override val coroutineContext = Dispatchers.Main + Job()
@@ -26,6 +28,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setPrototypeLauncherView()
+        WindowCompat.setDecorFitsSystemWindows(window, false)
     }
 
     private fun setPrototypeLauncherView() {
@@ -39,7 +42,8 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
     private fun goToTestBedView() {
         setContentView(R.layout.activity_main)
-        supportFragmentManager.beginTransaction()
+        supportFragmentManager
+            .beginTransaction()
             .replace(R.id.main_container, TestBedFragment())
             .commit()
     }
@@ -61,7 +65,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
     private inline fun Uri?.doIfRedirectedFromOkta(block: (uri: Uri) -> Unit) {
         // Check with scheme from AndroidManifest.MainActivity
-        if (this?.scheme == "com.okta.dev-2518047") {
+        if (this?.scheme == "com.oktapreview.genesys-cloud") {
             block(this)
         }
     }

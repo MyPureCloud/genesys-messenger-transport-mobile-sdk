@@ -30,7 +30,7 @@ final class MessengerInteractor {
                                            reconnectionTimeoutInSeconds: reconnectTimeout,
                                            autoRefreshTokenWhenExpired: true,
                                            encryptedVault: true)
-        self.tokenVault = DefaultVault(keys: Vault.Keys(vaultKey: "com.genesys.cloud.messenger", tokenKey: "token", authRefreshTokenKey: "auth_refresh_token", wasAuthenticated: "wasAuthenticated"))
+        self.tokenVault = DefaultVault(keys: Vault.Keys(vaultKey: "com.genesys.cloud.messenger", tokenKey: "token", authRefreshTokenKey: "auth_refresh_token", wasAuthenticated: "wasAuthenticated", pushConfigKey: "pushConfig"))
         self.messengerTransport = MessengerTransportSDK(configuration: self.configuration, vault: self.tokenVault)
         self.messagingClient = self.messengerTransport.createMessagingClient()
         
@@ -46,6 +46,8 @@ final class MessengerInteractor {
             print("Event: \(event)")
             self?.eventSubject.send(event)
         }
+        
+        self.fetchDeployment(completion: { _, _ in })
     }
 
     func getFileAttachmentProfile() -> FileAttachmentProfile? {
@@ -115,6 +117,15 @@ final class MessengerInteractor {
             try messagingClient.sendQuickReply(buttonResponse: buttonResponse)
         } catch {
             print("sendQuickReply(buttonResponse:) failed. \(error.localizedDescription)")
+            throw error
+        }
+    }
+
+    func sendCardReply(buttonResponse: ButtonResponse) throws {
+        do {
+            try messagingClient.sendCardReply(postbackResponse: buttonResponse)
+        } catch {
+            print("sendCardReply(buttonResponse:) failed. \(error.localizedDescription)")
             throw error
         }
     }
@@ -213,5 +224,23 @@ final class MessengerInteractor {
     
     func wasAuthenticated() -> Bool {
         return messagingClient.wasAuthenticated
+    }
+
+    func shouldAuthorize(completion: @escaping (Bool) -> Void) {
+        messagingClient.shouldAuthorize { shouldAuth in
+            completion(shouldAuth as! Bool)
+        }
+    }
+
+    func createPushService() -> PushService {
+        return messengerTransport.createPushService()
+    }
+
+    func isDeploymentRegisteredForPush() -> Bool {
+        return UserDefaults.isRegisterForPushNotifications(deploymentId: configuration.deploymentId)
+    }
+
+    func updateDeploymentRegisteredForPush(state: Bool) {
+        UserDefaults.updatePushNotificationsStateFor(deploymentId: configuration.deploymentId, state: state)
     }
 }

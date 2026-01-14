@@ -70,9 +70,10 @@ internal class CustomAttributesStoreImpl(
 
     private fun isSizeExceeded(attributes: Map<String, String>): Boolean {
         val attributesToValidate = customAttributes + attributes
-        val totalSize = attributesToValidate.entries.sumOf { (key, value) ->
-            key.toByteArray(Charsets.UTF_8).size + value.toByteArray(Charsets.UTF_8).size
-        }
+        val totalSize =
+            attributesToValidate.entries.sumOf { (key, value) ->
+                key.toByteArray(Charsets.UTF_8).size + value.toByteArray(Charsets.UTF_8).size
+            }
         return totalSize > maxCustomDataBytes
     }
 
@@ -120,4 +121,5 @@ internal class CustomAttributesStoreImpl(
 }
 
 private fun Int.isUnset(): Boolean = this == MAX_CUSTOM_DATA_BYTES_UNSET
+
 private fun Int.isSet(): Boolean = this != MAX_CUSTOM_DATA_BYTES_UNSET

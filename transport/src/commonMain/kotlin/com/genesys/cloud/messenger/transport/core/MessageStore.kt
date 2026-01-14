@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.core
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
 import com.genesys.cloud.messenger.transport.util.extensions.getUploadedAttachments
 import com.genesys.cloud.messenger.transport.util.logs.Log
@@ -21,21 +22,27 @@ internal class MessageStore(private val log: Log) {
     val updateAttachmentStateWith = { attachment: Attachment -> update(attachment) }
     var messageListener: ((MessageEvent) -> Unit)? = null
 
-    fun prepareMessage(token: String, text: String, channel: Channel? = null): OnMessageRequest {
-        val messageToSend = pendingMessage.copy(text = text, state = Message.State.Sending).also {
-            log.i { LogMessages.messagePreparedToSend(it) }
-            activeConversation.add(it)
-            publish(MessageEvent.MessageInserted(it))
-            pendingMessage = Message()
-        }
+    fun prepareMessage(
+        token: String,
+        text: String,
+        channel: Channel? = null
+    ): OnMessageRequest {
+        val messageToSend =
+            pendingMessage.copy(text = text, state = Message.State.Sending).also {
+                log.i { LogMessages.messagePreparedToSend(it) }
+                activeConversation.add(it)
+                publish(MessageEvent.MessageInserted(it))
+                pendingMessage = Message()
+            }
         return OnMessageRequest(
             token = token,
-            message = TextMessage(
-                text,
-                metadata = mapOf("customMessageId" to messageToSend.id),
-                content = messageToSend.getUploadedAttachments(),
-                channel = channel,
-            )
+            message =
+                TextMessage(
+                    text,
+                    metadata = mapOf("customMessageId" to messageToSend.id),
+                    content = messageToSend.getUploadedAttachments(),
+                    channel = channel,
+                )
         )
     }
 
@@ -45,56 +52,107 @@ internal class MessageStore(private val log: Log) {
         channel: Channel? = null,
     ): OnMessageRequest {
         val type = Message.Type.QuickReply
-        val messageToSend = pendingMessage.copy(
-            messageType = type,
-            type = type.name,
-            state = Message.State.Sending,
-            quickReplies = listOf(buttonResponse),
-        ).also {
-            log.i { LogMessages.quickReplyPrepareToSend(it) }
-            activeConversation.add(it)
-            publish(MessageEvent.MessageInserted(it))
-            pendingMessage = Message(attachments = it.attachments)
-        }
-        val content = listOf(
-            Message.Content(
-                contentType = Message.Content.Type.ButtonResponse,
-                buttonResponse = buttonResponse,
+        val messageToSend =
+            pendingMessage
+                .copy(
+                    messageType = type,
+                    type = type.name,
+                    state = Message.State.Sending,
+                    quickReplies = listOf(buttonResponse),
+                ).also {
+                    log.i { LogMessages.quickReplyPrepareToSend(it) }
+                    activeConversation.add(it)
+                    publish(MessageEvent.MessageInserted(it))
+                    pendingMessage = Message(attachments = it.attachments)
+                }
+        val content =
+            listOf(
+                Message.Content(
+                    contentType = Message.Content.Type.ButtonResponse,
+                    buttonResponse = buttonResponse,
+                )
             )
-        )
         return OnMessageRequest(
             token = token,
-            message = TextMessage(
-                text = "",
-                metadata = mapOf("customMessageId" to messageToSend.id),
-                content = content,
-                channel = channel,
-            )
+            message =
+                TextMessage(
+                    text = "",
+                    metadata = mapOf("customMessageId" to messageToSend.id),
+                    content = content,
+                    channel = channel,
+                )
         )
     }
 
-    fun update(message: Message) = message.run {
-        log.i { LogMessages.messageStateUpdated(this) }
-        when (direction) {
-            Direction.Inbound -> findAndPublish(this)
-            Direction.Outbound -> {
-                activeConversation.add(this)
-                publish(this.toMessageEvent())
-            }
-        }
-        nextPage = activeConversation.getNextPage()
+    fun preparePostbackMessage(
+        token: String,
+        buttonResponse: ButtonResponse,
+        channel: Channel? = null,
+    ): OnMessageRequest {
+        val type = Message.Type.Cards
+
+        val messageToSend =
+            pendingMessage
+                .copy(
+                    messageType = type,
+                    type = type.name,
+                    state = Message.State.Sending,
+                    quickReplies = listOf(buttonResponse),
+                ).also {
+                    log.i { LogMessages.postbackPrepareToSend(it) }
+                    activeConversation.add(it)
+                    publish(MessageEvent.MessageInserted(it))
+                    pendingMessage = Message(attachments = it.attachments)
+                }
+
+        val content =
+            listOf(
+                Message.Content(
+                    contentType = Message.Content.Type.ButtonResponse,
+                    buttonResponse = buttonResponse,
+                )
+            )
+
+        return OnMessageRequest(
+            token = token,
+            message =
+                StructuredMessage(
+                    text = buttonResponse.text,
+                    metadata = mapOf("customMessageId" to messageToSend.id),
+                    content = content,
+                    channel = channel
+                )
+        )
     }
+
+    fun update(message: Message) =
+        message.run {
+            log.i { LogMessages.messageStateUpdated(this) }
+            when (direction) {
+                Direction.Inbound -> findAndPublish(this)
+                Direction.Outbound -> {
+                    activeConversation.add(this)
+                    publish(this.toMessageEvent())
+                }
+            }
+            nextPage = activeConversation.getNextPage()
+        }
 
     private fun update(attachment: Attachment) {
         log.i { LogMessages.attachmentStateUpdated(attachment) }
-        val attachments = pendingMessage.attachments.toMutableMap().also {
-            it[attachment.id] = attachment
-        }.filterNot { it.value.state is Attachment.State.Sent }
+        val attachments =
+            pendingMessage.attachments
+                .toMutableMap()
+                .also { it[attachment.id] = attachment }
+                .filterNot { it.value.state is Attachment.State.Sent }
         pendingMessage = pendingMessage.copy(attachments = attachments)
         publish(MessageEvent.AttachmentUpdated(attachment))
     }
 
-    fun updateMessageHistory(historyPage: List<Message>, total: Int) {
+    fun updateMessageHistory(
+        historyPage: List<Message>,
+        total: Int
+    ) {
         startOfConversation = isAllHistoryFetched(total)
         with(historyPage.takeInactiveMessages().reversed()) {
             log.i { LogMessages.messageHistoryUpdated(this) }
@@ -106,7 +164,10 @@ internal class MessageStore(private val log: Log) {
 
     fun getConversation(): List<Message> = activeConversation.toList()
 
-    fun onMessageError(code: ErrorCode, message: String?) {
+    fun onMessageError(
+        code: ErrorCode,
+        message: String?
+    ) {
         activeConversation.find { it.state == Message.State.Sending }?.let {
             update(it.copy(state = Message.State.Error(code, message)))
         }
@@ -140,8 +201,7 @@ internal class MessageStore(private val log: Log) {
 
     private fun <E> MutableList<E>.getNextPage(): Int = (this.size / DEFAULT_PAGE_SIZE) + 1
 
-    private fun isAllHistoryFetched(totalInStash: Int) =
-        totalInStash - activeConversation.size <= DEFAULT_PAGE_SIZE
+    private fun isAllHistoryFetched(totalInStash: Int) = totalInStash - activeConversation.size <= DEFAULT_PAGE_SIZE
 
     private fun List<Message>.takeInactiveMessages(): List<Message> {
         return this.filter { message ->
@@ -153,10 +213,10 @@ internal class MessageStore(private val log: Log) {
 }
 
 private fun Message.toMessageEvent(): MessageEvent =
-    if (messageType == Message.Type.QuickReply) {
-        MessageEvent.QuickReplyReceived(this)
-    } else {
-        MessageEvent.MessageInserted(this)
+    when (messageType) {
+        Message.Type.QuickReply -> MessageEvent.QuickReplyReceived(this)
+        Message.Type.Cards -> MessageEvent.CardMessageReceived(this)
+        else -> MessageEvent.MessageInserted(this)
     }
 
 /**
@@ -195,8 +255,10 @@ sealed class MessageEvent {
      * @property startOfConversation is a flag that indicated if user has fetched all messages in the conversation history.
      * When true - no more [com.genesys.cloud.messenger.transport.network.WebMessagingApi.getMessages] requests will be executed.
      */
-    class HistoryFetched(val messages: List<Message>, val startOfConversation: Boolean) :
-        MessageEvent()
+    class HistoryFetched(
+        val messages: List<Message>,
+        val startOfConversation: Boolean
+    ) : MessageEvent()
 
     /**
      * Dispatched when message with quick replies was sent by the Bot. To get the actual quick reply
@@ -205,4 +267,13 @@ sealed class MessageEvent {
      * @property message is the [Message] object with all the details.
      */
     class QuickReplyReceived(val message: Message) : MessageEvent()
+
+    /**
+     * Dispatched when a card or carousel message was sent by the Bot.
+     * Card messages may include one or more cards, with each card containing title, description, image, and actions.
+     * To access the card data, refer to [Message.cards].
+     *
+     * @property message is the [Message] object with all the card details.
+     */
+    class CardMessageReceived(val message: Message) : MessageEvent()
 }

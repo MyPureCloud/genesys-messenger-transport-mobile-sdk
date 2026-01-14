@@ -3,11 +3,13 @@ package com.genesys.cloud.messenger.transport.utility
 import com.genesys.cloud.messenger.transport.util.Vault
 
 class FakeVault(keys: Keys) : Vault(keys) {
-
     private var fakeJwtToken: String? = null
     private var fakeAuthRefreshToken: String? = null
 
-    override fun store(key: String, value: String) {
+    override fun store(
+        key: String,
+        value: String
+    ) {
         when (key) {
             keys.authRefreshTokenKey -> fakeAuthRefreshToken = value
             keys.tokenKey -> fakeJwtToken = value

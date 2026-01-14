@@ -18,21 +18,24 @@ import transport.util.Request
 class UserTypingProviderTest {
     private val mockLogger: Log = mockk(relaxed = true)
     private val logSlot = mutableListOf<() -> String>()
-    private val mockTimestampFunction: () -> Long = spyk<() -> Long>().also {
-        every { it.invoke() } answers { Platform().epochMillis() }
-    }
-    private val mockShowUserTypingIndicatorFunction: () -> Boolean = spyk<() -> Boolean>().also {
-        every { it.invoke() } returns true
-    }
+    private val mockTimestampFunction: () -> Long =
+        spyk<() -> Long>().also {
+            every { it.invoke() } answers { Platform().epochMillis() }
+        }
+    private val mockShowUserTypingIndicatorFunction: () -> Boolean =
+        spyk<() -> Boolean>().also {
+            every { it.invoke() } returns true
+        }
 
-    private val subject = UserTypingProvider(
-        log = mockLogger,
-        showUserTypingEnabled = mockShowUserTypingIndicatorFunction,
-        getCurrentTimestamp = mockTimestampFunction,
-    )
+    private val subject =
+        UserTypingProvider(
+            log = mockLogger,
+            showUserTypingEnabled = mockShowUserTypingIndicatorFunction,
+            getCurrentTimestamp = mockTimestampFunction,
+        )
 
     @Test
-    fun whenEncode() {
+    fun `when encode`() {
         val expected = Request.userTypingRequest
         val result = subject.encodeRequest(token = Request.token)
 
@@ -44,7 +47,7 @@ class UserTypingProviderTest {
     }
 
     @Test
-    fun whenEncodeWithCoolDown() {
+    fun `when encode with coolDown`() {
         val typingIndicatorCoolDownInMilliseconds = TYPING_INDICATOR_COOL_DOWN_MILLISECONDS + 250
         val expected = Request.userTypingRequest
         val firstResult = subject.encodeRequest(token = Request.token)
@@ -56,7 +59,7 @@ class UserTypingProviderTest {
     }
 
     @Test
-    fun whenEncodeWithoutCoolDown() {
+    fun `when encode without coolDown`() {
         val expected = Request.userTypingRequest
         val firstResult = subject.encodeRequest(token = Request.token)
         val secondResult = subject.encodeRequest(token = Request.token)
@@ -77,7 +80,7 @@ class UserTypingProviderTest {
     }
 
     @Test
-    fun whenEncodeWithoutCoolDownButWithClear() {
+    fun `when encode without coolDown but with clear`() {
         val expected = Request.userTypingRequest
         val firstResult = subject.encodeRequest(token = Request.token)
         subject.clear()
@@ -88,7 +91,7 @@ class UserTypingProviderTest {
     }
 
     @Test
-    fun whenEncodeAndShowUserTypingIsDisabled() {
+    fun `when encode and showUserTyping is disabled`() {
         every { mockShowUserTypingIndicatorFunction.invoke() } returns false
 
         val result = subject.encodeRequest(token = Request.token)
@@ -100,5 +103,18 @@ class UserTypingProviderTest {
 
         assertThat(result).isNull()
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.TYPING_INDICATOR_DISABLED)
+    }
+
+    @Test
+    fun `when encode with default getCurrentTimestamp function`() {
+        val subject =
+            UserTypingProvider(
+                log = mockLogger,
+                showUserTypingEnabled = { true }
+            )
+
+        val result = subject.encodeRequest(token = Request.token)
+
+        assertThat(result).isEqualTo(Request.userTypingRequest)
     }
 }

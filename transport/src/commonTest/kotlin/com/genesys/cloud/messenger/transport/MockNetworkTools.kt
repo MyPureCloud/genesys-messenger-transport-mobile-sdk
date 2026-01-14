@@ -12,12 +12,14 @@ import io.ktor.client.request.HttpResponseData
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 
-fun mockHttpClientWith(engineBlock: HttpClientConfig<MockEngineConfig>.() -> Unit): HttpClient = HttpClient(MockEngine) {
-    install(ContentNegotiation) {
-        json(WebMessagingJson.json)
+fun mockHttpClientWith(
+    engineBlock: HttpClientConfig<MockEngineConfig>.() -> Unit
+): HttpClient =
+    HttpClient(MockEngine) {
+        install(ContentNegotiation) {
+            json(WebMessagingJson.json)
+        }
+        engineBlock()
     }
-    engineBlock()
-}
 
-fun MockRequestHandleScope.respondNotFound(): HttpResponseData =
-    respond("Not found", HttpStatusCode.NotFound)
+fun MockRequestHandleScope.respondNotFound(): HttpResponseData = respond("Not found", HttpStatusCode.NotFound)

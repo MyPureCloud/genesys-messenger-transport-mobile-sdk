@@ -11,12 +11,15 @@ import java.net.URL
 import java.util.concurrent.atomic.AtomicBoolean
 
 class API : IdlingResource {
-
     val mapper = jacksonObjectMapper()
     val agentToken = testConfig.agentToken
     val agentEmail = testConfig.agentEmail
 
-    fun publicApiCall(httpMethod: String, httpURL: String, payload: ByteArray? = null): JsonNode? {
+    fun publicApiCall(
+        httpMethod: String,
+        httpURL: String,
+        payload: ByteArray? = null
+    ): JsonNode? {
         val url = URL("${testConfig.apiBaseAddress}$httpURL")
         var output: JsonNode? = null
         setIdle(false)

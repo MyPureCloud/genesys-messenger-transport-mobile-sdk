@@ -44,13 +44,17 @@ data class Conversations(
     val autoStart: AutoStart = AutoStart(),
     val conversationDisconnect: ConversationDisconnect = ConversationDisconnect(),
     val conversationClear: ConversationClear = ConversationClear(),
+    val notifications: Notifications = Notifications(),
+    val markdown: Markdown = Markdown(),
 ) {
     @Serializable
     data class AutoStart(val enabled: Boolean = false)
 
     @Serializable
-    data class ConversationDisconnect(val enabled: Boolean = false, val type: Type = Type.Send) {
-
+    data class ConversationDisconnect(
+        val enabled: Boolean = false,
+        val type: Type = Type.Send
+    ) {
         @Serializable
         enum class Type {
             ReadOnly,
@@ -60,6 +64,21 @@ data class Conversations(
 
     @Serializable
     data class ConversationClear(val enabled: Boolean = false)
+
+    @Serializable
+    data class Notifications(
+        val enabled: Boolean = false,
+        val notificationContentType: NotificationContentType = NotificationContentType.ExcludeMessagesContent,
+    ) {
+        @Serializable
+        enum class NotificationContentType {
+            IncludeMessagesContent,
+            ExcludeMessagesContent,
+        }
+    }
+
+    @Serializable
+    data class Markdown(val enabled: Boolean = false)
 }
 
 @Serializable

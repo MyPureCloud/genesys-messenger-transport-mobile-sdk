@@ -1,6 +1,5 @@
 package com.genesys.cloud.messenger.transport.auth
 
-import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
@@ -8,6 +7,7 @@ import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.isUnauthorized
+import com.genesys.cloud.messenger.transport.core.toCorrectiveAction
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.logs.Log
@@ -25,6 +25,7 @@ internal class AuthHandlerImpl(
     private val api: WebMessagingApi,
     private val vault: Vault,
     private val log: Log,
+    private val isAuthEnabled: suspend () -> Boolean,
     private val dispatcher: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
 ) : AuthHandler {
     private var logoutAttempts = 0
@@ -33,7 +34,11 @@ internal class AuthHandlerImpl(
     override val jwt: String
         get() = authJwt.jwt
 
-    override fun authorize(authCode: String, redirectUri: String, codeVerifier: String?) {
+    override fun authorize(
+        authCode: String,
+        redirectUri: String,
+        codeVerifier: String?
+    ) {
         dispatcher.launch {
             when (val result = api.fetchAuthJwt(authCode, redirectUri, codeVerifier)) {
                 is Result.Success -> {
@@ -45,6 +50,7 @@ internal class AuthHandlerImpl(
                         eventHandler.onEvent(Event.Authorized)
                     }
                 }
+
                 is Result.Failure -> handleRequestError(result, "fetchAuthJwt()")
             }
         }
@@ -74,26 +80,58 @@ internal class AuthHandlerImpl(
 
     override fun refreshToken(callback: (Result<Empty>) -> Unit) {
         if (!autoRefreshTokenWhenExpired || !authJwt.hasRefreshToken()) {
-            val message = if (!autoRefreshTokenWhenExpired) {
-                ErrorMessage.AutoRefreshTokenDisabled
-            } else {
-                ErrorMessage.NoRefreshToken
-            }
+            val message =
+                if (!autoRefreshTokenWhenExpired) {
+                    ErrorMessage.AutoRefreshTokenDisabled
+                } else {
+                    ErrorMessage.NoRefreshToken
+                }
             log.e { LogMessages.couldNotRefreshAuthToken(message) }
             callback(Result.Failure(ErrorCode.RefreshAuthTokenFailure, message))
             return
         }
-        authJwt.let {
+        performTokenRefresh(callback)
+    }
+
+    override fun shouldAuthorize(callback: (Boolean) -> Unit) {
+        dispatcher.launch {
+            if (!isAuthEnabled()) {
+                callback(false)
+                return@launch
+            }
+
+            if (!authJwt.hasRefreshToken()) {
+                callback(true)
+                return@launch
+            }
+
+            performTokenRefresh { result ->
+                when (result) {
+                    is Result.Success -> callback(false)
+                    is Result.Failure -> callback(true)
+                }
+            }
+        }
+    }
+
+    private fun performTokenRefresh(callback: (Result<Empty>) -> Unit) {
+        authJwt.let { jwt ->
             dispatcher.launch {
-                when (val result = api.refreshAuthJwt(it.refreshToken!!)) {
+                when (val result = api.refreshAuthJwt(jwt.refreshToken!!)) {
                     is Result.Success -> {
                         log.i { LogMessages.REFRESH_AUTH_TOKEN_SUCCESS }
-                        authJwt = it.copy(jwt = result.value.jwt, refreshToken = it.refreshToken)
+                        authJwt = jwt.copy(jwt = result.value.jwt, refreshToken = jwt.refreshToken)
                         callback(Result.Success(Empty()))
                     }
+
                     is Result.Failure -> {
                         log.e { LogMessages.couldNotRefreshAuthToken(result.message) }
-                        clear()
+                        if (result.errorCode != ErrorCode.NetworkDisabled) {
+                            clear()
+                        }
+                        eventHandler.onEvent(
+                            Event.Error(result.errorCode, result.message, result.errorCode.toCorrectiveAction())
+                        )
                         callback(result)
                     }
                 }
@@ -106,14 +144,17 @@ internal class AuthHandlerImpl(
         vault.authRefreshToken = NO_REFRESH_TOKEN
     }
 
-    private fun handleRequestError(result: Result.Failure, requestName: String) {
+    private fun handleRequestError(
+        result: Result.Failure,
+        requestName: String
+    ) {
         if (result.errorCode is ErrorCode.CancellationError) {
             log.w { LogMessages.cancellationExceptionRequestName(requestName) }
             return
         }
         log.e { LogMessages.requestError(requestName, result.errorCode, result.message) }
         eventHandler.onEvent(
-            Event.Error(result.errorCode, result.message, CorrectiveAction.ReAuthenticate)
+            Event.Error(result.errorCode, result.message, result.errorCode.toCorrectiveAction())
         )
     }
 
@@ -123,5 +164,4 @@ internal class AuthHandlerImpl(
             authJwt.hasRefreshToken()
 }
 
-private fun AuthJwt.hasRefreshToken(): Boolean =
-    refreshToken != null && refreshToken != NO_REFRESH_TOKEN
+private fun AuthJwt.hasRefreshToken(): Boolean = refreshToken != null && refreshToken != NO_REFRESH_TOKEN

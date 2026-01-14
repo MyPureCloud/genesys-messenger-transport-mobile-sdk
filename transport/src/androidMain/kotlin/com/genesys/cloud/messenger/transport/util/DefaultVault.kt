@@ -12,18 +12,21 @@ actual class DefaultVault actual constructor(keys: Keys) : Vault(keys) {
         sharedPreferences = currentContext.getSharedPreferences(keys.vaultKey, Context.MODE_PRIVATE)
     }
 
-    override fun store(key: String, value: String) {
+    actual override fun store(
+        key: String,
+        value: String
+    ) {
         with(sharedPreferences.edit()) {
             putString(key, value)
             apply()
         }
     }
 
-    override fun fetch(key: String): String? {
+    actual override fun fetch(key: String): String? {
         return sharedPreferences.getString(key, null)
     }
 
-    override fun remove(key: String) {
+    actual override fun remove(key: String) {
         with(sharedPreferences.edit()) {
             remove(key)
             apply()

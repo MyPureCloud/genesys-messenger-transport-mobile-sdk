@@ -18,6 +18,7 @@ class TestbedViewController: UIViewController {
     private var authCode: String? = nil
     private var authState: AuthState = AuthState.noAuth
     private var quickRepliesMap = [String: ButtonResponse]()
+    private var cardActionsMap = [String: ButtonResponse]()
 
     init(messenger: MessengerInteractor) {
         self.messenger = messenger
@@ -57,6 +58,10 @@ class TestbedViewController: UIViewController {
         case removeAuthRefreshToken
         case stepUp
         case wasAuthenticated
+        case shouldAuthorize
+        case sendAction
+        case listActions
+        
 
         var helpDescription: String {
             switch self {
@@ -65,6 +70,7 @@ class TestbedViewController: UIViewController {
             case .addAttribute: return "addAttribute <key> <value>"
             case .sendQuickReply: return "sendQuickReply <quickReply>"
             case .refreshAttachment: return "refreshAttachment <attachmentId>"
+            case .sendAction: return "sendAction <action>"
             default: return rawValue
             }
         }
@@ -224,6 +230,15 @@ class TestbedViewController: UIViewController {
         case let quickReplies as MessageEvent.QuickReplyReceived:
             quickRepliesMap =  Dictionary(uniqueKeysWithValues: quickReplies.message.quickReplies.map { ($0.text, $0) })
             displayMessage = "QuickReplyReceived: text: <\(quickReplies.message.text)> | quick reply optoins: <\(quickReplies.message.quickReplies)>"
+        case let cardMessage as MessageEvent.CardMessageReceived:
+            var tempActionsMap = [String: ButtonResponse]()
+            for card in cardMessage.message.cards {
+                for action in card.actions {
+                    tempActionsMap[action.text] = action
+                    cardActionsMap[action.text] = action
+                }
+            }
+            displayMessage = "CardMessageReceived with actions: \(tempActionsMap)"
         default:
             break
         }
@@ -498,6 +513,25 @@ extension TestbedViewController : UITextFieldDelegate {
                 try messenger.stepUp()
             case (.wasAuthenticated, _):
                 self.info.text = "wasAuthenticated: \(messenger.wasAuthenticated())"
+            case (.shouldAuthorize, _):
+                messenger.shouldAuthorize { shouldAuth in
+                    self.info.text = "shouldAuthorize: \(shouldAuth)"
+                }
+            case (.sendAction, let action?):
+                if let buttonResponse = cardActionsMap[action] {
+                    if buttonResponse.type == "Link" {
+                        if let url = URL(string: buttonResponse.payload) {
+                            UIApplication.shared.open(url)
+                        }
+                        self.info.text = "Opened URL: \(buttonResponse.payload)"
+                    } else {
+                        try messenger.sendCardReply(buttonResponse: buttonResponse)
+                    }
+                } else {
+                    self.info.text = "Selected card action: \(action) does not exist."
+                }
+            case (.listActions, _):
+                self.info.text = "Available card actions: \(Array(cardActionsMap.keys))"
             default:
                 self.info.text = "Invalid command"
             }

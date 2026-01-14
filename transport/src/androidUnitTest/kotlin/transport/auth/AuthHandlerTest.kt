@@ -2,9 +2,11 @@ package transport.auth
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
 import assertk.assertions.isInstanceOf
 import assertk.assertions.isNotEmpty
 import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.auth.AuthHandlerImpl
 import com.genesys.cloud.messenger.transport.auth.AuthJwt
 import com.genesys.cloud.messenger.transport.auth.MAX_LOGOUT_ATTEMPTS
@@ -37,60 +39,66 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.serialization.encodeToString
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class AuthHandlerTest {
-
     @MockK(relaxed = true)
     private val mockEventHandler: EventHandler = mockk(relaxed = true)
     private val mockLogger: Log = mockk(relaxed = true)
     private val logSlot = slot<() -> String>()
 
     @MockK(relaxed = true)
-    private val mockWebMessagingApi: WebMessagingApi = mockk {
-        coEvery {
-            fetchAuthJwt(
-                AuthTest.AUTH_CODE,
-                AuthTest.REDIRECT_URI,
-                AuthTest.CODE_VERIFIER,
-            )
-        } returns Result.Success(AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN))
+    private val mockWebMessagingApi: WebMessagingApi =
+        mockk {
+            coEvery {
+                fetchAuthJwt(
+                    AuthTest.AUTH_CODE,
+                    AuthTest.REDIRECT_URI,
+                    AuthTest.CODE_VERIFIER,
+                )
+            } returns Result.Success(AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN))
 
-        coEvery {
-            logoutFromAuthenticatedSession(AuthTest.JWT_TOKEN)
-        } returns Result.Success(Empty())
+            coEvery {
+                logoutFromAuthenticatedSession(AuthTest.JWT_TOKEN)
+            } returns Result.Success(Empty())
 
-        coEvery {
-            logoutFromAuthenticatedSession(NO_JWT)
-        } returns Result.Failure(
-            ErrorCode.AuthLogoutFailed,
-            ErrorTest.MESSAGE,
-        )
+            coEvery {
+                logoutFromAuthenticatedSession(NO_JWT)
+            } returns
+                Result.Failure(
+                    ErrorCode.AuthLogoutFailed,
+                    ErrorTest.MESSAGE,
+                )
 
-        coEvery { refreshAuthJwt(AuthTest.REFRESH_TOKEN) } returns Result.Success(
-            AuthJwt(AuthTest.REFRESHED_JWT_TOKEN, null)
-        )
+            coEvery { refreshAuthJwt(AuthTest.REFRESH_TOKEN) } returns
+                Result.Success(
+                    AuthJwt(AuthTest.REFRESHED_JWT_TOKEN, null)
+                )
 
-        coEvery { refreshAuthJwt(NO_REFRESH_TOKEN) } returns Result.Failure(
-            ErrorCode.RefreshAuthTokenFailure,
-            ErrorTest.MESSAGE,
-        )
-    }
+            coEvery { refreshAuthJwt(NO_REFRESH_TOKEN) } returns
+                Result.Failure(
+                    ErrorCode.RefreshAuthTokenFailure,
+                    ErrorTest.MESSAGE,
+                )
+        }
 
     private val fakeVault: FakeVault = FakeVault(TestValues.vaultKeys)
     private val dispatcher: CoroutineDispatcher = Dispatchers.Unconfined
 
-    private var subject = buildAuthHandler()
+    private lateinit var subject: AuthHandlerImpl
 
     @ExperimentalCoroutinesApi
     @Before
     fun setup() {
         MockKAnnotations.init(this)
         Dispatchers.setMain(dispatcher)
+        subject = buildAuthHandler()
     }
 
     @ExperimentalCoroutinesApi
@@ -166,10 +174,11 @@ class AuthHandlerTest {
         val expectedErrorMessage = ErrorTest.MESSAGE
         val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
 
-        coEvery { mockWebMessagingApi.fetchAuthJwt(any(), any(), any()) } returns Result.Failure(
-            ErrorCode.AuthFailed,
-            ErrorTest.MESSAGE
-        )
+        coEvery { mockWebMessagingApi.fetchAuthJwt(any(), any(), any()) } returns
+            Result.Failure(
+                ErrorCode.AuthFailed,
+                ErrorTest.MESSAGE
+            )
 
         val expectedAuthJwt = AuthJwt(NO_JWT, NO_REFRESH_TOKEN)
 
@@ -199,10 +208,11 @@ class AuthHandlerTest {
 
     @Test
     fun `when authorize() failure with CancellationException`() {
-        coEvery { mockWebMessagingApi.fetchAuthJwt(any(), any(), any()) } returns Result.Failure(
-            ErrorCode.CancellationError,
-            ErrorTest.MESSAGE
-        )
+        coEvery { mockWebMessagingApi.fetchAuthJwt(any(), any(), any()) } returns
+            Result.Failure(
+                ErrorCode.CancellationError,
+                ErrorTest.MESSAGE
+            )
 
         subject.authorize(AuthTest.AUTH_CODE, AuthTest.REDIRECT_URI, AuthTest.CODE_VERIFIER)
 
@@ -258,10 +268,11 @@ class AuthHandlerTest {
     fun `when authorized and logout() failed because of 401 but autoRefreshTokenWhenExpired is disabled`() {
         subject = buildAuthHandler(givenAutoRefreshTokenWhenExpired = false)
         authorize()
-        coEvery { mockWebMessagingApi.logoutFromAuthenticatedSession(AuthTest.JWT_TOKEN) } returns Result.Failure(
-            ErrorCode.ClientResponseError(401),
-            ErrorTest.MESSAGE
-        )
+        coEvery { mockWebMessagingApi.logoutFromAuthenticatedSession(AuthTest.JWT_TOKEN) } returns
+            Result.Failure(
+                ErrorCode.ClientResponseError(401),
+                ErrorTest.MESSAGE
+            )
         val expectedErrorCode = ErrorCode.ClientResponseError(401)
         val expectedErrorMessage = ErrorTest.MESSAGE
         val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
@@ -285,12 +296,42 @@ class AuthHandlerTest {
     }
 
     @Test
-    fun `when authorized and logout() failed because of 401 and autoRefreshTokenWhenExpired is enabled but refreshToken() success`() {
+    fun `when logout() without authorize failed because of 401`() {
+        coEvery { mockWebMessagingApi.logoutFromAuthenticatedSession(NO_JWT) } returns
+            Result.Failure(
+                ErrorCode.ClientResponseError(401),
+                ErrorTest.MESSAGE
+            )
+        val expectedErrorCode = ErrorCode.ClientResponseError(401)
+        val expectedErrorMessage = ErrorTest.MESSAGE
+        val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
+
+        subject.logout()
+
+        coVerify {
+            mockWebMessagingApi.logoutFromAuthenticatedSession(NO_JWT)
+        }
+        verify {
+            mockLogger.e(capture(logSlot))
+            mockEventHandler.onEvent(
+                Event.Error(
+                    expectedErrorCode,
+                    expectedErrorMessage,
+                    expectedCorrectiveAction
+                )
+            )
+        }
+        assertThat(logSlot.captured.invoke()).isEqualTo(LogMessages.requestError("logout()", expectedErrorCode, expectedErrorMessage))
+    }
+
+    @Test
+    fun `when authorized and logout() fails with 401 and autoRefreshTokenWhenExpired is enabled but refreshToken() succeeds`() {
         authorize()
-        coEvery { mockWebMessagingApi.logoutFromAuthenticatedSession(any()) } returns Result.Failure(
-            ErrorCode.ClientResponseError(401),
-            ErrorTest.MESSAGE
-        )
+        coEvery { mockWebMessagingApi.logoutFromAuthenticatedSession(any()) } returns
+            Result.Failure(
+                ErrorCode.ClientResponseError(401),
+                ErrorTest.MESSAGE
+            )
         val expectedErrorCode = ErrorCode.ClientResponseError(401)
         val expectedErrorMessage = ErrorTest.MESSAGE
         val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
@@ -320,14 +361,16 @@ class AuthHandlerTest {
     @Test
     fun `when authorized and logout() failed because of 401 and autoRefreshTokenWhenExpired is enabled but refreshToken() fails`() {
         authorize()
-        coEvery { mockWebMessagingApi.logoutFromAuthenticatedSession(AuthTest.JWT_TOKEN) } returns Result.Failure(
-            ErrorCode.ClientResponseError(401),
-            ErrorTest.MESSAGE
-        )
-        coEvery { mockWebMessagingApi.refreshAuthJwt(AuthTest.REFRESH_TOKEN) } returns Result.Failure(
-            ErrorCode.RefreshAuthTokenFailure,
-            ErrorTest.MESSAGE,
-        )
+        coEvery { mockWebMessagingApi.logoutFromAuthenticatedSession(AuthTest.JWT_TOKEN) } returns
+            Result.Failure(
+                ErrorCode.ClientResponseError(401),
+                ErrorTest.MESSAGE
+            )
+        coEvery { mockWebMessagingApi.refreshAuthJwt(AuthTest.REFRESH_TOKEN) } returns
+            Result.Failure(
+                ErrorCode.RefreshAuthTokenFailure,
+                ErrorTest.MESSAGE,
+            )
         val expectedAuthJwt = AuthJwt(NO_JWT, NO_REFRESH_TOKEN)
         val expectedErrorCode = ErrorCode.RefreshAuthTokenFailure
         val expectedErrorMessage = ErrorTest.MESSAGE
@@ -338,6 +381,9 @@ class AuthHandlerTest {
         coVerify(exactly = 1) {
             mockWebMessagingApi.logoutFromAuthenticatedSession(AuthTest.JWT_TOKEN)
             mockWebMessagingApi.refreshAuthJwt(AuthTest.REFRESH_TOKEN)
+        }
+        // Event is fired twice: once in performTokenRefresh and once in handleRequestError (logout)
+        coVerify(exactly = 2) {
             mockEventHandler.onEvent(
                 Event.Error(
                     expectedErrorCode,
@@ -408,10 +454,11 @@ class AuthHandlerTest {
     @Test
     fun `when authorized and refreshToken() failure`() {
         authorize()
-        coEvery { mockWebMessagingApi.refreshAuthJwt(any()) } returns Result.Failure(
-            ErrorCode.RefreshAuthTokenFailure,
-            ErrorTest.MESSAGE,
-        )
+        coEvery { mockWebMessagingApi.refreshAuthJwt(any()) } returns
+            Result.Failure(
+                ErrorCode.RefreshAuthTokenFailure,
+                ErrorTest.MESSAGE,
+            )
         val mockCallback = slot<Result<Empty>>()
         val expectedAuthJwt = AuthJwt(NO_JWT, NO_REFRESH_TOKEN)
 
@@ -474,17 +521,82 @@ class AuthHandlerTest {
         }
     }
 
-    private fun buildAuthHandler(givenAutoRefreshTokenWhenExpired: Boolean = true): AuthHandlerImpl {
+    private fun buildAuthHandler(
+        givenAutoRefreshTokenWhenExpired: Boolean = true,
+        isAuthEnabled: suspend () -> Boolean = { true }
+    ): AuthHandlerImpl {
         return AuthHandlerImpl(
             autoRefreshTokenWhenExpired = givenAutoRefreshTokenWhenExpired,
             eventHandler = mockEventHandler,
             api = mockWebMessagingApi,
             vault = fakeVault,
             log = mockLogger,
+            isAuthEnabled = isAuthEnabled
         )
     }
 
     private fun authorize() {
         subject.authorize(AuthTest.AUTH_CODE, AuthTest.REDIRECT_URI, AuthTest.CODE_VERIFIER)
     }
+
+    @Test
+    fun `when shouldAuthorize() and no refresh token available`() {
+        var callbackResult: Boolean? = null
+
+        subject.shouldAuthorize { result -> callbackResult = result }
+
+        assertThat(callbackResult!!).isTrue()
+        coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
+    }
+
+    @Test
+    fun `when shouldAuthorize() with refresh token and refresh succeeds`() {
+        authorize()
+        var callbackResult: Boolean? = null
+
+        subject.shouldAuthorize { result -> callbackResult = result }
+
+        coVerify { mockWebMessagingApi.refreshAuthJwt(AuthTest.REFRESH_TOKEN) }
+        assertThat(callbackResult!!).isFalse()
+        assertThat(subject.jwt).isEqualTo(AuthTest.REFRESHED_JWT_TOKEN)
+    }
+
+    @Test
+    fun `when shouldAuthorize() with refresh token but refresh fails`() {
+        authorize()
+        coEvery { mockWebMessagingApi.refreshAuthJwt(any()) } returns
+            Result.Failure(
+                ErrorCode.RefreshAuthTokenFailure,
+                ErrorTest.MESSAGE
+            )
+        var callbackResult: Boolean? = null
+        val expectedAuthJwt = AuthJwt(NO_JWT, NO_REFRESH_TOKEN)
+
+        subject.shouldAuthorize { result -> callbackResult = result }
+
+        coVerify { mockWebMessagingApi.refreshAuthJwt(AuthTest.REFRESH_TOKEN) }
+        assertThat(callbackResult!!).isTrue()
+        assertThat(subject.jwt).isEqualTo(expectedAuthJwt.jwt)
+        assertThat(fakeVault.authRefreshToken).isEqualTo(expectedAuthJwt.refreshToken)
+    }
+
+    @Test
+    fun `when shouldAuthorize() and auth is disabled in deployment config`() =
+        runTest {
+            subject = buildAuthHandler(isAuthEnabled = { false })
+
+            subject.shouldAuthorize { result ->
+                assertFalse(result)
+                coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
+            }
+        }
+
+    @Test
+    fun `when shouldAuthorize() and auth is enabled in deployment config`() =
+        runTest {
+            subject.shouldAuthorize { result ->
+                assertTrue(result)
+                coVerify(exactly = 0) { mockWebMessagingApi.refreshAuthJwt(any()) }
+            }
+        }
 }

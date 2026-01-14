@@ -13,6 +13,7 @@ import org.junit.Rule
 open class BaseTests {
     companion object {
         open val apiHelper by lazy { API() }
+
         // Will run before running any test.
         init {
             setUpDevice()

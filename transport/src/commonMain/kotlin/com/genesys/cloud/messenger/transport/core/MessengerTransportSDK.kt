@@ -7,18 +7,16 @@ import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.network.defaultHttpClient
+import com.genesys.cloud.messenger.transport.push.PushService
+import com.genesys.cloud.messenger.transport.push.PushServiceImpl
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.EncryptedVault
 import com.genesys.cloud.messenger.transport.util.TokenStore
+import com.genesys.cloud.messenger.transport.util.Urls
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.logs.Log
-import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 
 /**
  * The entry point to the services provided by the transport SDK.
@@ -31,6 +29,7 @@ class MessengerTransportSDK(
     val vault: Vault,
 ) {
     private var deploymentConfig: DeploymentConfig? = null
+    private val urls = Urls(configuration.domain, configuration.deploymentId, configuration.application)
 
     companion object {
         /**
@@ -76,30 +75,24 @@ class MessengerTransportSDK(
      */
     fun createMessagingClient(): MessagingClient {
         val log = Log(configuration.logging, LogTag.MESSAGING_CLIENT)
-        if (deploymentConfig == null) {
-            CoroutineScope(Dispatchers.Main + SupervisorJob()).launch {
-                try {
-                    fetchDeploymentConfig()
-                } catch (t: Throwable) {
-                    log.w { LogMessages.failedFetchDeploymentConfig(t) }
-                }
-            }
-        }
-        val api = WebMessagingApi(configuration)
-        val webSocket = PlatformSocket(
-            log.withTag(LogTag.WEBSOCKET),
-            configuration.webSocketUrl,
-            DEFAULT_PING_INTERVAL_IN_SECONDS,
-            configuration.forceTLSv13,
-        )
+        val api = WebMessagingApi(urls, configuration)
+        val webSocket =
+            PlatformSocket(
+                log.withTag(LogTag.WEBSOCKET),
+                urls.webSocketUrl,
+                DEFAULT_PING_INTERVAL_IN_SECONDS,
+                configuration.forceTLSv13
+            )
+
         // Support old TokenStore. If TokenStore not present fallback to the Vault.
         val token = tokenStore?.token ?: vault.token
         val messageStore = MessageStore(log.withTag(LogTag.MESSAGE_STORE))
-        val attachmentHandler = AttachmentHandlerImpl(
-            api,
-            log.withTag(LogTag.ATTACHMENT_HANDLER),
-            messageStore.updateAttachmentStateWith,
-        )
+        val attachmentHandler =
+            AttachmentHandlerImpl(
+                api,
+                log.withTag(LogTag.ATTACHMENT_HANDLER),
+                messageStore.updateAttachmentStateWith,
+            )
 
         return MessagingClientImpl(
             api = api,
@@ -111,10 +104,11 @@ class MessengerTransportSDK(
             jwtHandler = JwtHandler(webSocket),
             attachmentHandler = attachmentHandler,
             messageStore = messageStore,
-            reconnectionHandler = ReconnectionHandlerImpl(
-                configuration.reconnectionTimeoutInSeconds,
-                log.withTag(LogTag.RECONNECTION_HANDLER),
-            ),
+            reconnectionHandler =
+                ReconnectionHandlerImpl(
+                    configuration.reconnectionTimeoutInSeconds,
+                    log.withTag(LogTag.RECONNECTION_HANDLER),
+                ),
             deploymentConfig = this::deploymentConfig,
         )
     }
@@ -127,10 +121,23 @@ class MessengerTransportSDK(
     @Throws(Exception::class)
     suspend fun fetchDeploymentConfig(): DeploymentConfig {
         return DeploymentConfigUseCase(
-            configuration.deploymentConfigUrl.toString(),
+            urls.deploymentConfigUrl.toString(),
             defaultHttpClient(configuration.logging)
         ).fetch().also {
             deploymentConfig = it
         }
+    }
+
+    /**
+     *  Creates and returns an instance of [PushService].
+     *
+     * @return A new [PushService] implementation.
+     */
+    fun createPushService(): PushService {
+        return PushServiceImpl(
+            vault = vault,
+            api = WebMessagingApi(urls, configuration),
+            log = Log(configuration.logging, LogTag.PUSH_SERVICE),
+        )
     }
 }

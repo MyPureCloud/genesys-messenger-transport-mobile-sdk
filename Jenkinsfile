@@ -4,6 +4,8 @@ def isReleaseBranch() { env.BRANCH_NAME.startsWith('release/') }
 def isFeatureBranch() { env.BRANCH_NAME.startsWith('feature/') }
 
 def oktaproperties = ''
+def googleservices = ''
+def pipelineLibrary = library('pipeline-library').com.genesys.jenkins
 
 void setBuildStatus(String message, String state) {
   step([
@@ -34,33 +36,43 @@ pipeline {
             }
         }
 
-        stage('Get okta.properties') {
-                    agent {
-                        node {
-                            label 'dev_mesos_v2'
-                            customWorkspace "jenkins-mtsdk-${currentBuild.number}"
-                        }
-                    }
-                    steps {
-                        script {
-                            def pipelineLibrary = library('pipeline-library').com.genesys.jenkins
-                            def testing = pipelineLibrary.Testing.new()
-                            oktaproperties = testing.getSecretStashSecret(
-                                'dev',
-                                'us-east-1',
-                                'mobiledx-ios',
-                                'okta-properties',
-                                env.WORKSPACE
-                            )
-                            echo "okta.properties fetched successfully."
-                        }
-                    }
+        stage('Get secrets from secretstash') {
+            agent {
+                node {
+                    label 'dev_x86_small||dev_x86_large'
+                    customWorkspace "jenkins-mtsdk-${currentBuild.number}"
+                }
+            }
+            steps {
+                script {
+                    def testing = pipelineLibrary.Testing.new()
+
+                    oktaproperties = testing.getSecretStashSecret(
+                        'dev',
+                        'us-east-1',
+                        'transportsdk',
+                        'okta.properties',
+                        env.WORKSPACE
+                    )
+                    echo "okta.properties fetched successfully."
+
+                    googleservices = testing.getSecretStashSecret(
+                        'dev',
+                        'us-east-1',
+                        'transportsdk',
+                        'google-services-transport',
+                        env.WORKSPACE
+                    )
+                    echo "google-services.json fetched successfully."
+                }
+            }
         }
 
         stage("Continue build") {
                     steps {
                         script {
                             writeFile file: "${env.WORKSPACE}/okta.properties", text: oktaproperties
+                            writeFile file: "${env.WORKSPACE}/androidComposePrototype/google-services.json", text: googleservices
                             def props = readProperties file: "${env.WORKSPACE}/okta.properties"
                             env.OKTA_DOMAIN = props['OKTA_DOMAIN']
                             env.CLIENT_ID = props['CLIENT_ID']
@@ -80,6 +92,36 @@ pipeline {
                     steps {
                         sh './gradlew lintKotlin'
                     }
+                }
+            }
+        }
+
+        stage('Run Snyk Android') {
+            steps {
+                script {
+                    snykSecurity(
+                        snykInstallation: 'SnykLatestMacos',
+                        snykTokenId: 'snyk-global-api-token',
+                        severity: 'high', 
+                        organisation: 'digital-mobile-sdk',
+                        targetFile: 'build.gradle.kts',
+                        additionalArguments: '--package-manager=gradle --sub-project="transport" --configuration-matching="releaseRuntimeClasspath"'
+                    )
+                }
+            }
+        }
+
+        stage('Run Snyk iOS') {
+            steps {
+                script {
+                    snykSecurity(
+                        snykInstallation: 'SnykLatestMacos',
+                        snykTokenId: 'snyk-global-api-token',
+                        severity: 'high', 
+                        organisation: 'digital-mobile-sdk',
+                        targetFile: 'iosApp/Podfile.lock',
+                        additionalArguments: '--package-manager=cocoapods'
+                    )
                 }
             }
         }
@@ -186,6 +228,16 @@ pipeline {
         always {
             archiveArtifacts 'transport/build/reports/tests/testReleaseUnitTest/**/*.html, transport/build/reports/tests/testReleaseUnitTest/**/*.js, transport/build/reports/tests/testReleaseUnitTest/**/*.css'
             junit 'transport/build/test-results/testReleaseUnitTest/*.xml'
+            script {
+                testResultToKnex {
+                    files = 'transport/build/test-results/testReleaseUnitTest/*.xml'
+                    aut = 'KMM-Transport-SDK'
+                    type = 'unit'
+                    platform = 'junit'
+                    clusterName = 'Mobile Messenger Transport SDK'
+                    teams = 'Digital Mobile SDK'
+                }
+            }
             cleanWs()
         }
     }

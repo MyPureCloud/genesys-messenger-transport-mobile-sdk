@@ -20,8 +20,11 @@ import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessagingClient.State
 import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
 import com.genesys.cloud.messenger.transport.core.events.Event
+import com.genesys.cloud.messenger.transport.push.PushProvider
+import com.genesys.cloud.messenger.transport.push.PushService
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.EncryptedVault
+import com.google.firebase.messaging.FirebaseMessaging
 import io.ktor.http.URLBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,14 +35,16 @@ import kotlinx.coroutines.withContext
 
 private const val SAVED_ATTACHMENT_FILE_NAME = "test_asset.png"
 
-class TestBedViewModel : ViewModel(), CoroutineScope {
-
+class TestBedViewModel :
+    ViewModel(),
+    CoroutineScope {
     override val coroutineContext = Dispatchers.IO + Job()
 
     private val TAG = TestBedViewModel::class.simpleName
 
     private lateinit var messengerTransport: MessengerTransportSDK
     private lateinit var client: MessagingClient
+    private lateinit var pushService: PushService
     private val attachedIds = mutableListOf<String>()
 
     var command: String by mutableStateOf("")
@@ -61,34 +66,54 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     var authCode: String = ""
         set(value) {
             field = value
-            val authState = if (value.isNotEmpty()) {
-                onSocketMessageReceived("AuthCode: $value")
-                AuthState.AuthCodeReceived(value)
-            } else {
-                AuthState.NoAuth
-            }
+            val authState =
+                if (value.isNotEmpty()) {
+                    onSocketMessageReceived("AuthCode: $value")
+                    AuthState.AuthCodeReceived(value)
+                } else {
+                    AuthState.NoAuth
+                }
             this.authState = authState
         }
 
-    val regions = listOf("inindca.com", "inintca.com", "mypurecloud.com", "usw2.pure.cloud", "mypurecloud.jp", "mypurecloud.com.au", "mypurecloud.de", "euw2.pure.cloud", "cac1.pure.cloud", "apne2.pure.cloud", "aps1.pure.cloud", "sae1.pure.cloud", "mec1.pure.cloud", "apne3.pure.cloud", "euc2.pure.cloud")
-    private lateinit var onOktaSingIn: (url: String) -> Unit
+    val regions =
+        listOf(
+            "inindca.com",
+            "inintca.com",
+            "mypurecloud.com",
+            "usw2.pure.cloud",
+            "mypurecloud.jp",
+            "mypurecloud.com.au",
+            "mypurecloud.de",
+            "euw2.pure.cloud",
+            "cac1.pure.cloud",
+            "apne2.pure.cloud",
+            "aps1.pure.cloud",
+            "sae1.pure.cloud",
+            "mec1.pure.cloud",
+            "apne3.pure.cloud",
+            "euc2.pure.cloud"
+        )
+    private lateinit var onOpenUrl: (url: String) -> Unit
     private val quickRepliesMap = mutableMapOf<String, ButtonResponse>()
+    private val cardActionsMap = mutableMapOf<String, ButtonResponse>()
     private lateinit var selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit
 
     fun init(
         context: Context,
         selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit,
-        onOktaSignIn: (url: String) -> Unit,
+        onOpenUrl: (url: String) -> Unit,
     ) {
         println("Messenger Transport sdkVersion: ${MessengerTransportSDK.sdkVersion}")
-        this.onOktaSingIn = onOktaSignIn
+        this.onOpenUrl = onOpenUrl
         this.selectFile = selectFile
-        val mmsdkConfiguration = Configuration(
-            deploymentId = deploymentId.ifEmpty { BuildConfig.DEPLOYMENT_ID },
-            domain = region.ifEmpty { BuildConfig.DEPLOYMENT_DOMAIN },
-            logging = true,
-            encryptedVault = true
-        )
+        val mmsdkConfiguration =
+            Configuration(
+                deploymentId = deploymentId.ifEmpty { BuildConfig.DEPLOYMENT_ID },
+                domain = region.ifEmpty { BuildConfig.DEPLOYMENT_DOMAIN },
+                logging = true,
+                encryptedVault = true
+            )
 
         if (mmsdkConfiguration.encryptedVault) {
             EncryptedVault.context = context
@@ -97,6 +122,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
         messengerTransport = MessengerTransportSDK(mmsdkConfiguration)
         client = messengerTransport.createMessagingClient()
+        pushService = messengerTransport.createPushService()
         client.customAttributesStore.add(mapOf("sdkVersion" to "Transport SDK: ${MessengerTransportSDK.sdkVersion}"))
         with(client) {
             stateChangedListener = {
@@ -115,6 +141,9 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         // Loading saved attachment example.
         context.assets.open(SAVED_ATTACHMENT_FILE_NAME).use { inputStream ->
             inputStream.readBytes().also { attachment = it }
+        }
+        launch {
+            messengerTransport.fetchDeploymentConfig()
         }
     }
 
@@ -141,6 +170,8 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "bye" -> doDisconnect()
             "send" -> doSendMessage(input)
             "sendQuickReply" -> doSendQuickReply(input)
+            "sendAction" -> doSendAction(input)
+            "listActions" -> doListActions()
             "history" -> fetchNextPage()
             "healthCheck" -> doSendHealthCheck()
             "attach" -> doAttach()
@@ -163,10 +194,20 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
             "removeAuthRefreshToken" -> doRemoveAuthRefreshTokenFromVault()
             "stepUp" -> doStepUp()
             "wasAuthenticated" -> doWasAuthenticated()
+            "shouldAuthorize" -> doShouldAuthorize()
+            "syncDeviceToken" -> doSynchronizeDeviceToken()
+            "unregPush" -> doUnregisterFromPush()
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
             }
+        }
+    }
+
+    private fun doShouldAuthorize() {
+        client.shouldAuthorize { result ->
+            onSocketMessageReceived("shouldAuthorize is: $result")
+            commandWaiting = false
         }
     }
 
@@ -177,7 +218,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private fun doOktaSignIn(withPKCE: Boolean) {
         pkceEnabled = withPKCE
-        onOktaSingIn(buildOktaAuthorizeUrl())
+        onOpenUrl(buildOktaAuthorizeUrl())
         commandWaiting = false
     }
 
@@ -260,6 +301,26 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         } ?: onSocketMessageReceived("Selected quickReply option: $quickReply does not exist.")
     }
 
+    private fun doSendAction(action: String) {
+        cardActionsMap[action]?.let { buttonResponse ->
+            try {
+                if (buttonResponse.type == "Link") {
+                    onOpenUrl(buttonResponse.payload)
+                    commandWaiting = false
+                } else {
+                    client.sendCardReply(buttonResponse)
+                }
+            } catch (t: Throwable) {
+                handleException(t, "send card action")
+            }
+        } ?: onSocketMessageReceived("Selected card action: $action does not exist.")
+    }
+
+    private fun doListActions() {
+        onSocketMessageReceived("Available card actions: ${cardActionsMap.keys}")
+        commandWaiting = false
+    }
+
     private fun fetchNextPage() {
         viewModelScope.launch {
             try {
@@ -295,14 +356,17 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
 
     private var sendFileName = SAVED_ATTACHMENT_FILE_NAME
     private lateinit var attachment: ByteArray
+
     private fun doAttachSavedImage() {
         try {
-            client.attach(
-                attachment,
-                sendFileName
-            ) { progress -> println("Attachment upload progress: $progress") }.also {
-                attachedIds.add(it)
-            }
+            client
+                .attach(
+                    attachment,
+                    sendFileName
+                ) { progress -> println("Attachment upload progress: $progress") }
+                .also {
+                    attachedIds.add(it)
+                }
         } catch (t: Throwable) {
             handleException(t, "attach")
         }
@@ -324,8 +388,7 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private fun doFileAttachmentProfile() =
-        onSocketMessageReceived("FileAttachmentProfile: ${client.fileAttachmentProfile}")
+    private fun doFileAttachmentProfile() = onSocketMessageReceived("FileAttachmentProfile: ${client.fileAttachmentProfile}")
 
     private fun doChangeFileName(newFileName: String) {
         sendFileName = newFileName
@@ -392,17 +455,57 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    private fun onClientStateChanged(oldState: State, newState: State) {
+    private fun doSynchronizeDeviceToken() {
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.d(TAG, "Synchronize Push: error")
+                onSocketMessageReceived("Failed to retrieve deviceToken")
+            } else {
+                viewModelScope.launch {
+                    try {
+                        Log.d(TAG, "Synchronize Push with device token: ${task.result}")
+                        pushService.synchronize(task.result, PushProvider.FCM)
+                        clearCommand()
+                    } catch (t: Throwable) {
+                        Log.d(TAG, "Synchronize Push: error")
+                        withContext(Dispatchers.Main) {
+                            handleException(t, "Synchronize push")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun doUnregisterFromPush() {
+        viewModelScope.launch {
+            try {
+                pushService.unregister()
+                clearCommand()
+            } catch (t: Throwable) {
+                Log.d(TAG, "UnregisterFromPush: error")
+                withContext(Dispatchers.Main) {
+                    handleException(t, "unregister from push")
+                }
+            }
+        }
+    }
+
+    private fun onClientStateChanged(
+        oldState: State,
+        newState: State
+    ) {
         Log.v(TAG, "onClientStateChanged(oldState = $oldState, newState = $newState)")
         clientState = newState
-        val statePayloadMessage = when (newState) {
-            is State.Configured ->
-                "connected: ${newState.connected}," + " newSession: ${newState.newSession}," + " wasReconnecting: ${oldState is State.Reconnecting}"
-            is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
-            is State.Closed -> "code: ${newState.code}, reason: ${newState.reason}"
-            is State.Error -> "code: ${newState.code}, message: ${newState.message}"
-            else -> ""
-        }
+        val statePayloadMessage =
+            when (newState) {
+                is State.Configured ->
+                    "connected: ${newState.connected}," + " newSession: ${newState.newSession}," + " wasReconnecting: ${oldState is State.Reconnecting}"
+                is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
+                is State.Closed -> "code: ${newState.code}, reason: ${newState.reason}"
+                is State.Error -> "code: ${newState.code}, message: ${newState.message}"
+                else -> ""
+            }
         onSocketMessageReceived(statePayloadMessage)
         commandWaiting = false
     }
@@ -418,7 +521,10 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         commandWaiting = false
     }
 
-    private fun handleException(t: Throwable, action: String) {
+    private fun handleException(
+        t: Throwable,
+        action: String
+    ) {
         val failMessage = "Failed to $action"
         Log.e(TAG, failMessage, t)
         onSocketMessageReceived(t.message ?: failMessage)
@@ -426,29 +532,41 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
     }
 
     private fun onMessage(event: MessageEvent) {
-        val eventMessage = when (event) {
-            is MessageEvent.MessageUpdated -> "MessageUpdated: ${event.message}"
-            is MessageEvent.MessageInserted -> "MessageInserted: ${event.message}"
-            is MessageEvent.HistoryFetched -> "start of conversation: ${event.startOfConversation}, messages: ${event.messages}"
-            is AttachmentUpdated -> {
-                when (event.attachment.state) {
-                    Detached -> {
-                        attachedIds.remove(event.attachment.id)
-                        event.attachment.toString()
+        val eventMessage =
+            when (event) {
+                is MessageEvent.MessageUpdated -> "MessageUpdated: ${event.message}"
+                is MessageEvent.MessageInserted -> "MessageInserted: ${event.message}"
+                is MessageEvent.HistoryFetched -> "start of conversation: ${event.startOfConversation}, messages: ${event.messages}"
+                is AttachmentUpdated -> {
+                    when (event.attachment.state) {
+                        Detached -> {
+                            attachedIds.remove(event.attachment.id)
+                            event.attachment.toString()
+                        }
+
+                        else -> event.attachment.toString()
+                    }
+                }
+
+                is MessageEvent.QuickReplyReceived ->
+                    event.message.run {
+                        quickRepliesMap.clear()
+                        quickRepliesMap.putAll(quickReplies.associateBy { it.text })
+                        "QuickReplyReceived: text: $text | quick reply options: $quickReplies"
                     }
 
-                    else -> event.attachment.toString()
-                }
+                is MessageEvent.CardMessageReceived ->
+                    event.message.run {
+                        val tempActionsMap = mutableMapOf<String, ButtonResponse>()
+                        cards.forEach { card ->
+                            card.actions.forEach { action ->
+                                tempActionsMap.put(action.text, action)
+                                cardActionsMap[action.text] = action
+                            }
+                        }
+                        "CardMessageReceived with actions: $tempActionsMap"
+                    }
             }
-
-            is MessageEvent.QuickReplyReceived -> event.message.run {
-                quickRepliesMap.clear()
-                quickRepliesMap.putAll(quickReplies.associateBy { it.text })
-                "QuickReplyReceived: text: $text | quick reply options: $quickReplies"
-            }
-
-            else -> event.toString()
-        }
         onSocketMessageReceived(eventMessage)
     }
 
@@ -480,14 +598,19 @@ class TestBedViewModel : ViewModel(), CoroutineScope {
         }
     }
 
-    fun onFileSelected(byteArray: ByteArray, fileName: String) {
+    fun onFileSelected(
+        byteArray: ByteArray,
+        fileName: String
+    ) {
         commandWaiting = false
-        client.attach(
-            byteArray,
-            fileName
-        ) { progress -> println("Attachment upload progress: $progress") }.also {
-            attachedIds.add(it)
-        }
+        client
+            .attach(
+                byteArray,
+                fileName
+            ) { progress -> println("Attachment upload progress: $progress") }
+            .also {
+                attachedIds.add(it)
+            }
     }
 
     fun onCancelFileSelection() {
@@ -527,9 +650,13 @@ private fun String.toKeyValuePair(): Pair<String, String> {
 
 sealed class AuthState {
     data object NoAuth : AuthState()
+
     data class AuthCodeReceived(val authCode: String) : AuthState()
+
     data object Authorized : AuthState()
+
     data object LoggedOut : AuthState()
+
     data class Error(
         val errorCode: ErrorCode,
         val message: String? = null,

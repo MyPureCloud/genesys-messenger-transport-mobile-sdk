@@ -26,7 +26,6 @@ internal class InternalVault(
     private val serviceName: String,
     private val sharedPreferences: SharedPreferences
 ) {
-
     companion object {
         private const val ANDROID_KEYSTORE = "AndroidKeyStore"
         private const val TRANSFORMATION = "AES/GCM/NoPadding"
@@ -43,7 +42,10 @@ internal class InternalVault(
      * @param key The key to store
      * @param value The value to store
      */
-    fun store(key: String, value: String) {
+    fun store(
+        key: String,
+        value: String
+    ) {
         try {
             val encryptedData = encrypt(value)
             with(sharedPreferences.edit()) {
@@ -191,19 +193,21 @@ internal class InternalVault(
      */
     private fun generateSecretKey(): SecretKey {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val keyGenParameterSpec = KeyGenParameterSpec.Builder(
-                keyAlias,
-                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-            )
-                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-                .setKeySize(256)
-                .build()
+            val keyGenParameterSpec =
+                KeyGenParameterSpec
+                    .Builder(
+                        keyAlias,
+                        KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+                    ).setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                    .setKeySize(256)
+                    .build()
 
-            val keyGenerator = KeyGenerator.getInstance(
-                KeyProperties.KEY_ALGORITHM_AES,
-                ANDROID_KEYSTORE
-            )
+            val keyGenerator =
+                KeyGenerator.getInstance(
+                    KeyProperties.KEY_ALGORITHM_AES,
+                    ANDROID_KEYSTORE
+                )
             keyGenerator.init(keyGenParameterSpec)
             return keyGenerator.generateKey()
         } else {

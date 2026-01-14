@@ -14,6 +14,9 @@ import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
 import com.genesys.cloud.messenger.transport.network.SocketCloseCode
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
+import com.genesys.cloud.messenger.transport.push.DeviceTokenException
+import com.genesys.cloud.messenger.transport.push.PushService
+import com.genesys.cloud.messenger.transport.push.PushServiceImpl
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.AttachmentDeletedResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.ConnectionClosedEvent
@@ -41,17 +44,22 @@ import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.util.Platform
+import com.genesys.cloud.messenger.transport.util.UNKNOWN
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.extensions.isHealthCheckResponseId
 import com.genesys.cloud.messenger.transport.util.extensions.isOutbound
 import com.genesys.cloud.messenger.transport.util.extensions.isRefreshUrl
-import com.genesys.cloud.messenger.transport.util.extensions.sanitize
+import com.genesys.cloud.messenger.transport.util.extensions.sanitizeText
 import com.genesys.cloud.messenger.transport.util.extensions.toFileAttachmentProfile
 import com.genesys.cloud.messenger.transport.util.extensions.toMessage
-import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlin.reflect.KProperty0
@@ -73,21 +81,40 @@ internal class MessagingClientImpl(
     private val stateMachine: StateMachine = StateMachineImpl(log.withTag(LogTag.STATE_MACHINE)),
     private val eventHandler: EventHandler = EventHandlerImpl(log.withTag(LogTag.EVENT_HANDLER)),
     private val healthCheckProvider: HealthCheckProvider = HealthCheckProvider(log.withTag(LogTag.HEALTH_CHECK_PROVIDER)),
-    private val userTypingProvider: UserTypingProvider = UserTypingProvider(
-        log.withTag(LogTag.TYPING_INDICATOR_PROVIDER),
-        { deploymentConfig.isShowUserTypingEnabled() },
-    ),
-    private val authHandler: AuthHandler = AuthHandlerImpl(
-        configuration.autoRefreshTokenWhenExpired,
-        eventHandler,
-        api,
-        vault,
-        log.withTag(LogTag.AUTH_HANDLER)
-    ),
-    private val internalCustomAttributesStore: CustomAttributesStoreImpl = CustomAttributesStoreImpl(
-        log.withTag(LogTag.CUSTOM_ATTRIBUTES_STORE),
-        eventHandler
-    ),
+    private val userTypingProvider: UserTypingProvider =
+        UserTypingProvider(
+            log.withTag(LogTag.TYPING_INDICATOR_PROVIDER),
+            { deploymentConfig.isShowUserTypingEnabled() },
+        ),
+    private val authHandler: AuthHandler =
+        AuthHandlerImpl(
+            configuration.autoRefreshTokenWhenExpired,
+            eventHandler,
+            api,
+            vault,
+            log.withTag(LogTag.AUTH_HANDLER),
+            isAuthEnabled = { deploymentConfig.isAuthEnabled(api) }
+        ),
+    private val internalCustomAttributesStore: CustomAttributesStoreImpl =
+        CustomAttributesStoreImpl(
+            log.withTag(LogTag.CUSTOM_ATTRIBUTES_STORE),
+            eventHandler
+        ),
+    private val pushService: PushService =
+        PushServiceImpl(
+            vault = vault,
+            api = api,
+            log = log.withTag(LogTag.PUSH_SERVICE),
+        ),
+    private val historyHandler: HistoryHandler =
+        HistoryHandlerImpl(
+            messageStore,
+            api,
+            eventHandler,
+            log.withTag(LogTag.HISTORY_HANDLER),
+            suspend { jwtHandler.withJwt(token) { it } }
+        ),
+    private val defaultDispatcher: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
 ) : MessagingClient {
     private var connectAuthenticated = false
     private var isStartingANewSession = false
@@ -133,20 +160,32 @@ internal class MessagingClientImpl(
     override val wasAuthenticated: Boolean
         get() = vault.wasAuthenticated
 
-    @Throws(IllegalStateException::class)
+    @Throws(IllegalStateException::class, TransportSDKException::class)
     override fun connect() {
         log.i { LogMessages.CONNECT }
+        validateDeploymentConfig()
         connectAuthenticated = false
         stateMachine.onConnect()
         webSocket.openSocket(socketListener)
     }
 
-    @Throws(IllegalStateException::class)
+    @Throws(IllegalStateException::class, TransportSDKException::class)
     override fun connectAuthenticatedSession() {
         log.i { LogMessages.CONNECT_AUTHENTICATED_SESSION }
+        validateDeploymentConfig()
         connectAuthenticated = true
         stateMachine.onConnect()
         webSocket.openSocket(socketListener)
+    }
+
+    @Throws(TransportSDKException::class)
+    private fun validateDeploymentConfig() {
+        if (deploymentConfig.get() == null) {
+            throw TransportSDKException(
+                ErrorCode.MissingDeploymentConfig,
+                ErrorMessage.MissingDeploymentConfig
+            )
+        }
     }
 
     @Throws(IllegalStateException::class)
@@ -176,29 +215,33 @@ internal class MessagingClientImpl(
     }
 
     private fun configureSession(startNew: Boolean = false) {
-        val encodedJson = if (connectAuthenticated) {
-            log.i { LogMessages.configureAuthenticatedSession(token, startNew) }
-            if (authHandler.jwt == NO_JWT) {
-                if (reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
-                    reconfigureAttempts++
-                    refreshTokenAndPerform { configureSession(startNew) }
+        val encodedJson =
+            if (connectAuthenticated) {
+                log.i { LogMessages.configureAuthenticatedSession(token, startNew) }
+                if (authHandler.jwt == NO_JWT) {
+                    if (reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
+                        reconfigureAttempts++
+                        refreshTokenAndPerform { configureSession(startNew) }
+                        return
+                    }
+                    transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
                     return
                 }
-                transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
-                return
+                encodeConfigureAuthenticatedSessionRequest(startNew)
+            } else {
+                log.i { LogMessages.configureSession(token, startNew) }
+                encodeConfigureGuestSessionRequest(startNew)
             }
-            encodeConfigureAuthenticatedSessionRequest(startNew)
-        } else {
-            log.i { LogMessages.configureSession(token, startNew) }
-            encodeConfigureGuestSessionRequest(startNew)
-        }
         webSocket.sendMessage(encodedJson)
     }
 
     @Throws(IllegalStateException::class)
-    override fun sendMessage(text: String, customAttributes: Map<String, String>) {
+    override fun sendMessage(
+        text: String,
+        customAttributes: Map<String, String>
+    ) {
         stateMachine.checkIfConfigured()
-        log.i { LogMessages.sendMessage(text.sanitize(), customAttributes) }
+        log.i { LogMessages.sendMessage(text.sanitizeText(), customAttributes) }
         internalCustomAttributesStore.add(customAttributes)
         val channel = prepareCustomAttributesForSending()
         val request = messageStore.prepareMessage(token, text, channel)
@@ -212,6 +255,15 @@ internal class MessagingClientImpl(
         log.i { LogMessages.sendQuickReply(buttonResponse) }
         val channel = prepareCustomAttributesForSending()
         val request = messageStore.prepareMessageWith(token, buttonResponse, channel)
+        val encodedJson = WebMessagingJson.json.encodeToString(request)
+        send(encodedJson)
+    }
+
+    override fun sendCardReply(postbackResponse: ButtonResponse) {
+        stateMachine.checkIfConfigured()
+        log.i { LogMessages.sendCardReply(postbackResponse) }
+        val channel = prepareCustomAttributesForSending()
+        val request = messageStore.preparePostbackMessage(token, postbackResponse, channel)
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         send(encodedJson)
     }
@@ -231,13 +283,14 @@ internal class MessagingClientImpl(
         uploadProgress: ((Float) -> Unit)?,
     ): String {
         log.i { LogMessages.attach(fileName) }
-        val request = attachmentHandler.prepare(
-            token,
-            Platform().randomUUID(),
-            byteArray,
-            fileName,
-            uploadProgress,
-        )
+        val request =
+            attachmentHandler.prepare(
+                token,
+                Platform().randomUUID(),
+                byteArray,
+                fileName,
+                uploadProgress,
+            )
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         send(encodedJson)
         return request.attachmentId
@@ -254,15 +307,16 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun refreshAttachmentUrl(attachmentId: String) {
-        WebMessagingJson.json.encodeToString(
-            GetAttachmentRequest(
-                token = token,
-                attachmentId = attachmentId
-            )
-        ).also {
-            log.i { "getAttachmentRequest()" }
-            send(it)
-        }
+        WebMessagingJson.json
+            .encodeToString(
+                GetAttachmentRequest(
+                    token = token,
+                    attachmentId = attachmentId
+                )
+            ).also {
+                log.i { "getAttachmentRequest()" }
+                send(it)
+            }
     }
 
     @Throws(IllegalStateException::class)
@@ -275,45 +329,15 @@ internal class MessagingClientImpl(
     @Throws(Exception::class)
     override suspend fun fetchNextPage() {
         stateMachine.checkIfConfiguredOrReadOnly()
-        if (messageStore.startOfConversation) {
-            log.i { LogMessages.ALL_HISTORY_FETCHED }
-            messageStore.updateMessageHistory(emptyList(), conversation.size)
-            return
-        }
-        log.i { LogMessages.fetchingHistory(messageStore.nextPage) }
-        jwtHandler.withJwt(token) { jwt ->
-            api.getMessages(jwt, messageStore.nextPage).also {
-                when (it) {
-                    is Result.Success -> {
-                        messageStore.updateMessageHistory(
-                            it.value.entities.toMessageList(),
-                            it.value.total,
-                        )
-                    }
-
-                    is Result.Failure -> {
-                        if (it.errorCode is ErrorCode.CancellationError) {
-                            log.w { LogMessages.CANCELLATION_EXCEPTION_GET_MESSAGES }
-                            return
-                        }
-                        log.w { LogMessages.historyFetchFailed(it) }
-                        eventHandler.onEvent(
-                            Event.Error(
-                                ErrorCode.HistoryFetchFailure,
-                                it.message,
-                                it.errorCode.toCorrectiveAction()
-                            )
-                        )
-                    }
-                }
-            }
-        }
+        historyHandler.fetchNextPage()
     }
 
-    @Throws(IllegalStateException::class)
     override fun logoutFromAuthenticatedSession() {
-        stateMachine.checkIfConfigured()
         authHandler.logout()
+    }
+
+    override fun shouldAuthorize(callback: (Boolean) -> Unit) {
+        authHandler.shouldAuthorize(callback)
     }
 
     @Throws(IllegalStateException::class)
@@ -348,7 +372,11 @@ internal class MessagingClientImpl(
         }
     }
 
-    override fun authorize(authCode: String, redirectUri: String, codeVerifier: String?) {
+    override fun authorize(
+        authCode: String,
+        redirectUri: String,
+        codeVerifier: String?
+    ) {
         invalidateSessionToken()
         authHandler.authorize(authCode, redirectUri, codeVerifier)
     }
@@ -371,42 +399,75 @@ internal class MessagingClientImpl(
      * indicating that new chat should be configured.
      */
     private fun closeAllConnectionsForTheSession() {
-        WebMessagingJson.json.encodeToString(
-            CloseSessionRequest(
-                token = token,
-                closeAllConnections = true
-            )
-        ).also {
-            log.i { LogMessages.CLOSE_SESSION }
-            webSocket.sendMessage(it)
+        WebMessagingJson.json
+            .encodeToString(
+                CloseSessionRequest(
+                    token = token,
+                    closeAllConnections = true
+                )
+            ).also {
+                log.i { LogMessages.CLOSE_SESSION }
+                webSocket.sendMessage(it)
+            }
+    }
+
+    private fun handleSessionResponse(sessionResponse: SessionResponse) =
+        sessionResponse.run {
+            vault.wasAuthenticated = connectAuthenticated
+            attachmentHandler.fileAttachmentProfile = createFileAttachmentProfile(this)
+            reconnectionHandler.clear()
+            jwtHandler.clear()
+            internalCustomAttributesStore.maxCustomDataBytes = this.maxCustomDataBytes
+            synchronizePushService()
+            if (readOnly) {
+                stateMachine.onReadOnly()
+                if (!connected && isStartingANewSession) {
+                    cleanUp()
+                    configureSession(startNew = true)
+                }
+            } else {
+                isStartingANewSession = false
+                stateMachine.onSessionConfigured(connected, newSession)
+                if (newSession && deploymentConfig.isAutostartEnabled()) {
+                    sendAutoStart()
+                }
+            }
+            if (clearedExistingSession) {
+                eventHandler.onEvent(Event.ExistingAuthSessionCleared)
+            }
+        }
+
+    private fun synchronizePushService() {
+        if (!deploymentConfig.isPushServiceEnabled()) return
+        log.i { LogMessages.SYNCHRONIZE_PUSH_SERVICE_ON_SESSION_CONFIGURE }
+        vault.pushConfig.run {
+            if (deviceToken != UNKNOWN && pushProvider != null) {
+                defaultDispatcher.launch {
+                    try {
+                        pushService.synchronize(deviceToken, pushProvider)
+                    } catch (deviceTokenException: DeviceTokenException) {
+                        log.e {
+                            LogMessages.failedToSynchronizeDeviceToken(
+                                this@run,
+                                deviceTokenException.errorCode
+                            )
+                        }
+                    } catch (illegalArgumentException: IllegalArgumentException) {
+                        log.e { LogMessages.NO_DEVICE_TOKEN_OR_PUSH_PROVIDER }
+                    } catch (cancellationException: CancellationException) {
+                        log.w { LogMessages.cancellationExceptionRequestName("pushService.synchronize()") }
+                    }
+                }
+            } else {
+                log.i { LogMessages.NO_DEVICE_TOKEN_OR_PUSH_PROVIDER }
+            }
         }
     }
 
-    private fun handleSessionResponse(sessionResponse: SessionResponse) = sessionResponse.run {
-        vault.wasAuthenticated = connectAuthenticated
-        attachmentHandler.fileAttachmentProfile = createFileAttachmentProfile(this)
-        reconnectionHandler.clear()
-        jwtHandler.clear()
-        internalCustomAttributesStore.maxCustomDataBytes = this.maxCustomDataBytes
-        if (readOnly) {
-            stateMachine.onReadOnly()
-            if (!connected && isStartingANewSession) {
-                cleanUp()
-                configureSession(startNew = true)
-            }
-        } else {
-            isStartingANewSession = false
-            stateMachine.onSessionConfigured(connected, newSession)
-            if (newSession && deploymentConfig.isAutostartEnabled()) {
-                sendAutoStart()
-            }
-        }
-        if (clearedExistingSession) {
-            eventHandler.onEvent(Event.ExistingAuthSessionCleared)
-        }
-    }
-
-    private fun handleError(code: ErrorCode, message: String? = null) {
+    private fun handleError(
+        code: ErrorCode,
+        message: String? = null
+    ) {
         when (code) {
             is ErrorCode.SessionHasExpired,
             is ErrorCode.SessionNotFound,
@@ -457,7 +518,7 @@ internal class MessagingClientImpl(
     }
 
     private fun invalidateSessionToken() {
-        log.i { "${LogMessages.INVALIDATE_SESSION_TOKEN}" }
+        log.i { LogMessages.INVALIDATE_SESSION_TOKEN }
         vault.remove(vault.keys.tokenKey)
         token = vault.token
     }
@@ -497,7 +558,10 @@ internal class MessagingClientImpl(
         }
     }
 
-    private fun handleConfigureSessionErrorResponse(code: ErrorCode, message: String?) {
+    private fun handleConfigureSessionErrorResponse(
+        code: ErrorCode,
+        message: String?
+    ) {
         if (connectAuthenticated && code.isUnauthorized() && reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
             reconfigureAttempts++
             if (stateMachine.isConnected() || stateMachine.isReadOnly()) {
@@ -510,7 +574,10 @@ internal class MessagingClientImpl(
         }
     }
 
-    private fun handleConventionalHttpErrorResponse(code: ErrorCode, message: String?) {
+    private fun handleConventionalHttpErrorResponse(
+        code: ErrorCode,
+        message: String?
+    ) {
         val errorCode =
             if (message.isClearConversationError()) ErrorCode.ClearConversationFailure else code
         eventHandler.onEvent(
@@ -535,35 +602,37 @@ internal class MessagingClientImpl(
         }
     }
 
-    private fun Message.handleAsEvent(isReadOnly: Boolean) = this.run {
-        if (isOutbound()) {
-            // Every Outbound event should be reported to UI.
-            events.forEach {
-                if (it is Event.ConversationDisconnect && isReadOnly) stateMachine.onReadOnly()
-                eventHandler.onEvent(it)
-            }
-        } else {
-            events.forEach {
-                when (it) {
-                    is Event.ConversationAutostart -> {
-                        sendingAutostart = false
-                        internalCustomAttributesStore.onSent()
-                        eventHandler.onEvent(it)
-                    }
+    private fun Message.handleAsEvent(isReadOnly: Boolean) =
+        this.run {
+            if (isOutbound()) {
+                // Every Outbound event should be reported to UI.
+                events.forEach {
+                    if (it is Event.ConversationDisconnect && isReadOnly) stateMachine.onReadOnly()
+                    eventHandler.onEvent(it)
+                }
+            } else {
+                events.forEach {
+                    when (it) {
+                        is Event.ConversationAutostart -> {
+                            sendingAutostart = false
+                            internalCustomAttributesStore.onSent()
+                            eventHandler.onEvent(it)
+                        }
 
-                    is Event.SignedIn -> eventHandler.onEvent(it)
-                    else -> {
-                        // Do nothing. Autostart and SignedIn are the only Inbound events that should be reported to UI.
-                        log.i { LogMessages.ignoreInboundEvent(it) }
+                        is Event.SignedIn -> eventHandler.onEvent(it)
+                        else -> {
+                            // Do nothing. Autostart and SignedIn are the only Inbound events that should be reported to UI.
+                            log.i { LogMessages.ignoreInboundEvent(it) }
+                        }
                     }
                 }
             }
         }
-    }
 
     private fun Message.handleAsStructuredMessage() {
         when (messageType) {
             Message.Type.QuickReply -> messageStore.update(this)
+            Message.Type.Cards -> messageStore.update(this)
             Message.Type.Unknown -> log.w { LogMessages.unsupportedMessageType(messageType) }
             else -> log.w { "Should not happen." }
         }
@@ -583,7 +652,10 @@ internal class MessagingClientImpl(
         internalCustomAttributesStore.onSessionClosed()
     }
 
-    private fun transitionToStateError(errorCode: ErrorCode, errorMessage: String?) {
+    private fun transitionToStateError(
+        errorCode: ErrorCode,
+        errorMessage: String?
+    ) {
         stateMachine.onError(errorCode, errorMessage)
         reconnectionHandler.clear()
         jwtHandler.clear()
@@ -606,10 +678,11 @@ internal class MessagingClientImpl(
                 token = token,
                 deploymentId = configuration.deploymentId,
                 startNew = startNew,
-                journeyContext = JourneyContext(
-                    JourneyCustomer(token, "cookie"),
-                    JourneyCustomerSession("", "web")
-                )
+                journeyContext =
+                    JourneyContext(
+                        JourneyCustomer(token, "cookie"),
+                        JourneyCustomerSession("", "web")
+                    )
             )
         )
 
@@ -619,10 +692,11 @@ internal class MessagingClientImpl(
                 token = token,
                 deploymentId = configuration.deploymentId,
                 startNew = startNew,
-                journeyContext = JourneyContext(
-                    JourneyCustomer(token, "cookie"),
-                    JourneyCustomerSession("", "web")
-                ),
+                journeyContext =
+                    JourneyContext(
+                        JourneyCustomer(token, "cookie"),
+                        JourneyCustomerSession("", "web")
+                    ),
                 data = ConfigureAuthenticatedSessionRequest.Data(authHandler.jwt)
             )
         )
@@ -632,21 +706,24 @@ internal class MessagingClientImpl(
             internalCustomAttributesStore.onSending()
         }
 
-    private val socketListener = SocketListener(
-        log = log.withTag(LogTag.WEBSOCKET)
-    )
+    private val socketListener =
+        SocketListener(
+            log = log.withTag(LogTag.WEBSOCKET)
+        )
 
     private inner class SocketListener(
         private val log: Log,
     ) : PlatformSocketListener {
-
         override fun onOpen() {
             log.i { LogMessages.ON_OPEN }
             stateMachine.onConnectionOpened()
             configureSession()
         }
 
-        override fun onFailure(t: Throwable, errorCode: ErrorCode) {
+        override fun onFailure(
+            t: Throwable,
+            errorCode: ErrorCode
+        ) {
             log.e(throwable = t) { LogMessages.onFailure(t) }
             handleWebSocketError(errorCode)
         }
@@ -685,9 +762,10 @@ internal class MessagingClientImpl(
                             val message = this.toMessage()
                             when (type) {
                                 StructuredMessage.Type.Text -> message.handleAsTextMessage()
-                                StructuredMessage.Type.Event -> message.handleAsEvent(
-                                    metadata["readOnly"].toBoolean()
-                                )
+                                StructuredMessage.Type.Event ->
+                                    message.handleAsEvent(
+                                        metadata["readOnly"].toBoolean()
+                                    )
 
                                 StructuredMessage.Type.Structured -> message.handleAsStructuredMessage()
                             }
@@ -718,9 +796,10 @@ internal class MessagingClientImpl(
                     }
 
                     is ConnectionClosedEvent -> {
-                        val reason = decoded.body.reason.toTransportConnectionClosedReason(
-                            clearingConversation
-                        )
+                        val reason =
+                            decoded.body.reason.toTransportConnectionClosedReason(
+                                clearingConversation
+                            )
                         if (reason == Event.ConnectionClosed.Reason.UserSignedIn) {
                             invalidateSessionToken()
                             vault.wasAuthenticated = false
@@ -753,12 +832,18 @@ internal class MessagingClientImpl(
             }
         }
 
-        override fun onClosing(code: Int, reason: String) {
+        override fun onClosing(
+            code: Int,
+            reason: String
+        ) {
             log.i { LogMessages.onClosing(code, reason) }
             stateMachine.onClosing(code, reason)
         }
 
-        override fun onClosed(code: Int, reason: String) {
+        override fun onClosed(
+            code: Int,
+            reason: String
+        ) {
             log.i { LogMessages.onClosed(code, reason) }
             stateMachine.onClosed(code, reason)
             cleanUp()
@@ -783,16 +868,53 @@ private fun String?.isClearConversationError(): Boolean {
 }
 
 private fun KProperty0<DeploymentConfig?>.isAutostartEnabled(): Boolean =
-    this.get()?.messenger?.apps?.conversations?.autoStart?.enabled == true
+    this
+        .get()
+        ?.messenger
+        ?.apps
+        ?.conversations
+        ?.autoStart
+        ?.enabled == true
 
 private fun KProperty0<DeploymentConfig?>.isShowUserTypingEnabled(): Boolean =
-    this.get()?.messenger?.apps?.conversations?.showUserTypingIndicator == true
+    this
+        .get()
+        ?.messenger
+        ?.apps
+        ?.conversations
+        ?.showUserTypingIndicator == true
 
 private fun KProperty0<DeploymentConfig?>.isClearConversationEnabled(): Boolean =
-    this.get()?.messenger?.apps?.conversations?.conversationClear?.enabled == true
+    this
+        .get()
+        ?.messenger
+        ?.apps
+        ?.conversations
+        ?.conversationClear
+        ?.enabled == true
+
+internal suspend fun KProperty0<DeploymentConfig?>.isAuthEnabled(api: WebMessagingApi): Boolean {
+    val config = this.get()
+    return config?.auth?.enabled
+        ?: when (val result = api.fetchDeploymentConfig()) {
+            is Result.Success -> result.value.auth.enabled
+            is Result.Failure -> false
+        }
+}
+
+private fun KProperty0<DeploymentConfig?>.isPushServiceEnabled(): Boolean =
+    this
+        .get()
+        ?.messenger
+        ?.apps
+        ?.conversations
+        ?.notifications
+        ?.enabled == true
 
 private fun Map<String, String>.asChannel(): Channel? {
     return if (this.isNotEmpty()) {
         Channel(Channel.Metadata(this))
-    } else null
+    } else {
+        null
+    }
 }
