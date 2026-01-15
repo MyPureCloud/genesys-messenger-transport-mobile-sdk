@@ -52,6 +52,8 @@ object Deps {
             const val logging = "io.ktor:ktor-client-logging:$ktorVersion"
             const val loggingJvm = "io.ktor:ktor-client-logging-jvm:$ktorVersion"
             const val android = "io.ktor:ktor-client-android:$ktorVersion"
+            const val okhttp = "io.ktor:ktor-client-okhttp:$ktorVersion"
+            const val darwin = "io.ktor:ktor-client-darwin:$ktorVersion"
             const val ios = "io.ktor:ktor-client-ios:$ktorVersion"
             const val mock = "io.ktor:ktor-client-mock:$ktorVersion"
             const val contentNegotiation = "io.ktor:ktor-client-content-negotiation:$ktorVersion"

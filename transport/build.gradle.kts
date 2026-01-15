@@ -156,6 +156,7 @@ kotlin {
                 implementation(Deps.Libs.OkHttp.client)
                 implementation(Deps.Libs.OkHttp.loggingInterceptor)
                 api(Deps.Libs.Ktor.android)
+                implementation(Deps.Libs.Ktor.okhttp)
                 implementation(Deps.Libs.Ktor.loggingJvm)
                 implementation(Deps.Libs.Kotlinx.coroutinesAndroid)
             }
@@ -176,6 +177,7 @@ kotlin {
         val iosMain by creating {
             dependencies {
                 implementation(Deps.Libs.Ktor.ios)
+                implementation(Deps.Libs.Ktor.darwin)
             }
             dependsOn(commonMain.get())
             iosX64Main.dependsOn(this)

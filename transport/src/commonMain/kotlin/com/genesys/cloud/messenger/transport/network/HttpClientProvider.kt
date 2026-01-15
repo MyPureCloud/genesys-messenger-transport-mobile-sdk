@@ -4,6 +4,7 @@ import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import io.ktor.client.HttpClient
+import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.HttpCallValidator
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -13,7 +14,7 @@ import io.ktor.serialization.kotlinx.json.json
 
 private const val TIMEOUT_IN_MS = 30000L
 
-internal fun defaultHttpClient(logging: Boolean = false): HttpClient = HttpClient {
+internal fun defaultHttpClient(logging: Boolean = false, engine: HttpClientEngine? = null): HttpClient = HttpClient(engine ?: createPlatformHttpEngine()) {
     if (logging) {
         install(Logging) {
             this.logger = Log(logging, LogTag.HTTP_CLIENT).ktorLogger
