@@ -65,7 +65,6 @@ internal actual class PlatformSocket actual constructor(
         // Force TLS 1.3 if enabled
         if (forceTLSv13) {
             config.TLSMinimumSupportedProtocolVersion = tls_protocol_version_TLSv13
-            config.TLSMaximumSupportedProtocolVersion = tls_protocol_version_TLSv13
             log.i { LogMessages.FORCE_TLS_V13 }
         }
         val urlSession =
