@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport
 
 import com.genesys.cloud.messenger.transport.core.ApplicationType
+import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.InternalConfigurationFactory
 import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
 import kotlin.test.Test
@@ -37,6 +38,40 @@ class InternalConfigurationFactoryTest {
         assertEquals(
             "MessengerSDK-$messengerVersion/TransportSDK-${MessengerTransportSDK.sdkVersion}",
             config.application
+        )
+    }
+
+    @Test
+    fun `when creating configuration it uses default sessionExpirationNoticeIntervalSeconds`() {
+        val config =
+            InternalConfigurationFactory.create(
+                deploymentId = "test-deployment",
+                domain = "test.com",
+                applicationType = ApplicationType.TRANSPORT_SDK,
+                applicationVersion = "0.0.0"
+            )
+
+        assertEquals(
+            Configuration.DEFAULT_INTERVAL,
+            config.sessionExpirationNoticeIntervalSeconds
+        )
+    }
+
+    @Test
+    fun `when creating configuration with custom sessionExpirationNoticeIntervalSeconds`() {
+        val givenSessionExpirationNoticeIntervalSeconds = 120L
+        val config =
+            InternalConfigurationFactory.create(
+                deploymentId = "test-deployment",
+                domain = "test.com",
+                applicationType = ApplicationType.TRANSPORT_SDK,
+                applicationVersion = "0.0.0",
+                sessionExpirationNoticeIntervalSeconds = givenSessionExpirationNoticeIntervalSeconds
+            )
+
+        assertEquals(
+            givenSessionExpirationNoticeIntervalSeconds,
+            config.sessionExpirationNoticeIntervalSeconds
         )
     }
 }
