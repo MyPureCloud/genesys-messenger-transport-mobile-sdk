@@ -46,5 +46,9 @@ internal interface AttachmentHandler {
 
     fun onAttachmentRefreshed(presignedUrlResponse: PresignedUrlResponse)
 
+    fun onNewSession()
+
+    fun reEmitAttachmentStates()
+
     fun clearAll()
 }

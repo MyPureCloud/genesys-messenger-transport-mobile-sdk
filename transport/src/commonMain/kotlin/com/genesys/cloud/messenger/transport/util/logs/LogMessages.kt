@@ -232,6 +232,8 @@ internal object LogMessages {
     ) = "Failed to synchronize deviceToken: ${pushConfig.deviceToken.sanitize()} ,pushProvider ${pushConfig.pushProvider} with errorCode: $errorCode."
 
     const val SYNCHRONIZE_PUSH_SERVICE_ON_SESSION_CONFIGURE = "Synchronizing push service from session configured."
+    const val INVALIDATE_ATTACHMENTS_ON_NEW_SESSION = "Invalidating attachments due to new session."
+    const val RE_EMIT_ATTACHMENT_STATES = "Re-emitting attachment states after reconnection."
     const val UNREGISTERING_DEVICE = "Unregistering device from push notifications."
     const val DEVICE_NOT_REGISTERED = "Device is not registered."
     const val DEVICE_ALREADY_REGISTERED = "Device is already registered. Performing update."

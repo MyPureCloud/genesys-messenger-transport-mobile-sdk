@@ -16,7 +16,8 @@ internal object Response {
         allowedMedia: String = AllowedMedia.empty,
         blockedExtensions: String = AllowedMedia.emptyBlockedExtensions,
         clearedExistingSession: Boolean = false,
-    ): String = """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":$connected,"newSession":true,"readOnly":$readOnly,"maxCustomDataBytes":$maxCustomDataBytes$allowedMedia$blockedExtensions,"clearedExistingSession":$clearedExistingSession}}"""
+        newSession: Boolean = true,
+    ): String = """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":$connected,"newSession":$newSession,"readOnly":$readOnly,"maxCustomDataBytes":$maxCustomDataBytes$allowedMedia$blockedExtensions,"clearedExistingSession":$clearedExistingSession}}"""
 
     const val configureSuccessWithNewSessionFalse =
         """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":false}}"""

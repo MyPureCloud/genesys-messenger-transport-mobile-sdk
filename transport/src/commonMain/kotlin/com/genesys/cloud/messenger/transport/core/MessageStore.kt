@@ -183,6 +183,10 @@ internal class MessageStore(private val log: Log) {
         pendingMessage = Message()
     }
 
+    fun clearPendingAttachments() {
+        pendingMessage = pendingMessage.copy(attachments = emptyMap())
+    }
+
     private fun findAndPublish(message: Message) {
         activeConversation.find { it.id == message.id }?.let {
             activeConversation[it.getIndex()] = message

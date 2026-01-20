@@ -66,6 +66,8 @@ sealed class ErrorCode(val code: Int) {
 
     data object DeploymentConfigFetchFailed : ErrorCode(6007)
 
+    data object AttachmentInvalidatedByNewSession : ErrorCode(6008)
+
     // Push
     data object DeviceTokenOperationFailure : ErrorCode(6020)
 
@@ -149,6 +151,7 @@ object ErrorMessage {
     const val FileAttachmentIsDisabled = "File attachment is disabled in Deployment Configuration."
     const val SessionAuthFailed = "Session authentication failed"
     const val TryAuthenticateAgain = "Try to authenticate again"
+    const val AttachmentInvalidatedByNewSession = "Attachment invalidated because a new session was started. Please re-attach."
 
     fun detachFailed(attachmentId: String) = "Detach failed: Invalid attachment ID ($attachmentId)"
 
