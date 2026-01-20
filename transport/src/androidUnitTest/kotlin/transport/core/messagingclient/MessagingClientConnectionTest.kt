@@ -95,14 +95,11 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         )
         verifySequence {
             connectSequence()
-            mockLogger.i(capture(logSlot))
-            mockMessageStore.invalidateConversationCache()
             mockReconnectionHandler.shouldReconnect
             errorSequence(fromConfiguredToError(expectedErrorState))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
     }
 
     @Test
@@ -124,7 +121,6 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         verifySequence {
             mockStateChangedListener(fromIdleToConnecting)
             mockPlatformSocket.openSocket(any())
-            mockMessageStore.invalidateConversationCache()
             errorSequence(
                 StateChange(
                     oldState = MessagingClient.State.Connecting,
@@ -209,7 +205,6 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
         verifySequence {
             connectSequence()
-            mockLogger.i(capture(logSlot))
             mockReconnectionHandler.shouldReconnect
             mockStateChangedListener(fromConfiguredToReconnecting())
             mockReconnectionHandler.reconnect(any())
@@ -221,9 +216,8 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
-        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CONNECT)
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
     }
 
     @Test
@@ -249,12 +243,11 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockLogger.i(capture(logSlot))
             mockLogger.w(capture(logSlot))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.unhandledWebSocketError(ErrorCode.UnexpectedError))
     }
 
     @Test

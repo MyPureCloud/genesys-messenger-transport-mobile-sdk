@@ -560,7 +560,6 @@ internal class MessagingClientImpl(
     private fun handleWebSocketError(errorCode: ErrorCode) {
         considerForceClose()
         if (stateMachine.isInactive()) return
-        invalidateConversationCache()
         when (errorCode) {
             is ErrorCode.WebsocketError -> {
                 if (reconnectionHandler.shouldReconnect) {

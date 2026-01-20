@@ -276,14 +276,11 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         )
         verifySequence {
             connectSequence(shouldConfigureAuth = true)
-            mockLogger.i(capture(logSlot))
-            mockMessageStore.invalidateConversationCache()
             mockReconnectionHandler.shouldReconnect
             errorSequence(fromConfiguredToError(expectedErrorState))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT_AUTHENTICATED_SESSION)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(Request.token, false))
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
     }
 
     @Test
@@ -308,8 +305,6 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
         verifySequence {
             connectSequence(shouldConfigureAuth = true)
-            mockLogger.i(capture(logSlot))
-            mockMessageStore.invalidateConversationCache()
             mockReconnectionHandler.shouldReconnect
             mockStateChangedListener(fromConfiguredToReconnecting())
             mockReconnectionHandler.reconnect(any())
@@ -323,9 +318,8 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT_AUTHENTICATED_SESSION)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(Request.token, false))
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
-        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.CONNECT_AUTHENTICATED_SESSION)
-        assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(Request.token, false))
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CONNECT_AUTHENTICATED_SESSION)
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(Request.token, false))
     }
 
     @Test
