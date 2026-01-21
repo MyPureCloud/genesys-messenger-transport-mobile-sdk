@@ -81,6 +81,7 @@ internal class AttachmentHandlerImpl(
     override fun onUploadSuccess(uploadSuccessEvent: UploadSuccessEvent) {
         processedAttachments[uploadSuccessEvent.attachmentId]?.let {
             log.i { LogMessages.attachmentUploaded(it.attachment) }
+            it.downloadUrl = uploadSuccessEvent.downloadUrl
             it.attachment =
                 it.attachment
                     .copy(state = Uploaded(uploadSuccessEvent.downloadUrl))
@@ -185,6 +186,19 @@ internal class AttachmentHandlerImpl(
         }
     }
 
+    override fun resetSendingToUploaded() {
+        log.i { LogMessages.RESET_SENDING_TO_UPLOADED }
+        processedAttachments.forEach { entry ->
+            if (entry.value.attachment.state is Sending) {
+                entry.value.downloadUrl?.let { url ->
+                    entry.value.attachment = entry.value.attachment
+                        .copy(state = Uploaded(url))
+                        .also(updateAttachmentStateWith)
+                }
+            }
+        }
+    }
+
     override fun onAttachmentRefreshed(presignedUrlResponse: PresignedUrlResponse) {
         updateAttachmentStateWith(
             Attachment(
@@ -249,6 +263,7 @@ internal class ProcessedAttachment(
     var byteArray: ByteArray,
     var job: Job? = null,
     val uploadProgress: ((Float) -> Unit)? = null,
+    var downloadUrl: String? = null,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

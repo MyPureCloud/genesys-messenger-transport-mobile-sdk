@@ -519,13 +519,14 @@ internal class MessagingClientImpl(
                 if ((code as? ErrorCode.ClientResponseError)?.value == 403) {
                     message?.run {
                         if (startsWith(ErrorMessage.SessionAuthFailed, true)) {
+                            attachmentHandler.resetSendingToUploaded()
                             eventHandler.onEvent(Event.AuthorizationRequired)
                             stateMachine.onReconnect()
                             return
                         } else if (startsWith(ErrorMessage.TryAuthenticateAgain, true)) {
+                            attachmentHandler.resetSendingToUploaded()
                             eventHandler.onEvent(Event.AuthorizationRequired)
                             stateMachine.onReconnect()
-
                             return
                         }
                     }

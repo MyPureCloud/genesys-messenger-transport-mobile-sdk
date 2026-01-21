@@ -50,5 +50,7 @@ internal interface AttachmentHandler {
 
     fun reEmitAttachmentStates()
 
+    fun resetSendingToUploaded()
+
     fun clearAll()
 }
