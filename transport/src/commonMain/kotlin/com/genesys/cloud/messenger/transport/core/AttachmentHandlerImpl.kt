@@ -165,27 +165,6 @@ internal class AttachmentHandlerImpl(
 
     override fun clearAll() = processedAttachments.clear()
 
-    override fun onNewSession() {
-        log.i { LogMessages.INVALIDATE_ATTACHMENTS_ON_NEW_SESSION }
-        processedAttachments.forEach { entry ->
-            entry.value.job?.cancel()
-            entry.value.attachment = entry.value.attachment.copy(
-                state = Error(
-                    ErrorCode.AttachmentInvalidatedByNewSession,
-                    ErrorMessage.AttachmentInvalidatedByNewSession
-                )
-            ).also(updateAttachmentStateWith)
-        }
-        processedAttachments.clear()
-    }
-
-    override fun reEmitAttachmentStates() {
-        log.i { LogMessages.RE_EMIT_ATTACHMENT_STATES }
-        processedAttachments.forEach { entry ->
-            updateAttachmentStateWith(entry.value.attachment)
-        }
-    }
-
     override fun resetSendingToUploaded() {
         log.i { LogMessages.RESET_SENDING_TO_UPLOADED }
         processedAttachments.forEach { entry ->

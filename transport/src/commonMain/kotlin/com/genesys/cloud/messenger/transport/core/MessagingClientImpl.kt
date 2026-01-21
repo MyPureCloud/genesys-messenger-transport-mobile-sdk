@@ -434,14 +434,6 @@ internal class MessagingClientImpl(
                     configureSession(startNew = true)
                 }
             } else {
-                val wasReconnecting = stateMachine.isReconnecting()
-                if (connected && newSession) {
-                    attachmentHandler.onNewSession()
-                    messageStore.clearPendingAttachments()
-                } else if (wasReconnecting && !newSession) {
-                    // Session was preserved after reconnection, re-emit attachment states so UI knows they're still valid
-                    attachmentHandler.reEmitAttachmentStates()
-                }
                 isStartingANewSession = false
                 stateMachine.onSessionConfigured(connected, newSession)
                 if (newSession && deploymentConfig.isAutostartEnabled()) {
