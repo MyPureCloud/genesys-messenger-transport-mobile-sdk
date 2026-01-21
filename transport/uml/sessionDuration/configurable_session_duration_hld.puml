@@ -1,0 +1,71 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+!theme bluegray
+!pragma teoz true
+
+skinparam backgroundColor #whitesmoke
+title Configurable Session Duration - High Level Flow
+
+participant App
+box "Transport SDK" #lightcyan
+participant MessagingClient
+end box
+
+rnote over MessagingClient
+  Applies to sessions:
+  * both Anonymous and Authenticated
+end rnote
+
+App -> MessagingClient: Configuration(..., **sessionExpirationNoticeIntervalSeconds = 300**)
+rnote over MessagingClient
+  Default: 300 seconds (5 minutes)
+  before session expires
+end rnote
+
+App -> MessagingClient: connect()
+MessagingClient --> App: Event.SessionDuration(durationInSeconds)
+rnote over App
+  Inactivity timeout duration
+  configured in the deployment.
+  
+  Example: durationInSeconds = 3600
+  (session expires after 1 hour of inactivity)
+end rnote
+
+alt Normal messaging extends the session
+    App -> MessagingClient: sendMessage("Hello")
+    App -> MessagingClient: sendMessage("How are you?")
+    rnote over MessagingClient
+      Any message activity (sending or receiving)
+      resets the session expiration timer
+    end rnote
+end
+
+alt Session about to expire (no activity for extended period)
+    MessagingClient --> App: Event.SessionExpirationNotice(expiresInSeconds)
+    rnote over App
+      Remaining time until session expires.
+      
+      Example: expiresInSeconds = 300
+      (5 minutes remaining)
+      
+      Show warning to user
+      with countdown timer
+    end rnote
+end
+
+alt User sends message before session expires
+    App -> MessagingClient: sendMessage("I'm still here!")
+    MessagingClient --> App: Event.RemoveSessionExpirationNotice
+    rnote over App
+      Session was extended due to activity.
+      Dismiss the expiration warning
+      and reset countdown.
+      
+      New SessionExpirationNotice
+      will be sent if inactive again.
+    end rnote
+end
+
+@enduml
