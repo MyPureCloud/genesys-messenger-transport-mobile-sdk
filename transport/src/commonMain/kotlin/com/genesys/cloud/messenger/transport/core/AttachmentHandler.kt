@@ -47,4 +47,6 @@ internal interface AttachmentHandler {
     fun onAttachmentRefreshed(presignedUrlResponse: PresignedUrlResponse)
 
     fun clearAll()
+
+    fun resetSendingToUploaded()
 }

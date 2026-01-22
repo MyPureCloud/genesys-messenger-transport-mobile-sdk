@@ -66,6 +66,8 @@ sealed class ErrorCode(val code: Int) {
 
     data object DeploymentConfigFetchFailed : ErrorCode(6007)
 
+    data object AttachmentUploadInterrupted : ErrorCode(6008)
+
     // Push
     data object DeviceTokenOperationFailure : ErrorCode(6020)
 
@@ -118,6 +120,7 @@ sealed class ErrorCode(val code: Int) {
                 6005 -> ClearConversationFailure
                 6006 -> MissingDeploymentConfig
                 6007 -> DeploymentConfigFetchFailed
+                6008 -> AttachmentUploadInterrupted
                 6020 -> DeviceTokenOperationFailure
                 6021 -> DeviceAlreadyRegistered
                 6022 -> DeviceNotFound
@@ -149,6 +152,7 @@ object ErrorMessage {
     const val FileAttachmentIsDisabled = "File attachment is disabled in Deployment Configuration."
     const val SessionAuthFailed = "Session authentication failed"
     const val TryAuthenticateAgain = "Try to authenticate again"
+    const val AttachmentUploadInterrupted = "Attachment upload was interrupted. Please re-attach the file."
 
     fun detachFailed(attachmentId: String) = "Detach failed: Invalid attachment ID ($attachmentId)"
 

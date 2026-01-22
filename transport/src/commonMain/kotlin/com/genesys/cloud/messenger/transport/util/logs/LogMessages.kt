@@ -45,6 +45,8 @@ internal object LogMessages {
 
     fun invalidAttachmentId(attachmentId: String) = "Invalid attachment ID: $attachmentId. Detach failed."
 
+    const val RESET_SENDING_TO_UPLOADED = "Resetting sending attachments to uploaded state."
+
     // Authentication
     const val REFRESH_AUTH_TOKEN_SUCCESS = "refreshAuthToken success."
 
