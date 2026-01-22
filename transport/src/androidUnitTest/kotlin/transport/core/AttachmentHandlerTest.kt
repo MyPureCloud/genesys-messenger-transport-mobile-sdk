@@ -5,8 +5,8 @@ import assertk.assertions.containsOnly
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
-import assertk.assertions.isNull
 import assertk.assertions.isInstanceOf
+import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.Attachment
 import com.genesys.cloud.messenger.transport.core.Attachment.State
@@ -265,11 +265,12 @@ internal class AttachmentHandlerTest {
         val expectedState = State.Uploaded(expectedDownloadUrl)
         val expectedAttachment =
             Attachment(AttachmentValues.ID, AttachmentValues.FILE_NAME, null, expectedState)
-        val expectedProcessedAttachment = ProcessedAttachment(
-            expectedAttachment,
-            ByteArray(1),
-            downloadUrl = expectedDownloadUrl
-        )
+        val expectedProcessedAttachment =
+            ProcessedAttachment(
+                expectedAttachment,
+                ByteArray(1),
+                downloadUrl = expectedDownloadUrl
+            )
         givenPrepareCalled()
 
         subject.onUploadSuccess(givenUploadSuccessEvent)
@@ -303,11 +304,12 @@ internal class AttachmentHandlerTest {
         val expectedDownloadUrl = "http://somedownloadurl.com"
         val expectedAttachment =
             Attachment(AttachmentValues.ID, AttachmentValues.FILE_NAME, null, State.Detaching)
-        val expectedProcessedAttachment = ProcessedAttachment(
-            expectedAttachment,
-            ByteArray(1),
-            downloadUrl = expectedDownloadUrl
-        )
+        val expectedProcessedAttachment =
+            ProcessedAttachment(
+                expectedAttachment,
+                ByteArray(1),
+                downloadUrl = expectedDownloadUrl
+            )
         givenPrepareCalled()
         givenUploadSuccessCalled()
 
@@ -592,11 +594,12 @@ internal class AttachmentHandlerTest {
     fun `when resetSendingToUploaded() with attachment in Sending state`() {
         val expectedDownloadUrl = "http://somedownloadurl.com"
         val expectedState = State.Uploaded(expectedDownloadUrl)
-        val expectedAttachment = Attachment(
-            id = AttachmentValues.ID,
-            fileName = AttachmentValues.FILE_NAME,
-            state = expectedState
-        )
+        val expectedAttachment =
+            Attachment(
+                id = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                state = expectedState
+            )
         givenPrepareCalled()
         givenUploadSuccessCalled()
         givenOnSendingCalled()
@@ -618,10 +621,11 @@ internal class AttachmentHandlerTest {
         val expectedErrorCode = ErrorCode.AttachmentUploadInterrupted
         val expectedErrorMessage = ErrorMessage.AttachmentUploadInterrupted
         val expectedState = State.Error(expectedErrorCode, expectedErrorMessage)
-        val expectedAttachment = Attachment(
-            id = AttachmentValues.ID,
-            state = expectedState
-        )
+        val expectedAttachment =
+            Attachment(
+                id = AttachmentValues.ID,
+                state = expectedState
+            )
         givenPrepareCalled()
 
         subject.resetSendingToUploaded()

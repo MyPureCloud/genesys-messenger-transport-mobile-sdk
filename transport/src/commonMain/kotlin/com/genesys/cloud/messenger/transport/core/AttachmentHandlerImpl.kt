@@ -171,9 +171,10 @@ internal class AttachmentHandlerImpl(
             when (entry.value.attachment.state) {
                 is Sending -> {
                     entry.value.downloadUrl?.let { url ->
-                        entry.value.attachment = entry.value.attachment
-                            .copy(state = Uploaded(url))
-                            .also(updateAttachmentStateWith)
+                        entry.value.attachment =
+                            entry.value.attachment
+                                .copy(state = Uploaded(url))
+                                .also(updateAttachmentStateWith)
                     }
                 }
                 is Presigning, is Uploading -> {
