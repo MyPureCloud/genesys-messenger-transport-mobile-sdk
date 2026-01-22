@@ -604,7 +604,7 @@ internal class AttachmentHandlerTest {
         givenUploadSuccessCalled()
         givenOnSendingCalled()
 
-        subject.resetSendingToUploaded()
+        subject.resetAttachmentState()
 
         verify {
             mockLogger.i(capture(logSlot))
@@ -628,7 +628,7 @@ internal class AttachmentHandlerTest {
             )
         givenPrepareCalled()
 
-        subject.resetSendingToUploaded()
+        subject.resetAttachmentState()
 
         verify {
             mockLogger.i(capture(logSlot))
@@ -647,7 +647,7 @@ internal class AttachmentHandlerTest {
         givenPrepareCalled()
         givenUploadSuccessCalled()
 
-        subject.resetSendingToUploaded()
+        subject.resetAttachmentState()
 
         verify {
             mockLogger.i(capture(logSlot))

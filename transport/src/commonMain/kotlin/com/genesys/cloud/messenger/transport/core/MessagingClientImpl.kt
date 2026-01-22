@@ -513,7 +513,7 @@ internal class MessagingClientImpl(
                         if (startsWith(ErrorMessage.SessionAuthFailed, true) ||
                             startsWith(ErrorMessage.TryAuthenticateAgain, true)
                         ) {
-                            attachmentHandler.resetSendingToUploaded()
+                            attachmentHandler.resetAttachmentState()
                             eventHandler.onEvent(Event.AuthorizationRequired)
                             stateMachine.onReconnect()
                             return

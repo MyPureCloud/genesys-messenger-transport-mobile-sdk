@@ -351,7 +351,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
 
         assertThat(subject.currentState).isReconnecting()
         verify {
-            mockAttachmentHandler.resetSendingToUploaded()
+            mockAttachmentHandler.resetAttachmentState()
             mockEventHandler.onEvent(Event.AuthorizationRequired)
         }
     }
@@ -367,7 +367,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         assertThat(subject.currentState).isReconnecting()
 
         verify {
-            mockAttachmentHandler.resetSendingToUploaded()
+            mockAttachmentHandler.resetAttachmentState()
             mockEventHandler.onEvent(Event.AuthorizationRequired)
         }
     }

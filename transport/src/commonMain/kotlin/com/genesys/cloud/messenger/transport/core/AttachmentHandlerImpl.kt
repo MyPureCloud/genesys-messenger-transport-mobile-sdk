@@ -165,7 +165,7 @@ internal class AttachmentHandlerImpl(
 
     override fun clearAll() = processedAttachments.clear()
 
-    override fun resetSendingToUploaded() {
+    override fun resetAttachmentState() {
         log.i { LogMessages.RESET_SENDING_TO_UPLOADED }
         processedAttachments.forEach { entry ->
             when (entry.value.attachment.state) {
