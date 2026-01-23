@@ -20,7 +20,7 @@ internal interface AuthHandler {
         nonce: String
     )
 
-    fun logout()
+    fun logout(onLogoutFailure: () -> Unit = {})
 
     fun refreshToken(callback: (Result<Empty>) -> Unit)
 

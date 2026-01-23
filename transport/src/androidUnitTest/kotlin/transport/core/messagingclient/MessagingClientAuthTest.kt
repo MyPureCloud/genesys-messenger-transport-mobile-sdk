@@ -160,7 +160,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         subject.logoutFromAuthenticatedSession()
 
         verify {
-            mockAuthHandler.logout()
+            mockAuthHandler.logout(any())
         }
     }
 
@@ -169,7 +169,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         // Test from Idle state
         assertThat(subject.currentState).isIdle()
         subject.logoutFromAuthenticatedSession()
-        verify { mockAuthHandler.logout() }
+        verify { mockAuthHandler.logout(any()) }
 
         // Test from Error state
         every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
@@ -178,7 +178,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         subject.connect()
         assertThat(subject.currentState).isError(ErrorCode.SessionNotFound, "session not found error message")
         subject.logoutFromAuthenticatedSession()
-        verify(exactly = 2) { mockAuthHandler.logout() }
+        verify(exactly = 2) { mockAuthHandler.logout(any()) }
 
         // Test from ReadOnly state
         every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
@@ -187,7 +187,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         subject.connect()
         assertThat(subject.currentState).isReadOnly()
         subject.logoutFromAuthenticatedSession()
-        verify(exactly = 3) { mockAuthHandler.logout() }
+        verify(exactly = 3) { mockAuthHandler.logout(any()) }
     }
 
     @Test
@@ -198,7 +198,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence(shouldConfigureAuth = true)
-            mockAuthHandler.logout()
+            mockAuthHandler.logout(any())
         }
     }
 
