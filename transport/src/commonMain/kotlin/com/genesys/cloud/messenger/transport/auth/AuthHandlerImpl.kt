@@ -74,7 +74,7 @@ internal class AuthHandlerImpl(
         }
     }
 
-    override fun logout() {
+    override fun logout(onLogoutFailure: () -> Unit) {
         dispatcher.launch {
             when (val result = api.logoutFromAuthenticatedSession(authJwt.jwt)) {
                 is Result.Success -> logoutAttempts = 0
@@ -83,10 +83,18 @@ internal class AuthHandlerImpl(
                         logoutAttempts++
                         refreshToken {
                             when (it) {
-                                is Result.Success -> logout()
-                                is Result.Failure -> handleRequestError(it, "logout()")
+                                is Result.Success -> logout(onLogoutFailure)
+                                is Result.Failure -> {
+                                    if (result.errorCode.isUnauthorized()) {
+                                        handleUnauthorizedError(onLogoutFailure)
+                                    } else {
+                                        handleRequestError(it, "logout()")
+                                    }
+                                }
                             }
                         }
+                    } else if (result.errorCode.isUnauthorized()) {
+                        handleUnauthorizedError(onLogoutFailure)
                     } else {
                         logoutAttempts = 0
                         handleRequestError(result, "logout()")
@@ -94,6 +102,11 @@ internal class AuthHandlerImpl(
                 }
             }
         }
+    }
+
+    private fun handleUnauthorizedError(onLogoutFailure: () -> Unit) {
+        logoutAttempts = 0
+        onLogoutFailure()
     }
 
     override fun refreshToken(callback: (Result<Empty>) -> Unit) {

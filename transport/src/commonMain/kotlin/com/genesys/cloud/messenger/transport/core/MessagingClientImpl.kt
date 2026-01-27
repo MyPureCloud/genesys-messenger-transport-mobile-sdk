@@ -333,7 +333,9 @@ internal class MessagingClientImpl(
     }
 
     override fun logoutFromAuthenticatedSession() {
-        authHandler.logout()
+        authHandler.logout {
+            performLogout()
+        }
     }
 
     override fun shouldAuthorize(callback: (Boolean) -> Unit) {
@@ -736,6 +738,14 @@ internal class MessagingClientImpl(
             log = log.withTag(LogTag.WEBSOCKET)
         )
 
+    private fun performLogout() {
+        invalidateSessionToken()
+        vault.wasAuthenticated = false
+        authHandler.clear()
+        eventHandler.onEvent(Event.Logout)
+        disconnect()
+    }
+
     private inner class SocketListener(
         private val log: Log,
     ) : PlatformSocketListener {
@@ -834,11 +844,7 @@ internal class MessagingClientImpl(
                     }
 
                     is LogoutEvent -> {
-                        invalidateSessionToken()
-                        vault.wasAuthenticated = false
-                        authHandler.clear()
-                        eventHandler.onEvent(Event.Logout)
-                        disconnect()
+                        performLogout()
                     }
 
                     is SessionClearedEvent -> {
