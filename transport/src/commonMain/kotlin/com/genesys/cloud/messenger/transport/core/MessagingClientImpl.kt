@@ -512,14 +512,12 @@ internal class MessagingClientImpl(
             -> {
                 if ((code as? ErrorCode.ClientResponseError)?.value == 403) {
                     message?.run {
-                        if (startsWith(ErrorMessage.SessionAuthFailed, true)) {
+                        if (startsWith(ErrorMessage.SessionAuthFailed, true) ||
+                            startsWith(ErrorMessage.TryAuthenticateAgain, true)
+                        ) {
+                            attachmentHandler.resetAttachmentState()
                             eventHandler.onEvent(Event.AuthorizationRequired)
                             stateMachine.onReconnect()
-                            return
-                        } else if (startsWith(ErrorMessage.TryAuthenticateAgain, true)) {
-                            eventHandler.onEvent(Event.AuthorizationRequired)
-                            stateMachine.onReconnect()
-
                             return
                         }
                     }
