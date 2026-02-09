@@ -2,7 +2,9 @@ package transport.core.events
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
 import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.events.TYPING_INDICATOR_COOL_DOWN_MILLISECONDS
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
 import com.genesys.cloud.messenger.transport.util.Platform
@@ -36,31 +38,31 @@ class UserTypingProviderTest {
 
     @Test
     fun `when encode`() {
-        val expected = Request.userTypingRequest
         val result = subject.encodeRequest(token = Request.token)
 
         verify {
             mockShowUserTypingIndicatorFunction.invoke()
             mockTimestampFunction.invoke()
         }
-        assertThat(result).isEqualTo(expected)
+        assertThat(result).isNotNull()
+        assertThat(Request.isUserTypingRequest(result!!)).isTrue()
     }
 
     @Test
     fun `when encode with coolDown`() {
         val typingIndicatorCoolDownInMilliseconds = TYPING_INDICATOR_COOL_DOWN_MILLISECONDS + 250
-        val expected = Request.userTypingRequest
         val firstResult = subject.encodeRequest(token = Request.token)
         every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() + typingIndicatorCoolDownInMilliseconds }
         val secondResult = subject.encodeRequest(token = Request.token)
 
-        assertThat(firstResult).isEqualTo(expected)
-        assertThat(secondResult).isEqualTo(expected)
+        assertThat(firstResult).isNotNull()
+        assertThat(Request.isUserTypingRequest(firstResult!!)).isTrue()
+        assertThat(secondResult).isNotNull()
+        assertThat(Request.isUserTypingRequest(secondResult!!)).isTrue()
     }
 
     @Test
     fun `when encode without coolDown`() {
-        val expected = Request.userTypingRequest
         val firstResult = subject.encodeRequest(token = Request.token)
         val secondResult = subject.encodeRequest(token = Request.token)
 
@@ -70,7 +72,8 @@ class UserTypingProviderTest {
             mockLogger.w(capture(logSlot))
         }
 
-        assertThat(firstResult).isEqualTo(expected)
+        assertThat(firstResult).isNotNull()
+        assertThat(Request.isUserTypingRequest(firstResult!!)).isTrue()
         assertThat(secondResult).isNull()
         assertThat(logSlot[0].invoke()).isEqualTo(
             LogMessages.typingIndicatorCoolDown(
@@ -81,13 +84,14 @@ class UserTypingProviderTest {
 
     @Test
     fun `when encode without coolDown but with clear`() {
-        val expected = Request.userTypingRequest
         val firstResult = subject.encodeRequest(token = Request.token)
         subject.clear()
         val secondResult = subject.encodeRequest(token = Request.token)
 
-        assertThat(firstResult).isEqualTo(expected)
-        assertThat(secondResult).isEqualTo(expected)
+        assertThat(firstResult).isNotNull()
+        assertThat(Request.isUserTypingRequest(firstResult!!)).isTrue()
+        assertThat(secondResult).isNotNull()
+        assertThat(Request.isUserTypingRequest(secondResult!!)).isTrue()
     }
 
     @Test
@@ -115,6 +119,7 @@ class UserTypingProviderTest {
 
         val result = subject.encodeRequest(token = Request.token)
 
-        assertThat(result).isEqualTo(Request.userTypingRequest)
+        assertThat(result).isNotNull()
+        assertThat(Request.isUserTypingRequest(result!!)).isTrue()
     }
 }

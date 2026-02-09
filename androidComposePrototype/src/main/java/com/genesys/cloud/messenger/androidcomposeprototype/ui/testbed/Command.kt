@@ -13,7 +13,7 @@ enum class Command(val description: String) {
     FILE_ATTACHMENT_PROFILE("fileAttachmentProfile"),
     DEPLOYMENT("deployment"),
     DETACH("detach <attachmentId>"),
-    HEALTH_CHECK("healthcheck"),
+    HEALTH_CHECK("healthCheck"),
     HISTORY("history"),
     INVALIDATE_CONVERSATION_CACHE("invalidateConversationCache"),
     NEW_CHAT("newChat"),
@@ -30,5 +30,7 @@ enum class Command(val description: String) {
     WAS_AUTHENTICATED("wasAuthenticated"),
     SHOULD_AUTHORIZE("shouldAuthorize"),
     SEND_ACTION("sendAction <action>"),
-    ACTION_LIST("listActions")
+    ACTION_LIST("listActions"),
+    IMPLICIT_FLOW_LOGIN("implicitLogin"),
+    IMPLICIT_FLOW_AUTHORIZE("implicitAuthorize")
 }

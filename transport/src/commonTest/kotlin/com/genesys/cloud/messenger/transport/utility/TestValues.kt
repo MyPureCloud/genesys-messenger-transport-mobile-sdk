@@ -15,7 +15,6 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ButtonResponseContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.QuickReplyContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
-import com.genesys.cloud.messenger.transport.util.PUSH_CONFIG_KEY
 import com.genesys.cloud.messenger.transport.util.Vault
 
 internal const val DEFAULT_TIMEOUT = 10000L
@@ -27,6 +26,7 @@ object TestValues {
     internal const val DEFAULT_NUMBER = 1
     internal const val TIME_STAMP = "2022-08-22T19:24:26.704Z"
     internal const val TOKEN = "token"
+    internal const val TRACING_ID = "tracing_id"
     internal const val TOKEN_SANITIZED = "*oken"
     internal const val SECONDARY_TOKEN = "<secondary_token>"
     internal const val RECONNECTION_TIMEOUT = 5000L
@@ -95,6 +95,8 @@ object AuthTest {
     internal const val REFRESH_TOKEN = "refresh_token"
     internal const val REFRESHED_JWT_TOKEN = "jwt_token_that_was_refreshed"
     internal const val JWT_EXPIRY = 100L
+    internal const val ID_TOKEN = "id_token_implicit_flow"
+    internal const val NONCE = "test_nonce_value"
 }
 
 object ErrorTest {
@@ -265,7 +267,6 @@ object CardTestValues {
     internal const val POSTBACK_TEXT = "Book Now"
     internal const val POSTBACK_TYPE = "Postback"
     internal const val POSTBACK_PAYLOAD = "I want it"
-    internal const val customMessageId = "customMessageId"
     internal const val LINK_TYPE = "Link"
 
     val cardWithPostbackAction =
@@ -427,7 +428,7 @@ object CardTestValues {
         return StructuredMessageValues.createStructuredMessageForTesting(
             id = id,
             type = StructuredMessage.Type.Structured,
-            direction = com.genesys.cloud.messenger.transport.core.Message.Direction.Outbound.name,
+            direction = Message.Direction.Outbound.name,
             content =
                 listOf(
                     StructuredMessage.Content.CarouselContent(

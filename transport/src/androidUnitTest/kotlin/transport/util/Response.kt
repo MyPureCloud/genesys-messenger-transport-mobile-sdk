@@ -1,5 +1,6 @@
 package transport.util
 
+import com.genesys.cloud.messenger.transport.core.ErrorMessage
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.util.SIGNED_IN
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
@@ -21,9 +22,15 @@ internal object Response {
         """{"type":"response","class":"SessionResponse","code":200,"body":{"connected":true,"newSession":false}}"""
     const val webSocketRequestFailed =
         """{"type":"response","class":"string","code":400,"body":"Request failed."}"""
+    const val clientError403Normal =
+        """{"type":"response","class":"string","code":403,"body":"HTTP authorization error"}"""
+    const val clientError403SessionAuthFailed =
+        """{"type":"response","class":"string","code":403,"body":"${ErrorMessage.SessionAuthFailed}"}"""
+    const val clientError403TryAuthenticateAgain =
+        """{"type":"response","class":"string","code":403,"body":"${ErrorMessage.TryAuthenticateAgain}"}"""
     const val defaultStructuredEvents = """${StructuredEvent.typingOff},${StructuredEvent.typingOn}"""
 
-    fun onMessage(direction: Message.Direction = Message.Direction.Inbound) = """{"type":"message","class":"StructuredMessage","code":200,"body":{"text":"Hello world!","direction":"${direction.name}","id":"test_id","channel":{"time":"2022-08-22T19:24:26.704Z","messageId":"message_id"},"type":"Text","metadata":{"customMessageId":"some_custom_message_id"}}}"""
+    fun onMessage(direction: Message.Direction = Message.Direction.Inbound) = """{"type":"message","class":"StructuredMessage","code":200,"body":{"text":"Hello world!","direction":"${direction.name}","id":"test_id","channel":{"time":"2022-08-22T19:24:26.704Z","messageId":"message_id"},"type":"Text"},"tracingId":"some_custom_message_id"}"""
 
     fun onMessageWithAttachment(direction: Message.Direction = Message.Direction.Outbound) = """{"type":"message","class":"StructuredMessage","code":200,"body":{"direction":"${direction.name}","id":"msg_id","channel":{"time":"some_time","type":"Private"},"type":"Text","text":"Hi","content":[{"attachment":{"id":"attachment_id","filename":"image.png","mediaType":"Image","fileSize":${AttachmentValues.FILE_SIZE},"mime":"image/png","url":"https://downloadurl.com"},"contentType":"Attachment"}],"originatingEntity":"Human"}}"""
 
@@ -60,7 +67,7 @@ internal object Response {
     const val sessionClearedEvent =
         """{"type":"message","class":"SessionClearedEvent","code":200,"body":{}}"""
     const val echo =
-        """{"type":"response","class":"StructuredMessage","code":200,"body":{"text":"ping","type":"Text","direction":"Inbound","id":"echo_id","metadata":{"customMessageId":"SGVhbHRoQ2hlY2tNZXNzYWdlSWQ="}}}"""
+        """{"type":"response","class":"StructuredMessage","code":200,"body":{"text":"ping","type":"Text","direction":"Inbound","id":"echo_id"}, "tracingId":"SGVhbHRoQ2hlY2tNZXNzYWdlSWQ=" }"""
     const val unknownErrorEvent =
         """{"type":"response","class":"string","code":5000,"body":"Request failed."}"""
     const val uploadSuccessEvent =
@@ -71,8 +78,6 @@ internal object Response {
         """{"type":"message","class":"GenerateUrlError","code":200,"body":{"attachmentId":"test_attachment_id","errorCode":4001,"errorMessage":"This is a generic error message for testing."}}"""
     const val uploadFailureEvent =
         """{"type":"message","class":"UploadFailureEvent","code":200,"body":{"attachmentId":"test_attachment_id","errorCode":4001,"errorMessage":"This is a generic error message for testing.","timestamp":"2022-08-22T19:24:26.704Z"}}"""
-    const val healthCheckResponse =
-        """{"type":"response","class":"StructuredMessage","code":200,"body":{"text":"ping","type":"Text","direction":"Inbound","id":"ebb7e3aa5829c0fed0f43ccbcca4ade7","metadata":{"customMessageId":"SGVhbHRoQ2hlY2tNZXNzYWdlSWQ="}}}"""
     const val jwtResponse =
         """{"type":"response","class":"JwtResponse","code":200,"body":{"jwt":"some_jwt","exp":333}}"""
 

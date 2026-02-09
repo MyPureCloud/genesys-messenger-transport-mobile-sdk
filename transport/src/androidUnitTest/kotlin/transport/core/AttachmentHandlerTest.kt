@@ -5,6 +5,7 @@ import assertk.assertions.containsOnly
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isInstanceOf
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.Attachment
@@ -21,8 +22,6 @@ import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
-import com.genesys.cloud.messenger.transport.shyrka.send.DeleteAttachmentRequest
-import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
@@ -96,16 +95,6 @@ internal class AttachmentHandlerTest {
                 State.Presigning
             )
         val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(AttachmentValues.FILE_SIZE))
-        val expectedOnAttachmentRequest =
-            OnAttachmentRequest(
-                token = TestValues.TOKEN,
-                attachmentId = AttachmentValues.ID,
-                fileName = AttachmentValues.FILE_NAME,
-                fileType = "image/png",
-                fileSize = AttachmentValues.FILE_SIZE,
-                null,
-                true,
-            )
 
         val onAttachmentRequest =
             subject.prepare(TestValues.TOKEN, AttachmentValues.ID, ByteArray(AttachmentValues.FILE_SIZE), AttachmentValues.FILE_NAME)
@@ -114,7 +103,15 @@ internal class AttachmentHandlerTest {
             mockLogger.i(capture(logSlot))
             mockAttachmentListener.invoke(capture(attachmentSlot))
         }
-        assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
+        onAttachmentRequest.run {
+            assertThat(token).isEqualTo(TestValues.TOKEN)
+            assertThat(attachmentId).isEqualTo(AttachmentValues.ID)
+            assertThat(fileName).isEqualTo(AttachmentValues.FILE_NAME)
+            assertThat(fileType).isEqualTo("image/png")
+            assertThat(fileSize).isEqualTo(AttachmentValues.FILE_SIZE)
+            assertThat(fileMd5).isNull()
+            assertThat(errorsAsJson).isTrue()
+        }
         assertThat(processedAttachments).containsOnly(AttachmentValues.ID to expectedProcessedAttachment)
         assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
         assertThat(logSlot[0].invoke()).isEqualTo(
@@ -134,16 +131,6 @@ internal class AttachmentHandlerTest {
                 State.Presigning
             )
         val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(AttachmentValues.FILE_SIZE))
-        val expectedOnAttachmentRequest =
-            OnAttachmentRequest(
-                token = TestValues.TOKEN,
-                attachmentId = AttachmentValues.ID,
-                fileName = AttachmentValues.TXT_FILE_NAME,
-                fileType = "text/plain",
-                fileSize = AttachmentValues.FILE_SIZE,
-                null,
-                true,
-            )
 
         val onAttachmentRequest =
             subject.prepare(TestValues.TOKEN, AttachmentValues.ID, ByteArray(AttachmentValues.FILE_SIZE), AttachmentValues.TXT_FILE_NAME)
@@ -152,7 +139,15 @@ internal class AttachmentHandlerTest {
             mockLogger.i(capture(logSlot))
             mockAttachmentListener.invoke(capture(attachmentSlot))
         }
-        assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
+        onAttachmentRequest.run {
+            assertThat(token).isEqualTo(TestValues.TOKEN)
+            assertThat(attachmentId).isEqualTo(AttachmentValues.ID)
+            assertThat(fileName).isEqualTo(AttachmentValues.TXT_FILE_NAME)
+            assertThat(fileType).isEqualTo("text/plain")
+            assertThat(fileSize).isEqualTo(AttachmentValues.FILE_SIZE)
+            assertThat(fileMd5).isNull()
+            assertThat(errorsAsJson).isTrue()
+        }
         assertThat(processedAttachments).containsOnly(AttachmentValues.ID to expectedProcessedAttachment)
         assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
         assertThat(logSlot[0].invoke()).isEqualTo(
@@ -270,7 +265,12 @@ internal class AttachmentHandlerTest {
         val expectedState = State.Uploaded(expectedDownloadUrl)
         val expectedAttachment =
             Attachment(AttachmentValues.ID, AttachmentValues.FILE_NAME, null, expectedState)
-        val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(1))
+        val expectedProcessedAttachment =
+            ProcessedAttachment(
+                expectedAttachment,
+                ByteArray(1),
+                downloadUrl = expectedDownloadUrl
+            )
         givenPrepareCalled()
 
         subject.onUploadSuccess(givenUploadSuccessEvent)
@@ -301,11 +301,15 @@ internal class AttachmentHandlerTest {
 
     @Test
     fun `when detach() on uploaded attachment`() {
+        val expectedDownloadUrl = "http://somedownloadurl.com"
         val expectedAttachment =
             Attachment(AttachmentValues.ID, AttachmentValues.FILE_NAME, null, State.Detaching)
-        val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(1))
-        val expectedDeleteAttachmentRequest =
-            DeleteAttachmentRequest(TestValues.TOKEN, AttachmentValues.ID)
+        val expectedProcessedAttachment =
+            ProcessedAttachment(
+                expectedAttachment,
+                ByteArray(1),
+                downloadUrl = expectedDownloadUrl
+            )
         givenPrepareCalled()
         givenUploadSuccessCalled()
 
@@ -315,7 +319,10 @@ internal class AttachmentHandlerTest {
             mockLogger.i(capture(logSlot))
             mockAttachmentListener.invoke(capture(attachmentSlot))
         }
-        assertThat(result).isEqualTo(expectedDeleteAttachmentRequest)
+        result!!.run {
+            assertThat(token).isEqualTo(TestValues.TOKEN)
+            assertThat(attachmentId).isEqualTo(AttachmentValues.ID)
+        }
         assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
         assertThat(processedAttachments).containsOnly(AttachmentValues.ID to expectedProcessedAttachment)
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.detachingAttachment(expectedAttachment.id))
@@ -483,6 +490,7 @@ internal class AttachmentHandlerTest {
 
     @Test
     fun `when onSending() has uploaded attachment`() {
+        val expectedDownloadUrl = "http://somedownloadurl.com"
         val expectedAttachment =
             Attachment(
                 id = AttachmentValues.ID,
@@ -490,7 +498,7 @@ internal class AttachmentHandlerTest {
                 state = State.Sending
             )
         val expectedProcessedAttachment =
-            ProcessedAttachment(expectedAttachment, ByteArray(1))
+            ProcessedAttachment(expectedAttachment, ByteArray(1), downloadUrl = expectedDownloadUrl)
         givenPrepareCalled()
         givenUploadSuccessCalled()
 
@@ -583,25 +591,92 @@ internal class AttachmentHandlerTest {
     }
 
     @Test
-    fun `when prepare() but fileAttachmentProfile is not set`() {
-        val expectedOnAttachmentRequest =
-            OnAttachmentRequest(
-                token = TestValues.TOKEN,
-                attachmentId = AttachmentValues.ID,
+    fun `when resetSendingToUploaded() with attachment in Sending state`() {
+        val expectedDownloadUrl = "http://somedownloadurl.com"
+        val expectedState = State.Uploaded(expectedDownloadUrl)
+        val expectedAttachment =
+            Attachment(
+                id = AttachmentValues.ID,
                 fileName = AttachmentValues.FILE_NAME,
-                fileType = "image/png",
-                2000,
-                null,
-                true,
+                state = expectedState
             )
+        givenPrepareCalled()
+        givenUploadSuccessCalled()
+        givenOnSendingCalled()
 
+        subject.resetAttachmentState()
+
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockAttachmentListener.invoke(capture(attachmentSlot))
+        }
+        assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
+        assertThat(attachmentSlot.captured.state).isEqualTo(expectedState)
+        // logSlot index: 0=prepare, 1=uploadSuccess, 2=onSending, 3=resetSendingToUploaded
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.RESET_SENDING_TO_UPLOADED)
+    }
+
+    @Test
+    fun `when resetSendingToUploaded() with attachment in Presigning state`() {
+        val expectedErrorCode = ErrorCode.AttachmentUploadInterrupted
+        val expectedErrorMessage = ErrorMessage.AttachmentUploadInterrupted
+        val expectedState = State.Error(expectedErrorCode, expectedErrorMessage)
+        val expectedAttachment =
+            Attachment(
+                id = AttachmentValues.ID,
+                state = expectedState
+            )
+        givenPrepareCalled()
+
+        subject.resetAttachmentState()
+
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockLogger.e(capture(logSlot))
+            mockAttachmentListener.invoke(capture(attachmentSlot))
+        }
+        assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
+        assertThat(attachmentSlot.captured.state).isInstanceOf(State.Error::class)
+        assertThat((attachmentSlot.captured.state as State.Error).errorCode).isEqualTo(expectedErrorCode)
+        // logSlot index: 0=prepare, 1=resetSendingToUploaded
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.RESET_SENDING_TO_UPLOADED)
+    }
+
+    @Test
+    fun `when resetSendingToUploaded() with attachment in Uploaded state does nothing`() {
+        givenPrepareCalled()
+        givenUploadSuccessCalled()
+
+        subject.resetAttachmentState()
+
+        verify {
+            mockLogger.i(capture(logSlot))
+        }
+        verify(exactly = 0) {
+            mockAttachmentListener.invoke(any())
+        }
+        // logSlot index: 0=prepare, 1=uploadSuccess, 2=resetSendingToUploaded
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.RESET_SENDING_TO_UPLOADED)
+        assertThat(processedAttachments[AttachmentValues.ID]?.attachment?.state is State.Uploaded).isTrue()
+    }
+
+    @Test
+    fun `when prepare() but fileAttachmentProfile is not set`() {
         val givenByteArray = ByteArray(2000)
 
         val onAttachmentRequest =
             subject.prepare(TestValues.TOKEN, AttachmentValues.ID, givenByteArray, AttachmentValues.FILE_NAME)
 
         assertThat(subject.fileAttachmentProfile).isNull()
-        assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
+        onAttachmentRequest.run {
+            assertThat(token).isEqualTo(TestValues.TOKEN)
+            assertThat(attachmentId).isEqualTo(AttachmentValues.ID)
+            assertThat(fileName).isEqualTo(AttachmentValues.FILE_NAME)
+            assertThat(fileType).isEqualTo("image/png")
+            assertThat(fileSize).isEqualTo(2000)
+            assertThat(fileMd5).isNull()
+            assertThat(errorsAsJson).isTrue()
+        }
     }
 
     @Test
@@ -620,22 +695,20 @@ internal class AttachmentHandlerTest {
         val givenByteArray = ByteArray(2000)
         subject.fileAttachmentProfile = FileAttachmentProfile(enabled = true, maxFileSizeKB = 2)
         val expectedFileSizeInKB = 2L
-        val expectedOnAttachmentRequest =
-            OnAttachmentRequest(
-                token = TestValues.TOKEN,
-                attachmentId = AttachmentValues.ID,
-                fileName = AttachmentValues.FILE_NAME,
-                fileType = "image/png",
-                2000,
-                null,
-                true,
-            )
 
         val onAttachmentRequest =
             subject.prepare(TestValues.TOKEN, AttachmentValues.ID, givenByteArray, AttachmentValues.FILE_NAME)
 
         assertThat(subject.fileAttachmentProfile?.maxFileSizeKB).isEqualTo(expectedFileSizeInKB)
-        assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
+        onAttachmentRequest.run {
+            assertThat(token).isEqualTo(TestValues.TOKEN)
+            assertThat(attachmentId).isEqualTo(AttachmentValues.ID)
+            assertThat(fileName).isEqualTo(AttachmentValues.FILE_NAME)
+            assertThat(fileType).isEqualTo("image/png")
+            assertThat(fileSize).isEqualTo(2000)
+            assertThat(fileMd5).isNull()
+            assertThat(errorsAsJson).isTrue()
+        }
     }
 
     @Test
@@ -654,22 +727,20 @@ internal class AttachmentHandlerTest {
         val givenByteArray = ByteArray(2000)
         subject.fileAttachmentProfile = FileAttachmentProfile(enabled = true, maxFileSizeKB = 100)
         val expectedFileSizeInKB = 100L
-        val expectedOnAttachmentRequest =
-            OnAttachmentRequest(
-                token = TestValues.TOKEN,
-                attachmentId = AttachmentValues.ID,
-                fileName = AttachmentValues.FILE_NAME,
-                fileType = "image/png",
-                2000,
-                null,
-                true,
-            )
 
         val onAttachmentRequest =
             subject.prepare(TestValues.TOKEN, AttachmentValues.ID, givenByteArray, AttachmentValues.FILE_NAME)
 
         assertThat(subject.fileAttachmentProfile?.maxFileSizeKB).isEqualTo(expectedFileSizeInKB)
-        assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
+        onAttachmentRequest.run {
+            assertThat(token).isEqualTo(TestValues.TOKEN)
+            assertThat(attachmentId).isEqualTo(AttachmentValues.ID)
+            assertThat(fileName).isEqualTo(AttachmentValues.FILE_NAME)
+            assertThat(fileType).isEqualTo("image/png")
+            assertThat(fileSize).isEqualTo(2000)
+            assertThat(fileMd5).isNull()
+            assertThat(errorsAsJson).isTrue()
+        }
     }
 
     @Test
@@ -697,21 +768,19 @@ internal class AttachmentHandlerTest {
                 maxFileSizeKB = 100,
                 blockedFileTypes = listOf(".exe")
             )
-        val expectedOnAttachmentRequest =
-            OnAttachmentRequest(
-                token = TestValues.TOKEN,
-                attachmentId = AttachmentValues.ID,
-                fileName = AttachmentValues.FILE_NAME,
-                fileType = "image/png",
-                1,
-                null,
-                true,
-            )
 
         val onAttachmentRequest =
             subject.prepare(TestValues.TOKEN, AttachmentValues.ID, givenByteArray, AttachmentValues.FILE_NAME)
 
-        assertThat(onAttachmentRequest).isEqualTo(expectedOnAttachmentRequest)
+        onAttachmentRequest.run {
+            assertThat(token).isEqualTo(TestValues.TOKEN)
+            assertThat(attachmentId).isEqualTo(AttachmentValues.ID)
+            assertThat(fileName).isEqualTo(AttachmentValues.FILE_NAME)
+            assertThat(fileType).isEqualTo("image/png")
+            assertThat(fileSize).isEqualTo(1)
+            assertThat(fileMd5).isNull()
+            assertThat(errorsAsJson).isTrue()
+        }
     }
 
     @Test

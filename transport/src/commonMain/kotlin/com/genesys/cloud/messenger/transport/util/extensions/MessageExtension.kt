@@ -16,19 +16,19 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Co
 import com.genesys.cloud.messenger.transport.shyrka.receive.isInbound
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.util.WILD_CARD
-import com.soywiz.klock.DateTime
+import kotlinx.datetime.Instant
 
 internal fun List<StructuredMessage>.toMessageList(): List<Message> =
     map { it.toMessage() }
         .filter { it.messageType != Message.Type.Unknown }
 
-internal fun StructuredMessage.toMessage(): Message {
+internal fun StructuredMessage.toMessage(tracingId: String? = null): Message {
     val quickReplies = content.toQuickReplies()
     val cards = content.toCards()
     val hasCardSelection = content.hasCardSelection()
 
     return Message(
-        id = metadata["customMessageId"] ?: id,
+        id = tracingId ?: id,
         direction = if (isInbound()) Direction.Inbound else Direction.Outbound,
         state = Message.State.Sent,
         messageType = type.toMessageType(quickReplies.isNotEmpty(), cards.isNotEmpty(), hasCardSelection),
@@ -47,7 +47,7 @@ internal fun StructuredMessage.toMessage(): Message {
                         isInbound()
                     }
             ),
-        authenticated = metadata["authenticated"]?.toBoolean() ?: false
+        authenticated = metadata["authenticated"]?.toBoolean() ?: false,
     )
 }
 
@@ -62,7 +62,7 @@ internal fun Message.getUploadedAttachments(): List<Message.Content> {
 internal fun String?.fromIsoToEpochMilliseconds(): Long? {
     return try {
         this?.let {
-            DateTime.fromString(it).local.unixMillisLong
+            Instant.parse(it).toEpochMilliseconds()
         }
     } catch (t: Throwable) {
         null

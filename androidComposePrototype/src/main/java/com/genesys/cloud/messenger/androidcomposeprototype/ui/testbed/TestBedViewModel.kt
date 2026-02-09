@@ -32,6 +32,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 private const val SAVED_ATTACHMENT_FILE_NAME = "test_asset.png"
 
@@ -75,6 +76,21 @@ class TestBedViewModel :
                 }
             this.authState = authState
         }
+
+    var idToken: String = ""
+        set(value) {
+            field = value
+            val authState =
+                if (value.isNotEmpty()) {
+                    onSocketMessageReceived("ID Token: $value")
+                    AuthState.IdTokenReceived(value)
+                } else {
+                    AuthState.NoAuth
+                }
+            this.authState = authState
+        }
+
+    var nonce: String = ""
 
     val regions =
         listOf(
@@ -186,6 +202,8 @@ class TestBedViewModel :
             "oktaSignInWithPKCE" -> doOktaSignIn(true)
             "oktaLogout" -> logoutFromOktaSession()
             "authorize" -> doAuthorize()
+            "implicitLogin" -> doImplicitSignIn()
+            "implicitAuthorize" -> doAuthorizeImplicit()
             "clearConversation" -> doClearConversation()
             "refreshAttachment" -> doRefreshAttachmentUrl(input)
             "savedFileName" -> doChangeFileName(input)
@@ -213,6 +231,13 @@ class TestBedViewModel :
 
     private fun doWasAuthenticated() {
         onSocketMessageReceived("wasAuthenticated: ${client.wasAuthenticated}")
+        commandWaiting = false
+    }
+
+    private fun doImplicitSignIn() {
+        val url = buildImplicitOktaAuthorizeUrl()
+        Log.d(TAG, "doImplicitOktaSignIn: $url")
+        onOpenUrl(url)
         commandWaiting = false
     }
 
@@ -441,6 +466,17 @@ class TestBedViewModel :
         )
     }
 
+    private fun doAuthorizeImplicit() {
+        if (idToken.isEmpty()) {
+            onSocketMessageReceived("Please, first obtain id token from login.")
+            return
+        }
+        if (nonce.isEmpty()) {
+            nonce = UUID.randomUUID().toString()
+        }
+        client.authorizeImplicit(idToken, nonce)
+    }
+
     private fun doRemoveTokenFromVault() {
         messengerTransport.vault.run {
             remove(keys.tokenKey)
@@ -638,6 +674,21 @@ class TestBedViewModel :
             }
         return builder.build().toString()
     }
+
+    private fun buildImplicitOktaAuthorizeUrl(): String {
+        val generatedNonce = UUID.randomUUID().toString()
+        nonce = generatedNonce
+        val builder =
+            URLBuilder("https://${BuildConfig.OKTA_DOMAIN}/oauth2/default/v1/authorize").apply {
+                parameters.append("client_id", BuildConfig.CLIENT_ID)
+                parameters.append("response_type", "id_token")
+                parameters.append("scope", "openid profile email")
+                parameters.append("redirect_uri", BuildConfig.SIGN_IN_REDIRECT_URI)
+                parameters.append("state", BuildConfig.OKTA_STATE)
+                parameters.append("nonce", generatedNonce)
+            }
+        return builder.build().toString()
+    }
 }
 
 private fun String.toKeyValuePair(): Pair<String, String> {
@@ -652,6 +703,8 @@ sealed class AuthState {
     data object NoAuth : AuthState()
 
     data class AuthCodeReceived(val authCode: String) : AuthState()
+
+    data class IdTokenReceived(val idToken: String) : AuthState()
 
     data object Authorized : AuthState()
 

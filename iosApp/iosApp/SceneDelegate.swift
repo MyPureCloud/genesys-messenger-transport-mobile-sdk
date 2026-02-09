@@ -51,18 +51,45 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             return
         }
 
-        if let components = URLComponents(url: urlContext.url, resolvingAgainstBaseURL: false),
+        guard let windowScene = scene as? UIWindowScene,
+              let rootViewController = windowScene.windows.first?.rootViewController as? TestbedViewController else {
+            return
+        }
+
+        let url = urlContext.url
+
+        if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
            let queryItems = components.queryItems {
             for item in queryItems {
                 if item.name == "code", let code = item.value {
-                    if let windowScene = scene as? UIWindowScene,
-                       let rootViewController = windowScene.windows.first?.rootViewController as? TestbedViewController {
-                        rootViewController.setAuthCode(code)
-                    }
+                    rootViewController.setAuthCode(code)
+                    rootViewController.setIdToken(nil)
+                    return
+                } else if item.name == "error" {
+                    let errorDescription = queryItems.first(where: { $0.name == "error_description" })?.value ?? item.value ?? "Unknown error"
+                    print("Okta error: \(errorDescription)")
+                    return
                 }
-                break
+            }
+        }
+
+        if let fragment = url.fragment {
+            let params = fragment.split(separator: "&").reduce(into: [String: String]()) { dict, pair in
+                let parts = pair.split(separator: "=", maxSplits: 1)
+                if parts.count == 2 {
+                    let key = String(parts[0]).removingPercentEncoding ?? String(parts[0])
+                    let value = String(parts[1]).removingPercentEncoding ?? String(parts[1])
+                    dict[key] = value
+                }
+            }
+
+            if let idToken = params["id_token"] {
+                rootViewController.setIdToken(idToken)
+                rootViewController.setAuthCode(nil)
+            } else if let error = params["error"] {
+                let errorDescription = params["error_description"] ?? error
+                print("Okta error: \(errorDescription)")
             }
         }
     }
 }
-

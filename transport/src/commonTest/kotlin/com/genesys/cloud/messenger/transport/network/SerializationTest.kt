@@ -5,6 +5,7 @@ import assertk.assertions.containsExactly
 import assertk.assertions.hasClass
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
+import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.core.Action
 import com.genesys.cloud.messenger.transport.core.Attachment
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
@@ -65,11 +66,12 @@ class SerializationTest {
                     deploymentId = "<deploymentId>",
                     startNew = false,
                     journeyContext = journeyContext,
+                    tracingId = TestValues.TRACING_ID,
                 )
             )
 
         assertThat(encodedString, "encoded ConfigureSessionRequest")
-            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","startNew":false,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"action":"configureSession"}""")
+            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","startNew":false,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"tracingId":"${TestValues.TRACING_ID}","action":"configureSession"}""")
     }
 
     @Test
@@ -79,17 +81,17 @@ class SerializationTest {
         val encodedString = WebMessagingJson.json.encodeToString(echoRequest)
 
         assertThat(encodedString, "encoded EchoRequest")
-            .isEqualTo("""{"token":"<token>","action":"echo","message":{"text":"ping","metadata":{"customMessageId":"$HealthCheckID"},"type":"Text"}}""")
+            .isEqualTo("""{"token":"<token>","tracingId":"$HealthCheckID","action":"echo","message":{"text":"ping","type":"Text"}}""")
     }
 
     @Test
     fun `when OnMessageRequest then encodes`() {
-        val messageRequest = OnMessageRequest("<token>", TextMessage("Hello world"))
+        val messageRequest = OnMessageRequest("<token>", TextMessage("Hello world"), tracingId = TestValues.TRACING_ID)
 
         var encodedString = WebMessagingJson.json.encodeToString(messageRequest)
 
         assertThat(encodedString, "encoded OnMessageRequest")
-            .isEqualTo("""{"token":"<token>","message":{"text":"Hello world","type":"Text"},"action":"onMessage"}""")
+            .isEqualTo("""{"token":"<token>","message":{"text":"Hello world","type":"Text"},"tracingId":"${TestValues.TRACING_ID}","action":"onMessage"}""")
 
         val messageWithAttachmentAndCustomAttributesRequest =
             OnMessageRequest(
@@ -107,6 +109,7 @@ class SerializationTest {
                             ),
                         channel = Channel(Channel.Metadata(mapOf("A" to "B"))),
                     ),
+                tracingId = TestValues.TRACING_ID,
             )
 
         encodedString =
@@ -114,7 +117,7 @@ class SerializationTest {
 
         assertThat(encodedString, "encoded OnMessageRequest with attachment and custom attributes")
             .isEqualTo(
-                """{"token":"<token>","message":{"text":"Hello world","metadata":{"id":"aaa-bbb-ccc"},"content":[{"contentType":"Attachment","attachment":{"id":"abcd-1234"}}],"channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"action":"onMessage"}"""
+                """{"token":"<token>","message":{"text":"Hello world","metadata":{"id":"aaa-bbb-ccc"},"content":[{"contentType":"Attachment","attachment":{"id":"abcd-1234"}}],"channel":{"metadata":{"customAttributes":{"A":"B"}}},"type":"Text"},"tracingId":"${TestValues.TRACING_ID}","action":"onMessage"}"""
             )
     }
 
@@ -128,12 +131,13 @@ class SerializationTest {
                 fileType = "image/png",
                 fileSize = 424242,
                 errorsAsJson = true,
+                tracingId = TestValues.TRACING_ID,
             )
 
         val encodedString = WebMessagingJson.json.encodeToString(attachmentRequest)
 
         assertThat(encodedString, "encoded OnAttachmentRequest")
-            .isEqualTo("""{"token":"<token>","attachmentId":"00000000-0000-0000-0000-000000000001","fileName":"foo.png","fileType":"image/png","fileSize":424242,"errorsAsJson":true,"action":"onAttachment"}""")
+            .isEqualTo("""{"token":"<token>","attachmentId":"00000000-0000-0000-0000-000000000001","fileName":"foo.png","fileType":"image/png","fileSize":424242,"errorsAsJson":true,"tracingId":"${TestValues.TRACING_ID}","action":"onAttachment"}""")
     }
 
     @Test
@@ -462,11 +466,12 @@ class SerializationTest {
                 CloseSessionRequest(
                     token = "<token>",
                     closeAllConnections = true,
+                    tracingId = TestValues.TRACING_ID,
                 )
             )
 
         assertThat(encodedString, "encoded CloseSessionRequest")
-            .isEqualTo("""{"token":"<token>","closeAllConnections":true,"action":"closeSession"}""")
+            .isEqualTo("""{"token":"<token>","closeAllConnections":true,"tracingId":"${TestValues.TRACING_ID}","action":"closeSession"}""")
     }
 
     @Test
@@ -485,11 +490,12 @@ class SerializationTest {
                     startNew = false,
                     journeyContext = journeyContext,
                     data = data,
+                    tracingId = TestValues.TRACING_ID,
                 )
             )
 
         assertThat(encodedString, "encoded ConfigureAuthenticatedSessionRequest")
-            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","startNew":false,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"data":{"code":"<auth_token>"},"action":"configureAuthenticatedSession"}""")
+            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","startNew":false,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"data":{"code":"<auth_token>"},"tracingId":"${TestValues.TRACING_ID}","action":"configureAuthenticatedSession"}""")
     }
 
     @Test
@@ -544,11 +550,12 @@ class SerializationTest {
             WebMessagingJson.json.encodeToString(
                 ClearConversationRequest(
                     token = "<token>",
+                    tracingId = TestValues.TRACING_ID,
                 )
             )
 
         assertThat(encodedString, "encoded ClearConversationRequest")
-            .isEqualTo("""{"token":"<token>","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Clear"}}],"type":"Event"}}""")
+            .isEqualTo("""{"token":"<token>","tracingId":"${TestValues.TRACING_ID}","action":"onMessage","message":{"events":[{"eventType":"Presence","presence":{"type":"Clear"}}],"type":"Event"}}""")
     }
 
     @Test
@@ -1344,5 +1351,64 @@ class SerializationTest {
                     )
             )
         )
+    }
+
+    @Test
+    fun `when QuickReplyContent without action field then deserializes`() {
+        val json = """{"contentType":"QuickReply","quickReply":{"text":"Yes","payload":"cookie1"}}"""
+
+        val decoded = WebMessagingJson.json.decodeFromString(StructuredMessage.Content.serializer(), json)
+
+        val expected =
+            StructuredMessage.Content.QuickReplyContent(
+                contentType = "QuickReply",
+                quickReply =
+                    StructuredMessage.Content.QuickReplyContent.QuickReply(
+                        text = "Yes",
+                        payload = "cookie1",
+                        action = null
+                    )
+            )
+        assertThat(decoded).isEqualTo(expected)
+    }
+
+    @Test
+    fun `when QuickReplyContent with action field then deserializes`() {
+        val json = """{"contentType":"QuickReply","quickReply":{"text":"Yes","payload":"cookie1","action":"action_value"}}"""
+
+        val decoded = WebMessagingJson.json.decodeFromString(StructuredMessage.Content.serializer(), json)
+
+        val expected =
+            StructuredMessage.Content.QuickReplyContent(
+                contentType = "QuickReply",
+                quickReply =
+                    StructuredMessage.Content.QuickReplyContent.QuickReply(
+                        text = "Yes",
+                        payload = "cookie1",
+                        action = "action_value"
+                    )
+            )
+        assertThat(decoded).isEqualTo(expected)
+    }
+
+    @Test
+    fun `when StructuredMessage with QuickReplies without action then deserializes`() {
+        val json = """{"type":"message","class":"StructuredMessage","code":200,"body":{"text":"What would you like to do?","type":"Structured","direction":"Outbound","id":"msg_id","channel":{"time":"2026-01-06T13:26:15.174Z","type":"Private","from":{},"to":{}},"content":[{"contentType":"QuickReply","quickReply":{"text":"Yes","payload":"cookie1"}},{"contentType":"QuickReply","quickReply":{"text":"No","payload":"cookie2"}}],"metadata":{},"originatingEntity":"Bot"}}"""
+
+        val decoded = WebMessagingJson.decodeFromString(json)
+
+        assertThat(decoded.body, "WebMessagingMessage body")
+            .isNotNull()
+            .hasClass(StructuredMessage::class)
+        val structuredMessage = decoded.body as StructuredMessage
+        assertThat(structuredMessage.content.size).isEqualTo(2)
+        val quickReply1 = (structuredMessage.content[0] as StructuredMessage.Content.QuickReplyContent).quickReply
+        val quickReply2 = (structuredMessage.content[1] as StructuredMessage.Content.QuickReplyContent).quickReply
+        assertThat(quickReply1.text).isEqualTo("Yes")
+        assertThat(quickReply1.payload).isEqualTo("cookie1")
+        assertThat(quickReply1.action).isNull()
+        assertThat(quickReply2.text).isEqualTo("No")
+        assertThat(quickReply2.payload).isEqualTo("cookie2")
+        assertThat(quickReply2.action).isNull()
     }
 }
