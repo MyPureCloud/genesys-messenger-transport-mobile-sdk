@@ -95,7 +95,7 @@ internal data class StructuredMessage(
             data class QuickReply(
                 val text: String,
                 val payload: String,
-                val action: String,
+                val action: String? = null,
             )
         }
 

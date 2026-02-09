@@ -3,6 +3,7 @@ package transport.core.messagingclient
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.auth.NO_JWT
+import com.genesys.cloud.messenger.transport.auth.NO_REFRESH_TOKEN
 import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
@@ -58,6 +59,38 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
     }
 
     @Test
+    fun `when authorizeImplicit is called`() {
+        subject.authorizeImplicit(AuthTest.ID_TOKEN, AuthTest.NONCE)
+
+        verify {
+            mockAuthHandler.authorizeImplicit(AuthTest.ID_TOKEN, AuthTest.NONCE)
+        }
+    }
+
+    @Test
+    fun `when connectAuthenticatedSession and no JWT and no refresh token`() {
+        every { mockAuthHandler.jwt } returns NO_JWT
+        every { mockVault.authRefreshToken } returns NO_REFRESH_TOKEN
+        every { mockAuthHandler.refreshToken(captureLambda()) } answers {
+            lambda<(Result<Empty>) -> Unit>().invoke(
+                Result.Failure(ErrorCode.RefreshAuthTokenFailure, ErrorMessage.NoRefreshToken)
+            )
+        }
+
+        subject.connectAuthenticatedSession()
+
+        verifySequence {
+            mockStateChangedListener(fromIdleToConnecting)
+            mockPlatformSocket.openSocket(any())
+            mockStateChangedListener(fromConnectingToConnected)
+            mockAuthHandler.jwt
+            mockAuthHandler.refreshToken(any())
+            mockEventHandler.onEvent(Event.AuthorizationRequired)
+            errorSequence(fromConnectedToError(MessagingClient.State.Error(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)))
+        }
+    }
+
+    @Test
     fun `when connectAuthenticatedSession`() {
         subject.connectAuthenticatedSession()
 
@@ -69,6 +102,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
 
     @Test
     fun `when connectAuthenticatedSession and AuthHandler has no Jwt and refreshToken was successful`() {
+        every { mockVault.authRefreshToken } returns AuthTest.REFRESH_TOKEN
         every { mockAuthHandler.jwt } returns NO_JWT
         every { mockAuthHandler.refreshToken(captureLambda()) } answers {
             every { mockAuthHandler.jwt } returns AuthTest.JWT_TOKEN
@@ -94,14 +128,15 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
 
     @Test
     fun `when connectAuthenticatedSession and AuthHandler has no Jwt and refreshToken fails`() {
-        val givenFailure = Result.Failure(ErrorCode.AuthFailed, ErrorTest.MESSAGE)
+        every { mockVault.authRefreshToken } returns AuthTest.REFRESH_TOKEN
+        val givenResult = Result.Failure(ErrorCode.AuthFailed, ErrorTest.MESSAGE)
         every { mockAuthHandler.refreshToken(captureLambda()) } answers {
-            lambda<(Result<Empty>) -> Unit>().invoke(givenFailure)
+            lambda<(Result<Empty>) -> Unit>().invoke(givenResult)
         }
         every { mockAuthHandler.jwt } returns NO_JWT
 
         val expectedErrorState =
-            MessagingClient.State.Error(ErrorCode.AuthFailed, ErrorTest.MESSAGE)
+            MessagingClient.State.Error(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
 
         subject.connectAuthenticatedSession()
 
@@ -115,6 +150,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
             mockStateChangedListener(fromConnectingToConnected)
             mockAuthHandler.jwt
             mockAuthHandler.refreshToken(any())
+            mockEventHandler.onEvent(Event.AuthorizationRequired)
             errorSequence(fromConnectedToError(expectedErrorState))
         }
     }
@@ -124,7 +160,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         subject.logoutFromAuthenticatedSession()
 
         verify {
-            mockAuthHandler.logout()
+            mockAuthHandler.logout(any())
         }
     }
 
@@ -133,7 +169,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         // Test from Idle state
         assertThat(subject.currentState).isIdle()
         subject.logoutFromAuthenticatedSession()
-        verify { mockAuthHandler.logout() }
+        verify { mockAuthHandler.logout(any()) }
 
         // Test from Error state
         every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
@@ -142,7 +178,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         subject.connect()
         assertThat(subject.currentState).isError(ErrorCode.SessionNotFound, "session not found error message")
         subject.logoutFromAuthenticatedSession()
-        verify(exactly = 2) { mockAuthHandler.logout() }
+        verify(exactly = 2) { mockAuthHandler.logout(any()) }
 
         // Test from ReadOnly state
         every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
@@ -151,7 +187,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         subject.connect()
         assertThat(subject.currentState).isReadOnly()
         subject.logoutFromAuthenticatedSession()
-        verify(exactly = 3) { mockAuthHandler.logout() }
+        verify(exactly = 3) { mockAuthHandler.logout(any()) }
     }
 
     @Test
@@ -162,7 +198,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence(shouldConfigureAuth = true)
-            mockAuthHandler.logout()
+            mockAuthHandler.logout(any())
         }
     }
 
@@ -290,6 +326,50 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
         assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.CONNECT_AUTHENTICATED_SESSION)
         assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(Request.token, false))
+    }
+
+    @Test
+    fun `when SocketListener invoke onMessage with ClientResponseError 403 - normal way`() {
+        val expectedErrorCode = ErrorCode.ClientResponseError(403)
+        val expectedErrorMessage = "HTTP authorization error"
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) }) } answers {
+            slot.captured.onMessage(Response.clientError403Normal)
+        }
+        subject.connectAuthenticatedSession()
+        slot.captured.onMessage("Hi but maybe I get an HTTP 403 error")
+
+        assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
+    }
+
+    @Test
+    fun `when SocketListener invoke onMessage with ClientResponseError 403 - session auth failed`() {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) }) } answers {
+            slot.captured.onMessage(Response.clientError403SessionAuthFailed)
+        }
+        subject.connectAuthenticatedSession()
+        slot.captured.onMessage("Hi, but I may get an HTTP 403 error with session auth failed message")
+
+        assertThat(subject.currentState).isReconnecting()
+        verify {
+            mockAttachmentHandler.resetAttachmentState()
+            mockEventHandler.onEvent(Event.AuthorizationRequired)
+        }
+    }
+
+    @Test
+    fun `when SocketListener invoke onMessage with ClientResponseError 403 - try authenticate again`() {
+        every { mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) }) } answers {
+            slot.captured.onMessage(Response.clientError403TryAuthenticateAgain)
+        }
+        subject.connectAuthenticatedSession()
+        slot.captured.onMessage("Hi, but I may get an HTTP 403 error with try authenticate again message")
+
+        assertThat(subject.currentState).isReconnecting()
+
+        verify {
+            mockAttachmentHandler.resetAttachmentState()
+            mockEventHandler.onEvent(Event.AuthorizationRequired)
+        }
     }
 
     @Test

@@ -5,6 +5,7 @@ import assertk.assertions.containsExactly
 import assertk.assertions.hasClass
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
+import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.core.Action
 import com.genesys.cloud.messenger.transport.core.Attachment
 import com.genesys.cloud.messenger.transport.core.ButtonResponse
@@ -1350,5 +1351,64 @@ class SerializationTest {
                     )
             )
         )
+    }
+
+    @Test
+    fun `when QuickReplyContent without action field then deserializes`() {
+        val json = """{"contentType":"QuickReply","quickReply":{"text":"Yes","payload":"cookie1"}}"""
+
+        val decoded = WebMessagingJson.json.decodeFromString(StructuredMessage.Content.serializer(), json)
+
+        val expected =
+            StructuredMessage.Content.QuickReplyContent(
+                contentType = "QuickReply",
+                quickReply =
+                    StructuredMessage.Content.QuickReplyContent.QuickReply(
+                        text = "Yes",
+                        payload = "cookie1",
+                        action = null
+                    )
+            )
+        assertThat(decoded).isEqualTo(expected)
+    }
+
+    @Test
+    fun `when QuickReplyContent with action field then deserializes`() {
+        val json = """{"contentType":"QuickReply","quickReply":{"text":"Yes","payload":"cookie1","action":"action_value"}}"""
+
+        val decoded = WebMessagingJson.json.decodeFromString(StructuredMessage.Content.serializer(), json)
+
+        val expected =
+            StructuredMessage.Content.QuickReplyContent(
+                contentType = "QuickReply",
+                quickReply =
+                    StructuredMessage.Content.QuickReplyContent.QuickReply(
+                        text = "Yes",
+                        payload = "cookie1",
+                        action = "action_value"
+                    )
+            )
+        assertThat(decoded).isEqualTo(expected)
+    }
+
+    @Test
+    fun `when StructuredMessage with QuickReplies without action then deserializes`() {
+        val json = """{"type":"message","class":"StructuredMessage","code":200,"body":{"text":"What would you like to do?","type":"Structured","direction":"Outbound","id":"msg_id","channel":{"time":"2026-01-06T13:26:15.174Z","type":"Private","from":{},"to":{}},"content":[{"contentType":"QuickReply","quickReply":{"text":"Yes","payload":"cookie1"}},{"contentType":"QuickReply","quickReply":{"text":"No","payload":"cookie2"}}],"metadata":{},"originatingEntity":"Bot"}}"""
+
+        val decoded = WebMessagingJson.decodeFromString(json)
+
+        assertThat(decoded.body, "WebMessagingMessage body")
+            .isNotNull()
+            .hasClass(StructuredMessage::class)
+        val structuredMessage = decoded.body as StructuredMessage
+        assertThat(structuredMessage.content.size).isEqualTo(2)
+        val quickReply1 = (structuredMessage.content[0] as StructuredMessage.Content.QuickReplyContent).quickReply
+        val quickReply2 = (structuredMessage.content[1] as StructuredMessage.Content.QuickReplyContent).quickReply
+        assertThat(quickReply1.text).isEqualTo("Yes")
+        assertThat(quickReply1.payload).isEqualTo("cookie1")
+        assertThat(quickReply1.action).isNull()
+        assertThat(quickReply2.text).isEqualTo("No")
+        assertThat(quickReply2.payload).isEqualTo("cookie2")
+        assertThat(quickReply2.action).isNull()
     }
 }

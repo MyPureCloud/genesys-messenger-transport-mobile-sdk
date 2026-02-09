@@ -93,4 +93,9 @@ sealed class Event {
      *  Sent as confirmation when existing authenticated session was cleared on other devices as a result of step-up.
      */
     data object ExistingAuthSessionCleared : Event()
+
+    /**
+     * Sent when authorization is required for authenticated session configuration.
+     */
+    data object AuthorizationRequired : Event()
 }

@@ -61,7 +61,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.encodeToString
 import kotlin.reflect.KProperty0
 
 private const val MAX_RECONFIGURE_ATTEMPTS = 3
@@ -224,6 +223,7 @@ internal class MessagingClientImpl(
                         refreshTokenAndPerform { configureSession(startNew) }
                         return
                     }
+                    eventHandler.onEvent(Event.AuthorizationRequired)
                     transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
                     return
                 }
@@ -333,7 +333,9 @@ internal class MessagingClientImpl(
     }
 
     override fun logoutFromAuthenticatedSession() {
-        authHandler.logout()
+        authHandler.logout {
+            performLogout()
+        }
     }
 
     override fun shouldAuthorize(callback: (Boolean) -> Unit) {
@@ -379,6 +381,14 @@ internal class MessagingClientImpl(
     ) {
         invalidateSessionToken()
         authHandler.authorize(authCode, redirectUri, codeVerifier)
+    }
+
+    override fun authorizeImplicit(
+        idToken: String,
+        nonce: String
+    ) {
+        invalidateSessionToken()
+        authHandler.authorizeImplicit(idToken, nonce)
     }
 
     @Throws(IllegalStateException::class)
@@ -500,6 +510,18 @@ internal class MessagingClientImpl(
             is ErrorCode.ServerResponseError,
             is ErrorCode.RedirectResponseError,
             -> {
+                if ((code as? ErrorCode.ClientResponseError)?.value == 403) {
+                    message?.run {
+                        if (startsWith(ErrorMessage.SessionAuthFailed, true) ||
+                            startsWith(ErrorMessage.TryAuthenticateAgain, true)
+                        ) {
+                            attachmentHandler.resetAttachmentState()
+                            eventHandler.onEvent(Event.AuthorizationRequired)
+                            stateMachine.onReconnect()
+                            return
+                        }
+                    }
+                }
                 if (stateMachine.isConnected() || stateMachine.isReconnecting() || isStartingANewSession) {
                     handleConfigureSessionErrorResponse(code, message)
                 } else {
@@ -527,7 +549,10 @@ internal class MessagingClientImpl(
         authHandler.refreshToken { result ->
             when (result) {
                 is Result.Success -> action()
-                is Result.Failure -> transitionToStateError(result.errorCode, result.message)
+                is Result.Failure -> {
+                    eventHandler.onEvent(Event.AuthorizationRequired)
+                    transitionToStateError(ErrorCode.AuthFailed, ErrorMessage.FailedToConfigureSession)
+                }
             }
         }
     }
@@ -711,6 +736,14 @@ internal class MessagingClientImpl(
             log = log.withTag(LogTag.WEBSOCKET)
         )
 
+    private fun performLogout() {
+        invalidateSessionToken()
+        vault.wasAuthenticated = false
+        authHandler.clear()
+        eventHandler.onEvent(Event.Logout)
+        disconnect()
+    }
+
     private inner class SocketListener(
         private val log: Log,
     ) : PlatformSocketListener {
@@ -809,11 +842,7 @@ internal class MessagingClientImpl(
                     }
 
                     is LogoutEvent -> {
-                        invalidateSessionToken()
-                        vault.wasAuthenticated = false
-                        authHandler.clear()
-                        eventHandler.onEvent(Event.Logout)
-                        disconnect()
+                        performLogout()
                     }
 
                     is SessionClearedEvent -> {
