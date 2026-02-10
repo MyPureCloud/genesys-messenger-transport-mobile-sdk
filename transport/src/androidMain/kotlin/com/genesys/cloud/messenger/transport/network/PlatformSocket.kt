@@ -18,6 +18,7 @@ internal actual class PlatformSocket actual constructor(
     private val log: Log,
     private val url: Url,
     actual val pingInterval: Int,
+    @Suppress("UNUSED_PARAMETER") private val forceTLSv13: Boolean,
 ) {
     private var webSocket: WebSocket? = null
     private var listener: PlatformSocketListener? = null

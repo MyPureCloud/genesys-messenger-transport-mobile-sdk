@@ -154,6 +154,7 @@ internal object LogMessages {
 
     const val SENDING_PING = "Sending ping"
     const val RECEIVED_PONG = "Received pong"
+    const val FORCE_TLS_V13 = "Forcing TLSv1.3 connection"
     const val DEACTIVATE = "deactivate()"
     const val SEND_HEALTH_CHECK = "sendHealthCheck()"
     const val SEND_AUTO_START = "sendAutoStart()"
