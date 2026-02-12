@@ -8,7 +8,7 @@ object Deps {
     private const val mockWebServerVersion = "4.12.0"
     private const val mockkVersion = "1.14.5"
     private const val okhttpVersion = "4.12.0"
-    const val kotlinVersion = "2.1.21"
+    const val kotlinVersion = "2.3.10"
     const val kotlinterVersion = "5.0.2"
     const val composeVersion = "1.5.10"
     const val fragmentVersion = "1.3.5"
@@ -81,6 +81,5 @@ object Deps {
         const val compileSdk = 35
         const val minSdk = 21
         const val targetSdk = 35
-        const val jvmTarget = "17"
     }
 }

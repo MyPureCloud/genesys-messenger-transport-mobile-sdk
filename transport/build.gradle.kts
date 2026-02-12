@@ -1,6 +1,6 @@
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
-import org.jetbrains.kotlin.gradle.plugin.mpp.BitcodeEmbeddingMode
 
 plugins {
     kotlin("multiplatform")
@@ -90,10 +90,8 @@ kotlin {
         }
     }
     androidTarget {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = Deps.Android.jvmTarget
-            }
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
         }
         publishLibraryVariants("release", "debug")
         publishLibraryVariantsGroupedByFlavor = true
@@ -106,7 +104,6 @@ kotlin {
         iosSimulatorArm64()
     ).forEach {
         it.binaries.framework {
-            embedBitcodeMode = BitcodeEmbeddingMode.DISABLE
             baseName = iosFrameworkName
             xcf.add(this)
         }

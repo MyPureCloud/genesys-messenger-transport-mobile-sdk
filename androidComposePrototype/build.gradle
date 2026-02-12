@@ -37,10 +37,10 @@ buildscript {
 plugins {
     id 'com.android.application'
     id 'kotlin-android'
-    id 'org.jetbrains.kotlin.plugin.serialization' version '2.1.21'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.3.10'
     id 'org.jmailen.kotlinter'
     id 'com.google.gms.google-services'
-    id 'org.jetbrains.kotlin.plugin.compose' version '2.1.21'
+    id 'org.jetbrains.kotlin.plugin.compose' version '2.3.10'
 }
 
 android {
@@ -48,7 +48,7 @@ android {
     android.buildFeatures.buildConfig true
     defaultConfig {
         applicationId "com.genesys.cloud.webmessaging.androidcomposeprototype"
-        minSdkVersion 21
+        minSdkVersion 23
         compileSdk 35
         targetSdkVersion 35
         versionCode 1
