@@ -1,0 +1,5 @@
+[versions]
+kotlinter = "5.4.2"
+
+[plugins]
+kotlinter = { id = "org.jmailen.kotlinter", version.ref = "kotlinter" }

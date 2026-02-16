@@ -187,40 +187,142 @@ class TestBedViewModel :
         val command = components.firstOrNull()
         val input = components.getOrNull(1) ?: ""
         when (command) {
-            "connect" -> doConnect()
-            "connectAuthenticated" -> doConnectAuthenticated()
-            "bye" -> doDisconnect()
-            "send" -> doSendMessage(input)
-            "sendQuickReply" -> doSendQuickReply(input)
-            "sendAction" -> doSendAction(input)
-            "listActions" -> doListActions()
-            "history" -> fetchNextPage()
-            "healthCheck" -> doSendHealthCheck()
-            "attach" -> doAttach()
-            "attachSavedImage" -> doAttachSavedImage()
-            "detach" -> doDetach(input)
-            "deployment" -> doDeployment()
-            "invalidateConversationCache" -> doInvalidateConversationCache()
-            "addAttribute" -> doAddCustomAttributes(input)
-            "typing" -> doIndicateTyping()
-            "newChat" -> doStartNewChat()
-            "oktaSignIn" -> doOktaSignIn(false)
-            "oktaSignInWithPKCE" -> doOktaSignIn(true)
-            "oktaLogout" -> logoutFromOktaSession()
-            "authorize" -> doAuthorize()
-            "implicitLogin" -> doImplicitSignIn()
-            "implicitAuthorize" -> doAuthorizeImplicit()
-            "clearConversation" -> doClearConversation()
-            "refreshAttachment" -> doRefreshAttachmentUrl(input)
-            "savedFileName" -> doChangeFileName(input)
-            "fileAttachmentProfile" -> doFileAttachmentProfile()
-            "removeToken" -> doRemoveTokenFromVault()
-            "removeAuthRefreshToken" -> doRemoveAuthRefreshTokenFromVault()
-            "stepUp" -> doStepUp()
-            "wasAuthenticated" -> doWasAuthenticated()
-            "shouldAuthorize" -> doShouldAuthorize()
-            "syncDeviceToken" -> doSynchronizeDeviceToken()
-            "unregPush" -> doUnregisterFromPush()
+            "connect" -> {
+                doConnect()
+            }
+
+            "connectAuthenticated" -> {
+                doConnectAuthenticated()
+            }
+
+            "bye" -> {
+                doDisconnect()
+            }
+
+            "send" -> {
+                doSendMessage(input)
+            }
+
+            "sendQuickReply" -> {
+                doSendQuickReply(input)
+            }
+
+            "sendAction" -> {
+                doSendAction(input)
+            }
+
+            "listActions" -> {
+                doListActions()
+            }
+
+            "history" -> {
+                fetchNextPage()
+            }
+
+            "healthCheck" -> {
+                doSendHealthCheck()
+            }
+
+            "attach" -> {
+                doAttach()
+            }
+
+            "attachSavedImage" -> {
+                doAttachSavedImage()
+            }
+
+            "detach" -> {
+                doDetach(input)
+            }
+
+            "deployment" -> {
+                doDeployment()
+            }
+
+            "invalidateConversationCache" -> {
+                doInvalidateConversationCache()
+            }
+
+            "addAttribute" -> {
+                doAddCustomAttributes(input)
+            }
+
+            "typing" -> {
+                doIndicateTyping()
+            }
+
+            "newChat" -> {
+                doStartNewChat()
+            }
+
+            "oktaSignIn" -> {
+                doOktaSignIn(false)
+            }
+
+            "oktaSignInWithPKCE" -> {
+                doOktaSignIn(true)
+            }
+
+            "oktaLogout" -> {
+                logoutFromOktaSession()
+            }
+
+            "authorize" -> {
+                doAuthorize()
+            }
+
+            "implicitLogin" -> {
+                doImplicitSignIn()
+            }
+
+            "implicitAuthorize" -> {
+                doAuthorizeImplicit()
+            }
+
+            "clearConversation" -> {
+                doClearConversation()
+            }
+
+            "refreshAttachment" -> {
+                doRefreshAttachmentUrl(input)
+            }
+
+            "savedFileName" -> {
+                doChangeFileName(input)
+            }
+
+            "fileAttachmentProfile" -> {
+                doFileAttachmentProfile()
+            }
+
+            "removeToken" -> {
+                doRemoveTokenFromVault()
+            }
+
+            "removeAuthRefreshToken" -> {
+                doRemoveAuthRefreshTokenFromVault()
+            }
+
+            "stepUp" -> {
+                doStepUp()
+            }
+
+            "wasAuthenticated" -> {
+                doWasAuthenticated()
+            }
+
+            "shouldAuthorize" -> {
+                doShouldAuthorize()
+            }
+
+            "syncDeviceToken" -> {
+                doSynchronizeDeviceToken()
+            }
+
+            "unregPush" -> {
+                doUnregisterFromPush()
+            }
+
             else -> {
                 Log.e(TAG, "Invalid command")
                 commandWaiting = false
@@ -541,22 +643,32 @@ class TestBedViewModel :
         clientState = newState
         val statePayloadMessage =
             when (newState) {
-                is State.Configured ->
+                is State.Configured -> {
                     "connected: ${newState.connected}," + " newSession: ${newState.newSession}," + " wasReconnecting: ${oldState is State.Reconnecting}"
-                is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
+                }
+
+                is State.Closing -> {
+                    "code: ${newState.code}, reason: ${newState.reason}"
+                }
+
                 is State.Closed -> {
                     resetSessionState()
                     "code: ${newState.code}, reason: ${newState.reason}"
                 }
+
                 is State.Error -> {
                     resetSessionState()
                     "code: ${newState.code}, message: ${newState.message}"
                 }
+
                 is State.Idle -> {
                     resetSessionState()
                     ""
                 }
-                else -> ""
+
+                else -> {
+                    ""
+                }
             }
         onSocketMessageReceived(statePayloadMessage)
         commandWaiting = false
@@ -586,9 +698,18 @@ class TestBedViewModel :
     private fun onMessage(event: MessageEvent) {
         val eventMessage =
             when (event) {
-                is MessageEvent.MessageUpdated -> "MessageUpdated: ${event.message}"
-                is MessageEvent.MessageInserted -> "MessageInserted: ${event.message}"
-                is MessageEvent.HistoryFetched -> "start of conversation: ${event.startOfConversation}, messages: ${event.messages}"
+                is MessageEvent.MessageUpdated -> {
+                    "MessageUpdated: ${event.message}"
+                }
+
+                is MessageEvent.MessageInserted -> {
+                    "MessageInserted: ${event.message}"
+                }
+
+                is MessageEvent.HistoryFetched -> {
+                    "start of conversation: ${event.startOfConversation}, messages: ${event.messages}"
+                }
+
                 is AttachmentUpdated -> {
                     when (event.attachment.state) {
                         Detached -> {
@@ -596,18 +717,21 @@ class TestBedViewModel :
                             event.attachment.toString()
                         }
 
-                        else -> event.attachment.toString()
+                        else -> {
+                            event.attachment.toString()
+                        }
                     }
                 }
 
-                is MessageEvent.QuickReplyReceived ->
+                is MessageEvent.QuickReplyReceived -> {
                     event.message.run {
                         quickRepliesMap.clear()
                         quickRepliesMap.putAll(quickReplies.associateBy { it.text })
                         "QuickReplyReceived: text: $text | quick reply options: $quickReplies"
                     }
+                }
 
-                is MessageEvent.CardMessageReceived ->
+                is MessageEvent.CardMessageReceived -> {
                     event.message.run {
                         val tempActionsMap = mutableMapOf<String, ButtonResponse>()
                         cards.forEach { card ->
@@ -618,6 +742,7 @@ class TestBedViewModel :
                         }
                         "CardMessageReceived with actions: $tempActionsMap"
                     }
+                }
             }
         onSocketMessageReceived(eventMessage)
     }
@@ -666,10 +791,12 @@ class TestBedViewModel :
             -> {
                 authState = AuthState.Error(event.errorCode, event.message, event.correctiveAction)
             }
+
             is ErrorCode.CustomAttributeSizeTooLarge
             -> {
                 onSocketMessageReceived(event.message ?: "CA size too large")
             }
+
             else -> {
                 println("Handle Event.Error here.")
             }
