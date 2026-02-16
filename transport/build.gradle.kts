@@ -8,7 +8,6 @@ plugins {
     kotlin("plugin.serialization") version Deps.kotlinVersion
     id("com.android.library")
     id("org.jetbrains.dokka") version "1.4.30"
-    id("org.jmailen.kotlinter")
     id("maven-publish")
     id("signing")
     id("transportValidationPlugin")
@@ -234,10 +233,6 @@ tasks {
             file(podspecFileName, PathValidation.NONE).writeText(content)
             println("CocoaPods podspec for Pod $iosCocoaPodName written to: ${this.project.projectDir}/$podspecFileName")
         }
-    }
-
-    "lintKotlinCommonMain"(org.jmailen.gradle.kotlinter.tasks.LintTask::class) {
-        exclude("**/BuildKonfig.kt")
     }
 }
 
