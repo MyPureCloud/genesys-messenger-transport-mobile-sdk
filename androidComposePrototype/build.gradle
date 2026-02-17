@@ -117,7 +117,6 @@ dependencies {
     implementation libs.appcompat
     implementation libs.material
     implementation libs.lifecycle.runtime.ktx
-    implementation libs.kotlinx.serialization.json
     implementation libs.fragment.ktx
 
     // Compose
