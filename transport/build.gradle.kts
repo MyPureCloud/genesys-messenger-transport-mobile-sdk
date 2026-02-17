@@ -128,7 +128,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(kotlin("stdlib-common"))
-                implementation(Deps.Libs.Kotlinx.serializationJson)
+                implementation(libs.kotlinx.serialization.json)
                 implementation(Deps.Libs.Kotlinx.coroutinesCore)
                 implementation(Deps.Libs.Ktor.core)
                 implementation(Deps.Libs.Ktor.serialization)
@@ -160,7 +160,7 @@ kotlin {
         val androidUnitTest by getting {
             dependencies {
                 implementation(kotlin("test-junit"))
-                implementation(Deps.Libs.junit)
+                implementation(libs.junit)
                 implementation(Deps.Libs.Assertk.jvm)
                 implementation(Deps.Libs.OkHttp.mockWebServer)
                 implementation(Deps.Libs.mockk)
