@@ -6,7 +6,7 @@ object Deps {
     private const val mockkVersion = "1.14.9"
     private const val okhttpVersion = "4.12.0"
     const val kotlinVersion = "2.3.10"
-    const val agp = "8.6.1"
+    const val agp = "9.0.1"
     const val buildKonfig = "0.17.1"
     const val nexusPublish = "1.3.0"
     const val googleServices = "4.4.4"

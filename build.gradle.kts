@@ -21,6 +21,7 @@ allprojects {
 }
 
 plugins {
+    alias(libs.plugins.android.kotlin.multiplatform.library) apply false
     id("io.github.gradle-nexus.publish-plugin") version Deps.nexusPublish
 }
 
