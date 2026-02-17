@@ -1,4 +1,5 @@
 [versions]
+agp = "9.0.1"
 dokka = "2.1.0"
 kotlinter = "5.4.2"
 kover = "0.9.7"
@@ -55,6 +56,7 @@ jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackso
 uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
 
 [plugins]
+android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
