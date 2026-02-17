@@ -132,7 +132,6 @@ kotlin {
                 implementation(Deps.Libs.Kotlinx.coroutinesCore)
                 implementation(Deps.Libs.Ktor.core)
                 implementation(Deps.Libs.Ktor.serialization)
-                implementation(Deps.Libs.Ktor.json)
                 implementation(Deps.Libs.Ktor.logging)
                 implementation(Deps.Libs.Ktor.contentNegotiation)
                 implementation(Deps.Libs.Ktor.kotlinxSerialization)
