@@ -1,11 +1,11 @@
 object Deps {
-    private const val assertkVersion = "0.26.1"
+    private const val assertkVersion = "0.28.1"
     private const val coroutinesVersion = "1.10.2"
     private const val junitVersion = "4.13.2"
     private const val kotlinxSerializationJsonVersion = "1.10.0"
     private const val kotlinxDatetimeVersion = "0.7.1"
     private const val ktorVersion = "3.4.0"
-    private const val mockkVersion = "1.14.5"
+    private const val mockkVersion = "1.14.9"
     private const val okhttpVersion = "4.12.0"
     const val kotlinVersion = "2.3.10"
     const val composeVersion = "1.5.10"
