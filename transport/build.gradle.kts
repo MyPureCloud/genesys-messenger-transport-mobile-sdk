@@ -6,7 +6,7 @@ plugins {
     kotlin("multiplatform")
     kotlin("native.cocoapods")
     kotlin("plugin.serialization") version Deps.kotlinVersion
-    id("com.android.library")
+    alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.dokka)
     id("maven-publish")
     id("signing")
@@ -49,37 +49,6 @@ buildkonfig {
     }
 }
 
-android {
-    compileSdk = Deps.Android.compileSdk
-    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-    defaultConfig {
-        minSdk = Deps.Android.minSdk
-        targetSdk = Deps.Android.targetSdk
-        consumerProguardFiles("transport-proguard-rules.txt")
-    }
-    buildTypes {
-        getByName("release") {
-            isMinifyEnabled = false
-        }
-    }
-    configurations {
-        create("androidTestApi")
-        create("androidTestDebugApi")
-        create("androidTestReleaseApi")
-        create("testApi")
-        create("testDebugApi")
-        create("testReleaseApi")
-    }
-    packaging {
-        resources {
-            excludes += "META-INF/*.kotlin_module"
-            excludes += "META-INF/LICENSE.md"
-            excludes += "META-INF/LICENSE-notice.md"
-        }
-    }
-    namespace = "com.genesys.cloud.messenger"
-}
-
 kotlin {
     targets.configureEach {
         compilations.configureEach {
@@ -88,12 +57,13 @@ kotlin {
             }
         }
     }
-    androidTarget {
+    androidLibrary {
+        namespace = "com.genesys.cloud.messenger"
+        compileSdk = Deps.Android.compileSdk
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
         }
-        publishLibraryVariants("release", "debug")
-        publishLibraryVariantsGroupedByFlavor = true
+        withHostTest { }
     }
 
     val xcf = XCFramework(iosFrameworkName)
@@ -156,7 +126,8 @@ kotlin {
                 implementation(Deps.Libs.Kotlinx.coroutinesAndroid)
             }
         }
-        val androidUnitTest by getting {
+        val androidHostTest by getting {
+            kotlin.srcDirs("src/androidUnitTest/kotlin")
             dependencies {
                 implementation(kotlin("test-junit"))
                 implementation(libs.junit)
@@ -187,7 +158,6 @@ tasks.withType<AbstractPublishToMaven>().configureEach {
 }
 
 tasks {
-
     create<Jar>("fakeJavadocJar") {
         archiveClassifier.set("javadoc")
         from("./deployment")
@@ -208,9 +178,9 @@ tasks {
                     println("Updating framework metadata at: ${this.project.projectDir}/$infoPlistPath")
                     for ((key, value) in propertiesMap) {
                         println("  $key = $value")
-                        exec {
-                            commandLine("plutil", "-replace", key, "-string", value, infoPlistPath)
-                        }
+                        val proc = ProcessBuilder("plutil", "-replace", key, "-string", value.toString(), infoPlistPath).start()
+                        val exit = proc.waitFor()
+                        if (exit != 0) throw org.gradle.api.GradleException("plutil failed: ${proc.errorStream.bufferedReader().readText()}")
                     }
                 }
             }
