@@ -4,7 +4,7 @@ object Deps {
     private const val junitVersion = "4.13.2"
     private const val kotlinxSerializationJsonVersion = "1.10.0"
     private const val kotlinxDatetimeVersion = "0.7.1"
-    private const val ktorVersion = "3.2.3"
+    private const val ktorVersion = "3.4.0"
     private const val mockkVersion = "1.14.5"
     private const val okhttpVersion = "5.3.2"
     const val kotlinVersion = "2.3.10"
@@ -15,7 +15,7 @@ object Deps {
     const val agp = "8.6.1"
     const val buildKonfig = "0.17.1"
     const val nexusPublish = "1.3.0"
-    const val googleServices = "4.4.2"
+    const val googleServices = "4.4.4"
 
 
     object Libs {
