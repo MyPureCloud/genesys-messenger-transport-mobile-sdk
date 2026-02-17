@@ -39,7 +39,6 @@ object Deps {
         object Ktor {
             const val core = "io.ktor:ktor-client-core:$ktorVersion"
             const val serialization = "io.ktor:ktor-client-serialization:$ktorVersion"
-            const val json = "io.ktor:ktor-client-json:$ktorVersion"
             const val logging = "io.ktor:ktor-client-logging:$ktorVersion"
             const val loggingJvm = "io.ktor:ktor-client-logging-jvm:$ktorVersion"
             const val android = "io.ktor:ktor-client-android:$ktorVersion"
