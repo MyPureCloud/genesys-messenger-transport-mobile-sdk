@@ -1,9 +1,58 @@
 [versions]
-kotlinter = "5.4.2"
 dokka = "2.1.0"
+kotlinter = "5.4.2"
 kover = "0.9.7"
+# Kotlin (match project)
+kotlin = "2.3.10"
+# androidComposePrototype - latest
+activityCompose = "1.8.2"  # 1.12.2 needs compileSdk 36, AGP 8.9+
+androidDeviceNames = "2.1.1"
+androidxTestExtJunit = "1.3.0"
+androidxTestRules = "1.7.0"
+appcompat = "1.7.0"  # 1.8+ needs AGP 8.7+
+awaitilityKotlin = "4.3.0"
+browser = "1.8.0"  # 1.9.0 needs compileSdk 36, AGP 8.9+
+composeBom = "2025.03.01"  # 2026.01.x needs compileSdk 36, AGP 8.9+
+coreKtx = "1.15.0"  # 1.18.0-alpha needs AGP 8.8+
+desugarJdkLibs = "2.1.5"
+espressoCore = "3.7.0"
+firebaseMessaging = "24.1.2"  # Firebase BOM 33.x needs AGP 8.7+
+fragment = "1.8.9"
+jacksonModuleKotlin = "2.21.0"
+junit = "4.13.2"
+kotlinxSerializationJson = "1.10.0"
+lifecycleRuntimeKtx = "2.7.0"  # 2.10.0 needs compileSdk 36, AGP 8.9+
+lifecycleViewModelCompose = "2.7.0"  # 2.8.2/2.10.0 need compileSdk 36, AGP 8.9+
+material = "1.12.0"  # 1.14.x needs AGP 8.8+, minSdk 24
+uiautomator = "2.3.0"
+
+[libraries]
+# androidComposePrototype - runtime
+activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
+compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugarJdkLibs" }
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging", version.ref = "firebaseMessaging" }
+fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragment" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycleViewModelCompose" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+# androidComposePrototype - test
+android-device-names = { group = "com.jaredrummler", name = "android-device-names", version.ref = "androidDeviceNames" }
+androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestExtJunit" }
+androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "androidxTestRules" }
+awaitility-kotlin = { group = "org.awaitility", name = "awaitility-kotlin", version.ref = "awaitilityKotlin" }
+espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jacksonModuleKotlin" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
 
 [plugins]
-kotlinter = { id = "org.jmailen.kotlinter", version.ref = "kotlinter" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlinter = { id = "org.jmailen.kotlinter", version.ref = "kotlinter" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
