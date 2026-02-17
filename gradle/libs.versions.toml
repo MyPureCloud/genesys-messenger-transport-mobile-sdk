@@ -1,5 +1,9 @@
 [versions]
 kotlinter = "5.4.2"
+dokka = "2.1.0"
+kover = "0.9.7"
 
 [plugins]
 kotlinter = { id = "org.jmailen.kotlinter", version.ref = "kotlinter" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
