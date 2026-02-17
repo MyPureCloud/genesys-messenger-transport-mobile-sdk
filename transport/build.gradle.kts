@@ -7,12 +7,12 @@ plugins {
     kotlin("native.cocoapods")
     kotlin("plugin.serialization") version Deps.kotlinVersion
     id("com.android.library")
-    id("org.jetbrains.dokka") version "1.4.30"
+    alias(libs.plugins.dokka)
     id("maven-publish")
     id("signing")
     id("transportValidationPlugin")
     id("com.codingfeline.buildkonfig")
-    id("org.jetbrains.kotlinx.kover") version "0.7.6"
+    alias(libs.plugins.kover)
 }
 
 version = project.rootProject.version
