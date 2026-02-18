@@ -1,4 +1,5 @@
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
+import org.gradle.internal.os.OperatingSystem
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
@@ -168,18 +169,27 @@ tasks {
                 listOf("ios-arm64", "ios-arm64_x86_64-simulator").forEach { arch ->
                     val xcframeworkPath =
                         "build/XCFrameworks/${buildVariant.lowercase()}/$iosFrameworkName.xcframework/$arch/$iosFrameworkName.framework"
-                    val infoPlistPath = "$xcframeworkPath/Info.plist"
+                    val infoPlistFile = project.file("$xcframeworkPath/Info.plist")
+                    if (!infoPlistFile.isFile) {
+                        throw org.gradle.api.GradleException("Info.plist not found at: ${infoPlistFile.absolutePath}")
+                    }
+                    val infoPlistPath = infoPlistFile.absolutePath
                     val propertiesMap = mapOf(
                         "CFBundleShortVersionString" to baseVersion,
                         "CFBundleVersion" to buildNumber,
                         "MinimumOSVersion" to iosMinimumOSVersion
                     )
-                    println("Updating framework metadata at: ${this.project.projectDir}/$infoPlistPath")
-                    for ((key, value) in propertiesMap) {
-                        println("  $key = $value")
-                        val proc = ProcessBuilder("plutil", "-replace", key, "-string", value.toString(), infoPlistPath).start()
-                        val exit = proc.waitFor()
-                        if (exit != 0) throw org.gradle.api.GradleException("plutil failed: ${proc.errorStream.bufferedReader().readText()}")
+                    if (!OperatingSystem.current().isMacOsX) {
+                        println("Skipping Info.plist update (plutil is macOS-only); path would be: $infoPlistPath")
+                    } else {
+                        println("Updating framework metadata at: $infoPlistPath")
+                        for ((key, value) in propertiesMap) {
+                            println("  $key = $value")
+                            val proc = ProcessBuilder("plutil", "-replace", key, "-string", value.toString(), infoPlistPath).start()
+                            val exit = proc.waitFor()
+                            val err = proc.errorStream.bufferedReader().readText()
+                            if (exit != 0) throw org.gradle.api.GradleException("plutil failed: $err")
+                        }
                     }
                 }
             }
