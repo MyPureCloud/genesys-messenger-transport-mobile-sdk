@@ -69,6 +69,7 @@ class OpeningPage(activity: Activity) : BasePage(activity) {
                         .getChild(UiSelector().className("android.view.View").index(3))!!
                         .click()
             }
+
             // to do add other regions as needed
             else -> {
                 Log.e(TAG, "region not found")
