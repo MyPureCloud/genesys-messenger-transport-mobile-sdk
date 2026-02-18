@@ -128,7 +128,7 @@ pipeline {
 
         stage("CI Unit Tests") {
             steps {
-                sh './gradlew :transport:test :transport:koverXmlReportDebug :transport:koverXmlReportRelease'
+                sh './gradlew test :transport:koverXmlReport'
                 jacoco classPattern: '**/kotlin-classes/debug,**/kotlin-classes/release', inclusionPattern: '**/*.class', sourcePattern: '**/src/*main/kotlin'
             }
         }
@@ -141,7 +141,7 @@ pipeline {
 
         stage("CI Build - transport Module debug") {
             steps {
-                sh './gradlew :transport:assembleDebug'
+                sh './gradlew :transport:assembleAndroidMain'
             }
         }
 
@@ -153,7 +153,7 @@ pipeline {
 
         stage("CI Build - transport Module release") {
             steps {
-                sh './gradlew :transport:assembleRelease'
+                sh './gradlew :transport:assembleAndroidMain'
             }
         }
 
@@ -226,11 +226,11 @@ pipeline {
             emailext attachLog: false, body: "Build Job: ${BUILD_URL}", recipientProviders: [culprits(), requestor(), brokenBuildSuspects()], subject: "Build failed: ${JOB_NAME}-${BUILD_NUMBER}"
         }
         always {
-            archiveArtifacts 'transport/build/reports/tests/testReleaseUnitTest/**/*.html, transport/build/reports/tests/testReleaseUnitTest/**/*.js, transport/build/reports/tests/testReleaseUnitTest/**/*.css'
-            junit 'transport/build/test-results/testReleaseUnitTest/*.xml'
+            archiveArtifacts 'transport/build/reports/tests/testAndroidHostTest/**/*.html, transport/build/reports/tests/testAndroidHostTest/**/*.js, transport/build/reports/tests/testAndroidHostTest/**/*.css'
+            junit 'transport/build/test-results/testAndroidHostTest/*.xml'
             script {
                 testResultToKnex {
-                    files = 'transport/build/test-results/testReleaseUnitTest/*.xml'
+                    files = 'transport/build/test-results/testAndroidHostTest/*.xml'
                     aut = 'KMM-Transport-SDK'
                     type = 'unit'
                     platform = 'junit'

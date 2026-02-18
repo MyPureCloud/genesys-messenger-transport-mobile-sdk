@@ -10,7 +10,12 @@ class TransportValidationPlugin : Plugin<Project> {
 
     override fun apply(target: Project) {
         target.tasks.create<DependencyValidatorTask>(ANDROIDX_VALIDATION_TASK_NAME) {
-            dependsOn("androidDependencies")
+            val androidDeps = target.tasks.findByName("androidDependencies")
+            if (androidDeps != null) {
+                dependsOn(androidDeps)
+            } else {
+                dependsOn("compileAndroidMain")
+            }
             failIfPresent("androidx")
         }
     }
