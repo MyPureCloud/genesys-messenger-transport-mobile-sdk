@@ -28,9 +28,9 @@ data class DeploymentConfig(
 data class Messenger(
     val enabled: Boolean,
     val apps: Apps,
-    val styles: Styles,
-    val launcherButton: LauncherButton,
-    val fileUpload: FileUpload,
+    val styles: Styles? = null,
+    val launcherButton: LauncherButton? = null,
+    val fileUpload: FileUpload? = null,
 )
 
 @Serializable
