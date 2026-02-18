@@ -273,26 +273,17 @@ class AuthHandlerTest {
                 ErrorCode.ClientResponseError(401),
                 ErrorTest.MESSAGE
             )
-        val expectedErrorCode = ErrorCode.ClientResponseError(401)
-        val expectedErrorMessage = ErrorTest.MESSAGE
-        val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
-
-        subject.logout()
+        val onLogoutFailureMock = mockk<() -> Unit>(relaxed = true)
+        subject.logout(onLogoutFailure = onLogoutFailureMock)
 
         coVerify {
             mockWebMessagingApi.logoutFromAuthenticatedSession(AuthTest.JWT_TOKEN)
         }
         verify {
-            mockLogger.e(capture(logSlot))
-            mockEventHandler.onEvent(
-                Event.Error(
-                    expectedErrorCode,
-                    expectedErrorMessage,
-                    expectedCorrectiveAction
-                )
-            )
+            onLogoutFailureMock.invoke()
+            fakeVault.remove(fakeVault.keys.tokenKey)
+            subject.clear()
         }
-        assertThat(logSlot.captured.invoke()).isEqualTo(LogMessages.requestError("logout()", ErrorCode.ClientResponseError(401), expectedErrorMessage))
     }
 
     @Test
@@ -302,26 +293,23 @@ class AuthHandlerTest {
                 ErrorCode.ClientResponseError(401),
                 ErrorTest.MESSAGE
             )
-        val expectedErrorCode = ErrorCode.ClientResponseError(401)
-        val expectedErrorMessage = ErrorTest.MESSAGE
-        val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
+        coEvery { mockWebMessagingApi.refreshAuthJwt(NO_JWT) } returns
+            Result.Failure(
+                ErrorCode.ClientResponseError(401),
+                ErrorTest.MESSAGE
+            )
 
-        subject.logout()
+        val onLogoutFailureMock = mockk<() -> Unit>(relaxed = true)
+        subject.logout(onLogoutFailure = onLogoutFailureMock)
 
         coVerify {
             mockWebMessagingApi.logoutFromAuthenticatedSession(NO_JWT)
         }
         verify {
-            mockLogger.e(capture(logSlot))
-            mockEventHandler.onEvent(
-                Event.Error(
-                    expectedErrorCode,
-                    expectedErrorMessage,
-                    expectedCorrectiveAction
-                )
-            )
+            onLogoutFailureMock.invoke()
+            fakeVault.remove(fakeVault.keys.tokenKey)
+            subject.clear()
         }
-        assertThat(logSlot.captured.invoke()).isEqualTo(LogMessages.requestError("logout()", expectedErrorCode, expectedErrorMessage))
     }
 
     @Test
@@ -336,7 +324,8 @@ class AuthHandlerTest {
         val expectedErrorMessage = ErrorTest.MESSAGE
         val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
 
-        subject.logout()
+        val onLogoutFailureMock = mockk<() -> Unit>(relaxed = true)
+        subject.logout(onLogoutFailure = onLogoutFailureMock)
 
         coVerify(exactly = 1) {
             mockWebMessagingApi.logoutFromAuthenticatedSession(AuthTest.JWT_TOKEN)
@@ -346,7 +335,9 @@ class AuthHandlerTest {
             mockWebMessagingApi.refreshAuthJwt(AuthTest.REFRESH_TOKEN)
         }
         verify(exactly = 1) {
-            mockLogger.e(capture(logSlot))
+            onLogoutFailureMock.invoke()
+        }
+        verify(exactly = 0) {
             mockEventHandler.onEvent(
                 Event.Error(
                     expectedErrorCode,
@@ -355,7 +346,39 @@ class AuthHandlerTest {
                 )
             )
         }
-        assertThat(logSlot.captured.invoke()).isEqualTo(LogMessages.requestError("logout()", ErrorCode.ClientResponseError(401), expectedErrorMessage))
+    }
+
+    @Test
+    fun `when authorized and logout() failed because of 401 and autoRefreshTokenWhenExpired is enabled but refreshToken() fails with 401`() {
+        authorize()
+        coEvery { mockWebMessagingApi.logoutFromAuthenticatedSession(AuthTest.JWT_TOKEN) } returns
+            Result.Failure(
+                ErrorCode.ClientResponseError(401),
+                ErrorTest.MESSAGE
+            )
+        coEvery { mockWebMessagingApi.refreshAuthJwt(AuthTest.REFRESH_TOKEN) } returns
+            Result.Failure(
+                ErrorCode.ClientResponseError(401),
+                ErrorTest.MESSAGE,
+            )
+        val expectedAuthJwt = AuthJwt(NO_JWT, NO_REFRESH_TOKEN)
+
+        val onLogoutFailureMock = mockk<() -> Unit>(relaxed = true)
+        subject.logout(onLogoutFailure = onLogoutFailureMock)
+
+        coVerify(exactly = 1) {
+            mockWebMessagingApi.logoutFromAuthenticatedSession(AuthTest.JWT_TOKEN)
+            mockWebMessagingApi.refreshAuthJwt(AuthTest.REFRESH_TOKEN)
+        }
+        verify {
+            onLogoutFailureMock.invoke()
+
+            fakeVault.remove(fakeVault.keys.tokenKey)
+            subject.clear()
+        }
+        assertThat(subject.jwt).isEqualTo(expectedAuthJwt.jwt)
+        assertThat(fakeVault.authRefreshToken).isEqualTo(expectedAuthJwt.refreshToken)
+        assertThat(fakeVault.wasAuthenticated).isFalse()
     }
 
     @Test
@@ -376,14 +399,16 @@ class AuthHandlerTest {
         val expectedErrorMessage = ErrorTest.MESSAGE
         val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
 
-        subject.logout()
+        val onLogoutFailureMock = mockk<() -> Unit>(relaxed = true)
+        subject.logout(onLogoutFailure = onLogoutFailureMock)
 
         coVerify(exactly = 1) {
             mockWebMessagingApi.logoutFromAuthenticatedSession(AuthTest.JWT_TOKEN)
             mockWebMessagingApi.refreshAuthJwt(AuthTest.REFRESH_TOKEN)
         }
         // Event is fired twice: once in performTokenRefresh and once in handleRequestError (logout)
-        coVerify(exactly = 2) {
+        verify(exactly = 1) {
+            onLogoutFailureMock.invoke()
             mockEventHandler.onEvent(
                 Event.Error(
                     expectedErrorCode,

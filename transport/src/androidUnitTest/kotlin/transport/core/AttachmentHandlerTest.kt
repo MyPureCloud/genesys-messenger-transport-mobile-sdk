@@ -5,6 +5,7 @@ import assertk.assertions.containsOnly
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isInstanceOf
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.Attachment
@@ -264,7 +265,12 @@ internal class AttachmentHandlerTest {
         val expectedState = State.Uploaded(expectedDownloadUrl)
         val expectedAttachment =
             Attachment(AttachmentValues.ID, AttachmentValues.FILE_NAME, null, expectedState)
-        val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(1))
+        val expectedProcessedAttachment =
+            ProcessedAttachment(
+                expectedAttachment,
+                ByteArray(1),
+                downloadUrl = expectedDownloadUrl
+            )
         givenPrepareCalled()
 
         subject.onUploadSuccess(givenUploadSuccessEvent)
@@ -295,9 +301,15 @@ internal class AttachmentHandlerTest {
 
     @Test
     fun `when detach() on uploaded attachment`() {
+        val expectedDownloadUrl = "http://somedownloadurl.com"
         val expectedAttachment =
             Attachment(AttachmentValues.ID, AttachmentValues.FILE_NAME, null, State.Detaching)
-        val expectedProcessedAttachment = ProcessedAttachment(expectedAttachment, ByteArray(1))
+        val expectedProcessedAttachment =
+            ProcessedAttachment(
+                expectedAttachment,
+                ByteArray(1),
+                downloadUrl = expectedDownloadUrl
+            )
         givenPrepareCalled()
         givenUploadSuccessCalled()
 
@@ -478,6 +490,7 @@ internal class AttachmentHandlerTest {
 
     @Test
     fun `when onSending() has uploaded attachment`() {
+        val expectedDownloadUrl = "http://somedownloadurl.com"
         val expectedAttachment =
             Attachment(
                 id = AttachmentValues.ID,
@@ -485,7 +498,7 @@ internal class AttachmentHandlerTest {
                 state = State.Sending
             )
         val expectedProcessedAttachment =
-            ProcessedAttachment(expectedAttachment, ByteArray(1))
+            ProcessedAttachment(expectedAttachment, ByteArray(1), downloadUrl = expectedDownloadUrl)
         givenPrepareCalled()
         givenUploadSuccessCalled()
 
@@ -575,6 +588,76 @@ internal class AttachmentHandlerTest {
         subject.clearAll()
 
         assertThat(processedAttachments).isEmpty()
+    }
+
+    @Test
+    fun `when resetSendingToUploaded() with attachment in Sending state`() {
+        val expectedDownloadUrl = "http://somedownloadurl.com"
+        val expectedState = State.Uploaded(expectedDownloadUrl)
+        val expectedAttachment =
+            Attachment(
+                id = AttachmentValues.ID,
+                fileName = AttachmentValues.FILE_NAME,
+                state = expectedState
+            )
+        givenPrepareCalled()
+        givenUploadSuccessCalled()
+        givenOnSendingCalled()
+
+        subject.resetAttachmentState()
+
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockAttachmentListener.invoke(capture(attachmentSlot))
+        }
+        assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
+        assertThat(attachmentSlot.captured.state).isEqualTo(expectedState)
+        // logSlot index: 0=prepare, 1=uploadSuccess, 2=onSending, 3=resetSendingToUploaded
+        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.RESET_SENDING_TO_UPLOADED)
+    }
+
+    @Test
+    fun `when resetSendingToUploaded() with attachment in Presigning state`() {
+        val expectedErrorCode = ErrorCode.AttachmentUploadInterrupted
+        val expectedErrorMessage = ErrorMessage.AttachmentUploadInterrupted
+        val expectedState = State.Error(expectedErrorCode, expectedErrorMessage)
+        val expectedAttachment =
+            Attachment(
+                id = AttachmentValues.ID,
+                state = expectedState
+            )
+        givenPrepareCalled()
+
+        subject.resetAttachmentState()
+
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockLogger.e(capture(logSlot))
+            mockAttachmentListener.invoke(capture(attachmentSlot))
+        }
+        assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
+        assertThat(attachmentSlot.captured.state).isInstanceOf(State.Error::class)
+        assertThat((attachmentSlot.captured.state as State.Error).errorCode).isEqualTo(expectedErrorCode)
+        // logSlot index: 0=prepare, 1=resetSendingToUploaded
+        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.RESET_SENDING_TO_UPLOADED)
+    }
+
+    @Test
+    fun `when resetSendingToUploaded() with attachment in Uploaded state does nothing`() {
+        givenPrepareCalled()
+        givenUploadSuccessCalled()
+
+        subject.resetAttachmentState()
+
+        verify {
+            mockLogger.i(capture(logSlot))
+        }
+        verify(exactly = 0) {
+            mockAttachmentListener.invoke(any())
+        }
+        // logSlot index: 0=prepare, 1=uploadSuccess, 2=resetSendingToUploaded
+        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.RESET_SENDING_TO_UPLOADED)
+        assertThat(processedAttachments[AttachmentValues.ID]?.attachment?.state is State.Uploaded).isTrue()
     }
 
     @Test

@@ -354,7 +354,9 @@ internal class MessagingClientImpl(
     }
 
     override fun logoutFromAuthenticatedSession() {
-        authHandler.logout()
+        authHandler.logout {
+            performLogout()
+        }
     }
 
     override fun shouldAuthorize(callback: (Boolean) -> Unit) {
@@ -532,14 +534,12 @@ internal class MessagingClientImpl(
             -> {
                 if ((code as? ErrorCode.ClientResponseError)?.value == 403) {
                     message?.run {
-                        if (startsWith(ErrorMessage.SessionAuthFailed, true)) {
+                        if (startsWith(ErrorMessage.SessionAuthFailed, true) ||
+                            startsWith(ErrorMessage.TryAuthenticateAgain, true)
+                        ) {
+                            attachmentHandler.resetAttachmentState()
                             eventHandler.onEvent(Event.AuthorizationRequired)
                             stateMachine.onReconnect()
-                            return
-                        } else if (startsWith(ErrorMessage.TryAuthenticateAgain, true)) {
-                            eventHandler.onEvent(Event.AuthorizationRequired)
-                            stateMachine.onReconnect()
-
                             return
                         }
                     }
@@ -779,6 +779,14 @@ internal class MessagingClientImpl(
             log = log.withTag(LogTag.WEBSOCKET)
         )
 
+    private fun performLogout() {
+        invalidateSessionToken()
+        vault.wasAuthenticated = false
+        authHandler.clear()
+        eventHandler.onEvent(Event.Logout)
+        disconnect()
+    }
+
     private inner class SocketListener(
         private val log: Log,
     ) : PlatformSocketListener {
@@ -878,11 +886,7 @@ internal class MessagingClientImpl(
                     }
 
                     is LogoutEvent -> {
-                        invalidateSessionToken()
-                        vault.wasAuthenticated = false
-                        authHandler.clear()
-                        eventHandler.onEvent(Event.Logout)
-                        disconnect()
+                        performLogout()
                     }
 
                     is SessionClearedEvent -> {
