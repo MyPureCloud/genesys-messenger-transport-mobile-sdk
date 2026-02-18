@@ -50,6 +50,12 @@ internal class SessionDurationHandler(
             action = { onHealthCheckTimerFired() },
             dispatcher = dispatcher
         )
+    private val expirationHealthCheckTimer: ActionTimer =
+        ActionTimer(
+            log = log,
+            action = { triggerHealthCheck() },
+            dispatcher = dispatcher
+        )
 
     /**
      * Updates the session duration parameters.
@@ -133,6 +139,17 @@ internal class SessionDurationHandler(
         sessionExpirationNoticeSent = true
         log.i { LogMessages.sessionExpirationNoticeSent(expiresInSeconds) }
         eventHandler.onEvent(Event.SessionExpirationNotice(expiresInSeconds))
+        scheduleExpirationHealthCheck(expiresInSeconds)
+    }
+
+    private fun scheduleExpirationHealthCheck(expiresInSeconds: Long) {
+        val delayMillis = expiresInSeconds * 1000
+        if (delayMillis > 0) {
+            log.i { LogMessages.schedulingExpirationHealthCheck(delayMillis) }
+            expirationHealthCheckTimer.start(delayMillis)
+        } else {
+            triggerHealthCheck()
+        }
     }
 
     private fun calculateTimeToExpiration(): Long {
@@ -158,6 +175,7 @@ internal class SessionDurationHandler(
         if (sessionExpirationNoticeSent) {
             log.i { LogMessages.REMOVING_SESSION_EXPIRATION_NOTICE }
             sessionExpirationNoticeSent = false
+            expirationHealthCheckTimer.cancel()
             eventHandler.onEvent(Event.RemoveSessionExpirationNotice)
             currentExpirationDate = updatedExpirationDate
             updateSessionDuration(null, updatedExpirationDate)
@@ -186,5 +204,6 @@ internal class SessionDurationHandler(
         sessionExpirationNoticeSent = false
         expirationTimer.cancel()
         healthCheckTimer.cancel()
+        expirationHealthCheckTimer.cancel()
     }
 }
