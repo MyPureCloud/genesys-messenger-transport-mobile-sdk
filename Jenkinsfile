@@ -129,7 +129,12 @@ pipeline {
         stage("CI Unit Tests") {
             steps {
                 sh './gradlew test :transport:koverXmlReport'
-                jacoco classPattern: '**/kotlin-classes/debug,**/kotlin-classes/release', inclusionPattern: '**/*.class', sourcePattern: '**/src/*main/kotlin'
+                jacoco(
+                    execPattern: 'transport/build/kover/bin-reports/*.exec',
+                    classPattern: 'transport/build/classes/kotlin/android/main',
+                    sourcePattern: 'transport/src/commonMain/kotlin,transport/src/androidMain/kotlin',
+                    inclusionPattern: '**/*.class'
+                )
             }
         }
 
