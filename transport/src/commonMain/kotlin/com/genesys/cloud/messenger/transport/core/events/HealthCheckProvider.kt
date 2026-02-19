@@ -16,6 +16,15 @@ internal class HealthCheckProvider(
 ) {
     private var lastSentHealthCheckTimestamp = 0L
 
+    fun remainingCooldownMillis(): Long {
+        val delta = getCurrentTimestamp() - lastSentHealthCheckTimestamp
+        return if (delta > HEALTH_CHECK_COOL_DOWN_MILLISECONDS) {
+            0L
+        } else {
+            HEALTH_CHECK_COOL_DOWN_MILLISECONDS - delta
+        }
+    }
+
     @Throws(Exception::class)
     fun encodeRequest(token: String): String? {
         val currentTimestamp = getCurrentTimestamp()

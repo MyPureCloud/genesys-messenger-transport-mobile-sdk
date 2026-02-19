@@ -44,6 +44,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.GetAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
+import com.genesys.cloud.messenger.transport.util.ActionTimer
 import com.genesys.cloud.messenger.transport.util.DURATION_SECONDS_KEY
 import com.genesys.cloud.messenger.transport.util.EXPIRATION_DATE_KEY
 import com.genesys.cloud.messenger.transport.util.Platform
@@ -129,6 +130,11 @@ internal class MessagingClientImpl(
     private var reconfigureAttempts = 0
     private var sendingAutostart = false
     private var clearingConversation = false
+    private val healthCheckRetriggerTimer: ActionTimer = ActionTimer(
+        log = log.withTag(LogTag.HEALTH_CHECK_PROVIDER),
+        action = { sendSafeHealthCheck() },
+        dispatcher = defaultDispatcher
+    )
 
     override val currentState: State
         get() {
@@ -284,8 +290,19 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun sendHealthCheck() {
         healthCheckProvider.encodeRequest(token)?.let {
+            healthCheckRetriggerTimer.cancel()
             log.i { LogMessages.SEND_HEALTH_CHECK }
             send(it)
+        } ?: scheduleHealthCheckRetrigger()
+    }
+
+    private fun scheduleHealthCheckRetrigger() {
+        if (!healthCheckRetriggerTimer.isActive()) {
+            val remainingCooldown = healthCheckProvider.remainingCooldownMillis()
+            if (remainingCooldown > 0) {
+                log.i { LogMessages.schedulingHealthCheckRetrigger(remainingCooldown) }
+                healthCheckRetriggerTimer.start(remainingCooldown)
+            }
         }
     }
 
@@ -709,6 +726,7 @@ internal class MessagingClientImpl(
         messageStore.clear()
         userTypingProvider.clear()
         healthCheckProvider.clear()
+        healthCheckRetriggerTimer.cancel()
         attachmentHandler.clearAll()
         reconnectionHandler.clear()
         jwtHandler.clear()

@@ -165,6 +165,9 @@ internal object LogMessages {
 
     fun healthCheckCoolDown(milliseconds: Long) = "Health check can be sent only once every $milliseconds milliseconds."
 
+    fun schedulingHealthCheckRetrigger(delayMillis: Long) =
+        "Scheduling health check retrigger in $delayMillis ms"
+
     fun deactivateWithCloseCode(
         code: Int,
         reason: String?
