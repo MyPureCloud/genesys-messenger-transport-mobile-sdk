@@ -128,12 +128,12 @@ pipeline {
 
         stage("CI Unit Tests") {
             steps {
-                sh './gradlew test :transport:koverXmlReport'
-                jacoco(
-                    execPattern: 'transport/build/kover/bin-reports/*.exec',
-                    classPattern: 'transport/build/classes/kotlin/android/main',
-                    sourcePattern: 'transport/src/commonMain/kotlin,transport/src/androidMain/kotlin',
-                    inclusionPattern: '**/*.class'
+                sh './gradlew test :transport:koverXmlReport :transport:koverHtmlReport'
+                // Use Kover's JaCoCo XML report (transport only). The jacoco() step expects .exec + class dirs
+                // and does not match KMP/Kover layout; publishCoverage reads the XML directly for correct coverage.
+                publishCoverage(
+                    adapters: [jacocoAdapter(path: 'transport/build/reports/kover/report.xml')],
+                    sourceDirectories: [[path: 'transport/src/commonMain/kotlin'], [path: 'transport/src/androidMain/kotlin']]
                 )
             }
         }
@@ -231,7 +231,7 @@ pipeline {
             emailext attachLog: false, body: "Build Job: ${BUILD_URL}", recipientProviders: [culprits(), requestor(), brokenBuildSuspects()], subject: "Build failed: ${JOB_NAME}-${BUILD_NUMBER}"
         }
         always {
-            archiveArtifacts 'transport/build/reports/tests/testAndroidHostTest/**/*.html, transport/build/reports/tests/testAndroidHostTest/**/*.js, transport/build/reports/tests/testAndroidHostTest/**/*.css'
+            archiveArtifacts 'transport/build/reports/tests/testAndroidHostTest/**/*.html, transport/build/reports/tests/testAndroidHostTest/**/*.js, transport/build/reports/tests/testAndroidHostTest/**/*.css, transport/build/reports/kover/report.xml, transport/build/reports/kover/html/**'
             junit 'transport/build/test-results/testAndroidHostTest/*.xml'
             script {
                 testResultToKnex {
