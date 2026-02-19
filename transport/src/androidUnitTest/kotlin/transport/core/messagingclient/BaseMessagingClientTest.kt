@@ -49,6 +49,11 @@ import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.spyk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 import transport.util.Request
 import transport.util.Response
 import transport.util.fromConnectedToConfigured
@@ -57,8 +62,16 @@ import transport.util.fromConnectingToConnected
 import transport.util.fromIdleToConnecting
 import kotlin.reflect.KProperty0
 import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 
+@OptIn(ExperimentalCoroutinesApi::class)
 open class BaseMessagingClientTest {
+    private val testDispatcher = UnconfinedTestDispatcher()
+
+    @BeforeTest
+    fun setUpDispatchers() {
+        Dispatchers.setMain(testDispatcher)
+    }
     private var testToken = Request.token
     internal val slot = slot<PlatformSocketListener>()
     protected val mockStateChangedListener: (StateChange) -> Unit = spyk()
@@ -245,7 +258,10 @@ open class BaseMessagingClientTest {
         }
 
     @AfterTest
-    fun after() = clearAllMocks()
+    fun after() {
+        clearAllMocks()
+        Dispatchers.resetMain()
+    }
 
     protected fun MockKVerificationScope.fromIdleToConnectedSequence() {
         mockLogger.withTag(LogTag.STATE_MACHINE)

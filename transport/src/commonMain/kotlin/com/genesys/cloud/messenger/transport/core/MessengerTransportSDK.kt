@@ -17,6 +17,8 @@ import com.genesys.cloud.messenger.transport.util.Urls
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * The entry point to the services provided by the transport SDK.
@@ -118,11 +120,19 @@ class MessengerTransportSDK(
      */
     @Throws(Exception::class)
     suspend fun fetchDeploymentConfig(): DeploymentConfig {
-        return DeploymentConfigUseCase(
-            urls.deploymentConfigUrl.toString(),
-            defaultHttpClient(configuration.logging)
-        ).fetch().also {
-            deploymentConfig = it
+        // Wrap the entire body in withContext(Dispatchers.Main) so both success and error paths
+        // complete on the main thread. Kotlin/Native's ObjCExportCoroutines calls the Swift
+        // completion handler on the same dispatcher the coroutine completes on. Swift 6 strict
+        // concurrency requires this callback to originate from the main thread to avoid a
+        // cross-isolation-boundary crash. The HTTP request itself still executes on Ktor's IO
+        // dispatcher; only coroutine resumption is forced onto Main.
+        return withContext(Dispatchers.Main) {
+            val result = DeploymentConfigUseCase(
+                urls.deploymentConfigUrl.toString(),
+                defaultHttpClient(configuration.logging)
+            ).fetch()
+            deploymentConfig = result
+            result
         }
     }
 

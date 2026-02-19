@@ -60,6 +60,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
 import kotlin.reflect.KProperty0
 
@@ -328,8 +329,13 @@ internal class MessagingClientImpl(
 
     @Throws(Exception::class)
     override suspend fun fetchNextPage() {
-        stateMachine.checkIfConfiguredOrReadOnly()
-        historyHandler.fetchNextPage()
+        // Dispatch on Main before returning to ObjC. Swift 6 strict concurrency requires the
+        // completion handler to be called from the main thread to prevent a cross-isolation crash
+        // in Kotlin/Native's ObjCExportCoroutines machinery.
+        withContext(Dispatchers.Main) {
+            stateMachine.checkIfConfiguredOrReadOnly()
+            historyHandler.fetchNextPage()
+        }
     }
 
     override fun logoutFromAuthenticatedSession() {
