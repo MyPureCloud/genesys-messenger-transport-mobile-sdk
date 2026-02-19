@@ -128,8 +128,13 @@ pipeline {
 
         stage("CI Unit Tests") {
             steps {
-                sh './gradlew :transport:test :transport:koverXmlReportDebug :transport:koverXmlReportRelease'
-                jacoco classPattern: '**/kotlin-classes/debug,**/kotlin-classes/release', inclusionPattern: '**/*.class', sourcePattern: '**/src/*main/kotlin'
+                sh './gradlew test :transport:koverXmlReport :transport:koverHtmlReport'
+                // Use Kover's JaCoCo XML report (transport only). The jacoco() step expects .exec + class dirs
+                // and does not match KMP/Kover layout; publishCoverage reads the XML directly for correct coverage.
+                publishCoverage(
+                    adapters: [jacocoAdapter(path: 'transport/build/reports/kover/report.xml')],
+                    sourceDirectories: [[path: 'transport/src/commonMain/kotlin'], [path: 'transport/src/androidMain/kotlin']]
+                )
             }
         }
 
@@ -141,7 +146,7 @@ pipeline {
 
         stage("CI Build - transport Module debug") {
             steps {
-                sh './gradlew :transport:assembleDebug'
+                sh './gradlew :transport:assembleAndroidMain'
             }
         }
 
@@ -153,7 +158,7 @@ pipeline {
 
         stage("CI Build - transport Module release") {
             steps {
-                sh './gradlew :transport:assembleRelease'
+                sh './gradlew :transport:assembleAndroidMain'
             }
         }
 
@@ -226,11 +231,11 @@ pipeline {
             emailext attachLog: false, body: "Build Job: ${BUILD_URL}", recipientProviders: [culprits(), requestor(), brokenBuildSuspects()], subject: "Build failed: ${JOB_NAME}-${BUILD_NUMBER}"
         }
         always {
-            archiveArtifacts 'transport/build/reports/tests/testReleaseUnitTest/**/*.html, transport/build/reports/tests/testReleaseUnitTest/**/*.js, transport/build/reports/tests/testReleaseUnitTest/**/*.css'
-            junit 'transport/build/test-results/testReleaseUnitTest/*.xml'
+            archiveArtifacts 'transport/build/reports/tests/testAndroidHostTest/**/*.html, transport/build/reports/tests/testAndroidHostTest/**/*.js, transport/build/reports/tests/testAndroidHostTest/**/*.css, transport/build/reports/kover/report.xml, transport/build/reports/kover/html/**'
+            junit 'transport/build/test-results/testAndroidHostTest/*.xml'
             script {
                 testResultToKnex {
-                    files = 'transport/build/test-results/testReleaseUnitTest/*.xml'
+                    files = 'transport/build/test-results/testAndroidHostTest/*.xml'
                     aut = 'KMM-Transport-SDK'
                     type = 'unit'
                     platform = 'junit'
