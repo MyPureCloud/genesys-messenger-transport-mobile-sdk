@@ -14,7 +14,7 @@ object InternalConfigurationFactory {
      * @param reconnectionTimeoutInSeconds period of time during which Transport will try to reconnect.
      * @param autoRefreshTokenWhenExpired indicates if Transport should auto refresh auth token if expired.
      * @param encryptedVault indicates if encrypted vault should be used.
-     * @param minimumTlsVersion the minimum TLS protocol version for secure connections (iOS only).
+     * @param minimumTlsVersion the minimum TLS protocol version for WebSocket connections (iOS only). Does not affect HTTP REST calls.
      * @return Configuration instance with proper application parameter formatting.
      */
     fun create(

@@ -6,7 +6,7 @@ package com.genesys.cloud.messenger.transport.core
  * @param logging indicates if logging should be enabled.
  * @param reconnectionTimeoutInSeconds period of time during which Transport will try to reconnect to the web socket in case of connectivity lost.
  * @param autoRefreshTokenWhenExpired indicates if Transport should auto refresh auth token if it was expired.
- * @param minimumTlsVersion the minimum TLS protocol version for secure connections (iOS only). Default is [TlsVersion.SYSTEM_DEFAULT] for backward compatibility.
+ * @param minimumTlsVersion the minimum TLS protocol version for WebSocket connections (iOS only). Does not affect HTTP REST calls. Default is [TlsVersion.SYSTEM_DEFAULT] for backward compatibility.
  */
 data class Configuration(
     val deploymentId: String,

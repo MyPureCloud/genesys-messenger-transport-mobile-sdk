@@ -1,9 +1,11 @@
 package com.genesys.cloud.messenger.transport.core
 
 /**
- * Represents the minimum TLS protocol version to use for secure connections.
+ * Represents the minimum TLS protocol version to enforce for WebSocket connections.
  *
- * This configuration is currently only applicable to iOS WebSocket connections.
+ * This configuration applies only to the iOS WebSocket connection (NSURLSession).
+ * It does not affect HTTP REST calls (e.g., deployment config, attachments) which
+ * use a separate HTTP client with system-default TLS settings.
  * On Android, the platform handles TLS version negotiation automatically.
  *
  * Note: Genesys Cloud backend has not supported TLS versions below 1.2 since July 2020.
