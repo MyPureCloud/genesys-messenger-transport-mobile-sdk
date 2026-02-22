@@ -55,7 +55,7 @@ class InternalConfigurationFactoryTest {
     }
 
     @Test
-    fun `when creating configuration with minimumTlsVersion it should be threaded to Configuration`() {
+    fun `when creating configuration with minimumTlsVersion it should be propagated to Configuration`() {
         val config =
             InternalConfigurationFactory.create(
                 deploymentId = "test-deployment",

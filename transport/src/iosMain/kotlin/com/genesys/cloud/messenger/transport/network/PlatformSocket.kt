@@ -28,7 +28,6 @@ import platform.Foundation.NSURLSessionWebSocketDelegateProtocol
 import platform.Foundation.NSURLSessionWebSocketMessage
 import platform.Foundation.NSURLSessionWebSocketTask
 import platform.Foundation.setValue
-import platform.Security.tls_protocol_version_t
 import platform.Security.tls_protocol_version_TLSv12
 import platform.Security.tls_protocol_version_TLSv13
 import platform.darwin.NSObject
@@ -61,8 +60,16 @@ internal actual class PlatformSocket actual constructor(
         urlRequest.setValue(Platform().platform, forHTTPHeaderField = "User-Agent")
         urlRequest.setTimeoutInterval(TIMEOUT_INTERVAL)
         val sessionConfig = NSURLSessionConfiguration.defaultSessionConfiguration()
-        if (minimumTlsVersion != TlsVersion.SYSTEM_DEFAULT) {
-            sessionConfig.TLSMinimumSupportedProtocolVersion = minimumTlsVersion.toTlsProtocolVersion()
+        when (minimumTlsVersion) {
+            TlsVersion.SYSTEM_DEFAULT -> {}
+            TlsVersion.TLS_1_2 -> {
+                log.i { "Configuring minimum TLS version: TLS 1.2" }
+                sessionConfig.TLSMinimumSupportedProtocolVersion = tls_protocol_version_TLSv12
+            }
+            TlsVersion.TLS_1_3 -> {
+                log.i { "Configuring minimum TLS version: TLS 1.3" }
+                sessionConfig.TLSMinimumSupportedProtocolVersion = tls_protocol_version_TLSv13
+            }
         }
         val urlSession =
             NSURLSession.sessionWithConfiguration(
@@ -232,12 +239,6 @@ internal actual class PlatformSocket actual constructor(
             )
         }
     }
-}
-
-private fun TlsVersion.toTlsProtocolVersion(): tls_protocol_version_t = when (this) {
-    TlsVersion.SYSTEM_DEFAULT -> error("SYSTEM_DEFAULT should not be converted to tls_protocol_version_t")
-    TlsVersion.TLS_1_2 -> tls_protocol_version_TLSv12
-    TlsVersion.TLS_1_3 -> tls_protocol_version_TLSv13
 }
 
 private fun NSError.toTransportErrorCode(): ErrorCode =
