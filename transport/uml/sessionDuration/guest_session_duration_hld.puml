@@ -42,7 +42,7 @@ SessionDurationHandler -> SessionDurationHandler: handleExpirationDateChange(exp
 alt handleExpirationDateChange()
     SessionDurationHandler -> SessionDurationHandler: scheduleHealthCheckTimer(expirationNoticeDelayMillis)
     rnote over SessionDurationHandler
-        This timer will be trigger 10 seconds before the schedule expiration notice event is set.
+        This timer will be triggered 10 seconds before the schedule expiration notice event is set.
     end rnote
     SessionDurationHandler -> SessionDurationHandler: scheduleExpirationNoticeTimer(expirationNoticeDelayMillis)
 
@@ -52,7 +52,7 @@ alt handleExpirationDateChange()
     Shyrka [#999]--> MessagingClient: Health check response \n(StructuredMessage(metadata = {**sessionDuration =..., expirationDate=;;;})**)
     rnote over MessagingClient
         New values in health check response:
-        * durationSeconds (no supposed to change)
+        * durationSeconds not supposed to change)
         * expirationDate
     end rnote
     MessagingClient -> SessionDurationHandler: updateSessionDuration(durationSeconds, expirationDate)
@@ -69,8 +69,8 @@ alt handleExpirationDateChange()
         MessagingClient -> App: eventListener.onEvent(SessionExpirationNotice(expiresInSeconds))
         SessionDurationHandler -> SessionDurationHandler: scheduleExpirationHealthCheck(expiresInSeconds)
         rnote over SessionDurationHandler
-            If there is no any new messages, when triggered the session should be expired already,
-             so the session expired flow (detailed down below) will started.
+            If no new messages arrive, the session will have expired by the time this fires,
+             triggering the session expired flow (detailed below).
         end rnote
     end
 end
@@ -108,7 +108,8 @@ alt Session Expired (Health Check Response)
     MessagingClient -> MessagingClient: transitionToStateError()
     MessagingClient -> SessionDurationHandler: clearAndRemoveNotice()
     alt SessionExpirationNotice was shown
-        SessionDurationHandler --> App: eventHandler.onEvent(RemoveSessionExpirationNotice)
+        SessionDurationHandler --> MessagingClient: onRemoveExpirationNotice
+        MessagingClient -> App: eventListener.onEvent(RemoveSessionExpirationNotice)
     end
     SessionDurationHandler -> SessionDurationHandler: clear()
     rnote over SessionDurationHandler
