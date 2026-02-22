@@ -59,15 +59,16 @@ object InternalConfigurationFactory {
         reconnectionTimeoutInSeconds: Long,
         autoRefreshTokenWhenExpired: Boolean,
         encryptedVault: Boolean
-    ): Configuration = create(
-        deploymentId = deploymentId,
-        domain = domain,
-        applicationType = applicationType,
-        applicationVersion = applicationVersion,
-        logging = logging,
-        reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
-        autoRefreshTokenWhenExpired = autoRefreshTokenWhenExpired,
-        encryptedVault = encryptedVault,
-        minimumTlsVersion = TlsVersion.SYSTEM_DEFAULT
-    )
+    ): Configuration =
+        create(
+            deploymentId = deploymentId,
+            domain = domain,
+            applicationType = applicationType,
+            applicationVersion = applicationVersion,
+            logging = logging,
+            reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
+            autoRefreshTokenWhenExpired = autoRefreshTokenWhenExpired,
+            encryptedVault = encryptedVault,
+            minimumTlsVersion = TlsVersion.SYSTEM_DEFAULT
+        )
 }
