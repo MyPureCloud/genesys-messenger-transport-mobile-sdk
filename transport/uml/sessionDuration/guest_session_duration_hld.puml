@@ -118,6 +118,6 @@ alt Session Expired (Health Check Response)
       * healthCheckTimer
       * expirationHealthCheckTimer
     end rnote
-    MessagingClient --> App: stateChangedListener(State.Error(SessionHasExpired))
+    MessagingClient [#999]--> App: stateChangedListener(State.Error(SessionHasExpired))
 end
 @enduml
