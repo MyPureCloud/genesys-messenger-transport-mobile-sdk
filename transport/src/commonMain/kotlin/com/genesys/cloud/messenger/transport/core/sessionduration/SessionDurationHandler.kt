@@ -33,6 +33,10 @@ internal class SessionDurationHandler(
     private var triggerHealthCheck: () -> Unit = {},
     dispatcher: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
 ) {
+    private companion object {
+        const val EXPIRATION_HEALTH_CHECK_BUFFER_SECONDS = 10L
+    }
+
     private var currentDurationSeconds: Long? = null
     private var currentExpirationDate: Long? = null
     private var updatedExpirationDate: Long? = null
@@ -139,7 +143,8 @@ internal class SessionDurationHandler(
         sessionExpirationNoticeSent = true
         log.i { LogMessages.sessionExpirationNoticeSent(expiresInSeconds) }
         eventHandler.onEvent(Event.SessionExpirationNotice(expiresInSeconds))
-        scheduleExpirationHealthCheck(expiresInSeconds)
+        log.i { LogMessages.schedulingExpirationHealthCheckWithBuffer(expiresInSeconds, EXPIRATION_HEALTH_CHECK_BUFFER_SECONDS) }
+        scheduleExpirationHealthCheck(expiresInSeconds + EXPIRATION_HEALTH_CHECK_BUFFER_SECONDS)
     }
 
     private fun scheduleExpirationHealthCheck(expiresInSeconds: Long) {
