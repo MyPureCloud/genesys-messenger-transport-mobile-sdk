@@ -144,7 +144,7 @@ pipeline {
             }
         }
 
-        stage("CI Build - transport Module debug") {
+        stage("CI Build - transport Module Android - debug and release") {
             steps {
                 sh './gradlew :transport:assembleAndroidMain'
             }
@@ -156,9 +156,9 @@ pipeline {
             }
         }
 
-        stage("CI Build - transport Module release") {
+        stage("CI Build - transport Module iOS - debug and release") {
             steps {
-                sh './gradlew :transport:assembleAndroidMain'
+                sh './gradlew :transport:assembleMessengerTransportXCFramework'
             }
         }
 
