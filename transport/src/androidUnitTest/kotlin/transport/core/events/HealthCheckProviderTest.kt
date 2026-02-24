@@ -44,12 +44,13 @@ class HealthCheckProviderTest {
         logSlot.clear()
         clearMocks(mockLogger, mockTimestampFunction)
         every { mockTimestampFunction.invoke() } answers { Platform().epochMillis() }
-        subject = HealthCheckProvider(
-            log = mockLogger,
-            getCurrentTimestamp = mockTimestampFunction,
-            triggerHealthCheck = { healthCheckTriggered = true },
-            dispatcher = testScope
-        )
+        subject =
+            HealthCheckProvider(
+                log = mockLogger,
+                getCurrentTimestamp = mockTimestampFunction,
+                triggerHealthCheck = { healthCheckTriggered = true },
+                dispatcher = testScope
+            )
     }
 
     @Test
@@ -125,106 +126,112 @@ class HealthCheckProviderTest {
     }
 
     @Test
-    fun `when deferred health check timer fires then triggers callback`() = testScope.runTest {
-        val baseTime = Platform().epochMillis()
-        var currentTime = baseTime
-        every { mockTimestampFunction.invoke() } answers { currentTime }
+    fun `when deferred health check timer fires then triggers callback`() =
+        testScope.runTest {
+            val baseTime = Platform().epochMillis()
+            var currentTime = baseTime
+            every { mockTimestampFunction.invoke() } answers { currentTime }
 
-        subject.encodeRequest(token = Request.token)
-        assertFalse(healthCheckTriggered)
+            subject.encodeRequest(token = Request.token)
+            assertFalse(healthCheckTriggered)
 
-        currentTime = baseTime + 10000
-        subject.encodeRequest(token = Request.token)
+            currentTime = baseTime + 10000
+            subject.encodeRequest(token = Request.token)
 
-        assertFalse(healthCheckTriggered)
+            assertFalse(healthCheckTriggered)
 
-        advanceTimeBy(HEALTH_CHECK_COOL_DOWN_MILLISECONDS)
+            advanceTimeBy(HEALTH_CHECK_COOL_DOWN_MILLISECONDS)
 
-        assertTrue(healthCheckTriggered)
-    }
-
-    @Test
-    fun `when clear called then cancels deferred health check timer`() = testScope.runTest {
-        val baseTime = Platform().epochMillis()
-        var currentTime = baseTime
-        every { mockTimestampFunction.invoke() } answers { currentTime }
-
-        subject.encodeRequest(token = Request.token)
-
-        currentTime = baseTime + 10000
-        subject.encodeRequest(token = Request.token)
-
-        subject.clear()
-
-        advanceTimeBy(HEALTH_CHECK_COOL_DOWN_MILLISECONDS)
-
-        assertFalse(healthCheckTriggered)
-    }
+            assertTrue(healthCheckTriggered)
+        }
 
     @Test
-    fun `when encodeRequest() called multiple times during cooldown then only one deferred timer is active`() = testScope.runTest {
-        var triggerCount = 0
-        val baseTime = Platform().epochMillis()
-        var currentTime = baseTime
-        every { mockTimestampFunction.invoke() } answers { currentTime }
+    fun `when clear called then cancels deferred health check timer`() =
+        testScope.runTest {
+            val baseTime = Platform().epochMillis()
+            var currentTime = baseTime
+            every { mockTimestampFunction.invoke() } answers { currentTime }
 
-        val customSubject = HealthCheckProvider(
-            log = mockLogger,
-            getCurrentTimestamp = mockTimestampFunction,
-            triggerHealthCheck = { triggerCount++ },
-            dispatcher = testScope
-        )
+            subject.encodeRequest(token = Request.token)
 
-        customSubject.encodeRequest(token = Request.token)
+            currentTime = baseTime + 10000
+            subject.encodeRequest(token = Request.token)
 
-        currentTime = baseTime + 5000
-        customSubject.encodeRequest(token = Request.token)
+            subject.clear()
 
-        currentTime = baseTime + 10000
-        customSubject.encodeRequest(token = Request.token)
+            advanceTimeBy(HEALTH_CHECK_COOL_DOWN_MILLISECONDS)
 
-        currentTime = baseTime + 15000
-        customSubject.encodeRequest(token = Request.token)
-
-        advanceTimeBy(HEALTH_CHECK_COOL_DOWN_MILLISECONDS)
-
-        assertThat(triggerCount).isEqualTo(1)
-    }
+            assertFalse(healthCheckTriggered)
+        }
 
     @Test
-    fun `when setTriggerHealthCheck then uses new callback for deferred health check`() = testScope.runTest {
-        var newCallbackTriggered = false
-        val baseTime = Platform().epochMillis()
-        var currentTime = baseTime
-        every { mockTimestampFunction.invoke() } answers { currentTime }
+    fun `when encodeRequest() called multiple times during cooldown then only one deferred timer is active`() =
+        testScope.runTest {
+            var triggerCount = 0
+            val baseTime = Platform().epochMillis()
+            var currentTime = baseTime
+            every { mockTimestampFunction.invoke() } answers { currentTime }
 
-        subject.encodeRequest(token = Request.token)
+            val customSubject =
+                HealthCheckProvider(
+                    log = mockLogger,
+                    getCurrentTimestamp = mockTimestampFunction,
+                    triggerHealthCheck = { triggerCount++ },
+                    dispatcher = testScope
+                )
 
-        subject.setTriggerHealthCheck { newCallbackTriggered = true }
+            customSubject.encodeRequest(token = Request.token)
 
-        currentTime = baseTime + 10000
-        subject.encodeRequest(token = Request.token)
+            currentTime = baseTime + 5000
+            customSubject.encodeRequest(token = Request.token)
 
-        advanceTimeBy(HEALTH_CHECK_COOL_DOWN_MILLISECONDS)
+            currentTime = baseTime + 10000
+            customSubject.encodeRequest(token = Request.token)
 
-        assertFalse(healthCheckTriggered)
-        assertTrue(newCallbackTriggered)
-    }
+            currentTime = baseTime + 15000
+            customSubject.encodeRequest(token = Request.token)
+
+            advanceTimeBy(HEALTH_CHECK_COOL_DOWN_MILLISECONDS)
+
+            assertThat(triggerCount).isEqualTo(1)
+        }
 
     @Test
-    fun `when deferred timer fires and cooldown has passed then health check is triggered`() = testScope.runTest {
-        val baseTime = Platform().epochMillis()
-        var currentTime = baseTime
-        every { mockTimestampFunction.invoke() } answers { currentTime }
+    fun `when setTriggerHealthCheck then uses new callback for deferred health check`() =
+        testScope.runTest {
+            var newCallbackTriggered = false
+            val baseTime = Platform().epochMillis()
+            var currentTime = baseTime
+            every { mockTimestampFunction.invoke() } answers { currentTime }
 
-        subject.encodeRequest(token = Request.token)
+            subject.encodeRequest(token = Request.token)
 
-        currentTime = baseTime + 20000
-        val remainingCooldown = HEALTH_CHECK_COOL_DOWN_MILLISECONDS - 20000
-        subject.encodeRequest(token = Request.token)
+            subject.setTriggerHealthCheck { newCallbackTriggered = true }
 
-        advanceTimeBy(remainingCooldown + 100)
+            currentTime = baseTime + 10000
+            subject.encodeRequest(token = Request.token)
 
-        assertTrue(healthCheckTriggered)
-    }
+            advanceTimeBy(HEALTH_CHECK_COOL_DOWN_MILLISECONDS)
+
+            assertFalse(healthCheckTriggered)
+            assertTrue(newCallbackTriggered)
+        }
+
+    @Test
+    fun `when deferred timer fires and cooldown has passed then health check is triggered`() =
+        testScope.runTest {
+            val baseTime = Platform().epochMillis()
+            var currentTime = baseTime
+            every { mockTimestampFunction.invoke() } answers { currentTime }
+
+            subject.encodeRequest(token = Request.token)
+
+            currentTime = baseTime + 20000
+            val remainingCooldown = HEALTH_CHECK_COOL_DOWN_MILLISECONDS - 20000
+            subject.encodeRequest(token = Request.token)
+
+            advanceTimeBy(remainingCooldown + 100)
+
+            assertTrue(healthCheckTriggered)
+        }
 }
