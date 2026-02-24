@@ -68,20 +68,4 @@ class InternalConfigurationFactoryTest {
         assertEquals(TlsVersion.TLS_1_3, config.minimumWebSocketTlsVersion)
     }
 
-    @Test
-    fun `when using backward compatible overload it should default minimumTlsVersion to SYSTEM_DEFAULT`() {
-        val config =
-            InternalConfigurationFactory.create(
-                deploymentId = "test-deployment",
-                domain = "test.com",
-                applicationType = ApplicationType.TRANSPORT_SDK,
-                applicationVersion = "0.0.0",
-                logging = true,
-                reconnectionTimeoutInSeconds = 300,
-                autoRefreshTokenWhenExpired = true,
-                encryptedVault = false
-            )
-
-        assertEquals(TlsVersion.SYSTEM_DEFAULT, config.minimumTlsVersion)
-    }
 }

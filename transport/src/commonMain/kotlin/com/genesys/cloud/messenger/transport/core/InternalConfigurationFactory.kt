@@ -46,29 +46,4 @@ object InternalConfigurationFactory {
             }
         return config
     }
-
-    /**
-     * Overload to preserve the pre-2.12.0 signature for iOS/Swift callers.
-     */
-    fun create(
-        deploymentId: String,
-        domain: String,
-        applicationType: ApplicationType,
-        applicationVersion: String,
-        logging: Boolean,
-        reconnectionTimeoutInSeconds: Long,
-        autoRefreshTokenWhenExpired: Boolean,
-        encryptedVault: Boolean
-    ): Configuration =
-        create(
-            deploymentId = deploymentId,
-            domain = domain,
-            applicationType = applicationType,
-            applicationVersion = applicationVersion,
-            logging = logging,
-            reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
-            autoRefreshTokenWhenExpired = autoRefreshTokenWhenExpired,
-            encryptedVault = encryptedVault,
-            minimumTlsVersion = TlsVersion.SYSTEM_DEFAULT
-        )
 }
