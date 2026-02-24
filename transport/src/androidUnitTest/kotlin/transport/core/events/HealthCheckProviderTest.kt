@@ -8,6 +8,7 @@ import com.genesys.cloud.messenger.transport.core.events.HEALTH_CHECK_COOL_DOWN_
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.logs.Log
+import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import io.mockk.clearMocks
 import io.mockk.every
@@ -80,17 +81,23 @@ class HealthCheckProviderTest {
 
     @Test
     fun `when encodeRequest() during cooldown then returns null and schedules deferred health check`() {
+        val baseTime = 1000000L
+        every { mockTimestampFunction.invoke() } returns baseTime
+
         val firstResult = subject.encodeRequest(token = Request.token)
+
+        every { mockTimestampFunction.invoke() } returns baseTime + 10000
+
         val secondResult = subject.encodeRequest(token = Request.token)
 
+        val expectedRemainingCooldown = HEALTH_CHECK_COOL_DOWN_MILLISECONDS - 10000
         verify {
             mockLogger.i(capture(logSlot))
         }
         assertThat(firstResult).isNotNull()
         assertTrue(Request.isEchoRequest(firstResult!!))
         assertThat(secondResult).isNull()
-        val capturedLogMessage = logSlot.find { it.invoke().contains("deferred") }
-        assertThat(capturedLogMessage).isNotNull()
+        assertTrue(logSlot.any { it.invoke() == LogMessages.healthCheckDeferred(expectedRemainingCooldown) })
     }
 
     @Test
