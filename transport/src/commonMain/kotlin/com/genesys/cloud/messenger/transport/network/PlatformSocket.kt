@@ -12,13 +12,13 @@ const val DEFAULT_PING_INTERVAL_IN_SECONDS = 15
  * @param log the logger
  * @param url the WS endpoint.
  * @param pingInterval the interval in seconds for sending ping frames until the connection fails or is closed. Pinging may help keep the connection from timing out. The default value of 0 disables pinging.
- * @param minimumTlsVersion the minimum TLS protocol version for this WebSocket connection (iOS only).
+ * @param minimumWebSocketTlsVersion the minimum TLS protocol version for this WebSocket connection.
  */
 internal expect class PlatformSocket(
     log: Log,
     url: Url,
     pingInterval: Int = DEFAULT_PING_INTERVAL_IN_SECONDS,
-    minimumTlsVersion: TlsVersion = TlsVersion.SYSTEM_DEFAULT,
+    minimumWebSocketTlsVersion: TlsVersion = TlsVersion.SYSTEM_DEFAULT,
 ) {
     val pingInterval: Int
 

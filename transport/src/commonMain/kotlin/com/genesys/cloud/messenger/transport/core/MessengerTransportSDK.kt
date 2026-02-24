@@ -81,7 +81,7 @@ class MessengerTransportSDK(
                 log.withTag(LogTag.WEBSOCKET),
                 urls.webSocketUrl,
                 DEFAULT_PING_INTERVAL_IN_SECONDS,
-                configuration.minimumTlsVersion,
+                configuration.minimumWebSocketTlsVersion,
             )
         // Support old TokenStore. If TokenStore not present fallback to the Vault.
         val token = tokenStore?.token ?: vault.token

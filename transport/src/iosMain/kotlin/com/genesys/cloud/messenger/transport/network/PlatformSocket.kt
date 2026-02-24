@@ -43,7 +43,7 @@ internal actual class PlatformSocket actual constructor(
      * client assumes connectivity is lost and will notify [PlatformSocketListener.onFailure].
      */
     actual val pingInterval: Int,
-    private val minimumTlsVersion: TlsVersion,
+    private val minimumWebSocketTlsVersion: TlsVersion,
 ) {
     private val socketEndpoint = NSURL.URLWithString(url.toString())!!
     private var webSocket: NSURLSessionWebSocketTask? = null
@@ -60,17 +60,7 @@ internal actual class PlatformSocket actual constructor(
         urlRequest.setValue(Platform().platform, forHTTPHeaderField = "User-Agent")
         urlRequest.setTimeoutInterval(TIMEOUT_INTERVAL)
         val sessionConfig = NSURLSessionConfiguration.defaultSessionConfiguration()
-        when (minimumTlsVersion) {
-            TlsVersion.SYSTEM_DEFAULT -> {}
-            TlsVersion.TLS_1_2 -> {
-                log.i { "Configuring minimum TLS version: TLS 1.2" }
-                sessionConfig.TLSMinimumSupportedProtocolVersion = tls_protocol_version_TLSv12
-            }
-            TlsVersion.TLS_1_3 -> {
-                log.i { "Configuring minimum TLS version: TLS 1.3" }
-                sessionConfig.TLSMinimumSupportedProtocolVersion = tls_protocol_version_TLSv13
-            }
-        }
+        applyTlsConfiguration(sessionConfig, minimumWebSocketTlsVersion)
         val urlSession =
             NSURLSession.sessionWithConfiguration(
                 configuration = sessionConfig,
@@ -237,6 +227,21 @@ internal actual class PlatformSocket actual constructor(
                 Throwable("[${error.code}] ${error.localizedDescription}"),
                 error.toTransportErrorCode()
             )
+        }
+    }
+}
+
+private fun applyTlsConfiguration(
+    sessionConfig: NSURLSessionConfiguration,
+    minimumWebSocketTlsVersion: TlsVersion
+) {
+    when (minimumWebSocketTlsVersion) {
+        TlsVersion.SYSTEM_DEFAULT -> {}
+        TlsVersion.TLS_1_2 -> {
+            sessionConfig.TLSMinimumSupportedProtocolVersion = tls_protocol_version_TLSv12
+        }
+        TlsVersion.TLS_1_3 -> {
+            sessionConfig.TLSMinimumSupportedProtocolVersion = tls_protocol_version_TLSv13
         }
     }
 }

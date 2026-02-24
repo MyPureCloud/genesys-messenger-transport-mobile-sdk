@@ -42,7 +42,7 @@ class InternalConfigurationFactoryTest {
     }
 
     @Test
-    fun `when creating configuration without minimumTlsVersion it should default to SYSTEM_DEFAULT`() {
+    fun `when creating configuration without minimumWebSocketTlsVersion it should default to SYSTEM_DEFAULT`() {
         val config =
             InternalConfigurationFactory.create(
                 deploymentId = "test-deployment",
@@ -51,21 +51,21 @@ class InternalConfigurationFactoryTest {
                 applicationVersion = "0.0.0"
             )
 
-        assertEquals(TlsVersion.SYSTEM_DEFAULT, config.minimumTlsVersion)
+        assertEquals(TlsVersion.SYSTEM_DEFAULT, config.minimumWebSocketTlsVersion)
     }
 
     @Test
-    fun `when creating configuration with minimumTlsVersion it should be propagated to Configuration`() {
+    fun `when creating configuration with minimumWebSocketTlsVersion it should be propagated to Configuration`() {
         val config =
             InternalConfigurationFactory.create(
                 deploymentId = "test-deployment",
                 domain = "test.com",
                 applicationType = ApplicationType.TRANSPORT_SDK,
                 applicationVersion = "0.0.0",
-                minimumTlsVersion = TlsVersion.TLS_1_3
+                minimumWebSocketTlsVersion = TlsVersion.TLS_1_3
             )
 
-        assertEquals(TlsVersion.TLS_1_3, config.minimumTlsVersion)
+        assertEquals(TlsVersion.TLS_1_3, config.minimumWebSocketTlsVersion)
     }
 
     @Test

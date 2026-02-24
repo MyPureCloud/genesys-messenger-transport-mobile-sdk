@@ -4,6 +4,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
+import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.TlsVersion
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlin.test.Test
@@ -20,7 +21,7 @@ class ConfigurationTest {
             assertThat(reconnectionTimeoutInSeconds).isEqualTo(expectedReconnectionTimeout)
             assertThat(autoRefreshTokenWhenExpired).isTrue()
             assertThat(encryptedVault).isFalse()
-            assertThat(minimumTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
+            assertThat(minimumWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
         }
     }
 
@@ -38,7 +39,7 @@ class ConfigurationTest {
             assertThat(reconnectionTimeoutInSeconds).isEqualTo(expectedReconnectionTimeout)
             assertThat(autoRefreshTokenWhenExpired).isTrue()
             assertThat(encryptedVault).isFalse()
-            assertThat(minimumTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
+            assertThat(minimumWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
         }
     }
 
@@ -52,27 +53,43 @@ class ConfigurationTest {
             assertThat(reconnectionTimeoutInSeconds).isEqualTo(300L)
             assertThat(autoRefreshTokenWhenExpired).isTrue()
             assertThat(encryptedVault).isTrue()
-            assertThat(minimumTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
+            assertThat(minimumWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
         }
     }
 
     @Test
-    fun `validate configuration with TLS_1_2`() {
-        val configuration = TestValues.configuration.copy(minimumTlsVersion = TlsVersion.TLS_1_2)
+    fun `validate configuration with non-default TLS version`() {
+        val configuration = TestValues.configuration.copy(minimumWebSocketTlsVersion = TlsVersion.TLS_1_2)
 
         configuration.run {
             assertThat(deploymentId).isEqualTo(TestValues.DEPLOYMENT_ID)
-            assertThat(minimumTlsVersion).isEqualTo(TlsVersion.TLS_1_2)
+            assertThat(minimumWebSocketTlsVersion).isEqualTo(TlsVersion.TLS_1_2)
         }
     }
 
     @Test
-    fun `validate configuration with TLS_1_3`() {
-        val configuration = TestValues.configuration.copy(minimumTlsVersion = TlsVersion.TLS_1_3)
+    fun `when using 4-param secondary constructor then minimumWebSocketTlsVersion defaults to SYSTEM_DEFAULT`() {
+        val configuration = Configuration(
+            deploymentId = TestValues.DEPLOYMENT_ID,
+            domain = TestValues.DOMAIN,
+            logging = true,
+            reconnectionTimeoutInSeconds = 60,
+        )
 
-        configuration.run {
-            assertThat(deploymentId).isEqualTo(TestValues.DEPLOYMENT_ID)
-            assertThat(minimumTlsVersion).isEqualTo(TlsVersion.TLS_1_3)
-        }
+        assertThat(configuration.minimumWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
+    }
+
+    @Test
+    fun `when using 6-param secondary constructor then minimumWebSocketTlsVersion defaults to SYSTEM_DEFAULT`() {
+        val configuration = Configuration(
+            deploymentId = TestValues.DEPLOYMENT_ID,
+            domain = TestValues.DOMAIN,
+            logging = true,
+            reconnectionTimeoutInSeconds = 60,
+            autoRefreshTokenWhenExpired = false,
+            encryptedVault = true,
+        )
+
+        assertThat(configuration.minimumWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
     }
 }

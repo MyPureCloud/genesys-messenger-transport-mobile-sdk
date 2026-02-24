@@ -19,7 +19,7 @@ internal actual class PlatformSocket actual constructor(
     private val log: Log,
     private val url: Url,
     actual val pingInterval: Int,
-    @Suppress("unused") private val minimumTlsVersion: TlsVersion,
+    minimumWebSocketTlsVersion: TlsVersion,
 ) {
     private var webSocket: WebSocket? = null
     private var listener: PlatformSocketListener? = null
