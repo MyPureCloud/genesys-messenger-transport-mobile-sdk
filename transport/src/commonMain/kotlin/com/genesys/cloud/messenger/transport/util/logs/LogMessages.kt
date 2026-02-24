@@ -264,6 +264,9 @@ internal object LogMessages {
     fun sessionExpirationNoticeSent(expiresInSeconds: Long) =
         "Session expiration notice sent. Session expires in $expiresInSeconds seconds"
 
+    fun schedulingExpirationHealthCheck(delayMillis: Long, bufferMillis: Long) =
+        "Scheduling health check after expiration with delay: ${delayMillis / 1000} seconds (includes ${bufferMillis / 1000}s buffer)"
+
     const val REMOVING_SESSION_EXPIRATION_NOTICE =
         "Message activity detected during expiration notice period. Removing session expiration notice and triggering health check."
 

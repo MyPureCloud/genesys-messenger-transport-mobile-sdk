@@ -754,4 +754,130 @@ class SessionDurationHandlerTest {
             // Expiration notice should NOT be emitted because shouldReschedule() returned true
             assertThat(capturedEvent).isNull()
         }
+
+    @Test
+    fun `when expiration notice is emitted then schedules health check at expiration time plus buffer`() =
+        testScope.runTest {
+            val givenNoticeInterval = 1L
+            val givenExpirationDate = currentTime + 2L
+            val subject = createSubject(sessionExpirationNoticeIntervalSeconds = givenNoticeInterval)
+
+            subject.updateSessionDuration(null, givenExpirationDate)
+
+            // Advance time for expiration notice to be sent (at 1000ms)
+            advanceTimeBy(1100)
+
+            assertThat(capturedEvent).isEqualTo(Event.SessionExpirationNotice(givenExpirationDate - currentTime))
+            healthCheckTriggered = false
+
+            // Notice emitted at ~1000ms, so timer fires at ~5000ms. We're at 1100ms, need 4000ms more.
+            advanceTimeBy(4000)
+
+            assertThat(healthCheckTriggered).isTrue()
+        }
+
+    @Test
+    fun `when expiration notice is emitted with zero time to expiration then schedules health check with buffer only`() =
+        testScope.runTest {
+            val givenNoticeInterval = 60L // Notice interval is 60 seconds before expiration
+            val givenExpirationDate = currentTime + 30L // Expiration in 30 seconds, notice time already passed
+            val subject = createSubject(sessionExpirationNoticeIntervalSeconds = givenNoticeInterval)
+
+            subject.updateSessionDuration(null, givenExpirationDate)
+
+            // Event should be emitted immediately (notice time already passed)
+            assertThat(capturedEvent).isEqualTo(Event.SessionExpirationNotice(givenExpirationDate - currentTime))
+            healthCheckTriggered = false
+
+            // Health check should be scheduled for 30 seconds + 2s buffer = 32 seconds
+            advanceTimeBy(32100)
+
+            assertThat(healthCheckTriggered).isTrue()
+        }
+
+    @Test
+    fun `when clear then cancels expiration health check timer`() =
+        testScope.runTest {
+            val givenNoticeInterval = 1L
+            val givenExpirationDate = currentTime + 2L
+            val subject = createSubject(sessionExpirationNoticeIntervalSeconds = givenNoticeInterval)
+
+            subject.updateSessionDuration(null, givenExpirationDate)
+
+            // Advance time for expiration notice to be sent
+            advanceTimeBy(1100)
+
+            assertThat(capturedEvent).isEqualTo(Event.SessionExpirationNotice(givenExpirationDate - currentTime))
+            healthCheckTriggered = false
+
+            subject.clear()
+
+            // Advance time past when health check would have fired (1s + 2s buffer)
+            advanceTimeBy(4000)
+
+            assertThat(healthCheckTriggered).isFalse()
+        }
+
+    @Test
+    fun `when onMessage after expiration notice then cancels expiration health check timer`() =
+        testScope.runTest {
+            var healthCheckCount = 0
+            val givenNoticeInterval = 1L
+            val givenExpirationDate = currentTime + 2L
+            val subject =
+                SessionDurationHandler(
+                    sessionExpirationNoticeIntervalSeconds = givenNoticeInterval,
+                    healthCheckPreNoticeTimeMillis = 300L,
+                    eventHandler = mockEventHandler,
+                    log = mockLog,
+                    triggerHealthCheck = { healthCheckCount++ },
+                    getCurrentTimestamp = { currentTime * 1000 },
+                    dispatcher = testScope
+                )
+
+            subject.updateSessionDuration(3600L, givenExpirationDate)
+
+            // Advance time for expiration notice to be sent
+            advanceTimeBy(1100)
+
+            assertThat(capturedEvent).isEqualTo(Event.SessionExpirationNotice(givenExpirationDate - currentTime))
+
+            // Record health check count after notice (should have one from pre-notice timer)
+            val healthCheckCountAfterNotice = healthCheckCount
+
+            // Send message which should cancel expiration health check timer and trigger immediate health check
+            subject.onMessage()
+
+            val expectedHealthCheckCount = healthCheckCountAfterNotice + 1
+            assertThat(healthCheckCount).isEqualTo(expectedHealthCheckCount)
+
+            // Advance time past when expiration health check would have fired (1s + 2s buffer)
+            advanceTimeBy(4000)
+
+            // No additional health check should have been triggered since timer was cancelled
+            assertThat(healthCheckCount).isEqualTo(expectedHealthCheckCount)
+        }
+
+    @Test
+    fun `when clearAndRemoveNotice then cancels expiration health check timer`() =
+        testScope.runTest {
+            val givenNoticeInterval = 1L
+            val givenExpirationDate = currentTime + 2L
+            val subject = createSubject(sessionExpirationNoticeIntervalSeconds = givenNoticeInterval)
+
+            subject.updateSessionDuration(null, givenExpirationDate)
+
+            // Advance time for expiration notice to be sent
+            advanceTimeBy(1100)
+
+            assertThat(capturedEvent).isEqualTo(Event.SessionExpirationNotice(givenExpirationDate - currentTime))
+            healthCheckTriggered = false
+
+            subject.clearAndRemoveNotice()
+
+            // Advance time past when health check would have fired (1s + 2s buffer)
+            advanceTimeBy(4000)
+
+            assertThat(healthCheckTriggered).isFalse()
+        }
 }
