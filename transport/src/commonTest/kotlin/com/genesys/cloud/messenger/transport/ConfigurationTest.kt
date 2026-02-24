@@ -69,26 +69,28 @@ class ConfigurationTest {
 
     @Test
     fun `when using 4-param secondary constructor then minimumWebSocketTlsVersion defaults to SYSTEM_DEFAULT`() {
-        val configuration = Configuration(
-            deploymentId = TestValues.DEPLOYMENT_ID,
-            domain = TestValues.DOMAIN,
-            logging = true,
-            reconnectionTimeoutInSeconds = 60,
-        )
+        val configuration =
+            Configuration(
+                deploymentId = TestValues.DEPLOYMENT_ID,
+                domain = TestValues.DOMAIN,
+                logging = true,
+                reconnectionTimeoutInSeconds = 60,
+            )
 
         assertThat(configuration.minimumWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
     }
 
     @Test
     fun `when using 6-param secondary constructor then minimumWebSocketTlsVersion defaults to SYSTEM_DEFAULT`() {
-        val configuration = Configuration(
-            deploymentId = TestValues.DEPLOYMENT_ID,
-            domain = TestValues.DOMAIN,
-            logging = true,
-            reconnectionTimeoutInSeconds = 60,
-            autoRefreshTokenWhenExpired = false,
-            encryptedVault = true,
-        )
+        val configuration =
+            Configuration(
+                deploymentId = TestValues.DEPLOYMENT_ID,
+                domain = TestValues.DOMAIN,
+                logging = true,
+                reconnectionTimeoutInSeconds = 60,
+                autoRefreshTokenWhenExpired = false,
+                encryptedVault = true,
+            )
 
         assertThat(configuration.minimumWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
     }
