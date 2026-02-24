@@ -170,6 +170,7 @@ internal class MessagingClientImpl(
 
     init {
         sessionDurationHandler.setTriggerHealthCheck { sendSafeHealthCheck() }
+        healthCheckProvider.setTriggerHealthCheck { sendSafeHealthCheck() }
     }
 
     @Throws(IllegalStateException::class, TransportSDKException::class)
