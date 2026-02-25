@@ -826,7 +826,7 @@ class SessionDurationHandlerTest {
     fun `when session already expired then schedules health check with buffer only`() =
         testScope.runTest {
             val givenNoticeIntervalSeconds = 60L
-            val givenExpirationDate = currentTime 
+            val givenExpirationDate = currentTime
             val subject = createSubject(sessionExpirationNoticeIntervalSeconds = givenNoticeIntervalSeconds)
 
             subject.updateSessionDuration(null, givenExpirationDate)
