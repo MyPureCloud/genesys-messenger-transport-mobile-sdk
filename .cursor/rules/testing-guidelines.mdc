@@ -8,3 +8,6 @@ alwaysApply: false
 
 ## Test Naming Reference
 For test naming decisions (SUT, variables, functions), reference `test-naming-conventions.mdc` for detailed rules. Ignore this file's context otherwise.
+
+## Test Readability Reference
+For avoiding magic numbers, using production constants, and comment policy, reference `test-readability-conventions.mdc` for detailed rules. Ignore this file's context otherwise.
