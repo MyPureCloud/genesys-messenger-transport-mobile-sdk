@@ -2,6 +2,7 @@ package com.genesys.cloud.messenger.transport.network
 
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
+import com.genesys.cloud.messenger.transport.core.TlsVersion
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
@@ -18,6 +19,7 @@ internal actual class PlatformSocket actual constructor(
     private val log: Log,
     private val url: Url,
     actual val pingInterval: Int,
+    minimumWebSocketTlsVersion: TlsVersion,
 ) {
     private var webSocket: WebSocket? = null
     private var listener: PlatformSocketListener? = null

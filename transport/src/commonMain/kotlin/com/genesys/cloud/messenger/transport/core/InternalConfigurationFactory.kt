@@ -14,6 +14,7 @@ object InternalConfigurationFactory {
      * @param reconnectionTimeoutInSeconds period of time during which Transport will try to reconnect.
      * @param autoRefreshTokenWhenExpired indicates if Transport should auto refresh auth token if expired.
      * @param encryptedVault indicates if encrypted vault should be used.
+     * @param minimumWebSocketTlsVersion the minimum TLS protocol version for WebSocket connections.
      * @return Configuration instance with proper application parameter formatting.
      */
     fun create(
@@ -24,7 +25,8 @@ object InternalConfigurationFactory {
         logging: Boolean = false,
         reconnectionTimeoutInSeconds: Long = 60 * 5,
         autoRefreshTokenWhenExpired: Boolean = true,
-        encryptedVault: Boolean = false
+        encryptedVault: Boolean = false,
+        minimumWebSocketTlsVersion: TlsVersion = TlsVersion.SYSTEM_DEFAULT
     ): Configuration {
         val config =
             Configuration(
@@ -33,7 +35,8 @@ object InternalConfigurationFactory {
                 logging = logging,
                 reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
                 autoRefreshTokenWhenExpired = autoRefreshTokenWhenExpired,
-                encryptedVault = encryptedVault
+                encryptedVault = encryptedVault,
+                minimumWebSocketTlsVersion = minimumWebSocketTlsVersion
             )
 
         config.application =
@@ -43,4 +46,29 @@ object InternalConfigurationFactory {
             }
         return config
     }
+
+    /**
+     * Overload to preserve the pre-2.12.0 signature for iOS/Swift callers.
+     */
+    fun create(
+        deploymentId: String,
+        domain: String,
+        applicationType: ApplicationType,
+        applicationVersion: String,
+        logging: Boolean,
+        reconnectionTimeoutInSeconds: Long,
+        autoRefreshTokenWhenExpired: Boolean,
+        encryptedVault: Boolean
+    ): Configuration =
+        create(
+            deploymentId = deploymentId,
+            domain = domain,
+            applicationType = applicationType,
+            applicationVersion = applicationVersion,
+            logging = logging,
+            reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
+            autoRefreshTokenWhenExpired = autoRefreshTokenWhenExpired,
+            encryptedVault = encryptedVault,
+            minimumWebSocketTlsVersion = TlsVersion.SYSTEM_DEFAULT
+        )
 }

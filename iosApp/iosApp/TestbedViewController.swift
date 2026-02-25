@@ -12,7 +12,7 @@ import Combine
 
 class TestbedViewController: UIViewController {
 
-    private let messenger: MessengerInteractor
+    private var messenger: MessengerInteractor
     private var cancellables = Set<AnyCancellable>()
     private var pkceEnabled = false
     private var authCode: String? = nil
@@ -67,6 +67,9 @@ class TestbedViewController: UIViewController {
         case unregisterPush
         case implicitLogin
         case implicitAuthorize
+        case tlsDefault
+        case tls12
+        case tls13
 
         var helpDescription: String {
             switch self {
@@ -603,6 +606,15 @@ extension TestbedViewController : UITextFieldDelegate {
                 }
             case (.listActions, _):
                 self.info.text = "Available card actions: \(Array(cardActionsMap.keys))"
+            case (.tlsDefault, _):
+                reinitializeMessenger(tlsVersion: .systemDefault)
+                self.info.text = "Reconfigured with TLS: SYSTEM_DEFAULT. Use 'connect' to test. Verify with Wireshark: ClientHello should advertise TLS 1.0, 1.1, 1.2, 1.3"
+            case (.tls12, _):
+                reinitializeMessenger(tlsVersion: .tls12)
+                self.info.text = "Reconfigured with TLS: TLS_1_2. Use 'connect' to test. Verify with Wireshark: ClientHello should advertise TLS 1.2, 1.3 ONLY"
+            case (.tls13, _):
+                reinitializeMessenger(tlsVersion: .tls13)
+                self.info.text = "Reconfigured with TLS: TLS_1_3. Use 'connect' to test. Verify with Wireshark: ClientHello should advertise TLS 1.3 ONLY"
             default:
                 self.info.text = "Invalid command"
             }
@@ -613,6 +625,22 @@ extension TestbedViewController : UITextFieldDelegate {
         self.input.text = ""
         textField.resignFirstResponder()
         return true
+    }
+
+    private func reinitializeMessenger(tlsVersion: TlsVersion) {
+        cancellables.removeAll()
+        let deployment = appDelegate().deployment
+        messenger = MessengerInteractor(deployment: deployment, minimumTlsVersion: tlsVersion)
+        messenger.stateChangeSubject
+            .sink(receiveValue: updateWithStateChange)
+            .store(in: &cancellables)
+        messenger.messageEventSubject
+            .sink(receiveValue: updateWithMessageEvent)
+            .store(in: &cancellables)
+        messenger.eventSubject
+            .sink(receiveValue: updateWithEvent)
+            .store(in: &cancellables)
+        status.text = "Messenger Status: Idle (TLS: \(tlsVersion))"
     }
 
     private func updateAuthStateView() {

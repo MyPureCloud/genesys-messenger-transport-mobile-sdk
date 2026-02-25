@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.network
 
 import com.genesys.cloud.messenger.transport.core.ErrorCode
+import com.genesys.cloud.messenger.transport.core.TlsVersion
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.extensions.string
 import com.genesys.cloud.messenger.transport.util.extensions.toNSData
@@ -27,6 +28,8 @@ import platform.Foundation.NSURLSessionWebSocketDelegateProtocol
 import platform.Foundation.NSURLSessionWebSocketMessage
 import platform.Foundation.NSURLSessionWebSocketTask
 import platform.Foundation.setValue
+import platform.Security.tls_protocol_version_TLSv12
+import platform.Security.tls_protocol_version_TLSv13
 import platform.darwin.NSObject
 import platform.posix.ENOTCONN
 import platform.posix.ETIMEDOUT
@@ -40,6 +43,7 @@ internal actual class PlatformSocket actual constructor(
      * client assumes connectivity is lost and will notify [PlatformSocketListener.onFailure].
      */
     actual val pingInterval: Int,
+    private val minimumWebSocketTlsVersion: TlsVersion,
 ) {
     private val socketEndpoint = NSURL.URLWithString(url.toString())!!
     private var webSocket: NSURLSessionWebSocketTask? = null
@@ -55,9 +59,11 @@ internal actual class PlatformSocket actual constructor(
         urlRequest.setValue(url.host, forHTTPHeaderField = "Origin")
         urlRequest.setValue(Platform().platform, forHTTPHeaderField = "User-Agent")
         urlRequest.setTimeoutInterval(TIMEOUT_INTERVAL)
+        val sessionConfig = NSURLSessionConfiguration.defaultSessionConfiguration()
+        applyTlsConfiguration(sessionConfig, minimumWebSocketTlsVersion)
         val urlSession =
             NSURLSession.sessionWithConfiguration(
-                configuration = NSURLSessionConfiguration.defaultSessionConfiguration(),
+                configuration = sessionConfig,
                 delegate =
                     object : NSObject(), NSURLSessionWebSocketDelegateProtocol {
                         override fun URLSession(
@@ -221,6 +227,21 @@ internal actual class PlatformSocket actual constructor(
                 Throwable("[${error.code}] ${error.localizedDescription}"),
                 error.toTransportErrorCode()
             )
+        }
+    }
+}
+
+private fun applyTlsConfiguration(
+    sessionConfig: NSURLSessionConfiguration,
+    minimumWebSocketTlsVersion: TlsVersion
+) {
+    when (minimumWebSocketTlsVersion) {
+        TlsVersion.SYSTEM_DEFAULT -> {}
+        TlsVersion.TLS_1_2 -> {
+            sessionConfig.TLSMinimumSupportedProtocolVersion = tls_protocol_version_TLSv12
+        }
+        TlsVersion.TLS_1_3 -> {
+            sessionConfig.TLSMinimumSupportedProtocolVersion = tls_protocol_version_TLSv13
         }
     }
 }

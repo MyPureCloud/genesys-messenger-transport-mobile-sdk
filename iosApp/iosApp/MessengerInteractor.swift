@@ -21,15 +21,17 @@ final class MessengerInteractor {
     let messageEventSubject = PassthroughSubject<MessageEvent, Never>()
     let eventSubject = PassthroughSubject<Event, Never>()
         
-    init(deployment: Deployment, reconnectTimeout: Int64 = 60 * 5) {
+    init(deployment: Deployment, reconnectTimeout: Int64 = 60 * 5, minimumTlsVersion: TlsVersion = .systemDefault) {
         print("Messenger Transport sdkVersion: \(MessengerTransportSDK.companion.sdkVersion)")
+        print("TLS Configuration: minimumTlsVersion = \(minimumTlsVersion)")
         
         self.configuration = Configuration(deploymentId: deployment.deploymentId,
                                            domain: deployment.domain,
                                            logging: true,
                                            reconnectionTimeoutInSeconds: reconnectTimeout,
                                            autoRefreshTokenWhenExpired: true,
-                                           encryptedVault: true)
+                                           encryptedVault: true,
+                                           minimumWebSocketTlsVersion: minimumTlsVersion)
         self.tokenVault = DefaultVault(keys: Vault.Keys(vaultKey: "com.genesys.cloud.messenger", tokenKey: "token", authRefreshTokenKey: "auth_refresh_token", wasAuthenticated: "wasAuthenticated", pushConfigKey: "pushConfig"))
         self.messengerTransport = MessengerTransportSDK(configuration: self.configuration, vault: self.tokenVault)
         self.messagingClient = self.messengerTransport.createMessagingClient()
