@@ -4,6 +4,7 @@ import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.util.ActionTimer
 import com.genesys.cloud.messenger.transport.util.DEFAULT_HEALTH_CHECK_PRE_NOTICE_TIME_MILLIS
+import com.genesys.cloud.messenger.transport.util.EXPIRATION_HEALTH_CHECK_BUFFER_MILLIS
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
@@ -48,6 +49,12 @@ internal class SessionDurationHandler(
         ActionTimer(
             log = log,
             action = { onHealthCheckTimerFired() },
+            dispatcher = dispatcher
+        )
+    private val expirationHealthCheckTimer: ActionTimer =
+        ActionTimer(
+            log = log,
+            action = { triggerHealthCheck() },
             dispatcher = dispatcher
         )
 
@@ -133,6 +140,13 @@ internal class SessionDurationHandler(
         sessionExpirationNoticeSent = true
         log.i { LogMessages.sessionExpirationNoticeSent(expiresInSeconds) }
         eventHandler.onEvent(Event.SessionExpirationNotice(expiresInSeconds))
+        scheduleExpirationHealthCheck(expiresInSeconds)
+    }
+
+    private fun scheduleExpirationHealthCheck(expiresInSeconds: Long) {
+        val delayMillis = (expiresInSeconds * 1000) + EXPIRATION_HEALTH_CHECK_BUFFER_MILLIS
+        log.i { LogMessages.schedulingExpirationHealthCheck(delayMillis, EXPIRATION_HEALTH_CHECK_BUFFER_MILLIS) }
+        expirationHealthCheckTimer.start(delayMillis)
     }
 
     private fun calculateTimeToExpiration(): Long {
@@ -158,6 +172,7 @@ internal class SessionDurationHandler(
         if (sessionExpirationNoticeSent) {
             log.i { LogMessages.REMOVING_SESSION_EXPIRATION_NOTICE }
             sessionExpirationNoticeSent = false
+            expirationHealthCheckTimer.cancel()
             eventHandler.onEvent(Event.RemoveSessionExpirationNotice)
             currentExpirationDate = updatedExpirationDate
             updateSessionDuration(null, updatedExpirationDate)
@@ -186,5 +201,6 @@ internal class SessionDurationHandler(
         sessionExpirationNoticeSent = false
         expirationTimer.cancel()
         healthCheckTimer.cancel()
+        expirationHealthCheckTimer.cancel()
     }
 }
