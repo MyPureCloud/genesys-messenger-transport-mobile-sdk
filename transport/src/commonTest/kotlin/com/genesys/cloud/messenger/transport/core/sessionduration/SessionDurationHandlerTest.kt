@@ -804,7 +804,7 @@ class SessionDurationHandlerTest {
         }
 
     @Test
-    fun `when expiration notice is emitted with zero time to expiration then schedules health check with buffer only`() =
+    fun `when notice time has already passed then schedules health check based on remaining time plus buffer`() =
         testScope.runTest {
             val givenNoticeIntervalSeconds = 60L
             val givenTimeToExpirationSeconds = 30L
@@ -818,6 +818,23 @@ class SessionDurationHandlerTest {
 
             val healthCheckDelayMillis = givenTimeToExpirationSeconds * 1000 + EXPIRATION_HEALTH_CHECK_BUFFER_MILLIS
             advanceTimeBy(healthCheckDelayMillis + TIMER_MARGIN_MILLIS)
+
+            assertThat(healthCheckTriggered).isTrue()
+        }
+
+    @Test
+    fun `when session already expired then schedules health check with buffer only`() =
+        testScope.runTest {
+            val givenNoticeIntervalSeconds = 60L
+            val givenExpirationDate = currentTime 
+            val subject = createSubject(sessionExpirationNoticeIntervalSeconds = givenNoticeIntervalSeconds)
+
+            subject.updateSessionDuration(null, givenExpirationDate)
+
+            assertThat(capturedEvent).isEqualTo(Event.SessionExpirationNotice(0L))
+            healthCheckTriggered = false
+
+            advanceTimeBy(EXPIRATION_HEALTH_CHECK_BUFFER_MILLIS + TIMER_MARGIN_MILLIS)
 
             assertThat(healthCheckTriggered).isTrue()
         }
