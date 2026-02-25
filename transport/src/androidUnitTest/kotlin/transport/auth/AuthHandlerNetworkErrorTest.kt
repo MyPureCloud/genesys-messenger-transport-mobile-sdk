@@ -92,7 +92,7 @@ class AuthHandlerNetworkErrorTest {
     @Test
     fun `when fetchAuthJwt with idToken fails with NetworkDisabled error`() {
         coEvery { mockWebMessagingApi.fetchAuthJwt(idToken = any(), nonce = any()) } returns
-                Result.Failure(ErrorCode.NetworkDisabled, ErrorTest.MESSAGE)
+            Result.Failure(ErrorCode.NetworkDisabled, ErrorTest.MESSAGE)
         subject = buildAuthHandler()
 
         val expectedErrorCode = ErrorCode.NetworkDisabled
