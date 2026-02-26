@@ -1,0 +1,53 @@
+---
+description: "Test readability conventions"
+globs: ["transport/**/*Test.kt", "transport/**/test/**", "transport/**/commonTest/**", "transport/**/androidUnitTest/**", "transport/**/iosX64Test/**"]
+alwaysApply: false
+---
+
+## Avoid Magic Numbers
+
+All numeric values in tests must be expressed as named variables or derived from production constants. This ensures tests stay in sync with production code and are self-documenting.
+
+### Rules
+- **Never hardcode raw numeric literals** in `advanceTimeBy`, assertions, or delay calculations.
+- **Use production constants** (e.g., `EXPIRATION_HEALTH_CHECK_BUFFER_MILLIS`) directly in tests instead of duplicating their values.
+- **Derive delays from test inputs** using the same formulas as production code. For example:
+  ```kotlin
+  val noticeDelayMillis = (givenTimeToExpirationSeconds - givenNoticeIntervalSeconds) * 1000
+  advanceTimeBy(noticeDelayMillis + TIMER_MARGIN_MILLIS)
+  ```
+- **Define small offsets as named constants** in a companion object:
+  ```kotlin
+  private companion object {
+      const val TIMER_MARGIN_MILLIS = 100L
+  }
+  ```
+
+### Variable Naming for Test Inputs
+Use descriptive names with units:
+
+| Pattern | Example |
+|---|---|
+| `given<Thing>Seconds` | `givenNoticeIntervalSeconds`, `givenTimeToExpirationSeconds` |
+| `given<Thing>Millis` | `givenHealthCheckLeadTimeMillis` |
+| `<purpose>DelayMillis` | `noticeDelayMillis`, `healthCheckDelayMillis` |
+
+### Bad
+```kotlin
+advanceTimeBy(1100)
+advanceTimeBy(4000)
+advanceTimeBy(32100)
+```
+
+### Good
+```kotlin
+val noticeDelayMillis = (givenTimeToExpirationSeconds - givenNoticeIntervalSeconds) * 1000
+advanceTimeBy(noticeDelayMillis + TIMER_MARGIN_MILLIS)
+
+val healthCheckDelayMillis = givenTimeToExpirationSeconds * 1000 + EXPIRATION_HEALTH_CHECK_BUFFER_MILLIS
+advanceTimeBy(healthCheckDelayMillis + TIMER_MARGIN_MILLIS)
+```
+
+## Comments Policy
+- **Do not add comments that restate what the code does.** If the code is self-documenting (through named variables and calculated values), no comment is needed.
+- **Only add comments** when they clarify non-obvious intent, trade-offs, or constraints that the code itself cannot convey.
