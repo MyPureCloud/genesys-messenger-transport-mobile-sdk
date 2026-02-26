@@ -6,9 +6,8 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Deps.kotlinVersion}")
-        classpath("com.android.tools.build:gradle:${Deps.agp}")
-        classpath("org.jmailen.gradle:kotlinter-gradle:${Deps.kotlinterVersion}")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${libs.versions.kotlin.get()}")
+        classpath("com.android.tools.build:gradle:${libs.versions.agp.get()}")
         classpath("com.codingfeline.buildkonfig:buildkonfig-gradle-plugin:${Deps.buildKonfig}")
         classpath("com.google.gms:google-services:${Deps.googleServices}")
     }
@@ -22,6 +21,7 @@ allprojects {
 }
 
 plugins {
+    alias(libs.plugins.android.kotlin.multiplatform.library) apply false
     id("io.github.gradle-nexus.publish-plugin") version Deps.nexusPublish
 }
 
