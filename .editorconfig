@@ -26,3 +26,6 @@ ktlint_standard_spacing-between-declarations-with-comments = disabled
 ktlint_standard_statement-wrapping = disabled
 ktlint_standard_trailing-comma-on-call-site = disabled
 ktlint_standard_trailing-comma-on-declaration-site = disabled
+ktlint_standard_when-entry-bracing = disabled
+ktlint_standard_blank-line-between-when-conditions = disabled
+ktlint_standard_kdoc = disabled
