@@ -9,6 +9,7 @@ import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.okHttpLogger
 import io.ktor.http.Url
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
@@ -36,6 +37,7 @@ internal actual class PlatformSocket actual constructor(
         val webClient =
             OkHttpClient()
                 .newBuilder()
+                .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
                 .pingInterval(pingInterval.toLong(), TimeUnit.SECONDS)
                 .addInterceptor(
                     HttpLoggingInterceptor(logger = log.okHttpLogger()).apply {

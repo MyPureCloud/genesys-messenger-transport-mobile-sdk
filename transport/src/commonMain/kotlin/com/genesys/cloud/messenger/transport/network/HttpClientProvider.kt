@@ -4,6 +4,7 @@ import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import io.ktor.client.HttpClient
+import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.HttpCallValidator
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpTimeout
@@ -25,12 +26,15 @@ private val RETRYABLE_STATUS_CODES =
         HttpStatusCode.GatewayTimeout,
     )
 
-internal fun defaultHttpClient(logging: Boolean = false): HttpClient =
-    HttpClient {
+internal fun defaultHttpClient(
+    logging: Boolean = false,
+    engine: HttpClientEngine? = null
+): HttpClient =
+    HttpClient(engine ?: createPlatformHttpEngine()) {
         if (logging) {
             install(Logging) {
                 logger = Log(logging, LogTag.HTTP_CLIENT).ktorLogger
-                level = LogLevel.INFO
+                level = LogLevel.HEADERS
             }
         }
         install(ContentNegotiation) { json(WebMessagingJson.json) }
