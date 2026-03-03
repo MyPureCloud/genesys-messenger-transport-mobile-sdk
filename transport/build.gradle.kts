@@ -9,6 +9,7 @@ plugins {
     kotlin("plugin.serialization") version libs.versions.kotlin.get()
     alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.dokka)
+    alias(libs.plugins.kotlinter)
     id("maven-publish")
     id("signing")
     id("transportValidationPlugin")
@@ -254,6 +255,9 @@ afterEvaluate {
             mavenPublication?.artifactId =
                 "messenger-transport-mobile-sdk${"-$name".takeUnless { "kotlinMultiplatform" in name }.orEmpty()}"
         }
+    }
+    tasks.withType(org.jmailen.gradle.kotlinter.tasks.LintTask::class.java).configureEach {
+        exclude("**/BuildKonfig.kt")
     }
 }
 
