@@ -37,7 +37,7 @@ internal actual class PlatformSocket actual constructor(
         val webClient =
             OkHttpClient()
                 .newBuilder()
-                .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
+                .protocols(WEB_SOCKET_OKHTTP_PROTOCOLS)
                 .pingInterval(pingInterval.toLong(), TimeUnit.SECONDS)
                 .addInterceptor(
                     HttpLoggingInterceptor(logger = log.okHttpLogger()).apply {

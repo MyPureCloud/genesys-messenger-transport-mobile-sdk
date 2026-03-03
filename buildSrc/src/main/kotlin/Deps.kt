@@ -5,7 +5,6 @@ object Deps {
     private const val kotlinxSerializationJsonVersion = "1.8.1"
     private const val kotlinxDatetimeVersion = "0.6.2"
     private const val ktorVersion = "3.2.3"
-    private const val mockWebServerVersion = "4.12.0"
     private const val mockkVersion = "1.14.5"
     private const val okhttpVersion = "5.3.2"
     const val kotlinVersion = "2.1.21"
@@ -32,7 +31,7 @@ object Deps {
         object OkHttp {
             const val client = "com.squareup.okhttp3:okhttp:$okhttpVersion"
             const val loggingInterceptor = "com.squareup.okhttp3:logging-interceptor:$okhttpVersion"
-            const val mockWebServer = "com.squareup.okhttp3:mockwebserver:$mockWebServerVersion"
+            const val mockWebServer = "com.squareup.okhttp3:mockwebserver:$okhttpVersion"
         }
 
         object Kotlinx {

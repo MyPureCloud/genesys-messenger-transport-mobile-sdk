@@ -12,6 +12,12 @@ abstract class DependencyValidatorTask: DefaultTask() {
 
     fun failIfPresent(excludeGroup: String) {
         project.configurations.all {
+            val configName = name
+            // OkHttp 5.x pulls in androidx on the test classpath; skip check for test configs only.
+            // Production configs are still validated (no androidx in published/runtime deps).
+            val isTestConfiguration = configName.contains("UnitTest", ignoreCase = true) ||
+                configName.contains("AndroidTest", ignoreCase = true)
+            if (isTestConfiguration) return@all
             resolutionStrategy.eachDependency {
                 if (this.requested.group.contains(excludeGroup)) {
                     throw IllegalArgumentException("Sorry, $excludeGroup libraries are not welcomed here.")
