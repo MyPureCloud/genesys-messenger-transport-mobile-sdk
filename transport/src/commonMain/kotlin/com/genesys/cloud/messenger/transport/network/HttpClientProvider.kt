@@ -34,7 +34,7 @@ internal fun defaultHttpClient(
         if (logging) {
             install(Logging) {
                 logger = Log(logging, LogTag.HTTP_CLIENT).ktorLogger
-                level = LogLevel.HEADERS
+                level = LogLevel.INFO
             }
         }
         install(ContentNegotiation) { json(WebMessagingJson.json) }
