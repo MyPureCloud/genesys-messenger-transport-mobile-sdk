@@ -155,7 +155,7 @@ kotlin {
             dependencies {
                 implementation(Deps.Libs.OkHttp.client)
                 implementation(Deps.Libs.OkHttp.loggingInterceptor)
-                api(Deps.Libs.Ktor.okhttp)
+                implementation(Deps.Libs.Ktor.okhttp)
                 implementation(Deps.Libs.Ktor.loggingJvm)
                 implementation(Deps.Libs.Kotlinx.coroutinesAndroid)
             }
