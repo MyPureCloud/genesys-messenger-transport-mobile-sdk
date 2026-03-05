@@ -129,6 +129,7 @@ kotlin {
         }
         val androidHostTest by getting {
             kotlin.srcDirs("src/androidUnitTest/kotlin")
+            resources.srcDirs("src/androidUnitTest/resources")
             dependencies {
                 implementation(kotlin("test-junit"))
                 implementation(libs.junit)

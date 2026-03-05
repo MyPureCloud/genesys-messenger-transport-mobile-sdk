@@ -16,12 +16,14 @@ object TestSslHelper {
     private const val STORE_PASSWORD = "changeit"
     private const val KEY_PASSWORD = "changeit"
     private const val ALIAS = "test"
-    private const val PROTOCOL = "TLS"
+    private const val PROTOCOL = "TLSv1.2"
 
     fun loadKeystore(): KeyStore {
-        val stream = requireNotNull(javaClass.classLoader?.getResourceAsStream(KEYSTORE_RESOURCE)) {
-            "Test keystore not found: $KEYSTORE_RESOURCE"
-        }
+        val stream = (
+            Thread.currentThread().contextClassLoader?.getResourceAsStream(KEYSTORE_RESOURCE)
+                ?: javaClass.classLoader?.getResourceAsStream(KEYSTORE_RESOURCE)
+                ?: ClassLoader.getSystemResourceAsStream(KEYSTORE_RESOURCE)
+            ) ?: error("Test keystore not found: $KEYSTORE_RESOURCE (tried context, class, and system classloaders)")
         return stream.use { KeyStore.getInstance("PKCS12").apply { load(it, STORE_PASSWORD.toCharArray()) } }
     }
 
