@@ -110,6 +110,9 @@ dependencies {
 
     implementation(project(':transport'))
 
+    // Ktor (URLBuilder for OAuth URL building in TestBedViewModel)
+    implementation 'io.ktor:ktor-client-core:3.2.3'
+
     // Required by minSdk 21 with Java 17
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
