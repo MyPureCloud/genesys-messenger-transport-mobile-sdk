@@ -23,7 +23,7 @@ object TestSslHelper {
             Thread.currentThread().contextClassLoader?.getResourceAsStream(KEYSTORE_RESOURCE)
                 ?: javaClass.classLoader?.getResourceAsStream(KEYSTORE_RESOURCE)
                 ?: ClassLoader.getSystemResourceAsStream(KEYSTORE_RESOURCE)
-            ) ?: error("Test keystore not found: $KEYSTORE_RESOURCE (tried context, class, and system classloaders)")
+        ) ?: error("Test keystore not found: $KEYSTORE_RESOURCE (tried context, class, and system classloaders)")
         return stream.use { KeyStore.getInstance("PKCS12").apply { load(it, STORE_PASSWORD.toCharArray()) } }
     }
 
