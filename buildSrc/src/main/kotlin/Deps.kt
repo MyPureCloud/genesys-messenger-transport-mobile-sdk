@@ -18,7 +18,7 @@ object Deps {
         }
 
         object OkHttp {
-            const val client = "com.squareup.okhttp3:okhttp:$okhttpVersion"
+            const val clientJvm = "com.squareup.okhttp3:okhttp-jvm:$okhttpVersion"
             const val loggingInterceptor = "com.squareup.okhttp3:logging-interceptor:$okhttpVersion"
             const val mockWebServer = "com.squareup.okhttp3:mockwebserver:$okhttpVersion"
         }

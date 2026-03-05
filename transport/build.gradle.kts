@@ -37,7 +37,6 @@ if (matchResult != null) {
 println("baseVersion: version: $baseVersion")
 println("buildNumber: version: $buildNumber")
 
-
 val iosFrameworkName = "MessengerTransport"
 val iosMinimumOSVersion = "13.0"
 val iosCocoaPodName = "GenesysCloudMessengerTransport"
@@ -120,15 +119,20 @@ kotlin {
         }
         androidMain {
             dependencies {
-                implementation(Deps.Libs.OkHttp.client)
-                implementation(Deps.Libs.OkHttp.loggingInterceptor)
-                implementation(Deps.Libs.Ktor.okhttp)
+                implementation(Deps.Libs.OkHttp.clientJvm)
+                implementation(Deps.Libs.OkHttp.loggingInterceptor) {
+                    exclude(group = "com.squareup.okhttp3", module = "okhttp") // avoid AndroidX (okhttp-android)
+                }
+                implementation(Deps.Libs.Ktor.okhttp) {
+                    exclude(group = "com.squareup.okhttp3", module = "okhttp") // avoid AndroidX (okhttp-android)
+                }
                 implementation(Deps.Libs.Ktor.loggingJvm)
                 implementation(Deps.Libs.Kotlinx.coroutinesAndroid)
             }
         }
         val androidHostTest by getting {
             kotlin.srcDirs("src/androidUnitTest/kotlin")
+            resources.srcDirs("src/androidUnitTest/resources")
             dependencies {
                 implementation(kotlin("test-junit"))
                 implementation(libs.junit)

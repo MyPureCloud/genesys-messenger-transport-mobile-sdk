@@ -31,7 +31,7 @@ class Http2ConfigurationTest {
     }
 
     @Test
-    fun `WebSocket OkHttp client protocols include HTTP_2 and HTTP_1_1`() {
+    fun `WebSocket client protocols include HTTP_2 and HTTP_1_1`() {
         assertThat(Protocol.HTTP_2 in WEB_SOCKET_OKHTTP_PROTOCOLS).isTrue()
         assertThat(Protocol.HTTP_1_1 in WEB_SOCKET_OKHTTP_PROTOCOLS).isTrue()
     }
@@ -62,11 +62,8 @@ class Http2ConfigurationTest {
 
     @Test
     fun `REST client uses HTTP_2 when server supports it`() {
-        // 1. Start HTTPS server supporting HTTP/2 and a plain body response.
         startHttpsServerWithHttp2(MockResponse().setBody("ok"))
-        // 2. Build client with REST protocol list and test SSL (trust server cert).
         val client = okHttpClientWithTestSsl(PLATFORM_HTTP_ENGINE_PROTOCOLS)
-        // 3. GET / and assert the connection used HTTP/2.
         val request = okhttp3.Request.Builder().url(server.url("/")).build()
         client.newCall(request).execute().use { response ->
             assertThat(response.protocol).isEqualTo(Protocol.HTTP_2)
@@ -75,9 +72,6 @@ class Http2ConfigurationTest {
 
     @Test
     fun `WebSocket client uses HTTP_2 when server supports it`() {
-        // Client built with WEB_SOCKET_OKHTTP_PROTOCOLS uses HTTP/2 when server supports it.
-        // Use a plain GET (same TLS/ALPN path as WebSocket upgrade) since MockWebServer
-        // WebSocket upgrade over HTTP/2 does not complete reliably in this environment.
         startHttpsServerWithHttp2(MockResponse().setBody("ok"))
         val client = okHttpClientWithTestSsl(WEB_SOCKET_OKHTTP_PROTOCOLS)
         val request = okhttp3.Request.Builder().url(server.url("/")).build()
