@@ -11,7 +11,6 @@ participant App
 box TransportSDK #lightcyan
 participant MessagingClient
 participant SessionDurationHandler
-participant HealthCheckProvider
 end box
 box BackEnd
 participant Shyrka
@@ -29,69 +28,96 @@ rnote over MessagingClient
 end rnote
 
 App -> MessagingClient: Configuration(..., **sessionExpirationNoticeIntervalSeconds = DEFAULT_INTERVAL**)
-MessagingClient -> SessionDurationHandler:  updateSessionExpirationNoticeInterval(sessionExpirationNoticeIntervalSeconds)
+MessagingClient -> SessionDurationHandler: <<create>>(sessionExpirationNoticeIntervalSeconds, eventHandler, ...)
 
 App [#999]-> MessagingClient: connect
 MessagingClient [#999]--> Shyrka: configureSession
 Shyrka [#999]--> MessagingClient: SessionConfigured(..., **durationSeconds, expirationDate**)
 
-MessagingClient -> SessionDurationHandler: scheduleExpiration(durationSeconds, expirationDate)
+MessagingClient -> SessionDurationHandler: updateSessionDuration(durationSeconds, expirationDate)
 SessionDurationHandler -> MessagingClient: onSessionDurationChange(durationSeconds)
 MessagingClient --> App: eventListener.onEvent(SessionDuration(durationSeconds))
-SessionDurationHandler -> SessionDurationHandler: startHealthCheckTimer(expirationDate)
 
-alt startHealthCheckTimer()
-    SessionDurationHandler -> SessionDurationHandler: scheduleSessionExpirationNotice(expirationDate)
+SessionDurationHandler -> SessionDurationHandler: handleExpirationDateChange(expirationDate)
+alt handleExpirationDateChange()
+    SessionDurationHandler -> SessionDurationHandler: scheduleHealthCheckTimer(expirationNoticeDelayMillis)
     rnote over SessionDurationHandler
-        Health check schedule
-        * Do health check only when there were no interaction for long time
-        * start timer for calling health check at 5 minutes + 10 seconds before expirationDate
+        This timer will be triggered 10 seconds before the schedule expiration notice event is set.
     end rnote
+    SessionDurationHandler -> SessionDurationHandler: scheduleExpirationNoticeTimer(expirationNoticeDelayMillis)
+
     SessionDurationHandler -> SessionDurationHandler: onHealthCheckTimerExpired()
-    SessionDurationHandler --> MessagingClient: startHealthCheck()
+    SessionDurationHandler --> MessagingClient: triggerHealthCheck()
     MessagingClient [#999]--> Shyrka: sendHealthCheck()
     Shyrka [#999]--> MessagingClient: Health check response \n(StructuredMessage(metadata = {**sessionDuration =..., expirationDate=;;;})**)
     rnote over MessagingClient
         New values in health check response:
-        * durationSeconds (no supposed to change)
+        * durationSeconds not supposed to change)
         * expirationDate
     end rnote
-    MessagingClient -> SessionDurationHandler: scheduleExpiration(durationSeconds, expirationDate)
+    MessagingClient -> SessionDurationHandler: updateSessionDuration(durationSeconds, expirationDate)
     alt The new expiration date is fresher
         SessionDurationHandler -> SessionDurationHandler: stopExpirationTimer()
         SessionDurationHandler -> SessionDurationHandler: startExpirationTimer
         SessionDurationHandler -> SessionDurationHandler: startHealthCheckTimer()
     else Expiration date remains the same
         rnote over SessionDurationHandler
-            Timer continues until 5 minutes before expiration date
+            The expiration timer is set to (expiration date - sessionExpirationNoticeIntervalSeconds)
         end rnote
-        SessionDurationHandler -> SessionDurationHandler: onTimerExpired()
+        SessionDurationHandler -> SessionDurationHandler: onExpirationTimerFired()
         SessionDurationHandler --> MessagingClient: onSessionExpirationNotice()
-        MessagingClient -> App: eventListener.onEvent(SessionExpirationNotice)
+        MessagingClient -> App: eventListener.onEvent(SessionExpirationNotice(expiresInSeconds))
+        SessionDurationHandler -> SessionDurationHandler: scheduleExpirationHealthCheck(expiresInSeconds)
+        rnote over SessionDurationHandler
+            If no new messages arrive, the session will have expired by the time this fires,
+             triggering the session expired flow (detailed below).
+        end rnote
     end
 end
 
 alt Any new message after the timer end starts new timer
     Shyrka --> MessagingClient: onMessage
-    MessagingClient -> SessionDurationHandler: checkExpiration()
+    MessagingClient -> SessionDurationHandler: onMessage()
     rnote over SessionDurationHandler
       Given: session expiration notice is sent but we are before the timeout
     end rnote
     SessionDurationHandler --> MessagingClient: onRemoveExpirationNotice
     MessagingClient -> App: eventListener.onEvent(RemoveSessionExpirationNotice)
+
+    SessionDurationHandler -> SessionDurationHandler: updateSessionDuration(null, updatedExpirationDate)
+    SessionDurationHandler --> MessagingClient: triggerHealthCheck()
     rnote over SessionDurationHandler
-      Run health check
-    end rnote
-    SessionDurationHandler -> SessionDurationHandler: startExpirationTimer
-    SessionDurationHandler -> SessionDurationHandler: startHealthCheckTimer()
-    rnote over SessionDurationHandler
-      New timer started
+      New timers started via updateSessionDuration
     end rnote
 end
 
-alt Clear Conversation
-    Shyrka [#999]--> MessagingClient: Clear Conversation
-    MessagingClient [#999]-> MessagingClient: invalidateConversationCache()
-    MessagingClient [#999]--> App: eventListener.onEvent(Event.ConversationCleared)
+alt Session Expired (Health Check Response)
+    rnote over SessionDurationHandler
+      After SessionExpirationNotice is sent,
+      expirationHealthCheckTimer is scheduled
+      to fire at the exact expiration time
+    end rnote
+    SessionDurationHandler -> SessionDurationHandler: expirationHealthCheckTimer fires
+    SessionDurationHandler --> MessagingClient: triggerHealthCheck()
+    MessagingClient [#999]--> Shyrka: sendHealthCheck()
+    rnote over Shyrka
+      Session has expired on backend
+    end rnote
+    Shyrka [#999]--> MessagingClient: SessionExpiredEvent\n(class: "SessionExpiredEvent", code: 200, type: "message")
+    MessagingClient -> MessagingClient: handleError(ErrorCode.SessionHasExpired)
+    MessagingClient -> MessagingClient: transitionToStateError()
+    MessagingClient -> SessionDurationHandler: clearAndRemoveNotice()
+    alt SessionExpirationNotice was shown
+        SessionDurationHandler --> MessagingClient: onRemoveExpirationNotice
+        MessagingClient -> App: eventListener.onEvent(RemoveSessionExpirationNotice)
+    end
+    SessionDurationHandler -> SessionDurationHandler: clear()
+    rnote over SessionDurationHandler
+      All timers cancelled:
+      * expirationTimer
+      * healthCheckTimer
+      * expirationHealthCheckTimer
+    end rnote
+    MessagingClient [#999]--> App: stateChangedListener(State.Error(SessionHasExpired))
 end
 @enduml
