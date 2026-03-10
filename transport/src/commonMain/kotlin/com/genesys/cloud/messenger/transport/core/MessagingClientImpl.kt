@@ -268,6 +268,22 @@ internal class MessagingClientImpl(
         send(encodedJson)
     }
 
+    override fun submitTimeSlot(timeSlot: StructuredMessage.Content.TimeSlotPickerContent.TimeSlot, parentMessageId: String?) {
+        stateMachine.checkIfConfigured()
+        log.i { LogMessages.submitTimeSlot(timeSlot, parentMessageId) }
+        val channel = prepareCustomAttributesForSending()
+        val postbackResponse = ButtonResponse(
+            text = "time slot submitted: ${timeSlot.dateTime}",
+            payload = timeSlot.dateTime,
+            type = "DatePicker",
+            originatingMessageId = parentMessageId
+        )
+        val request =
+            messageStore.prepareTimeSlotSubmissionMessageWith(token, postbackResponse, channel)
+        val encodedJson = WebMessagingJson.json.encodeToString(request)
+        send(encodedJson)
+    }
+
     @Throws(IllegalStateException::class)
     override fun sendHealthCheck() {
         healthCheckProvider.encodeRequest(token)?.let {
@@ -658,6 +674,7 @@ internal class MessagingClientImpl(
         when (messageType) {
             Message.Type.QuickReply -> messageStore.update(this)
             Message.Type.Cards -> messageStore.update(this)
+            Message.Type.DatePicker -> messageStore.update(this)
             Message.Type.Unknown -> log.w { LogMessages.unsupportedMessageType(messageType) }
             else -> log.w { "Should not happen." }
         }
@@ -793,14 +810,20 @@ internal class MessagingClientImpl(
                     is StructuredMessage -> {
                         decoded.body.run {
                             val message = this.toMessage(decoded.tracingId)
+                            //log.i{ "decoded message datepicker: $message"}
                             when (type) {
                                 StructuredMessage.Type.Text -> message.handleAsTextMessage()
                                 StructuredMessage.Type.Event ->
                                     message.handleAsEvent(
                                         metadata["readOnly"].toBoolean()
                                     )
-
-                                StructuredMessage.Type.Structured -> message.handleAsStructuredMessage()
+                                StructuredMessage.Type.Structured -> {
+                                    message.handleAsStructuredMessage()
+                                    message.timePicker?.let{
+                                        it.availableTimes.firstOrNull()?.let {
+                                            slot -> submitTimeSlot(slot, message.id) }
+                                    }
+                                }
                             }
                         }
                     }

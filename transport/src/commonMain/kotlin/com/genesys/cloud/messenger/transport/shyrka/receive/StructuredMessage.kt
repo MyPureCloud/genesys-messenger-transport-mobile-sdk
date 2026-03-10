@@ -19,7 +19,7 @@ internal data class MessageEntityList(
 )
 
 @Serializable
-internal data class StructuredMessage(
+data class StructuredMessage(
     val id: String,
     val type: Type,
     val text: String? = null,
@@ -29,6 +29,7 @@ internal data class StructuredMessage(
     val metadata: Map<String, String> = emptyMap(),
     val events: List<StructuredMessageEvent> = emptyList(),
     val originatingEntity: String? = null,
+    val originatingMessageId: String? = null
 ) {
     @Serializable
     data class Participant(
@@ -58,7 +59,7 @@ internal data class StructuredMessage(
     }
 
     @Serializable(with = ContentSerializer::class)
-    internal sealed class Content {
+    sealed class Content {
         @Serializable
         enum class Type {
             Attachment,
@@ -66,6 +67,7 @@ internal data class StructuredMessage(
             ButtonResponse,
             Card,
             Carousel,
+            DatePicker,
         }
 
         @Serializable
@@ -109,6 +111,7 @@ internal data class StructuredMessage(
                 val text: String,
                 val payload: String,
                 val type: String,
+                //val originatingMessageId: String
             )
         }
 
@@ -147,6 +150,24 @@ internal data class StructuredMessage(
         }
 
         @Serializable
+        data class DatePicker(
+            val datePicker: TimeSlotPickerContent
+        ) : Content()
+        @Serializable
+        data class TimeSlotPickerContent(
+            val title: String,
+            val subTitle: String? = null,
+            val imageUrl: String? = null,
+            val availableTimes: List<TimeSlot> = emptyList()
+        ) : Content() {
+            @Serializable
+            data class TimeSlot(
+                val duration: Long,
+                val dateTime: String
+            )
+        }
+
+        @Serializable
         internal data object UnknownContent : Content()
     }
 
@@ -159,6 +180,7 @@ internal data class StructuredMessage(
                 Content.Type.ButtonResponse.name -> Content.ButtonResponseContent.serializer()
                 Content.Type.Card.name -> Content.CardContent.serializer()
                 Content.Type.Carousel.name -> Content.CarouselContent.serializer()
+                Content.Type.DatePicker.name -> Content.DatePicker.serializer()
                 else -> Content.UnknownContent.serializer()
             }
         }

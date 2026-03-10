@@ -10,6 +10,7 @@ import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.push.PushConfig
 import com.genesys.cloud.messenger.transport.push.PushConfigComparator
 import com.genesys.cloud.messenger.transport.push.PushProvider
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
 import com.genesys.cloud.messenger.transport.util.extensions.sanitize
 import com.genesys.cloud.messenger.transport.util.extensions.sanitizeSensitiveData
@@ -203,6 +204,7 @@ internal object LogMessages {
 
     // Quick Replies
     fun quickReplyPrepareToSend(message: Message) = "Message with quick reply prepared to send: ${message.toString().sanitizeSensitiveData()}"
+    fun submitTimeSlotPrepareToSend(message: Message) = "Message with time slot submission prepared to send: ${message.toString().sanitizeSensitiveData()}"
 
     fun postbackPrepareToSend(message: Message) = "Message with postback prepared to send: ${message.toString().sanitizeSensitiveData()}"
 
@@ -232,6 +234,11 @@ internal object LogMessages {
         pushConfig: PushConfig,
         errorCode: ErrorCode
     ) = "Failed to synchronize deviceToken: ${pushConfig.deviceToken.sanitize()} ,pushProvider ${pushConfig.pushProvider} with errorCode: $errorCode."
+
+    fun submitTimeSlot(
+        timeSlot: StructuredMessage.Content.TimeSlotPickerContent.TimeSlot,
+        parentMessageId: String?
+    ) = "Submit time slot: $timeSlot, sot message with ID: $parentMessageId"
 
     const val SYNCHRONIZE_PUSH_SERVICE_ON_SESSION_CONFIGURE = "Synchronizing push service from session configured."
     const val UNREGISTERING_DEVICE = "Unregistering device from push notifications."

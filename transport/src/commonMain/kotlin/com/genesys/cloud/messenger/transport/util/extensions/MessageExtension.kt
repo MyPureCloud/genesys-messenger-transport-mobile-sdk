@@ -23,16 +23,24 @@ internal fun List<StructuredMessage>.toMessageList(): List<Message> =
         .filter { it.messageType != Message.Type.Unknown }
 
 internal fun StructuredMessage.toMessage(tracingId: String? = null): Message {
-    val quickReplies = content.toQuickReplies()
+    val quickReplies = content.toQuickReplies().map { it.copy(originatingMessageId = this.id) }
     val cards = content.toCards()
     val hasCardSelection = content.hasCardSelection()
+    val hasTimePicker = content.hasTimePicker()
+    val timePicker = content.filterIsInstance<StructuredMessage.Content.DatePicker>().firstOrNull()
 
     return Message(
         id = tracingId ?: id,
         direction = if (isInbound()) Direction.Inbound else Direction.Outbound,
         state = Message.State.Sent,
-        messageType = type.toMessageType(quickReplies.isNotEmpty(), cards.isNotEmpty(), hasCardSelection),
+        messageType = type.toMessageType(
+            quickReplies.isNotEmpty(),
+            cards.isNotEmpty(),
+            hasCardSelection,
+            timePicker != null
+        ),
         text = text,
+        timePicker = timePicker?.datePicker,
         timeStamp = channel?.time.fromIsoToEpochMilliseconds(),
         attachments = content.filterIsInstance<AttachmentContent>().toAttachments(),
         quickReplies = quickReplies,
@@ -48,6 +56,7 @@ internal fun StructuredMessage.toMessage(tracingId: String? = null): Message {
                     }
             ),
         authenticated = metadata["authenticated"]?.toBoolean() ?: false,
+        originatingMessageId = originatingMessageId
     )
 }
 
@@ -158,13 +167,15 @@ private fun List<StructuredMessage.Content>.toCards(): List<Message.Card> =
 private fun StructuredMessage.Type.toMessageType(
     hasQuickReplies: Boolean,
     hasCards: Boolean,
-    hasCardSelection: Boolean
+    hasCardSelection: Boolean,
+    hasTimePicker: Boolean
 ): Message.Type =
     when (this) {
         StructuredMessage.Type.Text -> Message.Type.Text
         StructuredMessage.Type.Event -> Message.Type.Event
         StructuredMessage.Type.Structured -> {
             when {
+                hasTimePicker -> Message.Type.DatePicker
                 hasQuickReplies -> Message.Type.QuickReply
                 hasCards || hasCardSelection -> Message.Type.Cards
                 else -> Message.Type.Unknown
@@ -182,6 +193,11 @@ private fun List<StructuredMessage.Content>.hasCardSelection(): Boolean =
     this
         .filterIsInstance<ButtonResponseContent>()
         .any { it.buttonResponse.type.normalizeButtonType() == "Button" }
+
+private fun List<StructuredMessage.Content>.hasTimePicker(): Boolean =
+    this
+        .filterIsInstance<StructuredMessage.Content.DatePicker>()
+        .any { true }
 
 internal fun String.isHealthCheckResponseId(): Boolean = this == HealthCheckID
 

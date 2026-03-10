@@ -602,6 +602,11 @@ class TestBedViewModel :
                         }
                         "CardMessageReceived with actions: $tempActionsMap"
                     }
+
+                is MessageEvent.TimeSlotPickerReceived -> {
+                    "TimeSlotPickerReceived with time picker: ${event.message.timePicker}"
+                    // ... TODO
+                }
             }
         onSocketMessageReceived(eventMessage)
     }

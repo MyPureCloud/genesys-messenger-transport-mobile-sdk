@@ -84,6 +84,43 @@ internal class MessageStore(private val log: Log) {
         )
     }
 
+    fun prepareTimeSlotSubmissionMessageWith(
+    token: String,
+    buttonResponse: ButtonResponse,
+    channel: Channel? = null,
+    ): OnMessageRequest {
+        val type = Message.Type.DatePicker
+        val messageToSend =
+            pendingMessage
+                .copy(
+                    messageType = type,
+                    type = type.name,
+                    state = Message.State.Sending,
+                ).also {
+                    log.i { LogMessages.submitTimeSlotPrepareToSend(it) }
+                    activeConversation.add(it)
+                    publish(MessageEvent.MessageInserted(it))
+                    pendingMessage = Message(attachments = it.attachments)
+                }
+        val content =
+            listOf(
+                Message.Content(
+                    contentType = Message.Content.Type.ButtonResponse,
+                    buttonResponse = buttonResponse,
+                )
+            )
+        return OnMessageRequest(
+            token = token,
+            message =
+                TextMessage(
+                    text = "",
+                    content = content,
+                    channel = channel,
+                ),
+            tracingId = messageToSend.id
+        )
+    }
+
     fun preparePostbackMessage(
         token: String,
         buttonResponse: ButtonResponse,
@@ -216,6 +253,7 @@ private fun Message.toMessageEvent(): MessageEvent =
     when (messageType) {
         Message.Type.QuickReply -> MessageEvent.QuickReplyReceived(this)
         Message.Type.Cards -> MessageEvent.CardMessageReceived(this)
+        Message.Type.DatePicker -> MessageEvent.TimeSlotPickerReceived(this)
         else -> MessageEvent.MessageInserted(this)
     }
 
@@ -276,4 +314,13 @@ sealed class MessageEvent {
      * @property message is the [Message] object with all the card details.
      */
     class CardMessageReceived(val message: Message) : MessageEvent()
+
+    /**
+     * Dispatched when a time slot picker message was sent by the Bot.
+     * Each time slot picker contains title, subtitle, image, and the time slots.
+     * To access the time slot picker data, refer to [Message.timePicker].
+     *
+     * @property message is the [Message] object with all the time slot picker details.
+     */
+    class TimeSlotPickerReceived(val message: Message) : MessageEvent()
 }

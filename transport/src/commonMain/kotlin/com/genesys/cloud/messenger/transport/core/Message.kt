@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
 import com.genesys.cloud.messenger.transport.core.events.Event
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.util.Platform
 import kotlinx.serialization.Serializable
 
@@ -22,6 +23,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Message(
     val id: String = Platform().randomUUID(),
+    val originatingMessageId: String? = null,
     val direction: Direction = Direction.Inbound,
     val state: State = State.Idle,
     val messageType: Type = Type.Text,
@@ -37,6 +39,7 @@ data class Message(
         ),
     val authenticated: Boolean = false,
     val text: String? = null,
+    val timePicker: StructuredMessage.Content.TimeSlotPickerContent? = null,
 ) {
     /**
      * The enum type representation of the message.
@@ -45,6 +48,7 @@ data class Message(
      * @property Event when message is an event.
      * @property QuickReply when message is a quick reply.
      * @property Cards when message contains rich content in the form of one or more cards.
+     * @property DatePicker when message contains time slot picker data.
      * @property Unknown when system could not recognize the message type.
      */
     @Serializable
@@ -53,6 +57,7 @@ data class Message(
         Event,
         QuickReply,
         Cards,
+        DatePicker,
         Unknown,
     }
 

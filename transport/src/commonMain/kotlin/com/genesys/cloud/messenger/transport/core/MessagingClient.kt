@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
 import com.genesys.cloud.messenger.transport.core.events.Event
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 
 /**
  * The main SDK interface providing bi-directional communication between a guest and Genesys Cloud
@@ -354,4 +355,8 @@ interface MessagingClient {
      */
     @Throws(IllegalStateException::class)
     fun clearConversation()
+    fun submitTimeSlot(
+        timeSlot: StructuredMessage.Content.TimeSlotPickerContent.TimeSlot,
+        parentMessageId: String? = null
+    )
 }

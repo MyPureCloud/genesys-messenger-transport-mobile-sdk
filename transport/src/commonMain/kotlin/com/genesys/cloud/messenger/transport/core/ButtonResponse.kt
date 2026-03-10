@@ -14,4 +14,5 @@ data class ButtonResponse(
     val text: String,
     val payload: String,
     val type: String,
+    val originatingMessageId: String? = null
 )

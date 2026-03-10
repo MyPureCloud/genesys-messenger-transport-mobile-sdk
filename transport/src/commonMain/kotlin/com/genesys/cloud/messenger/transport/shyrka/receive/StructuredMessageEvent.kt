@@ -10,7 +10,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 @Serializable(with = StructuredMessageEventSerializer::class)
-internal sealed class StructuredMessageEvent {
+sealed class StructuredMessageEvent {
     @Serializable
     enum class Type {
         @SerialName("Typing")

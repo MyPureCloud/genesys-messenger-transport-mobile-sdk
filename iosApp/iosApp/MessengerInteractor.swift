@@ -23,7 +23,9 @@ final class MessengerInteractor {
         
     init(deployment: Deployment, reconnectTimeout: Int64 = 60 * 5) {
         print("Messenger Transport sdkVersion: \(MessengerTransportSDK.companion.sdkVersion)")
-        
+        let buton = ButtonResponse(
+            text: "hi", payload: "ha", type: "hu"
+        )
         self.configuration = Configuration(deploymentId: deployment.deploymentId,
                                            domain: deployment.domain,
                                            logging: true,
