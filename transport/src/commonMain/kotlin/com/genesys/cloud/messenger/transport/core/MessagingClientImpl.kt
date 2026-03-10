@@ -60,6 +60,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
 import kotlin.reflect.KProperty0
 
@@ -327,7 +328,7 @@ internal class MessagingClientImpl(
     }
 
     @Throws(Exception::class)
-    override suspend fun fetchNextPage() {
+    override suspend fun fetchNextPage() = withContext(Dispatchers.Main) {
         stateMachine.checkIfConfiguredOrReadOnly()
         historyHandler.fetchNextPage()
     }
