@@ -15,4 +15,7 @@ data class ButtonResponse(
     val payload: String,
     val type: String,
     val originatingMessageId: String? = null
-)
+) {
+
+    constructor(text: String, payload: String, type: String) : this(text, payload, type, null)
+}
