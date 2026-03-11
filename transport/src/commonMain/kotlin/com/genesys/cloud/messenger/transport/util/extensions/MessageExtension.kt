@@ -56,7 +56,6 @@ internal fun StructuredMessage.toMessage(tracingId: String? = null): Message {
                     }
             ),
         authenticated = metadata["authenticated"]?.toBoolean() ?: false,
-        originatingMessageId = originatingMessageId
     )
 }
 

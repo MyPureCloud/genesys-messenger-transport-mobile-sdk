@@ -23,7 +23,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Message(
     val id: String = Platform().randomUUID(),
-    val originatingMessageId: String? = null,
     val direction: Direction = Direction.Inbound,
     val state: State = State.Idle,
     val messageType: Type = Type.Text,
