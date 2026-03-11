@@ -213,6 +213,7 @@ private fun SocketMessageView(socketMessage: String) {
 
 @Preview
 @Composable
+@Suppress("ViewModelConstructorInComposable")
 fun PreviewTestBedScreen() {
     TestBedScreen(TestBedViewModel())
 }

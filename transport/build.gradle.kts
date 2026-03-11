@@ -123,7 +123,7 @@ kotlin {
                 implementation(Deps.Libs.OkHttp.loggingInterceptor) {
                     exclude(group = "com.squareup.okhttp3", module = "okhttp") // avoid AndroidX (okhttp-android)
                 }
-                implementation(Deps.Libs.Ktor.okhttp) {
+                api(Deps.Libs.Ktor.okhttp) {
                     exclude(group = "com.squareup.okhttp3", module = "okhttp") // avoid AndroidX (okhttp-android)
                 }
                 implementation(Deps.Libs.Ktor.loggingJvm)

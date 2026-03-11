@@ -106,9 +106,6 @@ android {
 dependencies {
     implementation(project(':transport'))
 
-    // Ktor (URLBuilder for OAuth URL building in TestBedViewModel)
-    implementation 'io.ktor:ktor-client-core:3.2.3'
-
     // Required by minSdk 21 with Java 17
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
@@ -135,11 +132,9 @@ dependencies {
     testImplementation libs.junit
     androidTestImplementation libs.androidx.test.ext.junit
     androidTestImplementation libs.espresso.core
-    androidTestImplementation libs.android.device.names
-    androidTestImplementation libs.awaitility.kotlin
     androidTestImplementation libs.uiautomator
     androidTestImplementation libs.androidx.test.rules
-    androidTestImplementation libs.jackson.module.kotlin
+    androidTestImplementation libs.kotlinx.serialization.json
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     configurations.all {
         resolutionStrategy.dependencySubstitution {

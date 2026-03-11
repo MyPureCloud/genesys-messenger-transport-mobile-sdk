@@ -1,17 +1,17 @@
 package com.genesys.cloud.messenger.uitest.support.ApiHelper
 
 import androidx.test.espresso.IdlingResource
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.genesys.cloud.messenger.uitest.support.testConfig
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.serializer
 import java.io.FileNotFoundException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.atomic.AtomicBoolean
 
 class API : IdlingResource {
-    val mapper = jacksonObjectMapper()
+    val json = Json { ignoreUnknownKeys = true }
     val agentToken = testConfig.agentToken
     val agentEmail = testConfig.agentEmail
 
@@ -19,9 +19,9 @@ class API : IdlingResource {
         httpMethod: String,
         httpURL: String,
         payload: ByteArray? = null
-    ): JsonNode? {
+    ): JsonElement? {
         val url = URL("${testConfig.apiBaseAddress}$httpURL")
-        var output: JsonNode? = null
+        var output: JsonElement? = null
         setIdle(false)
         println("Sending $httpMethod to $url.")
 
@@ -31,21 +31,19 @@ class API : IdlingResource {
             setRequestProperty("User-Agent", "Android-MTSDK-Testing")
             setRequestProperty("Content-Type", "application/json")
 
-            // send the payload if needed.
             if (payload != null) {
                 outputStream.write(payload)
                 outputStream.flush()
             }
 
             try {
-                inputStream.bufferedReader().use {
-                    it.lines().forEach { line ->
-                        output = mapper.readValue(line)
+                inputStream.bufferedReader().use { reader ->
+                    reader.readText().let { text ->
+                        if (text.isNotBlank()) output = json.parseToJsonElement(text)
                     }
-                    setIdle(true)
                 }
+                setIdle(true)
             } catch (error: FileNotFoundException) {
-                // FileNotFoundException can be received when a 404 is returned by an endpoint.
                 throw Error("An error was received while sending an HTTP Request. The target endpoint was: ${error.message} \n$responseCode \n$responseMessage")
                 setIdle(false)
             }
@@ -53,20 +51,17 @@ class API : IdlingResource {
         return output
     }
 
-    inline fun <reified T> parseJsonToClass(jsonResult: JsonNode?): T {
-        val jsonString = jsonResult?.toString() ?: ""
-        return mapper.readValue(jsonString)
+    inline fun <reified T> parseJsonToClass(jsonResult: JsonElement?): T {
+        val jsonString = jsonResult?.toString() ?: "{}"
+        return json.decodeFromString(serializer(), jsonString)
     }
 
-    inline fun <reified T> parseJsonToClass(jsonResult: List<JsonNode>?): T {
-        val jsonString = jsonResult.toString()
-        return mapper.readValue(jsonString)
+    inline fun <reified T> parseJsonToClass(jsonResult: List<JsonElement>?): T {
+        val jsonString = if (jsonResult.isNullOrEmpty()) "[]" else "[${jsonResult.joinToString(",") { it.toString() }}]"
+        return json.decodeFromString(serializer(), jsonString)
     }
 
-    // Idling Resource code.
     private val isIdle = AtomicBoolean(true)
-
-    // written from main thread, read from any thread.
     @Volatile private var resourceCallback: IdlingResource.ResourceCallback? = null
 
     override fun getName(): String = "HTTP Request"
@@ -78,12 +73,8 @@ class API : IdlingResource {
     }
 
     private fun setIdle(isIdleNow: Boolean) {
-        if (isIdleNow == isIdle.get()) {
-            return
-        }
+        if (isIdleNow == isIdle.get()) return
         isIdle.set(isIdleNow)
-        if (isIdleNow) {
-            resourceCallback?.onTransitionToIdle()
-        }
+        if (isIdleNow) resourceCallback?.onTransitionToIdle()
     }
 }
