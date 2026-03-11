@@ -236,7 +236,7 @@ internal object LogMessages {
     ) = "Failed to synchronize deviceToken: ${pushConfig.deviceToken.sanitize()} ,pushProvider ${pushConfig.pushProvider} with errorCode: $errorCode."
 
     fun submitTimeSlot(
-        timeSlot: StructuredMessage.Content.TimeSlotPickerContent.TimeSlot,
+        timeSlot: String,
         parentMessageId: String?
     ) = "Submit time slot: $timeSlot, sot message with ID: $parentMessageId"
 

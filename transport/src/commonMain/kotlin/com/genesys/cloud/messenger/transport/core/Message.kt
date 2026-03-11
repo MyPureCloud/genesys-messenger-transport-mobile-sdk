@@ -1,7 +1,6 @@
 package com.genesys.cloud.messenger.transport.core
 
 import com.genesys.cloud.messenger.transport.core.events.Event
-import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.util.Platform
 import kotlinx.serialization.Serializable
 
@@ -38,7 +37,7 @@ data class Message(
         ),
     val authenticated: Boolean = false,
     val text: String? = null,
-    val timePicker: StructuredMessage.Content.TimeSlotPickerContent? = null,
+    val timePicker: TimeSlotPicker? = null,
 ) {
     /**
      * The enum type representation of the message.
@@ -158,5 +157,19 @@ data class Message(
         val imageUrl: String? = null,
         val actions: List<ButtonResponse>,
         val defaultAction: ButtonResponse? = null,
+    )
+
+    @Serializable
+    data class TimeSlotPicker(
+        val title: String,
+        val subTitle: String? = null,
+        val imageUrl: String? = null,
+        val availableTimes: List<TimeSlot> = emptyList()
+    )
+    @Serializable
+    data class TimeSlot(
+        val timeEpochMillis: Long?,
+        val duration: Long,
+        val payload: String
     )
 }

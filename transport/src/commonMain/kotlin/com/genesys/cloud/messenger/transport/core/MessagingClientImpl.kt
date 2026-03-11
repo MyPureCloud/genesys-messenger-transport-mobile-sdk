@@ -268,16 +268,10 @@ internal class MessagingClientImpl(
         send(encodedJson)
     }
 
-    override fun submitTimeSlot(timeSlot: StructuredMessage.Content.TimeSlotPickerContent.TimeSlot, parentMessageId: String?) {
+    override fun submitTimeSlot(postbackResponse: ButtonResponse) {
         stateMachine.checkIfConfigured()
-        log.i { LogMessages.submitTimeSlot(timeSlot, parentMessageId) }
+        log.i { LogMessages.submitTimeSlot(postbackResponse.payload, postbackResponse.originatingMessageId) }
         val channel = prepareCustomAttributesForSending()
-        val postbackResponse = ButtonResponse(
-            text = "time slot submitted: ${timeSlot.dateTime}",
-            payload = timeSlot.dateTime,
-            type = "DatePicker",
-            originatingMessageId = parentMessageId
-        )
         val request =
             messageStore.prepareTimeSlotSubmissionMessageWith(token, postbackResponse, channel)
         val encodedJson = WebMessagingJson.json.encodeToString(request)
@@ -820,8 +814,14 @@ internal class MessagingClientImpl(
                                 StructuredMessage.Type.Structured -> {
                                     message.handleAsStructuredMessage()
                                     message.timePicker?.let{
-                                        it.availableTimes.firstOrNull()?.let {
-                                            slot -> submitTimeSlot(slot, message.id) }
+                                        it.availableTimes.firstOrNull()?.let { timeSlot ->
+                                            val postbackResponse = ButtonResponse(
+                                                text = "time formatted: ${timeSlot.payload}",
+                                                payload = timeSlot.payload,
+                                                type = "DatePicker",
+                                                originatingMessageId = originatingMessageId
+                                            )
+                                            submitTimeSlot(postbackResponse) }
                                     }
                                 }
                             }

@@ -150,18 +150,19 @@ data class StructuredMessage(
         }
 
         @Serializable
-        data class DatePicker(
+        internal data class DatePickerContent(
             val datePicker: TimeSlotPickerContent
         ) : Content()
         @Serializable
-        data class TimeSlotPickerContent(
+        internal data class TimeSlotPickerContent(
             val title: String,
             val subTitle: String? = null,
             val imageUrl: String? = null,
-            val availableTimes: List<TimeSlot> = emptyList()
+            val availableTimes: List<TimeSlotContent> = emptyList()
         ) : Content() {
+
             @Serializable
-            data class TimeSlot(
+            internal data class TimeSlotContent(
                 val duration: Long,
                 val dateTime: String
             )
@@ -180,7 +181,7 @@ data class StructuredMessage(
                 Content.Type.ButtonResponse.name -> Content.ButtonResponseContent.serializer()
                 Content.Type.Card.name -> Content.CardContent.serializer()
                 Content.Type.Carousel.name -> Content.CarouselContent.serializer()
-                Content.Type.DatePicker.name -> Content.DatePicker.serializer()
+                Content.Type.DatePicker.name -> Content.DatePickerContent.serializer()
                 else -> Content.UnknownContent.serializer()
             }
         }

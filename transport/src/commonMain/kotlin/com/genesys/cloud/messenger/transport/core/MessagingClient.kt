@@ -355,8 +355,14 @@ interface MessagingClient {
      */
     @Throws(IllegalStateException::class)
     fun clearConversation()
-    fun submitTimeSlot(
-        timeSlot: StructuredMessage.Content.TimeSlotPickerContent.TimeSlot,
-        parentMessageId: String? = null
-    )
+
+
+    /**
+     * Send a selected time slot to the Agent/Bot.
+     *
+     * @param postbackResponse the time slot data to send.
+     * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
+     */
+    @Throws(IllegalStateException::class)
+    fun submitTimeSlot(postbackResponse: ButtonResponse)
 }

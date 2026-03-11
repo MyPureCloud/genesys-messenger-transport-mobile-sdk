@@ -13,6 +13,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.AttachmentContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ButtonResponseContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.QuickReplyContent
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.TimeSlotPickerContent.TimeSlotContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.isInbound
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.util.WILD_CARD
@@ -22,12 +23,30 @@ internal fun List<StructuredMessage>.toMessageList(): List<Message> =
     map { it.toMessage() }
         .filter { it.messageType != Message.Type.Unknown }
 
+
+internal fun StructuredMessage.Content.TimeSlotPickerContent.toMessage() = Message.TimeSlotPicker(
+    title = title,
+    subTitle = subTitle,
+    imageUrl = imageUrl,
+    availableTimes = availableTimes.map { it.toMessage() }
+)
+
+internal fun TimeSlotContent.toMessage(): Message.TimeSlot =
+    Message.TimeSlot(
+        timeEpochMillis = runCatching {
+            Instant.parse(dateTime).toEpochMilliseconds()
+        }.getOrNull(),
+        duration = duration,
+        payload = dateTime
+    )
+
 internal fun StructuredMessage.toMessage(tracingId: String? = null): Message {
     val quickReplies = content.toQuickReplies().map { it.copy(originatingMessageId = this.id) }
     val cards = content.toCards()
     val hasCardSelection = content.hasCardSelection()
-    val hasTimePicker = content.hasTimePicker()
-    val timePicker = content.filterIsInstance<StructuredMessage.Content.DatePicker>().firstOrNull()
+    val timePicker: Message.TimeSlotPicker? =
+        content.filterIsInstance<StructuredMessage.Content.DatePickerContent>()
+            .firstOrNull()?.datePicker?.toMessage()
 
     return Message(
         id = tracingId ?: id,
@@ -40,7 +59,7 @@ internal fun StructuredMessage.toMessage(tracingId: String? = null): Message {
             timePicker != null
         ),
         text = text,
-        timePicker = timePicker?.datePicker,
+        timePicker = timePicker,
         timeStamp = channel?.time.fromIsoToEpochMilliseconds(),
         attachments = content.filterIsInstance<AttachmentContent>().toAttachments(),
         quickReplies = quickReplies,
@@ -195,7 +214,7 @@ private fun List<StructuredMessage.Content>.hasCardSelection(): Boolean =
 
 private fun List<StructuredMessage.Content>.hasTimePicker(): Boolean =
     this
-        .filterIsInstance<StructuredMessage.Content.DatePicker>()
+        .filterIsInstance<StructuredMessage.Content.DatePickerContent>()
         .any { true }
 
 internal fun String.isHealthCheckResponseId(): Boolean = this == HealthCheckID
