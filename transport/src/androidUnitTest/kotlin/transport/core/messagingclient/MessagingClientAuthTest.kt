@@ -80,9 +80,8 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         subject.connectAuthenticatedSession()
 
         verifySequence {
-            mockStateChangedListener(fromIdleToConnecting)
-            mockPlatformSocket.openSocket(any())
-            mockStateChangedListener(fromConnectingToConnected)
+            fromIdleToConnectedSequence()
+            mockLogger.i(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.refreshToken(any())
             mockEventHandler.onEvent(Event.AuthorizationRequired)
@@ -145,9 +144,8 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
             expectedErrorState.message
         )
         verifySequence {
-            mockStateChangedListener(fromIdleToConnecting)
-            mockPlatformSocket.openSocket(any())
-            mockStateChangedListener(fromConnectingToConnected)
+            fromIdleToConnectedSequence()
+            mockLogger.i(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.refreshToken(any())
             mockEventHandler.onEvent(Event.AuthorizationRequired)
@@ -239,21 +237,23 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
             expectedErrorState.message
         )
         verifySequence {
-            mockStateChangedListener(fromIdleToConnecting)
-            mockPlatformSocket.openSocket(any())
-            mockStateChangedListener(fromConnectingToConnected)
+            fromIdleToConnectedSequence()
+            mockLogger.i(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.jwt
             mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
             mockAuthHandler.refreshToken(any())
+            mockLogger.i(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.jwt
             mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
             mockAuthHandler.refreshToken(any())
+            mockLogger.i(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.jwt
             mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
             mockAuthHandler.refreshToken(any())
+            mockLogger.i(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.jwt
             mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
@@ -311,6 +311,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockMessageStore.invalidateConversationCache()
             mockReconnectionHandler.shouldReconnect
+            mockSessionDurationHandler.clearAndRemoveNotice()
             mockStateChangedListener(fromConfiguredToReconnecting())
             mockReconnectionHandler.reconnect(any())
             mockLogger.i(capture(logSlot))
@@ -407,15 +408,19 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
             fromIdleToConnectedSequence()
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
+            mockSessionDurationHandler.updateSessionDuration(any(), any())
             mockStateChangedListener(fromConnectedToConfigured)
             mockStateChangedListener(fromConfiguredToReadOnly())
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isCloseAllConnectionsRequest(it) })
+            mockSessionDurationHandler.updateSessionDuration(any(), any())
             mockLogger.i(capture(logSlot))
+            mockSessionDurationHandler.clear()
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it, startNew = true) })
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it, startNew = true) })
+            mockSessionDurationHandler.updateSessionDuration(any(), any())
             mockStateChangedListener(fromReadOnlyToConfigured)
         }
     }

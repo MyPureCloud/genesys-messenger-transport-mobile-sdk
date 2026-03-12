@@ -6,6 +6,7 @@ package com.genesys.cloud.messenger.transport.core
  * @param logging indicates if logging should be enabled.
  * @param reconnectionTimeoutInSeconds period of time during which Transport will try to reconnect to the web socket in case of connectivity lost.
  * @param autoRefreshTokenWhenExpired indicates if Transport should auto refresh auth token if it was expired.
+ * @param sessionExpirationNoticeIntervalSeconds how many seconds before the session expires to show the expiration notice
  * @param minimumWebSocketTlsVersion the minimum TLS protocol version for WebSocket connections. Default is [TlsVersion.SYSTEM_DEFAULT] for backward compatibility.
  */
 data class Configuration(
@@ -15,6 +16,7 @@ data class Configuration(
     val reconnectionTimeoutInSeconds: Long = 60 * 5,
     val autoRefreshTokenWhenExpired: Boolean = true,
     val encryptedVault: Boolean = false,
+    val sessionExpirationNoticeIntervalSeconds: Long = DEFAULT_INTERVAL,
     val minimumWebSocketTlsVersion: TlsVersion = TlsVersion.SYSTEM_DEFAULT
 ) {
     /**
@@ -37,6 +39,7 @@ data class Configuration(
         reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
         autoRefreshTokenWhenExpired = true,
         encryptedVault = false,
+        sessionExpirationNoticeIntervalSeconds = DEFAULT_INTERVAL,
         minimumWebSocketTlsVersion = TlsVersion.SYSTEM_DEFAULT
     )
 
@@ -57,8 +60,13 @@ data class Configuration(
         reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
         autoRefreshTokenWhenExpired = autoRefreshTokenWhenExpired,
         encryptedVault = encryptedVault,
+        sessionExpirationNoticeIntervalSeconds = DEFAULT_INTERVAL,
         minimumWebSocketTlsVersion = TlsVersion.SYSTEM_DEFAULT
     )
 
     internal var application: String = "TransportSDK-${MessengerTransportSDK.sdkVersion}"
+
+    companion object {
+        internal const val DEFAULT_INTERVAL = 300L
+    }
 }

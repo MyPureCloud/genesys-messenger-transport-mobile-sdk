@@ -115,6 +115,7 @@ kotlin {
                 implementation(kotlin("test-annotations-common"))
                 implementation(Deps.Libs.Assertk.common)
                 implementation(Deps.Libs.Ktor.mock)
+                implementation(Deps.Libs.Kotlinx.coroutinesTest)
             }
         }
         androidMain {

@@ -167,6 +167,9 @@ internal object LogMessages {
 
     fun healthCheckCoolDown(milliseconds: Long) = "Health check can be sent only once every $milliseconds milliseconds."
 
+    fun healthCheckDeferred(delayMillis: Long) =
+        "Health check deferred. Scheduling to run in $delayMillis ms (${delayMillis / 1000} seconds)"
+
     fun deactivateWithCloseCode(
         code: Int,
         reason: String?
@@ -238,4 +241,44 @@ internal object LogMessages {
     const val DEVICE_NOT_REGISTERED = "Device is not registered."
     const val DEVICE_ALREADY_REGISTERED = "Device is already registered. Performing update."
     const val NO_DEVICE_TOKEN_OR_PUSH_PROVIDER = "Skipping push service synchronization: Missing device token or push provider."
+
+    // Session Duration
+    fun updateSessionDuration(
+        durationSeconds: Long?,
+        expirationDate: Long?
+    ) = "updateSessionDuration(durationSeconds=$durationSeconds, expirationDate=$expirationDate)"
+
+    fun startingExpirationTimer(
+        delayMillis: Long,
+        delaySeconds: Long
+    ) = "Starting expiration timer with delay: $delayMillis ms ($delaySeconds seconds)"
+
+    fun startingHealthCheckTimer(delayMillis: Long) =
+        "Starting health check timer with delay: $delayMillis ms (${delayMillis / 1000} seconds)"
+
+    fun healthCheckLeadTimeTooShort(delayMillis: Long) =
+        "Health check lead time too short (delay: $delayMillis ms), triggering health check immediately"
+
+    fun noticeTimeAlreadyPassed(delayMillis: Long) = "Notice time has already passed (delay: $delayMillis ms)"
+
+    fun sessionExpirationNoticeSent(expiresInSeconds: Long) =
+        "Session expiration notice sent. Session expires in $expiresInSeconds seconds"
+
+    fun schedulingExpirationHealthCheck(delayMillis: Long, bufferMillis: Long) =
+        "Scheduling health check after expiration with delay: ${delayMillis / 1000} seconds (includes ${bufferMillis / 1000}s buffer)"
+
+    const val REMOVING_SESSION_EXPIRATION_NOTICE =
+        "Message activity detected during expiration notice period. Removing session expiration notice and triggering health check."
+
+    const val CLEARING_SESSION_DURATION_WITH_ACTIVE_NOTICE =
+        "Clearing session duration handler with active expiration notice. Removing notice."
+
+    const val HEALTH_CHECK_SKIPPED_INVALID_STATE =
+        "Health check skipped: MessagingClient is not in Configured or ReadOnly state."
+
+    // Action Timer
+    fun startingTimer(delayMillis: Long) = "Starting timer with delay: $delayMillis ms"
+
+    const val TIMER_EXPIRED_EXECUTING_ACTION = "Timer expired, executing action"
+    const val CANCELLING_TIMER = "Cancelling timer"
 }
