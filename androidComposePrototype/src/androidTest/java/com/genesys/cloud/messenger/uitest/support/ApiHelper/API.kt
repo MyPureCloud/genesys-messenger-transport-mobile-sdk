@@ -44,8 +44,8 @@ class API : IdlingResource {
                 }
                 setIdle(true)
             } catch (error: FileNotFoundException) {
+                setIdle(true)
                 throw Error("An error was received while sending an HTTP Request. The target endpoint was: ${error.message} \n$responseCode \n$responseMessage")
-                setIdle(false)
             }
         }
         return output
