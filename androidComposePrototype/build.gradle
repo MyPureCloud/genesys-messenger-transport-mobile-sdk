@@ -116,9 +116,9 @@ dependencies {
 
     // Compose (material brings in ui + foundation transitively)
     implementation platform(libs.compose.bom)
-    implementation libs.androidx.material
-    implementation libs.androidx.material.icons.core.android
-    implementation libs.androidx.ui.tooling
+    implementation libs.compose.material
+    implementation libs.compose.material.icons.core.android
+    implementation libs.compose.ui.tooling
     implementation libs.lifecycle.viewmodel.compose
     implementation libs.activity.compose
 

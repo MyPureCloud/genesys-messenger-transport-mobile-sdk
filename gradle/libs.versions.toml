@@ -36,9 +36,9 @@ activity-compose = { group = "androidx.activity", name = "activity-compose", ver
 appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
 compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
-androidx-material = { module = "androidx.compose.material:material" }
-androidx-material-icons-core-android = { module = "androidx.compose.material:material-icons-core-android" }
-androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
+compose-material = { module = "androidx.compose.material:material" }
+compose-material-icons-core-android = { module = "androidx.compose.material:material-icons-core-android" }
+compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugarJdkLibs" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging", version.ref = "firebaseMessaging" }
