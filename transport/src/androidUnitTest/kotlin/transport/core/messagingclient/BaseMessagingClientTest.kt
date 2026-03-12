@@ -16,6 +16,7 @@ import com.genesys.cloud.messenger.transport.core.StateChange
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
+import com.genesys.cloud.messenger.transport.core.sessionduration.SessionDurationHandler
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandlerImpl
@@ -212,6 +213,7 @@ open class BaseMessagingClientTest {
         }
     internal val mockJwtHandler: JwtHandler = mockk(relaxed = true)
     internal val mockHistoryHandler: HistoryHandler = mockk(relaxed = true)
+    internal val mockSessionDurationHandler: SessionDurationHandler = mockk(relaxed = true)
 
     internal val mockLogger: Log = mockk(relaxed = true)
     internal val logSlot = mutableListOf<() -> String>()
@@ -240,6 +242,7 @@ open class BaseMessagingClientTest {
             internalCustomAttributesStore = mockCustomAttributesStore,
             pushService = mockPushService,
             historyHandler = mockHistoryHandler,
+            sessionDurationHandler = mockSessionDurationHandler,
         ).also {
             it.stateChangedListener = mockStateChangedListener
         }
@@ -249,6 +252,7 @@ open class BaseMessagingClientTest {
 
     protected fun MockKVerificationScope.fromIdleToConnectedSequence() {
         mockLogger.withTag(LogTag.STATE_MACHINE)
+        mockSessionDurationHandler.setTriggerHealthCheck(any())
         mockLogger.withTag(LogTag.WEBSOCKET)
         mockLogger.i(capture(logSlot))
         mockStateChangedListener(fromIdleToConnecting)
@@ -282,16 +286,19 @@ open class BaseMessagingClientTest {
         mockReconnectionHandler.clear()
         mockJwtHandler.clear()
         mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
+        mockSessionDurationHandler.updateSessionDuration(any(), any())
     }
 
     protected fun MockKVerificationScope.connectToReadOnlySequence() {
         fromIdleToConnectedSequence()
         mockLogger.i(capture(logSlot))
         mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) })
+        mockVault.wasAuthenticated = false
         mockAttachmentHandler.fileAttachmentProfile = any()
         mockReconnectionHandler.clear()
         mockJwtHandler.clear()
         mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
+        mockSessionDurationHandler.updateSessionDuration(any(), any())
         mockStateChangedListener(fromConnectedToReadOnly)
     }
 
@@ -319,9 +326,14 @@ open class BaseMessagingClientTest {
     }
 
     protected fun MockKVerificationScope.connectWithFailedConfigureSequence(shouldConfigureAuth: Boolean = false) {
+        mockLogger.withTag(LogTag.STATE_MACHINE)
+        mockSessionDurationHandler.setTriggerHealthCheck(any())
+        mockLogger.withTag(LogTag.WEBSOCKET)
+        mockLogger.i(capture(logSlot))
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
+        mockLogger.i(capture(logSlot))
         mockPlatformSocket.sendMessage(
             match {
                 if (shouldConfigureAuth) {
@@ -333,10 +345,11 @@ open class BaseMessagingClientTest {
         )
     }
 
-    protected fun errorSequence(stateChange: StateChange) {
-        this.mockStateChangedListener(stateChange)
+    protected fun MockKVerificationScope.errorSequence(stateChange: StateChange) {
+        mockStateChangedListener(stateChange)
         mockReconnectionHandler.clear()
         mockJwtHandler.clear()
+        mockSessionDurationHandler.clearAndRemoveNotice()
     }
 
     protected fun MockKVerificationScope.invalidateSessionTokenSequence() {
@@ -352,6 +365,7 @@ open class BaseMessagingClientTest {
         mockAttachmentHandler.clearAll()
         mockReconnectionHandler.clear()
         mockJwtHandler.clear()
+        mockSessionDurationHandler.clear()
         mockCustomAttributesStore.onSessionClosed()
     }
 }

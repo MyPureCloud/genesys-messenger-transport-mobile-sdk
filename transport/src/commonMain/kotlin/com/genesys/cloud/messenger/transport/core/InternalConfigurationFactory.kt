@@ -15,6 +15,7 @@ object InternalConfigurationFactory {
      * @param autoRefreshTokenWhenExpired indicates if Transport should auto refresh auth token if expired.
      * @param encryptedVault indicates if encrypted vault should be used.
      * @param minimumWebSocketTlsVersion the minimum TLS protocol version for WebSocket connections.
+     * @param sessionExpirationNoticeIntervalSeconds how many seconds before the session expires to show the expiration notice.
      * @return Configuration instance with proper application parameter formatting.
      */
     fun create(
@@ -26,6 +27,7 @@ object InternalConfigurationFactory {
         reconnectionTimeoutInSeconds: Long = 60 * 5,
         autoRefreshTokenWhenExpired: Boolean = true,
         encryptedVault: Boolean = false,
+        sessionExpirationNoticeIntervalSeconds: Long = Configuration.DEFAULT_INTERVAL,
         minimumWebSocketTlsVersion: TlsVersion = TlsVersion.SYSTEM_DEFAULT
     ): Configuration {
         val config =
@@ -36,6 +38,7 @@ object InternalConfigurationFactory {
                 reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
                 autoRefreshTokenWhenExpired = autoRefreshTokenWhenExpired,
                 encryptedVault = encryptedVault,
+                sessionExpirationNoticeIntervalSeconds = sessionExpirationNoticeIntervalSeconds,
                 minimumWebSocketTlsVersion = minimumWebSocketTlsVersion
             )
 
