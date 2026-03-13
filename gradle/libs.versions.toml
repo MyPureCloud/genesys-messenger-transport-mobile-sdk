@@ -26,6 +26,12 @@ lifecycleViewModelCompose = "2.7.0"  # 2.8.2/2.10.0 need compileSdk 36
 material = "1.12.0"  # 1.13 needs minSdk 24
 uiautomator = "2.3.0"
 
+# Java – transport module (Gradle / Kotlin jvmTarget)
+transportJavaVersion = "21"
+
+# Java – androidComposePrototype (compileOptions / Kotlin jvmTarget)
+testbedJavaVersion = "21"
+
 [libraries]
 # common (transport + androidComposePrototype)
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }

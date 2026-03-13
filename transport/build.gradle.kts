@@ -62,7 +62,7 @@ kotlin {
         namespace = "com.genesys.cloud.messenger"
         compileSdk = Deps.Android.compileSdk
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
+            jvmTarget.set(JvmTarget.fromTarget(libs.versions.transportJavaVersion.get()))
         }
         withHostTest { }
     }
