@@ -6,10 +6,10 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${libs.versions.kotlin.get()}")
-        classpath("com.android.tools.build:gradle:${libs.versions.agp.get()}")
-        classpath("com.codingfeline.buildkonfig:buildkonfig-gradle-plugin:${Deps.buildKonfig}")
-        classpath("com.google.gms:google-services:${Deps.googleServices}")
+        classpath(libs.kotlin.gradle.plugin)
+        classpath(libs.android.gradle.plugin)
+        classpath(libs.buildkonfig.gradle.plugin)
+        classpath(libs.google.services.gradle)
     }
 }
 
@@ -22,7 +22,7 @@ allprojects {
 
 plugins {
     alias(libs.plugins.android.kotlin.multiplatform.library) apply false
-    id("io.github.gradle-nexus.publish-plugin") version Deps.nexusPublish
+    alias(libs.plugins.nexus.publish)
 }
 
 // CocoaPods requires the podspec to have a `version`
