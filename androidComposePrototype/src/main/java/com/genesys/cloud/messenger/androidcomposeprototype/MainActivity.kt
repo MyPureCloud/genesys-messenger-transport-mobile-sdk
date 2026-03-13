@@ -2,9 +2,11 @@ package com.genesys.cloud.messenger.androidcomposeprototype
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import android.window.OnBackInvokedDispatcher
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -30,6 +32,13 @@ class MainActivity :
         setPrototypeLauncherView()
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            onBackInvokedDispatcher.registerOnBackInvokedCallback(
+                OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+                ::onBackInvoked
+            )
+        }
+
         intent?.data?.doIfRedirectedFromOkta { uri ->
             handleOktaRedirect(uri)
         }
@@ -52,8 +61,13 @@ class MainActivity :
             .commit()
     }
 
+    @Deprecated("Deprecated in API 33. Back handling uses OnBackInvokedCallback on API 33+.")
     override fun onBackPressed() {
-        Log.d(TAG, "onBackPressed")
+        onBackInvoked()
+    }
+
+    private fun onBackInvoked() {
+        Log.d(TAG, "onBackInvoked")
         if (supportFragmentManager.fragments.isNotEmpty()) {
             setPrototypeLauncherView()
             supportFragmentManager.popBackStackImmediate()
