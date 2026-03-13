@@ -128,12 +128,18 @@ pipeline {
 
         stage("CI Unit Tests") {
             steps {
-                sh './gradlew test :transport:koverXmlReport :transport:koverHtmlReport'
-                // Use Kover's JaCoCo XML report (transport only). The jacoco() step expects .exec + class dirs
-                // and does not match KMP/Kover layout; publishCoverage reads the XML directly for correct coverage.
+                sh './gradlew test :transport:koverXmlReport :transport:koverHtmlReport :journey:koverXmlReport :journey:koverHtmlReport'
                 publishCoverage(
-                    adapters: [jacocoAdapter(path: 'transport/build/reports/kover/report.xml')],
-                    sourceDirectories: [[path: 'transport/src/commonMain/kotlin'], [path: 'transport/src/androidMain/kotlin']]
+                    adapters: [
+                        jacocoAdapter(path: 'transport/build/reports/kover/report.xml'),
+                        jacocoAdapter(path: 'journey/build/reports/kover/report.xml')
+                    ],
+                    sourceDirectories: [
+                        [path: 'transport/src/commonMain/kotlin'],
+                        [path: 'transport/src/androidMain/kotlin'],
+                        [path: 'journey/src/commonMain/kotlin'],
+                        [path: 'journey/src/androidMain/kotlin']
+                    ]
                 )
             }
         }
@@ -147,6 +153,12 @@ pipeline {
         stage("CI Build - transport Module Android - debug and release") {
             steps {
                 sh './gradlew :transport:assembleAndroidMain'
+            }
+        }
+
+        stage("CI Build - journey Module Android") {
+            steps {
+                sh './gradlew :journey:assembleAndroidMain'
             }
         }
 
@@ -231,12 +243,20 @@ pipeline {
             emailext attachLog: false, body: "Build Job: ${BUILD_URL}", recipientProviders: [culprits(), requestor(), brokenBuildSuspects()], subject: "Build failed: ${JOB_NAME}-${BUILD_NUMBER}"
         }
         always {
-            archiveArtifacts 'transport/build/reports/tests/testAndroidHostTest/**/*.html, transport/build/reports/tests/testAndroidHostTest/**/*.js, transport/build/reports/tests/testAndroidHostTest/**/*.css, transport/build/reports/kover/report.xml, transport/build/reports/kover/html/**'
-            junit 'transport/build/test-results/testAndroidHostTest/*.xml'
+            archiveArtifacts 'transport/build/reports/tests/testAndroidHostTest/**/*.html, transport/build/reports/tests/testAndroidHostTest/**/*.js, transport/build/reports/tests/testAndroidHostTest/**/*.css, transport/build/reports/kover/report.xml, transport/build/reports/kover/html/**, journey/build/reports/tests/testAndroidHostTest/**/*.html, journey/build/reports/tests/testAndroidHostTest/**/*.js, journey/build/reports/tests/testAndroidHostTest/**/*.css, journey/build/reports/kover/report.xml, journey/build/reports/kover/html/**'
+            junit 'transport/build/test-results/testAndroidHostTest/*.xml, journey/build/test-results/testAndroidHostTest/*.xml'
             script {
                 testResultToKnex {
                     files = 'transport/build/test-results/testAndroidHostTest/*.xml'
                     aut = 'KMM-Transport-SDK'
+                    type = 'unit'
+                    platform = 'junit'
+                    clusterName = 'Mobile Messenger Transport SDK'
+                    teams = 'Digital Mobile SDK'
+                }
+                testResultToKnex {
+                    files = 'journey/build/test-results/testAndroidHostTest/*.xml'
+                    aut = 'KMM-Journey-SDK'
                     type = 'unit'
                     platform = 'junit'
                     clusterName = 'Mobile Messenger Transport SDK'

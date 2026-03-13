@@ -22,6 +22,7 @@ import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.push.PushProvider
 import com.genesys.cloud.messenger.transport.push.PushService
+import com.genesys.cloud.messenger.journey.JourneyTracker
 import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.EncryptedVault
 import com.google.firebase.messaging.FirebaseMessaging
@@ -136,6 +137,7 @@ class TestBedViewModel :
         } else {
             DefaultVault.context = context
         }
+        JourneyTracker.platformContext = context
         messengerTransport = MessengerTransportSDK(mmsdkConfiguration)
         client = messengerTransport.createMessagingClient()
         pushService = messengerTransport.createPushService()

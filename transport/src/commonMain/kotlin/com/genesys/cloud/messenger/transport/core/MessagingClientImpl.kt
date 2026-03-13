@@ -1,5 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
+import com.genesys.cloud.messenger.journey.JourneyConfiguration
+import com.genesys.cloud.messenger.journey.JourneyTracker
 import com.genesys.cloud.messenger.transport.auth.AuthHandler
 import com.genesys.cloud.messenger.transport.auth.AuthHandlerImpl
 import com.genesys.cloud.messenger.transport.auth.NO_JWT
@@ -55,11 +57,13 @@ import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
+import io.ktor.client.plugins.cookies.CookiesStorage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerializationException
 import kotlin.reflect.KProperty0
 
@@ -126,6 +130,51 @@ internal class MessagingClientImpl(
             return stateMachine.currentState
         }
 
+    init {
+        val tracker = JourneyTracker(
+            JourneyConfiguration(
+                deploymentId = "deployment",
+                domain = "domain",
+                logging = true
+            )
+        )
+
+        // Set required session metadata (maps to "app" and "device" in request body)
+        tracker.setAppName("MyRetailApp")
+        tracker.setAppNamespace("com.example.retail")
+        tracker.setAppVersion("2.1.0")
+        tracker.setAppBuildNumber("145")
+        tracker.setDeviceCategory("mobile")
+        tracker.setDeviceType("iPhone 15")
+        tracker.setOsFamily("iOS")
+        tracker.setOsVersion("17.4")
+
+        // Set optional fields
+        tracker.setIsMobile(true)
+        tracker.setScreenWidth(390)
+        tracker.setScreenHeight(844)
+        tracker.setScreenDensity(3)
+        tracker.setManufacturer("Apple")
+        tracker.setWifiEnabled(true)
+
+        // Set identity for stitching
+        tracker.setExternalId("sf-customer-98765")
+        tracker.setCellularEnabled(false)
+        tracker.setBluetoothEnabled(false)
+
+
+        // Send events — SDK auto-fills sdkLibrary, customerCookieId, createdDate
+
+        runBlocking {
+           tracker.screenViewed(screenName = "HomeScreen")
+           tracker.customEvent(
+               eventName = "add_to_cart",
+               screenName = "ProductScreen",
+               attributes = mapOf("productId" to "SKU123", "price" to "29.99"),
+           )
+       }
+
+    }
     override var stateChangedListener: ((StateChange) -> Unit)? = null
         set(value) {
             stateMachine.stateChangedListener = value

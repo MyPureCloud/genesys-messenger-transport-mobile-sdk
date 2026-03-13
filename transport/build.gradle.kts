@@ -98,6 +98,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
+                api(project(":journey"))
                 implementation(kotlin("stdlib-common"))
                 implementation(libs.kotlinx.serialization.json)
                 implementation(Deps.Libs.Kotlinx.coroutinesCore)
