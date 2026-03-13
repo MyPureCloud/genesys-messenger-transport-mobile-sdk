@@ -17,6 +17,8 @@ internal class JourneyApi(
 ) {
     suspend fun sendAppEvent(request: AppEventRequest): Result<Unit> {
         return try {
+            val jsonBody = journeyJson.encodeToString(request)
+            log.i { "Sending app event to ${urls.appEventsUrl}: $jsonBody" }
             val response: HttpResponse = client.post(urls.appEventsUrl) {
                 contentType(ContentType.Application.Json)
                 setBody(request)

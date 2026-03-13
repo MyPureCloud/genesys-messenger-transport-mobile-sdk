@@ -243,9 +243,7 @@ class JourneyTracker(private val configuration: JourneyConfiguration) {
 
         val mergedTraits = mergeTraits(traits)
         val customerCookieId = cookieIdManager.getOrCreateCookieId()
-        val now = kotlin.time.Clock.System.now()
-        val truncated = kotlin.time.Instant.fromEpochSeconds(now.epochSeconds)
-        val createdDate = truncated.toString().replace("Z", "+0000")
+        val createdDate = kotlin.time.Clock.System.now().toString()
 
         val request = AppEventRequest(
             eventName = eventName,

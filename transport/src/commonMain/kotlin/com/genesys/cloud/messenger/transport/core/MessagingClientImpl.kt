@@ -167,8 +167,12 @@ internal class MessagingClientImpl(
 
         runBlocking {
            tracker.screenViewed(screenName = "HomeScreen")
+           tracker.screenViewed(screenName = "HomeScreen7")
+//           tracker.screenViewed(screenName = "HomeScreen8")
+//           tracker.screenViewed(screenName = "HomeScreen9")
+           tracker.screenViewed(screenName = "ProductScreen")
            tracker.customEvent(
-               eventName = "add_to_cart",
+               eventName = "ad_to_cart_event",
                screenName = "ProductScreen",
                attributes = mapOf("productId" to "SKU123", "price" to "29.99"),
            )
