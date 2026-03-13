@@ -38,6 +38,12 @@ androidxTestRules = "1.7.0"
 espressoCore = "3.7.0"
 uiautomator = "2.3.0"
 
+# Java – transport module (Gradle / Kotlin jvmTarget)
+transportJavaVersion = "21"
+
+# Java – androidComposePrototype (compileOptions / Kotlin jvmTarget)
+testbedJavaVersion = "21"
+
 # Android SDK – transport module
 transportCompileSdk = "36"
 transportMinSdk = "21"
