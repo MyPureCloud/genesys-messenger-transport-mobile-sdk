@@ -51,9 +51,9 @@ android {
     android.buildFeatures.buildConfig true
     defaultConfig {
         applicationId "com.genesys.cloud.webmessaging.androidcomposeprototype"
-        minSdkVersion 21
-        compileSdk 35
-        targetSdkVersion 35
+        minSdkVersion libs.versions.testbedMinSdk.get().toInteger()
+        compileSdk libs.versions.testbedCompileSdk.get().toInteger()
+        targetSdkVersion libs.versions.testbedTargetSdk.get().toInteger()
         versionCode 1
         versionName "1.0"
 

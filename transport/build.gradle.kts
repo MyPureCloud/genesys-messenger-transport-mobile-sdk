@@ -60,7 +60,7 @@ kotlin {
     }
     androidLibrary {
         namespace = "com.genesys.cloud.messenger"
-        compileSdk = Deps.Android.compileSdk
+        compileSdk = libs.versions.transportCompileSdk.get().toInt()
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
         }
@@ -100,34 +100,34 @@ kotlin {
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation(libs.kotlinx.serialization.json)
-                implementation(Deps.Libs.Kotlinx.coroutinesCore)
-                implementation(Deps.Libs.Ktor.core)
-                implementation(Deps.Libs.Ktor.serialization)
-                implementation(Deps.Libs.Ktor.logging)
-                implementation(Deps.Libs.Ktor.contentNegotiation)
-                implementation(Deps.Libs.Ktor.kotlinxSerialization)
-                implementation(Deps.Libs.Kotlinx.datetime)
+                implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.ktor.client.core)
+                implementation(libs.ktor.client.serialization)
+                implementation(libs.ktor.client.logging)
+                implementation(libs.ktor.client.content.negotiation)
+                implementation(libs.ktor.serialization.kotlinx.json)
+                implementation(libs.kotlinx.datetime)
             }
         }
         commonTest {
             dependencies {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
-                implementation(Deps.Libs.Assertk.common)
-                implementation(Deps.Libs.Ktor.mock)
+                implementation(libs.assertk)
+                implementation(libs.ktor.client.mock)
             }
         }
         androidMain {
             dependencies {
-                implementation(Deps.Libs.OkHttp.clientJvm)
-                implementation(Deps.Libs.OkHttp.loggingInterceptor) {
-                    exclude(group = "com.squareup.okhttp3", module = "okhttp") // avoid AndroidX (okhttp-android)
+                implementation(libs.okhttp.jvm)
+                implementation("com.squareup.okhttp3:logging-interceptor:${libs.versions.okhttp.get()}") {
+                    exclude(group = "com.squareup.okhttp3", module = "okhttp")
                 }
-                api(Deps.Libs.Ktor.okhttp) {
-                    exclude(group = "com.squareup.okhttp3", module = "okhttp") // avoid AndroidX (okhttp-android)
+                api("io.ktor:ktor-client-okhttp:${libs.versions.ktor.get()}") {
+                    exclude(group = "com.squareup.okhttp3", module = "okhttp")
                 }
-                implementation(Deps.Libs.Ktor.loggingJvm)
-                implementation(Deps.Libs.Kotlinx.coroutinesAndroid)
+                implementation(libs.ktor.client.logging.jvm)
+                implementation(libs.kotlinx.coroutines.android)
             }
         }
         val androidHostTest by getting {
@@ -136,10 +136,10 @@ kotlin {
             dependencies {
                 implementation(kotlin("test-junit"))
                 implementation(libs.junit)
-                implementation(Deps.Libs.Assertk.jvm)
-                implementation(Deps.Libs.OkHttp.mockWebServer)
-                implementation(Deps.Libs.mockk)
-                implementation(Deps.Libs.Kotlinx.coroutinesTest)
+                implementation(libs.assertk.jvm)
+                implementation(libs.okhttp.mockwebserver)
+                implementation(libs.mockk)
+                implementation(libs.kotlinx.coroutines.test)
             }
         }
         val iosX64Main by getting
@@ -147,8 +147,8 @@ kotlin {
         val iosSimulatorArm64Main by getting
         val iosMain by creating {
             dependencies {
-                implementation(Deps.Libs.Ktor.ios)
-                implementation(Deps.Libs.Ktor.darwin)
+                implementation(libs.ktor.client.ios)
+                implementation(libs.ktor.client.darwin)
             }
             dependsOn(commonMain.get())
             iosX64Main.dependsOn(this)
