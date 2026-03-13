@@ -1,17 +1,18 @@
 package com.genesys.cloud.messenger.uitest.support.ApiHelper
 
 import android.util.Log
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.databind.JsonNode
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed.TestBedViewModel
 import com.genesys.cloud.messenger.uitest.support.testConfig
-import org.awaitility.Awaitility
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import java.lang.Thread.sleep
-import java.util.concurrent.TimeUnit
 
 private val TAG = TestBedViewModel::class.simpleName
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class Conversation(
     val id: String,
     var participants: Array<Participant>
@@ -42,7 +43,7 @@ data class Conversation(
     }
 }
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class Participant(
     val id: String,
     val purpose: String,
@@ -50,29 +51,23 @@ data class Participant(
     var messages: Array<CallDetails>
 )
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class Media(
     val id: String,
     val uploadUrl: String,
     val Status: String
 )
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class CallDetails(
     val state: String,
     val id: String
 ) {
-    fun isConnected(): Boolean {
-        return state == "connected"
-    }
+    fun isConnected(): Boolean = state == "connected"
 
-    fun isDisconnected(): Boolean {
-        return state == "disconnected" || state == "terminated"
-    }
+    fun isDisconnected(): Boolean = state == "disconnected" || state == "terminated"
 
-    fun isAlerting(): Boolean {
-        return state == "alerting"
-    }
+    fun isAlerting(): Boolean = state == "alerting"
 }
 
 fun API.waitForConversation(): Conversation? {
@@ -98,8 +93,9 @@ fun API.waitForConversation(): Conversation? {
 }
 
 fun API.getAllConversations(): Array<Conversation> {
-    val result = publicApiCall("GET", "/api/v2/conversations")?.get("entities")?.toList()
-    return parseJsonToClass(result)
+    val entities = publicApiCall("GET", "/api/v2/conversations")
+        ?.jsonObject?.get("entities")?.jsonArray
+    return parseJsonToClass(entities?.toList())
 }
 
 fun API.getConversationInfo(conversationId: String): Conversation {
@@ -144,14 +140,13 @@ fun API.sendConnectOrDisconnect(
     var statusPayload = ""
     println("Sending $connecting request to: ${conversationInfo.id} from a conversation.")
     val agentParticipant = conversationInfo.getParticipantFromPurpose("agent")
-    var wrapupCodePayload: JsonNode? = null
+    var wrapupCodePayload: JsonElement? = null
     if (!connecting) {
         statusPayload = "{\"state\": \"DISCONNECTED\"}"
         wrapupCodePayload = getDefaultWrapupCodeId(conversationInfo.id, agentParticipant!!.id)
     } else {
         statusPayload = "{\"state\": \"CONNECTED\"}"
     }
-    // Send requests to connect/disconnect the conversation and send the wrapup code.
     sendStatusToParticipant(conversationInfo.id, agentParticipant!!.id, statusPayload)
     if (connecting) {
         waitForParticipantToConnectOrDisconnect(conversationInfo.id, connectionState = "connected")
@@ -165,8 +160,9 @@ fun API.sendConnectOrDisconnect(
 fun API.getDefaultWrapupCodeId(
     conversationId: String,
     participantId: String
-): JsonNode? {
-    val wrapupCodeId = publicApiCall("GET", "/api/v2/conversations/$conversationId/participants/$participantId/wrapupcodes")?.firstOrNull()?.get("id")
+): JsonElement? {
+    val wrapupCodeId = publicApiCall("GET", "/api/v2/conversations/$conversationId/participants/$participantId/wrapupcodes")
+        ?.jsonArray?.firstOrNull()?.jsonObject?.get("id")
     return wrapupCodeId
 }
 
@@ -174,14 +170,17 @@ fun API.waitForParticipantToConnectOrDisconnect(
     conversationId: String,
     connectionState: String = "disconnected"
 ) {
-    Awaitility
-        .await()
-        .atMost(60, TimeUnit.SECONDS)
-        .ignoreExceptions()
-        .untilAsserted {
+    val deadline = System.currentTimeMillis() + 60_000L
+    while (System.currentTimeMillis() < deadline) {
+        try {
             val listOfMessages = getConversationInfo(conversationId).getParticipantFromPurpose("agent")?.messages?.toList()
-            listOfMessages?.get(0)?.state == connectionState
+            if (listOfMessages?.get(0)?.state == connectionState) return
+        } catch (_: Exception) {
+            // ignore and retry
         }
+        sleep(1000)
+    }
+    throw AssertionError("Participant did not reach state '$connectionState' within 60 seconds")
 }
 
 fun API.sendStatusToParticipant(
@@ -194,14 +193,15 @@ fun API.sendStatusToParticipant(
 
 fun API.sendWrapupCode(
     conversationInfo: Conversation,
-    wrapupPayload: JsonNode?
+    wrapupPayload: JsonElement?
 ) {
     val agentParticipant = conversationInfo.getParticipantFromPurpose("agent")
     val communicationId = conversationInfo.getCommunicationId(agentParticipant!!)
+    val codeId = wrapupPayload?.jsonPrimitive?.content
     publicApiCall(
         "POST",
-        "/api/v2/conversations/messages/${conversationInfo.id}/participants/${agentParticipant?.id}/communications/$communicationId/wrapup",
-        ("{ \"code\": \"${wrapupPayload?.get("id")}\", \"notes\": \"\"}").toByteArray()
+        "/api/v2/conversations/messages/${conversationInfo.id}/participants/${agentParticipant.id}/communications/$communicationId/wrapup",
+        ("{ \"code\": \"$codeId\", \"notes\": \"\"}").toByteArray()
     )
 }
 
@@ -221,10 +221,9 @@ fun API.checkForConversationMessages(conversationId: String) {
 fun API.attachImage(conversationInfo: Conversation) {
     val agentParticipant = conversationInfo.getParticipantFromPurpose("agent")
     val communicationId = conversationInfo.getCommunicationId(agentParticipant!!)
-    val mediaResult =
-        publicApiCall(
-            "POST",
-            "/api/v2/conversations/messages/${conversationInfo.id}/communications/$communicationId/messages/media"
-        )
+    val mediaResult = publicApiCall(
+        "POST",
+        "/api/v2/conversations/messages/${conversationInfo.id}/communications/$communicationId/messages/media"
+    )
     val result: Media = parseJsonToClass(mediaResult)
 }
