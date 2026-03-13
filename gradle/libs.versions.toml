@@ -39,14 +39,14 @@ espressoCore = "3.7.0"
 uiautomator = "2.3.0"
 
 # Android SDK – transport module
-transportCompileSdk = "35"
+transportCompileSdk = "36"
 transportMinSdk = "21"
-transportTargetSdk = "35"
+transportTargetSdk = "36"
 
 # Android SDK – androidComposePrototype
-testbedCompileSdk = "35"
+testbedCompileSdk = "36"
 testbedMinSdk = "21"
-testbedTargetSdk = "35"
+testbedTargetSdk = "36"
 
 [libraries]
 # common
