@@ -56,6 +56,17 @@ final class MessengerInteractor {
         return messagingClient.fileAttachmentProfile
     }
 
+    func getPendingAttachments() -> [String: String] {
+        let pending = messagingClient.pendingMessage
+        var result: [String: String] = [:]
+        for (id, attachment) in pending.attachments {
+            let key = id as? String ?? "?"
+            let att = attachment as? Attachment
+            result[key] = att?.fileName ?? "unknown"
+        }
+        return result
+    }
+
     func authorize(authCode: String, redirectUri: String, codeVerifier: String?) {
         messagingClient.authorize(authCode: authCode, redirectUri: redirectUri, codeVerifier: codeVerifier)
     }

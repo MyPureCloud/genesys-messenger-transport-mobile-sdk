@@ -21,6 +21,9 @@ class TestbedViewController: UIViewController {
     private var authState: AuthState = AuthState.noAuth
     private var quickRepliesMap = [String: ButtonResponse]()
     private var cardActionsMap = [String: ButtonResponse]()
+    private var burstTimer: Timer?
+    private var burstRemaining = 0
+    private var burstTotal = 0
 
     init(messenger: MessengerInteractor) {
         self.messenger = messenger
@@ -70,6 +73,9 @@ class TestbedViewController: UIViewController {
         case tlsDefault
         case tls12
         case tls13
+        case burstSend
+        case quickAttach
+        case pendingMessage
 
         var helpDescription: String {
             switch self {
@@ -79,6 +85,9 @@ class TestbedViewController: UIViewController {
             case .sendQuickReply: return "sendQuickReply <quickReply>"
             case .refreshAttachment: return "refreshAttachment <attachmentId>"
             case .sendAction: return "sendAction <action>"
+            case .burstSend: return "burstSend <count>"
+            case .quickAttach: return "quickAttach"
+            case .pendingMessage: return "pendingMessage"
             default: return rawValue
             }
         }
@@ -615,6 +624,16 @@ extension TestbedViewController : UITextFieldDelegate {
             case (.tls13, _):
                 reinitializeMessenger(tlsVersion: .tls13)
                 self.info.text = "Reconfigured with TLS: TLS_1_3. Use 'connect' to test. Verify with Wireshark: ClientHello should advertise TLS 1.3 ONLY"
+            case (.burstSend, let countStr?):
+                guard let count = Int(countStr), count > 0 else {
+                    self.info.text = "Usage: burstSend <count> (e.g. burstSend 15)"
+                    break
+                }
+                startBurstSend(count: count)
+            case (.quickAttach, _):
+                performQuickAttach()
+            case (.pendingMessage, _):
+                displayPendingMessage()
             default:
                 self.info.text = "Invalid command"
             }
@@ -655,6 +674,84 @@ enum AuthState {
     case authorized
     case loggedOut
     case error(errorCode: ErrorCode, message: String?, correctiveAction: CorrectiveAction)
+}
+
+// MARK: - MTSDK-483 Bug Reproduction Helpers
+extension TestbedViewController {
+
+    func startBurstSend(count: Int) {
+        burstTimer?.invalidate()
+        burstRemaining = count
+        burstTotal = count
+        info.text = "Burst sending \(count) messages (1/sec). Use 'quickAttach' NOW to reproduce MTSDK-483."
+
+        sendNextBurstMessage()
+        burstTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
+            guard let self else {
+                timer.invalidate()
+                return
+            }
+            self.sendNextBurstMessage()
+        }
+    }
+
+    private func sendNextBurstMessage() {
+        guard burstRemaining > 0 else {
+            burstTimer?.invalidate()
+            burstTimer = nil
+            info.text = "Burst complete (\(burstTotal) messages sent). Check if attachment was silently included."
+            return
+        }
+
+        let messageNumber = burstTotal - burstRemaining + 1
+        burstRemaining -= 1
+
+        let pendingAttachments = messenger.getPendingAttachments()
+        let attachmentInfo = pendingAttachments.isEmpty ? "" : " [PENDING ATTACHMENTS: \(pendingAttachments)]"
+
+        do {
+            try messenger.sendMessage(text: "Burst \(messageNumber)/\(burstTotal)")
+            info.text = "Sent burst \(messageNumber)/\(burstTotal)\(attachmentInfo)"
+            print("[MTSDK-483] Sent burst \(messageNumber)/\(burstTotal)\(attachmentInfo)")
+        } catch {
+            info.text = "Burst \(messageNumber)/\(burstTotal) failed: \(error.localizedDescription)"
+            burstTimer?.invalidate()
+            burstTimer = nil
+        }
+    }
+
+    func performQuickAttach() {
+        guard messenger.getFileAttachmentProfile() != nil else {
+            info.text = "FileAttachmentProfile not available. Connect first."
+            return
+        }
+
+        let testContent = "MTSDK-483 test attachment - \(Date())"
+        guard let data = testContent.data(using: .utf8) else {
+            info.text = "Failed to create test file data."
+            return
+        }
+        let kotlinByteArray = TransportUtil().nsDataToKotlinByteArray(data: data)
+        do {
+            try messenger.attachImage(kotlinByteArray: kotlinByteArray, fileName: "mtsdk483_test.txt")
+            info.text = "Quick-attached test file. If burstSend is active, this will be sent with the NEXT outgoing message automatically (the bug)."
+        } catch {
+            info.text = "Quick attach failed: \(error.localizedDescription)"
+        }
+    }
+
+    func displayPendingMessage() {
+        let pending = messenger.messagingClient.pendingMessage
+        let attachments = pending.attachments
+        if attachments.isEmpty {
+            info.text = "Pending message: no attachments queued."
+        } else {
+            let descriptions = attachments.map { (id, attachment) in
+                "\(id): \(attachment.fileName ?? "?") [\(attachment.state)]"
+            }
+            info.text = "Pending message attachments (\(attachments.count)):\n\(descriptions.joined(separator: "\n"))"
+        }
+    }
 }
 
 extension TestbedViewController: UIDocumentPickerDelegate {
