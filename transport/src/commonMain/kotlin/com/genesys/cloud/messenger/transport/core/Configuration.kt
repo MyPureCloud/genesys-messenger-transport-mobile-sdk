@@ -16,7 +16,7 @@ data class Configuration(
     val reconnectionTimeoutInSeconds: Long = 60 * 5,
     val autoRefreshTokenWhenExpired: Boolean = true,
     val encryptedVault: Boolean = false,
-    val minimumWebSocketTlsVersion: TlsVersion = TlsVersion.SYSTEM_DEFAULT
+    val minimumWebSocketTlsVersion: TlsVersion = TlsVersion.SYSTEM_DEFAULT,
     val sessionExpirationNoticeIntervalSeconds: Long = DEFAULT_INTERVAL
 ) {
     /**
