@@ -17,6 +17,8 @@ import com.genesys.cloud.messenger.transport.util.Urls
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * The entry point to the services provided by the transport SDK.
@@ -81,6 +83,7 @@ class MessengerTransportSDK(
                 log.withTag(LogTag.WEBSOCKET),
                 urls.webSocketUrl,
                 DEFAULT_PING_INTERVAL_IN_SECONDS,
+                configuration.minimumWebSocketTlsVersion,
             )
         // Support old TokenStore. If TokenStore not present fallback to the Vault.
         val token = tokenStore?.token ?: vault.token
@@ -117,8 +120,8 @@ class MessengerTransportSDK(
      * @throws Exception
      */
     @Throws(Exception::class)
-    suspend fun fetchDeploymentConfig(): DeploymentConfig {
-        return DeploymentConfigUseCase(
+    suspend fun fetchDeploymentConfig(): DeploymentConfig = withContext(Dispatchers.Main) {
+        DeploymentConfigUseCase(
             urls.deploymentConfigUrl.toString(),
             defaultHttpClient(configuration.logging)
         ).fetch().also {

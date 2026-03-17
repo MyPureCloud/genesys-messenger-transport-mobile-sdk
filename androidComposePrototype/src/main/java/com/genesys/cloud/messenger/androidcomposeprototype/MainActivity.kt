@@ -5,6 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -30,6 +31,12 @@ class MainActivity :
         setPrototypeLauncherView()
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                onBackInvoked()
+            }
+        })
+
         intent?.data?.doIfRedirectedFromOkta { uri ->
             handleOktaRedirect(uri)
         }
@@ -52,17 +59,17 @@ class MainActivity :
             .commit()
     }
 
-    override fun onBackPressed() {
-        Log.d(TAG, "onBackPressed")
+    private fun onBackInvoked() {
+        Log.d(TAG, "onBackInvoked")
         if (supportFragmentManager.fragments.isNotEmpty()) {
             setPrototypeLauncherView()
             supportFragmentManager.popBackStackImmediate()
         }
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        intent?.data.doIfRedirectedFromOkta { uri ->
+        intent.data.doIfRedirectedFromOkta { uri ->
             handleOktaRedirect(uri)
         }
     }

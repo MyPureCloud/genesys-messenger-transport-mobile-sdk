@@ -145,7 +145,7 @@ internal class ErrorCodeTest {
     }
 
     private fun randomCodeExcludingKnown(): Int {
-        val errorCodesToExclude = arrayOf(400, 403, 404, 408, 429)
+        val errorCodesToExclude = arrayOf(400, 401, 403, 404, 408, 429)
         var random = Random.nextInt(401, 500)
         while (errorCodesToExclude.contains(random)) {
             random = Random.nextInt(401, 500)

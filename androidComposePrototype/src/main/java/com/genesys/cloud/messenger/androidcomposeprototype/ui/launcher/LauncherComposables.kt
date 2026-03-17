@@ -153,6 +153,7 @@ private fun DeploymentIdTextField(
 
 @Preview(showBackground = true)
 @Composable
+@Suppress("ViewModelConstructorInComposable")
 fun DefaultPreview() {
     PrototypeLauncherView(viewModel = TestBedViewModel()) { }
 }

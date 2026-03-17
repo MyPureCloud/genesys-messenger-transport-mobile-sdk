@@ -6,6 +6,7 @@ package com.genesys.cloud.messenger.transport.core
  * @param logging indicates if logging should be enabled.
  * @param reconnectionTimeoutInSeconds period of time during which Transport will try to reconnect to the web socket in case of connectivity lost.
  * @param autoRefreshTokenWhenExpired indicates if Transport should auto refresh auth token if it was expired.
+ * @param minimumWebSocketTlsVersion the minimum TLS protocol version for WebSocket connections. Default is [TlsVersion.SYSTEM_DEFAULT] for backward compatibility.
  * @param sessionExpirationNoticeIntervalSeconds how many seconds before the session expires to show the expiration notice
  */
 data class Configuration(
@@ -15,6 +16,7 @@ data class Configuration(
     val reconnectionTimeoutInSeconds: Long = 60 * 5,
     val autoRefreshTokenWhenExpired: Boolean = true,
     val encryptedVault: Boolean = false,
+    val minimumWebSocketTlsVersion: TlsVersion = TlsVersion.SYSTEM_DEFAULT
     val sessionExpirationNoticeIntervalSeconds: Long = DEFAULT_INTERVAL
 ) {
     /**
@@ -36,7 +38,28 @@ data class Configuration(
         logging = logging,
         reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
         autoRefreshTokenWhenExpired = true,
-        encryptedVault = false
+        encryptedVault = false,
+        minimumWebSocketTlsVersion = TlsVersion.SYSTEM_DEFAULT
+    )
+
+    /**
+     * Secondary constructor to preserve the pre-2.12.0 primary constructor signature for iOS/Swift callers.
+     */
+    constructor(
+        deploymentId: String,
+        domain: String,
+        logging: Boolean,
+        reconnectionTimeoutInSeconds: Long,
+        autoRefreshTokenWhenExpired: Boolean,
+        encryptedVault: Boolean,
+    ) : this(
+        deploymentId = deploymentId,
+        domain = domain,
+        logging = logging,
+        reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
+        autoRefreshTokenWhenExpired = autoRefreshTokenWhenExpired,
+        encryptedVault = encryptedVault,
+        minimumWebSocketTlsVersion = TlsVersion.SYSTEM_DEFAULT
     )
 
     internal var application: String = "TransportSDK-${MessengerTransportSDK.sdkVersion}"

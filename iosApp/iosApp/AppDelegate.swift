@@ -1,11 +1,13 @@
 import UIKit
 import UserNotifications
+import MessengerTransport
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     let deployment = try! Deployment()
-    lazy private(set) var messenger = MessengerInteractor(deployment: deployment)
+    var selectedTlsVersion: TlsVersion = .systemDefault
+    lazy private(set) var messenger = MessengerInteractor(deployment: deployment, minimumTlsVersion: selectedTlsVersion)
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.

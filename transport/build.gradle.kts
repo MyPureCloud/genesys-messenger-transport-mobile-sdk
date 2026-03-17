@@ -1,19 +1,20 @@
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
+import org.gradle.internal.os.OperatingSystem
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
-import org.jetbrains.kotlin.gradle.plugin.mpp.BitcodeEmbeddingMode
 
 plugins {
     kotlin("multiplatform")
     kotlin("native.cocoapods")
-    kotlin("plugin.serialization") version Deps.kotlinVersion
-    id("com.android.library")
-    id("org.jetbrains.dokka") version "1.4.30"
-    id("org.jmailen.kotlinter")
+    kotlin("plugin.serialization") version libs.versions.kotlin.get()
+    alias(libs.plugins.android.kotlin.multiplatform.library)
+    alias(libs.plugins.dokka)
+    alias(libs.plugins.kotlinter)
     id("maven-publish")
     id("signing")
     id("transportValidationPlugin")
     id("com.codingfeline.buildkonfig")
-    id("org.jetbrains.kotlinx.kover") version "0.7.6"
+    alias(libs.plugins.kover)
 }
 
 version = project.rootProject.version
@@ -36,7 +37,6 @@ if (matchResult != null) {
 println("baseVersion: version: $baseVersion")
 println("buildNumber: version: $buildNumber")
 
-
 val iosFrameworkName = "MessengerTransport"
 val iosMinimumOSVersion = "13.0"
 val iosCocoaPodName = "GenesysCloudMessengerTransport"
@@ -50,37 +50,6 @@ buildkonfig {
     }
 }
 
-android {
-    compileSdk = Deps.Android.compileSdk
-    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-    defaultConfig {
-        minSdk = Deps.Android.minSdk
-        targetSdk = Deps.Android.targetSdk
-        consumerProguardFiles("transport-proguard-rules.txt")
-    }
-    buildTypes {
-        getByName("release") {
-            isMinifyEnabled = false
-        }
-    }
-    configurations {
-        create("androidTestApi")
-        create("androidTestDebugApi")
-        create("androidTestReleaseApi")
-        create("testApi")
-        create("testDebugApi")
-        create("testReleaseApi")
-    }
-    packaging {
-        resources {
-            excludes += "META-INF/*.kotlin_module"
-            excludes += "META-INF/LICENSE.md"
-            excludes += "META-INF/LICENSE-notice.md"
-        }
-    }
-    namespace = "com.genesys.cloud.messenger"
-}
-
 kotlin {
     targets.configureEach {
         compilations.configureEach {
@@ -89,14 +58,13 @@ kotlin {
             }
         }
     }
-    androidTarget {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = Deps.Android.jvmTarget
-            }
+    androidLibrary {
+        namespace = "com.genesys.cloud.messenger"
+        compileSdk = libs.versions.transportCompileSdk.get().toInt()
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
         }
-        publishLibraryVariants("release", "debug")
-        publishLibraryVariantsGroupedByFlavor = true
+        withHostTest { }
     }
 
     val xcf = XCFramework(iosFrameworkName)
@@ -106,7 +74,6 @@ kotlin {
         iosSimulatorArm64()
     ).forEach {
         it.binaries.framework {
-            embedBitcodeMode = BitcodeEmbeddingMode.DISABLE
             baseName = iosFrameworkName
             xcf.add(this)
         }
@@ -132,43 +99,49 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(kotlin("stdlib-common"))
-                implementation(Deps.Libs.Kotlinx.serializationJson)
-                implementation(Deps.Libs.Kotlinx.coroutinesCore)
-                implementation(Deps.Libs.Ktor.core)
-                implementation(Deps.Libs.Ktor.serialization)
-                implementation(Deps.Libs.Ktor.json)
-                implementation(Deps.Libs.Ktor.logging)
-                implementation(Deps.Libs.Ktor.contentNegotiation)
-                implementation(Deps.Libs.Ktor.kotlinxSerialization)
-                implementation(Deps.Libs.Kotlinx.datetime)
+                implementation(libs.kotlinx.serialization.json)
+                implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.ktor.client.core)
+                implementation(libs.ktor.client.serialization)
+                implementation(libs.ktor.client.logging)
+                implementation(libs.ktor.client.content.negotiation)
+                implementation(libs.ktor.serialization.kotlinx.json)
+                implementation(libs.kotlinx.datetime)
             }
         }
         commonTest {
             dependencies {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
-                implementation(Deps.Libs.Assertk.common)
-                implementation(Deps.Libs.Ktor.mock)
-                implementation(Deps.Libs.Kotlinx.coroutinesTest)
+                implementation(libs.assertk)
+                implementation(libs.ktor.client.mock)
+                implementation(libs.kotlinx.coroutinesTest)
+
             }
         }
         androidMain {
             dependencies {
-                implementation(Deps.Libs.OkHttp.client)
-                implementation(Deps.Libs.OkHttp.loggingInterceptor)
-                api(Deps.Libs.Ktor.android)
-                implementation(Deps.Libs.Ktor.loggingJvm)
-                implementation(Deps.Libs.Kotlinx.coroutinesAndroid)
+                implementation(libs.okhttp.jvm)
+                implementation("com.squareup.okhttp3:logging-interceptor:${libs.versions.okhttp.get()}") {
+                    exclude(group = "com.squareup.okhttp3", module = "okhttp")
+                }
+                api("io.ktor:ktor-client-okhttp:${libs.versions.ktor.get()}") {
+                    exclude(group = "com.squareup.okhttp3", module = "okhttp")
+                }
+                implementation(libs.ktor.client.logging.jvm)
+                implementation(libs.kotlinx.coroutines.android)
             }
         }
-        val androidUnitTest by getting {
+        val androidHostTest by getting {
+            kotlin.srcDirs("src/androidUnitTest/kotlin")
+            resources.srcDirs("src/androidUnitTest/resources")
             dependencies {
                 implementation(kotlin("test-junit"))
-                implementation(Deps.Libs.junit)
-                implementation(Deps.Libs.Assertk.jvm)
-                implementation(Deps.Libs.OkHttp.mockWebServer)
-                implementation(Deps.Libs.mockk)
-                implementation(Deps.Libs.Kotlinx.coroutinesTest)
+                implementation(libs.junit)
+                implementation(libs.assertk.jvm)
+                implementation(libs.okhttp.mockwebserver)
+                implementation(libs.mockk)
+                implementation(libs.kotlinx.coroutines.test)
             }
         }
         val iosX64Main by getting
@@ -176,7 +149,8 @@ kotlin {
         val iosSimulatorArm64Main by getting
         val iosMain by creating {
             dependencies {
-                implementation(Deps.Libs.Ktor.ios)
+                implementation(libs.ktor.client.ios)
+                implementation(libs.ktor.client.darwin)
             }
             dependsOn(commonMain.get())
             iosX64Main.dependsOn(this)
@@ -192,7 +166,6 @@ tasks.withType<AbstractPublishToMaven>().configureEach {
 }
 
 tasks {
-
     create<Jar>("fakeJavadocJar") {
         archiveClassifier.set("javadoc")
         from("./deployment")
@@ -204,17 +177,26 @@ tasks {
                 listOf("ios-arm64", "ios-arm64_x86_64-simulator").forEach { arch ->
                     val xcframeworkPath =
                         "build/XCFrameworks/${buildVariant.lowercase()}/$iosFrameworkName.xcframework/$arch/$iosFrameworkName.framework"
-                    val infoPlistPath = "$xcframeworkPath/Info.plist"
+                    val infoPlistFile = project.file("$xcframeworkPath/Info.plist")
+                    if (!infoPlistFile.isFile) {
+                        throw org.gradle.api.GradleException("Info.plist not found at: ${infoPlistFile.absolutePath}")
+                    }
+                    val infoPlistPath = infoPlistFile.absolutePath
                     val propertiesMap = mapOf(
                         "CFBundleShortVersionString" to baseVersion,
                         "CFBundleVersion" to buildNumber,
                         "MinimumOSVersion" to iosMinimumOSVersion
                     )
-                    println("Updating framework metadata at: ${this.project.projectDir}/$infoPlistPath")
-                    for ((key, value) in propertiesMap) {
-                        println("  $key = $value")
-                        exec {
-                            commandLine("plutil", "-replace", key, "-string", value, infoPlistPath)
+                    if (!OperatingSystem.current().isMacOsX) {
+                        println("Skipping Info.plist update (plutil is macOS-only); path would be: $infoPlistPath")
+                    } else {
+                        println("Updating framework metadata at: $infoPlistPath")
+                        for ((key, value) in propertiesMap) {
+                            println("  $key = $value")
+                            val proc = ProcessBuilder("plutil", "-replace", key, "-string", value.toString(), infoPlistPath).start()
+                            val exit = proc.waitFor()
+                            val err = proc.errorStream.bufferedReader().readText()
+                            if (exit != 0) throw org.gradle.api.GradleException("plutil failed: $err")
                         }
                     }
                 }
@@ -237,10 +219,6 @@ tasks {
             file(podspecFileName, PathValidation.NONE).writeText(content)
             println("CocoaPods podspec for Pod $iosCocoaPodName written to: ${this.project.projectDir}/$podspecFileName")
         }
-    }
-
-    "lintKotlinCommonMain"(org.jmailen.gradle.kotlinter.tasks.LintTask::class) {
-        exclude("**/BuildKonfig.kt")
     }
 }
 
@@ -283,6 +261,9 @@ afterEvaluate {
             mavenPublication?.artifactId =
                 "messenger-transport-mobile-sdk${"-$name".takeUnless { "kotlinMultiplatform" in name }.orEmpty()}"
         }
+    }
+    tasks.withType(org.jmailen.gradle.kotlinter.tasks.LintTask::class.java).configureEach {
+        exclude("**/BuildKonfig.kt")
     }
 }
 
