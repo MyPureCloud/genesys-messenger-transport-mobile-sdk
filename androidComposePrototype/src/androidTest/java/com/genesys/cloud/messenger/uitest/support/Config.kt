@@ -1,11 +1,12 @@
 package com.genesys.cloud.messenger.uitest.support
 
 import androidx.test.platform.app.InstrumentationRegistry
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 val testConfig by lazy { pullConfig() }
 
+@Serializable
 data class Config(
     val agentToken: String,
     val agentEmail: String,
@@ -26,12 +27,13 @@ data class Config(
     val oktaPassword2: String
 )
 
+private val configJson = Json { ignoreUnknownKeys = true }
+
 private fun pullConfig(): Config {
-    val mapper = jacksonObjectMapper()
     val configInputStream =
         InstrumentationRegistry
             .getInstrumentation()
             .context.assets
             .open("testConfig.json")
-    return mapper.readValue(configInputStream)
+    return configInputStream.bufferedReader().use { configJson.decodeFromString(it.readText()) }
 }
