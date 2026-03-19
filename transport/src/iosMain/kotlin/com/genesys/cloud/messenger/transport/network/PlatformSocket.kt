@@ -43,7 +43,7 @@ internal actual class PlatformSocket actual constructor(
      * client assumes connectivity is lost and will notify [PlatformSocketListener.onFailure].
      */
     actual val pingInterval: Int,
-    private val minimumWebSocketTlsVersion: TlsVersion,
+    private val minimumIosWebSocketTlsVersion: TlsVersion,
 ) {
     private val socketEndpoint = NSURL.URLWithString(url.toString())!!
     private var webSocket: NSURLSessionWebSocketTask? = null
@@ -60,7 +60,7 @@ internal actual class PlatformSocket actual constructor(
         urlRequest.setValue(Platform().platform, forHTTPHeaderField = "User-Agent")
         urlRequest.setTimeoutInterval(TIMEOUT_INTERVAL)
         val sessionConfig = NSURLSessionConfiguration.defaultSessionConfiguration()
-        applyTlsConfiguration(sessionConfig, minimumWebSocketTlsVersion)
+        applyTlsConfiguration(sessionConfig, minimumIosWebSocketTlsVersion)
         val urlSession =
             NSURLSession.sessionWithConfiguration(
                 configuration = sessionConfig,
@@ -233,9 +233,9 @@ internal actual class PlatformSocket actual constructor(
 
 private fun applyTlsConfiguration(
     sessionConfig: NSURLSessionConfiguration,
-    minimumWebSocketTlsVersion: TlsVersion
+    minimumIosWebSocketTlsVersion: TlsVersion
 ) {
-    when (minimumWebSocketTlsVersion) {
+    when (minimumIosWebSocketTlsVersion) {
         TlsVersion.SYSTEM_DEFAULT -> {}
         TlsVersion.TLS_1_2 -> {
             sessionConfig.TLSMinimumSupportedProtocolVersion = tls_protocol_version_TLSv12

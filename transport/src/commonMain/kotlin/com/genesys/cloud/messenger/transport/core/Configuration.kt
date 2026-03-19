@@ -6,7 +6,7 @@ package com.genesys.cloud.messenger.transport.core
  * @param logging indicates if logging should be enabled.
  * @param reconnectionTimeoutInSeconds period of time during which Transport will try to reconnect to the web socket in case of connectivity lost.
  * @param autoRefreshTokenWhenExpired indicates if Transport should auto refresh auth token if it was expired.
- * @param minimumWebSocketTlsVersion the minimum TLS protocol version for WebSocket connections. Default is [TlsVersion.SYSTEM_DEFAULT] for backward compatibility.
+ * @param minimumIosWebSocketTlsVersion the minimum TLS protocol version for iOS WebSocket connections. Only affects iOS; Android handles TLS via the system networking layer. Default is [TlsVersion.SYSTEM_DEFAULT] for backward compatibility.
  */
 data class Configuration(
     val deploymentId: String,
@@ -15,7 +15,7 @@ data class Configuration(
     val reconnectionTimeoutInSeconds: Long = 60 * 5,
     val autoRefreshTokenWhenExpired: Boolean = true,
     val encryptedVault: Boolean = false,
-    val minimumWebSocketTlsVersion: TlsVersion = TlsVersion.SYSTEM_DEFAULT
+    val minimumIosWebSocketTlsVersion: TlsVersion = TlsVersion.SYSTEM_DEFAULT
 ) {
     /**
      * Secondary constructor to avoid breaking changes on iOS platform.
@@ -37,7 +37,7 @@ data class Configuration(
         reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
         autoRefreshTokenWhenExpired = true,
         encryptedVault = false,
-        minimumWebSocketTlsVersion = TlsVersion.SYSTEM_DEFAULT
+        minimumIosWebSocketTlsVersion = TlsVersion.SYSTEM_DEFAULT
     )
 
     /**
@@ -57,7 +57,7 @@ data class Configuration(
         reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
         autoRefreshTokenWhenExpired = autoRefreshTokenWhenExpired,
         encryptedVault = encryptedVault,
-        minimumWebSocketTlsVersion = TlsVersion.SYSTEM_DEFAULT
+        minimumIosWebSocketTlsVersion = TlsVersion.SYSTEM_DEFAULT
     )
 
     internal var application: String = "TransportSDK-${MessengerTransportSDK.sdkVersion}"
