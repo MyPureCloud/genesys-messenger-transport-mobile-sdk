@@ -56,6 +56,7 @@ import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.StructuredMessageValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
+import com.genesys.cloud.messenger.transport.utility.TimeSlotPickerTestValues
 import net.bytebuddy.utility.RandomString
 import org.junit.Test
 
@@ -439,7 +440,7 @@ internal class MessageExtensionTest {
             ButtonResponse(
                 text = QuickReplyTestValues.TEXT_A,
                 payload = QuickReplyTestValues.PAYLOAD_A,
-                type = QuickReplyTestValues.QUICK_REPLY
+                type = QuickReplyTestValues.QUICK_REPLY,
             )
         val expectedMessage =
             Message(
@@ -466,7 +467,7 @@ internal class MessageExtensionTest {
             ButtonResponse(
                 text = QuickReplyTestValues.TEXT_A,
                 payload = QuickReplyTestValues.PAYLOAD_A,
-                type = QuickReplyTestValues.QUICK_REPLY
+                type = QuickReplyTestValues.QUICK_REPLY,
             )
         val expectedMessage =
             Message(
@@ -497,7 +498,7 @@ internal class MessageExtensionTest {
             ButtonResponse(
                 text = QuickReplyTestValues.TEXT_A,
                 payload = QuickReplyTestValues.PAYLOAD_A,
-                type = QuickReplyTestValues.QUICK_REPLY
+                type = QuickReplyTestValues.QUICK_REPLY,
             )
         val expectedMessage =
             Message(
@@ -1248,7 +1249,7 @@ internal class MessageExtensionTest {
             ButtonResponse(
                 text = QuickReplyTestValues.TEXT_A,
                 payload = QuickReplyTestValues.PAYLOAD_A,
-                type = QuickReplyTestValues.QUICK_REPLY
+                type = QuickReplyTestValues.QUICK_REPLY,
             )
 
         val result = givenStructuredMessage.toMessage()
@@ -1270,7 +1271,7 @@ internal class MessageExtensionTest {
             ButtonResponse(
                 text = QuickReplyTestValues.TEXT_A,
                 payload = QuickReplyTestValues.PAYLOAD_A,
-                type = QuickReplyTestValues.QUICK_REPLY
+                type = QuickReplyTestValues.QUICK_REPLY,
             )
 
         val result = givenStructuredMessage.toMessage()
@@ -1445,5 +1446,97 @@ internal class MessageExtensionTest {
                 .single()
         assertThat(mappedAction.type).isEqualTo(expectedActionType)
         assertThat(mappedAction.payload).isEqualTo(expectedPayload)
+    }
+
+    @Test
+    fun `when StructuredMessage has DatePickerContent then messageType is DatePicker and timePicker is mapped`() {
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                content = listOf(TimeSlotPickerTestValues.createDatePickerContent())
+            )
+        val expectedMessageType = Type.DatePicker
+        val expectedTitle = TimeSlotPickerTestValues.TITLE
+        val expectedSubTitle = TimeSlotPickerTestValues.SUBTITLE
+        val expectedImageUrl = TimeSlotPickerTestValues.IMAGE_URL
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result.messageType).isEqualTo(expectedMessageType)
+        assertThat(result.timePicker).isNotNull()
+        result.timePicker?.run {
+            assertThat(title).isEqualTo(expectedTitle)
+            assertThat(subTitle).isEqualTo(expectedSubTitle)
+            assertThat(imageUrl).isEqualTo(expectedImageUrl)
+            assertThat(availableTimes).size().isEqualTo(1)
+            availableTimes.first().run {
+                assertThat(duration).isEqualTo(TimeSlotPickerTestValues.DURATION)
+                assertThat(payload).isEqualTo(TimeSlotPickerTestValues.DATE_TIME_ISO)
+                assertThat(timeEpochMillis).isNotNull()
+            }
+        }
+    }
+
+    @Test
+    fun `when StructuredMessage has DatePickerContent with invalid dateTime then timeEpochMillis is null`() {
+        val invalidDateTimeContent =
+            TimeSlotPickerTestValues.createTimeSlotContent(
+                dateTime = "invalid-date-format"
+            )
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                content =
+                    listOf(
+                        TimeSlotPickerTestValues.createDatePickerContent(
+                            datePicker = TimeSlotPickerTestValues.createTimeSlotPickerContent(
+                                availableTimes = listOf(invalidDateTimeContent)
+                            )
+                        )
+                    )
+            )
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result.messageType).isEqualTo(Type.DatePicker)
+        assertThat(result.timePicker).isNotNull()
+        result.timePicker?.let { picker ->
+            assertThat(picker.availableTimes.first().timeEpochMillis).isNull()
+            assertThat(picker.availableTimes.first().payload).isEqualTo("invalid-date-format")
+        }
+    }
+
+    @Test
+    fun `when StructuredMessage has both DatePickerContent and QuickReplyContent then messageType is DatePicker`() {
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                content =
+                    listOf(
+                        TimeSlotPickerTestValues.createDatePickerContent(),
+                        QuickReplyTestValues.createQuickReplyContentForTesting()
+                    )
+            )
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result.messageType).isEqualTo(Type.DatePicker)
+        assertThat(result.timePicker).isNotNull()
+        assertThat(result.quickReplies).size().isEqualTo(1)
+    }
+
+    @Test
+    fun `when StructuredMessage toMessage() with QuickReplyContent then quickReplies have originatingMessageId`() {
+        val givenMessageId = "originating-msg-123"
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                id = givenMessageId,
+                type = StructuredMessage.Type.Structured,
+                content = listOf(QuickReplyTestValues.createQuickReplyContentForTesting())
+            )
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result.quickReplies).size().isEqualTo(1)
     }
 }
