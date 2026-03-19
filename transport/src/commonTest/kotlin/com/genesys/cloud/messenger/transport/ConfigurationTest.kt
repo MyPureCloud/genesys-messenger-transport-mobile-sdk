@@ -21,7 +21,7 @@ class ConfigurationTest {
             assertThat(reconnectionTimeoutInSeconds).isEqualTo(expectedReconnectionTimeout)
             assertThat(autoRefreshTokenWhenExpired).isTrue()
             assertThat(encryptedVault).isFalse()
-            assertThat(minimumWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
+            assertThat(minimumIosWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
         }
     }
 
@@ -39,7 +39,7 @@ class ConfigurationTest {
             assertThat(reconnectionTimeoutInSeconds).isEqualTo(expectedReconnectionTimeout)
             assertThat(autoRefreshTokenWhenExpired).isTrue()
             assertThat(encryptedVault).isFalse()
-            assertThat(minimumWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
+            assertThat(minimumIosWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
         }
     }
 
@@ -53,22 +53,22 @@ class ConfigurationTest {
             assertThat(reconnectionTimeoutInSeconds).isEqualTo(300L)
             assertThat(autoRefreshTokenWhenExpired).isTrue()
             assertThat(encryptedVault).isTrue()
-            assertThat(minimumWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
+            assertThat(minimumIosWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
         }
     }
 
     @Test
     fun `validate configuration with non-default TLS version`() {
-        val configuration = TestValues.configuration.copy(minimumWebSocketTlsVersion = TlsVersion.TLS_1_2)
+        val configuration = TestValues.configuration.copy(minimumIosWebSocketTlsVersion = TlsVersion.TLS_1_2)
 
         configuration.run {
             assertThat(deploymentId).isEqualTo(TestValues.DEPLOYMENT_ID)
-            assertThat(minimumWebSocketTlsVersion).isEqualTo(TlsVersion.TLS_1_2)
+            assertThat(minimumIosWebSocketTlsVersion).isEqualTo(TlsVersion.TLS_1_2)
         }
     }
 
     @Test
-    fun `when using 4-param secondary constructor then minimumWebSocketTlsVersion defaults to SYSTEM_DEFAULT`() {
+    fun `when using 4-param secondary constructor then minimumIosWebSocketTlsVersion defaults to SYSTEM_DEFAULT`() {
         val configuration =
             Configuration(
                 deploymentId = TestValues.DEPLOYMENT_ID,
@@ -77,11 +77,11 @@ class ConfigurationTest {
                 reconnectionTimeoutInSeconds = 60,
             )
 
-        assertThat(configuration.minimumWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
+        assertThat(configuration.minimumIosWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
     }
 
     @Test
-    fun `when using 6-param secondary constructor then minimumWebSocketTlsVersion defaults to SYSTEM_DEFAULT`() {
+    fun `when using 6-param secondary constructor then minimumIosWebSocketTlsVersion defaults to SYSTEM_DEFAULT`() {
         val configuration =
             Configuration(
                 deploymentId = TestValues.DEPLOYMENT_ID,
@@ -92,6 +92,6 @@ class ConfigurationTest {
                 encryptedVault = true,
             )
 
-        assertThat(configuration.minimumWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
+        assertThat(configuration.minimumIosWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
     }
 }

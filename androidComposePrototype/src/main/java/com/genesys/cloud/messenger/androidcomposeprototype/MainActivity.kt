@@ -31,11 +31,14 @@ class MainActivity :
         setPrototypeLauncherView()
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                onBackInvoked()
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    onBackInvoked()
+                }
             }
-        })
+        )
 
         intent?.data?.doIfRedirectedFromOkta { uri ->
             handleOktaRedirect(uri)

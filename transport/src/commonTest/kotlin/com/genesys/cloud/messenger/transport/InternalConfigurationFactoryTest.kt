@@ -42,7 +42,7 @@ class InternalConfigurationFactoryTest {
     }
 
     @Test
-    fun `when creating configuration without minimumWebSocketTlsVersion it should default to SYSTEM_DEFAULT`() {
+    fun `when creating configuration without minimumIosWebSocketTlsVersion it should default to SYSTEM_DEFAULT`() {
         val config =
             InternalConfigurationFactory.create(
                 deploymentId = "test-deployment",
@@ -51,25 +51,25 @@ class InternalConfigurationFactoryTest {
                 applicationVersion = "0.0.0"
             )
 
-        assertEquals(TlsVersion.SYSTEM_DEFAULT, config.minimumWebSocketTlsVersion)
+        assertEquals(TlsVersion.SYSTEM_DEFAULT, config.minimumIosWebSocketTlsVersion)
     }
 
     @Test
-    fun `when creating configuration with minimumWebSocketTlsVersion it should be propagated to Configuration`() {
+    fun `when creating configuration with minimumIosWebSocketTlsVersion it should be propagated to Configuration`() {
         val config =
             InternalConfigurationFactory.create(
                 deploymentId = "test-deployment",
                 domain = "test.com",
                 applicationType = ApplicationType.TRANSPORT_SDK,
                 applicationVersion = "0.0.0",
-                minimumWebSocketTlsVersion = TlsVersion.TLS_1_3
+                minimumIosWebSocketTlsVersion = TlsVersion.TLS_1_3
             )
 
-        assertEquals(TlsVersion.TLS_1_3, config.minimumWebSocketTlsVersion)
+        assertEquals(TlsVersion.TLS_1_3, config.minimumIosWebSocketTlsVersion)
     }
 
     @Test
-    fun `when using backward compatible overload it should default minimumWebSocketTlsVersion to SYSTEM_DEFAULT`() {
+    fun `when using backward compatible overload it should default minimumIosWebSocketTlsVersion to SYSTEM_DEFAULT`() {
         val config =
             InternalConfigurationFactory.create(
                 deploymentId = "test-deployment",
@@ -82,6 +82,6 @@ class InternalConfigurationFactoryTest {
                 encryptedVault = false
             )
 
-        assertEquals(TlsVersion.SYSTEM_DEFAULT, config.minimumWebSocketTlsVersion)
+        assertEquals(TlsVersion.SYSTEM_DEFAULT, config.minimumIosWebSocketTlsVersion)
     }
 }
