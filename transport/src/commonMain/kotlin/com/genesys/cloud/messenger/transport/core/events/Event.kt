@@ -95,6 +95,28 @@ sealed class Event {
     data object ExistingAuthSessionCleared : Event()
 
     /**
+     * Sent when the session duration has been updated.
+     *
+     * @param durationInSeconds The duration of the session in seconds.
+     */
+    data class SessionDuration(val durationInSeconds: Long) : Event()
+
+    /**
+     * Sent when the session is about to expire.
+     * This event is triggered before the session expires based on the configured notice interval.
+     *
+     * @param expiresInSeconds The time remaining until the session expires, in seconds.
+     */
+    data class SessionExpirationNotice(val expiresInSeconds: Long) : Event()
+
+    /**
+     * Sent when the session expiration notice should be dismissed.
+     * This event is triggered when a message is sent or received after the session expiration
+     * notice was shown, indicating that the session has been extended.
+     */
+    data object RemoveSessionExpirationNotice : Event()
+
+    /**
      * Sent when authorization is required for authenticated session configuration.
      */
     data object AuthorizationRequired : Event()

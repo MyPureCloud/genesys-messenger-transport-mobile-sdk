@@ -35,6 +35,7 @@ class MessagingClientQuickReplyTest : BaseMessagingClientTest() {
         verifySequence {
             connectSequence()
             mockMessageStore.update(expectedMessage)
+            mockSessionDurationHandler.onMessage()
         }
     }
 

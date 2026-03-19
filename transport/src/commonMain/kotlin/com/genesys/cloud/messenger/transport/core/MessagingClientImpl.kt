@@ -9,6 +9,7 @@ import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.EventHandlerImpl
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
+import com.genesys.cloud.messenger.transport.core.sessionduration.SessionDurationHandler
 import com.genesys.cloud.messenger.transport.network.PlatformSocket
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.network.ReconnectionHandler
@@ -43,6 +44,8 @@ import com.genesys.cloud.messenger.transport.shyrka.send.GetAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
 import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
+import com.genesys.cloud.messenger.transport.util.DURATION_SECONDS_KEY
+import com.genesys.cloud.messenger.transport.util.EXPIRATION_DATE_KEY
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.UNKNOWN
 import com.genesys.cloud.messenger.transport.util.Vault
@@ -115,6 +118,12 @@ internal class MessagingClientImpl(
             suspend { jwtHandler.withJwt(token) { it } }
         ),
     private val defaultDispatcher: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
+    private val sessionDurationHandler: SessionDurationHandler =
+        SessionDurationHandler(
+            sessionExpirationNoticeIntervalSeconds = configuration.sessionExpirationNoticeIntervalSeconds,
+            eventHandler = eventHandler,
+            log = log.withTag(LogTag.SESSION_DURATION),
+        ),
 ) : MessagingClient {
     private var connectAuthenticated = false
     private var isStartingANewSession = false
@@ -159,6 +168,11 @@ internal class MessagingClientImpl(
 
     override val wasAuthenticated: Boolean
         get() = vault.wasAuthenticated
+
+    init {
+        sessionDurationHandler.setTriggerHealthCheck { sendSafeHealthCheck() }
+        healthCheckProvider.setTriggerHealthCheck { sendSafeHealthCheck() }
+    }
 
     @Throws(IllegalStateException::class, TransportSDKException::class)
     override fun connect() {
@@ -274,6 +288,14 @@ internal class MessagingClientImpl(
         healthCheckProvider.encodeRequest(token)?.let {
             log.i { LogMessages.SEND_HEALTH_CHECK }
             send(it)
+        }
+    }
+
+    private fun sendSafeHealthCheck() {
+        if (stateMachine.currentState is State.Configured || stateMachine.isReadOnly()) {
+            sendHealthCheck()
+        } else {
+            log.w { LogMessages.HEALTH_CHECK_SKIPPED_INVALID_STATE }
         }
     }
 
@@ -429,6 +451,7 @@ internal class MessagingClientImpl(
             reconnectionHandler.clear()
             jwtHandler.clear()
             internalCustomAttributesStore.maxCustomDataBytes = this.maxCustomDataBytes
+            sessionDurationHandler.updateSessionDuration(durationSeconds, expirationDate)
             synchronizePushService()
             if (readOnly) {
                 stateMachine.onReadOnly()
@@ -565,6 +588,7 @@ internal class MessagingClientImpl(
         when (errorCode) {
             is ErrorCode.WebsocketError -> {
                 if (reconnectionHandler.shouldReconnect) {
+                    sessionDurationHandler.clearAndRemoveNotice()
                     stateMachine.onReconnect()
                     reconnectionHandler.reconnect { if (connectAuthenticated) connectAuthenticatedSession() else connect() }
                 } else {
@@ -617,13 +641,25 @@ internal class MessagingClientImpl(
 
     private fun Message.handleAsTextMessage() {
         if (id.isHealthCheckResponseId()) {
-            eventHandler.onEvent(Event.HealthChecked)
-            return
+            handleHealthCheck(this)
+        } else {
+            handleTextMessageUpdate(this)
         }
-        messageStore.update(this)
-        if (direction == Message.Direction.Inbound) {
+    }
+
+    private fun handleHealthCheck(message: Message) {
+        val durationSeconds = message.metadata[DURATION_SECONDS_KEY]?.toLongOrNull()
+        val expirationDate = message.metadata[EXPIRATION_DATE_KEY]?.toLongOrNull()
+        sessionDurationHandler.updateSessionDuration(durationSeconds, expirationDate)
+        eventHandler.onEvent(Event.HealthChecked)
+    }
+
+    private fun handleTextMessageUpdate(message: Message) {
+        messageStore.update(message)
+        sessionDurationHandler.onMessage()
+        if (message.direction == Message.Direction.Inbound) {
             internalCustomAttributesStore.onSent()
-            attachmentHandler.onSent(attachments)
+            attachmentHandler.onSent(message.attachments)
             userTypingProvider.clear()
         }
     }
@@ -657,8 +693,14 @@ internal class MessagingClientImpl(
 
     private fun Message.handleAsStructuredMessage() {
         when (messageType) {
-            Message.Type.QuickReply -> messageStore.update(this)
-            Message.Type.Cards -> messageStore.update(this)
+            Message.Type.QuickReply -> {
+                messageStore.update(this)
+                sessionDurationHandler.onMessage()
+            }
+            Message.Type.Cards -> {
+                messageStore.update(this)
+                sessionDurationHandler.onMessage()
+            }
             Message.Type.Unknown -> log.w { LogMessages.unsupportedMessageType(messageType) }
             else -> log.w { "Should not happen." }
         }
@@ -672,6 +714,7 @@ internal class MessagingClientImpl(
         attachmentHandler.clearAll()
         reconnectionHandler.clear()
         jwtHandler.clear()
+        sessionDurationHandler.clear()
         reconfigureAttempts = 0
         sendingAutostart = false
         clearingConversation = false
@@ -685,6 +728,7 @@ internal class MessagingClientImpl(
         stateMachine.onError(errorCode, errorMessage)
         reconnectionHandler.clear()
         jwtHandler.clear()
+        sessionDurationHandler.clearAndRemoveNotice()
         reconfigureAttempts = 0
         sendingAutostart = false
         clearingConversation = false
@@ -838,6 +882,7 @@ internal class MessagingClientImpl(
                             invalidateSessionToken()
                             vault.wasAuthenticated = false
                         }
+                        sessionDurationHandler.clearAndRemoveNotice()
                         eventHandler.onEvent(Event.ConnectionClosed(reason))
                         disconnect()
                     }
