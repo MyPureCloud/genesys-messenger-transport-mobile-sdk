@@ -1353,6 +1353,25 @@ class SerializationTest {
         )
     }
 
+    @Test fun `when DatePickerContent then deserializes`() {
+        val json =
+            """{"contentType":"DatePicker","datePicker":{"title":"Select a time","subTitle":"Choose slot","imageUrl":"https://example.com/cal.png","availableTimes":[{"duration":30,"dateTime":"2022-08-22T19:24:26.704Z"}]}}"""
+        val decoded = WebMessagingJson.json.decodeFromString(StructuredMessage.Content.serializer(), json)
+        val expectedTimeSlot =
+            StructuredMessage.Content.TimeSlotPickerContent.TimeSlotContent(
+                duration = 30L,
+                dateTime = "2022-08-22T19:24:26.704Z"
+            )
+        val expectedDatePicker =
+            StructuredMessage.Content.TimeSlotPickerContent(
+                title = "Select a time",
+                subTitle = "Choose slot",
+                imageUrl = "https://example.com/cal.png",
+                availableTimes = listOf(expectedTimeSlot)
+            )
+        assertThat(decoded).isEqualTo(StructuredMessage.Content.DatePickerContent(datePicker = expectedDatePicker))
+    }
+
     @Test
     fun `when QuickReplyContent without action field then deserializes`() {
         val json = """{"contentType":"QuickReply","quickReply":{"text":"Yes","payload":"cookie1"}}"""

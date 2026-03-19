@@ -630,6 +630,43 @@ internal class MessageStoreTest {
     }
 
     @Test
+    fun `when update called with DatePicker message, then TimeSlotPickerReceived is published`() {
+        val givenTimeSlotPicker =
+            Message.TimeSlotPicker(
+                title = "Select a time",
+                subTitle = "Choose available slot",
+                imageUrl = null,
+                availableTimes =
+                    listOf(
+                        Message.TimeSlot(
+                            timeEpochMillis = 1398892191411L,
+                            duration = 30L,
+                            payload = "2022-08-22T19:24:26.704Z"
+                        )
+                    )
+            )
+        val givenMessage =
+            Message(
+                id = "msg_id",
+                direction = Direction.Outbound,
+                state = State.Sent,
+                messageType = Type.DatePicker,
+                text = "Choose your appointment time",
+                timePicker = givenTimeSlotPicker,
+                from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
+            )
+
+        subject.update(givenMessage)
+
+        verify { mockMessageListener.invoke(capture(messageSlot)) }
+
+        val actualEvent = messageSlot.captured
+        assertThat(actualEvent).isInstanceOf(MessageEvent.TimeSlotPickerReceived::class.java)
+        assertThat((actualEvent as MessageEvent.TimeSlotPickerReceived).message).isEqualTo(givenMessage)
+        assertThat(actualEvent.message.timePicker).isEqualTo(givenTimeSlotPicker)
+    }
+
+    @Test
     fun `when updateMessageHistory is called with card selections then history is merged`() {
         val givenMessage =
             Message(

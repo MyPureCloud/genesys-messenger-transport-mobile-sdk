@@ -13,7 +13,9 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.MessageType
 import com.genesys.cloud.messenger.transport.shyrka.receive.PushErrorResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ButtonResponseContent
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.DatePickerContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.QuickReplyContent
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.TimeSlotPickerContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
 import com.genesys.cloud.messenger.transport.util.Vault
 
@@ -486,6 +488,39 @@ object PushTestValues {
     const val PUSH_CODE_DEVICE_REGISTRATION_FAILURE = "device.registration.failure"
     const val PUSH_CODE_DEVICE_UPDATE_FAILURE = "device.update.failure"
     const val PUSH_CODE_DEVICE_DELETE_FAILURE = "device.delete.failure"
+}
+
+object TimeSlotPickerTestValues {
+    internal const val TITLE = "Select a time slot"
+    internal const val SUBTITLE = "Choose an available time"
+    internal const val IMAGE_URL = "https://example.com/calendar.png"
+    internal const val DATE_TIME_ISO = "2022-08-22T19:24:26.704Z"
+    internal const val DURATION = 30L
+    internal const val PAYLOAD = "2022-08-22T19:24:26.704Z"
+
+    internal fun createTimeSlotContent(
+        duration: Long = DURATION,
+        dateTime: String = DATE_TIME_ISO
+    ) = TimeSlotPickerContent.TimeSlotContent(
+        duration = duration,
+        dateTime = dateTime
+    )
+
+    internal fun createTimeSlotPickerContent(
+        title: String = TITLE,
+        subTitle: String? = SUBTITLE,
+        imageUrl: String? = IMAGE_URL,
+        availableTimes: List<TimeSlotPickerContent.TimeSlotContent> = listOf(createTimeSlotContent())
+    ) = TimeSlotPickerContent(
+        title = title,
+        subTitle = subTitle,
+        imageUrl = imageUrl,
+        availableTimes = availableTimes
+    )
+
+    internal fun createDatePickerContent(
+        datePicker: TimeSlotPickerContent = createTimeSlotPickerContent()
+    ) = DatePickerContent(datePicker = datePicker)
 }
 
 object MockEngineValues {
