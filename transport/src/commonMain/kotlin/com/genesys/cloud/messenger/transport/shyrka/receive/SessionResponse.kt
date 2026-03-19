@@ -12,6 +12,8 @@ internal data class SessionResponse(
     val allowedMedia: AllowedMedia? = null,
     val blockedExtensions: List<String> = emptyList(),
     val clearedExistingSession: Boolean = false,
+    val durationSeconds: Long? = null,
+    val expirationDate: Long? = null,
 )
 
 @Serializable

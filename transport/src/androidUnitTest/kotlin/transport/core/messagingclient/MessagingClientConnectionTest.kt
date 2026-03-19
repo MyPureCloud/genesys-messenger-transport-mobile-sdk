@@ -122,8 +122,13 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
             expectedErrorState.message
         )
         verifySequence {
+            mockLogger.withTag(com.genesys.cloud.messenger.transport.util.logs.LogTag.STATE_MACHINE)
+            mockSessionDurationHandler.setTriggerHealthCheck(any())
+            mockLogger.withTag(com.genesys.cloud.messenger.transport.util.logs.LogTag.WEBSOCKET)
+            mockLogger.i(capture(logSlot))
             mockStateChangedListener(fromIdleToConnecting)
             mockPlatformSocket.openSocket(any())
+            mockLogger.i(capture(logSlot))
             mockMessageStore.invalidateConversationCache()
             errorSequence(
                 StateChange(
@@ -169,6 +174,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         )
         verifySequence {
             connectWithFailedConfigureSequence()
+            mockLogger.i(capture(logSlot))
             errorSequence(fromConnectedToError(expectedErrorState))
         }
     }
@@ -210,7 +216,9 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         verifySequence {
             connectSequence()
             mockLogger.i(capture(logSlot))
+            mockMessageStore.invalidateConversationCache()
             mockReconnectionHandler.shouldReconnect
+            mockSessionDurationHandler.clearAndRemoveNotice()
             mockStateChangedListener(fromConfiguredToReconnecting())
             mockReconnectionHandler.reconnect(any())
             mockLogger.i(capture(logSlot))
@@ -334,7 +342,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) })
             invalidateSessionTokenSequence()
-            mockStateChangedListener(fromConnectedToError(MessagingClient.State.Error(ErrorCode.CannotDowngradeToUnauthenticated, ErrorTest.MESSAGE)))
+            errorSequence(fromConnectedToError(MessagingClient.State.Error(ErrorCode.CannotDowngradeToUnauthenticated, ErrorTest.MESSAGE)))
         }
     }
 

@@ -132,6 +132,7 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
         verifySequence {
             connectSequence()
             mockMessageStore.update(expectedMessage)
+            mockSessionDurationHandler.onMessage()
         }
     }
 
