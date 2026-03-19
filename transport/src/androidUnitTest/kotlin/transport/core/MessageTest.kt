@@ -6,8 +6,10 @@ import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNull
+import assertk.assertions.size
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.Attachment
+import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.core.Message.Participant
@@ -163,6 +165,21 @@ class MessageTest {
     }
 
     @Test
+    fun `validate ButtonResponse with originatingMessageId`() {
+        val buttonWithOriginatingId =
+            ButtonResponse(
+                text = "Book",
+                payload = "payload",
+                type = "QuickReply",
+                originatingMessageId = "msg-123"
+            )
+        val buttonFromSecondaryConstructor = ButtonResponse("Book", "payload", "QuickReply")
+
+        assertThat(buttonWithOriginatingId.originatingMessageId).isEqualTo("msg-123")
+        assertThat(buttonFromSecondaryConstructor.originatingMessageId).isNull()
+    }
+
+    @Test
     fun `validate Direction serialization`() {
         val expectedRequest = Direction.Inbound
         val expectedJson = """"Inbound""""
@@ -206,6 +223,56 @@ class MessageTest {
             assertThat(name).isEqualTo(expectedRequest.name)
             assertThat(imageUrl).isEqualTo(expectedRequest.imageUrl)
             assertThat(originatingEntity).isEqualTo(expectedRequest.originatingEntity)
+        }
+    }
+
+    @Test
+    fun `validate Message Type DatePicker serialization`() {
+        val expectedRequest = Message.Type.DatePicker
+        val expectedJson = """"DatePicker""""
+
+        val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
+        val decoded = WebMessagingJson.json.decodeFromString<Message.Type>(expectedJson)
+
+        assertThat(encodedString, "encoded Message.Type.DatePicker").isEqualTo(expectedJson)
+        assertThat(decoded).isEqualTo(expectedRequest)
+    }
+
+    @Test
+    fun `validate Message with TimeSlotPicker`() {
+        val expectedTimeSlot =
+            Message.TimeSlot(
+                timeEpochMillis = 1398892191411L,
+                duration = 30L,
+                payload = "2022-08-22T19:24:26.704Z"
+            )
+        val expectedTimeSlotPicker =
+            Message.TimeSlotPicker(
+                title = "Select a time",
+                subTitle = "Choose available slot",
+                imageUrl = "https://example.com/calendar.png",
+                availableTimes = listOf(expectedTimeSlot)
+            )
+        val expectedMessage =
+            Message(
+                id = MessageValues.ID,
+                direction = Direction.Outbound,
+                state = State.Sent,
+                messageType = Message.Type.DatePicker,
+                timePicker = expectedTimeSlotPicker,
+                from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
+            )
+
+        expectedMessage.run {
+            assertThat(messageType).isEqualTo(Message.Type.DatePicker)
+            assertThat(timePicker).isEqualTo(expectedTimeSlotPicker)
+            timePicker?.run {
+                assertThat(title).isEqualTo("Select a time")
+                assertThat(subTitle).isEqualTo("Choose available slot")
+                assertThat(availableTimes).size().isEqualTo(1)
+                assertThat(availableTimes.first().timeEpochMillis).isEqualTo(1398892191411L)
+                assertThat(availableTimes.first().duration).isEqualTo(30L)
+            }
         }
     }
 }

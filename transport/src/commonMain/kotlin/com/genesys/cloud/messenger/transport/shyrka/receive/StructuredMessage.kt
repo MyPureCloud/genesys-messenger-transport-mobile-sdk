@@ -29,6 +29,7 @@ internal data class StructuredMessage(
     val metadata: Map<String, String> = emptyMap(),
     val events: List<StructuredMessageEvent> = emptyList(),
     val originatingEntity: String? = null,
+    val originatingMessageId: String? = null
 ) {
     @Serializable
     data class Participant(
@@ -58,7 +59,7 @@ internal data class StructuredMessage(
     }
 
     @Serializable(with = ContentSerializer::class)
-    internal sealed class Content {
+    sealed class Content {
         @Serializable
         enum class Type {
             Attachment,
@@ -66,6 +67,7 @@ internal data class StructuredMessage(
             ButtonResponse,
             Card,
             Carousel,
+            DatePicker,
         }
 
         @Serializable
@@ -147,6 +149,26 @@ internal data class StructuredMessage(
         }
 
         @Serializable
+        internal data class DatePickerContent(
+            val datePicker: TimeSlotPickerContent
+        ) : Content()
+
+        @Serializable
+        internal data class TimeSlotPickerContent(
+            val title: String,
+            val subTitle: String? = null,
+            val imageUrl: String? = null,
+            val availableTimes: List<TimeSlotContent> = emptyList()
+        ) : Content() {
+
+            @Serializable
+            internal data class TimeSlotContent(
+                val duration: Long,
+                val dateTime: String
+            )
+        }
+
+        @Serializable
         internal data object UnknownContent : Content()
     }
 
@@ -159,6 +181,7 @@ internal data class StructuredMessage(
                 Content.Type.ButtonResponse.name -> Content.ButtonResponseContent.serializer()
                 Content.Type.Card.name -> Content.CardContent.serializer()
                 Content.Type.Carousel.name -> Content.CarouselContent.serializer()
+                Content.Type.DatePicker.name -> Content.DatePickerContent.serializer()
                 else -> Content.UnknownContent.serializer()
             }
         }
