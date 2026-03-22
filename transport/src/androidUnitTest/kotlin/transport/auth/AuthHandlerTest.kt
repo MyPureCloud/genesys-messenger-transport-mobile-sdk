@@ -232,11 +232,15 @@ class AuthHandlerTest {
     @Test
     fun `when authorized and logout() success`() {
         authorize()
+        val onLogoutSuccessMock = mockk<() -> Unit>(relaxed = true)
 
-        subject.logout()
+        subject.logout(onLogoutSuccess = onLogoutSuccessMock)
 
         coVerify {
             mockWebMessagingApi.logoutFromAuthenticatedSession(AuthTest.JWT_TOKEN)
+        }
+        verify {
+            onLogoutSuccessMock.invoke()
         }
     }
 

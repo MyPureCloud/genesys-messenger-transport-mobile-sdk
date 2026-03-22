@@ -356,9 +356,16 @@ internal class MessagingClientImpl(
     }
 
     override fun logoutFromAuthenticatedSession() {
-        authHandler.logout {
-            performLogout()
-        }
+        authHandler.logout(
+            onLogoutSuccess = {
+                if (stateMachine.isInactive()) {
+                    performLogout()
+                }
+            },
+            onLogoutFailure = {
+                performLogout()
+            }
+        )
     }
 
     override fun shouldAuthorize(callback: (Boolean) -> Unit) {
@@ -786,7 +793,9 @@ internal class MessagingClientImpl(
         vault.wasAuthenticated = false
         authHandler.clear()
         eventHandler.onEvent(Event.Logout)
-        disconnect()
+        if (!stateMachine.isInactive()) {
+            disconnect()
+        }
     }
 
     private inner class SocketListener(
