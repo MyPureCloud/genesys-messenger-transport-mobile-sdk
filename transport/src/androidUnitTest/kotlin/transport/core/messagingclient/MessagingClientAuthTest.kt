@@ -158,7 +158,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         subject.logoutFromAuthenticatedSession()
 
         verify {
-            mockAuthHandler.logout(any())
+            mockAuthHandler.logout(any(), any())
         }
     }
 
@@ -167,7 +167,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         // Test from Idle state
         assertThat(subject.currentState).isIdle()
         subject.logoutFromAuthenticatedSession()
-        verify { mockAuthHandler.logout(any()) }
+        verify { mockAuthHandler.logout(any(), any()) }
 
         // Test from Error state
         every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
@@ -176,7 +176,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         subject.connect()
         assertThat(subject.currentState).isError(ErrorCode.SessionNotFound, "session not found error message")
         subject.logoutFromAuthenticatedSession()
-        verify(exactly = 2) { mockAuthHandler.logout(any()) }
+        verify(exactly = 2) { mockAuthHandler.logout(any(), any()) }
 
         // Test from ReadOnly state
         every { mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) }) } answers {
@@ -185,7 +185,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         subject.connect()
         assertThat(subject.currentState).isReadOnly()
         subject.logoutFromAuthenticatedSession()
-        verify(exactly = 3) { mockAuthHandler.logout(any()) }
+        verify(exactly = 3) { mockAuthHandler.logout(any(), any()) }
     }
 
     @Test
@@ -196,7 +196,42 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence(shouldConfigureAuth = true)
-            mockAuthHandler.logout(any())
+            mockAuthHandler.logout(any(), any())
+        }
+    }
+
+    @Test
+    fun `when logoutFromAuthenticatedSession after disconnect should emit Event Logout`() {
+        subject.connectAuthenticatedSession()
+        subject.disconnect()
+        assertThat(subject.currentState).isClosed(1000, "The user has closed the connection.")
+
+        every { mockAuthHandler.logout(captureLambda(), any()) } answers {
+            lambda<() -> Unit>().invoke()
+        }
+
+        subject.logoutFromAuthenticatedSession()
+
+        verify {
+            mockVault.wasAuthenticated = false
+            mockAuthHandler.clear()
+            mockEventHandler.onEvent(eq(Event.Logout))
+        }
+    }
+
+    @Test
+    fun `when logoutFromAuthenticatedSession after disconnect should not call disconnect again`() {
+        subject.connectAuthenticatedSession()
+        subject.disconnect()
+
+        every { mockAuthHandler.logout(captureLambda(), any()) } answers {
+            lambda<() -> Unit>().invoke()
+        }
+
+        subject.logoutFromAuthenticatedSession()
+
+        verify(exactly = 1) {
+            mockPlatformSocket.closeSocket(any(), any())
         }
     }
 
