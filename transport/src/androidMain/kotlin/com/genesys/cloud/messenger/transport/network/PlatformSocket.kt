@@ -8,6 +8,7 @@ import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.util.logs.okHttpLogger
 import io.ktor.http.Url
+import okhttp3.ConnectionSpec
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
@@ -15,12 +16,13 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.logging.HttpLoggingInterceptor
 import java.util.concurrent.TimeUnit
+import okhttp3.TlsVersion as OkHttpTlsVersion
 
 internal actual class PlatformSocket actual constructor(
     private val log: Log,
     private val url: Url,
     actual val pingInterval: Int,
-    minimumWebSocketTlsVersion: TlsVersion,
+    private val minimumWebSocketTlsVersion: TlsVersion,
 ) {
     private var webSocket: WebSocket? = null
     private var listener: PlatformSocketListener? = null
@@ -43,7 +45,9 @@ internal actual class PlatformSocket actual constructor(
                     HttpLoggingInterceptor(logger = log.okHttpLogger()).apply {
                         level = HttpLoggingInterceptor.Level.BODY
                     }
-                ).build()
+                )
+                .applyMinimumTlsVersion(minimumWebSocketTlsVersion)
+                .build()
         webSocket =
             webClient.newWebSocket(
                 socketRequest,
@@ -107,4 +111,26 @@ internal actual class PlatformSocket actual constructor(
         log.i { LogMessages.sendMessage(text) }
         webSocket?.send(text)
     }
+}
+
+internal fun connectionSpecForMinimumTls(minimumTlsVersion: TlsVersion): ConnectionSpec? =
+    when (minimumTlsVersion) {
+        TlsVersion.SYSTEM_DEFAULT -> null
+        TlsVersion.TLS_1_2 ->
+            ConnectionSpec
+                .Builder(ConnectionSpec.MODERN_TLS)
+                .tlsVersions(OkHttpTlsVersion.TLS_1_2, OkHttpTlsVersion.TLS_1_3)
+                .build()
+        TlsVersion.TLS_1_3 ->
+            ConnectionSpec
+                .Builder(ConnectionSpec.MODERN_TLS)
+                .tlsVersions(OkHttpTlsVersion.TLS_1_3)
+                .build()
+    }
+
+internal fun OkHttpClient.Builder.applyMinimumTlsVersion(minimumTlsVersion: TlsVersion): OkHttpClient.Builder {
+    connectionSpecForMinimumTls(minimumTlsVersion)?.let { spec ->
+        connectionSpecs(listOf(spec, ConnectionSpec.CLEARTEXT))
+    }
+    return this
 }
