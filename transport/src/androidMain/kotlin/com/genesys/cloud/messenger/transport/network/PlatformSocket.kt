@@ -112,25 +112,3 @@ internal actual class PlatformSocket actual constructor(
         webSocket?.send(text)
     }
 }
-
-internal fun connectionSpecForMinimumTls(minimumTlsVersion: TlsVersion): ConnectionSpec? =
-    when (minimumTlsVersion) {
-        TlsVersion.SYSTEM_DEFAULT -> null
-        TlsVersion.TLS_1_2 ->
-            ConnectionSpec
-                .Builder(ConnectionSpec.MODERN_TLS)
-                .tlsVersions(OkHttpTlsVersion.TLS_1_2, OkHttpTlsVersion.TLS_1_3)
-                .build()
-        TlsVersion.TLS_1_3 ->
-            ConnectionSpec
-                .Builder(ConnectionSpec.MODERN_TLS)
-                .tlsVersions(OkHttpTlsVersion.TLS_1_3)
-                .build()
-    }
-
-internal fun OkHttpClient.Builder.applyMinimumTlsVersion(minimumTlsVersion: TlsVersion): OkHttpClient.Builder {
-    connectionSpecForMinimumTls(minimumTlsVersion)?.let { spec ->
-        connectionSpecs(listOf(spec, ConnectionSpec.CLEARTEXT))
-    }
-    return this
-}
