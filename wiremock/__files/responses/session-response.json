@@ -1,0 +1,14 @@
+{
+  "type": "response",
+  "class": "SessionResponse",
+  "code": 200,
+  "body": {
+    "connected": true,
+    "newSession": true,
+    "readOnly": false,
+    "maxCustomDataBytes": 2048,
+    "allowedMedia": {},
+    "blockedExtensions": [],
+    "clearedExistingSession": false
+  }
+}

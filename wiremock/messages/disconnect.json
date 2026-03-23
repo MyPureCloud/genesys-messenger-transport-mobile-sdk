@@ -1,0 +1,21 @@
+{
+  "name": "Close Session (Disconnect)",
+  "trigger": {
+    "type": "message",
+    "message": {
+      "body": {
+        "matchesJsonPath": {
+          "expression": "$.action",
+          "equalTo": "closeSession"
+        }
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "send",
+      "channelTarget": { "type": "originating" },
+      "message": { "body": { "filePath": "responses/connection-closed-event.json" } }
+    }
+  ]
+}

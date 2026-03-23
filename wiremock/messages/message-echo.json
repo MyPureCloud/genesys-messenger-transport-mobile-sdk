@@ -1,0 +1,21 @@
+{
+  "name": "Echo Health Check",
+  "trigger": {
+    "type": "message",
+    "message": {
+      "body": {
+        "matchesJsonPath": {
+          "expression": "$.action",
+          "equalTo": "echo"
+        }
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "send",
+      "channelTarget": { "type": "originating" },
+      "message": { "body": { "filePath": "responses/echo-response.json" } }
+    }
+  ]
+}

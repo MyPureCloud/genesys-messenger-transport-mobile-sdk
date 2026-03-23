@@ -110,6 +110,9 @@ secure.properties
 deployment.properties
 okta.properties
 
+# WireMock
+wiremock/*.jar
+
 # Kotlin 2.0
 .kotlin/
 

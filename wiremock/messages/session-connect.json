@@ -1,0 +1,54 @@
+{
+  "messageMappings": [
+    {
+      "name": "Configure Session (Guest)",
+      "trigger": {
+        "type": "message",
+        "message": {
+          "body": {
+            "matchesJsonPath": {
+              "expression": "$.action",
+              "equalTo": "configureSession"
+            }
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "send",
+          "channelTarget": { "type": "originating" },
+          "message": {
+            "body": {
+              "filePath": "responses/session-response.json"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Configure Session (Authenticated)",
+      "trigger": {
+        "type": "message",
+        "message": {
+          "body": {
+            "matchesJsonPath": {
+              "expression": "$.action",
+              "equalTo": "configureAuthenticatedSession"
+            }
+          }
+        }
+      },
+      "actions": [
+        {
+          "type": "send",
+          "channelTarget": { "type": "originating" },
+          "message": {
+            "body": {
+              "filePath": "responses/session-response.json"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

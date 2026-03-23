@@ -1,0 +1,12 @@
+{
+  "type": "response",
+  "class": "StructuredMessage",
+  "code": 200,
+  "body": {
+    "text": "ping",
+    "type": "Text",
+    "direction": "Inbound",
+    "id": "echo-response-id"
+  },
+  "tracingId": "SGVhbHRoQ2hlY2tNZXNzYWdlSWQ="
+}

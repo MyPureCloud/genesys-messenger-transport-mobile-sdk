@@ -1,0 +1,21 @@
+{
+  "name": "On Message (Send/Receive)",
+  "trigger": {
+    "type": "message",
+    "message": {
+      "body": {
+        "matchesJsonPath": {
+          "expression": "$.action",
+          "equalTo": "onMessage"
+        }
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "send",
+      "channelTarget": { "type": "originating" },
+      "message": { "body": { "filePath": "responses/structured-message-inbound.json" } }
+    }
+  ]
+}
