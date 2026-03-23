@@ -94,8 +94,8 @@ internal class MessageExtensionTest {
                 timeStamp = null,
                 quickReplies =
                     listOf(
-                        QuickReplyTestValues.buttonResponse_a,
-                        QuickReplyTestValues.buttonResponse_b,
+                        QuickReplyTestValues.buttonResponse_a.copy(originatingMessageId = "message3_id"),
+                        QuickReplyTestValues.buttonResponse_b.copy(originatingMessageId = "message3_id"),
                     ),
                 from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
             )
@@ -441,6 +441,7 @@ internal class MessageExtensionTest {
                 text = QuickReplyTestValues.TEXT_A,
                 payload = QuickReplyTestValues.PAYLOAD_A,
                 type = QuickReplyTestValues.QUICK_REPLY,
+                originatingMessageId = MessageValues.ID
             )
         val expectedMessage =
             Message(
@@ -468,6 +469,7 @@ internal class MessageExtensionTest {
                 text = QuickReplyTestValues.TEXT_A,
                 payload = QuickReplyTestValues.PAYLOAD_A,
                 type = QuickReplyTestValues.QUICK_REPLY,
+                originatingMessageId = MessageValues.ID
             )
         val expectedMessage =
             Message(
@@ -499,6 +501,7 @@ internal class MessageExtensionTest {
                 text = QuickReplyTestValues.TEXT_A,
                 payload = QuickReplyTestValues.PAYLOAD_A,
                 type = QuickReplyTestValues.QUICK_REPLY,
+                originatingMessageId = MessageValues.ID,
             )
         val expectedMessage =
             Message(
@@ -1250,6 +1253,7 @@ internal class MessageExtensionTest {
                 text = QuickReplyTestValues.TEXT_A,
                 payload = QuickReplyTestValues.PAYLOAD_A,
                 type = QuickReplyTestValues.QUICK_REPLY,
+                originatingMessageId = MessageValues.ID,
             )
 
         val result = givenStructuredMessage.toMessage()
@@ -1272,6 +1276,7 @@ internal class MessageExtensionTest {
                 text = QuickReplyTestValues.TEXT_A,
                 payload = QuickReplyTestValues.PAYLOAD_A,
                 type = QuickReplyTestValues.QUICK_REPLY,
+                originatingMessageId = MessageValues.ID,
             )
 
         val result = givenStructuredMessage.toMessage()
@@ -1538,5 +1543,6 @@ internal class MessageExtensionTest {
         val result = givenStructuredMessage.toMessage()
 
         assertThat(result.quickReplies).size().isEqualTo(1)
+        assertThat(result.quickReplies.first().originatingMessageId).isEqualTo(givenMessageId)
     }
 }

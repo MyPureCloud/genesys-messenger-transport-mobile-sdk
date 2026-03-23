@@ -29,6 +29,7 @@ internal data class StructuredMessage(
     val metadata: Map<String, String> = emptyMap(),
     val events: List<StructuredMessageEvent> = emptyList(),
     val originatingEntity: String? = null,
+    val originatingMessageId: String? = null
 ) {
     @Serializable
     data class Participant(

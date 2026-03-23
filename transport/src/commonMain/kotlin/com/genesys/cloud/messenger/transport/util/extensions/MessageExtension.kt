@@ -38,7 +38,7 @@ internal fun TimeSlotContent.toMessage(): Message.TimeSlot =
     )
 
 internal fun StructuredMessage.toMessage(tracingId: String? = null): Message {
-    val quickReplies = content.toQuickReplies()
+    val quickReplies = content.toQuickReplies().map { it.copy(originatingMessageId = this.id) }
     val cards = content.toCards()
     val hasCardSelection = content.hasCardSelection()
     val timePicker: Message.TimeSlotPicker? =
