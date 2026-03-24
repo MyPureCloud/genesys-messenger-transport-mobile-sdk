@@ -277,14 +277,14 @@ class AuthHandlerTest {
                 ErrorCode.ClientResponseError(401),
                 ErrorTest.MESSAGE
             )
-        val onLogoutFailureMock = mockk<() -> Unit>(relaxed = true)
-        subject.logout(onLogoutFailure = onLogoutFailureMock)
+        val onUnauthorizedMock = mockk<() -> Unit>(relaxed = true)
+        subject.logout(onUnauthorized = onUnauthorizedMock)
 
         coVerify {
             mockWebMessagingApi.logoutFromAuthenticatedSession(AuthTest.JWT_TOKEN)
         }
         verify {
-            onLogoutFailureMock.invoke()
+            onUnauthorizedMock.invoke()
             fakeVault.remove(fakeVault.keys.tokenKey)
             subject.clear()
         }
@@ -303,14 +303,14 @@ class AuthHandlerTest {
                 ErrorTest.MESSAGE
             )
 
-        val onLogoutFailureMock = mockk<() -> Unit>(relaxed = true)
-        subject.logout(onLogoutFailure = onLogoutFailureMock)
+        val onUnauthorizedMock = mockk<() -> Unit>(relaxed = true)
+        subject.logout(onUnauthorized = onUnauthorizedMock)
 
         coVerify {
             mockWebMessagingApi.logoutFromAuthenticatedSession(NO_JWT)
         }
         verify {
-            onLogoutFailureMock.invoke()
+            onUnauthorizedMock.invoke()
             fakeVault.remove(fakeVault.keys.tokenKey)
             subject.clear()
         }
@@ -328,8 +328,8 @@ class AuthHandlerTest {
         val expectedErrorMessage = ErrorTest.MESSAGE
         val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
 
-        val onLogoutFailureMock = mockk<() -> Unit>(relaxed = true)
-        subject.logout(onLogoutFailure = onLogoutFailureMock)
+        val onUnauthorizedMock = mockk<() -> Unit>(relaxed = true)
+        subject.logout(onUnauthorized = onUnauthorizedMock)
 
         coVerify(exactly = 1) {
             mockWebMessagingApi.logoutFromAuthenticatedSession(AuthTest.JWT_TOKEN)
@@ -339,7 +339,7 @@ class AuthHandlerTest {
             mockWebMessagingApi.refreshAuthJwt(AuthTest.REFRESH_TOKEN)
         }
         verify(exactly = 1) {
-            onLogoutFailureMock.invoke()
+            onUnauthorizedMock.invoke()
         }
         verify(exactly = 0) {
             mockEventHandler.onEvent(
@@ -367,15 +367,15 @@ class AuthHandlerTest {
             )
         val expectedAuthJwt = AuthJwt(NO_JWT, NO_REFRESH_TOKEN)
 
-        val onLogoutFailureMock = mockk<() -> Unit>(relaxed = true)
-        subject.logout(onLogoutFailure = onLogoutFailureMock)
+        val onUnauthorizedMock = mockk<() -> Unit>(relaxed = true)
+        subject.logout(onUnauthorized = onUnauthorizedMock)
 
         coVerify(exactly = 1) {
             mockWebMessagingApi.logoutFromAuthenticatedSession(AuthTest.JWT_TOKEN)
             mockWebMessagingApi.refreshAuthJwt(AuthTest.REFRESH_TOKEN)
         }
         verify {
-            onLogoutFailureMock.invoke()
+            onUnauthorizedMock.invoke()
 
             fakeVault.remove(fakeVault.keys.tokenKey)
             subject.clear()
@@ -403,8 +403,8 @@ class AuthHandlerTest {
         val expectedErrorMessage = ErrorTest.MESSAGE
         val expectedCorrectiveAction = CorrectiveAction.ReAuthenticate
 
-        val onLogoutFailureMock = mockk<() -> Unit>(relaxed = true)
-        subject.logout(onLogoutFailure = onLogoutFailureMock)
+        val onUnauthorizedMock = mockk<() -> Unit>(relaxed = true)
+        subject.logout(onUnauthorized = onUnauthorizedMock)
 
         coVerify(exactly = 1) {
             mockWebMessagingApi.logoutFromAuthenticatedSession(AuthTest.JWT_TOKEN)
@@ -412,7 +412,7 @@ class AuthHandlerTest {
         }
         // Event is fired twice: once in performTokenRefresh and once in handleRequestError (logout)
         verify(exactly = 1) {
-            onLogoutFailureMock.invoke()
+            onUnauthorizedMock.invoke()
             mockEventHandler.onEvent(
                 Event.Error(
                     expectedErrorCode,

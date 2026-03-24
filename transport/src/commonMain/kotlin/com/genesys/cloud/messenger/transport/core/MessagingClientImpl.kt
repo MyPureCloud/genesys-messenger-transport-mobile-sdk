@@ -362,7 +362,7 @@ internal class MessagingClientImpl(
                     performLogout()
                 }
             },
-            onLogoutFailure = {
+            onUnauthorized = {
                 performLogout()
             }
         )
