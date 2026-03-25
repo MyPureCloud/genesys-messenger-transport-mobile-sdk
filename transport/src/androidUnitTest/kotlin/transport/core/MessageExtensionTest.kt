@@ -441,7 +441,7 @@ internal class MessageExtensionTest {
                 text = QuickReplyTestValues.TEXT_A,
                 payload = QuickReplyTestValues.PAYLOAD_A,
                 type = QuickReplyTestValues.QUICK_REPLY,
-                originatingMessageId = MessageValues.ID
+                originatingMessageId = MessageValues.ID,
             )
         val expectedMessage =
             Message(
@@ -469,7 +469,7 @@ internal class MessageExtensionTest {
                 text = QuickReplyTestValues.TEXT_A,
                 payload = QuickReplyTestValues.PAYLOAD_A,
                 type = QuickReplyTestValues.QUICK_REPLY,
-                originatingMessageId = MessageValues.ID
+                originatingMessageId = MessageValues.ID,
             )
         val expectedMessage =
             Message(
