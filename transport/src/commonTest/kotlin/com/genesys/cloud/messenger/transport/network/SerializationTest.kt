@@ -1355,7 +1355,7 @@ class SerializationTest {
 
     @Test fun `when DatePickerContent then deserializes`() {
         val json =
-            """{"contentType":"DatePicker","datePicker":{"title":"Select a time","subTitle":"Choose slot","imageUrl":"https://example.com/cal.png","availableTimes":[{"duration":30,"dateTime":"2022-08-22T19:24:26.704Z"}]}}"""
+            """{"contentType":"DatePicker","datePicker":{"title":"Select a time","subtitle":"Choose slot","imageUrl":"https://example.com/cal.png","availableTimes":[{"duration":30,"dateTime":"2022-08-22T19:24:26.704Z"}]}}"""
         val decoded = WebMessagingJson.json.decodeFromString(StructuredMessage.Content.serializer(), json)
         val expectedTimeSlot =
             StructuredMessage.Content.TimeSlotPickerContent.TimeSlotContent(

@@ -507,12 +507,12 @@ object TimeSlotPickerTestValues {
 
     internal fun createTimeSlotPickerContent(
         title: String = TITLE,
-        subTitle: String? = SUBTITLE,
+        subtitle: String? = SUBTITLE,
         imageUrl: String? = IMAGE_URL,
         availableTimes: List<TimeSlotPickerContent.TimeSlotContent> = listOf(createTimeSlotContent())
     ) = TimeSlotPickerContent(
         title = title,
-        subtitle = subTitle,
+        subtitle = subtitle,
         imageUrl = imageUrl,
         availableTimes = availableTimes
     )
