@@ -58,7 +58,7 @@ internal data class StructuredMessage(
     }
 
     @Serializable(with = ContentSerializer::class)
-    sealed class Content {
+    internal sealed class Content {
         @Serializable
         enum class Type {
             Attachment,
@@ -158,7 +158,7 @@ internal data class StructuredMessage(
             val subTitle: String? = null,
             val imageUrl: String? = null,
             val availableTimes: List<TimeSlotContent> = emptyList()
-        ) : Content() {
+        ) {
 
             @Serializable
             internal data class TimeSlotContent(

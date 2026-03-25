@@ -32,9 +32,7 @@ internal fun StructuredMessage.Content.TimeSlotPickerContent.toMessage() = Messa
 
 internal fun TimeSlotContent.toMessage(): Message.TimeSlot =
     Message.TimeSlot(
-        timeEpochMillis = runCatching {
-            kotlin.time.Instant.parse(dateTime).toEpochMilliseconds()
-        }.getOrNull(),
+        timeEpochMillis = dateTime.fromIsoToEpochMilliseconds(),
         duration = duration,
         payload = dateTime
     )
@@ -211,11 +209,6 @@ private fun List<StructuredMessage.Content>.hasCardSelection(): Boolean =
     this
         .filterIsInstance<ButtonResponseContent>()
         .any { it.buttonResponse.type.normalizeButtonType() == "Button" }
-
-private fun List<StructuredMessage.Content>.hasTimePicker(): Boolean =
-    this
-        .filterIsInstance<StructuredMessage.Content.DatePickerContent>()
-        .any { true }
 
 internal fun String.isHealthCheckResponseId(): Boolean = this == HealthCheckID
 

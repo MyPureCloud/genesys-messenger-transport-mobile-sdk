@@ -20,6 +20,7 @@ import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.CardTestValues
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
+import com.genesys.cloud.messenger.transport.utility.TimeSlotPickerTestValues
 import org.junit.Test
 
 class MessageTest {
@@ -228,14 +229,14 @@ class MessageTest {
         val expectedTimeSlot =
             Message.TimeSlot(
                 timeEpochMillis = 1398892191411L,
-                duration = 30L,
-                payload = "2022-08-22T19:24:26.704Z"
+                duration = TimeSlotPickerTestValues.DURATION,
+                payload = TimeSlotPickerTestValues.DATE_TIME_ISO
             )
         val expectedTimeSlotPicker =
             Message.TimeSlotPicker(
-                title = "Select a time",
-                subTitle = "Choose available slot",
-                imageUrl = "https://example.com/calendar.png",
+                title = TimeSlotPickerTestValues.TITLE,
+                subTitle = TimeSlotPickerTestValues.SUBTITLE,
+                imageUrl = TimeSlotPickerTestValues.IMAGE_URL,
                 availableTimes = listOf(expectedTimeSlot)
             )
         val expectedMessage =
@@ -252,11 +253,11 @@ class MessageTest {
             assertThat(messageType).isEqualTo(Message.Type.DatePicker)
             assertThat(timePicker).isEqualTo(expectedTimeSlotPicker)
             timePicker?.run {
-                assertThat(title).isEqualTo("Select a time")
-                assertThat(subTitle).isEqualTo("Choose available slot")
+                assertThat(title).isEqualTo(TimeSlotPickerTestValues.TITLE)
+                assertThat(subTitle).isEqualTo(TimeSlotPickerTestValues.SUBTITLE)
                 assertThat(availableTimes).size().isEqualTo(1)
                 assertThat(availableTimes.first().timeEpochMillis).isEqualTo(1398892191411L)
-                assertThat(availableTimes.first().duration).isEqualTo(30L)
+                assertThat(availableTimes.first().duration).isEqualTo(TimeSlotPickerTestValues.DURATION)
             }
         }
     }

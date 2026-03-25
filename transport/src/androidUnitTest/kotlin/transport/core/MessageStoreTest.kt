@@ -34,6 +34,7 @@ import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.CardTestValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
+import com.genesys.cloud.messenger.transport.utility.TimeSlotPickerTestValues
 import io.mockk.Called
 import io.mockk.clearMocks
 import io.mockk.mockk
@@ -633,15 +634,15 @@ internal class MessageStoreTest {
     fun `when update called with DatePicker message, then TimeSlotPickerReceived is published`() {
         val givenTimeSlotPicker =
             Message.TimeSlotPicker(
-                title = "Select a time",
-                subTitle = "Choose available slot",
+                title = TimeSlotPickerTestValues.TITLE,
+                subTitle = TimeSlotPickerTestValues.SUBTITLE,
                 imageUrl = null,
                 availableTimes =
                     listOf(
                         Message.TimeSlot(
                             timeEpochMillis = 1398892191411L,
-                            duration = 30L,
-                            payload = "2022-08-22T19:24:26.704Z"
+                            duration = TimeSlotPickerTestValues.DURATION,
+                            payload = TimeSlotPickerTestValues.DATE_TIME_ISO
                         )
                     )
             )
