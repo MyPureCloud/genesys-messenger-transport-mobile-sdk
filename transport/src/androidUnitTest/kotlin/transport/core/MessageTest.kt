@@ -9,7 +9,6 @@ import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import assertk.assertions.size
 import com.genesys.cloud.messenger.transport.core.Attachment
-import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.core.Message.Participant
@@ -235,7 +234,7 @@ class MessageTest {
         val expectedTimeSlotPicker =
             Message.TimeSlotPicker(
                 title = TimeSlotPickerTestValues.TITLE,
-                subTitle = TimeSlotPickerTestValues.SUBTITLE,
+                subtitle = TimeSlotPickerTestValues.SUBTITLE,
                 imageUrl = TimeSlotPickerTestValues.IMAGE_URL,
                 availableTimes = listOf(expectedTimeSlot)
             )
@@ -254,7 +253,7 @@ class MessageTest {
             assertThat(timePicker).isEqualTo(expectedTimeSlotPicker)
             timePicker?.run {
                 assertThat(title).isEqualTo(TimeSlotPickerTestValues.TITLE)
-                assertThat(subTitle).isEqualTo(TimeSlotPickerTestValues.SUBTITLE)
+                assertThat(subtitle).isEqualTo(TimeSlotPickerTestValues.SUBTITLE)
                 assertThat(availableTimes).size().isEqualTo(1)
                 assertThat(availableTimes.first().timeEpochMillis).isEqualTo(1398892191411L)
                 assertThat(availableTimes.first().duration).isEqualTo(TimeSlotPickerTestValues.DURATION)

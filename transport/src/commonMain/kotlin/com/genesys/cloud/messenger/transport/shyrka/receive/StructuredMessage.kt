@@ -155,7 +155,7 @@ internal data class StructuredMessage(
         @Serializable
         internal data class TimeSlotPickerContent(
             val title: String,
-            val subTitle: String? = null,
+            val subtitle: String? = null,
             val imageUrl: String? = null,
             val availableTimes: List<TimeSlotContent> = emptyList()
         ) {

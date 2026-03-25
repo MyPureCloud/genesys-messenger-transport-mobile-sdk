@@ -164,7 +164,7 @@ data class Message(
     @Serializable
     data class TimeSlotPicker(
         val title: String,
-        val subTitle: String? = null,
+        val subtitle: String? = null,
         val imageUrl: String? = null,
         val availableTimes: List<TimeSlot> = emptyList()
     )

@@ -25,7 +25,7 @@ internal fun List<StructuredMessage>.toMessageList(): List<Message> =
 
 internal fun StructuredMessage.Content.TimeSlotPickerContent.toMessage() = Message.TimeSlotPicker(
     title = title,
-    subTitle = subTitle,
+    subtitle = subtitle,
     imageUrl = imageUrl,
     availableTimes = availableTimes.map { it.toMessage() }
 )

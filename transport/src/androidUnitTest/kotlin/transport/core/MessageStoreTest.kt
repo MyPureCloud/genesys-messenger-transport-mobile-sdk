@@ -635,7 +635,7 @@ internal class MessageStoreTest {
         val givenTimeSlotPicker =
             Message.TimeSlotPicker(
                 title = TimeSlotPickerTestValues.TITLE,
-                subTitle = TimeSlotPickerTestValues.SUBTITLE,
+                subtitle = TimeSlotPickerTestValues.SUBTITLE,
                 imageUrl = null,
                 availableTimes =
                     listOf(

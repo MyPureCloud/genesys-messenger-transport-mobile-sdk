@@ -1466,7 +1466,7 @@ internal class MessageExtensionTest {
         assertThat(result.timePicker).isNotNull()
         result.timePicker?.run {
             assertThat(title).isEqualTo(expectedTitle)
-            assertThat(subTitle).isEqualTo(expectedSubTitle)
+            assertThat(subtitle).isEqualTo(expectedSubTitle)
             assertThat(imageUrl).isEqualTo(expectedImageUrl)
             assertThat(availableTimes).size().isEqualTo(1)
             availableTimes.first().run {

@@ -1365,7 +1365,7 @@ class SerializationTest {
         val expectedDatePicker =
             StructuredMessage.Content.TimeSlotPickerContent(
                 title = "Select a time",
-                subTitle = "Choose slot",
+                subtitle = "Choose slot",
                 imageUrl = "https://example.com/cal.png",
                 availableTimes = listOf(expectedTimeSlot)
             )

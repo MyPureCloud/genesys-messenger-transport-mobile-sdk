@@ -512,7 +512,7 @@ object TimeSlotPickerTestValues {
         availableTimes: List<TimeSlotPickerContent.TimeSlotContent> = listOf(createTimeSlotContent())
     ) = TimeSlotPickerContent(
         title = title,
-        subTitle = subTitle,
+        subtitle = subTitle,
         imageUrl = imageUrl,
         availableTimes = availableTimes
     )
