@@ -1,0 +1,15 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/__admin/scenarios/reset"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "status": "OK"
+    }
+  }
+}

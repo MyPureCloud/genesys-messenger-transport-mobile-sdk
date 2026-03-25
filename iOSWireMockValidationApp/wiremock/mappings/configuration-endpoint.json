@@ -1,0 +1,43 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/api/v2/webmessaging/deployments/.*/config"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "enabled": true,
+      "deploymentId": "test-deployment-id",
+      "status": "Active",
+      "messenger": {
+        "enabled": true,
+        "apps": {
+          "conversations": {
+            "messagingEndpoint": "wss://webmessaging.example.com/v1"
+          }
+        },
+        "styles": {
+          "primaryColor": "#4B8BF5"
+        },
+        "launcherButton": {
+          "visibility": "On"
+        },
+        "fileUpload": {
+          "enableAttachments": true,
+          "modes": [
+            {
+              "fileTypes": ["image/jpeg", "image/png"],
+              "maxFileSizeKB": 10240
+            }
+          ]
+        }
+      },
+      "journeyEvents": {
+        "enabled": false
+      }
+    }
+  }
+}
