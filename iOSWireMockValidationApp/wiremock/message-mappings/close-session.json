@@ -1,0 +1,41 @@
+{
+  "name": "Close Session",
+  "priority": 1,
+  "trigger": {
+    "type": "message",
+    "channel": {
+      "type": "websocket",
+      "initiatingRequestPattern": {
+        "urlPath": "/api/v2/webmessaging/messages"
+      }
+    },
+    "message": {
+      "body": {
+        "matchesJsonPath": {
+          "expression": "$.action",
+          "equalTo": "closeSession"
+        }
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "send",
+      "channelTarget": { "type": "originating" },
+      "message": {
+        "body": {
+          "data": "{\"type\":\"response\",\"class\":\"SessionResponse\",\"code\":200,\"body\":{\"connected\":false,\"newSession\":false}}"
+        }
+      }
+    },
+    {
+      "type": "send",
+      "channelTarget": { "type": "originating" },
+      "message": {
+        "body": {
+          "data": "{\"type\":\"message\",\"class\":\"ConnectionClosedEvent\",\"code\":200,\"body\":{}}"
+        }
+      }
+    }
+  ]
+}

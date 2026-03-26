@@ -131,6 +131,10 @@ struct PresenceType: Encodable {
     let type: String = "Join"
 }
 
+struct TriggerDisconnectRequest: Encodable {
+    let action: String = "triggerDisconnect"
+}
+
 // MARK: - Connection closed event
 
 struct ConnectionClosedEventBody: Decodable {

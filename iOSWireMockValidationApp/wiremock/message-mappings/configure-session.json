@@ -1,0 +1,32 @@
+{
+  "name": "Configure Session",
+  "priority": 1,
+  "trigger": {
+    "type": "message",
+    "channel": {
+      "type": "websocket",
+      "initiatingRequestPattern": {
+        "urlPath": "/api/v2/webmessaging/messages"
+      }
+    },
+    "message": {
+      "body": {
+        "matchesJsonPath": {
+          "expression": "$.action",
+          "equalTo": "configureSession"
+        }
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "send",
+      "channelTarget": { "type": "originating" },
+      "message": {
+        "body": {
+          "data": "{\"type\":\"response\",\"class\":\"SessionResponse\",\"code\":200,\"body\":{\"connected\":true,\"newSession\":true,\"readOnly\":false,\"maxCustomDataBytes\":2048,\"allowedMedia\":{\"inbound\":{\"fileTypes\":[{\"type\":\"*/*\"}],\"maxFileSizeKB\":10240}},\"blockedExtensions\":[],\"clearedExistingSession\":false}}"
+        }
+      }
+    }
+  ]
+}

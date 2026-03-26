@@ -1,0 +1,22 @@
+{
+  "name": "Presence Event",
+  "priority": 1,
+  "trigger": {
+    "type": "message",
+    "channel": {
+      "type": "websocket",
+      "initiatingRequestPattern": {
+        "urlPath": "/api/v2/webmessaging/messages"
+      }
+    },
+    "message": {
+      "body": {
+        "matchesJsonPath": {
+          "expression": "$.message.type",
+          "equalTo": "Event"
+        }
+      }
+    }
+  },
+  "actions": []
+}

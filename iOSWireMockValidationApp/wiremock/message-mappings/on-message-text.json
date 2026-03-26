@@ -1,0 +1,32 @@
+{
+  "name": "Chat Message (Text)",
+  "priority": 2,
+  "trigger": {
+    "type": "message",
+    "channel": {
+      "type": "websocket",
+      "initiatingRequestPattern": {
+        "urlPath": "/api/v2/webmessaging/messages"
+      }
+    },
+    "message": {
+      "body": {
+        "matchesJsonPath": {
+          "expression": "$.action",
+          "equalTo": "onMessage"
+        }
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "send",
+      "channelTarget": { "type": "originating" },
+      "message": {
+        "body": {
+          "data": "{\"type\":\"message\",\"class\":\"StructuredMessage\",\"code\":200,\"body\":{\"text\":\"Agent received: \\\"{{jsonPath message.body '$.message.text'}}\\\"\",\"direction\":\"Inbound\",\"id\":\"msg-inbound-{{randomValue length=8 type='ALPHANUMERIC'}}\",\"channel\":{\"time\":\"{{now}}\",\"messageId\":\"channel-msg-{{randomValue length=8 type='ALPHANUMERIC'}}-agent\",\"type\":\"Private\",\"from\":{\"firstName\":\"WireMock\",\"lastName\":\"Agent\",\"nickname\":\"MockAgent\"}},\"type\":\"Text\",\"originatingEntity\":\"Bot\"},\"tracingId\":\"{{jsonPath message.body '$.tracingId'}}\"}"
+        }
+      }
+    }
+  ]
+}

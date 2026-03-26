@@ -16,23 +16,9 @@ struct ConfigurationView: View {
                         .autocorrectionDisabled()
                 }
                 HStack {
-                    Text("REST Port")
+                    Text("Port")
                     Spacer()
-                    TextField("REST Port", text: portBinding(\.restPort))
-                        .multilineTextAlignment(.trailing)
-                        .keyboardType(.numberPad)
-                }
-                HStack {
-                    Text("WebSocket Port")
-                    Spacer()
-                    TextField("WS Port", text: portBinding(\.webSocketPort))
-                        .multilineTextAlignment(.trailing)
-                        .keyboardType(.numberPad)
-                }
-                HStack {
-                    Text("Admin Port")
-                    Spacer()
-                    TextField("Admin Port", text: portBinding(\.adminPort))
+                    TextField("Port", text: portBinding)
                         .multilineTextAlignment(.trailing)
                         .keyboardType(.numberPad)
                 }
@@ -84,10 +70,10 @@ struct ConfigurationView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    private func portBinding(_ keyPath: WritableKeyPath<WireMockConfiguration, Int>) -> Binding<String> {
+    private var portBinding: Binding<String> {
         Binding(
-            get: { String(configuration[keyPath: keyPath]) },
-            set: { configuration[keyPath: keyPath] = Int($0) ?? configuration[keyPath: keyPath] }
+            get: { String(configuration.port) },
+            set: { configuration.port = Int($0) ?? configuration.port }
         )
     }
 }

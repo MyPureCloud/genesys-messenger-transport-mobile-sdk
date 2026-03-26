@@ -298,10 +298,10 @@ final class ValidationViewModel: ObservableObject {
         }
 
         result.steps[2].status = .running
-        log("Requesting WireMock to close connection via admin API...")
+        log("Sending triggerDisconnect via WebSocket...")
 
         do {
-            try await triggerServerDisconnect()
+            try await wsService.send(TriggerDisconnectRequest())
             result.steps[2].status = .passed
             result.steps[2].detail = "Server disconnect triggered"
             log("Server disconnect triggered", level: .success)
@@ -313,19 +313,26 @@ final class ValidationViewModel: ObservableObject {
         }
 
         result.steps[3].status = .running
-        log("Waiting for disconnect detection...")
+        log("Waiting for ConnectionClosedEvent...")
 
         do {
-            try await handler.waitForDisconnect(timeout: 10)
+            let msg = try await handler.waitForMessage(
+                where: { $0.messageClass == "ConnectionClosedEvent" },
+                timeout: 10
+            )
+            let bodyDict = msg.body.value as? [String: Any]
+            let reason = bodyDict?["reason"] as? String ?? "unknown"
             result.steps[3].status = .passed
-            result.steps[3].detail = "Unexpected disconnect detected"
-            log("Unexpected disconnect detected and reported", level: .success)
+            result.steps[3].detail = "ConnectionClosedEvent received (reason: \(reason))"
+            log("ConnectionClosedEvent detected: reason=\(reason)", level: .success)
             result.overallPassed = true
         } catch {
             result.steps[3].status = .failed(error.localizedDescription)
             result.overallPassed = false
             log("Disconnect detection failed: \(error.localizedDescription)", level: .error)
         }
+
+        wsService.disconnect()
     }
 
     // MARK: - Scenario 4: Reconnect After Disconnect
@@ -478,24 +485,6 @@ final class ValidationViewModel: ObservableObject {
         let total = results.count
         log("=== Completed: \(passed)/\(total) scenarios passed ===", level: passed == total ? .success : .error)
         isRunning = false
-    }
-
-    // MARK: - Helpers
-
-    private func triggerServerDisconnect() async throws {
-        let urlString = "\(configuration.adminBaseURL)/disconnect-latest"
-        guard let url = URL(string: urlString) else {
-            throw ValidationError.invalidURL(urlString)
-        }
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        let (_, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200...299).contains(httpResponse.statusCode) else {
-            throw ValidationError.unexpectedStatusCode(
-                (response as? HTTPURLResponse)?.statusCode ?? -1
-            )
-        }
     }
 }
 

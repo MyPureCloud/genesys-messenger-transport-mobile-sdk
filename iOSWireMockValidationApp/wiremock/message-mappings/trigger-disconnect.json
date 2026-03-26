@@ -1,0 +1,32 @@
+{
+  "name": "Trigger Disconnect (Test Helper)",
+  "priority": 1,
+  "trigger": {
+    "type": "message",
+    "channel": {
+      "type": "websocket",
+      "initiatingRequestPattern": {
+        "urlPath": "/api/v2/webmessaging/messages"
+      }
+    },
+    "message": {
+      "body": {
+        "matchesJsonPath": {
+          "expression": "$.action",
+          "equalTo": "triggerDisconnect"
+        }
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "send",
+      "channelTarget": { "type": "originating" },
+      "message": {
+        "body": {
+          "data": "{\"type\":\"message\",\"class\":\"ConnectionClosedEvent\",\"code\":200,\"body\":{\"reason\":\"Server initiated disconnect\"}}"
+        }
+      }
+    }
+  ]
+}

@@ -1,12 +1,10 @@
 #!/bin/bash
 
 # ============================================================
-# WireMock + WebSocket Mock Server Startup Script
+# WireMock Server Startup Script
 # ============================================================
-# This script starts:
-#   1. WireMock (REST stubs on port 8080)
-#   2. WebSocket mock server (Shyrka protocol on port 8089)
-#   3. Admin server (disconnect control on port 8090)
+# Starts WireMock 4.x with REST stubs + WebSocket message stubs
+# on a single port. No Node.js or external dependencies needed.
 # ============================================================
 
 set -e
@@ -14,8 +12,6 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 WIREMOCK_DIR="$SCRIPT_DIR/wiremock"
 WIREMOCK_PORT=${WIREMOCK_PORT:-8080}
-WS_PORT=${WS_PORT:-8089}
-ADMIN_PORT=${ADMIN_PORT:-8090}
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -24,16 +20,12 @@ NC='\033[0m'
 
 cleanup() {
     echo ""
-    echo -e "${YELLOW}Shutting down servers...${NC}"
+    echo -e "${YELLOW}Shutting down WireMock...${NC}"
     if [ -n "$WIREMOCK_PID" ]; then
         kill "$WIREMOCK_PID" 2>/dev/null || true
         echo "  WireMock (PID $WIREMOCK_PID) stopped"
     fi
-    if [ -n "$WS_PID" ]; then
-        kill "$WS_PID" 2>/dev/null || true
-        echo "  WebSocket mock (PID $WS_PID) stopped"
-    fi
-    echo -e "${GREEN}All servers stopped.${NC}"
+    echo -e "${GREEN}Server stopped.${NC}"
     exit 0
 }
 
@@ -42,28 +34,15 @@ trap cleanup SIGINT SIGTERM
 # --- Check dependencies ---
 
 if ! command -v java &> /dev/null; then
-    echo -e "${RED}Error: Java is not installed. WireMock requires Java.${NC}"
+    echo -e "${RED}Error: Java is not installed. WireMock requires Java 11+.${NC}"
     echo "Install with: brew install openjdk"
     exit 1
 fi
 
-if ! command -v node &> /dev/null; then
-    echo -e "${RED}Error: Node.js is not installed. WebSocket mock requires Node.js.${NC}"
-    echo "Install with: brew install node"
-    exit 1
-fi
-
-# --- Install Node dependencies ---
-
-echo -e "${YELLOW}Installing Node.js dependencies...${NC}"
-cd "$WIREMOCK_DIR"
-npm install --silent
-cd "$SCRIPT_DIR"
-
 # --- Locate WireMock JAR ---
 
 WIREMOCK_JAR=""
-TRANSPORT_SDK_DIR="$SCRIPT_DIR/../genesys-messenger-transport-mobile-sdk/wiremock"
+TRANSPORT_SDK_DIR="$SCRIPT_DIR/../wiremock"
 
 if [ -f "$TRANSPORT_SDK_DIR/wiremock-standalone-4.0.0-beta.29.jar" ]; then
     WIREMOCK_JAR="$TRANSPORT_SDK_DIR/wiremock-standalone-4.0.0-beta.29.jar"
@@ -73,19 +52,16 @@ else
     if [ -z "$WIREMOCK_JAR" ]; then
         echo -e "${YELLOW}WireMock JAR not found locally. Downloading...${NC}"
         WIREMOCK_JAR="$WIREMOCK_DIR/wiremock-standalone.jar"
-        curl -L -o "$WIREMOCK_JAR" "https://repo1.maven.org/maven2/org/wiremock/wiremock-standalone/3.9.2/wiremock-standalone-3.9.2.jar"
+        curl -L -o "$WIREMOCK_JAR" "https://repo1.maven.org/maven2/org/wiremock/wiremock-standalone/4.0.0-beta.29/wiremock-standalone-4.0.0-beta.29.jar"
     fi
 fi
 
 echo ""
 echo "============================================================"
-echo -e "${GREEN} Starting WireMock Validation Servers${NC}"
+echo -e "${GREEN} Starting WireMock Server${NC}"
 echo "============================================================"
 echo ""
 
-# --- Start WireMock ---
-
-echo -e "${YELLOW}Starting WireMock on port $WIREMOCK_PORT...${NC}"
 java -jar "$WIREMOCK_JAR" \
     --port "$WIREMOCK_PORT" \
     --root-dir "$WIREMOCK_DIR" \
@@ -95,41 +71,24 @@ WIREMOCK_PID=$!
 sleep 3
 
 if kill -0 "$WIREMOCK_PID" 2>/dev/null; then
-    echo -e "${GREEN}WireMock started (PID $WIREMOCK_PID)${NC}"
+    echo ""
+    echo "============================================================"
+    echo -e "${GREEN} WireMock running on port $WIREMOCK_PORT${NC}"
+    echo "============================================================"
+    echo ""
+    echo "  REST + WebSocket:   http://localhost:$WIREMOCK_PORT"
+    echo "  WebSocket:          ws://localhost:$WIREMOCK_PORT/api/v2/webmessaging/messages"
+    echo "  Config endpoint:    http://localhost:$WIREMOCK_PORT/api/v2/webmessaging/deployments/test-deployment-id/config"
+    echo ""
+    echo "  REST stubs:         wiremock/mappings/"
+    echo "  WebSocket stubs:    wiremock/message-mappings/"
+    echo ""
+    echo "  Press Ctrl+C to stop"
+    echo "============================================================"
+    echo ""
 else
     echo -e "${RED}WireMock failed to start${NC}"
     exit 1
 fi
-
-# --- Start WebSocket mock ---
-
-echo -e "${YELLOW}Starting WebSocket mock server on port $WS_PORT...${NC}"
-WS_PORT=$WS_PORT ADMIN_PORT=$ADMIN_PORT node "$WIREMOCK_DIR/websocket-mock-server.js" &
-WS_PID=$!
-
-sleep 1
-
-if kill -0 "$WS_PID" 2>/dev/null; then
-    echo -e "${GREEN}WebSocket mock started (PID $WS_PID)${NC}"
-else
-    echo -e "${RED}WebSocket mock failed to start${NC}"
-    cleanup
-    exit 1
-fi
-
-echo ""
-echo "============================================================"
-echo -e "${GREEN} All servers running!${NC}"
-echo "============================================================"
-echo ""
-echo "  REST (WireMock):    http://localhost:$WIREMOCK_PORT"
-echo "  WebSocket:          ws://localhost:$WS_PORT/api/v2/webmessaging/messages"
-echo "  Admin:              http://localhost:$ADMIN_PORT"
-echo ""
-echo "  Config endpoint:    http://localhost:$WIREMOCK_PORT/api/v2/webmessaging/deployments/test-deployment-id/config"
-echo ""
-echo "  Press Ctrl+C to stop all servers"
-echo "============================================================"
-echo ""
 
 wait
