@@ -9,6 +9,7 @@ import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import assertk.assertions.size
 import com.genesys.cloud.messenger.transport.core.Attachment
+import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.core.Message.Participant
@@ -162,6 +163,21 @@ class MessageTest {
             assertThat(buttonResponse).isEqualTo(expectedButtonResponse)
             assertThat(contentType).isEqualTo(Message.Content.Type.ButtonResponse)
         }
+    }
+
+    @Test
+    fun `validate ButtonResponse with originatingMessageId`() {
+        val buttonWithOriginatingId =
+            ButtonResponse(
+                text = "Book",
+                payload = "payload",
+                type = "QuickReply",
+                originatingMessageId = "msg-123"
+            )
+        val buttonFromSecondaryConstructor = ButtonResponse("Book", "payload", "QuickReply")
+
+        assertThat(buttonWithOriginatingId.originatingMessageId).isEqualTo("msg-123")
+        assertThat(buttonFromSecondaryConstructor.originatingMessageId).isNull()
     }
 
     @Test
