@@ -544,7 +544,10 @@ class TestBedViewModel :
                 is State.Configured ->
                     "connected: ${newState.connected}," + " newSession: ${newState.newSession}," + " wasReconnecting: ${oldState is State.Reconnecting}"
 
-                is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
+                is State.Closing -> {
+                    "code: ${newState.code}, reason: ${newState.reason}"
+                }
+
                 is State.Closed -> {
                     resetSessionState()
                     "code: ${newState.code}, reason: ${newState.reason}"
@@ -622,6 +625,11 @@ class TestBedViewModel :
                         }
                         "CardMessageReceived with actions: $tempActionsMap"
                     }
+
+                is MessageEvent.TimeSlotPickerReceived -> {
+                    // No need of storing the time slot data in the viewmodel yet
+                    "TimeSlotPickerReceived with timePicker: ${event.message.timePicker}"
+                }
             }
         onSocketMessageReceived(eventMessage)
     }

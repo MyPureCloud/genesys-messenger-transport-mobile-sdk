@@ -34,6 +34,7 @@ import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.CardTestValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
+import com.genesys.cloud.messenger.transport.utility.TimeSlotPickerTestValues
 import io.mockk.Called
 import io.mockk.clearMocks
 import io.mockk.mockk
@@ -627,6 +628,43 @@ internal class MessageStoreTest {
         val actualEvent = messageSlot.captured
         assertThat(actualEvent).isInstanceOf(MessageEvent.CardMessageReceived::class.java)
         assertThat((actualEvent as MessageEvent.CardMessageReceived).message).isEqualTo(givenMessage)
+    }
+
+    @Test
+    fun `when update called with DatePicker message, then TimeSlotPickerReceived is published`() {
+        val givenTimeSlotPicker =
+            Message.TimeSlotPicker(
+                title = TimeSlotPickerTestValues.TITLE,
+                subtitle = TimeSlotPickerTestValues.SUBTITLE,
+                imageUrl = null,
+                availableTimes =
+                    listOf(
+                        Message.TimeSlot(
+                            timeEpochMillis = 1398892191411L,
+                            duration = TimeSlotPickerTestValues.DURATION,
+                            payload = TimeSlotPickerTestValues.DATE_TIME_ISO
+                        )
+                    )
+            )
+        val givenMessage =
+            Message(
+                id = "msg_id",
+                direction = Direction.Outbound,
+                state = State.Sent,
+                messageType = Type.DatePicker,
+                text = "Choose your appointment time",
+                timePicker = givenTimeSlotPicker,
+                from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
+            )
+
+        subject.update(givenMessage)
+
+        verify { mockMessageListener.invoke(capture(messageSlot)) }
+
+        val actualEvent = messageSlot.captured
+        assertThat(actualEvent).isInstanceOf(MessageEvent.TimeSlotPickerReceived::class.java)
+        assertThat((actualEvent as MessageEvent.TimeSlotPickerReceived).message).isEqualTo(givenMessage)
+        assertThat(actualEvent.message.timePicker).isEqualTo(givenTimeSlotPicker)
     }
 
     @Test

@@ -13,6 +13,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.AttachmentContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ButtonResponseContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.QuickReplyContent
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.TimeSlotPickerContent.TimeSlotContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.isInbound
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.util.WILD_CARD
@@ -22,17 +23,40 @@ internal fun List<StructuredMessage>.toMessageList(): List<Message> =
     map { it.toMessage() }
         .filter { it.messageType != Message.Type.Unknown }
 
+internal fun StructuredMessage.Content.TimeSlotPickerContent.toMessage() = Message.TimeSlotPicker(
+    title = title,
+    subtitle = subtitle,
+    imageUrl = imageUrl,
+    availableTimes = availableTimes.map { it.toMessage() }
+)
+
+internal fun TimeSlotContent.toMessage(): Message.TimeSlot =
+    Message.TimeSlot(
+        timeEpochMillis = dateTime.fromIsoToEpochMilliseconds(),
+        duration = duration,
+        payload = dateTime
+    )
+
 internal fun StructuredMessage.toMessage(tracingId: String? = null): Message {
     val quickReplies = content.toQuickReplies()
     val cards = content.toCards()
     val hasCardSelection = content.hasCardSelection()
+    val timePicker: Message.TimeSlotPicker? =
+        content.filterIsInstance<StructuredMessage.Content.DatePickerContent>()
+            .firstOrNull()?.datePicker?.toMessage()
 
     return Message(
         id = tracingId ?: id,
         direction = if (isInbound()) Direction.Inbound else Direction.Outbound,
         state = Message.State.Sent,
-        messageType = type.toMessageType(quickReplies.isNotEmpty(), cards.isNotEmpty(), hasCardSelection),
+        messageType = type.toMessageType(
+            quickReplies.isNotEmpty(),
+            cards.isNotEmpty(),
+            hasCardSelection,
+            timePicker != null
+        ),
         text = text,
+        timePicker = timePicker,
         timeStamp = channel?.time.fromIsoToEpochMilliseconds(),
         attachments = content.filterIsInstance<AttachmentContent>().toAttachments(),
         quickReplies = quickReplies,
@@ -159,13 +183,15 @@ private fun List<StructuredMessage.Content>.toCards(): List<Message.Card> =
 private fun StructuredMessage.Type.toMessageType(
     hasQuickReplies: Boolean,
     hasCards: Boolean,
-    hasCardSelection: Boolean
+    hasCardSelection: Boolean,
+    hasTimePicker: Boolean
 ): Message.Type =
     when (this) {
         StructuredMessage.Type.Text -> Message.Type.Text
         StructuredMessage.Type.Event -> Message.Type.Event
         StructuredMessage.Type.Structured -> {
             when {
+                hasTimePicker -> Message.Type.DatePicker
                 hasQuickReplies -> Message.Type.QuickReply
                 hasCards || hasCardSelection -> Message.Type.Cards
                 else -> Message.Type.Unknown
