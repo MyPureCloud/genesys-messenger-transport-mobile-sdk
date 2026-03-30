@@ -207,6 +207,8 @@ internal object LogMessages {
     // Quick Replies
     fun quickReplyPrepareToSend(message: Message) = "Message with quick reply prepared to send: ${message.toString().sanitizeSensitiveData()}"
 
+    fun submitTimeSlotPrepareToSend(message: Message) = "Message with time slot submission prepared to send: ${message.toString().sanitizeSensitiveData()}"
+
     fun postbackPrepareToSend(message: Message) = "Message with postback prepared to send: ${message.toString().sanitizeSensitiveData()}"
 
     fun sendQuickReply(buttonResponse: ButtonResponse) = "sendQuickReply(buttonResponse: ${buttonResponse.sanitize()})"
@@ -235,6 +237,11 @@ internal object LogMessages {
         pushConfig: PushConfig,
         errorCode: ErrorCode
     ) = "Failed to synchronize deviceToken: ${pushConfig.deviceToken.sanitize()} ,pushProvider ${pushConfig.pushProvider} with errorCode: $errorCode."
+
+    fun submitTimeSlot(
+        timeSlot: String,
+        parentMessageId: String?
+    ) = "Submit time slot: $timeSlot, slot message with ID: $parentMessageId"
 
     const val SYNCHRONIZE_PUSH_SERVICE_ON_SESSION_CONFIGURE = "Synchronizing push service from session configured."
     const val UNREGISTERING_DEVICE = "Unregistering device from push notifications."

@@ -496,6 +496,16 @@ object TimeSlotPickerTestValues {
     internal const val IMAGE_URL = "https://example.com/calendar.png"
     internal const val DATE_TIME_ISO = "2022-08-22T19:24:26.704Z"
     internal const val DURATION = 30L
+    internal const val PAYLOAD = "2022-08-22T19:24:26.704Z"
+    internal const val DATE_PICKER_TYPE = "DatePicker"
+
+    val timeSlotButtonResponse =
+        ButtonResponse(
+            text = "time formatted: $PAYLOAD",
+            payload = PAYLOAD,
+            type = DATE_PICKER_TYPE,
+            originatingMessageId = "msg_id"
+        )
 
     internal fun createTimeSlotContent(
         duration: Long = DURATION,

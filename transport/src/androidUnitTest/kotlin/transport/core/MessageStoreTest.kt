@@ -589,6 +589,132 @@ internal class MessageStoreTest {
     }
 
     @Test
+    fun `when prepareTimeSlotSubmissionMessageWith() ButtonResponse and channel`() {
+        val givenButtonResponse = TimeSlotPickerTestValues.timeSlotButtonResponse
+        val givenChannel = Channel(Channel.Metadata(mapOf("A" to "B")))
+        val expectedMessage =
+            subject.pendingMessage.copy(
+                state = State.Sending,
+                messageType = Type.DatePicker,
+                type = Type.DatePicker.name,
+            )
+        val expectedTextMessage =
+            TextMessage(
+                text = "",
+                content =
+                    listOf(
+                        Content(
+                            contentType = Content.Type.ButtonResponse,
+                            buttonResponse = givenButtonResponse
+                        )
+                    ),
+                channel = givenChannel
+            )
+
+        subject.prepareTimeSlotSubmissionMessageWith(TestValues.TOKEN, givenButtonResponse, givenChannel).run {
+            assertThat(message).isInstanceOf(TextMessage::class)
+            val textMessage = message as TextMessage
+
+            assertThat(token).isEqualTo(givenToken)
+            assertThat(textMessage).isEqualTo(expectedTextMessage)
+            assertThat(textMessage.content).isEqualTo(expectedTextMessage.content)
+            assertThat(textMessage.channel).isEqualTo(expectedTextMessage.channel)
+            assertThat(tracingId).isEqualTo(expectedMessage.id)
+            assertThat(time).isNull()
+        }
+        assertThat(subject.getConversation()[0]).isEqualTo(expectedMessage)
+        assertThat(subject.pendingMessage.id).isNotEqualTo(expectedMessage.id)
+        verify { mockMessageListener(capture(messageSlot)) }
+        assertThat((messageSlot.captured as MessageEvent.MessageInserted).message).isEqualTo(expectedMessage)
+    }
+
+    @Test
+    fun `when prepareTimeSlotSubmissionMessageWith() ButtonResponse and no channel`() {
+        val givenButtonResponse = TimeSlotPickerTestValues.timeSlotButtonResponse
+        val expectedMessage =
+            subject.pendingMessage.copy(
+                state = State.Sending,
+                messageType = Type.DatePicker,
+                type = Type.DatePicker.name,
+            )
+        val expectedTextMessage =
+            TextMessage(
+                text = "",
+                content =
+                    listOf(
+                        Content(
+                            contentType = Content.Type.ButtonResponse,
+                            buttonResponse = givenButtonResponse
+                        )
+                    ),
+            )
+
+        subject.prepareTimeSlotSubmissionMessageWith(TestValues.TOKEN, givenButtonResponse).run {
+            assertThat(message).isInstanceOf(TextMessage::class)
+            val textMessage = message as TextMessage
+
+            assertThat(token).isEqualTo(givenToken)
+            assertThat(textMessage).isEqualTo(expectedTextMessage)
+            assertThat(textMessage.content).isEqualTo(expectedTextMessage.content)
+            assertThat(textMessage.channel).isNull()
+            assertThat(tracingId).isEqualTo(expectedMessage.id)
+            assertThat(time).isNull()
+        }
+        assertThat(subject.getConversation()[0]).isEqualTo(expectedMessage)
+        assertThat(subject.pendingMessage.id).isNotEqualTo(expectedMessage.id)
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockMessageListener(capture(messageSlot))
+        }
+        assertThat((messageSlot.captured as MessageEvent.MessageInserted).message).isEqualTo(expectedMessage)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.submitTimeSlotPrepareToSend(expectedMessage))
+    }
+
+    @Test
+    fun `when prepareTimeSlotSubmissionMessageWith() then logs and publishes MessageInserted`() {
+        val givenButtonResponse = TimeSlotPickerTestValues.timeSlotButtonResponse
+        val expectedMessage =
+            subject.pendingMessage.copy(
+                state = State.Sending,
+                messageType = Type.DatePicker,
+                type = Type.DatePicker.name,
+            )
+
+        val result =
+            subject.prepareTimeSlotSubmissionMessageWith(
+                TestValues.TOKEN,
+                givenButtonResponse
+            )
+
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockMessageListener.invoke(capture(messageSlot))
+        }
+
+        val actualLog = logSlot[0].invoke()
+        assertThat(actualLog).contains("Message with time slot submission prepared to send:")
+        assertThat(actualLog).contains("state=${State.Sending}")
+        assertThat(actualLog).contains("messageType=${Type.DatePicker}")
+        assertThat(actualLog).contains("type=${Type.DatePicker.name}")
+        assertThat(actualLog).contains("id=${expectedMessage.id}")
+
+        val inserted = messageSlot.captured as MessageEvent.MessageInserted
+        assertThat(inserted.message).isEqualTo(expectedMessage)
+
+        assertThat(result.token).isEqualTo(TestValues.TOKEN)
+        assertThat(result.message).isInstanceOf(TextMessage::class)
+
+        val textMessage = result.message as TextMessage
+        assertThat(textMessage.text).isEqualTo("")
+        assertThat(result.tracingId).isEqualTo(expectedMessage.id)
+
+        val button = textMessage.content.first().buttonResponse!!
+        assertThat(button.text).isEqualTo(givenButtonResponse.text)
+        assertThat(button.payload).isEqualTo(givenButtonResponse.payload)
+        assertThat(button.type).isEqualTo(TimeSlotPickerTestValues.DATE_PICKER_TYPE)
+    }
+
+    @Test
     fun `when preparePostbackMessage is called then returns StructuredMessage with correct metadata`() {
         val givenButton = CardTestValues.postbackButtonResponse
 
