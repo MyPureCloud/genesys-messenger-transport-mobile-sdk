@@ -10,10 +10,25 @@ private const val BASE_WEBMESSAGING_PATH = "api/v2/webmessaging"
 internal class Urls(
     val domain: String,
     val deploymentId: String,
-    val application: String
+    val application: String,
+    customBaseUrl: String? = null
 ) {
+    private val sanitizedBaseUrl: String? = customBaseUrl?.sanitizeBaseUrl()
+
+    private val wsBaseUrl: String by lazy {
+        sanitizedBaseUrl?.let { "ws://$it" } ?: "wss://webmessaging.$domain"
+    }
+
+    private val apiBaseUrl: Url by lazy {
+        URLBuilder(sanitizedBaseUrl?.let { "http://$it" } ?: "https://api.$domain").build()
+    }
+
+    private val cdnBaseUrl: String by lazy {
+        sanitizedBaseUrl?.let { "http://$it" } ?: "https://api-cdn.$domain"
+    }
+
     internal val webSocketUrl: Url by lazy {
-        URLBuilder("wss://webmessaging.$domain")
+        URLBuilder(wsBaseUrl)
             .apply {
                 path("v1")
                 parameters.append("deploymentId", deploymentId)
@@ -21,12 +36,8 @@ internal class Urls(
             }.build()
     }
 
-    private val apiBaseUrl: Url by lazy {
-        URLBuilder("https://api.$domain").build()
-    }
-
     internal val deploymentConfigUrl: Url by lazy {
-        URLBuilder("https://api-cdn.$domain")
+        URLBuilder(cdnBaseUrl)
             .apply {
                 path("webdeployments/v1/deployments/$deploymentId/config.json")
             }.build()
@@ -53,4 +64,19 @@ internal class Urls(
             .apply { path("$BASE_WEBMESSAGING_PATH/deployments/$deploymentId/pushdevices/$token") }
             .build()
     }
+}
+
+// Matches URL scheme prefixes like "http://", "https://", "ws://", etc.
+private val schemeRegex = Regex("^\\w+://")
+
+/**
+ * Normalizes a raw custom base URL input into a clean "host:port" form.
+ *
+ * - Strips any scheme prefix (e.g., "http://localhost:8080" → "localhost:8080")
+ * - Removes trailing slashes (e.g., "localhost:8080/" → "localhost:8080")
+ * - Returns null if the result is blank, causing fallback to production URLs.
+ */
+private fun String.sanitizeBaseUrl(): String? {
+    val stripped = schemeRegex.replace(this, "").trimEnd('/')
+    return stripped.ifBlank { null }
 }

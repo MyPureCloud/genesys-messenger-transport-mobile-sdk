@@ -119,4 +119,48 @@ class InternalConfigurationFactoryTest {
             config.sessionExpirationNoticeIntervalSeconds
         )
     }
+
+    @Test
+    fun `when creating configuration without customBaseUrl it should default to null`() {
+        val config =
+            InternalConfigurationFactory.create(
+                deploymentId = "test-deployment",
+                domain = "test.com",
+                applicationType = ApplicationType.TRANSPORT_SDK,
+                applicationVersion = "0.0.0"
+            )
+
+        assertEquals(null, config.customBaseUrl)
+    }
+
+    @Test
+    fun `when creating configuration with customBaseUrl it should be set on Configuration`() {
+        val config =
+            InternalConfigurationFactory.create(
+                deploymentId = "test-deployment",
+                domain = "test.com",
+                applicationType = ApplicationType.TRANSPORT_SDK,
+                applicationVersion = "0.0.0",
+                customBaseUrl = "localhost:8080"
+            )
+
+        assertEquals("localhost:8080", config.customBaseUrl)
+    }
+
+    @Test
+    fun `when using backward compatible overload it should default customBaseUrl to null`() {
+        val config =
+            InternalConfigurationFactory.create(
+                deploymentId = "test-deployment",
+                domain = "test.com",
+                applicationType = ApplicationType.TRANSPORT_SDK,
+                applicationVersion = "0.0.0",
+                logging = true,
+                reconnectionTimeoutInSeconds = 300,
+                autoRefreshTokenWhenExpired = true,
+                encryptedVault = false
+            )
+
+        assertEquals(null, config.customBaseUrl)
+    }
 }
