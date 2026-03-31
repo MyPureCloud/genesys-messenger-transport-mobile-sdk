@@ -105,7 +105,6 @@ object InternalConfigurationFactory {
             reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
             autoRefreshTokenWhenExpired = autoRefreshTokenWhenExpired,
             encryptedVault = encryptedVault,
-            sessionExpirationNoticeIntervalSeconds = Configuration.DEFAULT_INTERVAL,
             minimumWebSocketTlsVersion = TlsVersion.SYSTEM_DEFAULT
         )
 }
