@@ -16,7 +16,7 @@ object InternalConfigurationFactory {
      * @param encryptedVault indicates if encrypted vault should be used.
      * @param minimumWebSocketTlsVersion the minimum TLS protocol version for WebSocket connections.
      * @param sessionExpirationNoticeIntervalSeconds how many seconds before the session expires to show the expiration notice.
-     * @param customBaseUrl optional internal base URL override (host:port) for routing connections to a local server (e.g., WireMock). Not exposed publicly.
+     * @param customBaseUrl optional base URL override (host:port) for routing connections to a local server (e.g., WireMock). Intended for UI testing only.
      * @return Configuration instance with proper application parameter formatting.
      */
     fun create(
