@@ -21,6 +21,7 @@ class TestbedViewController: UIViewController {
     private var authState: AuthState = AuthState.noAuth
     private var quickRepliesMap = [String: ButtonResponse]()
     private var cardActionsMap = [String: ButtonResponse]()
+    private var latestTimePickerData: (messageId: String, timePicker: Message.TimeSlotPicker)?
     
     // Session duration state
     private var sessionDurationSeconds: Int64? = nil
@@ -67,6 +68,7 @@ class TestbedViewController: UIViewController {
         case wasAuthenticated
         case shouldAuthorize
         case sendAction
+        case submitTimeSlot
         case listActions
         case synchronizePush
         case unregisterPush
@@ -84,6 +86,7 @@ class TestbedViewController: UIViewController {
             case .sendQuickReply: return "sendQuickReply <quickReply>"
             case .refreshAttachment: return "refreshAttachment <attachmentId>"
             case .sendAction: return "sendAction <action>"
+            case .submitTimeSlot: return "submitTimeSlot <payload> <text>"
             default: return rawValue
             }
         }
@@ -311,6 +314,11 @@ class TestbedViewController: UIViewController {
                 }
             }
             displayMessage = "CardMessageReceived with actions: \(tempActionsMap)"
+        case let timeSlotPicker as MessageEvent.TimeSlotPickerReceived:
+            if let timePicker = timeSlotPicker.message.timePicker {
+                latestTimePickerData = (messageId: timeSlotPicker.message.id, timePicker: timePicker)
+            }
+            displayMessage = "TimeSlotPickerReceived with timePicker: \(timeSlotPicker.message.timePicker?.description ?? "nil")"
         default:
             break
         }
@@ -684,6 +692,8 @@ extension TestbedViewController : UITextFieldDelegate {
                 } else {
                     self.info.text = "Selected card action: \(action) does not exist."
                 }
+            case (.submitTimeSlot, let input):
+                doSubmitTimeSlot(input: input)
             case (.listActions, _):
                 self.info.text = "Available card actions: \(Array(cardActionsMap.keys))"
             case (.tlsDefault, _):
@@ -705,6 +715,33 @@ extension TestbedViewController : UITextFieldDelegate {
         self.input.text = ""
         textField.resignFirstResponder()
         return true
+    }
+
+    private func doSubmitTimeSlot(input: String?) {
+        let parts = input?.split(separator: " ", maxSplits: 1) ?? []
+        let defaultPayload = latestTimePickerData?.timePicker.availableTimes.first?.payload
+        let explicitPayload = parts.first.map(String.init)
+        let payload = (explicitPayload?.isEmpty == false ? explicitPayload : nil) ?? defaultPayload
+        let explicitText = parts.count > 1 ? String(parts[1]) : nil
+        let text = (explicitText?.isEmpty == false ? explicitText : nil)
+            ?? payload.map { "selected time slot: \($0)" }
+
+        guard let payload = payload, !payload.isEmpty else {
+            return
+        }
+
+        do {
+            try messenger.submitTimeSlot(
+                buttonResponse: ButtonResponse(
+                    text: text ?? "",
+                    payload: payload,
+                    type: "DatePicker",
+                    originatingMessageId: latestTimePickerData?.messageId
+                )
+            )
+        } catch {
+            self.info.text = "Failed to submit time slot: \(error.localizedDescription)"
+        }
     }
 
     private func reinitializeMessenger(tlsVersion: TlsVersion) {

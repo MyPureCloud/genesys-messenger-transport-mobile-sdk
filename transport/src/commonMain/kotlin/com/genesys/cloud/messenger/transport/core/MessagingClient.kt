@@ -354,4 +354,13 @@ interface MessagingClient {
      */
     @Throws(IllegalStateException::class)
     fun clearConversation()
+
+    /**
+     * Send a selected time slot to the Agent/Bot.
+     *
+     * @param timeSlotResponse the time slot data to send.
+     * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
+     */
+    @Throws(IllegalStateException::class)
+    fun submitTimeSlot(timeSlotResponse: ButtonResponse)
 }

@@ -14,6 +14,7 @@ import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
+import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessageEvent.AttachmentUpdated
 import com.genesys.cloud.messenger.transport.core.MessagingClient
@@ -119,6 +120,7 @@ class TestBedViewModel :
     private lateinit var onOpenUrl: (url: String) -> Unit
     private val quickRepliesMap = mutableMapOf<String, ButtonResponse>()
     private val cardActionsMap = mutableMapOf<String, ButtonResponse>()
+    private var latestTimePickerData: Pair<String, Message.TimeSlotPicker>? = null
     private lateinit var selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit
 
     fun init(
@@ -193,6 +195,7 @@ class TestBedViewModel :
             "send" -> doSendMessage(input)
             "sendQuickReply" -> doSendQuickReply(input)
             "sendAction" -> doSendAction(input)
+            "submitTimeSlot" -> doSubmitTimeSlot(input)
             "listActions" -> doListActions()
             "history" -> fetchNextPage()
             "healthCheck" -> doSendHealthCheck()
@@ -345,6 +348,33 @@ class TestBedViewModel :
                 handleException(t, "send card action")
             }
         } ?: onSocketMessageReceived("Selected card action: $action does not exist.")
+    }
+
+    private fun doSubmitTimeSlot(input: String) {
+        val parts = input.split(" ", limit = 2)
+        val defaultPayload = latestTimePickerData?.second?.availableTimes?.firstOrNull()?.payload
+        val payload = parts.getOrNull(0)?.takeIf { it.isNotBlank() } ?: defaultPayload
+        val text = parts.getOrNull(1)?.takeIf { it.isNotBlank() }
+            ?: payload?.let { "selected time slot: $it" }
+        if (payload.isNullOrBlank()) {
+            commandWaiting = false
+            return
+        }
+        try {
+            client.submitTimeSlot(
+                ButtonResponse(
+                    text = text ?: "",
+                    payload = payload,
+                    type = "DatePicker",
+                    originatingMessageId = latestTimePickerData?.first,
+                )
+            )
+        } catch (t: Throwable) {
+            val failMessage = "Failed to submit time slot: ${t.message}"
+            Log.e(TAG, failMessage, t)
+            onSocketMessageReceived(failMessage)
+            commandWaiting = false
+        }
     }
 
     private fun doListActions() {
@@ -627,7 +657,9 @@ class TestBedViewModel :
                     }
 
                 is MessageEvent.TimeSlotPickerReceived -> {
-                    // No need of storing the time slot data in the viewmodel yet
+                    event.message.timePicker?.let {
+                        latestTimePickerData = event.message.id to it
+                    }
                     "TimeSlotPickerReceived with timePicker: ${event.message.timePicker}"
                 }
             }

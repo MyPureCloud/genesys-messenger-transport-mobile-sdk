@@ -283,6 +283,16 @@ internal class MessagingClientImpl(
         send(encodedJson)
     }
 
+    override fun submitTimeSlot(timeSlotResponse: ButtonResponse) {
+        stateMachine.checkIfConfigured()
+        log.i { LogMessages.submitTimeSlot(timeSlotResponse.payload, timeSlotResponse.originatingMessageId) }
+        val channel = prepareCustomAttributesForSending()
+        val request =
+            messageStore.prepareTimeSlotSubmissionMessageWith(token, timeSlotResponse, channel)
+        val encodedJson = WebMessagingJson.json.encodeToString(request)
+        send(encodedJson)
+    }
+
     @Throws(IllegalStateException::class)
     override fun sendHealthCheck() {
         healthCheckProvider.encodeRequest(token)?.let {
@@ -708,7 +718,14 @@ internal class MessagingClientImpl(
                 messageStore.update(this)
                 sessionDurationHandler.onMessage()
             }
-            Message.Type.Unknown -> log.w { LogMessages.unsupportedMessageType(messageType) }
+            Message.Type.DatePicker -> {
+                messageStore.update(this)
+                sessionDurationHandler.onMessage()
+            }
+
+            Message.Type.Unknown -> {
+                log.w { LogMessages.unsupportedMessageType(messageType) }
+            }
             else -> log.w { "Should not happen." }
         }
     }
@@ -853,8 +870,9 @@ internal class MessagingClientImpl(
                                     message.handleAsEvent(
                                         metadata["readOnly"].toBoolean()
                                     )
-
-                                StructuredMessage.Type.Structured -> message.handleAsStructuredMessage()
+                                StructuredMessage.Type.Structured -> {
+                                    message.handleAsStructuredMessage()
+                                }
                             }
                         }
                     }

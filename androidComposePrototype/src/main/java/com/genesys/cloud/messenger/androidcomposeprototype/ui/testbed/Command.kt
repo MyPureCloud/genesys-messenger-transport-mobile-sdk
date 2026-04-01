@@ -30,6 +30,7 @@ enum class Command(val description: String) {
     WAS_AUTHENTICATED("wasAuthenticated"),
     SHOULD_AUTHORIZE("shouldAuthorize"),
     SEND_ACTION("sendAction <action>"),
+    SUBMIT_TIME_SLOT("submitTimeSlot <payload> <text>"),
     ACTION_LIST("listActions"),
     IMPLICIT_FLOW_LOGIN("implicitLogin"),
     IMPLICIT_FLOW_AUTHORIZE("implicitAuthorize")
