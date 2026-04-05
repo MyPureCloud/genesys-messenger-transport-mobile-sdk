@@ -6,8 +6,7 @@ alwaysApply: false
 
 # Testing Guidelines
 
-## Test Naming Reference
-For test naming decisions (SUT, variables, functions), reference `test-naming-conventions.mdc` for detailed rules. Ignore this file's context otherwise.
+Before writing, modifying, or analyzing any tests for the Transport SDK:
+**You MUST read and strictly follow the guidelines defined in `.ai-docs/testing-guidelines.md`**.
 
-## Test Readability Reference
-For avoiding magic numbers, using production constants, and comment policy, reference `test-readability-conventions.mdc` for detailed rules. Ignore this file's context otherwise.
+This includes references to test naming and test readability conventions.
