@@ -881,7 +881,8 @@ private final class CommandsMenuViewController: UITableViewController {
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = UITableViewCell(style: .subtitle, reuseIdentifier: cellId)
+        let cell = tableView.dequeueReusableCell(withIdentifier: cellId)
+            ?? UITableViewCell(style: .subtitle, reuseIdentifier: cellId)
         let command = commands[indexPath.row]
         cell.textLabel?.text = command.rawValue
         let help = command.helpDescription
@@ -889,6 +890,8 @@ private final class CommandsMenuViewController: UITableViewController {
             cell.detailTextLabel?.text = help
             cell.detailTextLabel?.textColor = .secondaryLabel
             cell.detailTextLabel?.font = UIFont.preferredFont(forTextStyle: .caption1)
+        } else {
+            cell.detailTextLabel?.text = nil
         }
         return cell
     }
