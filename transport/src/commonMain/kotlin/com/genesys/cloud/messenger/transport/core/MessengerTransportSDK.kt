@@ -31,7 +31,7 @@ class MessengerTransportSDK(
     val vault: Vault,
 ) {
     private var deploymentConfig: DeploymentConfig? = null
-    private val urls = Urls(configuration.domain, configuration.deploymentId, configuration.application)
+    private val urls = Urls(configuration.domain, configuration.deploymentId, configuration.application, configuration.customBaseUrl)
 
     companion object {
         /**
