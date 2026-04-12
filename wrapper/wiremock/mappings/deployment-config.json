@@ -1,0 +1,64 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/webdeployments/v1/deployments/.*/config\\.json"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "id": "test-deployment-id",
+      "version": "1",
+      "languages": ["en"],
+      "defaultLanguage": "en",
+      "apiEndpoint": "https://api.example.com",
+      "status": "Active",
+      "messenger": {
+        "enabled": true,
+        "apps": {
+          "conversations": {
+            "messagingEndpoint": "wss://webmessaging.example.com/v1",
+            "showAgentTypingIndicator": true,
+            "showUserTypingIndicator": true,
+            "autoStart": {
+              "enabled": true
+            },
+            "conversationDisconnect": {
+              "enabled": true,
+              "type": "Send"
+            },
+            "conversationClear": {
+              "enabled": false
+            },
+            "markdown": {
+              "enabled": false
+            }
+          }
+        },
+        "styles": {
+          "primaryColor": "#4B8BF5"
+        },
+        "launcherButton": {
+          "visibility": "On"
+        },
+        "fileUpload": {
+          "enableAttachments": true,
+          "modes": [
+            {
+              "fileTypes": ["image/jpeg", "image/png"],
+              "maxFileSizeKB": 10240
+            }
+          ]
+        }
+      },
+      "journeyEvents": {
+        "enabled": false
+      },
+      "auth": {
+        "enabled": false
+      }
+    }
+  }
+}

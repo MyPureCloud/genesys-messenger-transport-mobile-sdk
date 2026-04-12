@@ -1,0 +1,32 @@
+{
+  "name": "AutoStart Conversation",
+  "priority": 1,
+  "trigger": {
+    "type": "message",
+    "channel": {
+      "type": "websocket",
+      "initiatingRequestPattern": {
+        "urlPath": "/v1"
+      }
+    },
+    "message": {
+      "body": {
+        "matchesJsonPath": {
+          "expression": "$.action",
+          "equalTo": "onMessage"
+        }
+      }
+    }
+  },
+  "actions": [
+    {
+      "type": "send",
+      "channelTarget": { "type": "originating" },
+      "message": {
+        "body": {
+          "data": "{\"type\":\"message\",\"class\":\"StructuredMessage\",\"code\":200,\"body\":{\"text\":\"\",\"type\":\"Event\",\"direction\":\"Inbound\",\"id\":\"autostart-response\",\"channel\":{\"time\":\"2026-01-01T00:00:00.000Z\",\"messageId\":\"autostart-channel-msg\",\"type\":\"Private\"},\"events\":[{\"eventType\":\"Presence\",\"presence\":{\"type\":\"Join\"}}],\"originatingEntity\":\"Bot\"},\"tracingId\":\"autostart-trace\"}"
+        }
+      }
+    }
+  ]
+}

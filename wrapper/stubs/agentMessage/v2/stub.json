@@ -1,0 +1,27 @@
+{
+  "type": "message",
+  "class": "StructuredMessage",
+  "code": 200,
+  "body": {
+    "text": "{{messageText}}",
+    "direction": "Inbound",
+    "id": "msg-inbound-{{messageId}}",
+    "channel": {
+      "time": "{{timestamp}}",
+      "messageId": "channel-msg-{{messageId}}-agent",
+      "type": "Private",
+      "from": {
+        "firstName": "WireMock",
+        "lastName": "Agent",
+        "nickname": "MockAgent"
+      }
+    },
+    "type": "Text",
+    "originatingEntity": "Bot",
+    "metadata": {
+      "priority": "high",
+      "source": "wrapper-v2"
+    }
+  },
+  "tracingId": "wrapper-{{messageId}}"
+}

@@ -1,0 +1,21 @@
+{
+  "type": "message",
+  "class": "StructuredMessage",
+  "code": 200,
+  "body": {
+    "type": "Event",
+    "direction": "Inbound",
+    "id": "typing-{{messageId}}",
+    "events": [
+      {
+        "eventType": "Typing",
+        "typing": {
+          "type": "On",
+          "duration": 3000
+        }
+      }
+    ],
+    "originatingEntity": "Bot"
+  },
+  "tracingId": "wrapper-typing-{{messageId}}"
+}
