@@ -121,7 +121,7 @@ class InternalConfigurationFactoryTest {
     }
 
     @Test
-    fun `when creating configuration without customBaseUrl it should default to null`() {
+    fun `when creating configuration without customEndpoint it should default to null`() {
         val config =
             InternalConfigurationFactory.create(
                 deploymentId = "test-deployment",
@@ -130,25 +130,25 @@ class InternalConfigurationFactoryTest {
                 applicationVersion = "0.0.0"
             )
 
-        assertEquals(null, config.customBaseUrl)
+        assertEquals(null, config.customEndpoint)
     }
 
     @Test
-    fun `when creating configuration with customBaseUrl it should be set on Configuration`() {
+    fun `when creating configuration with customEndpoint it should be set on Configuration`() {
         val config =
             InternalConfigurationFactory.create(
                 deploymentId = "test-deployment",
                 domain = "test.com",
                 applicationType = ApplicationType.TRANSPORT_SDK,
                 applicationVersion = "0.0.0",
-                customBaseUrl = "localhost:8080"
+                customEndpoint = "localhost:8080"
             )
 
-        assertEquals("localhost:8080", config.customBaseUrl)
+        assertEquals("localhost:8080", config.customEndpoint)
     }
 
     @Test
-    fun `when using backward compatible overload it should default customBaseUrl to null`() {
+    fun `when using backward compatible overload it should default customEndpoint to null`() {
         val config =
             InternalConfigurationFactory.create(
                 deploymentId = "test-deployment",
@@ -161,6 +161,6 @@ class InternalConfigurationFactoryTest {
                 encryptedVault = false
             )
 
-        assertEquals(null, config.customBaseUrl)
+        assertEquals(null, config.customEndpoint)
     }
 }

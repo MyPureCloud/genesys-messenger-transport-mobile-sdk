@@ -11,20 +11,20 @@ internal class Urls(
     val domain: String,
     val deploymentId: String,
     val application: String,
-    customBaseUrl: String? = null
+    customEndpoint: String? = null
 ) {
-    private val sanitizedBaseUrl: String? = customBaseUrl?.sanitizeBaseUrl()
+    private val sanitizedEndpoint: String? = customEndpoint?.sanitizeEndpoint()
 
     private val wsBaseUrl: String by lazy {
-        sanitizedBaseUrl?.let { "ws://$it" } ?: "wss://webmessaging.$domain"
+        sanitizedEndpoint?.let { "ws://$it" } ?: "wss://webmessaging.$domain"
     }
 
     private val apiBaseUrl: Url by lazy {
-        URLBuilder(sanitizedBaseUrl?.let { "http://$it" } ?: "https://api.$domain").build()
+        URLBuilder(sanitizedEndpoint?.let { "http://$it" } ?: "https://api.$domain").build()
     }
 
     private val cdnBaseUrl: String by lazy {
-        sanitizedBaseUrl?.let { "http://$it" } ?: "https://api-cdn.$domain"
+        sanitizedEndpoint?.let { "http://$it" } ?: "https://api-cdn.$domain"
     }
 
     internal val webSocketUrl: Url by lazy {
@@ -70,13 +70,13 @@ internal class Urls(
 private val schemeRegex = Regex("^\\w+://")
 
 /**
- * Normalizes a raw custom base URL input into a clean "host:port" form.
+ * Normalizes a raw custom endpoint input into a clean "host:port" form.
  *
  * - Strips any scheme prefix (e.g., "http://localhost:8080" → "localhost:8080")
  * - Removes trailing slashes (e.g., "localhost:8080/" → "localhost:8080")
  * - Returns null if the result is blank, causing fallback to production URLs.
  */
-private fun String.sanitizeBaseUrl(): String? {
+private fun String.sanitizeEndpoint(): String? {
     val stripped = schemeRegex.replace(this, "").trimEnd('/')
     return stripped.ifBlank { null }
 }

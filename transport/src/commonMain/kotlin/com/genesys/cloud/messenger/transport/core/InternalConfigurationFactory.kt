@@ -16,7 +16,7 @@ object InternalConfigurationFactory {
      * @param encryptedVault indicates if encrypted vault should be used.
      * @param minimumWebSocketTlsVersion the minimum TLS protocol version for WebSocket connections.
      * @param sessionExpirationNoticeIntervalSeconds how many seconds before the session expires to show the expiration notice.
-     * @param customBaseUrl optional base URL override (host:port) for routing connections to a local server (e.g., WireMock). Intended for UI testing only.
+     * @param customEndpoint optional endpoint override (host:port) for routing connections to a local server (e.g., WireMock). Intended for UI testing only.
      * @return Configuration instance with proper application parameter formatting.
      */
     fun create(
@@ -30,7 +30,7 @@ object InternalConfigurationFactory {
         encryptedVault: Boolean = false,
         sessionExpirationNoticeIntervalSeconds: Long = Configuration.DEFAULT_INTERVAL,
         minimumWebSocketTlsVersion: TlsVersion = TlsVersion.SYSTEM_DEFAULT,
-        customBaseUrl: String? = null
+        customEndpoint: String? = null
     ): Configuration {
         val config =
             Configuration(
@@ -49,13 +49,13 @@ object InternalConfigurationFactory {
                 ApplicationType.TRANSPORT_SDK -> "TransportSDK-${MessengerTransportSDK.sdkVersion}"
                 else -> "${applicationType.title}-$applicationVersion/TransportSDK-${MessengerTransportSDK.sdkVersion}"
             }
-        config.customBaseUrl = customBaseUrl
+        config.customEndpoint = customEndpoint
         return config
     }
 
     /**
      * Overload to preserve the 10-param signature for iOS/Swift callers
-     * that don't need [customBaseUrl].
+     * that don't need [customEndpoint].
      */
     fun create(
         deploymentId: String,
@@ -80,7 +80,7 @@ object InternalConfigurationFactory {
             encryptedVault = encryptedVault,
             sessionExpirationNoticeIntervalSeconds = sessionExpirationNoticeIntervalSeconds,
             minimumWebSocketTlsVersion = minimumWebSocketTlsVersion,
-            customBaseUrl = null
+            customEndpoint = null
         )
 
     /**

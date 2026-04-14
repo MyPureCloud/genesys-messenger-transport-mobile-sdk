@@ -67,14 +67,14 @@ data class Configuration(
     internal var application: String = "TransportSDK-${MessengerTransportSDK.sdkVersion}"
 
     /**
-     * Internal-only base URL override (host:port) for routing all Transport connections
+     * Internal-only endpoint override (host:port) for routing all Transport connections
      * to a local server (e.g., WireMock). Set via [InternalConfigurationFactory] only.
      * When null, standard domain-derived URLs are used.
      *
      * Intentionally declared outside the data class constructor so it is excluded from
      * [equals], [hashCode], [copy], and [toString]. Must be manually re-assigned after [copy].
      */
-    internal var customBaseUrl: String? = null
+    internal var customEndpoint: String? = null
 
     companion object {
         internal const val DEFAULT_INTERVAL = 300L
