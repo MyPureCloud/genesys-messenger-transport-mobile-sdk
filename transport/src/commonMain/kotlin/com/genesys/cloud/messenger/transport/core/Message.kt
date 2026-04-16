@@ -19,6 +19,7 @@ import kotlinx.serialization.Serializable
  *  @property from the [Participant] that sends a message.
  *  @property authenticated indicates if this message was sent from authenticated user.
  *  @property metadata a map of custom metadata key-value pairs associated with the message. Empty by default.
+ *  @property buttonResponse the [ButtonResponse] data when this message represents a button response selection (e.g. date picker selection). Null by default.
  */
 @Serializable
 data class Message(
@@ -40,6 +41,7 @@ data class Message(
     val text: String? = null,
     val metadata: Map<String, String> = emptyMap(),
     val timePicker: TimeSlotPicker? = null,
+    val buttonResponse: ButtonResponse? = null,
 ) {
     /**
      * The enum type representation of the message.
@@ -49,6 +51,7 @@ data class Message(
      * @property QuickReply when message is a quick reply.
      * @property Cards when message contains rich content in the form of one or more cards.
      * @property DatePicker when message contains time slot picker data.
+     * @property ButtonResponse when message contains a button response selection (e.g. date picker selection, card postback).
      * @property Unknown when system could not recognize the message type.
      */
     @Serializable
@@ -58,6 +61,7 @@ data class Message(
         QuickReply,
         Cards,
         DatePicker,
+        ButtonResponse,
         Unknown,
     }
 

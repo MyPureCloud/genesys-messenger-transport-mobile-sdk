@@ -722,6 +722,10 @@ internal class MessagingClientImpl(
                 messageStore.update(this)
                 sessionDurationHandler.onMessage()
             }
+            Message.Type.ButtonResponse -> {
+                messageStore.update(this)
+                sessionDurationHandler.onMessage()
+            }
 
             Message.Type.Unknown -> {
                 log.w { LogMessages.unsupportedMessageType(messageType) }

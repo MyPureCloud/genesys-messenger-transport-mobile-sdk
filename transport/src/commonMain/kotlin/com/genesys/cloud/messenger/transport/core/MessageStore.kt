@@ -222,6 +222,7 @@ private fun Message.toMessageEvent(): MessageEvent =
         Message.Type.QuickReply -> MessageEvent.QuickReplyReceived(this)
         Message.Type.Cards -> MessageEvent.CardMessageReceived(this)
         Message.Type.DatePicker -> MessageEvent.TimeSlotPickerReceived(this)
+        Message.Type.ButtonResponse -> MessageEvent.ButtonResponseReceived(this)
         else -> MessageEvent.MessageInserted(this)
     }
 
@@ -291,4 +292,12 @@ sealed class MessageEvent {
      * @property message is the [Message] object with all the time slot picker details.
      */
     class TimeSlotPickerReceived(val message: Message) : MessageEvent()
+
+    /**
+     * Dispatched when a button response message is received (e.g. a date picker selection or card postback).
+     * To access the button response data, refer to [Message.buttonResponse].
+     *
+     * @property message is the [Message] object with the button response details.
+     */
+    class ButtonResponseReceived(val message: Message) : MessageEvent()
 }
