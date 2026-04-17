@@ -1,0 +1,9 @@
+---
+description: "Deprecation process rules for public API changes"
+alwaysApply: false
+globs: ["transport/src/commonMain/**/*.kt", "transport/src/androidMain/**/*.kt", "transport/src/iosMain/**/*.kt"]
+---
+
+# Deprecation Process
+
+You MUST read and strictly follow the rules defined in `.ai-docs/deprecation-process.md`.
