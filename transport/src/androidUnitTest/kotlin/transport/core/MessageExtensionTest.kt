@@ -1287,7 +1287,8 @@ internal class MessageExtensionTest {
     }
 
     @Test
-    fun `when StructuredMessage has ButtonResponseContent with type Button then messageType is Cards and quickReplies empty`() {
+    fun `when StructuredMessage has ButtonResponseContent with type Button then messageType is ButtonResponse and quickReplies empty`() {
+        val givenOriginatingMessageId = "parent-msg-456"
         val givenButton =
             StructuredMessage.Content.ButtonResponseContent.ButtonResponse(
                 text = QuickReplyTestValues.TEXT_A,
@@ -1303,15 +1304,25 @@ internal class MessageExtensionTest {
                             contentType = StructuredMessage.Content.Type.ButtonResponse.name,
                             buttonResponse = givenButton
                         )
-                    )
+                    ),
+                originatingMessageId = givenOriginatingMessageId,
             )
-        val expectedMessageType = Type.Cards
+        val expectedMessageType = Type.ButtonResponse
+        val expectedButtonResponse =
+            ButtonResponse(
+                text = QuickReplyTestValues.TEXT_A,
+                payload = QuickReplyTestValues.PAYLOAD_A,
+                type = Type.ButtonResponse.name,
+                originatingMessageId = givenOriginatingMessageId,
+            )
 
         val result = givenStructuredMessage.toMessage()
 
         assertThat(result.messageType).isEqualTo(expectedMessageType)
         assertThat(result.quickReplies).isEmpty()
         assertThat(result.cards).isEmpty()
+        assertThat(result.originatingMessageId).isEqualTo(givenOriginatingMessageId)
+        assertThat(result.buttonResponse).isEqualTo(expectedButtonResponse)
     }
 
     @Test

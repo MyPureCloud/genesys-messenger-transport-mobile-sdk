@@ -240,6 +240,18 @@ class MessageTest {
     }
 
     @Test
+    fun `validate Message Type ButtonResponse serialization`() {
+        val expectedRequest = Message.Type.ButtonResponse
+        val expectedJson = """"ButtonResponse""""
+
+        val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
+        val decoded = WebMessagingJson.json.decodeFromString<Message.Type>(expectedJson)
+
+        assertThat(encodedString, "encoded Message.Type.ButtonResponse").isEqualTo(expectedJson)
+        assertThat(decoded).isEqualTo(expectedRequest)
+    }
+
+    @Test
     fun `validate Message with TimeSlotPicker`() {
         val expectedTimeSlot =
             Message.TimeSlot(

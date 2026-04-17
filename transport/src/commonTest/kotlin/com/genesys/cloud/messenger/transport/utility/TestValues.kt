@@ -238,6 +238,7 @@ object StructuredMessageValues {
         direction: String = Message.Direction.Inbound.name,
         text: String? = null,
         content: List<StructuredMessage.Content> = emptyList(),
+        originatingMessageId: String? = null,
     ): StructuredMessage {
         return StructuredMessage(
             id = id,
@@ -245,6 +246,7 @@ object StructuredMessageValues {
             direction = direction,
             text = text,
             content = content,
+            originatingMessageId = originatingMessageId,
         )
     }
 
