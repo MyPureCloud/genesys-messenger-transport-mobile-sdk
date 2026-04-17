@@ -41,7 +41,7 @@ data class Message(
     val metadata: Map<String, String> = emptyMap(),
     val timePicker: TimeSlotPicker? = null,
     val originatingMessageId: String? = null,
-    val buttonResponse: ButtonResponse? = null
+    val buttonResponses: List<ButtonResponse> = emptyList()
 ) {
     /**
      * The enum type representation of the message.

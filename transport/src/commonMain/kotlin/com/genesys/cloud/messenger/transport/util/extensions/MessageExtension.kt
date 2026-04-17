@@ -23,16 +23,16 @@ internal fun List<StructuredMessage>.toMessageList(): List<Message> =
     map { it.toMessage() }
         .filter { it.messageType != Message.Type.Unknown }
 
-internal fun List<StructuredMessage.Content>.toButtonResponse(originatingMessageId: String? = null): ButtonResponse? =
+internal fun List<StructuredMessage.Content>.toButtonResponseList(): List<ButtonResponse> =
     this.filterIsInstance<ButtonResponseContent>()
-        .firstOrNull { it.buttonResponse.type.normalizeButtonType() != "QuickReply" }
-        ?.buttonResponse
-        ?.let { buttonResponse ->
+        .filter { it.buttonResponse.type.normalizeButtonType() != "QuickReply" }
+        .map { it.buttonResponse }
+        .map { buttonResponse ->
             ButtonResponse(
                 text = buttonResponse.text,
                 payload = buttonResponse.payload,
-                type = Message.Type.ButtonResponse.name,
-                originatingMessageId = originatingMessageId
+                type = buttonResponse.type,
+                originatingMessageId = buttonResponse.originatingMessageId
             )
         }
 
@@ -57,7 +57,7 @@ internal fun StructuredMessage.toMessage(tracingId: String? = null): Message {
     val timePicker: Message.TimeSlotPicker? =
         content.filterIsInstance<StructuredMessage.Content.DatePickerContent>()
             .firstOrNull()?.datePicker?.toMessage()
-    val buttonResponse = content.toButtonResponse(originatingMessageId)
+    val buttonResponses = content.toButtonResponseList()
 
     return Message(
         id = tracingId ?: id,
@@ -68,7 +68,7 @@ internal fun StructuredMessage.toMessage(tracingId: String? = null): Message {
             cards.isNotEmpty(),
             hasCardSelection,
             timePicker != null,
-            buttonResponse != null
+            buttonResponses.isNotEmpty()
         ),
         text = text,
         timePicker = timePicker,
@@ -89,7 +89,7 @@ internal fun StructuredMessage.toMessage(tracingId: String? = null): Message {
         authenticated = metadata["authenticated"]?.toBoolean() ?: false,
         metadata = metadata,
         originatingMessageId = originatingMessageId,
-        buttonResponse = buttonResponse,
+        buttonResponses = buttonResponses,
     )
 }
 
