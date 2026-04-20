@@ -1312,13 +1312,67 @@ internal class MessageExtensionTest {
         assertThat(result.messageType).isEqualTo(expectedMessageType)
         assertThat(result.quickReplies).isEmpty()
         assertThat(result.cards).isEmpty()
-        assertThat(result.buttonResponses).containsExactly(
-            ButtonResponse(
-                QuickReplyTestValues.TEXT_A,
-                QuickReplyTestValues.PAYLOAD_A,
-                QuickReplyTestValues.BUTTON,
+        assertThat(result.buttonResponses).isEmpty()
+    }
+
+    @Test
+    fun `when StructuredMessage has ButtonResponseContent with buttonresponse type then messageType is ButtonResponse`() {
+        val givenButton =
+            StructuredMessage.Content.ButtonResponseContent.ButtonResponse(
+                text = QuickReplyTestValues.TEXT_A,
+                payload = QuickReplyTestValues.PAYLOAD_A,
+                type = "buttonresponse",
             )
-        )
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                content =
+                    listOf(
+                        StructuredMessage.Content.ButtonResponseContent(
+                            contentType = StructuredMessage.Content.Type.ButtonResponse.name,
+                            buttonResponse = givenButton,
+                        )
+                    ),
+            )
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result.messageType).isEqualTo(Type.ButtonResponse)
+        assertThat(result.buttonResponses.single().type).isEqualTo("buttonresponse")
+    }
+
+    @Test
+    fun `when StructuredMessage has ButtonResponseContent with lowercase quickreply type then messageType is QuickReply`() {
+        val givenButton =
+            StructuredMessage.Content.ButtonResponseContent.ButtonResponse(
+                text = QuickReplyTestValues.TEXT_A,
+                payload = QuickReplyTestValues.PAYLOAD_A,
+                type = "quickreply",
+            )
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                content =
+                    listOf(
+                        StructuredMessage.Content.ButtonResponseContent(
+                            contentType = StructuredMessage.Content.Type.ButtonResponse.name,
+                            buttonResponse = givenButton,
+                        )
+                    ),
+            )
+        val expectedQuickReply =
+            ButtonResponse(
+                text = QuickReplyTestValues.TEXT_A,
+                payload = QuickReplyTestValues.PAYLOAD_A,
+                type = QuickReplyTestValues.QUICK_REPLY,
+                originatingMessageId = MessageValues.ID,
+            )
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result.messageType).isEqualTo(Type.QuickReply)
+        assertThat(result.quickReplies).containsExactly(expectedQuickReply)
+        assertThat(result.buttonResponses).isEmpty()
     }
 
     @Test

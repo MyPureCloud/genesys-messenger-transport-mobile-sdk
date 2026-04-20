@@ -25,7 +25,7 @@ internal fun List<StructuredMessage>.toMessageList(): List<Message> =
 
 internal fun List<StructuredMessage.Content>.toButtonResponseList(): List<ButtonResponse> =
     this.filterIsInstance<ButtonResponseContent>()
-        .filter { it.buttonResponse.type.normalizeButtonType() != "QuickReply" }
+        .filter { it.buttonResponse.type.isButtonResponseType()}
         .map { it.buttonResponse }
         .map { buttonResponse ->
             ButtonResponse(
@@ -147,7 +147,7 @@ private fun List<StructuredMessage.Content>.toQuickReplies(): List<ButtonRespons
     if (filteredButtonResponse.isNotEmpty()) {
         return filteredButtonResponse
             .mapNotNull { buttonResponseContent ->
-                buttonResponseContent.buttonResponse.takeIf { it.type.normalizeButtonType() == "QuickReply" }
+                buttonResponseContent.buttonResponse.takeIf { it.type.isQuickReplyType() }
             }.map { br -> ButtonResponse(br.text, br.payload, "QuickReply") }
     }
 
@@ -218,16 +218,17 @@ private fun StructuredMessage.Type.toMessageType(
         }
     }
 
-private fun String.normalizeButtonType(): String =
-    when {
-        this.equals("QuickReply", ignoreCase = true) -> "QuickReply"
-        else -> "Button"
-    }
+private fun String.isQuickReplyType():Boolean = this.equals("QuickReply", true)
+
+private fun String.isCardButtonType() = this.equals("Button", true)
+
+private fun String.isButtonResponseType() = this.equals("ButtonResponse", true)
+
 
 private fun List<StructuredMessage.Content>.hasCardSelection(): Boolean =
     this
         .filterIsInstance<ButtonResponseContent>()
-        .any { it.buttonResponse.type.normalizeButtonType() == "Button" }
+        .any { it.buttonResponse.type.isCardButtonType() }
 
 internal fun String.isHealthCheckResponseId(): Boolean = this == HealthCheckID
 
