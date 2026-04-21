@@ -25,7 +25,7 @@ internal fun List<StructuredMessage>.toMessageList(): List<Message> =
 
 internal fun List<StructuredMessage.Content>.toButtonResponseList(): List<ButtonResponse> =
     this.filterIsInstance<ButtonResponseContent>()
-        .filter { it.buttonResponse.type.isButtonResponseType()}
+        .filter { !it.buttonResponse.type.isQuickReplyType() && !it.buttonResponse.type.isCardButtonType() }
         .map { it.buttonResponse }
         .map { buttonResponse ->
             ButtonResponse(
@@ -218,12 +218,9 @@ private fun StructuredMessage.Type.toMessageType(
         }
     }
 
-private fun String.isQuickReplyType():Boolean = this.equals("QuickReply", true)
+private fun String.isQuickReplyType(): Boolean = this.equals("QuickReply", true)
 
 private fun String.isCardButtonType() = this.equals("Button", true)
-
-private fun String.isButtonResponseType() = this.equals("ButtonResponse", true)
-
 
 private fun List<StructuredMessage.Content>.hasCardSelection(): Boolean =
     this
