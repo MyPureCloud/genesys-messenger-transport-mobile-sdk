@@ -710,15 +710,10 @@ internal class MessagingClientImpl(
 
     private fun Message.handleAsStructuredMessage() {
         when (messageType) {
-            Message.Type.QuickReply -> {
-                messageStore.update(this)
-                sessionDurationHandler.onMessage()
-            }
-            Message.Type.Cards -> {
-                messageStore.update(this)
-                sessionDurationHandler.onMessage()
-            }
-            Message.Type.DatePicker -> {
+            Message.Type.QuickReply,
+            Message.Type.Cards,
+            Message.Type.DatePicker,
+            Message.Type.ButtonResponse -> {
                 messageStore.update(this)
                 sessionDurationHandler.onMessage()
             }

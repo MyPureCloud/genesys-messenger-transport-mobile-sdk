@@ -40,6 +40,8 @@ data class Message(
     val text: String? = null,
     val metadata: Map<String, String> = emptyMap(),
     val timePicker: TimeSlotPicker? = null,
+    val originatingMessageId: String? = null,
+    val buttonResponses: List<ButtonResponse> = emptyList()
 ) {
     /**
      * The enum type representation of the message.
@@ -49,6 +51,7 @@ data class Message(
      * @property QuickReply when message is a quick reply.
      * @property Cards when message contains rich content in the form of one or more cards.
      * @property DatePicker when message contains time slot picker data.
+     * @property ButtonResponse when message contains a button response selection (non-quick-reply).
      * @property Unknown when system could not recognize the message type.
      */
     @Serializable
@@ -58,6 +61,7 @@ data class Message(
         QuickReply,
         Cards,
         DatePicker,
+        ButtonResponse,
         Unknown,
     }
 
