@@ -280,6 +280,30 @@ class DeploymentConfigTest {
     }
 
     @Test
+    fun `when Humanize serialized`() {
+        val givenHumanize = Conversations.Humanize(enabled = true)
+        val expectedHumanizeAsJson = """{"enabled":true}"""
+
+        val result = WebMessagingJson.json.encodeToString(givenHumanize)
+
+        assertThat(result).isEqualTo(expectedHumanizeAsJson)
+    }
+
+    @Test
+    fun `when Humanize deserialized`() {
+        val givenHumanizeAsJson = """{"enabled":true}"""
+        val expectedHumanize = Conversations.Humanize(enabled = true)
+
+        val result =
+            WebMessagingJson.json.decodeFromString<Conversations.Humanize>(
+                givenHumanizeAsJson
+            )
+
+        assertThat(result).isEqualTo(expectedHumanize)
+        assertThat(result.enabled).isTrue()
+    }
+
+    @Test
     fun `when ConversationDisconnect serialized`() {
         val givenConversationDisconnect =
             ConversationDisconnect(
