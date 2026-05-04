@@ -12,7 +12,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // Use a UIHostingController as window root view controller.
         if let windowScene = scene as? UIWindowScene {
             let window = UIWindow(windowScene: windowScene)
-            window.rootViewController = TestbedViewController(messenger: appDelegate().messenger)
+            let testbedVC = TestbedViewController(messenger: appDelegate().messenger)
+            window.rootViewController = UINavigationController(rootViewController: testbedVC)
             self.window = window
             window.makeKeyAndVisible()
         }
@@ -52,7 +53,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         }
 
         guard let windowScene = scene as? UIWindowScene,
-              let rootViewController = windowScene.windows.first?.rootViewController as? TestbedViewController else {
+              let navController = windowScene.windows.first?.rootViewController as? UINavigationController,
+              let rootViewController = navController.viewControllers.first as? TestbedViewController else {
             return
         }
 
