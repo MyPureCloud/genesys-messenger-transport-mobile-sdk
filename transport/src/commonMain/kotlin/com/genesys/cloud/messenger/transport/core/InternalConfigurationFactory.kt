@@ -49,7 +49,7 @@ object InternalConfigurationFactory {
                 ApplicationType.TRANSPORT_SDK -> "TransportSDK-${MessengerTransportSDK.sdkVersion}"
                 else -> "${applicationType.title}-$applicationVersion/TransportSDK-${MessengerTransportSDK.sdkVersion}"
             }
-        config.customEndpoint = customEndpoint
+        config.customEndpoint = customEndpoint ?: config.customEndpoint
         return config
     }
 

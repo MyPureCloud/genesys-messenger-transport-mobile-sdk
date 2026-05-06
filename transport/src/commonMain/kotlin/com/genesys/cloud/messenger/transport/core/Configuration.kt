@@ -1,5 +1,8 @@
 package com.genesys.cloud.messenger.transport.core
 
+import com.genesys.cloud.messenger.transport.util.CUSTOM_ENDPOINT_ENV_KEY
+import com.genesys.cloud.messenger.transport.util.getEnvironmentVariable
+
 /**
  * @param deploymentId the ID of the Genesys Cloud Messenger deployment.
  * @param domain the regional base domain address for a Genesys Cloud Web Messaging service. For example, "mypurecloud.com".
@@ -68,13 +71,16 @@ data class Configuration(
 
     /**
      * Internal-only endpoint override (host:port) for routing all Transport connections
-     * to a local server (e.g., WireMock). Set via [InternalConfigurationFactory] only.
-     * When null, standard domain-derived URLs are used.
+     * to a local server (e.g., WireMock). Resolved in order:
+     * 1. Explicit value set via [InternalConfigurationFactory].
+     * 2. `TRANSPORT_CUSTOM_ENDPOINT` environment variable.
+     * 3. null → standard domain-derived URLs.
      *
      * Intentionally declared outside the data class constructor so it is excluded from
      * [equals], [hashCode], [copy], and [toString]. Must be manually re-assigned after [copy].
      */
-    internal var customEndpoint: String? = null
+    internal var customEndpoint: String? =
+        getEnvironmentVariable(CUSTOM_ENDPOINT_ENV_KEY)?.ifBlank { null }
 
     companion object {
         internal const val DEFAULT_INTERVAL = 300L
