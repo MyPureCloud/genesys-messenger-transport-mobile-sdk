@@ -1,5 +1,5 @@
 PODS:
-  - transport (2.13.0-rc2)
+  - transport (2.13.0)
 
 DEPENDENCIES:
   - transport (from `../transport`)
