@@ -71,15 +71,13 @@ data class Configuration(
 
     /**
      * Internal-only endpoint override (host:port) for routing all Transport connections
-     * to a local server (e.g., WireMock). Resolved in order:
-     * 1. Explicit value set via [InternalConfigurationFactory].
-     * 2. `TRANSPORT_CUSTOM_ENDPOINT` environment variable.
-     * 3. null → standard domain-derived URLs.
+     * to a local server (e.g., WireMock). Read from the `TRANSPORT_CUSTOM_ENDPOINT`
+     * environment variable. When unset or blank, falls back to null (production URLs).
      *
      * Intentionally declared outside the data class constructor so it is excluded from
-     * [equals], [hashCode], [copy], and [toString]. Must be manually re-assigned after [copy].
+     * [equals], [hashCode], [copy], and [toString].
      */
-    internal var customEndpoint: String? =
+    internal val customEndpoint: String? =
         getEnvironmentVariable(CUSTOM_ENDPOINT_ENV_KEY)?.ifBlank { null }
 
     companion object {
