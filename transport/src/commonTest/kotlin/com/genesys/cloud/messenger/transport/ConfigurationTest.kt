@@ -97,15 +97,7 @@ class ConfigurationTest {
     }
 
     @Test
-    fun `validate default Configuration has null customEndpoint`() {
+    fun `validate default Configuration has null customEndpoint when env var is unset`() {
         assertThat(TestValues.configuration.customEndpoint).isNull()
-    }
-
-    @Test
-    fun `when customEndpoint is set as internal var it should be stored on Configuration`() {
-        val configuration = TestValues.configuration.copy()
-        configuration.customEndpoint = "localhost:8080"
-
-        assertThat(configuration.customEndpoint).isEqualTo("localhost:8080")
     }
 }

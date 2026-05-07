@@ -16,7 +16,6 @@ object InternalConfigurationFactory {
      * @param encryptedVault indicates if encrypted vault should be used.
      * @param minimumWebSocketTlsVersion the minimum TLS protocol version for WebSocket connections.
      * @param sessionExpirationNoticeIntervalSeconds how many seconds before the session expires to show the expiration notice.
-     * @param customEndpoint optional endpoint override (host:port) for routing connections to a local server (e.g., WireMock). Intended for UI testing only.
      * @return Configuration instance with proper application parameter formatting.
      */
     fun create(
@@ -29,8 +28,7 @@ object InternalConfigurationFactory {
         autoRefreshTokenWhenExpired: Boolean = true,
         encryptedVault: Boolean = false,
         sessionExpirationNoticeIntervalSeconds: Long = Configuration.DEFAULT_INTERVAL,
-        minimumWebSocketTlsVersion: TlsVersion = TlsVersion.SYSTEM_DEFAULT,
-        customEndpoint: String? = null
+        minimumWebSocketTlsVersion: TlsVersion = TlsVersion.SYSTEM_DEFAULT
     ): Configuration {
         val config =
             Configuration(
@@ -49,39 +47,8 @@ object InternalConfigurationFactory {
                 ApplicationType.TRANSPORT_SDK -> "TransportSDK-${MessengerTransportSDK.sdkVersion}"
                 else -> "${applicationType.title}-$applicationVersion/TransportSDK-${MessengerTransportSDK.sdkVersion}"
             }
-        config.customEndpoint = customEndpoint
         return config
     }
-
-    /**
-     * Overload to preserve the 10-param signature for iOS/Swift callers
-     * that don't need [customEndpoint].
-     */
-    fun create(
-        deploymentId: String,
-        domain: String,
-        applicationType: ApplicationType,
-        applicationVersion: String,
-        logging: Boolean,
-        reconnectionTimeoutInSeconds: Long,
-        autoRefreshTokenWhenExpired: Boolean,
-        encryptedVault: Boolean,
-        sessionExpirationNoticeIntervalSeconds: Long,
-        minimumWebSocketTlsVersion: TlsVersion
-    ): Configuration =
-        create(
-            deploymentId = deploymentId,
-            domain = domain,
-            applicationType = applicationType,
-            applicationVersion = applicationVersion,
-            logging = logging,
-            reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
-            autoRefreshTokenWhenExpired = autoRefreshTokenWhenExpired,
-            encryptedVault = encryptedVault,
-            sessionExpirationNoticeIntervalSeconds = sessionExpirationNoticeIntervalSeconds,
-            minimumWebSocketTlsVersion = minimumWebSocketTlsVersion,
-            customEndpoint = null
-        )
 
     /**
      * Overload to preserve the pre-2.12.0 8-param signature for iOS/Swift callers.
