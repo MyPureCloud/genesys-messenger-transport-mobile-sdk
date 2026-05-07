@@ -39,6 +39,9 @@ data class Message(
     val authenticated: Boolean = false,
     val text: String? = null,
     val metadata: Map<String, String> = emptyMap(),
+    val timePicker: TimeSlotPicker? = null,
+    val originatingMessageId: String? = null,
+    val buttonResponses: List<ButtonResponse> = emptyList()
 ) {
     /**
      * The enum type representation of the message.
@@ -47,6 +50,8 @@ data class Message(
      * @property Event when message is an event.
      * @property QuickReply when message is a quick reply.
      * @property Cards when message contains rich content in the form of one or more cards.
+     * @property DatePicker when message contains time slot picker data.
+     * @property ButtonResponse when message contains a button response selection (non-quick-reply).
      * @property Unknown when system could not recognize the message type.
      */
     @Serializable
@@ -55,6 +60,8 @@ data class Message(
         Event,
         QuickReply,
         Cards,
+        DatePicker,
+        ButtonResponse,
         Unknown,
     }
 
@@ -156,5 +163,20 @@ data class Message(
         val imageUrl: String? = null,
         val actions: List<ButtonResponse>,
         val defaultAction: ButtonResponse? = null,
+    )
+
+    @Serializable
+    data class TimeSlotPicker(
+        val title: String,
+        val subtitle: String? = null,
+        val imageUrl: String? = null,
+        val availableTimes: List<TimeSlot> = emptyList()
+    )
+
+    @Serializable
+    data class TimeSlot(
+        val timeEpochMillis: Long?,
+        val duration: Long,
+        val payload: String
     )
 }
