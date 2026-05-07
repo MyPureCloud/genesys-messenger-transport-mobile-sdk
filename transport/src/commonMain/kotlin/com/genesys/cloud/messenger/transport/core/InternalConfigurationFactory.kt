@@ -30,7 +30,6 @@ object InternalConfigurationFactory {
         encryptedVault: Boolean = false,
         sessionExpirationNoticeIntervalSeconds: Long = Configuration.DEFAULT_INTERVAL,
         minimumWebSocketTlsVersion: TlsVersion = TlsVersion.SYSTEM_DEFAULT,
-        customEndpoint: String? = null
     ): Configuration {
         val config =
             Configuration(
@@ -49,39 +48,8 @@ object InternalConfigurationFactory {
                 ApplicationType.TRANSPORT_SDK -> "TransportSDK-${MessengerTransportSDK.sdkVersion}"
                 else -> "${applicationType.title}-$applicationVersion/TransportSDK-${MessengerTransportSDK.sdkVersion}"
             }
-        config.customEndpoint = customEndpoint
         return config
     }
-
-    /**
-     * Overload to preserve the 10-param signature for iOS/Swift callers
-     * that don't need [customEndpoint].
-     */
-    fun create(
-        deploymentId: String,
-        domain: String,
-        applicationType: ApplicationType,
-        applicationVersion: String,
-        logging: Boolean,
-        reconnectionTimeoutInSeconds: Long,
-        autoRefreshTokenWhenExpired: Boolean,
-        encryptedVault: Boolean,
-        sessionExpirationNoticeIntervalSeconds: Long,
-        minimumWebSocketTlsVersion: TlsVersion
-    ): Configuration =
-        create(
-            deploymentId = deploymentId,
-            domain = domain,
-            applicationType = applicationType,
-            applicationVersion = applicationVersion,
-            logging = logging,
-            reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
-            autoRefreshTokenWhenExpired = autoRefreshTokenWhenExpired,
-            encryptedVault = encryptedVault,
-            sessionExpirationNoticeIntervalSeconds = sessionExpirationNoticeIntervalSeconds,
-            minimumWebSocketTlsVersion = minimumWebSocketTlsVersion,
-            customEndpoint = null
-        )
 
     /**
      * Overload to preserve the pre-2.12.0 8-param signature for iOS/Swift callers.
