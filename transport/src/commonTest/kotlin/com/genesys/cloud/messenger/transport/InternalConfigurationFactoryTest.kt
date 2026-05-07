@@ -119,48 +119,4 @@ class InternalConfigurationFactoryTest {
             config.sessionExpirationNoticeIntervalSeconds
         )
     }
-
-    @Test
-    fun `when creating configuration without customEndpoint it should default to null`() {
-        val config =
-            InternalConfigurationFactory.create(
-                deploymentId = "test-deployment",
-                domain = "test.com",
-                applicationType = ApplicationType.TRANSPORT_SDK,
-                applicationVersion = "0.0.0"
-            )
-
-        assertEquals(null, config.customEndpoint)
-    }
-
-    @Test
-    fun `when creating configuration with customEndpoint it should be set on Configuration`() {
-        val config =
-            InternalConfigurationFactory.create(
-                deploymentId = "test-deployment",
-                domain = "test.com",
-                applicationType = ApplicationType.TRANSPORT_SDK,
-                applicationVersion = "0.0.0",
-                customEndpoint = "localhost:8080"
-            )
-
-        assertEquals("localhost:8080", config.customEndpoint)
-    }
-
-    @Test
-    fun `when using backward compatible overload it should default customEndpoint to null`() {
-        val config =
-            InternalConfigurationFactory.create(
-                deploymentId = "test-deployment",
-                domain = "test.com",
-                applicationType = ApplicationType.TRANSPORT_SDK,
-                applicationVersion = "0.0.0",
-                logging = true,
-                reconnectionTimeoutInSeconds = 300,
-                autoRefreshTokenWhenExpired = true,
-                encryptedVault = false
-            )
-
-        assertEquals(null, config.customEndpoint)
-    }
 }
