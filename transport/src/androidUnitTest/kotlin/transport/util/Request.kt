@@ -88,6 +88,12 @@ internal object Request {
             json.contains(""""contentType":"ButtonResponse"""") &&
             json.contains(""""type":"QuickReply"""")
 
+    fun isTimeSlotRequest(json: String) =
+        json.contains(""""token":"$token"""") &&
+            json.contains(""""action":"onMessage"""") &&
+            json.contains(""""contentType":"ButtonResponse"""") &&
+            json.contains(""""type":"DatePicker"""")
+
     fun isStructuredMessageRequest(json: String) =
         json.contains(""""token":"$token"""") &&
             json.contains(""""action":"onMessage"""") &&

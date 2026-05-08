@@ -23,8 +23,8 @@ class MessagingClientQuickReplyTest : BaseMessagingClientTest() {
                 timeStamp = null,
                 quickReplies =
                     listOf(
-                        QuickReplyTestValues.buttonResponse_a,
-                        QuickReplyTestValues.buttonResponse_b,
+                        QuickReplyTestValues.buttonResponse_a.copy(originatingMessageId = "msg_id"),
+                        QuickReplyTestValues.buttonResponse_b.copy(originatingMessageId = "msg_id"),
                     ),
                 from = Message.Participant(originatingEntity = Message.Participant.OriginatingEntity.Bot),
             )

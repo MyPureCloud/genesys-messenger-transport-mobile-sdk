@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
+import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.Configuration
 import com.genesys.cloud.messenger.transport.core.TlsVersion
@@ -93,5 +94,10 @@ class ConfigurationTest {
             )
 
         assertThat(configuration.minimumWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
+    }
+
+    @Test
+    fun `validate default Configuration has null customEndpoint when env var is unset`() {
+        assertThat(TestValues.configuration.customEndpoint).isNull()
     }
 }

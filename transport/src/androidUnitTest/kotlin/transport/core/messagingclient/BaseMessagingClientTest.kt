@@ -39,6 +39,7 @@ import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues.TOKEN_KEY
+import com.genesys.cloud.messenger.transport.utility.TimeSlotPickerTestValues
 import io.mockk.MockKVerificationScope
 import io.mockk.Runs
 import io.mockk.clearAllMocks
@@ -108,6 +109,21 @@ open class BaseMessagingClientTest {
                                                 payload = "some_payload_value",
                                                 type = "Postback"
                                             )
+                                    )
+                                )
+                        )
+                )
+            every { prepareTimeSlotSubmissionMessageWith(any(), any(), any()) } returns
+                OnMessageRequest(
+                    token = Request.token,
+                    message =
+                        TextMessage(
+                            text = "",
+                            content =
+                                listOf(
+                                    Message.Content(
+                                        contentType = Message.Content.Type.ButtonResponse,
+                                        buttonResponse = TimeSlotPickerTestValues.timeSlotButtonResponse
                                     )
                                 )
                         )
