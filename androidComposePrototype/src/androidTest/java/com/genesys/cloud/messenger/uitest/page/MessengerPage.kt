@@ -9,10 +9,7 @@ import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject
 import androidx.test.uiautomator.UiSelector
-import org.awaitility.Awaitility
-import org.awaitility.Awaitility.await
 import java.lang.Thread.sleep
-import java.util.concurrent.TimeUnit.SECONDS
 
 class MessengerPage(activity: Activity) : BasePage(activity) {
     private val title = "Web Messaging Testbed"
@@ -33,6 +30,15 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     private val signInText = "Sign In"
     private val signInUserNameId = "okta-signin-username"
     private val signInPasswordId = "okta-signin-password"
+
+    private fun waitUntil(timeoutSeconds: Long, intervalMs: Long = 500, condition: () -> Boolean) {
+        val deadline = System.currentTimeMillis() + timeoutSeconds * 1000
+        while (System.currentTimeMillis() < deadline) {
+            if (condition()) return
+            sleep(intervalMs)
+        }
+        throw AssertionError("Condition not met within ${timeoutSeconds}s")
+    }
 
     // Wait until android compose prototype begins
     fun verifyPageIsVisible(waitTime: Long = 20) {
@@ -90,12 +96,9 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
 
     // Wait for client to return proper response
     fun waitForProperResponse(response: String) {
-        Awaitility
-            .await()
-            .atMost(waitTime, SECONDS)
-            .until {
-                getFullResponse().contains(response, ignoreCase = true)
-            }
+        waitUntil(waitTime) {
+            getFullResponse().contains(response, ignoreCase = true)
+        }
     }
 
     fun grabAttachmentId(): String {
@@ -114,51 +117,41 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     }
 
     fun waitForAuthMsgReceived(messageToBeReceived: String) {
-        await()
-            .atMost(waitTime, SECONDS)
-            .until {
-                getAuthStateResponse().contains(
-                    messageToBeReceived,
-                    ignoreCase = true
-                )
-            }
+        waitUntil(waitTime) {
+            getAuthStateResponse().contains(
+                messageToBeReceived,
+                ignoreCase = true
+            )
+        }
     }
 
     // Wait for configure response
     fun waitForConfigured() {
         var clientResponse: String = ""
-        await()
-            .atMost(waitTime, SECONDS)
-            .until {
-                clientResponse = getClientResponse()
-                (clientResponse.contains("Configured", ignoreCase = true) || (clientResponse.contains("ReadOnly", ignoreCase = true)))
-            }
+        waitUntil(waitTime) {
+            clientResponse = getClientResponse()
+            (clientResponse.contains("Configured", ignoreCase = true) || (clientResponse.contains("ReadOnly", ignoreCase = true)))
+        }
         if (clientResponse.contains("ReadOnly", ignoreCase = true)) {
             enterCommand(newChatText)
-            await()
-                .atMost(waitTime, SECONDS)
-                .until {
-                    clientResponse = getClientResponse()
-                    clientResponse.contains("Configured", ignoreCase = true)
-                }
+            waitUntil(waitTime) {
+                clientResponse = getClientResponse()
+                clientResponse.contains("Configured", ignoreCase = true)
+            }
         }
     }
 
     fun waitForReadOnly() {
-        await()
-            .atMost(waitTime, SECONDS)
-            .until {
-                getClientResponse().contains("ReadOnly", ignoreCase = true)
-            }
+        waitUntil(waitTime) {
+            getClientResponse().contains("ReadOnly", ignoreCase = true)
+        }
     }
 
     // Wait for client to be closed
     fun waitForClosed() {
-        await()
-            .atMost(waitTime, SECONDS)
-            .until {
-                getClientResponse().contains("Closed", ignoreCase = true)
-            }
+        waitUntil(waitTime) {
+            getClientResponse().contains("Closed", ignoreCase = true)
+        }
     }
 
     // Get text from response field
@@ -259,32 +252,14 @@ class MessengerPage(activity: Activity) : BasePage(activity) {
     }
 
     protected fun pressTab() {
-        await()
-            .atMost(3, SECONDS)
-            .ignoreExceptions()
-            .untilAsserted {
-                UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()) != null
-            }
         UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).pressKeyCode(KeyEvent.KEYCODE_TAB)
     }
 
     protected fun pressEnterKey() {
-        await()
-            .atMost(3, SECONDS)
-            .ignoreExceptions()
-            .untilAsserted {
-                UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()) != null
-            }
         UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).pressEnter()
     }
 
     fun pressBackKey() {
-        await()
-            .atMost(3, SECONDS)
-            .ignoreExceptions()
-            .untilAsserted {
-                UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()) != null
-            }
         UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).pressBack()
     }
 

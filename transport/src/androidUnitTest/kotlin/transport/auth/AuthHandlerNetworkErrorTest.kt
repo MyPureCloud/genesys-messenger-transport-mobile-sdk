@@ -90,6 +90,33 @@ class AuthHandlerNetworkErrorTest {
     }
 
     @Test
+    fun `when fetchAuthJwt with idToken fails with NetworkDisabled error`() {
+        coEvery { mockWebMessagingApi.fetchAuthJwt(idToken = any(), nonce = any()) } returns
+            Result.Failure(ErrorCode.NetworkDisabled, ErrorTest.MESSAGE)
+        subject = buildAuthHandler()
+
+        val expectedErrorCode = ErrorCode.NetworkDisabled
+        val expectedErrorMessage = ErrorTest.MESSAGE
+        val expectedCorrectiveAction = CorrectiveAction.CheckNetwork
+
+        subject.authorizeImplicit(idToken = AuthTest.ID_TOKEN, nonce = AuthTest.NONCE)
+
+        verify {
+            mockLogger.e(capture(logSlot))
+            mockEventHandler.onEvent(
+                Event.Error(
+                    expectedErrorCode,
+                    expectedErrorMessage,
+                    expectedCorrectiveAction
+                )
+            )
+        }
+        assertThat(logSlot.captured.invoke()).isEqualTo(
+            LogMessages.requestError("authorizeImplicit()", expectedErrorCode, expectedErrorMessage)
+        )
+    }
+
+    @Test
     fun `when refreshAuthJwt fails with NetworkDisabled error - auth tokens are preserved`() {
         // First authorize successfully
         coEvery {

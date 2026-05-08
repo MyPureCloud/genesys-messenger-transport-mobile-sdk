@@ -171,7 +171,11 @@ internal class WebMessagingApi(
         } catch (cancellationException: CancellationException) {
             Result.Failure(ErrorCode.CancellationError, cancellationException.message)
         } catch (exception: Exception) {
-            Result.Failure(ErrorCode.AuthFailed, exception.message)
+            if (exception.isNetworkException()) {
+                Result.Failure(ErrorCode.NetworkDisabled, exception.message)
+            } else {
+                Result.Failure(ErrorCode.AuthFailed, exception.message)
+            }
         }
 
     suspend fun logoutFromAuthenticatedSession(jwt: String): Result<Empty> =

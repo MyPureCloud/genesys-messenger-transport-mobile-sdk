@@ -348,7 +348,7 @@ internal class MessageStoreTest {
 
         subject.onMessageError(ErrorCode.MessageTooLong, errorMessage)
 
-        assertThat { subject.getConversation().contains(expectedMessage) }
+        assertThat(subject.getConversation().contains(expectedMessage)).isTrue()
         verify { mockMessageListener.invoke(capture(messageSlot)) }
         (messageSlot.captured as MessageEvent.MessageUpdated).message.run {
             assertThat(this).isEqualTo(expectedMessage)

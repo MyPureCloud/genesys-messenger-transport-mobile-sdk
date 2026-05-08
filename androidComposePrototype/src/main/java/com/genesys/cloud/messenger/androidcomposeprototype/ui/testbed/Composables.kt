@@ -167,7 +167,7 @@ private fun CommandView(
         label = { Text("Command") },
         keyboardOptions =
             KeyboardOptions(
-                autoCorrect = false,
+                autoCorrectEnabled = false,
                 capitalization = KeyboardCapitalization.None,
                 imeAction = ImeAction.Send
             ),
@@ -214,6 +214,7 @@ private fun SocketMessageView(socketMessage: String) {
 
 @Preview
 @Composable
+@Suppress("ViewModelConstructorInComposable")
 fun PreviewTestBedScreen() {
     TestBedScreen(TestBedViewModel())
 }

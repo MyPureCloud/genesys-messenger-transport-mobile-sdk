@@ -1,13 +1,13 @@
 package com.genesys.cloud.messenger.uitest.support.ApiHelper
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import kotlinx.serialization.Serializable
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class AllPresences(
     val entities: Array<PresenceInfo>
 )
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class PresenceInfo(
     val id: String,
     val systemPresence: String,
@@ -24,8 +24,7 @@ private var savedPresenceList: MutableMap<String, String>? = null
 
 fun API.getPresenceList(): MutableMap<String, String> {
     if (savedPresenceList != null) {
-        val presenceList = savedPresenceList!!
-        return presenceList
+        return savedPresenceList!!
     }
     val allPresences = getAllPresences()
     val presenceList: MutableMap<String, String> = mutableMapOf()

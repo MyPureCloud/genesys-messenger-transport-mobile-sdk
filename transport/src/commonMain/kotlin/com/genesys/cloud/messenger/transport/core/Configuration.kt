@@ -7,6 +7,7 @@ package com.genesys.cloud.messenger.transport.core
  * @param reconnectionTimeoutInSeconds period of time during which Transport will try to reconnect to the web socket in case of connectivity lost.
  * @param autoRefreshTokenWhenExpired indicates if Transport should auto refresh auth token if it was expired.
  * @param sessionExpirationNoticeIntervalSeconds how many seconds before the session expires to show the expiration notice
+ * @param minimumWebSocketTlsVersion the minimum TLS protocol version for WebSocket connections. Default is [TlsVersion.SYSTEM_DEFAULT] for backward compatibility.
  */
 data class Configuration(
     val deploymentId: String,
@@ -15,7 +16,8 @@ data class Configuration(
     val reconnectionTimeoutInSeconds: Long = 60 * 5,
     val autoRefreshTokenWhenExpired: Boolean = true,
     val encryptedVault: Boolean = false,
-    val sessionExpirationNoticeIntervalSeconds: Long = DEFAULT_INTERVAL
+    val sessionExpirationNoticeIntervalSeconds: Long = DEFAULT_INTERVAL,
+    val minimumWebSocketTlsVersion: TlsVersion = TlsVersion.SYSTEM_DEFAULT
 ) {
     /**
      * Secondary constructor to avoid breaking changes on iOS platform.
@@ -36,7 +38,30 @@ data class Configuration(
         logging = logging,
         reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
         autoRefreshTokenWhenExpired = true,
-        encryptedVault = false
+        encryptedVault = false,
+        sessionExpirationNoticeIntervalSeconds = DEFAULT_INTERVAL,
+        minimumWebSocketTlsVersion = TlsVersion.SYSTEM_DEFAULT
+    )
+
+    /**
+     * Secondary constructor to preserve the pre-2.12.0 primary constructor signature for iOS/Swift callers.
+     */
+    constructor(
+        deploymentId: String,
+        domain: String,
+        logging: Boolean,
+        reconnectionTimeoutInSeconds: Long,
+        autoRefreshTokenWhenExpired: Boolean,
+        encryptedVault: Boolean,
+    ) : this(
+        deploymentId = deploymentId,
+        domain = domain,
+        logging = logging,
+        reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
+        autoRefreshTokenWhenExpired = autoRefreshTokenWhenExpired,
+        encryptedVault = encryptedVault,
+        sessionExpirationNoticeIntervalSeconds = DEFAULT_INTERVAL,
+        minimumWebSocketTlsVersion = TlsVersion.SYSTEM_DEFAULT
     )
 
     internal var application: String = "TransportSDK-${MessengerTransportSDK.sdkVersion}"

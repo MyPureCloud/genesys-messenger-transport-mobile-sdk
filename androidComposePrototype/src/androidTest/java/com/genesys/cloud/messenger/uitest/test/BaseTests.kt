@@ -1,12 +1,12 @@
 package com.genesys.cloud.messenger.uitest.test
 
+import android.os.Build
 import androidx.test.rule.ActivityTestRule
 import androidx.test.rule.GrantPermissionRule
 import com.genesys.cloud.messenger.androidcomposeprototype.MainActivity
 import com.genesys.cloud.messenger.uitest.page.MessengerPage
 import com.genesys.cloud.messenger.uitest.page.OpeningPage
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.API
-import com.jaredrummler.android.device.DeviceName
 import org.junit.Before
 import org.junit.Rule
 
@@ -21,10 +21,10 @@ open class BaseTests {
 
         // Log the device name and SDK version
         fun setUpDevice() {
-            val device = DeviceName.getDeviceName()
+            val device = "${Build.MANUFACTURER} ${Build.MODEL}".trim()
             println("DEVICE NAME: $device")
-            val SDKVersionNumber = android.os.Build.VERSION.SDK_INT
-            println("SDK Version Number: $SDKVersionNumber")
+            val sdkVersionNumber = Build.VERSION.SDK_INT
+            println("SDK Version Number: $sdkVersionNumber")
         }
     }
 

@@ -543,19 +543,23 @@ class TestBedViewModel :
             when (newState) {
                 is State.Configured ->
                     "connected: ${newState.connected}," + " newSession: ${newState.newSession}," + " wasReconnecting: ${oldState is State.Reconnecting}"
+
                 is State.Closing -> "code: ${newState.code}, reason: ${newState.reason}"
                 is State.Closed -> {
                     resetSessionState()
                     "code: ${newState.code}, reason: ${newState.reason}"
                 }
+
                 is State.Error -> {
                     resetSessionState()
                     "code: ${newState.code}, message: ${newState.message}"
                 }
+
                 is State.Idle -> {
                     resetSessionState()
                     ""
                 }
+
                 else -> ""
             }
         onSocketMessageReceived(statePayloadMessage)

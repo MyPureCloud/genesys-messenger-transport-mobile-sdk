@@ -63,6 +63,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
 import kotlin.reflect.KProperty0
 
@@ -349,15 +350,22 @@ internal class MessagingClientImpl(
     }
 
     @Throws(Exception::class)
-    override suspend fun fetchNextPage() {
+    override suspend fun fetchNextPage() = withContext(Dispatchers.Main) {
         stateMachine.checkIfConfiguredOrReadOnly()
         historyHandler.fetchNextPage()
     }
 
     override fun logoutFromAuthenticatedSession() {
-        authHandler.logout {
-            performLogout()
-        }
+        authHandler.logout(
+            onLogoutSuccess = {
+                if (stateMachine.isInactive()) {
+                    performLogout()
+                }
+            },
+            onUnauthorized = {
+                performLogout()
+            }
+        )
     }
 
     override fun shouldAuthorize(callback: (Boolean) -> Unit) {
@@ -785,7 +793,9 @@ internal class MessagingClientImpl(
         vault.wasAuthenticated = false
         authHandler.clear()
         eventHandler.onEvent(Event.Logout)
-        disconnect()
+        if (!stateMachine.isInactive()) {
+            disconnect()
+        }
     }
 
     private inner class SocketListener(
