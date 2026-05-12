@@ -46,6 +46,7 @@ data class Conversations(
     val conversationClear: ConversationClear = ConversationClear(),
     val notifications: Notifications = Notifications(),
     val markdown: Markdown = Markdown(),
+    val humanize: Humanize = Humanize(),
 ) {
     @Serializable
     data class AutoStart(val enabled: Boolean = false)
@@ -79,6 +80,9 @@ data class Conversations(
 
     @Serializable
     data class Markdown(val enabled: Boolean = false)
+
+    @Serializable
+    data class Humanize(val enabled: Boolean = false)
 }
 
 @Serializable
