@@ -176,7 +176,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class, TransportSDKException::class)
     override fun connect() {
-        log.i { LogMessages.CONNECT }
+        log.d { LogMessages.CONNECT }
         validateDeploymentConfig()
         connectAuthenticated = false
         stateMachine.onConnect()
@@ -185,7 +185,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class, TransportSDKException::class)
     override fun connectAuthenticatedSession() {
-        log.i { LogMessages.CONNECT_AUTHENTICATED_SESSION }
+        log.d { LogMessages.CONNECT_AUTHENTICATED_SESSION }
         validateDeploymentConfig()
         connectAuthenticated = true
         stateMachine.onConnect()
@@ -204,7 +204,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun stepUpToAuthenticatedSession() {
-        log.i { LogMessages.STEP_UP_TO_AUTHENTICATED_SESSION }
+        log.d { LogMessages.STEP_UP_TO_AUTHENTICATED_SESSION }
         stateMachine.checkIfConfigured()
         if (connectAuthenticated) return
         connectAuthenticated = true
@@ -220,7 +220,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun disconnect() {
-        log.i { LogMessages.DISCONNECT }
+        log.d { LogMessages.DISCONNECT }
         val code = SocketCloseCode.NORMAL_CLOSURE.value
         val reason = "The user has closed the connection."
         reconnectionHandler.clear()
@@ -256,7 +256,7 @@ internal class MessagingClientImpl(
         customAttributes: Map<String, String>
     ) {
         stateMachine.checkIfConfigured()
-        log.i { LogMessages.sendMessage(text.sanitizeText(), customAttributes) }
+        log.d { LogMessages.sendMessage(text.sanitizeText(), customAttributes) }
         internalCustomAttributesStore.add(customAttributes)
         val channel = prepareCustomAttributesForSending()
         val request = messageStore.prepareMessage(token, text, channel)
@@ -267,7 +267,7 @@ internal class MessagingClientImpl(
 
     override fun sendQuickReply(buttonResponse: ButtonResponse) {
         stateMachine.checkIfConfigured()
-        log.i { LogMessages.sendQuickReply(buttonResponse) }
+        log.d { LogMessages.sendQuickReply(buttonResponse) }
         val channel = prepareCustomAttributesForSending()
         val request = messageStore.prepareMessageWith(token, buttonResponse, channel)
         val encodedJson = WebMessagingJson.json.encodeToString(request)
@@ -276,7 +276,7 @@ internal class MessagingClientImpl(
 
     override fun sendCardReply(postbackResponse: ButtonResponse) {
         stateMachine.checkIfConfigured()
-        log.i { LogMessages.sendCardReply(postbackResponse) }
+        log.d { LogMessages.sendCardReply(postbackResponse) }
         val channel = prepareCustomAttributesForSending()
         val request = messageStore.preparePostbackMessage(token, postbackResponse, channel)
         val encodedJson = WebMessagingJson.json.encodeToString(request)
@@ -285,7 +285,7 @@ internal class MessagingClientImpl(
 
     override fun submitTimeSlot(timeSlotResponse: ButtonResponse) {
         stateMachine.checkIfConfigured()
-        log.i { LogMessages.submitTimeSlot(timeSlotResponse.payload, timeSlotResponse.originatingMessageId) }
+        log.d { LogMessages.submitTimeSlot(timeSlotResponse.payload, timeSlotResponse.originatingMessageId) }
         val channel = prepareCustomAttributesForSending()
         val request =
             messageStore.prepareTimeSlotSubmissionMessageWith(token, timeSlotResponse, channel)
@@ -315,7 +315,7 @@ internal class MessagingClientImpl(
         fileName: String,
         uploadProgress: ((Float) -> Unit)?,
     ): String {
-        log.i { LogMessages.attach(fileName) }
+        log.d { LogMessages.attach(fileName) }
         val request =
             attachmentHandler.prepare(
                 token,
@@ -331,7 +331,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class, IllegalArgumentException::class)
     override fun detach(attachmentId: String) {
-        log.i { LogMessages.detach(attachmentId) }
+        log.d { LogMessages.detach(attachmentId) }
         attachmentHandler.detach(token, attachmentId)?.let {
             val encodedJson = WebMessagingJson.json.encodeToString(it)
             send(encodedJson)
