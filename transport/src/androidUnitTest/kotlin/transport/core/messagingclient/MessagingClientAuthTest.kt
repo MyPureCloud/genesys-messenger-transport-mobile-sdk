@@ -349,7 +349,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
             mockSessionDurationHandler.clearAndRemoveNotice()
             mockStateChangedListener(fromConfiguredToReconnecting())
             mockReconnectionHandler.reconnect(any())
-            mockLogger.d(capture(logSlot))
+            mockLogger.i(capture(logSlot))
             mockPlatformSocket.openSocket(any())
             mockLogger.d(capture(logSlot))
             mockAuthHandler.jwt

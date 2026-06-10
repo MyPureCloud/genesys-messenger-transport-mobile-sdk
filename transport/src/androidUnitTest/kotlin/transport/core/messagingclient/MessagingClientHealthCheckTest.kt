@@ -82,7 +82,7 @@ class MessagingClientHealthCheckTest : BaseMessagingClientTest() {
             mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isEchoRequest(it) })
             disconnectSequence()
-            mockLogger.d(capture(logSlot))
+            mockLogger.i(capture(logSlot))
             mockStateChangedListener(fromClosedToConnecting)
             mockPlatformSocket.openSocket(any())
             mockStateChangedListener(fromConnectingToConnected)

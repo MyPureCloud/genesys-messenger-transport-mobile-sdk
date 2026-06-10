@@ -53,7 +53,7 @@ class ReconnectionHandlerTest {
         }
 
         coVerify {
-            mockLogger.d(capture(logSlot))
+            mockLogger.i(capture(logSlot))
             mockReconnectFunction()
         }
         assertThat(subject.shouldReconnect).isTrue()
@@ -68,7 +68,7 @@ class ReconnectionHandlerTest {
 
         verify(exactly = 0) {
             mockReconnectFunction.invoke()
-            mockLogger.d(any())
+            mockLogger.i(any())
         }
         assertThat(subject.shouldReconnect).isFalse()
     }

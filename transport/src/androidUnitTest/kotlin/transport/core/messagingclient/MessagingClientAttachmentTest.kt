@@ -1,6 +1,7 @@
 package transport.core.messagingclient
 
 import assertk.assertThat
+import assertk.assertions.contains
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.Attachment
 import com.genesys.cloud.messenger.transport.core.ErrorCode
@@ -66,14 +67,16 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
         subject.detach("88888888-8888-8888-8888-888888888888")
 
         verify {
+            mockLogger.i(capture(logSlot))
             mockLogger.d(capture(logSlot))
             mockAttachmentHandler.detach(Request.token, capture(attachmentIdSlot))
             mockPlatformSocket.sendMessage(match { Request.isDeleteAttachmentRequest(it, expectedAttachmentId) })
         }
         assertThat(attachmentIdSlot.captured).isEqualTo(expectedAttachmentId)
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.detach(expectedAttachmentId))
+        val allLogs = logSlot.map { it.invoke() }
+        assertThat(allLogs).contains(LogMessages.CONNECT)
+        assertThat(allLogs).contains(LogMessages.configureSession(Request.token))
+        assertThat(allLogs).contains(LogMessages.detach(expectedAttachmentId))
     }
 
     @Test

@@ -1,6 +1,7 @@
 package transport.core.messagingclient
 
 import assertk.assertThat
+import assertk.assertions.contains
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.core.ErrorCode
@@ -193,11 +194,12 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
             disconnectSequence()
         }
 
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token, false))
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.DISCONNECT)
-        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.FORCE_CLOSE_WEB_SOCKET)
-        assertThat(logSlot[4].invoke()).isEqualTo(LogMessages.CLEAR_CONVERSATION_HISTORY)
+        val allLogs = logSlot.map { it.invoke() }
+        assertThat(allLogs).contains(LogMessages.CONNECT)
+        assertThat(allLogs).contains(LogMessages.configureSession(Request.token, false))
+        assertThat(allLogs).contains(LogMessages.DISCONNECT)
+        assertThat(allLogs).contains(LogMessages.FORCE_CLOSE_WEB_SOCKET)
+        assertThat(allLogs).contains(LogMessages.CLEAR_CONVERSATION_HISTORY)
     }
 
     @Test

@@ -20,7 +20,7 @@ internal actual class ReconnectionHandlerImpl actual constructor(
 
     actual override fun reconnect(reconnectFun: () -> Unit) {
         if (!shouldReconnect) return
-        log.d { LogMessages.tryingToReconnect(attempts.value, maxAttempts) }
+        log.i { LogMessages.tryingToReconnect(attempts.value, maxAttempts) }
         attempts.value++
         reconnectFun()
     }

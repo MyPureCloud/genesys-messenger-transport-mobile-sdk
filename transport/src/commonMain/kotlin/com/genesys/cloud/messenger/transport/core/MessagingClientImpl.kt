@@ -176,7 +176,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class, TransportSDKException::class)
     override fun connect() {
-        log.d { LogMessages.CONNECT }
+        log.i { LogMessages.CONNECT }
         validateDeploymentConfig()
         connectAuthenticated = false
         stateMachine.onConnect()
@@ -185,7 +185,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class, TransportSDKException::class)
     override fun connectAuthenticatedSession() {
-        log.d { LogMessages.CONNECT_AUTHENTICATED_SESSION }
+        log.i { LogMessages.CONNECT_AUTHENTICATED_SESSION }
         validateDeploymentConfig()
         connectAuthenticated = true
         stateMachine.onConnect()
@@ -220,7 +220,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun disconnect() {
-        log.d { LogMessages.DISCONNECT }
+        log.i { LogMessages.DISCONNECT }
         val code = SocketCloseCode.NORMAL_CLOSURE.value
         val reason = "The user has closed the connection."
         reconnectionHandler.clear()
@@ -814,7 +814,7 @@ internal class MessagingClientImpl(
         private val log: Log,
     ) : PlatformSocketListener {
         override fun onOpen() {
-            log.d { LogMessages.ON_OPEN }
+            log.i { LogMessages.ON_OPEN }
             stateMachine.onConnectionOpened()
             configureSession()
         }
@@ -933,7 +933,7 @@ internal class MessagingClientImpl(
             code: Int,
             reason: String
         ) {
-            log.d { LogMessages.onClosing(code, reason) }
+            log.i { LogMessages.onClosing(code, reason) }
             stateMachine.onClosing(code, reason)
         }
 
@@ -941,7 +941,7 @@ internal class MessagingClientImpl(
             code: Int,
             reason: String
         ) {
-            log.d { LogMessages.onClosed(code, reason) }
+            log.i { LogMessages.onClosed(code, reason) }
             stateMachine.onClosed(code, reason)
             cleanUp()
         }

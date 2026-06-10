@@ -27,7 +27,7 @@ internal actual class ReconnectionHandlerImpl actual constructor(
         resetDispatcher()
         reconnectJob =
             dispatcher.launch {
-                log.d { LogMessages.tryingToReconnect(attempts, maxAttempts) }
+                log.i { LogMessages.tryingToReconnect(attempts, maxAttempts) }
                 delay(TIMEOUT_INTERVAL_IN_SECONDS.toMilliseconds())
                 attempts++
                 reconnectFun()
