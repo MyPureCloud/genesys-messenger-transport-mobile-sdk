@@ -95,7 +95,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         )
         verifySequence {
             connectSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockMessageStore.invalidateConversationCache()
             mockReconnectionHandler.shouldReconnect
             errorSequence(fromConfiguredToError(expectedErrorState))
@@ -125,10 +125,10 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
             mockLogger.withTag(com.genesys.cloud.messenger.transport.util.logs.LogTag.STATE_MACHINE)
             mockSessionDurationHandler.setTriggerHealthCheck(any())
             mockLogger.withTag(com.genesys.cloud.messenger.transport.util.logs.LogTag.WEBSOCKET)
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockStateChangedListener(fromIdleToConnecting)
             mockPlatformSocket.openSocket(any())
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockMessageStore.invalidateConversationCache()
             errorSequence(
                 StateChange(
@@ -174,7 +174,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         )
         verifySequence {
             connectWithFailedConfigureSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             errorSequence(fromConnectedToError(expectedErrorState))
         }
     }
@@ -215,15 +215,15 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
         verifySequence {
             connectSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockMessageStore.invalidateConversationCache()
             mockReconnectionHandler.shouldReconnect
             mockSessionDurationHandler.clearAndRemoveNotice()
             mockStateChangedListener(fromConfiguredToReconnecting())
             mockReconnectionHandler.reconnect(any())
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.openSocket(any())
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) })
             errorSequence(fromReconnectingToError(expectedErrorState))
         }
@@ -257,7 +257,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockLogger.w(capture(logSlot))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
@@ -339,7 +339,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
 
         verifySequence {
             fromIdleToConnectedSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) })
             invalidateSessionTokenSequence()
             errorSequence(fromConnectedToError(MessagingClient.State.Error(ErrorCode.CannotDowngradeToUnauthenticated, ErrorTest.MESSAGE)))

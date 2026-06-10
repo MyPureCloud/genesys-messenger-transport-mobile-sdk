@@ -46,9 +46,9 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
         assertEquals(expectedAttachmentId, result)
         verifySequence {
             connectSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockAttachmentHandler.prepare(Request.token, any(), any(), any())
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isAttachmentRequest(it, expectedAttachmentId) })
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
@@ -66,7 +66,7 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
         subject.detach("88888888-8888-8888-8888-888888888888")
 
         verify {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockAttachmentHandler.detach(Request.token, capture(attachmentIdSlot))
             mockPlatformSocket.sendMessage(match { Request.isDeleteAttachmentRequest(it, expectedAttachmentId) })
         }

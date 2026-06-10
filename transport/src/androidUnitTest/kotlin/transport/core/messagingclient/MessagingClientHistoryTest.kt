@@ -26,7 +26,7 @@ class MessagingClientHistoryTest : BaseMessagingClientTest() {
         runBlocking { subject.fetchNextPage() }
 
         coVerify { mockHistoryHandler.fetchNextPage() }
-        verify { mockLogger.i(capture(logSlot)) }
+        verify { mockLogger.d(capture(logSlot)) }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
     }

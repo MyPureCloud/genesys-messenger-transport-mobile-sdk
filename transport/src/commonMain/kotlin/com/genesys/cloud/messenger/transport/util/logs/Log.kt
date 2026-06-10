@@ -10,6 +10,8 @@ internal class Log(
             Logger(enableLogs, LogTag.API)
         )
 
+    fun d(message: () -> String) = logger.d(message)
+
     fun i(message: () -> String) = logger.i(message)
 
     fun w(message: () -> String) = logger.w(message)

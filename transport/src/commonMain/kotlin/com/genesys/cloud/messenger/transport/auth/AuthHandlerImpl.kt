@@ -153,7 +153,7 @@ internal class AuthHandlerImpl(
             dispatcher.launch {
                 when (val result = api.refreshAuthJwt(jwt.refreshToken!!)) {
                     is Result.Success -> {
-                        log.i { LogMessages.REFRESH_AUTH_TOKEN_SUCCESS }
+                        log.d { LogMessages.REFRESH_AUTH_TOKEN_SUCCESS }
                         authJwt = jwt.copy(jwt = result.value.jwt, refreshToken = jwt.refreshToken)
                         callback(Result.Success(Empty()))
                     }

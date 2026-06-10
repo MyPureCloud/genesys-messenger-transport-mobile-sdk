@@ -74,7 +74,7 @@ class EventHandlerTest {
             subject.onEvent(it)
 
             verify {
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockEventListener.invoke(eq(it))
             }
         }
@@ -211,7 +211,7 @@ class EventHandlerTest {
         subject.onEvent(givenErrorEvent)
 
         verify {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockEventListener.invoke(capture(eventSlot))
         }
 
@@ -232,7 +232,7 @@ class EventHandlerTest {
         subject.onEvent(givenAgentTypingEvent)
 
         verify {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockEventListener.invoke(capture(eventSlot))
         }
         (eventSlot[0] as AgentTyping).run {
@@ -248,7 +248,7 @@ class EventHandlerTest {
         subject.onEvent(givenSignedInEvent)
 
         verify {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockEventListener.invoke(capture(eventSlot))
         }
         (eventSlot[0] as SignedIn).run {
@@ -267,7 +267,7 @@ class EventHandlerTest {
         subject.onEvent(givenConnectionClosedEvent)
 
         verify {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockEventListener.invoke(capture(eventSlot))
         }
         (eventSlot[0] as ConnectionClosed).run {
@@ -285,7 +285,7 @@ class EventHandlerTest {
         subject.onEvent(givenSessionDurationEvent)
 
         verify {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockEventListener.invoke(capture(eventSlot))
         }
         (eventSlot[0] as SessionDuration).run {
@@ -303,7 +303,7 @@ class EventHandlerTest {
         subject.onEvent(givenSessionExpirationNoticeEvent)
 
         verify {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockEventListener.invoke(capture(eventSlot))
         }
         (eventSlot[0] as SessionExpirationNotice).run {

@@ -70,12 +70,12 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockCustomAttributesStore.add(emptyMap())
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockMessageStore.prepareMessage(Request.token, MessageValues.TEXT)
             mockAttachmentHandler.onSending()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isTextMessageRequest(it) })
             mockMessageStore.update(expectedMessage)
             mockSessionDurationHandler.onMessage()

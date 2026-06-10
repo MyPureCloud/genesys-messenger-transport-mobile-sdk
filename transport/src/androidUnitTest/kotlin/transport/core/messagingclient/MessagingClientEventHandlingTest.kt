@@ -65,7 +65,7 @@ class MessagingClientEventHandlingTest : BaseMessagingClientTest() {
 
         slot.captured.onMessage(Response.structuredMessageWithEvents(direction = Message.Direction.Inbound))
 
-        verify { mockLogger.i(capture(logSlot)) }
+        verify { mockLogger.d(capture(logSlot)) }
         verify(exactly = 0) { mockEventHandler.onEvent(any()) }
         verify(exactly = 0) { mockMessageStore.update(any()) }
         verify(exactly = 0) { mockAttachmentHandler.onSent(any()) }

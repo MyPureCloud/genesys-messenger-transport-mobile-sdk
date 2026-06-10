@@ -38,7 +38,7 @@ class CustomAttributesStoreTest {
 
         val result = subject.add(givenCustomAttributes)
 
-        verify { mockLogger.i(capture(logSlot)) }
+        verify { mockLogger.d(capture(logSlot)) }
         assertThat(subject.state).isPending()
         assertThat(subject.get()).isEqualTo(expectedCustomAttributes)
         assertThat(subject.getCustomAttributesToSend()).isEqualTo(expectedCustomAttributes)
@@ -68,7 +68,7 @@ class CustomAttributesStoreTest {
         assertThat(subject.get()).isEmpty()
         assertThat(subject.getCustomAttributesToSend()).isEmpty()
         assertThat(result).isFalse()
-        verify { mockLogger.w(capture(logSlot)) }
+        verify { mockLogger.d(capture(logSlot)) }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CUSTOM_ATTRIBUTES_EMPTY_OR_SAME)
     }
 
@@ -85,9 +85,9 @@ class CustomAttributesStoreTest {
         assertThat(subject.getCustomAttributesToSend()).isEqualTo(expectedCustomAttributes)
         assertThat(result1).isTrue()
         assertThat(result2).isFalse()
-        verify { mockLogger.w(capture(logSlot)) }
+        verify { mockLogger.d(capture(logSlot)) }
         verify(exactly = 0) { mockEventHandler.onEvent(any()) }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CUSTOM_ATTRIBUTES_EMPTY_OR_SAME)
+        assertThat(logSlot.last().invoke()).isEqualTo(LogMessages.CUSTOM_ATTRIBUTES_EMPTY_OR_SAME)
     }
 
     @Test
@@ -164,7 +164,7 @@ class CustomAttributesStoreTest {
         subject.onSending()
 
         assertThat(subject.state).isSending()
-        verify { mockLogger.i(capture(logSlot)) }
+        verify { mockLogger.d(capture(logSlot)) }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.ON_SENDING)
     }
 
@@ -175,7 +175,7 @@ class CustomAttributesStoreTest {
         assertThat(subject.state).isError()
         assertThat(subject.get()).isEmpty()
         assertThat(subject.getCustomAttributesToSend()).isEmpty()
-        verify { mockLogger.i(capture(logSlot)) }
+        verify { mockLogger.d(capture(logSlot)) }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.ON_ERROR)
     }
 
@@ -185,7 +185,7 @@ class CustomAttributesStoreTest {
 
         assertThat(subject.state).isPending()
         assertThat(subject.maxCustomDataBytes).isEqualTo(MAX_CUSTOM_DATA_BYTES_UNSET)
-        verify { mockLogger.i(capture(logSlot)) }
+        verify { mockLogger.d(capture(logSlot)) }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.ON_SESSION_CLOSED)
     }
 
@@ -194,7 +194,7 @@ class CustomAttributesStoreTest {
         subject.onMessageError()
 
         assertThat(subject.state).isPending()
-        verify { mockLogger.i(capture(logSlot)) }
+        verify { mockLogger.d(capture(logSlot)) }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.ON_MESSAGE_ERROR)
     }
 
@@ -216,7 +216,7 @@ class CustomAttributesStoreTest {
         subject.onSent()
 
         assertThat(subject.state).isPending()
-        verify { mockLogger.i(capture(logSlot)) }
+        verify { mockLogger.d(capture(logSlot)) }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.onSentState(State.PENDING.name))
     }
 

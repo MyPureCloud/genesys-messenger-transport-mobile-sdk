@@ -30,8 +30,8 @@ class MessagingClientHealthCheckTest : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockLogger.i(capture(logSlot))
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isEchoRequest(it) })
             mockSessionDurationHandler.updateSessionDuration(null, null)
             mockEventHandler.onEvent(Event.HealthChecked)
@@ -78,15 +78,15 @@ class MessagingClientHealthCheckTest : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockLogger.i(capture(logSlot))
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isEchoRequest(it) })
             disconnectSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockStateChangedListener(fromClosedToConnecting)
             mockPlatformSocket.openSocket(any())
             mockStateChangedListener(fromConnectingToConnected)
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) })
             mockVault.wasAuthenticated = false
             mockAttachmentHandler.fileAttachmentProfile = any()
@@ -95,8 +95,8 @@ class MessagingClientHealthCheckTest : BaseMessagingClientTest() {
             mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
             mockSessionDurationHandler.updateSessionDuration(any(), any())
             mockStateChangedListener(fromConnectedToConfigured)
-            mockLogger.i(capture(logSlot))
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isEchoRequest(it) })
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
