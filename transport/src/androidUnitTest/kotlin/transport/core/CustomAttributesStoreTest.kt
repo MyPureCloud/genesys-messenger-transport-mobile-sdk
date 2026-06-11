@@ -68,7 +68,7 @@ class CustomAttributesStoreTest {
         assertThat(subject.get()).isEmpty()
         assertThat(subject.getCustomAttributesToSend()).isEmpty()
         assertThat(result).isFalse()
-        verify { mockLogger.d(capture(logSlot)) }
+        verify { mockLogger.w(capture(logSlot)) }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CUSTOM_ATTRIBUTES_EMPTY_OR_SAME)
     }
 
@@ -85,7 +85,7 @@ class CustomAttributesStoreTest {
         assertThat(subject.getCustomAttributesToSend()).isEqualTo(expectedCustomAttributes)
         assertThat(result1).isTrue()
         assertThat(result2).isFalse()
-        verify { mockLogger.d(capture(logSlot)) }
+        verify { mockLogger.w(capture(logSlot)) }
         verify(exactly = 0) { mockEventHandler.onEvent(any()) }
         assertThat(logSlot.last().invoke()).isEqualTo(LogMessages.CUSTOM_ATTRIBUTES_EMPTY_OR_SAME)
     }

@@ -44,7 +44,7 @@ internal class CustomAttributesStoreImpl(
             return true
         }
         if (customAttributes.isEmpty() || this.customAttributes == customAttributes) {
-            log.d { LogMessages.CUSTOM_ATTRIBUTES_EMPTY_OR_SAME }
+            log.w { LogMessages.CUSTOM_ATTRIBUTES_EMPTY_OR_SAME }
             return false
         }
         if (maybeReportFailure(customAttributes)) {

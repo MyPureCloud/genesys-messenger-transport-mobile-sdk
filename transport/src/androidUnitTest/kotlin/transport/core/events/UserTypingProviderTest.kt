@@ -69,7 +69,7 @@ class UserTypingProviderTest {
         verify {
             mockShowUserTypingIndicatorFunction.invoke()
             mockShowUserTypingIndicatorFunction.invoke()
-            mockLogger.d(capture(logSlot))
+            mockLogger.w(capture(logSlot))
         }
 
         assertThat(firstResult).isNotNull()
@@ -102,7 +102,7 @@ class UserTypingProviderTest {
 
         verify {
             mockShowUserTypingIndicatorFunction.invoke()
-            mockLogger.d(capture(logSlot))
+            mockLogger.w(capture(logSlot))
         }
 
         assertThat(result).isNull()

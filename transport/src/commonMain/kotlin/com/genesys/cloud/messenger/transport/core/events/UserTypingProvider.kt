@@ -26,11 +26,11 @@ internal class UserTypingProvider(
                 val request = UserTypingRequest(token = token)
                 WebMessagingJson.json.encodeToString(request)
             } else {
-                log.d { LogMessages.typingIndicatorCoolDown(TYPING_INDICATOR_COOL_DOWN_MILLISECONDS) }
+                log.w { LogMessages.typingIndicatorCoolDown(TYPING_INDICATOR_COOL_DOWN_MILLISECONDS) }
                 null
             }
         } else {
-            log.d { LogMessages.TYPING_INDICATOR_DISABLED }
+            log.w { LogMessages.TYPING_INDICATOR_DISABLED }
             null
         }
     }
