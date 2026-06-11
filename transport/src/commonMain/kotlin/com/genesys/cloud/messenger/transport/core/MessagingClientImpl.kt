@@ -204,7 +204,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class)
     override fun stepUpToAuthenticatedSession() {
-        log.i { LogMessages.STEP_UP_TO_AUTHENTICATED_SESSION }
+        log.d { LogMessages.STEP_UP_TO_AUTHENTICATED_SESSION }
         stateMachine.checkIfConfigured()
         if (connectAuthenticated) return
         connectAuthenticated = true
@@ -231,7 +231,7 @@ internal class MessagingClientImpl(
     private fun configureSession(startNew: Boolean = false) {
         val encodedJson =
             if (connectAuthenticated) {
-                log.i { LogMessages.configureAuthenticatedSession(token, startNew) }
+                log.d { LogMessages.configureAuthenticatedSession(token, startNew) }
                 if (authHandler.jwt == NO_JWT) {
                     if (reconfigureAttempts < MAX_RECONFIGURE_ATTEMPTS) {
                         reconfigureAttempts++
@@ -244,7 +244,7 @@ internal class MessagingClientImpl(
                 }
                 encodeConfigureAuthenticatedSessionRequest(startNew)
             } else {
-                log.i { LogMessages.configureSession(token, startNew) }
+                log.d { LogMessages.configureSession(token, startNew) }
                 encodeConfigureGuestSessionRequest(startNew)
             }
         webSocket.sendMessage(encodedJson)
@@ -256,7 +256,7 @@ internal class MessagingClientImpl(
         customAttributes: Map<String, String>
     ) {
         stateMachine.checkIfConfigured()
-        log.i { LogMessages.sendMessage(text.sanitizeText(), customAttributes) }
+        log.d { LogMessages.sendMessage(text.sanitizeText(), customAttributes) }
         internalCustomAttributesStore.add(customAttributes)
         val channel = prepareCustomAttributesForSending()
         val request = messageStore.prepareMessage(token, text, channel)
@@ -267,7 +267,7 @@ internal class MessagingClientImpl(
 
     override fun sendQuickReply(buttonResponse: ButtonResponse) {
         stateMachine.checkIfConfigured()
-        log.i { LogMessages.sendQuickReply(buttonResponse) }
+        log.d { LogMessages.sendQuickReply(buttonResponse) }
         val channel = prepareCustomAttributesForSending()
         val request = messageStore.prepareMessageWith(token, buttonResponse, channel)
         val encodedJson = WebMessagingJson.json.encodeToString(request)
@@ -276,7 +276,7 @@ internal class MessagingClientImpl(
 
     override fun sendCardReply(postbackResponse: ButtonResponse) {
         stateMachine.checkIfConfigured()
-        log.i { LogMessages.sendCardReply(postbackResponse) }
+        log.d { LogMessages.sendCardReply(postbackResponse) }
         val channel = prepareCustomAttributesForSending()
         val request = messageStore.preparePostbackMessage(token, postbackResponse, channel)
         val encodedJson = WebMessagingJson.json.encodeToString(request)
@@ -285,7 +285,7 @@ internal class MessagingClientImpl(
 
     override fun submitTimeSlot(timeSlotResponse: ButtonResponse) {
         stateMachine.checkIfConfigured()
-        log.i { LogMessages.submitTimeSlot(timeSlotResponse.payload, timeSlotResponse.originatingMessageId) }
+        log.d { LogMessages.submitTimeSlot(timeSlotResponse.payload, timeSlotResponse.originatingMessageId) }
         val channel = prepareCustomAttributesForSending()
         val request =
             messageStore.prepareTimeSlotSubmissionMessageWith(token, timeSlotResponse, channel)
@@ -296,7 +296,7 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun sendHealthCheck() {
         healthCheckProvider.encodeRequest(token)?.let {
-            log.i { LogMessages.SEND_HEALTH_CHECK }
+            log.d { LogMessages.SEND_HEALTH_CHECK }
             send(it)
         }
     }
@@ -315,7 +315,7 @@ internal class MessagingClientImpl(
         fileName: String,
         uploadProgress: ((Float) -> Unit)?,
     ): String {
-        log.i { LogMessages.attach(fileName) }
+        log.d { LogMessages.attach(fileName) }
         val request =
             attachmentHandler.prepare(
                 token,
@@ -331,7 +331,7 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class, IllegalArgumentException::class)
     override fun detach(attachmentId: String) {
-        log.i { LogMessages.detach(attachmentId) }
+        log.d { LogMessages.detach(attachmentId) }
         attachmentHandler.detach(token, attachmentId)?.let {
             val encodedJson = WebMessagingJson.json.encodeToString(it)
             send(encodedJson)
@@ -347,7 +347,7 @@ internal class MessagingClientImpl(
                     attachmentId = attachmentId
                 )
             ).also {
-                log.i { "getAttachmentRequest()" }
+                log.d { "getAttachmentRequest()" }
                 send(it)
             }
     }
@@ -355,7 +355,7 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     private fun send(message: String) {
         stateMachine.checkIfConfigured()
-        log.i { LogMessages.WILL_SEND_MESSAGE }
+        log.d { LogMessages.WILL_SEND_MESSAGE }
         webSocket.sendMessage(message)
     }
 
@@ -396,20 +396,20 @@ internal class MessagingClientImpl(
             return
         }
         WebMessagingJson.json.encodeToString(ClearConversationRequest(token)).let {
-            log.i { LogMessages.SEND_CLEAR_CONVERSATION }
+            log.d { LogMessages.SEND_CLEAR_CONVERSATION }
             webSocket.sendMessage(it)
         }
     }
 
     override fun invalidateConversationCache() {
-        log.i { LogMessages.CLEAR_CONVERSATION_HISTORY }
+        log.d { LogMessages.CLEAR_CONVERSATION_HISTORY }
         messageStore.invalidateConversationCache()
     }
 
     @Throws(IllegalStateException::class)
     override fun indicateTyping() {
         userTypingProvider.encodeRequest(token)?.let {
-            log.i { LogMessages.INDICATE_TYPING }
+            log.d { LogMessages.INDICATE_TYPING }
             send(it)
         }
     }
@@ -436,7 +436,7 @@ internal class MessagingClientImpl(
         sendingAutostart = true
         val channel = prepareCustomAttributesForSending()
         WebMessagingJson.json.encodeToString(AutoStartRequest(token, channel)).let {
-            log.i { LogMessages.SEND_AUTO_START }
+            log.d { LogMessages.SEND_AUTO_START }
             send(it)
         }
     }
@@ -456,7 +456,7 @@ internal class MessagingClientImpl(
                     closeAllConnections = true
                 )
             ).also {
-                log.i { LogMessages.CLOSE_SESSION }
+                log.d { LogMessages.CLOSE_SESSION }
                 webSocket.sendMessage(it)
             }
     }
@@ -490,7 +490,7 @@ internal class MessagingClientImpl(
 
     private fun synchronizePushService() {
         if (!deploymentConfig.isPushServiceEnabled()) return
-        log.i { LogMessages.SYNCHRONIZE_PUSH_SERVICE_ON_SESSION_CONFIGURE }
+        log.d { LogMessages.SYNCHRONIZE_PUSH_SERVICE_ON_SESSION_CONFIGURE }
         vault.pushConfig.run {
             if (deviceToken != UNKNOWN && pushProvider != null) {
                 defaultDispatcher.launch {
@@ -510,7 +510,7 @@ internal class MessagingClientImpl(
                     }
                 }
             } else {
-                log.i { LogMessages.NO_DEVICE_TOKEN_OR_PUSH_PROVIDER }
+                log.d { LogMessages.NO_DEVICE_TOKEN_OR_PUSH_PROVIDER }
             }
         }
     }
@@ -581,7 +581,7 @@ internal class MessagingClientImpl(
     }
 
     private fun invalidateSessionToken() {
-        log.i { LogMessages.INVALIDATE_SESSION_TOKEN }
+        log.d { LogMessages.INVALIDATE_SESSION_TOKEN }
         vault.remove(vault.keys.tokenKey)
         token = vault.token
     }
@@ -701,7 +701,7 @@ internal class MessagingClientImpl(
                         is Event.SignedIn -> eventHandler.onEvent(it)
                         else -> {
                             // Do nothing. Autostart and SignedIn are the only Inbound events that should be reported to UI.
-                            log.i { LogMessages.ignoreInboundEvent(it) }
+                            log.d { LogMessages.ignoreInboundEvent(it) }
                         }
                     }
                 }
@@ -755,7 +755,7 @@ internal class MessagingClientImpl(
 
     private fun considerForceClose() {
         if (stateMachine.isClosing()) {
-            log.i { LogMessages.FORCE_CLOSE_WEB_SOCKET }
+            log.d { LogMessages.FORCE_CLOSE_WEB_SOCKET }
             val closingState = stateMachine.currentState as State.Closing
             socketListener.onClosed(closingState.code, closingState.reason)
         }
@@ -828,7 +828,7 @@ internal class MessagingClientImpl(
         }
 
         override fun onMessage(text: String) {
-            log.i { LogMessages.onMessage(text) }
+            log.d { LogMessages.onMessage(text) }
             try {
                 val decoded = WebMessagingJson.decodeFromString(text)
                 when (decoded.body) {
@@ -919,7 +919,7 @@ internal class MessagingClientImpl(
                     }
 
                     else -> {
-                        log.i { LogMessages.unhandledMessage(decoded) }
+                        log.d { LogMessages.unhandledMessage(decoded) }
                     }
                 }
             } catch (exception: SerializationException) {

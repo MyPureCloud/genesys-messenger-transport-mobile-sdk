@@ -1,6 +1,7 @@
 package transport.core.messagingclient
 
 import assertk.assertThat
+import assertk.assertions.contains
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import com.genesys.cloud.messenger.transport.core.ErrorCode
@@ -65,12 +66,16 @@ class MessagingClientEventHandlingTest : BaseMessagingClientTest() {
 
         slot.captured.onMessage(Response.structuredMessageWithEvents(direction = Message.Direction.Inbound))
 
-        verify { mockLogger.i(capture(logSlot)) }
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
+        }
         verify(exactly = 0) { mockEventHandler.onEvent(any()) }
         verify(exactly = 0) { mockMessageStore.update(any()) }
         verify(exactly = 0) { mockAttachmentHandler.onSent(any()) }
-        assertThat(logSlot[2].invoke()).isEqualTo(LogMessages.ignoreInboundEvent(Event.AgentTyping(1000)))
-        assertThat(logSlot[3].invoke()).isEqualTo(LogMessages.ignoreInboundEvent(Event.AgentTyping(5000)))
+        val allLogs = logSlot.map { it.invoke() }
+        assertThat(allLogs).contains(LogMessages.ignoreInboundEvent(Event.AgentTyping(1000)))
+        assertThat(allLogs).contains(LogMessages.ignoreInboundEvent(Event.AgentTyping(5000)))
     }
 
     @Test

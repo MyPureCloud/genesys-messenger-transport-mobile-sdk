@@ -28,20 +28,20 @@ internal class PushServiceImpl(
         deviceToken: String,
         pushProvider: PushProvider
     ) {
-        log.i { LogMessages.synchronizingPush(deviceToken, pushProvider) }
+        log.d { LogMessages.synchronizingPush(deviceToken, pushProvider) }
         val storedPushConfig = vault.pushConfig
         val userPushConfig = buildPushConfigFromUserData(deviceToken, pushProvider)
         val diff = pushConfigComparator.compare(userPushConfig, storedPushConfig)
-        log.i { LogMessages.pushDiff(diff) }
+        log.d { LogMessages.pushDiff(diff) }
         handleDiff(diff, userPushConfig, storedPushConfig)
     }
 
     @Throws(DeviceTokenException::class, CancellationException::class)
     override suspend fun unregister() {
-        log.i { LogMessages.UNREGISTERING_DEVICE }
+        log.d { LogMessages.UNREGISTERING_DEVICE }
         vault.pushConfig.run {
             if (token == UNKNOWN) {
-                log.i { LogMessages.DEVICE_NOT_REGISTERED }
+                log.d { LogMessages.DEVICE_NOT_REGISTERED }
                 return
             }
             delete(this, true)
@@ -55,7 +55,7 @@ internal class PushServiceImpl(
         storedPushConfig: PushConfig
     ) {
         when (diff) {
-            Diff.NONE -> log.i { LogMessages.deviceTokenIsInSync(userPushConfig) }
+            Diff.NONE -> log.d { LogMessages.deviceTokenIsInSync(userPushConfig) }
 
             Diff.NO_TOKEN -> register(userPushConfig)
             Diff.TOKEN -> {
@@ -75,7 +75,7 @@ internal class PushServiceImpl(
     private suspend fun register(userPushConfig: PushConfig) {
         when (val result = api.performDeviceTokenOperation(userPushConfig, Register)) {
             is Result.Success -> {
-                log.i { LogMessages.deviceTokenWasRegistered(userPushConfig) }
+                log.d { LogMessages.deviceTokenWasRegistered(userPushConfig) }
                 vault.pushConfig = userPushConfig
             }
 
@@ -87,7 +87,7 @@ internal class PushServiceImpl(
     private suspend fun update(userPushConfig: PushConfig) {
         when (val result = api.performDeviceTokenOperation(userPushConfig, Update)) {
             is Result.Success -> {
-                log.i { LogMessages.deviceTokenWasUpdated(userPushConfig) }
+                log.d { LogMessages.deviceTokenWasUpdated(userPushConfig) }
                 vault.pushConfig = userPushConfig
             }
 
@@ -128,7 +128,7 @@ internal class PushServiceImpl(
 
             ErrorCode.DeviceNotFound -> {
                 if (operation == Update) {
-                    log.i { LogMessages.DEVICE_NOT_REGISTERED }
+                    log.d { LogMessages.DEVICE_NOT_REGISTERED }
                     register(userPushConfig)
                 } else {
                     throwDeviceTokenException(result, userPushConfig)
@@ -136,7 +136,7 @@ internal class PushServiceImpl(
             }
 
             ErrorCode.DeviceAlreadyRegistered -> {
-                log.i { LogMessages.DEVICE_ALREADY_REGISTERED }
+                log.d { LogMessages.DEVICE_ALREADY_REGISTERED }
                 vault.pushConfig = userPushConfig
                 update(userPushConfig)
             }
@@ -172,7 +172,7 @@ internal class PushServiceImpl(
         pushConfig: PushConfig,
         clearStoredPushConfigUponSuccess: Boolean
     ) {
-        log.i { LogMessages.deviceTokenWasDeleted(pushConfig) }
+        log.d { LogMessages.deviceTokenWasDeleted(pushConfig) }
         if (clearStoredPushConfigUponSuccess) vault.remove(vault.keys.pushConfigKey)
     }
 }

@@ -471,7 +471,7 @@ class AuthHandlerTest {
 
         coVerify {
             mockWebMessagingApi.refreshAuthJwt(AuthTest.REFRESH_TOKEN)
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
         }
         assertThat(mockCallback.captured).isInstanceOf(Result.Success::class.java)
         assertThat((mockCallback.captured as Result.Success<Empty>).value).isInstanceOf(Empty::class.java)

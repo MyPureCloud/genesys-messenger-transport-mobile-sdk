@@ -57,13 +57,13 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockCustomAttributesStore.add(expectedCustomAttributes)
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockCustomAttributesStore.onSending()
             mockMessageStore.prepareMessage(Request.token, expectedText, expectedChannel)
             mockAttachmentHandler.onSending()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isTextMessageRequest(it, MessageValues.TEXT.sanitizeText()) && it.contains(""""customAttributes":{"A":"B"}""") })
         }
         val sanitizedText = MessageValues.TEXT.sanitizeText()
@@ -197,11 +197,11 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockCustomAttributesStore.onSending()
             mockMessageStore.prepareMessageWith(Request.token, expectedButtonResponse, expectedChannel)
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isQuickReplyRequest(it) && it.contains(""""customAttributes":{"A":"B"}""") })
         }
     }
@@ -241,11 +241,11 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockLogger.i(any())
+            mockLogger.d(any())
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockCustomAttributesStore.onSending()
             mockMessageStore.preparePostbackMessage(Request.token, expectedButtonResponse, expectedChannel)
-            mockLogger.i(any())
+            mockLogger.d(any())
             mockPlatformSocket.sendMessage(match { Request.isStructuredMessageRequest(it) && it.contains(""""customAttributes":{"A":"B"}""") })
         }
     }
@@ -253,8 +253,8 @@ class MessagingClientCustomAttributesTest : BaseMessagingClientTest() {
     private fun MockKVerificationScope.sendingCustomAttributesSequence(messageMatcher: (String) -> Boolean) {
         mockCustomAttributesStore.getCustomAttributesToSend()
         mockCustomAttributesStore.onSending()
-        mockLogger.i(capture(logSlot))
-        mockLogger.i(capture(logSlot))
+        mockLogger.d(capture(logSlot))
+        mockLogger.d(capture(logSlot))
         mockPlatformSocket.sendMessage(match(messageMatcher))
     }
 }

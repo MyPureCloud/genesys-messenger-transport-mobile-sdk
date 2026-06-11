@@ -70,7 +70,7 @@ class PushServiceTest {
 
             verifySequence {
                 syncSequence(expectedUserConfig, expectedStoredConfig)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
             }
             assertBaseSynchronizeLogsFor(Diff.NONE)
             assertThat(logSlot[2].invoke()).isEqualTo(
@@ -91,7 +91,7 @@ class PushServiceTest {
             coVerifySequence {
                 syncSequence(expectedUserConfig, expectedStoredConfig)
                 mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig = expectedUserConfig
             }
             assertBaseSynchronizeLogsFor(Diff.NO_TOKEN)
@@ -113,7 +113,7 @@ class PushServiceTest {
             coVerifySequence {
                 syncSequence(expectedUserConfig, expectedStoredConfig)
                 mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig = expectedUserConfig
             }
             assertBaseSynchronizeLogsFor(Diff.TOKEN)
@@ -136,7 +136,7 @@ class PushServiceTest {
             coVerifySequence {
                 syncSequence(expectedUserConfig, expectedStoredConfig)
                 mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig = expectedUserConfig
             }
             assertBaseSynchronizeLogsFor(Diff.TOKEN)
@@ -158,7 +158,7 @@ class PushServiceTest {
             coVerifySequence {
                 syncSequence(expectedUserConfig, expectedStoredConfig)
                 mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig = expectedUserConfig
             }
             assertBaseSynchronizeLogsFor(Diff.DEVICE_TOKEN)
@@ -180,7 +180,7 @@ class PushServiceTest {
             coVerifySequence {
                 syncSequence(expectedUserConfig, expectedStoredConfig)
                 mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig = expectedUserConfig
             }
             assertBaseSynchronizeLogsFor(Diff.LANGUAGE)
@@ -202,7 +202,7 @@ class PushServiceTest {
             coVerifySequence {
                 syncSequence(expectedUserConfig, expectedStoredConfig)
                 mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig = expectedUserConfig
             }
             assertBaseSynchronizeLogsFor(Diff.EXPIRED)
@@ -217,9 +217,9 @@ class PushServiceTest {
             subject.unregister()
 
             coVerifySequence {
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
             }
             assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.UNREGISTERING_DEVICE)
             assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.DEVICE_NOT_REGISTERED)
@@ -234,10 +234,10 @@ class PushServiceTest {
             subject.unregister()
 
             coVerifySequence {
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig
                 mockApi.performDeviceTokenOperation(expectedUserConfig, DeviceTokenOperation.Delete)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.keys
                 mockVault.remove(TestValues.vaultKeys.pushConfigKey)
             }
@@ -332,10 +332,10 @@ class PushServiceTest {
             coVerifySequence {
                 syncSequence(expectedUserConfig, expectedStoredConfig)
                 mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation1)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig = expectedUserConfig
                 mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation2)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig = expectedUserConfig
             }
             assertBaseSynchronizeLogsFor(Diff.NO_TOKEN)
@@ -386,9 +386,9 @@ class PushServiceTest {
             coVerifySequence {
                 syncSequence(expectedUserConfig, expectedStoredConfig)
                 mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockApi.performDeviceTokenOperation(expectedUserConfig, DeviceTokenOperation.Register)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig = expectedUserConfig
             }
             assertBaseSynchronizeLogsFor(Diff.LANGUAGE)
@@ -410,10 +410,10 @@ class PushServiceTest {
             subject.unregister()
 
             coVerifySequence {
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig
                 mockApi.performDeviceTokenOperation(expectedUserConfig, DeviceTokenOperation.Delete)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.keys
                 mockVault.remove(TestValues.vaultKeys.pushConfigKey)
             }
@@ -451,13 +451,13 @@ class PushServiceTest {
         expectedUserConfig: PushConfig,
         expectedStoredConfig: PushConfig
     ) {
-        mockLogger.i(capture(logSlot))
+        mockLogger.d(capture(logSlot))
         mockVault.pushConfig
         mockVault.token
         mockPlatform.preferredLanguage()
         mockPlatform.epochMillis()
         mockPlatform.os
         mockPushConfigComparator.compare(expectedUserConfig, expectedStoredConfig)
-        mockLogger.i(capture(logSlot))
+        mockLogger.d(capture(logSlot))
     }
 }

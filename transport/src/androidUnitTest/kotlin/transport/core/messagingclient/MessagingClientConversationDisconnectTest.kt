@@ -193,7 +193,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         assertThat(subject.currentState).isReadOnly()
         verifySequence {
             connectToReadOnlySequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isCloseAllConnectionsRequest(it) })
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
@@ -219,7 +219,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
         verifySequence {
             connectToReadOnlySequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isCloseAllConnectionsRequest(it) })
             errorSequence(fromReadOnlyToError(errorState = expectedErrorState))
         }
@@ -240,7 +240,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         assertThat(subject.currentState).isReadOnly()
         verifySequence {
             connectToReadOnlySequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isCloseAllConnectionsRequest(it) })
             mockVault.wasAuthenticated = false
             mockAttachmentHandler.fileAttachmentProfile = any()
@@ -248,9 +248,9 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
             mockJwtHandler.clear()
             mockCustomAttributesStore.maxCustomDataBytes = TestValues.MAX_CUSTOM_DATA_BYTES
             mockSessionDurationHandler.updateSessionDuration(any(), any())
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             verifyCleanUp()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it, startNew = true) })
         }
     }
@@ -270,7 +270,7 @@ class MessagingClientConversationDisconnectTest : BaseMessagingClientTest() {
         assertThat(subject.currentState).isReadOnly()
         verifySequence {
             connectToReadOnlySequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isCloseAllConnectionsRequest(it) })
             mockVault.wasAuthenticated = false
             mockAttachmentHandler.fileAttachmentProfile = any()
