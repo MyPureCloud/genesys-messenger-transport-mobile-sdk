@@ -1,6 +1,7 @@
 package transport.core.messagingclient
 
 import assertk.assertThat
+import assertk.assertions.contains
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.shyrka.receive.JwtResponse
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
@@ -26,9 +27,13 @@ class MessagingClientHistoryTest : BaseMessagingClientTest() {
         runBlocking { subject.fetchNextPage() }
 
         coVerify { mockHistoryHandler.fetchNextPage() }
-        verify { mockLogger.i(capture(logSlot)) }
-        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
-        assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+        verify {
+            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
+        }
+        val allLogs = logSlot.map { it.invoke() }
+        assertThat(allLogs).contains(LogMessages.CONNECT)
+        assertThat(allLogs).contains(LogMessages.configureSession(Request.token))
     }
 
     @Test

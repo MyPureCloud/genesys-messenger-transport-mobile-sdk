@@ -81,7 +81,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
 
         verifySequence {
             fromIdleToConnectedSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.refreshToken(any())
             mockEventHandler.onEvent(Event.AuthorizationRequired)
@@ -145,7 +145,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         )
         verifySequence {
             fromIdleToConnectedSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.refreshToken(any())
             mockEventHandler.onEvent(Event.AuthorizationRequired)
@@ -273,22 +273,22 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         )
         verifySequence {
             fromIdleToConnectedSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.jwt
             mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
             mockAuthHandler.refreshToken(any())
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.jwt
             mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
             mockAuthHandler.refreshToken(any())
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.jwt
             mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
             mockAuthHandler.refreshToken(any())
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.jwt
             mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
@@ -311,7 +311,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         )
         verifySequence {
             connectSequence(shouldConfigureAuth = true)
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockMessageStore.invalidateConversationCache()
             mockReconnectionHandler.shouldReconnect
             errorSequence(fromConfiguredToError(expectedErrorState))
@@ -343,7 +343,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
         verifySequence {
             connectSequence(shouldConfigureAuth = true)
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockMessageStore.invalidateConversationCache()
             mockReconnectionHandler.shouldReconnect
             mockSessionDurationHandler.clearAndRemoveNotice()
@@ -351,7 +351,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
             mockReconnectionHandler.reconnect(any())
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.openSocket(any())
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockAuthHandler.jwt
             mockAuthHandler.jwt
             mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
@@ -441,19 +441,19 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
         verifySequence {
             fromIdleToConnectedSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it) })
             mockSessionDurationHandler.updateSessionDuration(any(), any())
             mockStateChangedListener(fromConnectedToConfigured)
             mockStateChangedListener(fromConfiguredToReadOnly())
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isCloseAllConnectionsRequest(it) })
             mockSessionDurationHandler.updateSessionDuration(any(), any())
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockSessionDurationHandler.clear()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it, startNew = true) })
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isConfigureAuthenticatedRequest(it, startNew = true) })
             mockSessionDurationHandler.updateSessionDuration(any(), any())
             mockStateChangedListener(fromReadOnlyToConfigured)
@@ -468,7 +468,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             configureSequence(shouldConfigureAuth = true)
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
@@ -485,7 +485,7 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence(shouldConfigureAuth = true)
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT_AUTHENTICATED_SESSION)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureAuthenticatedSession(Request.token, false))

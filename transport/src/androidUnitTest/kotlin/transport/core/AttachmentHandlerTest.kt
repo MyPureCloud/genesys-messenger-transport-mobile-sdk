@@ -100,7 +100,7 @@ internal class AttachmentHandlerTest {
             subject.prepare(TestValues.TOKEN, AttachmentValues.ID, ByteArray(AttachmentValues.FILE_SIZE), AttachmentValues.FILE_NAME)
 
         verify {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockAttachmentListener.invoke(capture(attachmentSlot))
         }
         onAttachmentRequest.run {
@@ -136,7 +136,7 @@ internal class AttachmentHandlerTest {
             subject.prepare(TestValues.TOKEN, AttachmentValues.ID, ByteArray(AttachmentValues.FILE_SIZE), AttachmentValues.TXT_FILE_NAME)
 
         verify {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockAttachmentListener.invoke(capture(attachmentSlot))
         }
         onAttachmentRequest.run {
@@ -171,7 +171,7 @@ internal class AttachmentHandlerTest {
 //        subject.upload(givenPresignedUrlResponse)
 //
 //        coVerify {
-//            mockLogger.i(capture(logSlot))
+//            mockLogger.d(capture(logSlot))
 //            mockAttachmentListener.invoke(capture(attachmentSlot))
 //            mockApi.uploadFile(expectedPresignedUrlResponse, ByteArray(1), mockUploadProgress)
 //            mockUploadProgress.invoke(capture(progressSlot))
@@ -276,7 +276,7 @@ internal class AttachmentHandlerTest {
         subject.onUploadSuccess(givenUploadSuccessEvent)
 
         verify {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockAttachmentListener.invoke(capture(attachmentSlot))
         }
         attachmentSlot.captured.run {
@@ -316,7 +316,7 @@ internal class AttachmentHandlerTest {
         val result = subject.detach(TestValues.TOKEN, AttachmentValues.ID)
 
         verify {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockAttachmentListener.invoke(capture(attachmentSlot))
         }
         result!!.run {
@@ -338,7 +338,7 @@ internal class AttachmentHandlerTest {
         val result = subject.detach(TestValues.TOKEN, AttachmentValues.ID)
 
         verify {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockAttachmentListener.invoke(capture(attachmentSlot))
         }
         assertThat(result).isNull()
@@ -370,7 +370,7 @@ internal class AttachmentHandlerTest {
         subject.onDetached(AttachmentValues.ID)
 
         verify {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockAttachmentListener.invoke(capture(attachmentSlot))
         }
         assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
@@ -505,7 +505,7 @@ internal class AttachmentHandlerTest {
         subject.onSending()
 
         verify {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockAttachmentListener.invoke(capture(attachmentSlot))
         }
         assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
@@ -545,7 +545,7 @@ internal class AttachmentHandlerTest {
         )
 
         verify {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockAttachmentListener.invoke(capture(attachmentSlot))
         }
         attachmentSlot.captured.run {
@@ -607,7 +607,7 @@ internal class AttachmentHandlerTest {
         subject.resetAttachmentState()
 
         verify {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockAttachmentListener.invoke(capture(attachmentSlot))
         }
         assertThat(attachmentSlot.captured).isEqualTo(expectedAttachment)
@@ -631,7 +631,7 @@ internal class AttachmentHandlerTest {
         subject.resetAttachmentState()
 
         verify {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockLogger.e(capture(logSlot))
             mockAttachmentListener.invoke(capture(attachmentSlot))
         }
@@ -650,7 +650,7 @@ internal class AttachmentHandlerTest {
         subject.resetAttachmentState()
 
         verify {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
         }
         verify(exactly = 0) {
             mockAttachmentListener.invoke(any())

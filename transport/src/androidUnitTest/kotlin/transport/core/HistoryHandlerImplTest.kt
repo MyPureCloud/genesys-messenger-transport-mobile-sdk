@@ -54,7 +54,7 @@ class HistoryHandlerImplTest {
 
             subject.fetchNextPage()
 
-            verify { log.i(capture(logSlot)) }
+            verify { log.d(capture(logSlot)) }
             verify { messageStore.updateMessageHistory(emptyList(), any()) }
             coVerify(exactly = 0) { api.getMessages(any(), any()) }
             verify(exactly = 0) { eventHandler.onEvent(any()) }
@@ -71,7 +71,7 @@ class HistoryHandlerImplTest {
 
             subject.fetchNextPage()
 
-            verify { log.i(capture(logSlot)) }
+            verify { log.d(capture(logSlot)) }
             verify { messageStore.updateMessageHistory(response.entities.toMessageList(), response.total) }
             assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.fetchingHistory(TestValues.HISTORY_PAGE_ONE))
         }
@@ -85,7 +85,7 @@ class HistoryHandlerImplTest {
 
             subject.fetchNextPage()
 
-            verify { log.i(capture(logSlot)) }
+            verify { log.d(capture(logSlot)) }
             verify { log.w(capture(logSlot)) }
             verify(exactly = 0) { eventHandler.onEvent(any()) }
             assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.fetchingHistory(TestValues.HISTORY_PAGE_ONE))
@@ -105,7 +105,7 @@ class HistoryHandlerImplTest {
 
             subject.fetchNextPage()
 
-            verify { log.i(capture(logSlot)) }
+            verify { log.d(capture(logSlot)) }
             verify { log.w(capture(logSlot)) }
             verify {
                 eventHandler.onEvent(

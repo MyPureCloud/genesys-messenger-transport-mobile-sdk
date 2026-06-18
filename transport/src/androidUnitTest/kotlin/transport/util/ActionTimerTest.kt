@@ -58,7 +58,7 @@ class ActionTimerTest {
             advanceTimeBy(150)
 
             assertThat(actionExecuted).isTrue()
-            verify { mockLogger.i(capture(logSlot)) }
+            verify { mockLogger.d(capture(logSlot)) }
             assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.startingTimer(100))
             assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.TIMER_EXPIRED_EXECUTING_ACTION)
         }
@@ -80,7 +80,7 @@ class ActionTimerTest {
             advanceTimeBy(1000)
 
             assertThat(actionExecuted).isFalse()
-            verify { mockLogger.i(capture(logSlot)) }
+            verify { mockLogger.d(capture(logSlot)) }
             assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.startingTimer(1000))
             assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.CANCELLING_TIMER)
         }
@@ -122,7 +122,7 @@ class ActionTimerTest {
             subject.cancel()
 
             assertThat(subject.isActive()).isFalse()
-            verify(exactly = 0) { mockLogger.i(any()) }
+            verify(exactly = 0) { mockLogger.d(any()) }
         }
 
     @Test

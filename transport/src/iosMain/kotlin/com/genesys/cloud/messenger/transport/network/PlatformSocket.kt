@@ -71,7 +71,7 @@ internal actual class PlatformSocket actual constructor(
                             webSocketTask: NSURLSessionWebSocketTask,
                             didOpenWithProtocol: String?,
                         ) {
-                            log.i { LogMessages.socketDidOpen(active) }
+                            log.d { LogMessages.socketDidOpen(active) }
                             if (webSocketTask == webSocket) {
                                 keepAlive()
                                 listener.onOpen()
@@ -85,7 +85,7 @@ internal actual class PlatformSocket actual constructor(
                             reason: NSData?,
                         ) {
                             val why = reason?.string() ?: "Reason not specified."
-                            log.i { LogMessages.socketDidClose(didCloseWithCode, why, active) }
+                            log.d { LogMessages.socketDidClose(didCloseWithCode, why, active) }
                             if (webSocketTask == webSocket) {
                                 deactivate()
                                 listener.onClosed(code = didCloseWithCode.toInt(), reason = why)
@@ -104,13 +104,13 @@ internal actual class PlatformSocket actual constructor(
         code: Int,
         reason: String
     ) {
-        log.i { LogMessages.closeSocket(code, reason) }
+        log.d { LogMessages.closeSocket(code, reason) }
         deactivateAndCancelWebSocket(code, reason)
         listener?.onClosed(code, reason)
     }
 
     actual fun sendMessage(text: String) {
-        log.i { LogMessages.sendMessage(text) }
+        log.d { LogMessages.sendMessage(text) }
         val message = NSURLSessionWebSocketMessage(text)
         webSocket?.sendMessage(message) { nsError ->
             if (nsError != null) {
@@ -159,14 +159,14 @@ internal actual class PlatformSocket actual constructor(
                     }
 
                     waitingOnPong = true
-                    log.i { LogMessages.SENDING_PING }
+                    log.d { LogMessages.SENDING_PING }
                     sendPing { nsError ->
                         if (nsError != null) {
                             handleError(nsError, "Pong handler failure")
                             return@sendPing
                         }
                         waitingOnPong = false
-                        log.i { LogMessages.RECEIVED_PONG }
+                        log.d { LogMessages.RECEIVED_PONG }
                     }
                 }
         }
@@ -193,7 +193,7 @@ internal actual class PlatformSocket actual constructor(
     }
 
     private fun deactivate() {
-        log.i { LogMessages.DEACTIVATE }
+        log.d { LogMessages.DEACTIVATE }
         cancelPings()
         webSocket = null
     }
@@ -207,7 +207,7 @@ internal actual class PlatformSocket actual constructor(
         code: Int,
         reason: String?
     ) {
-        log.i { LogMessages.deactivateWithCloseCode(code, reason) }
+        log.d { LogMessages.deactivateWithCloseCode(code, reason) }
         val webSocketRef = webSocket
         deactivate()
         webSocketRef?.cancelWithCloseCode(code.toLong(), reason?.toNSData())

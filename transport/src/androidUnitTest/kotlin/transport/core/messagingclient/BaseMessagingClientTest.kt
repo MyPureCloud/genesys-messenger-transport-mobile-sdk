@@ -298,7 +298,7 @@ open class BaseMessagingClientTest {
     }
 
     protected fun MockKVerificationScope.configureSequence(shouldConfigureAuth: Boolean = false, startNew: Boolean = false) {
-        mockLogger.i(capture(logSlot))
+        mockLogger.d(capture(logSlot))
         if (shouldConfigureAuth) {
             mockAuthHandler.jwt // check if jwt is valid
             mockAuthHandler.jwt // use jwt for request
@@ -322,7 +322,7 @@ open class BaseMessagingClientTest {
 
     protected fun MockKVerificationScope.connectToReadOnlySequence() {
         fromIdleToConnectedSequence()
-        mockLogger.i(capture(logSlot))
+        mockLogger.d(capture(logSlot))
         mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) })
         mockVault.wasAuthenticated = false
         mockAttachmentHandler.fileAttachmentProfile = any()
@@ -352,7 +352,7 @@ open class BaseMessagingClientTest {
         mockStateChangedListener(fromConfiguredToClosing)
         mockPlatformSocket.closeSocket(expectedCloseCode, expectedCloseReason)
         mockStateChangedListener(fromClosingToClosed)
-        mockLogger.i(capture(logSlot))
+        mockLogger.d(capture(logSlot))
         verifyCleanUp()
     }
 
@@ -364,7 +364,7 @@ open class BaseMessagingClientTest {
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
-        mockLogger.i(capture(logSlot))
+        mockLogger.d(capture(logSlot))
         mockPlatformSocket.sendMessage(
             match {
                 if (shouldConfigureAuth) {
@@ -384,7 +384,7 @@ open class BaseMessagingClientTest {
     }
 
     protected fun MockKVerificationScope.invalidateSessionTokenSequence() {
-        mockLogger.i(capture(logSlot))
+        mockLogger.d(capture(logSlot))
         mockVault.keys
         mockVault.remove(TOKEN_KEY)
         mockVault.token

@@ -65,7 +65,7 @@ internal class SessionDurationHandler(
      * @param expirationDate The current expiration date for the session (timestamp).
      */
     fun updateSessionDuration(durationSeconds: Long?, expirationDate: Long?) {
-        log.i { LogMessages.updateSessionDuration(durationSeconds, expirationDate) }
+        log.d { LogMessages.updateSessionDuration(durationSeconds, expirationDate) }
 
         if (durationSeconds != null && durationSeconds != currentDurationSeconds) {
             currentDurationSeconds = durationSeconds
@@ -100,16 +100,16 @@ internal class SessionDurationHandler(
     private fun scheduleHealthCheckTimer(expirationNoticeDelayMillis: Long) {
         val healthCheckDelayMillis = expirationNoticeDelayMillis - healthCheckPreNoticeTimeMillis
         if (healthCheckDelayMillis > 0) {
-            log.i { LogMessages.startingHealthCheckTimer(healthCheckDelayMillis) }
+            log.d { LogMessages.startingHealthCheckTimer(healthCheckDelayMillis) }
             healthCheckTimer.start(healthCheckDelayMillis)
         } else {
-            log.i { LogMessages.healthCheckLeadTimeTooShort(healthCheckDelayMillis) }
+            log.d { LogMessages.healthCheckLeadTimeTooShort(healthCheckDelayMillis) }
             triggerHealthCheck()
         }
     }
 
     private fun scheduleExpirationNoticeTimer(expirationNoticeDelayMillis: Long) {
-        log.i { LogMessages.startingExpirationTimer(expirationNoticeDelayMillis, expirationNoticeDelayMillis / 1000) }
+        log.d { LogMessages.startingExpirationTimer(expirationNoticeDelayMillis, expirationNoticeDelayMillis / 1000) }
         expirationTimer.start(expirationNoticeDelayMillis)
     }
 
@@ -138,14 +138,14 @@ internal class SessionDurationHandler(
     private fun emitSessionExpirationNotice() {
         val expiresInSeconds = calculateTimeToExpiration()
         sessionExpirationNoticeSent = true
-        log.i { LogMessages.sessionExpirationNoticeSent(expiresInSeconds) }
+        log.d { LogMessages.sessionExpirationNoticeSent(expiresInSeconds) }
         eventHandler.onEvent(Event.SessionExpirationNotice(expiresInSeconds))
         scheduleExpirationHealthCheck(expiresInSeconds)
     }
 
     private fun scheduleExpirationHealthCheck(expiresInSeconds: Long) {
         val delayMillis = (expiresInSeconds * 1000) + EXPIRATION_HEALTH_CHECK_BUFFER_MILLIS
-        log.i { LogMessages.schedulingExpirationHealthCheck(delayMillis, EXPIRATION_HEALTH_CHECK_BUFFER_MILLIS) }
+        log.d { LogMessages.schedulingExpirationHealthCheck(delayMillis, EXPIRATION_HEALTH_CHECK_BUFFER_MILLIS) }
         expirationHealthCheckTimer.start(delayMillis)
     }
 
@@ -170,7 +170,7 @@ internal class SessionDurationHandler(
         }
 
         if (sessionExpirationNoticeSent) {
-            log.i { LogMessages.REMOVING_SESSION_EXPIRATION_NOTICE }
+            log.d { LogMessages.REMOVING_SESSION_EXPIRATION_NOTICE }
             sessionExpirationNoticeSent = false
             expirationHealthCheckTimer.cancel()
             eventHandler.onEvent(Event.RemoveSessionExpirationNotice)
@@ -188,7 +188,7 @@ internal class SessionDurationHandler(
      */
     fun clearAndRemoveNotice() {
         if (sessionExpirationNoticeSent) {
-            log.i { LogMessages.CLEARING_SESSION_DURATION_WITH_ACTIVE_NOTICE }
+            log.d { LogMessages.CLEARING_SESSION_DURATION_WITH_ACTIVE_NOTICE }
             eventHandler.onEvent(Event.RemoveSessionExpirationNotice)
         }
         clear()
