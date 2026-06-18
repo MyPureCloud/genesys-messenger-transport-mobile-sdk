@@ -58,6 +58,7 @@ fun createConversationsVOForTesting(
     conversationClear: ConversationClear = ConversationClear(enabled = true),
     notifications: Notifications = Notifications(enabled = false, notificationContentType = Notifications.NotificationContentType.IncludeMessagesContent),
     markdown: Conversations.Markdown = Conversations.Markdown(enabled = false),
+    humanize: Conversations.Humanize = Conversations.Humanize(enabled = false),
 ): Conversations =
     Conversations(
         messagingEndpoint = DeploymentConfigValues.MESSAGING_ENDPOINT,
@@ -66,4 +67,5 @@ fun createConversationsVOForTesting(
         conversationClear = conversationClear,
         notifications = notifications,
         markdown = markdown,
+        humanize = humanize,
     )

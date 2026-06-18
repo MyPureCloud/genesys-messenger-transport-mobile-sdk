@@ -21,6 +21,7 @@ class TestbedViewController: UIViewController {
     private var authState: AuthState = AuthState.noAuth
     private var quickRepliesMap = [String: ButtonResponse]()
     private var cardActionsMap = [String: ButtonResponse]()
+    private var latestTimePickerData: (messageId: String, timePicker: Message.TimeSlotPicker)?
     
     // Session duration state
     private var sessionDurationSeconds: Int64? = nil
@@ -67,6 +68,7 @@ class TestbedViewController: UIViewController {
         case wasAuthenticated
         case shouldAuthorize
         case sendAction
+        case submitTimeSlot
         case listActions
         case synchronizePush
         case unregisterPush
@@ -84,6 +86,7 @@ class TestbedViewController: UIViewController {
             case .sendQuickReply: return "sendQuickReply <quickReply>"
             case .refreshAttachment: return "refreshAttachment <attachmentId>"
             case .sendAction: return "sendAction <action>"
+            case .submitTimeSlot: return "submitTimeSlot <payload> <text>"
             default: return rawValue
             }
         }
@@ -101,19 +104,15 @@ class TestbedViewController: UIViewController {
         return view
     }()
 
-    private let heading: UILabel = {
-        let view = UILabel()
-        view.text = "Web Messaging Testbed"
-        view.font = UIFont.preferredFont(forTextStyle: .headline)
-        return view
-    }()
-
-    private let instructions: UILabel = {
-        let view = UILabel()
-        view.numberOfLines = 0
-        view.text = "Commands: " + UserCommand.allCases.map { $0.helpDescription }.joined(separator: ", ")
-        view.font = UIFont.preferredFont(forTextStyle: .caption1)
-        return view
+    private lazy var commandsBarButtonItem: UIBarButtonItem = {
+        let item = UIBarButtonItem(
+            image: UIImage(systemName: "line.3.horizontal"),
+            style: .plain,
+            target: self,
+            action: #selector(showCommandsMenu)
+        )
+        item.accessibilityIdentifier = "Commands-Menu-Button"
+        return item
     }()
 
     private lazy var input: UITextField = {
@@ -200,6 +199,9 @@ class TestbedViewController: UIViewController {
 
         view.backgroundColor = UIColor(white: 0.99, alpha: 1.0)
 
+        title = "Transport Testbed"
+        navigationItem.leftBarButtonItem = commandsBarButtonItem
+
         // Set up left column (status info)
         leftStateColumn.addArrangedSubview(status)
         leftStateColumn.addArrangedSubview(authStateView)
@@ -212,9 +214,7 @@ class TestbedViewController: UIViewController {
         stateInfoContainer.addArrangedSubview(leftStateColumn)
         stateInfoContainer.addArrangedSubview(rightStateColumn)
 
-        content.addArrangedSubview(heading)
         content.addArrangedSubview(input)
-        content.addArrangedSubview(instructions)
         content.addArrangedSubview(stateInfoContainer)
         content.addArrangedSubview(info)
 
@@ -252,7 +252,7 @@ class TestbedViewController: UIViewController {
     private func configureAutoLayout() {
         content.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
         content.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
-        content.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
+        content.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor).isActive = true
     }
     
     private func updateWithStateChange(_ stateChange: StateChange) {
@@ -311,6 +311,11 @@ class TestbedViewController: UIViewController {
                 }
             }
             displayMessage = "CardMessageReceived with actions: \(tempActionsMap)"
+        case let timeSlotPicker as MessageEvent.TimeSlotPickerReceived:
+            if let timePicker = timeSlotPicker.message.timePicker {
+                latestTimePickerData = (messageId: timeSlotPicker.message.id, timePicker: timePicker)
+            }
+            displayMessage = "TimeSlotPickerReceived with timePicker: \(timeSlotPicker.message.timePicker?.description ?? "nil")"
         default:
             break
         }
@@ -418,6 +423,21 @@ class TestbedViewController: UIViewController {
         }
 
         return (frame.cgRectValue, duration.doubleValue, curve)
+    }
+
+    @objc private func showCommandsMenu() {
+        let menuVC = CommandsMenuViewController(commands: UserCommand.allCases) { [weak self] command in
+            let hasParameters = command.helpDescription != command.rawValue
+            self?.input.text = hasParameters ? command.rawValue + " " : command.rawValue
+            self?.input.becomeFirstResponder()
+        }
+        menuVC.modalPresentationStyle = .popover
+        if let popover = menuVC.popoverPresentationController {
+            popover.barButtonItem = commandsBarButtonItem
+            popover.permittedArrowDirections = .up
+            popover.delegate = self
+        }
+        present(menuVC, animated: true)
     }
 
     private func segmentUserInput(_ input: String) -> (String?, String?) {
@@ -684,6 +704,8 @@ extension TestbedViewController : UITextFieldDelegate {
                 } else {
                     self.info.text = "Selected card action: \(action) does not exist."
                 }
+            case (.submitTimeSlot, let input):
+                doSubmitTimeSlot(input: input)
             case (.listActions, _):
                 self.info.text = "Available card actions: \(Array(cardActionsMap.keys))"
             case (.tlsDefault, _):
@@ -705,6 +727,33 @@ extension TestbedViewController : UITextFieldDelegate {
         self.input.text = ""
         textField.resignFirstResponder()
         return true
+    }
+
+    private func doSubmitTimeSlot(input: String?) {
+        let parts = input?.split(separator: " ", maxSplits: 1) ?? []
+        let defaultPayload = latestTimePickerData?.timePicker.availableTimes.first?.payload
+        let explicitPayload = parts.first.map(String.init)
+        let payload = (explicitPayload?.isEmpty == false ? explicitPayload : nil) ?? defaultPayload
+        let explicitText = parts.count > 1 ? String(parts[1]) : nil
+        let text = (explicitText?.isEmpty == false ? explicitText : nil)
+            ?? payload.map { "selected time slot: \($0)" }
+
+        guard let payload = payload, !payload.isEmpty else {
+            return
+        }
+
+        do {
+            try messenger.submitTimeSlot(
+                buttonResponse: ButtonResponse(
+                    text: text ?? "",
+                    payload: payload,
+                    type: "DatePicker",
+                    originatingMessageId: latestTimePickerData?.messageId
+                )
+            )
+        } catch {
+            self.info.text = "Failed to submit time slot: \(error.localizedDescription)"
+        }
     }
 
     private func reinitializeMessenger(tlsVersion: TlsVersion) {
@@ -828,5 +877,69 @@ extension TestbedViewController: UIDocumentPickerDelegate {
 
     func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
         self.info.text = "File selection canceled. No attachment selected."
+    }
+}
+
+// MARK: UIPopoverPresentationControllerDelegate
+
+extension TestbedViewController: UIPopoverPresentationControllerDelegate {
+    func adaptivePresentationStyle(for controller: UIPresentationController) -> UIModalPresentationStyle {
+        .none
+    }
+}
+
+// MARK: - CommandsMenuViewController
+
+private final class CommandsMenuViewController: UITableViewController {
+
+    private let commands: [TestbedViewController.UserCommand]
+    private let onSelect: (TestbedViewController.UserCommand) -> Void
+    private let cellId = "CommandCell"
+
+    init(commands: [TestbedViewController.UserCommand], onSelect: @escaping (TestbedViewController.UserCommand) -> Void) {
+        self.commands = commands
+        self.onSelect = onSelect
+        super.init(style: .plain)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        preferredContentSize = CGSize(width: 320, height: 400)
+    }
+
+    // MARK: UITableViewDataSource
+
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        commands.count
+    }
+
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: cellId)
+            ?? UITableViewCell(style: .subtitle, reuseIdentifier: cellId)
+        let command = commands[indexPath.row]
+        cell.textLabel?.text = command.rawValue
+        let help = command.helpDescription
+        if help != command.rawValue {
+            cell.detailTextLabel?.text = help
+            cell.detailTextLabel?.textColor = .secondaryLabel
+            cell.detailTextLabel?.font = UIFont.preferredFont(forTextStyle: .caption1)
+        } else {
+            cell.detailTextLabel?.text = nil
+        }
+        return cell
+    }
+
+    // MARK: UITableViewDelegate
+
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        let command = commands[indexPath.row]
+        dismiss(animated: true) { [onSelect] in
+            onSelect(command)
+        }
     }
 }

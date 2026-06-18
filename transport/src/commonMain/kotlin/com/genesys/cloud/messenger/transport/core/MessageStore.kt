@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.core
 
 import com.genesys.cloud.messenger.transport.core.Message.Direction
+import com.genesys.cloud.messenger.transport.shyrka.send.BaseMessageProtocol
 import com.genesys.cloud.messenger.transport.shyrka.send.Channel
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.StructuredMessage
@@ -51,37 +52,28 @@ internal class MessageStore(private val log: Log) {
         buttonResponse: ButtonResponse,
         channel: Channel? = null,
     ): OnMessageRequest {
-        val type = Message.Type.QuickReply
-        val messageToSend =
-            pendingMessage
-                .copy(
-                    messageType = type,
-                    type = type.name,
-                    state = Message.State.Sending,
-                    quickReplies = listOf(buttonResponse),
-                ).also {
-                    log.i { LogMessages.quickReplyPrepareToSend(it) }
-                    activeConversation.add(it)
-                    publish(MessageEvent.MessageInserted(it))
-                    pendingMessage = Message(attachments = it.attachments)
-                }
-        val content =
-            listOf(
-                Message.Content(
-                    contentType = Message.Content.Type.ButtonResponse,
-                    buttonResponse = buttonResponse,
-                )
-            )
-        return OnMessageRequest(
-            token = token,
-            message =
-                TextMessage(
-                    text = "",
-                    content = content,
-                    channel = channel,
-                ),
-            tracingId = messageToSend.id
+        val messageToSend = preparePendingMessage(
+            type = Message.Type.QuickReply,
+            logMessage = { LogMessages.quickReplyPrepareToSend(it) },
+            extraFields = { copy(quickReplies = listOf(buttonResponse)) },
         )
+        return buildButtonResponseRequest(token, buttonResponse, messageToSend.id) {
+            TextMessage(text = "", content = it, channel = channel)
+        }
+    }
+
+    fun prepareTimeSlotSubmissionMessageWith(
+        token: String,
+        buttonResponse: ButtonResponse,
+        channel: Channel? = null,
+    ): OnMessageRequest {
+        val messageToSend = preparePendingMessage(
+            type = Message.Type.DatePicker,
+            logMessage = { LogMessages.submitTimeSlotPrepareToSend(it) },
+        )
+        return buildButtonResponseRequest(token, buttonResponse, messageToSend.id) {
+            TextMessage(text = "", content = it, channel = channel)
+        }
     }
 
     fun preparePostbackMessage(
@@ -89,39 +81,52 @@ internal class MessageStore(private val log: Log) {
         buttonResponse: ButtonResponse,
         channel: Channel? = null,
     ): OnMessageRequest {
-        val type = Message.Type.Cards
+        val messageToSend = preparePendingMessage(
+            type = Message.Type.Cards,
+            logMessage = { LogMessages.postbackPrepareToSend(it) },
+            extraFields = { copy(quickReplies = listOf(buttonResponse)) },
+        )
+        return buildButtonResponseRequest(token, buttonResponse, messageToSend.id) {
+            StructuredMessage(text = buttonResponse.text, content = it, channel = channel)
+        }
+    }
 
-        val messageToSend =
-            pendingMessage
-                .copy(
-                    messageType = type,
-                    type = type.name,
-                    state = Message.State.Sending,
-                    quickReplies = listOf(buttonResponse),
-                ).also {
-                    log.i { LogMessages.postbackPrepareToSend(it) }
-                    activeConversation.add(it)
-                    publish(MessageEvent.MessageInserted(it))
-                    pendingMessage = Message(attachments = it.attachments)
-                }
-
-        val content =
-            listOf(
-                Message.Content(
-                    contentType = Message.Content.Type.ButtonResponse,
-                    buttonResponse = buttonResponse,
-                )
+    private fun preparePendingMessage(
+        type: Message.Type,
+        logMessage: (Message) -> String,
+        extraFields: Message.() -> Message = { this },
+    ): Message {
+        return pendingMessage
+            .copy(
+                messageType = type,
+                type = type.name,
+                state = Message.State.Sending,
             )
+            .extraFields()
+            .also {
+                log.i { logMessage(it) }
+                activeConversation.add(it)
+                publish(MessageEvent.MessageInserted(it))
+                pendingMessage = Message(attachments = it.attachments)
+            }
+    }
 
+    private fun buildButtonResponseRequest(
+        token: String,
+        buttonResponse: ButtonResponse,
+        tracingId: String,
+        messageFactory: (List<Message.Content>) -> BaseMessageProtocol,
+    ): OnMessageRequest {
+        val content = listOf(
+            Message.Content(
+                contentType = Message.Content.Type.ButtonResponse,
+                buttonResponse = buttonResponse,
+            )
+        )
         return OnMessageRequest(
             token = token,
-            message =
-                StructuredMessage(
-                    text = buttonResponse.text,
-                    content = content,
-                    channel = channel
-                ),
-            tracingId = messageToSend.id
+            message = messageFactory(content),
+            tracingId = tracingId,
         )
     }
 
@@ -216,6 +221,7 @@ private fun Message.toMessageEvent(): MessageEvent =
     when (messageType) {
         Message.Type.QuickReply -> MessageEvent.QuickReplyReceived(this)
         Message.Type.Cards -> MessageEvent.CardMessageReceived(this)
+        Message.Type.DatePicker -> MessageEvent.TimeSlotPickerReceived(this)
         else -> MessageEvent.MessageInserted(this)
     }
 
@@ -276,4 +282,13 @@ sealed class MessageEvent {
      * @property message is the [Message] object with all the card details.
      */
     class CardMessageReceived(val message: Message) : MessageEvent()
+
+    /**
+     * Dispatched when a time slot picker message was sent by the Bot.
+     * Each time slot picker contains title, subtitle, image, and the time slots.
+     * To access the time slot picker data, refer to [Message.timePicker].
+     *
+     * @property message is the [Message] object with all the time slot picker details.
+     */
+    class TimeSlotPickerReceived(val message: Message) : MessageEvent()
 }

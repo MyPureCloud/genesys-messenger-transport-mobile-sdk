@@ -7,7 +7,9 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
+import assertk.assertions.size
 import com.genesys.cloud.messenger.transport.core.Attachment
+import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.Message.Direction
 import com.genesys.cloud.messenger.transport.core.Message.Participant
@@ -18,6 +20,7 @@ import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.CardTestValues
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
+import com.genesys.cloud.messenger.transport.utility.TimeSlotPickerTestValues
 import org.junit.Test
 
 class MessageTest {
@@ -163,6 +166,21 @@ class MessageTest {
     }
 
     @Test
+    fun `validate ButtonResponse with originatingMessageId`() {
+        val buttonWithOriginatingId =
+            ButtonResponse(
+                text = "Book",
+                payload = "payload",
+                type = "QuickReply",
+                originatingMessageId = "msg-123"
+            )
+        val buttonFromSecondaryConstructor = ButtonResponse("Book", "payload", "QuickReply")
+
+        assertThat(buttonWithOriginatingId.originatingMessageId).isEqualTo("msg-123")
+        assertThat(buttonFromSecondaryConstructor.originatingMessageId).isNull()
+    }
+
+    @Test
     fun `validate Direction serialization`() {
         val expectedRequest = Direction.Inbound
         val expectedJson = """"Inbound""""
@@ -206,6 +224,68 @@ class MessageTest {
             assertThat(name).isEqualTo(expectedRequest.name)
             assertThat(imageUrl).isEqualTo(expectedRequest.imageUrl)
             assertThat(originatingEntity).isEqualTo(expectedRequest.originatingEntity)
+        }
+    }
+
+    @Test
+    fun `validate Message Type DatePicker serialization`() {
+        val expectedRequest = Message.Type.DatePicker
+        val expectedJson = """"DatePicker""""
+
+        val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
+        val decoded = WebMessagingJson.json.decodeFromString<Message.Type>(expectedJson)
+
+        assertThat(encodedString, "encoded Message.Type.DatePicker").isEqualTo(expectedJson)
+        assertThat(decoded).isEqualTo(expectedRequest)
+    }
+
+    @Test
+    fun `validate Message Type ButtonResponse serialization`() {
+        val expectedRequest = Message.Type.ButtonResponse
+        val expectedJson = """"ButtonResponse""""
+
+        val encodedString = WebMessagingJson.json.encodeToString(expectedRequest)
+        val decoded = WebMessagingJson.json.decodeFromString<Message.Type>(expectedJson)
+
+        assertThat(encodedString, "encoded Message.Type.ButtonResponse").isEqualTo(expectedJson)
+        assertThat(decoded).isEqualTo(expectedRequest)
+    }
+
+    @Test
+    fun `validate Message with TimeSlotPicker`() {
+        val expectedTimeSlot =
+            Message.TimeSlot(
+                timeEpochMillis = 1398892191411L,
+                duration = TimeSlotPickerTestValues.DURATION,
+                payload = TimeSlotPickerTestValues.DATE_TIME_ISO
+            )
+        val expectedTimeSlotPicker =
+            Message.TimeSlotPicker(
+                title = TimeSlotPickerTestValues.TITLE,
+                subtitle = TimeSlotPickerTestValues.SUBTITLE,
+                imageUrl = TimeSlotPickerTestValues.IMAGE_URL,
+                availableTimes = listOf(expectedTimeSlot)
+            )
+        val expectedMessage =
+            Message(
+                id = MessageValues.ID,
+                direction = Direction.Outbound,
+                state = State.Sent,
+                messageType = Message.Type.DatePicker,
+                timePicker = expectedTimeSlotPicker,
+                from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
+            )
+
+        expectedMessage.run {
+            assertThat(messageType).isEqualTo(Message.Type.DatePicker)
+            assertThat(timePicker).isEqualTo(expectedTimeSlotPicker)
+            timePicker?.run {
+                assertThat(title).isEqualTo(TimeSlotPickerTestValues.TITLE)
+                assertThat(subtitle).isEqualTo(TimeSlotPickerTestValues.SUBTITLE)
+                assertThat(availableTimes).size().isEqualTo(1)
+                assertThat(availableTimes.first().timeEpochMillis).isEqualTo(1398892191411L)
+                assertThat(availableTimes.first().duration).isEqualTo(TimeSlotPickerTestValues.DURATION)
+            }
         }
     }
 }

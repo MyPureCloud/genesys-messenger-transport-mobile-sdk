@@ -16,6 +16,7 @@ object InternalConfigurationFactory {
      * @param encryptedVault indicates if encrypted vault should be used.
      * @param minimumWebSocketTlsVersion the minimum TLS protocol version for WebSocket connections.
      * @param sessionExpirationNoticeIntervalSeconds how many seconds before the session expires to show the expiration notice.
+     * @param customEndpoint optional endpoint override (host:port) for routing connections to a local server (e.g., WireMock). Intended for UI testing only.
      * @return Configuration instance with proper application parameter formatting.
      */
     fun create(
@@ -28,7 +29,7 @@ object InternalConfigurationFactory {
         autoRefreshTokenWhenExpired: Boolean = true,
         encryptedVault: Boolean = false,
         sessionExpirationNoticeIntervalSeconds: Long = Configuration.DEFAULT_INTERVAL,
-        minimumWebSocketTlsVersion: TlsVersion = TlsVersion.SYSTEM_DEFAULT
+        minimumWebSocketTlsVersion: TlsVersion = TlsVersion.SYSTEM_DEFAULT,
     ): Configuration {
         val config =
             Configuration(
@@ -51,7 +52,7 @@ object InternalConfigurationFactory {
     }
 
     /**
-     * Overload to preserve the pre-2.12.0 signature for iOS/Swift callers.
+     * Overload to preserve the pre-2.12.0 8-param signature for iOS/Swift callers.
      */
     fun create(
         deploymentId: String,

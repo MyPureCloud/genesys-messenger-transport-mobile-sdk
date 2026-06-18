@@ -6,6 +6,7 @@ import com.genesys.cloud.messenger.transport.util.SIGNED_IN
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
 import com.genesys.cloud.messenger.transport.utility.TestValues
+import com.genesys.cloud.messenger.transport.utility.TimeSlotPickerTestValues
 import kotlinx.serialization.json.Json
 
 internal object Response {
@@ -38,6 +39,9 @@ internal object Response {
         """{"type":"message","class":"StructuredMessage","code":200,"body":{"direction":"Outbound","id":"msg_id","channel":{"time":"some_time","type":"Private"},"type":"Structured","text":"Hi","content":[{"contentType":"QuickReply","quickReply":{"text":"text_a","payload":"payload_a","action":"action_a"}},{"contentType":"QuickReply","quickReply":{"text":"text_b","payload":"payload_b","action":"action_b"}}],"originatingEntity":"Bot"}}"""
     const val onMessageWithoutQuickReplies =
         """{"type":"message","class":"StructuredMessage","code":200,"body":{"direction":"Outbound","id":"msg_id","channel":{"time":"some_time","type":"Private"},"type":"Structured","text":"Hi","originatingEntity":"Bot"}}"""
+
+    const val onMessageWithDatePickerStructured =
+        """{"type":"message","class":"StructuredMessage","code":200,"body":{"direction":"Outbound","id":"msg_id","originatingMessageId":"msg_id","channel":{"time":"some_time","type":"Private"},"type":"Structured","text":"Pick a time","content":[{"contentType":"DatePicker","datePicker":{"title":"${TimeSlotPickerTestValues.TITLE}","subtitle":"${TimeSlotPickerTestValues.SUBTITLE}","imageUrl":"${TimeSlotPickerTestValues.IMAGE_URL}","availableTimes":[{"duration":${TimeSlotPickerTestValues.DURATION},"dateTime":"${TimeSlotPickerTestValues.DATE_TIME_ISO}"}]}}],"originatingEntity":"Bot"}}"""
     const val attachmentDeleted =
         """{"type":"message","class":"AttachmentDeletedResponse","code":200,"body":{"attachmentId":"attachment_id"}}"""
     const val typingIndicatorForbidden =

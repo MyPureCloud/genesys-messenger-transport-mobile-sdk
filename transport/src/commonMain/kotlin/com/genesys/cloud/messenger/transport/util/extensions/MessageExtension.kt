@@ -13,6 +13,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.AttachmentContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ButtonResponseContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.QuickReplyContent
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.TimeSlotPickerContent.TimeSlotContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.isInbound
 import com.genesys.cloud.messenger.transport.shyrka.send.HealthCheckID
 import com.genesys.cloud.messenger.transport.util.WILD_CARD
@@ -22,17 +23,55 @@ internal fun List<StructuredMessage>.toMessageList(): List<Message> =
     map { it.toMessage() }
         .filter { it.messageType != Message.Type.Unknown }
 
+internal fun List<StructuredMessage.Content>.toButtonResponseList(): List<ButtonResponse> =
+    this.filterIsInstance<ButtonResponseContent>()
+        .filter { !it.buttonResponse.type.isQuickReplyType() && !it.buttonResponse.type.isCardButtonType() }
+        .map { it.buttonResponse }
+        .map { buttonResponse ->
+            ButtonResponse(
+                text = buttonResponse.text,
+                payload = buttonResponse.payload,
+                type = buttonResponse.type,
+                originatingMessageId = buttonResponse.originatingMessageId
+            )
+        }
+
+internal fun StructuredMessage.Content.TimeSlotPickerContent.toMessage() = Message.TimeSlotPicker(
+    title = title,
+    subtitle = subtitle,
+    imageUrl = imageUrl,
+    availableTimes = availableTimes.map { it.toMessage() }
+)
+
+internal fun TimeSlotContent.toMessage(): Message.TimeSlot =
+    Message.TimeSlot(
+        timeEpochMillis = dateTime.fromIsoToEpochMilliseconds(),
+        duration = duration,
+        payload = dateTime
+    )
+
 internal fun StructuredMessage.toMessage(tracingId: String? = null): Message {
-    val quickReplies = content.toQuickReplies()
+    val quickReplies = content.toQuickReplies().map { it.copy(originatingMessageId = this.id) }
     val cards = content.toCards()
     val hasCardSelection = content.hasCardSelection()
+    val timePicker: Message.TimeSlotPicker? =
+        content.filterIsInstance<StructuredMessage.Content.DatePickerContent>()
+            .firstOrNull()?.datePicker?.toMessage()
+    val buttonResponses = content.toButtonResponseList()
 
     return Message(
         id = tracingId ?: id,
         direction = if (isInbound()) Direction.Inbound else Direction.Outbound,
         state = Message.State.Sent,
-        messageType = type.toMessageType(quickReplies.isNotEmpty(), cards.isNotEmpty(), hasCardSelection),
+        messageType = type.toMessageType(
+            quickReplies.isNotEmpty(),
+            cards.isNotEmpty(),
+            hasCardSelection,
+            timePicker != null,
+            buttonResponses.isNotEmpty()
+        ),
         text = text,
+        timePicker = timePicker,
         timeStamp = channel?.time.fromIsoToEpochMilliseconds(),
         attachments = content.filterIsInstance<AttachmentContent>().toAttachments(),
         quickReplies = quickReplies,
@@ -49,6 +88,8 @@ internal fun StructuredMessage.toMessage(tracingId: String? = null): Message {
             ),
         authenticated = metadata["authenticated"]?.toBoolean() ?: false,
         metadata = metadata,
+        originatingMessageId = originatingMessageId,
+        buttonResponses = buttonResponses,
     )
 }
 
@@ -106,7 +147,7 @@ private fun List<StructuredMessage.Content>.toQuickReplies(): List<ButtonRespons
     if (filteredButtonResponse.isNotEmpty()) {
         return filteredButtonResponse
             .mapNotNull { buttonResponseContent ->
-                buttonResponseContent.buttonResponse.takeIf { it.type.normalizeButtonType() == "QuickReply" }
+                buttonResponseContent.buttonResponse.takeIf { it.type.isQuickReplyType() }
             }.map { br -> ButtonResponse(br.text, br.payload, "QuickReply") }
     }
 
@@ -159,30 +200,32 @@ private fun List<StructuredMessage.Content>.toCards(): List<Message.Card> =
 private fun StructuredMessage.Type.toMessageType(
     hasQuickReplies: Boolean,
     hasCards: Boolean,
-    hasCardSelection: Boolean
+    hasCardSelection: Boolean,
+    hasTimePicker: Boolean,
+    hasButtonResponse: Boolean = false
 ): Message.Type =
     when (this) {
         StructuredMessage.Type.Text -> Message.Type.Text
         StructuredMessage.Type.Event -> Message.Type.Event
         StructuredMessage.Type.Structured -> {
             when {
+                hasTimePicker -> Message.Type.DatePicker
                 hasQuickReplies -> Message.Type.QuickReply
                 hasCards || hasCardSelection -> Message.Type.Cards
+                hasButtonResponse -> Message.Type.ButtonResponse
                 else -> Message.Type.Unknown
             }
         }
     }
 
-private fun String.normalizeButtonType(): String =
-    when {
-        this.equals("QuickReply", ignoreCase = true) -> "QuickReply"
-        else -> "Button"
-    }
+private fun String.isQuickReplyType(): Boolean = this.equals("QuickReply", true)
+
+private fun String.isCardButtonType() = this.equals("Button", true)
 
 private fun List<StructuredMessage.Content>.hasCardSelection(): Boolean =
     this
         .filterIsInstance<ButtonResponseContent>()
-        .any { it.buttonResponse.type.normalizeButtonType() == "Button" }
+        .any { it.buttonResponse.type.isCardButtonType() }
 
 internal fun String.isHealthCheckResponseId(): Boolean = this == HealthCheckID
 

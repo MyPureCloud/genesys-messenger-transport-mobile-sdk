@@ -137,6 +137,15 @@ final class MessengerInteractor {
         }
     }
 
+    func submitTimeSlot(buttonResponse: ButtonResponse) throws {
+        do {
+            try messagingClient.submitTimeSlot(timeSlotResponse: buttonResponse)
+        } catch {
+            print("submitTimeSlot(buttonResponse:) failed. \(error.localizedDescription)")
+            throw error
+        }
+    }
+
     func fetchNextPage(completion: ((Error?) -> Void)? = nil) {
         messagingClient.fetchNextPage() { error in
             completion?(error)
