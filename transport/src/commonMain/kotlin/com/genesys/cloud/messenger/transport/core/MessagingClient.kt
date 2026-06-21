@@ -101,6 +101,17 @@ interface MessagingClient {
     var eventListener: ((Event) -> Unit)?
 
     /**
+     * Optional provider invoked at session-configure time to attach a [JourneyContextInfo]
+     * (customer cookie id and optional journey session id) to guest and authenticated
+     * configure requests. When `null` (or when it returns `null`), no journey context is sent.
+     *
+     *
+     * Note: the provider is invoked synchronously on the thread that builds the configure
+     * or `AuthJwtRequest` payload; it must be cheap and non-blocking.
+     */
+    var journeyContextProvider: (() -> JourneyContextInfo?)?
+
+    /**
      * Message that is currently in progress of being sent.
      */
     val pendingMessage: Message

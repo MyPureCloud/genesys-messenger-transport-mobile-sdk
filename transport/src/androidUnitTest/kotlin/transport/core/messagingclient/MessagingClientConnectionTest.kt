@@ -7,6 +7,7 @@ import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
+import com.genesys.cloud.messenger.transport.core.JourneyContextInfo
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.StateChange
 import com.genesys.cloud.messenger.transport.core.TransportSDKException
@@ -56,6 +57,69 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
         assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.configureSession(Request.token))
+    }
+
+    @Test
+    fun `when journeyContextProvider is null then configure omits journeyContext`() {
+        subject.journeyContextProvider = null
+
+        subject.connect()
+
+        verify {
+            mockPlatformSocket.sendMessage(
+                match { Request.isConfigureRequest(it) && !it.contains(""""journeyContext"""") }
+            )
+        }
+    }
+
+    @Test
+    fun `when journeyContextProvider returns info then configure includes journeyContext`() {
+        subject.journeyContextProvider = {
+            JourneyContextInfo(customerCookieId = "test-cookie", sessionId = "test-session")
+        }
+
+        subject.connect()
+
+        verify {
+            mockPlatformSocket.sendMessage(
+                match {
+                    Request.isConfigureRequest(it) &&
+                        it.contains(Request.journeyContextFragment(cookieId = "test-cookie", sessionId = "test-session"))
+                }
+            )
+        }
+    }
+
+    @Test
+    fun `when journeyContextProvider returns info with null sessionId then customerSession is omitted`() {
+        subject.journeyContextProvider = {
+            JourneyContextInfo(customerCookieId = "test-cookie", sessionId = null)
+        }
+
+        subject.connect()
+
+        verify {
+            mockPlatformSocket.sendMessage(
+                match {
+                    Request.isConfigureRequest(it) &&
+                        it.contains(Request.journeyContextFragment(cookieId = "test-cookie", sessionId = null)) &&
+                        !it.contains(""""customerSession"""")
+                }
+            )
+        }
+    }
+
+    @Test
+    fun `when journeyContextProvider returns null then configure omits journeyContext`() {
+        subject.journeyContextProvider = { null }
+
+        subject.connect()
+
+        verify {
+            mockPlatformSocket.sendMessage(
+                match { Request.isConfigureRequest(it) && !it.contains(""""journeyContext"""") }
+            )
+        }
     }
 
     @Test

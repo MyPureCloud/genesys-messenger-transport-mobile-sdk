@@ -7,6 +7,7 @@ import com.genesys.cloud.messenger.transport.auth.NO_REFRESH_TOKEN
 import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
+import com.genesys.cloud.messenger.transport.core.JourneyContextInfo
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.events.Event
@@ -65,6 +66,27 @@ class MessagingClientAuthTest : BaseMessagingClientTest() {
         verify {
             mockAuthHandler.authorizeImplicit(AuthTest.ID_TOKEN, AuthTest.NONCE)
         }
+    }
+
+    @Test
+    fun `when journeyContextProvider is set then it is forwarded to authHandler`() {
+        val provider: () -> JourneyContextInfo? = {
+            JourneyContextInfo(customerCookieId = "cookie-id", sessionId = "session-id")
+        }
+
+        subject.journeyContextProvider = provider
+
+        verify { mockAuthHandler.journeyContextProvider = provider }
+        assertThat(subject.journeyContextProvider).isEqualTo(provider)
+    }
+
+    @Test
+    fun `when journeyContextProvider is cleared then null is forwarded to authHandler`() {
+        subject.journeyContextProvider = { JourneyContextInfo("cookie", null) }
+
+        subject.journeyContextProvider = null
+
+        verify { mockAuthHandler.journeyContextProvider = null }
     }
 
     @Test

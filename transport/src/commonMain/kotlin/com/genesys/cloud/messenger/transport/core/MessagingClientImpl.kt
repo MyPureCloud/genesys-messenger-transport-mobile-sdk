@@ -41,14 +41,12 @@ import com.genesys.cloud.messenger.transport.shyrka.send.CloseSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureAuthenticatedSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.GetAttachmentRequest
-import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
-import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
-import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.util.DURATION_SECONDS_KEY
 import com.genesys.cloud.messenger.transport.util.EXPIRATION_DATE_KEY
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.UNKNOWN
 import com.genesys.cloud.messenger.transport.util.Vault
+import com.genesys.cloud.messenger.transport.util.buildJourneyContext
 import com.genesys.cloud.messenger.transport.util.extensions.isHealthCheckResponseId
 import com.genesys.cloud.messenger.transport.util.extensions.isOutbound
 import com.genesys.cloud.messenger.transport.util.extensions.isRefreshUrl
@@ -152,6 +150,12 @@ internal class MessagingClientImpl(
         set(value) {
             eventHandler.eventListener = value
             field = value
+        }
+
+    override var journeyContextProvider: (() -> JourneyContextInfo?)? = null
+        set(value) {
+            field = value
+            authHandler.journeyContextProvider = value
         }
 
     override val pendingMessage: Message
@@ -417,7 +421,7 @@ internal class MessagingClientImpl(
     override fun authorize(
         authCode: String,
         redirectUri: String,
-        codeVerifier: String?
+        codeVerifier: String?,
     ) {
         invalidateSessionToken()
         authHandler.authorize(authCode, redirectUri, codeVerifier)
@@ -425,7 +429,7 @@ internal class MessagingClientImpl(
 
     override fun authorizeImplicit(
         idToken: String,
-        nonce: String
+        nonce: String,
     ) {
         invalidateSessionToken()
         authHandler.authorizeImplicit(idToken, nonce)
@@ -767,11 +771,7 @@ internal class MessagingClientImpl(
                 token = token,
                 deploymentId = configuration.deploymentId,
                 startNew = startNew,
-                journeyContext =
-                    JourneyContext(
-                        JourneyCustomer(token, "cookie"),
-                        JourneyCustomerSession("", "web")
-                    )
+                journeyContext = buildJourneyContext(journeyContextProvider),
             )
         )
 
@@ -781,11 +781,6 @@ internal class MessagingClientImpl(
                 token = token,
                 deploymentId = configuration.deploymentId,
                 startNew = startNew,
-                journeyContext =
-                    JourneyContext(
-                        JourneyCustomer(token, "cookie"),
-                        JourneyCustomerSession("", "web")
-                    ),
                 data = ConfigureAuthenticatedSessionRequest.Data(authHandler.jwt)
             )
         )
