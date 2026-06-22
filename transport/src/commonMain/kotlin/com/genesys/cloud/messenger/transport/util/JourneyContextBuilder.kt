@@ -26,8 +26,8 @@ internal fun buildJourneyContext(
     if (provider == null) return null
     val info = try {
         provider()
-    } catch (t: Throwable) {
-        log?.w { LogMessages.journeyContextProviderFailed(t) }
+    } catch (e: Exception) {
+        log?.w { LogMessages.journeyContextProviderFailed(e) }
         return null
     }
     return info?.let {

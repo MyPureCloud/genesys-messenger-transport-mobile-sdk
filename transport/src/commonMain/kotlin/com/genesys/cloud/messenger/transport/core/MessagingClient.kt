@@ -108,6 +108,9 @@ interface MessagingClient {
      *
      * Note: the provider is invoked synchronously on the thread that builds the configure
      * or `AuthJwtRequest` payload; it must be cheap and non-blocking.
+     *
+     * If the provider throws an exception, the exception is caught and logged; the session
+     * continues without journey context so a faulty provider cannot break the session.
      */
     var journeyContextProvider: (() -> JourneyContextInfo?)?
 
