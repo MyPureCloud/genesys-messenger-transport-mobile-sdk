@@ -43,7 +43,7 @@ internal class AuthHandlerImpl(
         redirectUri: String,
         codeVerifier: String?
     ) {
-        val journeyContext = buildJourneyContext(journeyContextProvider)
+        val journeyContext = buildJourneyContext(journeyContextProvider, log)
         dispatcher.launch {
             when (val result = api.fetchAuthJwt(authCode, redirectUri, codeVerifier, journeyContext)) {
                 is Result.Success -> {
@@ -65,7 +65,7 @@ internal class AuthHandlerImpl(
         idToken: String,
         nonce: String
     ) {
-        val journeyContext = buildJourneyContext(journeyContextProvider)
+        val journeyContext = buildJourneyContext(journeyContextProvider, log)
         dispatcher.launch {
             when (val result = api.fetchAuthJwt(idToken, nonce, journeyContext)) {
                 is Result.Success -> {

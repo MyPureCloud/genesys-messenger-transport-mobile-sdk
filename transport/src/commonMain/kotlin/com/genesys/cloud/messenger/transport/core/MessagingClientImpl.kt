@@ -771,7 +771,7 @@ internal class MessagingClientImpl(
                 token = token,
                 deploymentId = configuration.deploymentId,
                 startNew = startNew,
-                journeyContext = buildJourneyContext(journeyContextProvider),
+                journeyContext = buildJourneyContext(journeyContextProvider, log),
             )
         )
 

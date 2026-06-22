@@ -732,10 +732,10 @@ class AuthHandlerTest {
                 AuthTest.REDIRECT_URI,
                 AuthTest.CODE_VERIFIER,
                 journeyContext = match {
-                    it?.customer?.id == "test-cookie" &&
+                    it.customer.id == "test-cookie" &&
                         it.customer.idType == "cookie" &&
                         it.customerSession?.id == "test-session" &&
-                        it.customerSession?.type == "app"
+                        it.customerSession.type == "app"
                 },
             )
         }
@@ -755,7 +755,7 @@ class AuthHandlerTest {
                 AuthTest.REDIRECT_URI,
                 AuthTest.CODE_VERIFIER,
                 journeyContext = match {
-                    it?.customer?.id == "test-cookie" &&
+                    it.customer.id == "test-cookie" &&
                         it.customer.idType == "cookie" &&
                         it.customerSession == null
                 },
@@ -794,13 +794,58 @@ class AuthHandlerTest {
                 AuthTest.ID_TOKEN,
                 AuthTest.NONCE,
                 journeyContext = match {
-                    it?.customer?.id == "test-cookie" &&
+                    it.customer.id == "test-cookie" &&
                         it.customer.idType == "cookie" &&
                         it.customerSession?.id == "test-session" &&
-                        it.customerSession?.type == "app"
+                        it.customerSession.type == "app"
                 },
             )
         }
+    }
+
+    @Test
+    fun `when authorize() and journeyContextProvider throws then fetchAuthJwt receives null journeyContext and logs warning`() {
+        val exception = RuntimeException("provider failure")
+        subject.journeyContextProvider = { throw exception }
+        val warnSlot = slot<() -> String>()
+
+        subject.authorize(AuthTest.AUTH_CODE, AuthTest.REDIRECT_URI, AuthTest.CODE_VERIFIER)
+
+        coVerify {
+            mockWebMessagingApi.fetchAuthJwt(
+                AuthTest.AUTH_CODE,
+                AuthTest.REDIRECT_URI,
+                AuthTest.CODE_VERIFIER,
+                journeyContext = null,
+            )
+        }
+        verify { mockLogger.w(capture(warnSlot)) }
+        assertThat(warnSlot.captured.invoke()).isEqualTo(
+            LogMessages.journeyContextProviderFailed(exception)
+        )
+    }
+
+    @Test
+    fun `when authorizeImplicit() and journeyContextProvider throws then fetchAuthJwt receives null journeyContext and logs warning`() {
+        coEvery { mockWebMessagingApi.fetchAuthJwt(AuthTest.ID_TOKEN, AuthTest.NONCE, null) } returns
+            Result.Success(AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN))
+        val exception = RuntimeException("provider failure")
+        subject.journeyContextProvider = { throw exception }
+        val warnSlot = slot<() -> String>()
+
+        subject.authorizeImplicit(AuthTest.ID_TOKEN, AuthTest.NONCE)
+
+        coVerify {
+            mockWebMessagingApi.fetchAuthJwt(
+                AuthTest.ID_TOKEN,
+                AuthTest.NONCE,
+                journeyContext = null,
+            )
+        }
+        verify { mockLogger.w(capture(warnSlot)) }
+        assertThat(warnSlot.captured.invoke()).isEqualTo(
+            LogMessages.journeyContextProviderFailed(exception)
+        )
     }
 
     @Test
@@ -820,13 +865,13 @@ class AuthHandlerTest {
                 AuthTest.AUTH_CODE,
                 AuthTest.REDIRECT_URI,
                 AuthTest.CODE_VERIFIER,
-                journeyContext = match { it?.customer?.id == "cookie-1" },
+                journeyContext = match { it.customer.id == "cookie-1" },
             )
             mockWebMessagingApi.fetchAuthJwt(
                 AuthTest.AUTH_CODE,
                 AuthTest.REDIRECT_URI,
                 AuthTest.CODE_VERIFIER,
-                journeyContext = match { it?.customer?.id == "cookie-2" },
+                journeyContext = match { it.customer.id == "cookie-2" },
             )
         }
     }

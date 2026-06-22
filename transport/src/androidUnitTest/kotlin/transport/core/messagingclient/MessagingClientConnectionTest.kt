@@ -123,6 +123,25 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
     }
 
     @Test
+    fun `when journeyContextProvider throws then configure omits journeyContext and logs warning`() {
+        val exception = RuntimeException("provider failure")
+        subject.journeyContextProvider = { throw exception }
+        val warnSlot = slot<() -> String>()
+
+        subject.connect()
+
+        verify {
+            mockPlatformSocket.sendMessage(
+                match { Request.isConfigureRequest(it) && !it.contains(""""journeyContext"""") }
+            )
+            mockLogger.w(capture(warnSlot))
+        }
+        assertThat(warnSlot.captured.invoke()).isEqualTo(
+            LogMessages.journeyContextProviderFailed(exception)
+        )
+    }
+
+    @Test
     fun `when connect and then disconnect`() {
         val expectedState = MessagingClient.State.Closed(1000, "The user has closed the connection.")
         subject.connect()

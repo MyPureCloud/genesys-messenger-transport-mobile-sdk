@@ -163,6 +163,9 @@ internal object LogMessages {
     const val CLEAR_KEYCHAIN = "First launch detected, clearing KeyChain"
     const val MIGRATE_SESSION_FROM_OLD_VERSION = "Migration: Preserved existing session from previous version"
 
+    fun journeyContextProviderFailed(throwable: Throwable) =
+        "journeyContextProvider threw an exception; proceeding without journey context. Error: ${throwable.message}"
+
     fun failedFetchDeploymentConfig(error: Throwable) = "Failed to fetch deployment config: $error"
 
     fun healthCheckCoolDown(milliseconds: Long) = "Health check can be sent only once every $milliseconds milliseconds."
