@@ -139,6 +139,7 @@ sealed class ErrorCode(val code: Int) {
     }
 }
 
+@Deprecated("Not for external use. Public access will be removed in 3.0.0.")
 object ErrorMessage {
     const val FailedToReconnect = "Failed to reconnect."
     const val FailedToConfigureSession = "Failed to configure session."

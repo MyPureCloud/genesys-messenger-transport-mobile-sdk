@@ -8,6 +8,7 @@ import com.genesys.cloud.messenger.transport.core.TlsVersion
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+@Suppress("DEPRECATION")
 class InternalConfigurationFactoryTest {
     @Test
     fun `when creating configuration with TRANSPORT type it should format application parameter correctly`() {
