@@ -221,6 +221,10 @@ internal class MessagingClientImpl(
     @Throws(IllegalStateException::class)
     override fun disconnect() {
         log.i { LogMessages.DISCONNECT }
+        if (!stateMachine.canDisconnect()) {
+            log.i { LogMessages.disconnectIgnored(stateMachine.currentState) }
+            return
+        }
         val code = SocketCloseCode.NORMAL_CLOSURE.value
         val reason = "The user has closed the connection."
         reconnectionHandler.clear()
@@ -934,6 +938,10 @@ internal class MessagingClientImpl(
             reason: String
         ) {
             log.i { LogMessages.onClosing(code, reason) }
+            if (!stateMachine.canDisconnect()) {
+                log.i { LogMessages.disconnectIgnored(stateMachine.currentState) }
+                return
+            }
             stateMachine.onClosing(code, reason)
         }
 

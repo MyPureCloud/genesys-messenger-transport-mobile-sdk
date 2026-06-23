@@ -32,6 +32,7 @@ import transport.util.fromConfiguredToReconnecting
 import transport.util.fromConnectedToError
 import transport.util.fromIdleToConnecting
 import transport.util.fromReconnectingToError
+import com.genesys.cloud.messenger.transport.core.isIdle
 import kotlin.test.assertFailsWith
 
 class MessagingClientConnectionTest : BaseMessagingClientTest() {
@@ -74,9 +75,9 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
 
     @Test
     fun `when not connected and disconnect`() {
-        assertFailsWith<IllegalStateException> {
-            subject.disconnect()
-        }
+        subject.disconnect()
+
+        assertThat(subject.currentState).isIdle()
     }
 
     @Test
