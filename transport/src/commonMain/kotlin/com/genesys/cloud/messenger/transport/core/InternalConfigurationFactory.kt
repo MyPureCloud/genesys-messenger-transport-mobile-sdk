@@ -71,7 +71,7 @@ object InternalConfigurationFactory {
         logging: Boolean = false,
         reconnectionTimeoutInSeconds: Long = 60 * 5,
         autoRefreshTokenWhenExpired: Boolean = true,
-        encryptedVault: Boolean,
+        encryptedVault: Boolean = false,
         sessionExpirationNoticeIntervalSeconds: Long = Configuration.DEFAULT_INTERVAL,
         minimumWebSocketTlsVersion: TlsVersion = TlsVersion.SYSTEM_DEFAULT,
     ): Configuration {
