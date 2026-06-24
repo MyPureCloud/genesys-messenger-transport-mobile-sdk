@@ -4,6 +4,11 @@ import android.content.Context
 import android.content.SharedPreferences
 import java.lang.ref.WeakReference
 
+@Deprecated(
+    message = "Use EncryptedVault instead.",
+    replaceWith = ReplaceWith("EncryptedVault", "com.genesys.cloud.messenger.transport.util.EncryptedVault"),
+    level = DeprecationLevel.WARNING
+)
 actual class DefaultVault actual constructor(keys: Keys) : Vault(keys) {
     private val sharedPreferences: SharedPreferences
 

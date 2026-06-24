@@ -2,6 +2,11 @@ package com.genesys.cloud.messenger.transport.util
 
 import com.genesys.cloud.messenger.transport.core.InternalVault
 
+@Deprecated(
+    message = "Use EncryptedVault instead.",
+    replaceWith = ReplaceWith("EncryptedVault", "com.genesys.cloud.messenger.transport.util.EncryptedVault"),
+    level = DeprecationLevel.WARNING
+)
 actual class DefaultVault actual constructor(keys: Keys) : Vault(keys) {
     private val vault = InternalVault(keys.vaultKey, keys.tokenKey)
 

@@ -13,12 +13,56 @@ object InternalConfigurationFactory {
      * @param logging indicates if logging should be enabled.
      * @param reconnectionTimeoutInSeconds period of time during which Transport will try to reconnect.
      * @param autoRefreshTokenWhenExpired indicates if Transport should auto refresh auth token if expired.
-     * @param encryptedVault indicates if encrypted vault should be used.
      * @param minimumWebSocketTlsVersion the minimum TLS protocol version for WebSocket connections.
      * @param sessionExpirationNoticeIntervalSeconds how many seconds before the session expires to show the expiration notice.
      * @param customEndpoint optional endpoint override (host:port) for routing connections to a local server (e.g., WireMock). Intended for UI testing only.
      * @return Configuration instance with proper application parameter formatting.
      */
+    fun create(
+        deploymentId: String,
+        domain: String,
+        applicationType: ApplicationType,
+        applicationVersion: String,
+        logging: Boolean = false,
+        reconnectionTimeoutInSeconds: Long = 60 * 5,
+        autoRefreshTokenWhenExpired: Boolean = true,
+        sessionExpirationNoticeIntervalSeconds: Long = Configuration.DEFAULT_INTERVAL,
+        minimumWebSocketTlsVersion: TlsVersion = TlsVersion.SYSTEM_DEFAULT,
+    ): Configuration = create(
+        deploymentId = deploymentId,
+        domain = domain,
+        applicationType = applicationType,
+        applicationVersion = applicationVersion,
+        logging = logging,
+        reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
+        autoRefreshTokenWhenExpired = autoRefreshTokenWhenExpired,
+        encryptedVault = true,
+        sessionExpirationNoticeIntervalSeconds = sessionExpirationNoticeIntervalSeconds,
+        minimumWebSocketTlsVersion = minimumWebSocketTlsVersion,
+    )
+
+    /**
+     * @param deploymentId the ID of the Genesys Cloud Messenger deployment.
+     * @param domain the regional base domain address for a Genesys Cloud Web Messaging service.
+     * @param applicationType the type of application using the configuration.
+     * @param applicationVersion the version of application using the configuration.
+     * @param logging indicates if logging should be enabled.
+     * @param reconnectionTimeoutInSeconds period of time during which Transport will try to reconnect.
+     * @param autoRefreshTokenWhenExpired indicates if Transport should auto refresh auth token if expired.
+     * @param encryptedVault indicates if encrypted vault should be used.
+     * @param minimumWebSocketTlsVersion the minimum TLS protocol version for WebSocket connections.
+     * @param sessionExpirationNoticeIntervalSeconds how many seconds before the session expires to show the expiration notice.
+     * @param customEndpoint optional endpoint override (host:port) for routing connections to a local server (e.g., WireMock). Intended for UI testing only.
+     * @return Configuration instance with proper application parameter formatting.
+     *
+     * @deprecated [DefaultVault] is being removed in favour of [com.genesys.cloud.messenger.transport.util.EncryptedVault].
+     * Use the [create] overload without the [encryptedVault] parameter instead.
+     */
+    @Deprecated(
+        message = "DefaultVault is being removed. Use the create overload without the encryptedVault parameter instead.",
+        replaceWith = ReplaceWith("create(deploymentId, domain, applicationType, applicationVersion, logging, reconnectionTimeoutInSeconds, autoRefreshTokenWhenExpired, sessionExpirationNoticeIntervalSeconds, minimumWebSocketTlsVersion)"),
+        level = DeprecationLevel.WARNING
+    )
     fun create(
         deploymentId: String,
         domain: String,
@@ -53,7 +97,15 @@ object InternalConfigurationFactory {
 
     /**
      * Overload to preserve the pre-2.12.0 8-param signature for iOS/Swift callers.
+     *
+     * @deprecated [DefaultVault] is being removed in favour of [com.genesys.cloud.messenger.transport.util.EncryptedVault].
+     * Use the [create] overload without the [encryptedVault] parameter instead.
      */
+    @Deprecated(
+        message = "DefaultVault is being removed. Use the create overload without the encryptedVault parameter instead.",
+        replaceWith = ReplaceWith("create(deploymentId, domain, applicationType, applicationVersion, logging, reconnectionTimeoutInSeconds, autoRefreshTokenWhenExpired)"),
+        level = DeprecationLevel.WARNING
+    )
     fun create(
         deploymentId: String,
         domain: String,
