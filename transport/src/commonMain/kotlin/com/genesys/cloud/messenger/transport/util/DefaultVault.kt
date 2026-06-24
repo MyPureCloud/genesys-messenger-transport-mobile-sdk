@@ -9,7 +9,15 @@ internal const val PUSH_CONFIG_KEY = "push_config"
 /**
  * A default implementation of the [Vault] that should be sufficient for most users of the
  * SDK.
+ *
+ * @deprecated Use [EncryptedVault] instead. [DefaultVault] stores data without encryption and
+ * will be removed in a future release.
  */
+@Deprecated(
+    message = "Use EncryptedVault instead.",
+    replaceWith = ReplaceWith("EncryptedVault", "com.genesys.cloud.messenger.transport.util.EncryptedVault"),
+    level = DeprecationLevel.WARNING
+)
 expect class DefaultVault(
     keys: Keys =
         Keys(
