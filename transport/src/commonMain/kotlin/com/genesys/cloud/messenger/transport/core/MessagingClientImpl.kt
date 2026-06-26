@@ -218,7 +218,6 @@ internal class MessagingClientImpl(
         closeAllConnectionsForTheSession()
     }
 
-    @Throws(IllegalStateException::class)
     override fun disconnect() {
         log.i { LogMessages.DISCONNECT }
         if (!stateMachine.canDisconnect()) {

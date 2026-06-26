@@ -274,10 +274,8 @@ interface MessagingClient {
 
     /**
      * Close the WebSocket connection to the Web Messaging service.
-     *
-     * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
+     * If the client is already disconnected (Closed, Idle, or Error state), this is a no-op.
      */
-    @Throws(IllegalStateException::class)
     fun disconnect()
 
     /**
