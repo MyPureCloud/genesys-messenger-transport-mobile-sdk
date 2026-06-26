@@ -50,6 +50,31 @@ internal fun TimeSlotContent.toMessage(): Message.TimeSlot =
         payload = dateTime
     )
 
+internal fun StructuredMessage.Content.ListPickerContent.ListPicker.toMessage(): Message.ListPicker =
+    Message.ListPicker(
+        sections = sections.map { it.toMessage() },
+        receivedMessage = receivedMessage?.let {
+            Message.ListPicker.ReceivedMessage(it.title, it.subtitle, it.imageUrl)
+        },
+        replyMessage = replyMessage?.let {
+            Message.ListPicker.ReplyMessage(it.title, it.subtitle, it.imageUrl)
+        },
+    )
+
+private fun StructuredMessage.Content.ListPickerContent.ListPicker.Section.toMessage(): Message.ListPicker.Section =
+    Message.ListPicker.Section(
+        title = title,
+        multipleSelection = multipleSelection,
+        items = items.map {
+            Message.ListPicker.ListItem(
+                id = it.id,
+                title = it.title,
+                subtitle = it.subtitle,
+                imageUrl = it.imageUrl,
+            )
+        },
+    )
+
 internal fun StructuredMessage.toMessage(tracingId: String? = null): Message {
     val quickReplies = content.toQuickReplies().map { it.copy(originatingMessageId = this.id) }
     val cards = content.toCards()
@@ -58,6 +83,9 @@ internal fun StructuredMessage.toMessage(tracingId: String? = null): Message {
         content.filterIsInstance<StructuredMessage.Content.DatePickerContent>()
             .firstOrNull()?.datePicker?.toMessage()
     val buttonResponses = content.toButtonResponseList()
+    val listPicker: Message.ListPicker? =
+        content.filterIsInstance<StructuredMessage.Content.ListPickerContent>()
+            .firstOrNull()?.listPicker?.toMessage()
 
     return Message(
         id = tracingId ?: id,
@@ -68,7 +96,8 @@ internal fun StructuredMessage.toMessage(tracingId: String? = null): Message {
             cards.isNotEmpty(),
             hasCardSelection,
             timePicker != null,
-            buttonResponses.isNotEmpty()
+            buttonResponses.isNotEmpty(),
+            listPicker != null,
         ),
         text = text,
         timePicker = timePicker,
@@ -90,6 +119,7 @@ internal fun StructuredMessage.toMessage(tracingId: String? = null): Message {
         metadata = metadata,
         originatingMessageId = originatingMessageId,
         buttonResponses = buttonResponses,
+        listPicker = listPicker,
     )
 }
 
@@ -202,7 +232,8 @@ private fun StructuredMessage.Type.toMessageType(
     hasCards: Boolean,
     hasCardSelection: Boolean,
     hasTimePicker: Boolean,
-    hasButtonResponse: Boolean = false
+    hasButtonResponse: Boolean = false,
+    hasListPicker: Boolean = false,
 ): Message.Type =
     when (this) {
         StructuredMessage.Type.Text -> Message.Type.Text
@@ -210,6 +241,7 @@ private fun StructuredMessage.Type.toMessageType(
         StructuredMessage.Type.Structured -> {
             when {
                 hasTimePicker -> Message.Type.DatePicker
+                hasListPicker -> Message.Type.ListPicker
                 hasQuickReplies -> Message.Type.QuickReply
                 hasCards || hasCardSelection -> Message.Type.Cards
                 hasButtonResponse -> Message.Type.ButtonResponse

@@ -120,6 +120,10 @@ class TestBedViewModel :
     private lateinit var onOpenUrl: (url: String) -> Unit
     private val quickRepliesMap = mutableMapOf<String, ButtonResponse>()
     private val cardActionsMap = mutableMapOf<String, ButtonResponse>()
+
+    // PoC (MTSDK-1472 follow-up): List Picker options received from the Bot, keyed by option text.
+    // Populated from inbound messages that carry generic button responses (Message.buttonResponses).
+    private val listPickerOptionsMap = mutableMapOf<String, ButtonResponse>()
     private var latestTimePickerData: Pair<String, Message.TimeSlotPicker>? = null
     private lateinit var selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit
 
@@ -196,6 +200,8 @@ class TestBedViewModel :
             "sendQuickReply" -> doSendQuickReply(input)
             "sendAction" -> doSendAction(input)
             "submitTimeSlot" -> doSubmitTimeSlot(input)
+            "submitListPicker" -> doSubmitListPicker(input)
+            "listPickerOptions" -> doListPickerOptions()
             "listActions" -> doListActions()
             "history" -> fetchNextPage()
             "healthCheck" -> doSendHealthCheck()
@@ -375,6 +381,37 @@ class TestBedViewModel :
             onSocketMessageReceived(failMessage)
             commandWaiting = false
         }
+    }
+
+    private fun doSubmitListPicker(input: String) {
+        // Input: comma-separated option texts, e.g. "submitListPicker Red, Blue, Large"
+        // Selections may span multiple multipleSelection sections; each maps to one content[] entry.
+        val requestedTexts = input.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+        if (requestedTexts.isEmpty()) {
+            onSocketMessageReceived(
+                "Provide comma-separated option texts. Available: ${listPickerOptionsMap.keys}"
+            )
+            return
+        }
+        val selections = requestedTexts.mapNotNull { listPickerOptionsMap[it] }
+        val missing = requestedTexts.filter { listPickerOptionsMap[it] == null }
+        if (missing.isNotEmpty()) {
+            onSocketMessageReceived(
+                "Unknown List Picker option(s): $missing. Available: ${listPickerOptionsMap.keys}"
+            )
+            return
+        }
+        try {
+            client.submitListPicker(selections)
+            listPickerOptionsMap.clear()
+        } catch (t: Throwable) {
+            handleException(t, "submit list picker")
+        }
+    }
+
+    private fun doListPickerOptions() {
+        onSocketMessageReceived("Available List Picker options: ${listPickerOptionsMap.keys}")
+        commandWaiting = false
     }
 
     private fun doListActions() {
@@ -662,8 +699,30 @@ class TestBedViewModel :
                     }
                     "TimeSlotPickerReceived with timePicker: ${event.message.timePicker}"
                 }
+
+                is MessageEvent.ListPickerReceived -> {
+                    captureListPickerOptions(event.message)
+                    "ListPickerReceived with listPicker: ${event.message.listPicker}"
+                }
             }
         onSocketMessageReceived(eventMessage)
+    }
+
+    private fun captureListPickerOptions(message: Message) {
+        // Build a submittable ButtonResponse per selectable item across ALL sections.
+        // text = item.title, payload = item.id, type = "ListPicker" (per HLD Section 3).
+        val listPicker = message.listPicker ?: return
+        listPickerOptionsMap.clear()
+        listPicker.sections.forEach { section ->
+            section.items.forEach { item ->
+                listPickerOptionsMap[item.title] = ButtonResponse(
+                    text = item.title,
+                    payload = item.id,
+                    type = "ListPicker",
+                    originatingMessageId = message.id,
+                )
+            }
+        }
     }
 
     private fun onEvent(event: Event) {

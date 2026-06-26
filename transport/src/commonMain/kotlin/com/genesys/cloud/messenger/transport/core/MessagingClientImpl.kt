@@ -293,6 +293,17 @@ internal class MessagingClientImpl(
         send(encodedJson)
     }
 
+    override fun submitListPicker(listPickerResponses: List<ButtonResponse>) {
+        stateMachine.checkIfConfigured()
+        require(listPickerResponses.isNotEmpty()) { "listPickerResponses must not be empty." }
+        log.d { LogMessages.submitListPicker(listPickerResponses) }
+        val channel = prepareCustomAttributesForSending()
+        val request =
+            messageStore.prepareListPickerSubmissionMessageWith(token, listPickerResponses, channel)
+        val encodedJson = WebMessagingJson.json.encodeToString(request)
+        send(encodedJson)
+    }
+
     @Throws(IllegalStateException::class)
     override fun sendHealthCheck() {
         healthCheckProvider.encodeRequest(token)?.let {

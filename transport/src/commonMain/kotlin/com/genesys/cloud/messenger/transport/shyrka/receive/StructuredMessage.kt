@@ -68,6 +68,7 @@ internal data class StructuredMessage(
             Card,
             Carousel,
             DatePicker,
+            ListPicker,
         }
 
         @Serializable
@@ -171,6 +172,49 @@ internal data class StructuredMessage(
         }
 
         @Serializable
+        internal data class ListPickerContent(
+            val listPicker: ListPicker
+        ) : Content() {
+
+            @Serializable
+            internal data class ListPicker(
+                val sections: List<Section> = emptyList(),
+                val receivedMessage: ReceivedMessage? = null,
+                val replyMessage: ReplyMessage? = null,
+            ) {
+
+                @Serializable
+                internal data class Section(
+                    val title: String,
+                    val multipleSelection: Boolean = false,
+                    val items: List<ListItem> = emptyList(),
+                )
+
+                @Serializable
+                internal data class ListItem(
+                    val id: String,
+                    val title: String,
+                    val subtitle: String? = null,
+                    val imageUrl: String? = null,
+                )
+
+                @Serializable
+                internal data class ReceivedMessage(
+                    val title: String? = null,
+                    val subtitle: String? = null,
+                    val imageUrl: String? = null,
+                )
+
+                @Serializable
+                internal data class ReplyMessage(
+                    val title: String? = null,
+                    val subtitle: String? = null,
+                    val imageUrl: String? = null,
+                )
+            }
+        }
+
+        @Serializable
         internal data object UnknownContent : Content()
     }
 
@@ -184,6 +228,7 @@ internal data class StructuredMessage(
                 Content.Type.Card.name -> Content.CardContent.serializer()
                 Content.Type.Carousel.name -> Content.CarouselContent.serializer()
                 Content.Type.DatePicker.name -> Content.DatePickerContent.serializer()
+                Content.Type.ListPicker.name -> Content.ListPickerContent.serializer()
                 else -> Content.UnknownContent.serializer()
             }
         }

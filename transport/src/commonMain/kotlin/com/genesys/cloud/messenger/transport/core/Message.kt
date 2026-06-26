@@ -41,7 +41,8 @@ data class Message(
     val metadata: Map<String, String> = emptyMap(),
     val timePicker: TimeSlotPicker? = null,
     val originatingMessageId: String? = null,
-    val buttonResponses: List<ButtonResponse> = emptyList()
+    val buttonResponses: List<ButtonResponse> = emptyList(),
+    val listPicker: ListPicker? = null,
 ) {
     /**
      * The enum type representation of the message.
@@ -61,6 +62,7 @@ data class Message(
         QuickReply,
         Cards,
         DatePicker,
+        ListPicker,
         ButtonResponse,
         Unknown,
     }
@@ -179,4 +181,62 @@ data class Message(
         val duration: Long,
         val payload: String
     )
+
+    /**
+     * Container for a List Picker sent by the Bot.
+     *
+     * @property sections the list of [Section]s shown to the user.
+     * @property receivedMessage optional header information for the picker.
+     * @property replyMessage optional confirmation information returned after a selection.
+     */
+    @Serializable
+    data class ListPicker(
+        val sections: List<Section> = emptyList(),
+        val receivedMessage: ReceivedMessage? = null,
+        val replyMessage: ReplyMessage? = null,
+    ) {
+        /**
+         * A group of selectable [ListItem]s.
+         *
+         * @property title the section heading text.
+         * @property multipleSelection true when the section allows selecting more than one item.
+         * @property items the selectable options in the section.
+         */
+        @Serializable
+        data class Section(
+            val title: String,
+            val multipleSelection: Boolean = false,
+            val items: List<ListItem> = emptyList(),
+        )
+
+        /**
+         * A single selectable option.
+         *
+         * @property id unique identifier of the item; used as the selection payload.
+         * @property title primary label text.
+         * @property subtitle optional secondary label text.
+         * @property imageUrl optional image URL.
+         */
+        @Serializable
+        data class ListItem(
+            val id: String,
+            val title: String,
+            val subtitle: String? = null,
+            val imageUrl: String? = null,
+        )
+
+        @Serializable
+        data class ReceivedMessage(
+            val title: String? = null,
+            val subtitle: String? = null,
+            val imageUrl: String? = null,
+        )
+
+        @Serializable
+        data class ReplyMessage(
+            val title: String? = null,
+            val subtitle: String? = null,
+            val imageUrl: String? = null,
+        )
+    }
 }

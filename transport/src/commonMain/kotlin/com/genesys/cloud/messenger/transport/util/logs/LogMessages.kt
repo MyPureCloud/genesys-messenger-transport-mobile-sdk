@@ -209,6 +209,8 @@ internal object LogMessages {
 
     fun submitTimeSlotPrepareToSend(message: Message) = "Message with time slot submission prepared to send: ${message.toString().sanitizeSensitiveData()}"
 
+    fun listPickerSubmissionPrepareToSend(message: Message) = "Message with list picker multi-select submission prepared to send: ${message.toString().sanitizeSensitiveData()}"
+
     fun postbackPrepareToSend(message: Message) = "Message with postback prepared to send: ${message.toString().sanitizeSensitiveData()}"
 
     fun sendQuickReply(buttonResponse: ButtonResponse) = "sendQuickReply(buttonResponse: ${buttonResponse.sanitize()})"
@@ -216,6 +218,9 @@ internal object LogMessages {
     fun ignoreInboundEvent(event: Event) = "Ignore inbound event: $event."
 
     fun sendCardReply(postbackResponse: ButtonResponse) = "sendCardReply(postbackResponse: ${postbackResponse.sanitize()})"
+
+    fun submitListPicker(buttonResponses: List<ButtonResponse>) =
+        "submitListPicker(selections: ${buttonResponses.size}, payloads: ${buttonResponses.map { it.sanitize() }})"
 
     // Push
     fun synchronizingPush(

@@ -363,4 +363,19 @@ interface MessagingClient {
      */
     @Throws(IllegalStateException::class)
     fun submitTimeSlot(timeSlotResponse: ButtonResponse)
+
+    /**
+     * PoC (MTSDK-1472 follow-up): Submit one or more List Picker selections in a single outbound
+     * message. Each [ButtonResponse] becomes a separate entry in the message content[] array,
+     * supporting multi-select sections (multipleSelection = true) and selections spanning more
+     * than one section.
+     *
+     * Build each [ButtonResponse] from the selected [Message.ListPicker.ListItem] as:
+     * text = item.title, payload = item.id, type = "ListPicker".
+     *
+     * @param listPickerResponses the list of selected List Picker options to submit. Must not be empty.
+     * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
+     */
+    @Throws(IllegalStateException::class)
+    fun submitListPicker(listPickerResponses: List<ButtonResponse>)
 }

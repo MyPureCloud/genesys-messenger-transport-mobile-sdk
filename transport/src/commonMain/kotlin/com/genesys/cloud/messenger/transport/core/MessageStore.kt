@@ -76,6 +76,36 @@ internal class MessageStore(private val log: Log) {
         }
     }
 
+    /**
+     * PoC (MTSDK-1472 follow-up): Builds an OnMessage request whose content[] array carries
+     * multiple [ButtonResponse] entries, enabling multi-select List Picker submission
+     * (one or more selections, potentially spanning multiple multipleSelection sections).
+     *
+     * Unlike [buildButtonResponseRequest], this does NOT collapse to a single content item.
+     */
+    fun prepareListPickerSubmissionMessageWith(
+        token: String,
+        buttonResponses: List<ButtonResponse>,
+        channel: Channel? = null,
+    ): OnMessageRequest {
+        val messageToSend = preparePendingMessage(
+            type = Message.Type.ListPicker,
+            logMessage = { LogMessages.listPickerSubmissionPrepareToSend(it) },
+            extraFields = { copy(buttonResponses = buttonResponses) },
+        )
+        val content = buttonResponses.map {
+            Message.Content(
+                contentType = Message.Content.Type.ButtonResponse,
+                buttonResponse = it,
+            )
+        }
+        return OnMessageRequest(
+            token = token,
+            message = TextMessage(text = "", content = content, channel = channel),
+            tracingId = messageToSend.id,
+        )
+    }
+
     fun preparePostbackMessage(
         token: String,
         buttonResponse: ButtonResponse,
@@ -222,6 +252,7 @@ private fun Message.toMessageEvent(): MessageEvent =
         Message.Type.QuickReply -> MessageEvent.QuickReplyReceived(this)
         Message.Type.Cards -> MessageEvent.CardMessageReceived(this)
         Message.Type.DatePicker -> MessageEvent.TimeSlotPickerReceived(this)
+        Message.Type.ListPicker -> MessageEvent.ListPickerReceived(this)
         else -> MessageEvent.MessageInserted(this)
     }
 
@@ -291,4 +322,12 @@ sealed class MessageEvent {
      * @property message is the [Message] object with all the time slot picker details.
      */
     class TimeSlotPickerReceived(val message: Message) : MessageEvent()
+
+    /**
+     * Dispatched when a List Picker message was sent by the Bot.
+     * To access the List Picker data (sections and selectable items), refer to [Message.listPicker].
+     *
+     * @property message is the [Message] object with all the List Picker details.
+     */
+    class ListPickerReceived(val message: Message) : MessageEvent()
 }
