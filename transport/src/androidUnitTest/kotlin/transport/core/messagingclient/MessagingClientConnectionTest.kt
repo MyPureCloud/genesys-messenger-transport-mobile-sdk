@@ -16,6 +16,7 @@ import com.genesys.cloud.messenger.transport.core.isConfigured
 import com.genesys.cloud.messenger.transport.core.isConnected
 import com.genesys.cloud.messenger.transport.core.isConnecting
 import com.genesys.cloud.messenger.transport.core.isError
+import com.genesys.cloud.messenger.transport.core.isIdle
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
@@ -32,7 +33,6 @@ import transport.util.fromConfiguredToReconnecting
 import transport.util.fromConnectedToError
 import transport.util.fromIdleToConnecting
 import transport.util.fromReconnectingToError
-import com.genesys.cloud.messenger.transport.core.isIdle
 import kotlin.test.assertFailsWith
 
 class MessagingClientConnectionTest : BaseMessagingClientTest() {
