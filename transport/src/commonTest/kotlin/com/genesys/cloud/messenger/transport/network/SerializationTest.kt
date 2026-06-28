@@ -56,8 +56,8 @@ class SerializationTest {
     fun `when ConfigureSessionRequest then encodes`() {
         val journeyContext =
             JourneyContext(
-                JourneyCustomer("00000000-0000-0000-0000-000000000000", "cookie"),
-                JourneyCustomerSession("", "web"),
+                customer = JourneyCustomer("00000000-0000-0000-0000-000000000000", "cookie"),
+                customerSession = JourneyCustomerSession("session-id", "app"),
             )
         val encodedString =
             WebMessagingJson.json.encodeToString(
@@ -71,7 +71,45 @@ class SerializationTest {
             )
 
         assertThat(encodedString, "encoded ConfigureSessionRequest")
-            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","startNew":false,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"tracingId":"${TestValues.TRACING_ID}","action":"configureSession"}""")
+            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","startNew":false,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"session-id","type":"app"}},"tracingId":"${TestValues.TRACING_ID}","action":"configureSession"}""")
+    }
+
+    @Test
+    fun `when ConfigureSessionRequest has JourneyContext with null customerSession then customerSession is omitted`() {
+        val journeyContext =
+            JourneyContext(
+                customer = JourneyCustomer("00000000-0000-0000-0000-000000000000", "cookie"),
+            )
+        val encodedString =
+            WebMessagingJson.json.encodeToString(
+                ConfigureSessionRequest(
+                    token = "<token>",
+                    deploymentId = "<deploymentId>",
+                    startNew = false,
+                    journeyContext = journeyContext,
+                    tracingId = TestValues.TRACING_ID,
+                )
+            )
+
+        assertThat(encodedString, "encoded ConfigureSessionRequest")
+            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","startNew":false,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"}},"tracingId":"${TestValues.TRACING_ID}","action":"configureSession"}""")
+    }
+
+    @Test
+    fun `when ConfigureSessionRequest has no JourneyContext then journeyContext is omitted`() {
+        val encodedString =
+            WebMessagingJson.json.encodeToString(
+                ConfigureSessionRequest(
+                    token = "<token>",
+                    deploymentId = "<deploymentId>",
+                    startNew = false,
+                    journeyContext = null,
+                    tracingId = TestValues.TRACING_ID,
+                )
+            )
+
+        assertThat(encodedString, "encoded ConfigureSessionRequest")
+            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","startNew":false,"tracingId":"${TestValues.TRACING_ID}","action":"configureSession"}""")
     }
 
     @Test
@@ -476,11 +514,6 @@ class SerializationTest {
 
     @Test
     fun `when ConfigureAuthenticatedSessionRequest then encodes`() {
-        val journeyContext =
-            JourneyContext(
-                JourneyCustomer("00000000-0000-0000-0000-000000000000", "cookie"),
-                JourneyCustomerSession("", "web"),
-            )
         val data = ConfigureAuthenticatedSessionRequest.Data("<auth_token>")
         val encodedString =
             WebMessagingJson.json.encodeToString(
@@ -488,14 +521,13 @@ class SerializationTest {
                     token = "<token>",
                     deploymentId = "<deploymentId>",
                     startNew = false,
-                    journeyContext = journeyContext,
                     data = data,
                     tracingId = TestValues.TRACING_ID,
                 )
             )
 
         assertThat(encodedString, "encoded ConfigureAuthenticatedSessionRequest")
-            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","startNew":false,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"data":{"code":"<auth_token>"},"tracingId":"${TestValues.TRACING_ID}","action":"configureAuthenticatedSession"}""")
+            .isEqualTo("""{"token":"<token>","deploymentId":"<deploymentId>","startNew":false,"data":{"code":"<auth_token>"},"tracingId":"${TestValues.TRACING_ID}","action":"configureAuthenticatedSession"}""")
     }
 
     @Test

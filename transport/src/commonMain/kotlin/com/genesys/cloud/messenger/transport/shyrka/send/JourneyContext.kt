@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 internal data class JourneyContext(
     val customer: JourneyCustomer,
-    val customerSession: JourneyCustomerSession,
+    val customerSession: JourneyCustomerSession? = null,
     val triggeringAction: JourneyAction? = null
 )
 

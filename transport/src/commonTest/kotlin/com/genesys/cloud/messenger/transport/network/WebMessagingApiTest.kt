@@ -165,6 +165,7 @@ class WebMessagingApiTest {
                     authCode = AuthTest.AUTH_CODE,
                     redirectUri = AuthTest.REDIRECT_URI,
                     codeVerifier = AuthTest.CODE_VERIFIER,
+                    journeyContext = null,
                 )
             }
 
@@ -180,6 +181,7 @@ class WebMessagingApiTest {
             runBlocking {
                 subject.fetchAuthJwt(
                     authCode = AuthTest.ID_TOKEN,
+                    journeyContext = null,
                 )
             }
 
@@ -202,6 +204,7 @@ class WebMessagingApiTest {
             runBlocking {
                 subject.fetchAuthJwt(
                     authCode = AuthTest.ID_TOKEN,
+                    journeyContext = null,
                 )
             }
 
@@ -220,6 +223,7 @@ class WebMessagingApiTest {
                     authCode = AuthTest.AUTH_CODE,
                     redirectUri = AuthTest.REDIRECT_URI,
                     codeVerifier = AuthTest.CODE_VERIFIER,
+                    journeyContext = null,
                 )
             }
 
@@ -239,6 +243,7 @@ class WebMessagingApiTest {
                     authCode = AuthTest.AUTH_CODE,
                     redirectUri = AuthTest.REDIRECT_URI,
                     codeVerifier = AuthTest.CODE_VERIFIER,
+                    journeyContext = null,
                 )
             }
 
@@ -258,6 +263,7 @@ class WebMessagingApiTest {
                     authCode = AuthTest.AUTH_CODE,
                     redirectUri = AuthTest.REDIRECT_URI,
                     codeVerifier = AuthTest.CODE_VERIFIER,
+                    journeyContext = null,
                 )
             }
 
