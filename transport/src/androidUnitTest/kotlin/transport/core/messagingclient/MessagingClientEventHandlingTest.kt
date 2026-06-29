@@ -8,6 +8,7 @@ import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.events.Event
+import com.genesys.cloud.messenger.transport.core.isClosed
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import io.mockk.verify
 import io.mockk.verifySequence
@@ -108,6 +109,19 @@ class MessagingClientEventHandlingTest : BaseMessagingClientTest() {
             mockEventHandler.onEvent(eq(expectedEvent))
             disconnectSequence()
         }
+    }
+
+    @Test
+    fun `when event ConnectionClosed is received but state is already Closed`() {
+        val expectedState = MessagingClient.State.Closed(1000, "The user has closed the connection.")
+        subject.connect()
+        slot.captured.onMessage(Response.connectionClosedEventNoReason)
+        assertThat(subject.currentState).isClosed(expectedState.code, expectedState.reason)
+
+        slot.captured.onMessage(Response.connectionClosedEventNoReason)
+
+        assertThat(subject.currentState).isClosed(expectedState.code, expectedState.reason)
+        verify(exactly = 1) { mockPlatformSocket.closeSocket(expectedState.code, expectedState.reason) }
     }
 
     @Test

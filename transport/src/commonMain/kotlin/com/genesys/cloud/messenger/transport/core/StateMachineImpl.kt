@@ -95,4 +95,4 @@ internal fun StateMachine.checkIfCanStartANewChat() = check(isReadOnly()) { "Mes
 
 private fun State.canConnect(): Boolean = this is State.Closed || this is State.Idle || this is State.Error || this is State.Reconnecting
 
-private fun State.canDisconnect(): Boolean = this !is State.Closed && this !is State.Idle && this !is State.Error
+internal fun State.canDisconnect(): Boolean = this !is State.Closed && this !is State.Idle && this !is State.Error

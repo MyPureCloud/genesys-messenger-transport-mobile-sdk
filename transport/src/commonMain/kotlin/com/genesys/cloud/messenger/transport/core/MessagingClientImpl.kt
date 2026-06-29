@@ -218,12 +218,9 @@ internal class MessagingClientImpl(
         closeAllConnectionsForTheSession()
     }
 
+    @Throws(IllegalStateException::class)
     override fun disconnect() {
         log.i { LogMessages.DISCONNECT }
-        if (!stateMachine.canDisconnect()) {
-            log.i { LogMessages.disconnectIgnored(stateMachine.currentState) }
-            return
-        }
         val code = SocketCloseCode.NORMAL_CLOSURE.value
         val reason = "The user has closed the connection."
         reconnectionHandler.clear()
@@ -909,7 +906,11 @@ internal class MessagingClientImpl(
                         }
                         sessionDurationHandler.clearAndRemoveNotice()
                         eventHandler.onEvent(Event.ConnectionClosed(reason))
-                        disconnect()
+                        if (stateMachine.currentState.canDisconnect()) {
+                            disconnect()
+                        } else {
+                            log.i { "ConnectionClosedEvent ignored, state is already ${stateMachine.currentState}" }
+                        }
                     }
 
                     is LogoutEvent -> {
@@ -937,11 +938,11 @@ internal class MessagingClientImpl(
             reason: String
         ) {
             log.i { LogMessages.onClosing(code, reason) }
-            if (!stateMachine.canDisconnect()) {
-                log.i { LogMessages.disconnectIgnored(stateMachine.currentState) }
-                return
+            if (stateMachine.currentState.canDisconnect()) {
+                stateMachine.onClosing(code, reason)
+            } else {
+                log.i { "onClosing ignored, state is already ${stateMachine.currentState}" }
             }
-            stateMachine.onClosing(code, reason)
         }
 
         override fun onClosed(
