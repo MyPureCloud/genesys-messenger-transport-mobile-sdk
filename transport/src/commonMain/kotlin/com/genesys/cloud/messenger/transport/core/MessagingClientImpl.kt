@@ -909,7 +909,7 @@ internal class MessagingClientImpl(
                         if (stateMachine.currentState.canDisconnect()) {
                             disconnect()
                         } else {
-                            log.i { "ConnectionClosedEvent ignored, state is already ${stateMachine.currentState}" }
+                            log.i { LogMessages.connectionClosedEventIgnored(stateMachine.currentState) }
                         }
                     }
 
@@ -941,7 +941,7 @@ internal class MessagingClientImpl(
             if (stateMachine.currentState.canDisconnect()) {
                 stateMachine.onClosing(code, reason)
             } else {
-                log.i { "onClosing ignored, state is already ${stateMachine.currentState}" }
+                log.i { LogMessages.onClosingIgnored(stateMachine.currentState) }
             }
         }
 

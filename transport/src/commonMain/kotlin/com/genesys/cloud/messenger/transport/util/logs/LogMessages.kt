@@ -127,8 +127,11 @@ internal object LogMessages {
         reason: String
     ) = "onClosing(code = $code, reason = $reason)"
 
-    fun disconnectIgnored(state: MessagingClient.State) =
-        "disconnect() ignored, state is already $state"
+    fun connectionClosedEventIgnored(state: MessagingClient.State) =
+        "ConnectionClosedEvent ignored, state is already $state"
+
+    fun onClosingIgnored(state: MessagingClient.State) =
+        "onClosing ignored, state is already $state"
 
     fun onClosed(
         code: Int,
