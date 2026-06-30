@@ -17,7 +17,6 @@ import com.genesys.cloud.messenger.transport.core.isConfigured
 import com.genesys.cloud.messenger.transport.core.isConnected
 import com.genesys.cloud.messenger.transport.core.isConnecting
 import com.genesys.cloud.messenger.transport.core.isError
-import com.genesys.cloud.messenger.transport.core.isIdle
 import com.genesys.cloud.messenger.transport.network.PlatformSocketListener
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
@@ -76,9 +75,9 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
 
     @Test
     fun `when not connected and disconnect`() {
-        subject.disconnect()
-
-        assertThat(subject.currentState).isIdle()
+        assertFailsWith<IllegalStateException> {
+            subject.disconnect()
+        }
     }
 
     @Test
