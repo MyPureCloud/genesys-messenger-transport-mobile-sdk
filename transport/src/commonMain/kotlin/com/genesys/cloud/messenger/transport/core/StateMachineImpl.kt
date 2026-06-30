@@ -88,9 +88,11 @@ internal fun StateMachine.isInactive(): Boolean = currentState is State.Idle || 
 
 internal fun StateMachine.isClosing(): Boolean = currentState is State.Closing
 
+internal fun StateMachine.canDisconnect(): Boolean = currentState.canDisconnect()
+
 @Throws(IllegalStateException::class)
 internal fun StateMachine.checkIfCanStartANewChat() = check(isReadOnly()) { "MessagingClient is not in ReadOnly state." }
 
 private fun State.canConnect(): Boolean = this is State.Closed || this is State.Idle || this is State.Error || this is State.Reconnecting
 
-private fun State.canDisconnect(): Boolean = this !is State.Closed && this !is State.Idle && this !is State.Error
+internal fun State.canDisconnect(): Boolean = this !is State.Closed && this !is State.Idle && this !is State.Error

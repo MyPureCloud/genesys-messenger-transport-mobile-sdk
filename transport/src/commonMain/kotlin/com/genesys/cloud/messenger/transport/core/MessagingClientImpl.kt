@@ -906,7 +906,11 @@ internal class MessagingClientImpl(
                         }
                         sessionDurationHandler.clearAndRemoveNotice()
                         eventHandler.onEvent(Event.ConnectionClosed(reason))
-                        disconnect()
+                        if (stateMachine.currentState.canDisconnect()) {
+                            disconnect()
+                        } else {
+                            log.i { LogMessages.connectionClosedEventIgnored(stateMachine.currentState) }
+                        }
                     }
 
                     is LogoutEvent -> {
@@ -934,7 +938,11 @@ internal class MessagingClientImpl(
             reason: String
         ) {
             log.i { LogMessages.onClosing(code, reason) }
-            stateMachine.onClosing(code, reason)
+            if (stateMachine.currentState.canDisconnect()) {
+                stateMachine.onClosing(code, reason)
+            } else {
+                log.i { LogMessages.onClosingIgnored(stateMachine.currentState) }
+            }
         }
 
         override fun onClosed(

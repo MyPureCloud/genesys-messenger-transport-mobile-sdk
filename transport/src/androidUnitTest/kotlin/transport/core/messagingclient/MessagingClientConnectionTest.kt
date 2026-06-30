@@ -12,6 +12,7 @@ import com.genesys.cloud.messenger.transport.core.StateChange
 import com.genesys.cloud.messenger.transport.core.TransportSDKException
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.isClosed
+import com.genesys.cloud.messenger.transport.core.isClosing
 import com.genesys.cloud.messenger.transport.core.isConfigured
 import com.genesys.cloud.messenger.transport.core.isConnected
 import com.genesys.cloud.messenger.transport.core.isConnecting
@@ -77,6 +78,29 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         assertFailsWith<IllegalStateException> {
             subject.disconnect()
         }
+    }
+
+    @Test
+    fun `when SocketListener invoke onClosing while Configured`() {
+        val expectedCloseCode = 1001
+        val expectedCloseReason = "Going away."
+        subject.connect()
+
+        slot.captured.onClosing(expectedCloseCode, expectedCloseReason)
+
+        assertThat(subject.currentState).isClosing(expectedCloseCode, expectedCloseReason)
+    }
+
+    @Test
+    fun `when SocketListener invoke onClosing but state is already Closed`() {
+        val expectedState = MessagingClient.State.Closed(1000, "The user has closed the connection.")
+        subject.connect()
+        subject.disconnect()
+        assertThat(subject.currentState).isClosed(expectedState.code, expectedState.reason)
+
+        slot.captured.onClosing(expectedState.code, expectedState.reason)
+
+        assertThat(subject.currentState).isClosed(expectedState.code, expectedState.reason)
     }
 
     @Test
