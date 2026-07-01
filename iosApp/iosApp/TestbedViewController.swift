@@ -77,6 +77,7 @@ class TestbedViewController: UIViewController {
         case tlsDefault
         case tls12
         case tls13
+        case testCrash
 
         var helpDescription: String {
             switch self {
@@ -717,6 +718,11 @@ extension TestbedViewController : UITextFieldDelegate {
             case (.tls13, _):
                 reinitializeMessenger(tlsVersion: .tls13)
                 self.info.text = "Reconfigured with TLS: TLS_1_3. Use 'connect' to test. Verify with Wireshark: ClientHello should advertise TLS 1.3 ONLY"
+            case (.testCrash, _):
+                // MTSDK-1511 reproduction: call disconnect() with try! so the
+                // IllegalStateException is not caught. Crashes when state is
+                // already Closed/Idle/Error (i.e. after a bye command).
+                try! messenger.disconnect()
             default:
                 self.info.text = "Invalid command"
             }

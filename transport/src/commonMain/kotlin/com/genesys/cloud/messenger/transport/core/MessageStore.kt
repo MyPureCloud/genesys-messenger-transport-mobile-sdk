@@ -77,11 +77,9 @@ internal class MessageStore(private val log: Log) {
     }
 
     /**
-     * PoC (MTSDK-1472 follow-up): Builds an OnMessage request whose content[] array carries
-     * multiple [ButtonResponse] entries, enabling multi-select List Picker submission
-     * (one or more selections, potentially spanning multiple multipleSelection sections).
-     *
-     * Unlike [buildButtonResponseRequest], this does NOT collapse to a single content item.
+     * Builds a "Structured" OnMessage request whose content[] carries one [ButtonResponse]
+     * entry per selected item, enabling multi-select List Picker submission across sections.
+     * originatingMessageId is sent inside each buttonResponse.
      */
     fun prepareListPickerSubmissionMessageWith(
         token: String,
@@ -101,7 +99,7 @@ internal class MessageStore(private val log: Log) {
         }
         return OnMessageRequest(
             token = token,
-            message = TextMessage(text = "", content = content, channel = channel),
+            message = StructuredMessage(text = "", content = content, channel = channel),
             tracingId = messageToSend.id,
         )
     }

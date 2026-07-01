@@ -124,6 +124,7 @@ class TestBedViewModel :
     // PoC (MTSDK-1472 follow-up): List Picker options received from the Bot, keyed by option text.
     // Populated from inbound messages that carry generic button responses (Message.buttonResponses).
     private val listPickerOptionsMap = mutableMapOf<String, ButtonResponse>()
+    private var latestListPickerData: Pair<String, Message.ListPicker>? = null
     private var latestTimePickerData: Pair<String, Message.TimeSlotPicker>? = null
     private lateinit var selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit
 
@@ -201,6 +202,7 @@ class TestBedViewModel :
             "sendAction" -> doSendAction(input)
             "submitTimeSlot" -> doSubmitTimeSlot(input)
             "submitListPicker" -> doSubmitListPicker(input)
+            "submitListPickerDemo" -> doSubmitListPickerDemo()
             "listPickerOptions" -> doListPickerOptions()
             "listActions" -> doListActions()
             "history" -> fetchNextPage()
@@ -406,6 +408,37 @@ class TestBedViewModel :
             listPickerOptionsMap.clear()
         } catch (t: Throwable) {
             handleException(t, "submit list picker")
+        }
+    }
+
+    private fun doSubmitListPickerDemo() {
+        // One-shot full-feature demo: for the latest List Picker, auto-select the first item
+        // of every single-select section and the first two items of every multi-select section,
+        // then submit them all in a single message.
+        val data = latestListPickerData ?: run {
+            onSocketMessageReceived("No List Picker received yet.")
+            return
+        }
+        val (messageId, listPicker) = data
+        val selections = listPicker.sections.flatMap { section ->
+            section.items.take(if (section.multipleSelection) 2 else 1).map { item ->
+                ButtonResponse(
+                    text = item.title,
+                    payload = item.id,
+                    type = "ListPicker",
+                    originatingMessageId = messageId,
+                )
+            }
+        }
+        if (selections.isEmpty()) {
+            onSocketMessageReceived("List Picker has no selectable items.")
+            return
+        }
+        Log.i(TAG, "submitListPickerDemo selecting: ${selections.map { it.text }}")
+        try {
+            client.submitListPicker(selections)
+        } catch (t: Throwable) {
+            handleException(t, "submit list picker demo")
         }
     }
 
@@ -712,6 +745,7 @@ class TestBedViewModel :
         // Build a submittable ButtonResponse per selectable item across ALL sections.
         // text = item.title, payload = item.id, type = "ListPicker" (per HLD Section 3).
         val listPicker = message.listPicker ?: return
+        latestListPickerData = message.id to listPicker
         listPickerOptionsMap.clear()
         listPicker.sections.forEach { section ->
             section.items.forEach { item ->
