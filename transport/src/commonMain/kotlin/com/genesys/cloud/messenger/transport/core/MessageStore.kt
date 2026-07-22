@@ -222,6 +222,7 @@ private fun Message.toMessageEvent(): MessageEvent =
         Message.Type.QuickReply -> MessageEvent.QuickReplyReceived(this)
         Message.Type.Cards -> MessageEvent.CardMessageReceived(this)
         Message.Type.DatePicker -> MessageEvent.TimeSlotPickerReceived(this)
+        Message.Type.ListPicker -> MessageEvent.ListPickerReceived(this)
         else -> MessageEvent.MessageInserted(this)
     }
 
@@ -291,4 +292,12 @@ sealed class MessageEvent {
      * @property message is the [Message] object with all the time slot picker details.
      */
     class TimeSlotPickerReceived(val message: Message) : MessageEvent()
+
+    /**
+     * Dispatched when a List Picker message was sent by the Bot.
+     * To access the List Picker data (sections and selectable items), refer to [Message.listPicker].
+     *
+     * @property message is the [Message] object with all the List Picker details.
+     */
+    class ListPickerReceived(val message: Message) : MessageEvent()
 }

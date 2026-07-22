@@ -717,6 +717,7 @@ internal class MessagingClientImpl(
             Message.Type.QuickReply,
             Message.Type.Cards,
             Message.Type.DatePicker,
+            Message.Type.ListPicker,
             Message.Type.ButtonResponse -> {
                 messageStore.update(this)
                 sessionDurationHandler.onMessage()

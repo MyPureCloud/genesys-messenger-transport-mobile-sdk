@@ -32,6 +32,7 @@ import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.CardTestValues
+import com.genesys.cloud.messenger.transport.utility.ListPickerTestValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import com.genesys.cloud.messenger.transport.utility.TimeSlotPickerTestValues
@@ -791,6 +792,48 @@ internal class MessageStoreTest {
         assertThat(actualEvent).isInstanceOf(MessageEvent.TimeSlotPickerReceived::class.java)
         assertThat((actualEvent as MessageEvent.TimeSlotPickerReceived).message).isEqualTo(givenMessage)
         assertThat(actualEvent.message.timePicker).isEqualTo(givenTimeSlotPicker)
+    }
+
+    @Test
+    fun `when update called with ListPicker message, then ListPickerReceived is published`() {
+        val givenListPicker =
+            Message.ListPicker(
+                sections =
+                    listOf(
+                        Message.ListPicker.Section(
+                            title = ListPickerTestValues.SECTION_TITLE,
+                            multipleSelection = true,
+                            items =
+                                listOf(
+                                    Message.ListPicker.ListItem(
+                                        id = ListPickerTestValues.ITEM_ID,
+                                        title = ListPickerTestValues.ITEM_TITLE,
+                                    )
+                                )
+                        )
+                    ),
+                receivedMessage =
+                    Message.ListPicker.ReceivedMessage(title = ListPickerTestValues.HEADER_TITLE)
+            )
+        val givenMessage =
+            Message(
+                id = "msg_id",
+                direction = Direction.Outbound,
+                state = State.Sent,
+                messageType = Type.ListPicker,
+                text = "Choose from the list",
+                listPicker = givenListPicker,
+                from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
+            )
+
+        subject.update(givenMessage)
+
+        verify { mockMessageListener.invoke(capture(messageSlot)) }
+
+        val actualEvent = messageSlot.captured
+        assertThat(actualEvent).isInstanceOf(MessageEvent.ListPickerReceived::class.java)
+        assertThat((actualEvent as MessageEvent.ListPickerReceived).message).isEqualTo(givenMessage)
+        assertThat(actualEvent.message.listPicker).isEqualTo(givenListPicker)
     }
 
     @Test

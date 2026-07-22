@@ -14,6 +14,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.PushErrorResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ButtonResponseContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.DatePickerContent
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ListPickerContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.QuickReplyContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.TimeSlotPickerContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
@@ -530,6 +531,61 @@ object TimeSlotPickerTestValues {
     internal fun createDatePickerContent(
         datePicker: TimeSlotPickerContent = createTimeSlotPickerContent()
     ) = DatePickerContent(datePicker = datePicker)
+}
+
+object ListPickerTestValues {
+    internal const val SECTION_TITLE = "Choose an option"
+    internal const val ITEM_ID = "item_1"
+    internal const val ITEM_TITLE = "Option One"
+    internal const val ITEM_SUBTITLE = "First option"
+    internal const val ITEM_IMAGE_URL = "https://example.com/item.png"
+    internal const val HEADER_TITLE = "Pick from the list"
+    internal const val HEADER_SUBTITLE = "Select one or more"
+    internal const val HEADER_IMAGE_URL = "https://example.com/header.png"
+
+    internal fun createListItem(
+        id: String = ITEM_ID,
+        title: String = ITEM_TITLE,
+        subtitle: String? = ITEM_SUBTITLE,
+        imageUrl: String? = ITEM_IMAGE_URL,
+    ) = ListPickerContent.ListPicker.ListItem(
+        id = id,
+        title = title,
+        subtitle = subtitle,
+        imageUrl = imageUrl,
+    )
+
+    internal fun createSection(
+        title: String = SECTION_TITLE,
+        multipleSelection: Boolean = false,
+        items: List<ListPickerContent.ListPicker.ListItem> = listOf(createListItem()),
+    ) = ListPickerContent.ListPicker.Section(
+        title = title,
+        multipleSelection = multipleSelection,
+        items = items,
+    )
+
+    internal fun createReceivedMessage(
+        title: String? = HEADER_TITLE,
+        subtitle: String? = HEADER_SUBTITLE,
+        imageUrl: String? = HEADER_IMAGE_URL,
+    ) = ListPickerContent.ListPicker.ReceivedMessage(
+        title = title,
+        subtitle = subtitle,
+        imageUrl = imageUrl,
+    )
+
+    internal fun createListPicker(
+        sections: List<ListPickerContent.ListPicker.Section> = listOf(createSection()),
+        receivedMessage: ListPickerContent.ListPicker.ReceivedMessage? = createReceivedMessage(),
+    ) = ListPickerContent.ListPicker(
+        sections = sections,
+        receivedMessage = receivedMessage,
+    )
+
+    internal fun createListPickerContent(
+        listPicker: ListPickerContent.ListPicker = createListPicker()
+    ) = ListPickerContent(listPicker = listPicker)
 }
 
 object MockEngineValues {
