@@ -300,8 +300,9 @@ internal class MessagingClientImpl(
 
     @Throws(IllegalStateException::class, IllegalArgumentException::class)
     override fun submitListPicker(listPickerResponses: List<ButtonResponse>) {
-        stateMachine.checkIfConfigured()
+        // Validate the argument before the state check so input validation is state-independent.
         require(listPickerResponses.isNotEmpty()) { EMPTY_LIST_PICKER_SUBMISSION }
+        stateMachine.checkIfConfigured()
         log.d { LogMessages.submitListPicker(listPickerResponses) }
         val channel = prepareCustomAttributesForSending()
         val request =

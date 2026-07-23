@@ -35,6 +35,14 @@ class MessagingClientListPickerTest : BaseMessagingClientTest() {
 
         verify(exactly = 0) {
             mockMessageStore.prepareListPickerSubmissionMessageWith(any(), any(), any())
+            mockPlatformSocket.sendMessage(match { Request.isListPickerRequest(it) })
+        }
+    }
+
+    @Test
+    fun `when submitListPicker() with an empty list but client is not configured then it throws IllegalArgumentException`() {
+        assertFailsWith<IllegalArgumentException> {
+            subject.submitListPicker(emptyList())
         }
     }
 
