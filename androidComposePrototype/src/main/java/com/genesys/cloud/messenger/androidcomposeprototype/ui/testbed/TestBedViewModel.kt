@@ -662,6 +662,11 @@ class TestBedViewModel :
                     }
                     "TimeSlotPickerReceived with timePicker: ${event.message.timePicker}"
                 }
+
+                is MessageEvent.ListPickerReceived ->
+                    event.message.run {
+                        "ListPickerReceived: text: $text | listPicker: $listPicker"
+                    }
             }
         onSocketMessageReceived(eventMessage)
     }

@@ -1404,6 +1404,62 @@ class SerializationTest {
         assertThat(decoded).isEqualTo(StructuredMessage.Content.DatePickerContent(datePicker = expectedDatePicker))
     }
 
+    @Test fun `when ListPickerContent then deserializes`() {
+        val json =
+            """{"contentType":"ListPicker","listPicker":{"sections":[{"title":"Choose an option","multipleSelection":true,"items":[{"id":"item_1","title":"Option One","subtitle":"First option","imageUrl":"https://example.com/item.png"}]}],"receivedMessage":{"title":"Pick from the list","subtitle":"Select one or more","imageUrl":"https://example.com/header.png"}}}"""
+        val decoded = WebMessagingJson.json.decodeFromString(StructuredMessage.Content.serializer(), json)
+        val expectedItem =
+            StructuredMessage.Content.ListPickerContent.ListPicker.ListItem(
+                id = "item_1",
+                title = "Option One",
+                subtitle = "First option",
+                imageUrl = "https://example.com/item.png"
+            )
+        val expectedSection =
+            StructuredMessage.Content.ListPickerContent.ListPicker.Section(
+                title = "Choose an option",
+                multipleSelection = true,
+                items = listOf(expectedItem)
+            )
+        val expectedListPicker =
+            StructuredMessage.Content.ListPickerContent.ListPicker(
+                sections = listOf(expectedSection),
+                receivedMessage =
+                    StructuredMessage.Content.ListPickerContent.ListPicker.ReceivedMessage(
+                        title = "Pick from the list",
+                        subtitle = "Select one or more",
+                        imageUrl = "https://example.com/header.png"
+                    )
+            )
+        assertThat(decoded).isEqualTo(StructuredMessage.Content.ListPickerContent(listPicker = expectedListPicker))
+    }
+
+    @Test fun `when ListPickerContent with empty items then deserializes`() {
+        val json =
+            """{"contentType":"ListPicker","listPicker":{"sections":[{"title":"Empty section","items":[]}]}}"""
+        val decoded = WebMessagingJson.json.decodeFromString(StructuredMessage.Content.serializer(), json)
+        val expectedSection =
+            StructuredMessage.Content.ListPickerContent.ListPicker.Section(
+                title = "Empty section",
+                multipleSelection = false,
+                items = emptyList()
+            )
+        val expectedListPicker =
+            StructuredMessage.Content.ListPickerContent.ListPicker(
+                sections = listOf(expectedSection),
+                receivedMessage = null
+            )
+        assertThat(decoded).isEqualTo(StructuredMessage.Content.ListPickerContent(listPicker = expectedListPicker))
+    }
+
+    @Test fun `when ListPickerContent with malformed item missing required id then throws`() {
+        val json =
+            """{"contentType":"ListPicker","listPicker":{"sections":[{"title":"Section","items":[{"title":"fork"}]}]}}"""
+        assertFailsWith<SerializationException> {
+            WebMessagingJson.json.decodeFromString(StructuredMessage.Content.serializer(), json)
+        }
+    }
+
     @Test
     fun `when QuickReplyContent without action field then deserializes`() {
         val json = """{"contentType":"QuickReply","quickReply":{"text":"Yes","payload":"cookie1"}}"""

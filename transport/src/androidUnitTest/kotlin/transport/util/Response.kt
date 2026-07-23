@@ -5,6 +5,7 @@ import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.util.SIGNED_IN
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
+import com.genesys.cloud.messenger.transport.utility.ListPickerTestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import com.genesys.cloud.messenger.transport.utility.TimeSlotPickerTestValues
 import kotlinx.serialization.json.Json
@@ -120,6 +121,10 @@ internal object Response {
 
     const val onMessageWithPostbackCardReply =
         """{"type":"message","class":"StructuredMessage","code":200,"body":{"direction":"Outbound","id":"msg_id","channel":{"time":"some_time","type":"Private"},"type":"Structured","text":"You selected this card option","content":[{"contentType":"Card","card":{"title":"Title","description":"Description","image":"http://image.com/image.png","actions":[{"type":"Postback","text":"Select this option","payload":"postback_payload"}]}}],"originatingEntity":"Bot"}}"""
+
+    // Note: includes the extra "replyMessage":{} field emitted by the backend to exercise ignoreUnknownKeys.
+    const val onMessageWithListPicker =
+        """{"type":"message","class":"StructuredMessage","code":200,"body":{"direction":"Outbound","id":"msg_id","channel":{"time":"some_time","type":"Private"},"type":"Structured","text":"Pick from the list","content":[{"contentType":"ListPicker","listPicker":{"sections":[{"title":"${ListPickerTestValues.SECTION_TITLE}","multipleSelection":true,"items":[{"id":"${ListPickerTestValues.ITEM_ID}","title":"${ListPickerTestValues.ITEM_TITLE}","subtitle":"${ListPickerTestValues.ITEM_SUBTITLE}","imageUrl":"${ListPickerTestValues.ITEM_IMAGE_URL}"}]}],"replyMessage":{},"receivedMessage":{"title":"${ListPickerTestValues.HEADER_TITLE}","subtitle":"${ListPickerTestValues.HEADER_SUBTITLE}","imageUrl":"${ListPickerTestValues.HEADER_IMAGE_URL}"}}}],"originatingEntity":"Bot"}}"""
 
     fun structuredMessageWithEvents(
         events: String = defaultStructuredEvents,

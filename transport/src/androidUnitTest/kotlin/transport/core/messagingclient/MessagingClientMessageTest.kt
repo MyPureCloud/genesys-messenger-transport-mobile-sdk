@@ -16,6 +16,7 @@ import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.isClosed
 import com.genesys.cloud.messenger.transport.util.extensions.sanitizeText
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
+import com.genesys.cloud.messenger.transport.utility.ListPickerTestValues
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import io.mockk.every
 import io.mockk.verify
@@ -48,6 +49,55 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
 
         verify {
             mockMessageStore.pendingMessage
+        }
+    }
+
+    @Test
+    fun `when SocketListener invoke onMessage with Structured message that contains ListPicker`() {
+        val expectedListPicker =
+            Message.ListPicker(
+                sections =
+                    listOf(
+                        Message.ListPicker.Section(
+                            title = ListPickerTestValues.SECTION_TITLE,
+                            multipleSelection = true,
+                            items =
+                                listOf(
+                                    Message.ListPicker.ListItem(
+                                        id = ListPickerTestValues.ITEM_ID,
+                                        title = ListPickerTestValues.ITEM_TITLE,
+                                        subtitle = ListPickerTestValues.ITEM_SUBTITLE,
+                                        imageUrl = ListPickerTestValues.ITEM_IMAGE_URL,
+                                    )
+                                )
+                        )
+                    ),
+                receivedMessage =
+                    Message.ListPicker.ReceivedMessage(
+                        title = ListPickerTestValues.HEADER_TITLE,
+                        subtitle = ListPickerTestValues.HEADER_SUBTITLE,
+                        imageUrl = ListPickerTestValues.HEADER_IMAGE_URL,
+                    )
+            )
+        val expectedMessage =
+            Message(
+                id = "msg_id",
+                direction = Direction.Outbound,
+                state = State.Sent,
+                messageType = Type.ListPicker,
+                text = "Pick from the list",
+                listPicker = expectedListPicker,
+                from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
+            )
+
+        subject.connect()
+
+        slot.captured.onMessage(Response.onMessageWithListPicker)
+
+        verifySequence {
+            connectSequence()
+            mockMessageStore.update(expectedMessage)
+            mockSessionDurationHandler.onMessage()
         }
     }
 
