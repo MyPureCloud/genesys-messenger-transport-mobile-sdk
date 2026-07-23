@@ -36,6 +36,7 @@ import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import com.genesys.cloud.messenger.transport.utility.AuthTest
+import com.genesys.cloud.messenger.transport.utility.ListPickerTestValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues.TOKEN_KEY
@@ -126,6 +127,21 @@ open class BaseMessagingClientTest {
                                         buttonResponse = TimeSlotPickerTestValues.timeSlotButtonResponse
                                     )
                                 )
+                        )
+                )
+            every { prepareListPickerSubmissionMessageWith(any(), any(), any()) } returns
+                OnMessageRequest(
+                    token = Request.token,
+                    message =
+                        StructuredMessage(
+                            text = "",
+                            content =
+                                ListPickerTestValues.singleSelection.map {
+                                    Message.Content(
+                                        contentType = Message.Content.Type.ButtonResponse,
+                                        buttonResponse = it,
+                                    )
+                                }
                         )
                 )
         }

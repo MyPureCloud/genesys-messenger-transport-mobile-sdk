@@ -586,6 +586,45 @@ object ListPickerTestValues {
     internal fun createListPickerContent(
         listPicker: ListPickerContent.ListPicker = createListPicker()
     ) = ListPickerContent(listPicker = listPicker)
+
+    // Outbound submission (ButtonResponse) test values.
+    internal const val LIST_PICKER_TYPE = "ListPicker"
+    internal const val PICKER_MESSAGE_ID = "list_picker_msg_id"
+    internal const val ITEM_ID_2 = "item_2"
+    internal const val ITEM_TITLE_2 = "Option Two"
+    internal const val ITEM_ID_3 = "item_3"
+    internal const val ITEM_TITLE_3 = "Option Three"
+
+    internal val listPickerButtonResponse =
+        ButtonResponse(
+            text = ITEM_TITLE,
+            payload = ITEM_ID,
+            type = LIST_PICKER_TYPE,
+            originatingMessageId = PICKER_MESSAGE_ID,
+        )
+    internal val listPickerButtonResponse2 =
+        ButtonResponse(
+            text = ITEM_TITLE_2,
+            payload = ITEM_ID_2,
+            type = LIST_PICKER_TYPE,
+            originatingMessageId = PICKER_MESSAGE_ID,
+        )
+    internal val listPickerButtonResponse3 =
+        ButtonResponse(
+            text = ITEM_TITLE_3,
+            payload = ITEM_ID_3,
+            type = LIST_PICKER_TYPE,
+            originatingMessageId = PICKER_MESSAGE_ID,
+        )
+
+    /** A single selection from a single-select section. */
+    internal val singleSelection = listOf(listPickerButtonResponse)
+
+    /** Two selections from the same multi-select section. */
+    internal val multiSelection = listOf(listPickerButtonResponse, listPickerButtonResponse2)
+
+    /** Selections spanning more than one section. */
+    internal val crossSectionSelection = listOf(listPickerButtonResponse, listPickerButtonResponse3)
 }
 
 object MockEngineValues {
