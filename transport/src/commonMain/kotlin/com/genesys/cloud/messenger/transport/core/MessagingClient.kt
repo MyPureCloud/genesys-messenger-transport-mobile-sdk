@@ -377,4 +377,22 @@ interface MessagingClient {
      */
     @Throws(IllegalStateException::class)
     fun submitTimeSlot(timeSlotResponse: ButtonResponse)
+
+    /**
+     * Submit one or more List Picker selections to the Agent/Bot in a single message.
+     *
+     * Each selected item is sent as a separate [ButtonResponse], so single, multi-select,
+     * and cross-section selections can all be submitted together. Set each response's
+     * `originatingMessageId` to the id of the List Picker message being answered.
+     *
+     * All responses in a single call are expected to answer the same List Picker message, i.e.
+     * share the same `originatingMessageId`. Submitting responses that target different messages
+     * in one call is not supported.
+     *
+     * @param listPickerResponses the selected List Picker items to send. Must not be empty.
+     * @throws IllegalStateException If the current state of the MessagingClient is not compatible with the requested action.
+     * @throws IllegalArgumentException If [listPickerResponses] is empty.
+     */
+    @Throws(IllegalStateException::class, IllegalArgumentException::class)
+    fun submitListPicker(listPickerResponses: List<ButtonResponse>)
 }

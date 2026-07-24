@@ -672,6 +672,106 @@ internal class MessageStoreTest {
     }
 
     @Test
+    fun `when prepareListPickerSubmissionMessageWith() single selection and channel`() {
+        val givenButtonResponses = ListPickerTestValues.singleSelection
+        val givenChannel = Channel(Channel.Metadata(mapOf("A" to "B")))
+        val expectedMessage =
+            subject.pendingMessage.copy(
+                state = State.Sending,
+                messageType = Type.ListPicker,
+                type = Type.ListPicker.name,
+                buttonResponses = givenButtonResponses,
+            )
+        val expectedStructuredMessage =
+            StructuredMessage(
+                text = "",
+                content =
+                    givenButtonResponses.map {
+                        Content(
+                            contentType = Content.Type.ButtonResponse,
+                            buttonResponse = it,
+                        )
+                    },
+                channel = givenChannel,
+            )
+
+        subject.prepareListPickerSubmissionMessageWith(TestValues.TOKEN, givenButtonResponses, givenChannel).run {
+            assertThat(message).isInstanceOf(StructuredMessage::class)
+            val structuredMessage = message as StructuredMessage
+
+            assertThat(token).isEqualTo(givenToken)
+            assertThat(structuredMessage).isEqualTo(expectedStructuredMessage)
+            assertThat(structuredMessage.text).isEqualTo("")
+            assertThat(structuredMessage.content).isEqualTo(expectedStructuredMessage.content)
+            assertThat(structuredMessage.channel).isEqualTo(givenChannel)
+            assertThat(tracingId).isEqualTo(expectedMessage.id)
+            assertThat(time).isNull()
+        }
+        assertThat(subject.getConversation()[0]).isEqualTo(expectedMessage)
+        assertThat(subject.pendingMessage.id).isNotEqualTo(expectedMessage.id)
+        verify { mockMessageListener(capture(messageSlot)) }
+        assertThat((messageSlot.captured as MessageEvent.MessageInserted).message).isEqualTo(expectedMessage)
+    }
+
+    @Test
+    fun `when prepareListPickerSubmissionMessageWith() multi selection then one content entry per item`() {
+        val givenButtonResponses = ListPickerTestValues.multiSelection
+
+        subject.prepareListPickerSubmissionMessageWith(TestValues.TOKEN, givenButtonResponses).run {
+            val structuredMessage = message as StructuredMessage
+            assertThat(structuredMessage.content).containsExactly(
+                *givenButtonResponses.map {
+                    Content(
+                        contentType = Content.Type.ButtonResponse,
+                        buttonResponse = it,
+                    )
+                }.toTypedArray()
+            )
+        }
+    }
+
+    @Test
+    fun `when prepareListPickerSubmissionMessageWith() cross-section selection then all items in one message`() {
+        val givenButtonResponses = ListPickerTestValues.crossSectionSelection
+
+        subject.prepareListPickerSubmissionMessageWith(TestValues.TOKEN, givenButtonResponses).run {
+            val structuredMessage = message as StructuredMessage
+            assertThat(structuredMessage.content).containsExactly(
+                *givenButtonResponses.map {
+                    Content(
+                        contentType = Content.Type.ButtonResponse,
+                        buttonResponse = it,
+                    )
+                }.toTypedArray()
+            )
+        }
+    }
+
+    @Test
+    fun `when prepareListPickerSubmissionMessageWith() no channel then logs and publishes MessageInserted`() {
+        val givenButtonResponses = ListPickerTestValues.singleSelection
+        val expectedMessage =
+            subject.pendingMessage.copy(
+                state = State.Sending,
+                messageType = Type.ListPicker,
+                type = Type.ListPicker.name,
+                buttonResponses = givenButtonResponses,
+            )
+
+        subject.prepareListPickerSubmissionMessageWith(TestValues.TOKEN, givenButtonResponses).run {
+            val structuredMessage = message as StructuredMessage
+            assertThat(structuredMessage.channel).isNull()
+            assertThat(tracingId).isEqualTo(expectedMessage.id)
+        }
+        verify {
+            mockLogger.d(capture(logSlot))
+            mockMessageListener(capture(messageSlot))
+        }
+        assertThat((messageSlot.captured as MessageEvent.MessageInserted).message).isEqualTo(expectedMessage)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.submitListPickerPrepareToSend(expectedMessage))
+    }
+
+    @Test
     fun `when prepareTimeSlotSubmissionMessageWith() then logs and publishes MessageInserted`() {
         val givenButtonResponse = TimeSlotPickerTestValues.timeSlotButtonResponse
         val expectedMessage =

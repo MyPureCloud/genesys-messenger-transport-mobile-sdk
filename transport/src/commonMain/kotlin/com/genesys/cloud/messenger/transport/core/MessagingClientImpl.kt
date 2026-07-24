@@ -66,6 +66,7 @@ import kotlinx.serialization.SerializationException
 import kotlin.reflect.KProperty0
 
 private const val MAX_RECONFIGURE_ATTEMPTS = 3
+private const val EMPTY_LIST_PICKER_SUBMISSION = "submitListPicker requires at least one selection."
 
 internal class MessagingClientImpl(
     private val vault: Vault,
@@ -293,6 +294,19 @@ internal class MessagingClientImpl(
         val channel = prepareCustomAttributesForSending()
         val request =
             messageStore.prepareTimeSlotSubmissionMessageWith(token, timeSlotResponse, channel)
+        val encodedJson = WebMessagingJson.json.encodeToString(request)
+        send(encodedJson)
+    }
+
+    @Throws(IllegalStateException::class, IllegalArgumentException::class)
+    override fun submitListPicker(listPickerResponses: List<ButtonResponse>) {
+        // Validate the argument before the state check so input validation is state-independent.
+        require(listPickerResponses.isNotEmpty()) { EMPTY_LIST_PICKER_SUBMISSION }
+        stateMachine.checkIfConfigured()
+        log.d { LogMessages.submitListPicker(listPickerResponses) }
+        val channel = prepareCustomAttributesForSending()
+        val request =
+            messageStore.prepareListPickerSubmissionMessageWith(token, listPickerResponses, channel)
         val encodedJson = WebMessagingJson.json.encodeToString(request)
         send(encodedJson)
     }

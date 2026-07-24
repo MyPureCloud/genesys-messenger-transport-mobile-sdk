@@ -212,6 +212,8 @@ internal object LogMessages {
 
     fun submitTimeSlotPrepareToSend(message: Message) = "Message with time slot submission prepared to send: ${message.toString().sanitizeSensitiveData()}"
 
+    fun submitListPickerPrepareToSend(message: Message) = "Message with list picker submission prepared to send: ${message.toString().sanitizeSensitiveData()}"
+
     fun postbackPrepareToSend(message: Message) = "Message with postback prepared to send: ${message.toString().sanitizeSensitiveData()}"
 
     fun sendQuickReply(buttonResponse: ButtonResponse) = "sendQuickReply(buttonResponse: ${buttonResponse.sanitize()})"
@@ -245,6 +247,9 @@ internal object LogMessages {
         timeSlot: String,
         parentMessageId: String?
     ) = "Submit time slot: $timeSlot, slot message with ID: $parentMessageId"
+
+    fun submitListPicker(buttonResponses: List<ButtonResponse>) =
+        "Submit list picker: ${buttonResponses.size} selection(s), list picker message with ID: ${buttonResponses.firstOrNull()?.originatingMessageId}"
 
     const val SYNCHRONIZE_PUSH_SERVICE_ON_SESSION_CONFIGURE = "Synchronizing push service from session configured."
     const val UNREGISTERING_DEVICE = "Unregistering device from push notifications."
