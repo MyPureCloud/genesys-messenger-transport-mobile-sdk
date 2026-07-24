@@ -89,7 +89,7 @@ class TestbedViewController: UIViewController {
             case .refreshAttachment: return "refreshAttachment <attachmentId>"
             case .sendAction: return "sendAction <action>"
             case .submitTimeSlot: return "submitTimeSlot <payload> <text>"
-            case .submitListPicker: return "submitListPicker [<title>, <title>, ...] (no args = first item of every section)"
+            case .submitListPicker: return "submitListPicker [<title|id>, ...] (no args = first item of every section)"
             default: return rawValue
             }
         }
@@ -773,18 +773,22 @@ extension TestbedViewController : UITextFieldDelegate {
         }
         let listPicker = listPickerData.listPicker
         let allItems = listPicker.sections.flatMap { $0.items }
-        let itemsByTitle = Dictionary(allItems.map { ($0.title, $0) }, uniquingKeysWith: { first, _ in first })
-        // Comma-separated item titles, e.g. "submitListPicker fork, chair, desk".
-        // With no argument, defaults to the first item of every section (a cross-section submission).
-        let requestedTitles = (input ?? "")
+        // Comma-separated item ids or titles, e.g. "submitListPicker fork, chair" or "submitListPicker <id>".
+        // Each token matches by id or title; matching by title selects every item with that title, so
+        // two items that share a title are both submitted (they still carry distinct ids). Pass an id to
+        // target one specific item. With no argument, defaults to the first item of every section.
+        let tokens = (input ?? "")
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
         let matchedItems: [Message.ListPickerListItem] = tokens.isEmpty
             ? listPicker.sections.compactMap { $0.items.first }
-            : requestedTitles.compactMap { itemsByTitle[$0] }
+            : tokens.flatMap { token in allItems.filter { $0.id == token || $0.title == token } }
+        // De-duplicate by id while preserving order (a title typed once can match multiple items).
+        var seenIds = Set<String>()
+        let selectedItems = matchedItems.filter { seenIds.insert($0.id).inserted }
         guard !selectedItems.isEmpty else {
-            self.info.text = "No matching List Picker items for: \(requestedTitles)"
+            self.info.text = "No matching List Picker items for: \(tokens)"
             return
         }
         let responses = selectedItems.map { item in

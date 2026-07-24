@@ -386,24 +386,25 @@ class TestBedViewModel :
             return
         }
         val (pickerMessageId, listPicker) = listPickerData
-        val itemsByTitle =
-            listPicker.sections
-                .flatMap { it.items }
-                .associateBy { it.title }
-        // Comma-separated item titles, e.g. "submitListPicker fork, chair, desk".
-        // With no argument, defaults to the first item of every section (a cross-section submission).
-        val requestedTitles =
+        val allItems = listPicker.sections.flatMap { it.items }
+        // Comma-separated item ids or titles, e.g. "submitListPicker fork, chair" or "submitListPicker <id>".
+        // Each token matches by id or title; matching by title selects every item with that title, so
+        // two items that share a title are both submitted (they still carry distinct ids). Pass an id to
+        // target one specific item. With no argument, defaults to the first item of every section.
+        val tokens =
             input.split(",")
                 .map { it.trim() }
                 .filter { it.isNotBlank() }
         val selectedItems =
-            if (requestedTitles.isEmpty()) {
+            if (tokens.isEmpty()) {
                 listPicker.sections.mapNotNull { it.items.firstOrNull() }
             } else {
-                requestedTitles.mapNotNull { itemsByTitle[it] }
+                tokens
+                    .flatMap { token -> allItems.filter { it.id == token || it.title == token } }
+                    .distinctBy { it.id }
             }
         if (selectedItems.isEmpty()) {
-            onSocketMessageReceived("No matching List Picker items for: $requestedTitles")
+            onSocketMessageReceived("No matching List Picker items for: $tokens")
             return
         }
         val responses =
