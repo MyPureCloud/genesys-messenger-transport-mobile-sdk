@@ -780,7 +780,7 @@ extension TestbedViewController : UITextFieldDelegate {
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
-        let selectedItems: [Message.ListPicker.ListItem] = requestedTitles.isEmpty
+        let matchedItems: [Message.ListPickerListItem] = tokens.isEmpty
             ? listPicker.sections.compactMap { $0.items.first }
             : requestedTitles.compactMap { itemsByTitle[$0] }
         guard !selectedItems.isEmpty else {
