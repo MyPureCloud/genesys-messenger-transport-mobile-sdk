@@ -31,7 +31,7 @@ enum class Command(val description: String) {
     SHOULD_AUTHORIZE("shouldAuthorize"),
     SEND_ACTION("sendAction <action>"),
     SUBMIT_TIME_SLOT("submitTimeSlot <payload> <text>"),
-    SUBMIT_LIST_PICKER("submitListPicker [<title>, <title>, ...] (no args = first item of every section)"),
+    SUBMIT_LIST_PICKER("submitListPicker [<title|id>, ...] (no args = first item of every section)"),
     ACTION_LIST("listActions"),
     IMPLICIT_FLOW_LOGIN("implicitLogin"),
     IMPLICIT_FLOW_AUTHORIZE("implicitAuthorize")
