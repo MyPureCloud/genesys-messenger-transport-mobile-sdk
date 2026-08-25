@@ -115,10 +115,15 @@ class PushServiceTest {
                 mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
                 mockLogger.d(capture(logSlot))
                 mockVault.pushConfig = expectedUserConfig
+                mockApi.performDeviceTokenOperation(expectedStoredConfig, DeviceTokenOperation.Delete)
+                mockLogger.d(capture(logSlot))
             }
             assertBaseSynchronizeLogsFor(Diff.TOKEN)
             assertThat(logSlot[2].invoke()).isEqualTo(
                 LogMessages.deviceTokenWasRegistered(expectedUserConfig)
+            )
+            assertThat(logSlot[3].invoke()).isEqualTo(
+                LogMessages.deviceTokenWasDeleted(expectedStoredConfig)
             )
         }
 
@@ -138,10 +143,15 @@ class PushServiceTest {
                 mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
                 mockLogger.d(capture(logSlot))
                 mockVault.pushConfig = expectedUserConfig
+                mockApi.performDeviceTokenOperation(expectedStoredConfig, DeviceTokenOperation.Delete)
+                mockLogger.d(capture(logSlot))
             }
             assertBaseSynchronizeLogsFor(Diff.TOKEN)
             assertThat(logSlot[2].invoke()).isEqualTo(
                 LogMessages.deviceTokenWasRegistered(expectedUserConfig)
+            )
+            assertThat(logSlot[3].invoke()).isEqualTo(
+                LogMessages.deviceTokenWasDeleted(expectedStoredConfig)
             )
         }
 

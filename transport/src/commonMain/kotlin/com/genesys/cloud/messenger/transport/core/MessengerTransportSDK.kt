@@ -31,6 +31,7 @@ class MessengerTransportSDK(
     val vault: Vault,
 ) {
     private var deploymentConfig: DeploymentConfig? = null
+    private var journeyContextProvider: (() -> JourneyContextInfo?)? = null
     private val urls = Urls(configuration.domain, configuration.deploymentId, configuration.application, configuration.customEndpoint)
 
     companion object {
@@ -73,6 +74,19 @@ class MessengerTransportSDK(
     )
 
     /**
+     * Creates an instance configured with a [journeyContextProvider], invoked once to attach
+     * a device-scoped customer cookie id to session-configure requests and push registration,
+     * in place of the session token.
+     */
+    constructor(configuration: Configuration, journeyContextProvider: (() -> JourneyContextInfo?)?) : this(
+        configuration,
+        null,
+        getVault(configuration),
+    ) {
+        this.journeyContextProvider = journeyContextProvider
+    }
+
+    /**
      * Creates an instance of [MessagingClient] based on the provided configuration.
      */
     fun createMessagingClient(): MessagingClient {
@@ -111,6 +125,7 @@ class MessengerTransportSDK(
                     log.withTag(LogTag.RECONNECTION_HANDLER),
                 ),
             deploymentConfig = this::deploymentConfig,
+            journeyContextProvider = journeyContextProvider,
         )
     }
 
@@ -138,6 +153,7 @@ class MessengerTransportSDK(
         return PushServiceImpl(
             vault = vault,
             api = WebMessagingApi(urls, configuration),
+            journeyContextProvider = journeyContextProvider,
             log = Log(configuration.logging, LogTag.PUSH_SERVICE),
         )
     }

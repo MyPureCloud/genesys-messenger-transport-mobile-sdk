@@ -79,6 +79,7 @@ internal class MessagingClientImpl(
     private val attachmentHandler: AttachmentHandler,
     private val messageStore: MessageStore,
     private val reconnectionHandler: ReconnectionHandler,
+    private val journeyContextProvider: (() -> JourneyContextInfo?)? = null,
     private val stateMachine: StateMachine = StateMachineImpl(log.withTag(LogTag.STATE_MACHINE)),
     private val eventHandler: EventHandler = EventHandlerImpl(log.withTag(LogTag.EVENT_HANDLER)),
     private val healthCheckProvider: HealthCheckProvider = HealthCheckProvider(log.withTag(LogTag.HEALTH_CHECK_PROVIDER)),
@@ -94,7 +95,8 @@ internal class MessagingClientImpl(
             api,
             vault,
             log.withTag(LogTag.AUTH_HANDLER),
-            isAuthEnabled = { deploymentConfig.isAuthEnabled(api) }
+            isAuthEnabled = { deploymentConfig.isAuthEnabled(api) },
+            journeyContextProvider = journeyContextProvider,
         ),
     private val internalCustomAttributesStore: CustomAttributesStoreImpl =
         CustomAttributesStoreImpl(
@@ -106,6 +108,7 @@ internal class MessagingClientImpl(
             vault = vault,
             api = api,
             log = log.withTag(LogTag.PUSH_SERVICE),
+            journeyContextProvider = journeyContextProvider,
         ),
     private val historyHandler: HistoryHandler =
         HistoryHandlerImpl(
@@ -150,12 +153,6 @@ internal class MessagingClientImpl(
         set(value) {
             eventHandler.eventListener = value
             field = value
-        }
-
-    override var journeyContextProvider: (() -> JourneyContextInfo?)? = null
-        set(value) {
-            field = value
-            authHandler.journeyContextProvider = value
         }
 
     override val pendingMessage: Message

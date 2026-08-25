@@ -6,6 +6,7 @@ import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.CustomAttributesStoreImpl
 import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.HistoryHandler
+import com.genesys.cloud.messenger.transport.core.JourneyContextInfo
 import com.genesys.cloud.messenger.transport.core.JwtHandler
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.MessageStore
@@ -257,6 +258,32 @@ open class BaseMessagingClientTest {
             attachmentHandler = mockAttachmentHandler,
             messageStore = mockMessageStore,
             reconnectionHandler = mockReconnectionHandler,
+            eventHandler = mockEventHandler,
+            userTypingProvider = userTypingProvider,
+            healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),
+            deploymentConfig = mockDeploymentConfig,
+            authHandler = mockAuthHandler,
+            internalCustomAttributesStore = mockCustomAttributesStore,
+            pushService = mockPushService,
+            historyHandler = mockHistoryHandler,
+            sessionDurationHandler = mockSessionDurationHandler,
+        ).also {
+            it.stateChangedListener = mockStateChangedListener
+        }
+
+    internal fun buildSubject(journeyContextProvider: (() -> JourneyContextInfo?)? = null): MessagingClientImpl =
+        MessagingClientImpl(
+            log = mockLogger,
+            configuration = TestValues.configuration,
+            webSocket = mockPlatformSocket,
+            api = mockWebMessagingApi,
+            token = testToken,
+            jwtHandler = mockJwtHandler,
+            vault = mockVault,
+            attachmentHandler = mockAttachmentHandler,
+            messageStore = mockMessageStore,
+            reconnectionHandler = mockReconnectionHandler,
+            journeyContextProvider = journeyContextProvider,
             eventHandler = mockEventHandler,
             userTypingProvider = userTypingProvider,
             healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),
