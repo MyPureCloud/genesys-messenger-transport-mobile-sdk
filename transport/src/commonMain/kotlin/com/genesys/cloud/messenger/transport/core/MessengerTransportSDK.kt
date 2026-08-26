@@ -24,14 +24,17 @@ import kotlinx.coroutines.withContext
  * The entry point to the services provided by the transport SDK.
  *
  * @param vault the storage mechanism for managing session-related data.
+ * @param journeyContextProvider optional provider invoked at session-configure and push-registration
+ *        time to attach a device-scoped customer cookie id. `null` (or returning `null`) omits
+ *        journey context and keeps push identity as the session token.
  */
 class MessengerTransportSDK(
     private val configuration: Configuration,
     @Deprecated("Use Vault instead.") private val tokenStore: TokenStore?,
     val vault: Vault,
+    private val journeyContextProvider: (() -> JourneyContextInfo?)? = null,
 ) {
     private var deploymentConfig: DeploymentConfig? = null
-    private var journeyContextProvider: (() -> JourneyContextInfo?)? = null
     private val urls = Urls(configuration.domain, configuration.deploymentId, configuration.application, configuration.customEndpoint)
 
     companion object {
@@ -73,18 +76,26 @@ class MessengerTransportSDK(
         tokenStore = null,
     )
 
-    /**
-     * Creates an instance configured with a [journeyContextProvider], invoked once to attach
-     * a device-scoped customer cookie id to session-configure requests and push registration,
-     * in place of the session token.
-     */
-    constructor(configuration: Configuration, journeyContextProvider: (() -> JourneyContextInfo?)?) : this(
+    constructor(
+        configuration: Configuration,
+        journeyContextProvider: (() -> JourneyContextInfo?)?,
+    ) : this(
         configuration,
         null,
         getVault(configuration),
-    ) {
-        this.journeyContextProvider = journeyContextProvider
-    }
+        journeyContextProvider,
+    )
+
+    constructor(
+        configuration: Configuration,
+        vault: Vault,
+        journeyContextProvider: (() -> JourneyContextInfo?)?,
+    ) : this(
+        configuration = configuration,
+        tokenStore = null,
+        vault = vault,
+        journeyContextProvider = journeyContextProvider,
+    )
 
     /**
      * Creates an instance of [MessagingClient] based on the provided configuration.
