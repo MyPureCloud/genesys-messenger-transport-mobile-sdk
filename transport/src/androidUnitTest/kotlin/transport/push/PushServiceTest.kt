@@ -478,6 +478,33 @@ class PushServiceTest {
         }
 
     @Test
+    fun `when synchronize and journeyContextProvider returns blank cookie then PushConfig token is vault token`() =
+        runTest {
+            every { mockPushConfigComparator.compare(any(), any()) } returns Diff.NO_TOKEN
+            val expectedUserConfig = PushTestValues.CONFIG
+            val expectedStoredConfig = DEFAULT_PUSH_CONFIG
+            val expectedOperation = DeviceTokenOperation.Register
+            val subject = buildSubject(
+                journeyContextProvider = {
+                    JourneyContextInfo(customerCookieId = "", sessionId = null)
+                }
+            )
+
+            subject.synchronize(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
+
+            coVerifySequence {
+                syncSequence(expectedUserConfig, expectedStoredConfig)
+                mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
+                mockLogger.d(capture(logSlot))
+                mockVault.pushConfig = expectedUserConfig
+            }
+            assertBaseSynchronizeLogsFor(Diff.NO_TOKEN)
+            assertThat(logSlot[2].invoke()).isEqualTo(
+                LogMessages.deviceTokenWasRegistered(expectedUserConfig)
+            )
+        }
+
+    @Test
     fun `when synchronize and journeyContextProvider throws then PushConfig token is vault token and logs warning`() =
         runTest {
             val givenException = RuntimeException("provider failure")

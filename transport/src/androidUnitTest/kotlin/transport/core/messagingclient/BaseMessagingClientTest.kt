@@ -175,7 +175,7 @@ open class BaseMessagingClientTest {
             }
         }
 
-    private val mockWebMessagingApi: WebMessagingApi =
+    internal val mockWebMessagingApi: WebMessagingApi =
         mockk {
             coEvery {
                 getMessages(
@@ -246,30 +246,7 @@ open class BaseMessagingClientTest {
             coEvery { synchronize(any(), any()) } just Runs
         }
 
-    internal val subject =
-        MessagingClientImpl(
-            log = mockLogger,
-            configuration = TestValues.configuration,
-            webSocket = mockPlatformSocket,
-            api = mockWebMessagingApi,
-            token = testToken,
-            jwtHandler = mockJwtHandler,
-            vault = mockVault,
-            attachmentHandler = mockAttachmentHandler,
-            messageStore = mockMessageStore,
-            reconnectionHandler = mockReconnectionHandler,
-            eventHandler = mockEventHandler,
-            userTypingProvider = userTypingProvider,
-            healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),
-            deploymentConfig = mockDeploymentConfig,
-            authHandler = mockAuthHandler,
-            internalCustomAttributesStore = mockCustomAttributesStore,
-            pushService = mockPushService,
-            historyHandler = mockHistoryHandler,
-            sessionDurationHandler = mockSessionDurationHandler,
-        ).also {
-            it.stateChangedListener = mockStateChangedListener
-        }
+    internal val subject = buildSubject()
 
     internal fun buildSubject(journeyContextProvider: (() -> JourneyContextInfo?)? = null): MessagingClientImpl =
         MessagingClientImpl(

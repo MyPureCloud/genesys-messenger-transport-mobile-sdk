@@ -27,6 +27,12 @@ import kotlinx.coroutines.withContext
  * @param journeyContextProvider optional provider invoked at session-configure and push-registration
  *        time to attach a device-scoped customer cookie id. `null` (or returning `null`) omits
  *        journey context and keeps push identity as the session token.
+ *
+ *        The provider is invoked synchronously on the thread that builds the configure,
+ *        `AuthJwtRequest`, or push-registration payload; it must be cheap and non-blocking.
+ *
+ *        If the provider throws, the exception is caught and logged and the SDK continues
+ *        without journey context so a faulty provider cannot break the session.
  */
 class MessengerTransportSDK(
     private val configuration: Configuration,

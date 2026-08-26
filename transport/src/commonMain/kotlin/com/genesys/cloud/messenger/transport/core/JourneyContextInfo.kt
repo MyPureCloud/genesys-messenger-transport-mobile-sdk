@@ -1,7 +1,8 @@
 package com.genesys.cloud.messenger.transport.core
 
 /**
- * Journey context attached to guest and authenticated session-configure requests.
+ * Journey context attached to guest and authenticated session-configure requests, and used as
+ * the push-registration identity when a customer cookie id is present.
  *
  * @property customerCookieId the device-scoped customer cookie id. Always present when supplied.
  * @property sessionId the journey session id from a successful tracking event, or `null` if no

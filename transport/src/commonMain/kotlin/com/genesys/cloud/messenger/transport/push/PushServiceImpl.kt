@@ -11,7 +11,7 @@ import com.genesys.cloud.messenger.transport.push.PushConfigComparator.Diff
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.UNKNOWN
 import com.genesys.cloud.messenger.transport.util.Vault
-import com.genesys.cloud.messenger.transport.util.buildJourneyContext
+import com.genesys.cloud.messenger.transport.util.journeyContextInfoOrNull
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import kotlinx.coroutines.coroutineScope
@@ -162,7 +162,8 @@ internal class PushServiceImpl(
         pushProvider: PushProvider,
     ): PushConfig {
         return PushConfig(
-            token = buildJourneyContext(journeyContextProvider, log)?.customer?.id ?: vault.token,
+            token = journeyContextInfoOrNull(journeyContextProvider, log)
+                ?.customerCookieId?.takeIf { it.isNotBlank() } ?: vault.token,
             deviceToken = deviceToken,
             preferredLanguage = platform.preferredLanguage(),
             lastSyncTimestamp = platform.epochMillis(),
