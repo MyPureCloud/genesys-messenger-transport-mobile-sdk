@@ -61,7 +61,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
 
     @Test
     fun `when journeyContextProvider is null then configure omits journeyContext`() {
-        subject.journeyContextProvider = null
+        val subject = buildSubject(journeyContextProvider = null)
 
         subject.connect()
 
@@ -74,9 +74,9 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
 
     @Test
     fun `when journeyContextProvider returns info then configure includes journeyContext`() {
-        subject.journeyContextProvider = {
+        val subject = buildSubject(journeyContextProvider = {
             JourneyContextInfo(customerCookieId = "test-cookie", sessionId = "test-session")
-        }
+        })
 
         subject.connect()
 
@@ -92,9 +92,9 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
 
     @Test
     fun `when journeyContextProvider returns info with null sessionId then customerSession is omitted`() {
-        subject.journeyContextProvider = {
+        val subject = buildSubject(journeyContextProvider = {
             JourneyContextInfo(customerCookieId = "test-cookie", sessionId = null)
-        }
+        })
 
         subject.connect()
 
@@ -111,7 +111,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
 
     @Test
     fun `when journeyContextProvider returns null then configure omits journeyContext`() {
-        subject.journeyContextProvider = { null }
+        val subject = buildSubject(journeyContextProvider = { null })
 
         subject.connect()
 
@@ -125,7 +125,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
     @Test
     fun `when journeyContextProvider throws then configure omits journeyContext and logs warning`() {
         val exception = RuntimeException("provider failure")
-        subject.journeyContextProvider = { throw exception }
+        val subject = buildSubject(journeyContextProvider = { throw exception })
         val warnSlot = slot<() -> String>()
 
         subject.connect()

@@ -28,6 +28,7 @@ internal class AuthHandlerImpl(
     private val vault: Vault,
     private val log: Log,
     private val isAuthEnabled: suspend () -> Boolean,
+    private val journeyContextProvider: (() -> JourneyContextInfo?)? = null,
     private val dispatcher: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
 ) : AuthHandler {
     private var logoutAttempts = 0
@@ -35,8 +36,6 @@ internal class AuthHandlerImpl(
 
     override val jwt: String
         get() = authJwt.jwt
-
-    override var journeyContextProvider: (() -> JourneyContextInfo?)? = null
 
     override fun authorize(
         authCode: String,
