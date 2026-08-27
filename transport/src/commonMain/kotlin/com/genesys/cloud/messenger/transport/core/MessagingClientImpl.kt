@@ -425,7 +425,7 @@ internal class MessagingClientImpl(
 
     override fun authorizeImplicit(
         idToken: String,
-        nonce: String
+        nonce: String?
     ) {
         invalidateSessionToken()
         authHandler.authorizeImplicit(idToken, nonce)
