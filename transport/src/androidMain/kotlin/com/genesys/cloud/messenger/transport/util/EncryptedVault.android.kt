@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.util
 import android.content.Context
 import android.content.SharedPreferences
 import com.genesys.cloud.messenger.transport.core.InternalVault
+import com.genesys.cloud.messenger.transport.core.withVaultLock
 import java.lang.ref.WeakReference
 
 /**
@@ -40,15 +41,18 @@ actual class EncryptedVault actual constructor(keys: Keys) : Vault(keys) {
 
     private fun migrateFromDefaultVault() {
         val currentContext = context ?: return
-        val defaultPrefs = currentContext.getSharedPreferences(VAULT_KEY, Context.MODE_PRIVATE)
+        withVaultLock {
+            val defaultPrefs = currentContext.getSharedPreferences(VAULT_KEY, Context.MODE_PRIVATE)
+            val migrationEntries = defaultPrefs.all
 
-        if (defaultPrefs.all.isNotEmpty()) {
-            defaultPrefs.all.forEach { (key, value) ->
-                if (value is String) {
-                    store(key, value)
+            if (migrationEntries.isNotEmpty()) {
+                migrationEntries.forEach { (key, value) ->
+                    if (value is String) {
+                        store(key, value)
+                    }
                 }
+                defaultPrefs.edit().clear().apply()
             }
-            defaultPrefs.edit().clear().apply()
         }
     }
 

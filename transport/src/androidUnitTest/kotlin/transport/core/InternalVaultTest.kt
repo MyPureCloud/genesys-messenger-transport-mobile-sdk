@@ -4,8 +4,11 @@ import android.content.SharedPreferences
 import android.util.Base64
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
 import assertk.assertions.isNull
+import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.InternalVault
+import com.genesys.cloud.messenger.transport.utility.DEFAULT_TIMEOUT
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import io.mockk.Runs
 import io.mockk.clearAllMocks
@@ -21,12 +24,173 @@ import org.junit.Before
 import org.junit.Test
 import java.security.KeyStore
 import java.security.KeyStoreException
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 class InternalVaultTest {
+    @Test
+    fun `when store() runs concurrently on instances sharing storage`() {
+        val workerCount = 2
+        val latchCount = 1
+        val concurrentEntryObservationMillis = 500L
+        val firstStoreEnteredKeyStore = CountDownLatch(latchCount)
+        val releaseFirstStore = CountDownLatch(latchCount)
+        val secondStoreStarted = CountDownLatch(latchCount)
+        val secondStoreEnteredKeyStore = CountDownLatch(latchCount)
+        val isFirstKeyStoreEntry = AtomicBoolean(true)
+        val secondSubject = InternalVault(TestValues.SERVICE_NAME, mockSharedPreferences)
+
+        every { mockCipher.iv } returns givenTestIv
+        every { mockCipher.doFinal(any<ByteArray>()) } returns givenTestEncryptedBytes
+        every { Base64.encodeToString(any(), Base64.DEFAULT) } returns testBase64
+        every { mockKeyStore.containsAlias(any()) } answers {
+            if (isFirstKeyStoreEntry.getAndSet(false)) {
+                firstStoreEnteredKeyStore.countDown()
+                releaseFirstStore.await(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS)
+            } else {
+                secondStoreEnteredKeyStore.countDown()
+            }
+            true
+        }
+
+        val executor = Executors.newFixedThreadPool(workerCount)
+        val firstStoreFuture = executor.submit { subject.store(testKey, testValue) }
+        var secondStoreFuture: Future<*>? = null
+        var didFirstStoreEnterKeyStore = false
+        var didSecondStoreStart = false
+        var didSecondStoreEnterKeyStoreConcurrently = false
+
+        try {
+            didFirstStoreEnterKeyStore =
+                firstStoreEnteredKeyStore.await(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS)
+            if (didFirstStoreEnterKeyStore) {
+                secondStoreFuture =
+                    executor.submit {
+                        secondStoreStarted.countDown()
+                        secondSubject.store(testKey, testValue)
+                    }
+                didSecondStoreStart = secondStoreStarted.await(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS)
+                if (didSecondStoreStart) {
+                    didSecondStoreEnterKeyStoreConcurrently =
+                        secondStoreEnteredKeyStore.await(
+                            concurrentEntryObservationMillis,
+                            TimeUnit.MILLISECONDS
+                        )
+                }
+            }
+        } finally {
+            releaseFirstStore.countDown()
+            try {
+                firstStoreFuture.get(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS)
+                secondStoreFuture?.get(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS)
+            } finally {
+                executor.shutdownNow()
+                executor.awaitTermination(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS)
+            }
+        }
+
+        assertThat(didFirstStoreEnterKeyStore).isTrue()
+        assertThat(didSecondStoreStart).isTrue()
+        assertThat(didSecondStoreEnterKeyStoreConcurrently).isFalse()
+    }
+
+    @Test
+    fun `when fetch() and remove() run while store() accesses shared storage`() {
+        val workerCount = 3
+        val latchCount = 1
+        val concurrentEntryObservationMillis = 500L
+        val storeEnteredKeyStore = CountDownLatch(latchCount)
+        val releaseStore = CountDownLatch(latchCount)
+        val fetchStarted = CountDownLatch(latchCount)
+        val removeStarted = CountDownLatch(latchCount)
+        val fetchEnteredSharedPreferences = CountDownLatch(latchCount)
+        val removeEnteredSharedPreferences = CountDownLatch(latchCount)
+        val fetchSubject = InternalVault(TestValues.SERVICE_NAME, mockSharedPreferences)
+        val removeSubject = InternalVault(TestValues.SERVICE_NAME, mockSharedPreferences)
+
+        every { mockCipher.iv } returns givenTestIv
+        every { mockCipher.doFinal(any<ByteArray>()) } returns givenTestEncryptedBytes
+        every { Base64.encodeToString(any(), Base64.DEFAULT) } returns testBase64
+        every { mockKeyStore.containsAlias(any()) } answers {
+            storeEnteredKeyStore.countDown()
+            releaseStore.await(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS)
+            true
+        }
+        every { mockSharedPreferences.getString(testKey, null) } answers {
+            fetchEnteredSharedPreferences.countDown()
+            null
+        }
+        every { mockSharedPreferencesEditor.remove(testKey) } answers {
+            removeEnteredSharedPreferences.countDown()
+            mockSharedPreferencesEditor
+        }
+
+        val executor = Executors.newFixedThreadPool(workerCount)
+        val storeFuture = executor.submit { subject.store(testKey, testValue) }
+        var fetchFuture: Future<*>? = null
+        var removeFuture: Future<*>? = null
+        var didStoreEnterKeyStore = false
+        var didFetchStart = false
+        var didRemoveStart = false
+        var didFetchEnterSharedPreferencesConcurrently = false
+        var didRemoveEnterSharedPreferencesConcurrently = false
+
+        try {
+            didStoreEnterKeyStore = storeEnteredKeyStore.await(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS)
+            if (didStoreEnterKeyStore) {
+                fetchFuture =
+                    executor.submit {
+                        fetchStarted.countDown()
+                        fetchSubject.fetch(testKey)
+                    }
+                removeFuture =
+                    executor.submit {
+                        removeStarted.countDown()
+                        removeSubject.remove(testKey)
+                    }
+                didFetchStart = fetchStarted.await(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS)
+                didRemoveStart = removeStarted.await(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS)
+                if (didFetchStart) {
+                    didFetchEnterSharedPreferencesConcurrently =
+                        fetchEnteredSharedPreferences.await(
+                            concurrentEntryObservationMillis,
+                            TimeUnit.MILLISECONDS
+                        )
+                }
+                if (didRemoveStart) {
+                    didRemoveEnterSharedPreferencesConcurrently =
+                        removeEnteredSharedPreferences.await(
+                            concurrentEntryObservationMillis,
+                            TimeUnit.MILLISECONDS
+                        )
+                }
+            }
+        } finally {
+            releaseStore.countDown()
+            try {
+                storeFuture.get(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS)
+                fetchFuture?.get(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS)
+                removeFuture?.get(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS)
+            } finally {
+                executor.shutdownNow()
+                executor.awaitTermination(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS)
+            }
+        }
+
+        assertThat(didStoreEnterKeyStore).isTrue()
+        assertThat(didFetchStart).isTrue()
+        assertThat(didRemoveStart).isTrue()
+        assertThat(didFetchEnterSharedPreferencesConcurrently).isFalse()
+        assertThat(didRemoveEnterSharedPreferencesConcurrently).isFalse()
+    }
+
     // Mocks
     private val mockSharedPreferences = mockk<SharedPreferences>(relaxed = true)
     private val mockSharedPreferencesEditor = mockk<SharedPreferences.Editor>(relaxed = true)
