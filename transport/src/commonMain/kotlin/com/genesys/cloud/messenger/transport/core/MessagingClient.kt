@@ -316,11 +316,12 @@ interface MessagingClient {
      * In case of failure Event.Error with [ErrorCode.AuthFailed] will be sent.
      *
      * @param idToken The id token to use for fetching the Auth JWT.
-     * @param nonce The nonce that was used when requesting the ID token.
+     * @param nonce The nonce that was used when requesting the ID token, or null if the ID
+     * token was issued without a nonce claim.
      */
     fun authorizeImplicit(
         idToken: String,
-        nonce: String
+        nonce: String?
     )
 
     /**

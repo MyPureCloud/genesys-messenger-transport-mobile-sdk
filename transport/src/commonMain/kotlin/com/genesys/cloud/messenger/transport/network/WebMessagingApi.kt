@@ -146,7 +146,7 @@ internal class WebMessagingApi(
 
     suspend fun fetchAuthJwt(
         idToken: String,
-        nonce: String
+        nonce: String?
     ): Result<AuthJwt> =
         try {
             val requestBody =

@@ -58,7 +58,7 @@ internal class AuthHandlerImpl(
 
     override fun authorizeImplicit(
         idToken: String,
-        nonce: String
+        nonce: String?
     ) {
         dispatcher.launch {
             when (val result = api.fetchAuthJwt(idToken, nonce)) {

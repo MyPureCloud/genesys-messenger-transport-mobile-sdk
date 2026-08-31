@@ -17,7 +17,7 @@ internal interface AuthHandler {
 
     fun authorizeImplicit(
         idToken: String,
-        nonce: String
+        nonce: String?
     )
 
     fun logout(onLogoutSuccess: () -> Unit = {}, onUnauthorized: () -> Unit = {})
