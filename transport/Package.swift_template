@@ -1,0 +1,26 @@
+// swift-tools-version: 5.5
+// The swift-tools-version declares the minimum version of Swift required to build this package.
+
+import PackageDescription
+
+let package = Package(
+    name: "GenesysCloudMessengerTransport",
+    platforms: [
+        .iOS(.v15)
+    ],
+    products: [
+        .library(
+            name: "GenesysCloudMessengerTransport",
+            targets: ["GenesysCloudMessengerTransport"]),
+    ],
+    targets: [
+        .binaryTarget(
+            name: "GenesysCloudMessengerTransport",
+            url: "<SOURCE_HTTP_URL>",
+            checksum: "<CHECKSUM>"
+        ),
+        .testTarget(name: "PackageTests", dependencies: [
+            "GenesysCloudMessengerTransport"
+        ])
+    ]
+)

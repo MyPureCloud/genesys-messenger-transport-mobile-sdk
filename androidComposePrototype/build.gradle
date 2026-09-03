@@ -3,18 +3,21 @@ buildscript {
         deploymentProperties = new Properties()
         oktaProperties = new Properties()
         if (System.env.JENKINS_HOME != null) {
-            // when executing on jenkins, use environment variable-injected credentials
-                deploymentProperties["deploymentId"] = System.env.DEPLOYMENT_ID
-                deploymentProperties["deploymentDomain"] = System.env.DEPLOYMENT_DOMAIN
+            // when executing on jenkins, use environment variable-injected credentials.
+            // These are only required to actually run/build the testbed app; other Gradle
+            // invocations (e.g. transport publishing, podspec generation) still evaluate this
+            // project during configuration, so default to '' to avoid NPEs from Properties.put(null).
+                deploymentProperties["deploymentId"] = System.env.DEPLOYMENT_ID ?: ''
+                deploymentProperties["deploymentDomain"] = System.env.DEPLOYMENT_DOMAIN ?: ''
             //Okta variables
-            oktaProperties["oktaDomain"] = System.env.OKTA_DOMAIN
-            oktaProperties["clientId"] = System.env.CLIENT_ID
-            oktaProperties["signInRedirectUri"] = System.env.SIGN_IN_REDIRECT_URI
-            oktaProperties["signOutRedirectUri"] = System.env.SIGN_OUT_REDIRECT_URI
-            oktaProperties["oktaState"] = System.env.OKTA_STATE
-            oktaProperties["codeChallenge"] = System.env.CODE_CHALLENGE
-            oktaProperties["codeChallengeMethod"] = System.env.CODE_CHALLENGE_METHOD
-            oktaProperties["codeVerifier"] = System.env.CODE_VERIFIER
+            oktaProperties["oktaDomain"] = System.env.OKTA_DOMAIN ?: ''
+            oktaProperties["clientId"] = System.env.CLIENT_ID ?: ''
+            oktaProperties["signInRedirectUri"] = System.env.SIGN_IN_REDIRECT_URI ?: ''
+            oktaProperties["signOutRedirectUri"] = System.env.SIGN_OUT_REDIRECT_URI ?: ''
+            oktaProperties["oktaState"] = System.env.OKTA_STATE ?: ''
+            oktaProperties["codeChallenge"] = System.env.CODE_CHALLENGE ?: ''
+            oktaProperties["codeChallengeMethod"] = System.env.CODE_CHALLENGE_METHOD ?: ''
+            oktaProperties["codeVerifier"] = System.env.CODE_VERIFIER ?: ''
         } else {
             // when executing elsewhere (dev laptops, etc), use the secure.properties file on disk
             deploymentPropertiesFile = new File(rootDir.absolutePath + "/deployment.properties")
