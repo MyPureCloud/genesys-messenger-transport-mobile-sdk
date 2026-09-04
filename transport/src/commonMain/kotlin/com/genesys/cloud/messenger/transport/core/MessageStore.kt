@@ -30,7 +30,7 @@ internal class MessageStore(private val log: Log) {
     ): OnMessageRequest {
         val messageToSend =
             pendingMessage.copy(text = text, state = Message.State.Sending).also {
-                log.i { LogMessages.messagePreparedToSend(it) }
+                log.d { LogMessages.messagePreparedToSend(it) }
                 activeConversation.add(it)
                 publish(MessageEvent.MessageInserted(it))
                 pendingMessage = Message()
@@ -104,7 +104,7 @@ internal class MessageStore(private val log: Log) {
             )
             .extraFields()
             .also {
-                log.i { logMessage(it) }
+                log.d { logMessage(it) }
                 activeConversation.add(it)
                 publish(MessageEvent.MessageInserted(it))
                 pendingMessage = Message(attachments = it.attachments)
@@ -132,7 +132,7 @@ internal class MessageStore(private val log: Log) {
 
     fun update(message: Message) =
         message.run {
-            log.i { LogMessages.messageStateUpdated(this) }
+            log.d { LogMessages.messageStateUpdated(this) }
             when (direction) {
                 Direction.Inbound -> findAndPublish(this)
                 Direction.Outbound -> {
@@ -144,7 +144,7 @@ internal class MessageStore(private val log: Log) {
         }
 
     private fun update(attachment: Attachment) {
-        log.i { LogMessages.attachmentStateUpdated(attachment) }
+        log.d { LogMessages.attachmentStateUpdated(attachment) }
         val attachments =
             pendingMessage.attachments
                 .toMutableMap()
@@ -160,7 +160,7 @@ internal class MessageStore(private val log: Log) {
     ) {
         startOfConversation = isAllHistoryFetched(total)
         with(historyPage.takeInactiveMessages().reversed()) {
-            log.i { LogMessages.messageHistoryUpdated(this) }
+            log.d { LogMessages.messageHistoryUpdated(this) }
             activeConversation.addAll(0, this)
             nextPage = activeConversation.getNextPage()
             publish(MessageEvent.HistoryFetched(this, startOfConversation))

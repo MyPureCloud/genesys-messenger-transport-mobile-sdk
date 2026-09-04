@@ -99,7 +99,7 @@ internal actual class PlatformSocket actual constructor(
         code: Int,
         reason: String
     ) {
-        log.i { LogMessages.closeSocket(code, reason) }
+        log.d { LogMessages.closeSocket(code, reason) }
         val shutdownInitiatedByThisCall = webSocket?.close(code, reason) ?: false
         if (!shutdownInitiatedByThisCall) {
             listener?.onClosed(code, reason)
@@ -108,7 +108,7 @@ internal actual class PlatformSocket actual constructor(
     }
 
     actual fun sendMessage(text: String) {
-        log.i { LogMessages.sendMessage(text) }
+        log.d { LogMessages.sendMessage(text) }
         webSocket?.send(text)
     }
 }

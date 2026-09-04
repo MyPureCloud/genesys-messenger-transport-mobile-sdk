@@ -24,12 +24,12 @@ internal class ActionTimer(
     private var timerJob: Job? = null
 
     fun start(delayMillis: Long) {
-        log.i { LogMessages.startingTimer(delayMillis) }
+        log.d { LogMessages.startingTimer(delayMillis) }
         cancel()
         timerJob =
             dispatcher.launch {
                 delay(delayMillis)
-                log.i { LogMessages.TIMER_EXPIRED_EXECUTING_ACTION }
+                log.d { LogMessages.TIMER_EXPIRED_EXECUTING_ACTION }
                 action()
             }
     }
@@ -37,7 +37,7 @@ internal class ActionTimer(
     fun cancel() {
         timerJob?.let {
             if (it.isActive) {
-                log.i { LogMessages.CANCELLING_TIMER }
+                log.d { LogMessages.CANCELLING_TIMER }
                 it.cancel()
             }
         }

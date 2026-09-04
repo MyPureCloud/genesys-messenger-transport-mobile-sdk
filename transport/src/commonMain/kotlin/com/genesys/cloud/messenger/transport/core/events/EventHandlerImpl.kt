@@ -17,7 +17,7 @@ internal class EventHandlerImpl(
     override var eventListener: ((Event) -> Unit)? = null
 
     override fun onEvent(event: Event) {
-        log.i { LogMessages.onEvent(event) }
+        log.d { LogMessages.onEvent(event) }
         eventListener?.invoke(event)
     }
 }

@@ -18,6 +18,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.MessageEntityList
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.PushErrorResponse
 import com.genesys.cloud.messenger.transport.shyrka.send.AuthJwtRequest
+import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
 import com.genesys.cloud.messenger.transport.shyrka.send.OAuth
 import com.genesys.cloud.messenger.transport.util.Urls
 import com.genesys.cloud.messenger.transport.util.isNetworkException
@@ -112,6 +113,7 @@ internal class WebMessagingApi(
         authCode: String,
         redirectUri: String? = null,
         codeVerifier: String? = null,
+        journeyContext: JourneyContext?,
     ): Result<AuthJwt> =
         try {
             val requestBody =
@@ -122,7 +124,8 @@ internal class WebMessagingApi(
                             code = authCode,
                             redirectUri = redirectUri,
                             codeVerifier = codeVerifier,
-                        )
+                        ),
+                    journeyContext = journeyContext,
                 )
             val response =
                 client.post(urls.jwtAuthUrl.toString()) {
@@ -146,7 +149,8 @@ internal class WebMessagingApi(
 
     suspend fun fetchAuthJwt(
         idToken: String,
-        nonce: String
+        nonce: String,
+        journeyContext: JourneyContext?,
     ): Result<AuthJwt> =
         try {
             val requestBody =
@@ -156,7 +160,8 @@ internal class WebMessagingApi(
                         OAuth(
                             idToken = idToken,
                             nonce = nonce,
-                        )
+                        ),
+                    journeyContext = journeyContext,
                 )
             val response =
                 client.post(urls.jwtAuthUrl.toString()) {

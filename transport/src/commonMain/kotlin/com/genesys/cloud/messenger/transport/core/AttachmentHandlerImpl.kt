@@ -42,7 +42,7 @@ internal class AttachmentHandlerImpl(
     ): OnAttachmentRequest {
         validate(byteArray, fileName)
         Attachment(id = attachmentId, fileName = fileName, state = Presigning).also {
-            log.i { LogMessages.presigningAttachment(it) }
+            log.d { LogMessages.presigningAttachment(it) }
             updateAttachmentStateWith(it)
             processedAttachments[it.id] =
                 ProcessedAttachment(
@@ -63,7 +63,7 @@ internal class AttachmentHandlerImpl(
 
     override fun upload(presignedUrlResponse: PresignedUrlResponse) {
         processedAttachments[presignedUrlResponse.attachmentId]?.let {
-            log.i { LogMessages.uploadingAttachment(it.attachment) }
+            log.d { LogMessages.uploadingAttachment(it.attachment) }
             it.attachment =
                 it.attachment
                     .copy(state = Uploading)
@@ -80,7 +80,7 @@ internal class AttachmentHandlerImpl(
 
     override fun onUploadSuccess(uploadSuccessEvent: UploadSuccessEvent) {
         processedAttachments[uploadSuccessEvent.attachmentId]?.let {
-            log.i { LogMessages.attachmentUploaded(it.attachment) }
+            log.d { LogMessages.attachmentUploaded(it.attachment) }
             it.downloadUrl = uploadSuccessEvent.downloadUrl
             it.attachment =
                 it.attachment
@@ -100,7 +100,7 @@ internal class AttachmentHandlerImpl(
             throw IllegalArgumentException(ErrorMessage.detachFailed(attachmentId))
         }
         processedAttachments[attachmentId]?.let {
-            log.i { LogMessages.detachingAttachment(attachmentId) }
+            log.d { LogMessages.detachingAttachment(attachmentId) }
             it.job?.cancel()
             if (it.attachment.state is Uploaded) {
                 it.attachment =
@@ -117,7 +117,7 @@ internal class AttachmentHandlerImpl(
     }
 
     override fun onDetached(attachmentId: String) {
-        log.i { LogMessages.attachmentDetached(attachmentId) }
+        log.d { LogMessages.attachmentDetached(attachmentId) }
         processedAttachments.remove(attachmentId)?.let {
             updateAttachmentStateWith(it.attachment.copy(state = Detached))
         }
@@ -145,7 +145,7 @@ internal class AttachmentHandlerImpl(
     override fun onSending() {
         processedAttachments.forEach { entry ->
             entry.value.takeUploaded()?.let {
-                log.i { LogMessages.sendingAttachment(it.attachment.id) }
+                log.d { LogMessages.sendingAttachment(it.attachment.id) }
                 it.attachment =
                     it.attachment
                         .copy(state = Sending)
@@ -155,7 +155,7 @@ internal class AttachmentHandlerImpl(
     }
 
     override fun onSent(attachments: Map<String, Attachment>) {
-        log.i { LogMessages.attachmentSent(attachments) }
+        log.d { LogMessages.attachmentSent(attachments) }
         attachments.forEach { entry ->
             processedAttachments.remove(entry.key)?.also {
                 updateAttachmentStateWith(entry.value)
@@ -166,7 +166,7 @@ internal class AttachmentHandlerImpl(
     override fun clearAll() = processedAttachments.clear()
 
     override fun resetAttachmentState() {
-        log.i { LogMessages.RESET_SENDING_TO_UPLOADED }
+        log.d { LogMessages.RESET_SENDING_TO_UPLOADED }
         processedAttachments.forEach { entry ->
             when (entry.value.attachment.state) {
                 is Sending -> {

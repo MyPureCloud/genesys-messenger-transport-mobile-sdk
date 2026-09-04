@@ -8,6 +8,10 @@ import kotlinx.serialization.Serializable
  *
  * @param type the type of the bot response, which can be `Link`, or `Postback`.
  */
+@Deprecated(
+    "Unused. Bot/card actions are exposed via ButtonResponse. This type is never produced by the SDK " +
+        "and will be removed in 3.0.0.",
+)
 @Serializable
 sealed class Action(
     val type: Type

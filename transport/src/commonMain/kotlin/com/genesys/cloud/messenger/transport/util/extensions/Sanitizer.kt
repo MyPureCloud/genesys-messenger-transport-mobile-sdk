@@ -15,6 +15,7 @@ internal fun String.sanitize(): String {
     return "*".repeat(this.length - lastChars) + this.takeLast(lastChars)
 }
 
+@Deprecated("Not for external use. Public access will be removed in 3.0.0.")
 fun String.sanitizeSensitiveData(): String = this.sanitizeToken().sanitizeText().sanitizeCustomAttributes()
 
 internal fun String.sanitizeCustomAttributes(): String {

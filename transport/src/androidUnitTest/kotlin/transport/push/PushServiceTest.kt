@@ -4,6 +4,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.ErrorCode
+import com.genesys.cloud.messenger.transport.core.JourneyContextInfo
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.push.DEFAULT_PUSH_CONFIG
@@ -27,6 +28,7 @@ import io.mockk.coVerifySequence
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verifySequence
 import kotlinx.coroutines.test.runTest
 import kotlin.coroutines.cancellation.CancellationException
@@ -56,8 +58,7 @@ class PushServiceTest {
     private val mockLogger: Log = mockk(relaxed = true)
     private val logSlot = mutableListOf<() -> String>()
 
-    private val subject: PushServiceImpl =
-        PushServiceImpl(mockVault, mockApi, mockPlatform, mockPushConfigComparator, mockLogger)
+    private val subject: PushServiceImpl = buildSubject()
 
     @Test
     fun `when synchronize and diff is NONE`() =
@@ -70,7 +71,7 @@ class PushServiceTest {
 
             verifySequence {
                 syncSequence(expectedUserConfig, expectedStoredConfig)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
             }
             assertBaseSynchronizeLogsFor(Diff.NONE)
             assertThat(logSlot[2].invoke()).isEqualTo(
@@ -91,7 +92,7 @@ class PushServiceTest {
             coVerifySequence {
                 syncSequence(expectedUserConfig, expectedStoredConfig)
                 mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig = expectedUserConfig
             }
             assertBaseSynchronizeLogsFor(Diff.NO_TOKEN)
@@ -113,7 +114,7 @@ class PushServiceTest {
             coVerifySequence {
                 syncSequence(expectedUserConfig, expectedStoredConfig)
                 mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig = expectedUserConfig
             }
             assertBaseSynchronizeLogsFor(Diff.TOKEN)
@@ -136,7 +137,7 @@ class PushServiceTest {
             coVerifySequence {
                 syncSequence(expectedUserConfig, expectedStoredConfig)
                 mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig = expectedUserConfig
             }
             assertBaseSynchronizeLogsFor(Diff.TOKEN)
@@ -158,7 +159,7 @@ class PushServiceTest {
             coVerifySequence {
                 syncSequence(expectedUserConfig, expectedStoredConfig)
                 mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig = expectedUserConfig
             }
             assertBaseSynchronizeLogsFor(Diff.DEVICE_TOKEN)
@@ -180,7 +181,7 @@ class PushServiceTest {
             coVerifySequence {
                 syncSequence(expectedUserConfig, expectedStoredConfig)
                 mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig = expectedUserConfig
             }
             assertBaseSynchronizeLogsFor(Diff.LANGUAGE)
@@ -202,7 +203,7 @@ class PushServiceTest {
             coVerifySequence {
                 syncSequence(expectedUserConfig, expectedStoredConfig)
                 mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig = expectedUserConfig
             }
             assertBaseSynchronizeLogsFor(Diff.EXPIRED)
@@ -217,9 +218,9 @@ class PushServiceTest {
             subject.unregister()
 
             coVerifySequence {
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
             }
             assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.UNREGISTERING_DEVICE)
             assertThat(logSlot[1].invoke()).isEqualTo(LogMessages.DEVICE_NOT_REGISTERED)
@@ -234,10 +235,10 @@ class PushServiceTest {
             subject.unregister()
 
             coVerifySequence {
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig
                 mockApi.performDeviceTokenOperation(expectedUserConfig, DeviceTokenOperation.Delete)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.keys
                 mockVault.remove(TestValues.vaultKeys.pushConfigKey)
             }
@@ -332,10 +333,10 @@ class PushServiceTest {
             coVerifySequence {
                 syncSequence(expectedUserConfig, expectedStoredConfig)
                 mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation1)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig = expectedUserConfig
                 mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation2)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig = expectedUserConfig
             }
             assertBaseSynchronizeLogsFor(Diff.NO_TOKEN)
@@ -386,9 +387,9 @@ class PushServiceTest {
             coVerifySequence {
                 syncSequence(expectedUserConfig, expectedStoredConfig)
                 mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockApi.performDeviceTokenOperation(expectedUserConfig, DeviceTokenOperation.Register)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig = expectedUserConfig
             }
             assertBaseSynchronizeLogsFor(Diff.LANGUAGE)
@@ -410,10 +411,10 @@ class PushServiceTest {
             subject.unregister()
 
             coVerifySequence {
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.pushConfig
                 mockApi.performDeviceTokenOperation(expectedUserConfig, DeviceTokenOperation.Delete)
-                mockLogger.i(capture(logSlot))
+                mockLogger.d(capture(logSlot))
                 mockVault.keys
                 mockVault.remove(TestValues.vaultKeys.pushConfigKey)
             }
@@ -424,6 +425,159 @@ class PushServiceTest {
                 )
             )
         }
+
+    @Test
+    fun `when synchronize and journeyContextProvider returns cookie then PushConfig token is cookie`() =
+        runTest {
+            val givenCookieId = "journey-cookie-id"
+            val expectedUserConfig = PushTestValues.CONFIG.copy(token = givenCookieId)
+            val expectedStoredConfig = DEFAULT_PUSH_CONFIG
+            val expectedOperation = DeviceTokenOperation.Register
+            every { mockPushConfigComparator.compare(any(), any()) } returns Diff.NO_TOKEN
+            val subject = buildSubject(
+                journeyContextProvider = {
+                    JourneyContextInfo(customerCookieId = givenCookieId, sessionId = null)
+                }
+            )
+
+            subject.synchronize(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
+
+            coVerifySequence {
+                syncSequence(expectedUserConfig, expectedStoredConfig, readsVaultToken = false)
+                mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
+                mockLogger.d(capture(logSlot))
+                mockVault.pushConfig = expectedUserConfig
+            }
+            assertBaseSynchronizeLogsFor(Diff.NO_TOKEN)
+            assertThat(logSlot[2].invoke()).isEqualTo(
+                LogMessages.deviceTokenWasRegistered(expectedUserConfig)
+            )
+        }
+
+    @Test
+    fun `when synchronize and journeyContextProvider returns null then PushConfig token is vault token`() =
+        runTest {
+            every { mockPushConfigComparator.compare(any(), any()) } returns Diff.NO_TOKEN
+            val expectedUserConfig = PushTestValues.CONFIG
+            val expectedStoredConfig = DEFAULT_PUSH_CONFIG
+            val expectedOperation = DeviceTokenOperation.Register
+            val subject = buildSubject(journeyContextProvider = { null })
+
+            subject.synchronize(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
+
+            coVerifySequence {
+                syncSequence(expectedUserConfig, expectedStoredConfig)
+                mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
+                mockLogger.d(capture(logSlot))
+                mockVault.pushConfig = expectedUserConfig
+            }
+            assertBaseSynchronizeLogsFor(Diff.NO_TOKEN)
+            assertThat(logSlot[2].invoke()).isEqualTo(
+                LogMessages.deviceTokenWasRegistered(expectedUserConfig)
+            )
+        }
+
+    @Test
+    fun `when synchronize and journeyContextProvider returns blank cookie then PushConfig token is vault token`() =
+        runTest {
+            every { mockPushConfigComparator.compare(any(), any()) } returns Diff.NO_TOKEN
+            val expectedUserConfig = PushTestValues.CONFIG
+            val expectedStoredConfig = DEFAULT_PUSH_CONFIG
+            val expectedOperation = DeviceTokenOperation.Register
+            val subject = buildSubject(
+                journeyContextProvider = {
+                    JourneyContextInfo(customerCookieId = "", sessionId = null)
+                }
+            )
+
+            subject.synchronize(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
+
+            coVerifySequence {
+                syncSequence(expectedUserConfig, expectedStoredConfig)
+                mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
+                mockLogger.d(capture(logSlot))
+                mockVault.pushConfig = expectedUserConfig
+            }
+            assertBaseSynchronizeLogsFor(Diff.NO_TOKEN)
+            assertThat(logSlot[2].invoke()).isEqualTo(
+                LogMessages.deviceTokenWasRegistered(expectedUserConfig)
+            )
+        }
+
+    @Test
+    fun `when synchronize and journeyContextProvider throws then PushConfig token is vault token and logs warning`() =
+        runTest {
+            val givenException = RuntimeException("provider failure")
+            val warnSlot = slot<() -> String>()
+            every { mockPushConfigComparator.compare(any(), any()) } returns Diff.NO_TOKEN
+            val expectedUserConfig = PushTestValues.CONFIG
+            val expectedStoredConfig = DEFAULT_PUSH_CONFIG
+            val expectedOperation = DeviceTokenOperation.Register
+            val subject = buildSubject(journeyContextProvider = { throw givenException })
+
+            subject.synchronize(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
+
+            coVerifySequence {
+                mockLogger.d(capture(logSlot))
+                mockVault.pushConfig
+                mockLogger.w(capture(warnSlot))
+                mockVault.token
+                mockPlatform.preferredLanguage()
+                mockPlatform.epochMillis()
+                mockPlatform.os
+                mockPushConfigComparator.compare(expectedUserConfig, expectedStoredConfig)
+                mockLogger.d(capture(logSlot))
+                mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
+                mockLogger.d(capture(logSlot))
+                mockVault.pushConfig = expectedUserConfig
+            }
+            assertBaseSynchronizeLogsFor(Diff.NO_TOKEN)
+            assertThat(warnSlot.captured.invoke()).isEqualTo(
+                LogMessages.journeyContextProviderFailed(givenException)
+            )
+            assertThat(logSlot[2].invoke()).isEqualTo(
+                LogMessages.deviceTokenWasRegistered(expectedUserConfig)
+            )
+        }
+
+    @Test
+    fun `when synchronize and journey cookie differs from stored token`() =
+        runTest {
+            val givenCookieId = "journey-cookie-id"
+            val expectedUserConfig = PushTestValues.CONFIG.copy(token = givenCookieId)
+            val expectedStoredConfig = DEFAULT_PUSH_CONFIG
+            val expectedOperation = DeviceTokenOperation.Register
+            every { mockPushConfigComparator.compare(any(), any()) } returns Diff.TOKEN
+            val subject = buildSubject(
+                journeyContextProvider = {
+                    JourneyContextInfo(customerCookieId = givenCookieId, sessionId = null)
+                }
+            )
+
+            subject.synchronize(TestValues.DEVICE_TOKEN, TestValues.PUSH_PROVIDER)
+
+            coVerifySequence {
+                syncSequence(expectedUserConfig, expectedStoredConfig, readsVaultToken = false)
+                mockApi.performDeviceTokenOperation(expectedUserConfig, expectedOperation)
+                mockLogger.d(capture(logSlot))
+                mockVault.pushConfig = expectedUserConfig
+            }
+            assertBaseSynchronizeLogsFor(Diff.TOKEN)
+            assertThat(logSlot[2].invoke()).isEqualTo(
+                LogMessages.deviceTokenWasRegistered(expectedUserConfig)
+            )
+        }
+
+    private fun buildSubject(
+        journeyContextProvider: (() -> JourneyContextInfo?)? = null,
+    ) = PushServiceImpl(
+        mockVault,
+        mockApi,
+        mockPlatform,
+        mockPushConfigComparator,
+        mockLogger,
+        journeyContextProvider,
+    )
 
     private fun mockResultFailureWith(
         operation: DeviceTokenOperation,
@@ -449,15 +603,16 @@ class PushServiceTest {
 
     private fun MockKVerificationScope.syncSequence(
         expectedUserConfig: PushConfig,
-        expectedStoredConfig: PushConfig
+        expectedStoredConfig: PushConfig,
+        readsVaultToken: Boolean = true,
     ) {
-        mockLogger.i(capture(logSlot))
+        mockLogger.d(capture(logSlot))
         mockVault.pushConfig
-        mockVault.token
+        if (readsVaultToken) mockVault.token
         mockPlatform.preferredLanguage()
         mockPlatform.epochMillis()
         mockPlatform.os
         mockPushConfigComparator.compare(expectedUserConfig, expectedStoredConfig)
-        mockLogger.i(capture(logSlot))
+        mockLogger.d(capture(logSlot))
     }
 }

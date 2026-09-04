@@ -7,6 +7,7 @@ import assertk.assertions.isTrue
 import com.genesys.cloud.messenger.transport.core.CorrectiveAction
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
+import com.genesys.cloud.messenger.transport.core.JourneyContextInfo
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.StateChange
 import com.genesys.cloud.messenger.transport.core.TransportSDKException
@@ -59,6 +60,88 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
     }
 
     @Test
+    fun `when journeyContextProvider is null then configure omits journeyContext`() {
+        val subject = buildSubject(journeyContextProvider = null)
+
+        subject.connect()
+
+        verify {
+            mockPlatformSocket.sendMessage(
+                match { Request.isConfigureRequest(it) && !it.contains(""""journeyContext"""") }
+            )
+        }
+    }
+
+    @Test
+    fun `when journeyContextProvider returns info then configure includes journeyContext`() {
+        val subject = buildSubject(journeyContextProvider = {
+            JourneyContextInfo(customerCookieId = "test-cookie", sessionId = "test-session")
+        })
+
+        subject.connect()
+
+        verify {
+            mockPlatformSocket.sendMessage(
+                match {
+                    Request.isConfigureRequest(it) &&
+                        it.contains(Request.journeyContextFragment(cookieId = "test-cookie", sessionId = "test-session"))
+                }
+            )
+        }
+    }
+
+    @Test
+    fun `when journeyContextProvider returns info with null sessionId then customerSession is omitted`() {
+        val subject = buildSubject(journeyContextProvider = {
+            JourneyContextInfo(customerCookieId = "test-cookie", sessionId = null)
+        })
+
+        subject.connect()
+
+        verify {
+            mockPlatformSocket.sendMessage(
+                match {
+                    Request.isConfigureRequest(it) &&
+                        it.contains(Request.journeyContextFragment(cookieId = "test-cookie", sessionId = null)) &&
+                        !it.contains(""""customerSession"""")
+                }
+            )
+        }
+    }
+
+    @Test
+    fun `when journeyContextProvider returns null then configure omits journeyContext`() {
+        val subject = buildSubject(journeyContextProvider = { null })
+
+        subject.connect()
+
+        verify {
+            mockPlatformSocket.sendMessage(
+                match { Request.isConfigureRequest(it) && !it.contains(""""journeyContext"""") }
+            )
+        }
+    }
+
+    @Test
+    fun `when journeyContextProvider throws then configure omits journeyContext and logs warning`() {
+        val exception = RuntimeException("provider failure")
+        val subject = buildSubject(journeyContextProvider = { throw exception })
+        val warnSlot = slot<() -> String>()
+
+        subject.connect()
+
+        verify {
+            mockPlatformSocket.sendMessage(
+                match { Request.isConfigureRequest(it) && !it.contains(""""journeyContext"""") }
+            )
+            mockLogger.w(capture(warnSlot))
+        }
+        assertThat(warnSlot.captured.invoke()).isEqualTo(
+            LogMessages.journeyContextProviderFailed(exception)
+        )
+    }
+
+    @Test
     fun `when connect and then disconnect`() {
         val expectedState = MessagingClient.State.Closed(1000, "The user has closed the connection.")
         subject.connect()
@@ -95,7 +178,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         )
         verifySequence {
             connectSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockMessageStore.invalidateConversationCache()
             mockReconnectionHandler.shouldReconnect
             errorSequence(fromConfiguredToError(expectedErrorState))
@@ -128,7 +211,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
             mockLogger.i(capture(logSlot))
             mockStateChangedListener(fromIdleToConnecting)
             mockPlatformSocket.openSocket(any())
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockMessageStore.invalidateConversationCache()
             errorSequence(
                 StateChange(
@@ -174,7 +257,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         )
         verifySequence {
             connectWithFailedConfigureSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             errorSequence(fromConnectedToError(expectedErrorState))
         }
     }
@@ -215,7 +298,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
         assertThat(subject.currentState).isError(expectedErrorCode, expectedErrorMessage)
         verifySequence {
             connectSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockMessageStore.invalidateConversationCache()
             mockReconnectionHandler.shouldReconnect
             mockSessionDurationHandler.clearAndRemoveNotice()
@@ -223,7 +306,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
             mockReconnectionHandler.reconnect(any())
             mockLogger.i(capture(logSlot))
             mockPlatformSocket.openSocket(any())
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) })
             errorSequence(fromReconnectingToError(expectedErrorState))
         }
@@ -257,7 +340,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockLogger.w(capture(logSlot))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
@@ -339,7 +422,7 @@ class MessagingClientConnectionTest : BaseMessagingClientTest() {
 
         verifySequence {
             fromIdleToConnectedSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) })
             invalidateSessionTokenSequence()
             errorSequence(fromConnectedToError(MessagingClient.State.Error(ErrorCode.CannotDowngradeToUnauthenticated, ErrorTest.MESSAGE)))

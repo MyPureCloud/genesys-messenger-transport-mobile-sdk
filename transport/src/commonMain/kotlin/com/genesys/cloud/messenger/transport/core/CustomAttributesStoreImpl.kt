@@ -35,7 +35,7 @@ internal class CustomAttributesStoreImpl(
         }
         this.customAttributes.putAll(customAttributes)
         state = State.PENDING
-        log.i { LogMessages.addCustomAttribute(customAttributes, state.name) }
+        log.d { LogMessages.addCustomAttribute(customAttributes, state.name) }
         return true
     }
 
@@ -86,28 +86,28 @@ internal class CustomAttributesStoreImpl(
     }
 
     internal fun onSending() {
-        log.i { LogMessages.ON_SENDING }
+        log.d { LogMessages.ON_SENDING }
         state = State.SENDING
     }
 
     internal fun onSent() {
-        log.i { LogMessages.onSentState(state.name) }
+        log.d { LogMessages.onSentState(state.name) }
         state = if (state == State.PENDING) State.PENDING else State.SENT
     }
 
     internal fun onError() {
-        log.i { LogMessages.ON_ERROR }
+        log.d { LogMessages.ON_ERROR }
         customAttributes.clear()
         state = State.ERROR
     }
 
     internal fun onMessageError() {
-        log.i { LogMessages.ON_MESSAGE_ERROR }
+        log.d { LogMessages.ON_MESSAGE_ERROR }
         state = State.PENDING
     }
 
     internal fun onSessionClosed() {
-        log.i { LogMessages.ON_SESSION_CLOSED }
+        log.d { LogMessages.ON_SESSION_CLOSED }
         state = State.PENDING
         maxCustomDataBytes = MAX_CUSTOM_DATA_BYTES_UNSET
     }

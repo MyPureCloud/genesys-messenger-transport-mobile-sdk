@@ -26,10 +26,10 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockMessageStore.preparePostbackMessage(Request.token, givenPostbackResponse, null)
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isPostbackRequest(it) })
         }
 
@@ -81,11 +81,11 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockLogger.i(any())
+            mockLogger.d(any())
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockCustomAttributesStore.onSending()
             mockMessageStore.preparePostbackMessage(Request.token, expectedButtonResponse, expectedChannel)
-            mockLogger.i(any())
+            mockLogger.d(any())
             mockPlatformSocket.sendMessage(
                 match {
                     it.contains(""""text":"${expectedButtonResponse.text}"""") &&
@@ -202,7 +202,7 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockLogger.i(any())
+            mockLogger.d(any())
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockCustomAttributesStore.onSending()
             mockMessageStore.preparePostbackMessage(
@@ -210,7 +210,7 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
                 match { it.type == CardTestValues.LINK_TYPE },
                 givenChannel
             )
-            mockLogger.i(any())
+            mockLogger.d(any())
             mockPlatformSocket.sendMessage(
                 match { json ->
                     expectedJson.all { json.contains(it) } &&
@@ -222,7 +222,7 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
 
     @Test
     fun `when sendCardReply then logs success and then error`() {
-        every { mockLogger.i(capture(logSlot)) } answers { }
+        every { mockLogger.d(capture(logSlot)) } answers { }
         every { mockLogger.e(capture(logSlot)) } answers { }
         subject.connect()
 
@@ -233,7 +233,7 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
 
         subject.sendCardReply(CardTestValues.postbackButtonResponse)
 
-        verify(atLeast = 1) { mockLogger.i(any()) }
+        verify(atLeast = 1) { mockLogger.d(any()) }
         var allLogs = logSlot.joinToString("\n") { it.invoke() }
         assertThat(allLogs.contains(expectedSuccessMarker)).isTrue()
 
@@ -241,7 +241,7 @@ class MCCardsAndCarouselTests : BaseMessagingClientTest() {
 
         runCatching { subject.sendCardReply(CardTestValues.postbackButtonResponse) }
 
-        verify(atLeast = 1) { mockLogger.i(any()) }
+        verify(atLeast = 1) { mockLogger.d(any()) }
 
         allLogs = logSlot.joinToString("\n") { it.invoke() }
         assertThat(allLogs.contains(expectedErrorMarker) || allLogs.contains(expectedSuccessMarker)).isTrue()

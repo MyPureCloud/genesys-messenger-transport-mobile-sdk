@@ -32,14 +32,14 @@ class MessagingClientTimeSlotTest : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockMessageStore.prepareTimeSlotSubmissionMessageWith(
                 Request.token,
                 givenTimeSlotResponse,
                 null
             )
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isTimeSlotRequest(it) })
         }
 
@@ -79,7 +79,7 @@ class MessagingClientTimeSlotTest : BaseMessagingClientTest() {
 
         verifySequence {
             connectSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockCustomAttributesStore.getCustomAttributesToSend()
             mockCustomAttributesStore.onSending()
             mockMessageStore.prepareTimeSlotSubmissionMessageWith(
@@ -87,7 +87,7 @@ class MessagingClientTimeSlotTest : BaseMessagingClientTest() {
                 givenTimeSlotResponse,
                 expectedChannel
             )
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(
                 match {
                     it.contains(""""contentType":"ButtonResponse"""") &&

@@ -11,7 +11,7 @@ internal class StateMachineImpl(
     override var currentState: State = State.Idle
         set(value) {
             if (field != value) {
-                log.i { LogMessages.stateChanged(field, value) }
+                log.d { LogMessages.stateChanged(field, value) }
                 val oldState = field
                 field = value
                 stateListener?.invoke(value)

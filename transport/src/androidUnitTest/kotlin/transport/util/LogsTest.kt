@@ -26,6 +26,14 @@ class LogsTest {
     internal var subject = Log(true, TestValues.LOG_TAG, mockLogger)
 
     @Test
+    fun `when log d and enabledLogs=true`() {
+        subject.d { LogMessages.CONNECT }
+
+        verify { mockLogger.d(capture(logSlot)) }
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
+    }
+
+    @Test
     fun `when log i and enabledLogs=true`() {
         subject.i { LogMessages.CONNECT }
 
@@ -87,7 +95,7 @@ class LogsTest {
         ktorLogger.log(LogMessages.CONNECT)
 
         verify {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
     }
@@ -98,7 +106,7 @@ class LogsTest {
         result.log(LogMessages.CONNECT)
 
         verify {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
     }

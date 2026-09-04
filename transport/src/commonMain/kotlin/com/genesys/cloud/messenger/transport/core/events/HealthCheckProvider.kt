@@ -42,7 +42,7 @@ internal class HealthCheckProvider(
             WebMessagingJson.json.encodeToString(request)
         } else {
             val remainingCooldown = HEALTH_CHECK_COOL_DOWN_MILLISECONDS - delta
-            log.i { LogMessages.healthCheckDeferred(remainingCooldown) }
+            log.d { LogMessages.healthCheckDeferred(remainingCooldown) }
             deferredHealthCheckTimer.start(remainingCooldown)
             null
         }

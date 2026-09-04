@@ -6,6 +6,7 @@ import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.CustomAttributesStoreImpl
 import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.HistoryHandler
+import com.genesys.cloud.messenger.transport.core.JourneyContextInfo
 import com.genesys.cloud.messenger.transport.core.JwtHandler
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.MessageStore
@@ -174,7 +175,7 @@ open class BaseMessagingClientTest {
             }
         }
 
-    private val mockWebMessagingApi: WebMessagingApi =
+    internal val mockWebMessagingApi: WebMessagingApi =
         mockk {
             coEvery {
                 getMessages(
@@ -245,7 +246,9 @@ open class BaseMessagingClientTest {
             coEvery { synchronize(any(), any()) } just Runs
         }
 
-    internal val subject =
+    internal val subject = buildSubject()
+
+    internal fun buildSubject(journeyContextProvider: (() -> JourneyContextInfo?)? = null): MessagingClientImpl =
         MessagingClientImpl(
             log = mockLogger,
             configuration = TestValues.configuration,
@@ -257,6 +260,7 @@ open class BaseMessagingClientTest {
             attachmentHandler = mockAttachmentHandler,
             messageStore = mockMessageStore,
             reconnectionHandler = mockReconnectionHandler,
+            journeyContextProvider = journeyContextProvider,
             eventHandler = mockEventHandler,
             userTypingProvider = userTypingProvider,
             healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),
@@ -298,7 +302,7 @@ open class BaseMessagingClientTest {
     }
 
     protected fun MockKVerificationScope.configureSequence(shouldConfigureAuth: Boolean = false, startNew: Boolean = false) {
-        mockLogger.i(capture(logSlot))
+        mockLogger.d(capture(logSlot))
         if (shouldConfigureAuth) {
             mockAuthHandler.jwt // check if jwt is valid
             mockAuthHandler.jwt // use jwt for request
@@ -322,7 +326,7 @@ open class BaseMessagingClientTest {
 
     protected fun MockKVerificationScope.connectToReadOnlySequence() {
         fromIdleToConnectedSequence()
-        mockLogger.i(capture(logSlot))
+        mockLogger.d(capture(logSlot))
         mockPlatformSocket.sendMessage(match { Request.isConfigureRequest(it) })
         mockVault.wasAuthenticated = false
         mockAttachmentHandler.fileAttachmentProfile = any()
@@ -352,7 +356,7 @@ open class BaseMessagingClientTest {
         mockStateChangedListener(fromConfiguredToClosing)
         mockPlatformSocket.closeSocket(expectedCloseCode, expectedCloseReason)
         mockStateChangedListener(fromClosingToClosed)
-        mockLogger.i(capture(logSlot))
+        mockLogger.d(capture(logSlot))
         verifyCleanUp()
     }
 
@@ -364,7 +368,7 @@ open class BaseMessagingClientTest {
         mockStateChangedListener(fromIdleToConnecting)
         mockPlatformSocket.openSocket(any())
         mockStateChangedListener(fromConnectingToConnected)
-        mockLogger.i(capture(logSlot))
+        mockLogger.d(capture(logSlot))
         mockPlatformSocket.sendMessage(
             match {
                 if (shouldConfigureAuth) {
@@ -384,7 +388,7 @@ open class BaseMessagingClientTest {
     }
 
     protected fun MockKVerificationScope.invalidateSessionTokenSequence() {
-        mockLogger.i(capture(logSlot))
+        mockLogger.d(capture(logSlot))
         mockVault.keys
         mockVault.remove(TOKEN_KEY)
         mockVault.token
