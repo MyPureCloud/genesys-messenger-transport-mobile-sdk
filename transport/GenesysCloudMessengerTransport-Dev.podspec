@@ -1,8 +1,6 @@
 Pod::Spec.new do |spec|
-    base_version = File.read('../VERSION.txt').strip
-
     spec.name                     = 'GenesysCloudMessengerTransport'
-    spec.version                  = "#{base_version}-local"
+    spec.version                  = '2.14.0'
     spec.homepage                 = 'https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk'
     spec.source                   = { :http => '' }
     spec.authors                  = 'Genesys Cloud Services, Inc.'

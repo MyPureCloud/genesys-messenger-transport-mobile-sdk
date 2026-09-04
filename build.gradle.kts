@@ -25,23 +25,19 @@ plugins {
     alias(libs.plugins.nexus.publish)
 }
 
-// Version can be overridden via -PversionParam
-val buildVersion = project.findProperty("versionParam")?.toString()
-    ?: file("VERSION.txt").readText().trim()
-version = buildVersion
+// CocoaPods requires the podspec to have a `version`
+val buildVersion = "2.14.0"
+val snapshot = System.getenv("SNAPSHOT_BUILD") ?: ""
+version = "${buildVersion}${snapshot}"
 group = "cloud.genesys"
 
-val publishTarget = project.findProperty("publishTarget")?.toString() ?: "jfrog"
-
-if (publishTarget == "mavenCentral") {
-    nexusPublishing {
-        repositories {
-            sonatype {
-                username.set(System.getenv("SONATYPE_USERNAME"))
-                password.set(System.getenv("SONATYPE_PASSWORD"))
-                nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
-                snapshotRepositoryUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/content/repositories/snapshots/"))
-            }
+nexusPublishing {
+    repositories {
+        sonatype {
+            username.set(System.getenv("SONATYPE_USERNAME"))
+            password.set(System.getenv("SONATYPE_PASSWORD"))
+            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/content/repositories/snapshots/"))
         }
     }
 }

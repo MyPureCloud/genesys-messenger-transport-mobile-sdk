@@ -209,47 +209,19 @@ tasks {
         group = "publishing"
         description = "Generates the $podspecFileName file for publication to CocoaPods."
         doLast {
-            val sourceUrl = project.findProperty("sourceHttpUrl")?.toString()
-                ?: error("Missing 'sourceHttpUrl' property. Pass it with -PsourceHttpUrl=<value>")
             val content = file("${podspecFileName}_template").readText()
-                .replace("<VERSION>", version.toString())
-                .replace("<SOURCE_HTTP_URL>", sourceUrl)
+                .replace(oldValue = "<VERSION>", newValue = version.toString())
+                .replace(
+                    oldValue = "<SOURCE_HTTP_URL>",
+                    newValue = "https://github.com/MyPureCloud/genesys-messenger-transport-mobile-sdk/releases/download/v${version}/MessengerTransport.xcframework.zip"
+                )
             file(podspecFileName, PathValidation.NONE).writeText(content)
-            println("CocoaPods podspec written to: ${this.project.projectDir}/$podspecFileName")
-        }
-    }
-
-    register("generatePackageSwift") {
-        group = "publishing"
-        description = "Generates the Package.swift file for distribution via Swift Package Manager."
-        doLast {
-            val checksum = project.findProperty("xcframeworkChecksum")?.toString()
-                ?: error("Missing 'xcframeworkChecksum' property. Pass it with -PxcframeworkChecksum=<value>")
-            val sourceUrl = project.findProperty("sourceHttpUrl")?.toString()
-                ?: error("Missing 'sourceHttpUrl' property. Pass it with -PsourceHttpUrl=<value>")
-            val content = file("Package.swift_template").readText()
-                .replace("<CHECKSUM>", checksum)
-                .replace("<SOURCE_HTTP_URL>", sourceUrl)
-            project.rootDir.resolve("Package.swift").writeText(content)
-            println("Package.swift written to: ${project.rootDir}/Package.swift")
+            println("CocoaPods podspec for Pod $iosCocoaPodName written to: ${this.project.projectDir}/$podspecFileName")
         }
     }
 }
 
 publishing {
-    repositories {
-        val publishingUrl = project.findProperty("publishingUrl")?.toString()
-        if (publishingUrl != null) {
-            maven {
-                name = "jfrog"
-                url = uri(publishingUrl)
-                credentials {
-                    username = System.getenv("PUBLISHING_USER")
-                    password = System.getenv("PUBLISHING_PASSWORD")
-                }
-            }
-        }
-    }
     publications {
         withType<MavenPublication> {
             artifact(tasks["fakeJavadocJar"])
@@ -296,7 +268,9 @@ afterEvaluate {
 
 
 signing {
-    isRequired = (project.findProperty("publishTarget")?.toString() == "mavenCentral")
+    // Signing configuration is setup in the ~/.gradle/gradle.properties file on the Jenkins machine
+    isRequired = true
+
     sign(publishing.publications)
 }
 
