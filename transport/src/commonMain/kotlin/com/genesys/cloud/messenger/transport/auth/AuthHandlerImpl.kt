@@ -3,6 +3,7 @@ package com.genesys.cloud.messenger.transport.auth
 import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.ErrorCode
 import com.genesys.cloud.messenger.transport.core.ErrorMessage
+import com.genesys.cloud.messenger.transport.core.JourneyContextInfo
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
@@ -10,6 +11,7 @@ import com.genesys.cloud.messenger.transport.core.isUnauthorized
 import com.genesys.cloud.messenger.transport.core.toCorrectiveAction
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.util.Vault
+import com.genesys.cloud.messenger.transport.util.buildJourneyContext
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +28,7 @@ internal class AuthHandlerImpl(
     private val vault: Vault,
     private val log: Log,
     private val isAuthEnabled: suspend () -> Boolean,
+    private val journeyContextProvider: (() -> JourneyContextInfo?)? = null,
     private val dispatcher: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
 ) : AuthHandler {
     private var logoutAttempts = 0
@@ -39,8 +42,9 @@ internal class AuthHandlerImpl(
         redirectUri: String,
         codeVerifier: String?
     ) {
+        val journeyContext = buildJourneyContext(journeyContextProvider, log)
         dispatcher.launch {
-            when (val result = api.fetchAuthJwt(authCode, redirectUri, codeVerifier)) {
+            when (val result = api.fetchAuthJwt(authCode, redirectUri, codeVerifier, journeyContext)) {
                 is Result.Success -> {
                     result.value.let {
                         authJwt = it
@@ -60,8 +64,9 @@ internal class AuthHandlerImpl(
         idToken: String,
         nonce: String
     ) {
+        val journeyContext = buildJourneyContext(journeyContextProvider, log)
         dispatcher.launch {
-            when (val result = api.fetchAuthJwt(idToken, nonce)) {
+            when (val result = api.fetchAuthJwt(idToken, nonce, journeyContext)) {
                 is Result.Success -> {
                     result.value.let {
                         authJwt = it

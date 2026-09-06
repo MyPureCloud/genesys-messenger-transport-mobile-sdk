@@ -64,7 +64,7 @@ class AuthHandlerNetworkErrorTest {
 
     @Test
     fun `when fetchAuthJwt fails with NetworkDisabled error`() {
-        coEvery { mockWebMessagingApi.fetchAuthJwt(any(), any(), any()) } returns
+        coEvery { mockWebMessagingApi.fetchAuthJwt(any(), any(), any(), any()) } returns
             Result.Failure(ErrorCode.NetworkDisabled, ErrorTest.MESSAGE)
         subject = buildAuthHandler()
 
@@ -91,7 +91,7 @@ class AuthHandlerNetworkErrorTest {
 
     @Test
     fun `when fetchAuthJwt with idToken fails with NetworkDisabled error`() {
-        coEvery { mockWebMessagingApi.fetchAuthJwt(idToken = any(), nonce = any()) } returns
+        coEvery { mockWebMessagingApi.fetchAuthJwt(idToken = any(), nonce = any(), journeyContext = any()) } returns
             Result.Failure(ErrorCode.NetworkDisabled, ErrorTest.MESSAGE)
         subject = buildAuthHandler()
 
@@ -123,7 +123,8 @@ class AuthHandlerNetworkErrorTest {
             mockWebMessagingApi.fetchAuthJwt(
                 AuthTest.AUTH_CODE,
                 AuthTest.REDIRECT_URI,
-                AuthTest.CODE_VERIFIER
+                AuthTest.CODE_VERIFIER,
+                any(),
             )
         } returns Result.Success(AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN))
         subject = buildAuthHandler()
@@ -166,7 +167,8 @@ class AuthHandlerNetworkErrorTest {
             mockWebMessagingApi.fetchAuthJwt(
                 AuthTest.AUTH_CODE,
                 AuthTest.REDIRECT_URI,
-                AuthTest.CODE_VERIFIER
+                AuthTest.CODE_VERIFIER,
+                any(),
             )
         } returns Result.Success(AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN))
         subject = buildAuthHandler()

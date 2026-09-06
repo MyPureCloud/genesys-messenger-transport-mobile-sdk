@@ -41,14 +41,12 @@ import com.genesys.cloud.messenger.transport.shyrka.send.CloseSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureAuthenticatedSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.ConfigureSessionRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.GetAttachmentRequest
-import com.genesys.cloud.messenger.transport.shyrka.send.JourneyContext
-import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomer
-import com.genesys.cloud.messenger.transport.shyrka.send.JourneyCustomerSession
 import com.genesys.cloud.messenger.transport.util.DURATION_SECONDS_KEY
 import com.genesys.cloud.messenger.transport.util.EXPIRATION_DATE_KEY
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.UNKNOWN
 import com.genesys.cloud.messenger.transport.util.Vault
+import com.genesys.cloud.messenger.transport.util.buildJourneyContext
 import com.genesys.cloud.messenger.transport.util.extensions.isHealthCheckResponseId
 import com.genesys.cloud.messenger.transport.util.extensions.isOutbound
 import com.genesys.cloud.messenger.transport.util.extensions.isRefreshUrl
@@ -81,6 +79,7 @@ internal class MessagingClientImpl(
     private val attachmentHandler: AttachmentHandler,
     private val messageStore: MessageStore,
     private val reconnectionHandler: ReconnectionHandler,
+    private val journeyContextProvider: (() -> JourneyContextInfo?)? = null,
     private val stateMachine: StateMachine = StateMachineImpl(log.withTag(LogTag.STATE_MACHINE)),
     private val eventHandler: EventHandler = EventHandlerImpl(log.withTag(LogTag.EVENT_HANDLER)),
     private val healthCheckProvider: HealthCheckProvider = HealthCheckProvider(log.withTag(LogTag.HEALTH_CHECK_PROVIDER)),
@@ -96,7 +95,8 @@ internal class MessagingClientImpl(
             api,
             vault,
             log.withTag(LogTag.AUTH_HANDLER),
-            isAuthEnabled = { deploymentConfig.isAuthEnabled(api) }
+            isAuthEnabled = { deploymentConfig.isAuthEnabled(api) },
+            journeyContextProvider = journeyContextProvider,
         ),
     private val internalCustomAttributesStore: CustomAttributesStoreImpl =
         CustomAttributesStoreImpl(
@@ -108,6 +108,7 @@ internal class MessagingClientImpl(
             vault = vault,
             api = api,
             log = log.withTag(LogTag.PUSH_SERVICE),
+            journeyContextProvider = journeyContextProvider,
         ),
     private val historyHandler: HistoryHandler =
         HistoryHandlerImpl(
@@ -417,7 +418,7 @@ internal class MessagingClientImpl(
     override fun authorize(
         authCode: String,
         redirectUri: String,
-        codeVerifier: String?
+        codeVerifier: String?,
     ) {
         invalidateSessionToken()
         authHandler.authorize(authCode, redirectUri, codeVerifier)
@@ -425,7 +426,7 @@ internal class MessagingClientImpl(
 
     override fun authorizeImplicit(
         idToken: String,
-        nonce: String
+        nonce: String,
     ) {
         invalidateSessionToken()
         authHandler.authorizeImplicit(idToken, nonce)
@@ -767,11 +768,7 @@ internal class MessagingClientImpl(
                 token = token,
                 deploymentId = configuration.deploymentId,
                 startNew = startNew,
-                journeyContext =
-                    JourneyContext(
-                        JourneyCustomer(token, "cookie"),
-                        JourneyCustomerSession("", "web")
-                    )
+                journeyContext = buildJourneyContext(journeyContextProvider, log),
             )
         )
 
@@ -781,11 +778,6 @@ internal class MessagingClientImpl(
                 token = token,
                 deploymentId = configuration.deploymentId,
                 startNew = startNew,
-                journeyContext =
-                    JourneyContext(
-                        JourneyCustomer(token, "cookie"),
-                        JourneyCustomerSession("", "web")
-                    ),
                 data = ConfigureAuthenticatedSessionRequest.Data(authHandler.jwt)
             )
         )
