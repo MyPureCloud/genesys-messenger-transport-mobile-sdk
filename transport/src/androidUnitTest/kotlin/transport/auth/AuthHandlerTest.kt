@@ -558,7 +558,8 @@ class AuthHandlerTest {
 
     private fun buildAuthHandler(
         givenAutoRefreshTokenWhenExpired: Boolean = true,
-        isAuthEnabled: suspend () -> Boolean = { true }
+        isAuthEnabled: suspend () -> Boolean = { true },
+        journeyContextProvider: (() -> JourneyContextInfo?)? = null,
     ): AuthHandlerImpl {
         return AuthHandlerImpl(
             autoRefreshTokenWhenExpired = givenAutoRefreshTokenWhenExpired,
@@ -566,7 +567,8 @@ class AuthHandlerTest {
             api = mockWebMessagingApi,
             vault = fakeVault,
             log = mockLogger,
-            isAuthEnabled = isAuthEnabled
+            isAuthEnabled = isAuthEnabled,
+            journeyContextProvider = journeyContextProvider,
         )
     }
 
@@ -704,8 +706,6 @@ class AuthHandlerTest {
 
     @Test
     fun `when authorize() and journeyContextProvider is null then fetchAuthJwt receives null journeyContext`() {
-        subject.journeyContextProvider = null
-
         subject.authorize(AuthTest.AUTH_CODE, AuthTest.REDIRECT_URI, AuthTest.CODE_VERIFIER)
 
         coVerify {
@@ -720,9 +720,9 @@ class AuthHandlerTest {
 
     @Test
     fun `when authorize() and journeyContextProvider returns info then fetchAuthJwt receives JourneyContext with cookie and app session`() {
-        subject.journeyContextProvider = {
+        subject = buildAuthHandler(journeyContextProvider = {
             JourneyContextInfo(customerCookieId = "test-cookie", sessionId = "test-session")
-        }
+        })
 
         subject.authorize(AuthTest.AUTH_CODE, AuthTest.REDIRECT_URI, AuthTest.CODE_VERIFIER)
 
@@ -743,9 +743,9 @@ class AuthHandlerTest {
 
     @Test
     fun `when authorize() and journeyContextProvider returns info with null sessionId then customerSession is omitted`() {
-        subject.journeyContextProvider = {
+        subject = buildAuthHandler(journeyContextProvider = {
             JourneyContextInfo(customerCookieId = "test-cookie", sessionId = null)
-        }
+        })
 
         subject.authorize(AuthTest.AUTH_CODE, AuthTest.REDIRECT_URI, AuthTest.CODE_VERIFIER)
 
@@ -765,7 +765,7 @@ class AuthHandlerTest {
 
     @Test
     fun `when authorize() and journeyContextProvider returns null then fetchAuthJwt receives null journeyContext`() {
-        subject.journeyContextProvider = { null }
+        subject = buildAuthHandler(journeyContextProvider = { null })
 
         subject.authorize(AuthTest.AUTH_CODE, AuthTest.REDIRECT_URI, AuthTest.CODE_VERIFIER)
 
@@ -783,9 +783,9 @@ class AuthHandlerTest {
     fun `when authorizeImplicit() and journeyContextProvider returns info then fetchAuthJwt receives JourneyContext with cookie and app session`() {
         coEvery { mockWebMessagingApi.fetchAuthJwt(AuthTest.ID_TOKEN, AuthTest.NONCE, any()) } returns
             Result.Success(AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN))
-        subject.journeyContextProvider = {
+        subject = buildAuthHandler(journeyContextProvider = {
             JourneyContextInfo(customerCookieId = "test-cookie", sessionId = "test-session")
-        }
+        })
 
         subject.authorizeImplicit(AuthTest.ID_TOKEN, AuthTest.NONCE)
 
@@ -806,7 +806,7 @@ class AuthHandlerTest {
     @Test
     fun `when authorize() and journeyContextProvider throws then fetchAuthJwt receives null journeyContext and logs warning`() {
         val exception = RuntimeException("provider failure")
-        subject.journeyContextProvider = { throw exception }
+        subject = buildAuthHandler(journeyContextProvider = { throw exception })
         val warnSlot = slot<() -> String>()
 
         subject.authorize(AuthTest.AUTH_CODE, AuthTest.REDIRECT_URI, AuthTest.CODE_VERIFIER)
@@ -830,7 +830,7 @@ class AuthHandlerTest {
         coEvery { mockWebMessagingApi.fetchAuthJwt(AuthTest.ID_TOKEN, AuthTest.NONCE, null) } returns
             Result.Success(AuthJwt(AuthTest.JWT_TOKEN, AuthTest.REFRESH_TOKEN))
         val exception = RuntimeException("provider failure")
-        subject.journeyContextProvider = { throw exception }
+        subject = buildAuthHandler(journeyContextProvider = { throw exception })
         val warnSlot = slot<() -> String>()
 
         subject.authorizeImplicit(AuthTest.ID_TOKEN, AuthTest.NONCE)
@@ -851,10 +851,10 @@ class AuthHandlerTest {
     @Test
     fun `when authorize() invoked twice then journeyContextProvider is invoked twice with latest values`() {
         var providerCallCount = 0
-        subject.journeyContextProvider = {
+        subject = buildAuthHandler(journeyContextProvider = {
             providerCallCount++
             JourneyContextInfo(customerCookieId = "cookie-$providerCallCount", sessionId = null)
-        }
+        })
 
         subject.authorize(AuthTest.AUTH_CODE, AuthTest.REDIRECT_URI, AuthTest.CODE_VERIFIER)
         subject.authorize(AuthTest.AUTH_CODE, AuthTest.REDIRECT_URI, AuthTest.CODE_VERIFIER)

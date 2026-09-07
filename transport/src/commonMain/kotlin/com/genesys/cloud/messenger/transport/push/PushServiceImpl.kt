@@ -1,6 +1,7 @@
 package com.genesys.cloud.messenger.transport.push
 
 import com.genesys.cloud.messenger.transport.core.ErrorCode
+import com.genesys.cloud.messenger.transport.core.JourneyContextInfo
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.network.WebMessagingApi
 import com.genesys.cloud.messenger.transport.push.DeviceTokenOperation.Delete
@@ -10,6 +11,7 @@ import com.genesys.cloud.messenger.transport.push.PushConfigComparator.Diff
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.UNKNOWN
 import com.genesys.cloud.messenger.transport.util.Vault
+import com.genesys.cloud.messenger.transport.util.journeyContextInfoOrNull
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import kotlinx.coroutines.coroutineScope
@@ -22,6 +24,7 @@ internal class PushServiceImpl(
     private val platform: Platform = Platform(),
     private val pushConfigComparator: PushConfigComparator = PushConfigComparatorImpl(),
     private val log: Log,
+    private val journeyContextProvider: (() -> JourneyContextInfo?)? = null,
 ) : PushService {
     @Throws(DeviceTokenException::class, IllegalArgumentException::class, CancellationException::class)
     override suspend fun synchronize(
@@ -159,7 +162,8 @@ internal class PushServiceImpl(
         pushProvider: PushProvider,
     ): PushConfig {
         return PushConfig(
-            token = vault.token,
+            token = journeyContextInfoOrNull(journeyContextProvider, log)
+                ?.customerCookieId?.takeIf { it.isNotBlank() } ?: vault.token,
             deviceToken = deviceToken,
             preferredLanguage = platform.preferredLanguage(),
             lastSyncTimestamp = platform.epochMillis(),

@@ -6,6 +6,7 @@ import com.genesys.cloud.messenger.transport.core.ButtonResponse
 import com.genesys.cloud.messenger.transport.core.CustomAttributesStoreImpl
 import com.genesys.cloud.messenger.transport.core.Empty
 import com.genesys.cloud.messenger.transport.core.HistoryHandler
+import com.genesys.cloud.messenger.transport.core.JourneyContextInfo
 import com.genesys.cloud.messenger.transport.core.JwtHandler
 import com.genesys.cloud.messenger.transport.core.Message
 import com.genesys.cloud.messenger.transport.core.MessageStore
@@ -190,7 +191,7 @@ open class BaseMessagingClientTest {
             }
         }
 
-    private val mockWebMessagingApi: WebMessagingApi =
+    internal val mockWebMessagingApi: WebMessagingApi =
         mockk {
             coEvery {
                 getMessages(
@@ -261,7 +262,9 @@ open class BaseMessagingClientTest {
             coEvery { synchronize(any(), any()) } just Runs
         }
 
-    internal val subject =
+    internal val subject = buildSubject()
+
+    internal fun buildSubject(journeyContextProvider: (() -> JourneyContextInfo?)? = null): MessagingClientImpl =
         MessagingClientImpl(
             log = mockLogger,
             configuration = TestValues.configuration,
@@ -273,6 +276,7 @@ open class BaseMessagingClientTest {
             attachmentHandler = mockAttachmentHandler,
             messageStore = mockMessageStore,
             reconnectionHandler = mockReconnectionHandler,
+            journeyContextProvider = journeyContextProvider,
             eventHandler = mockEventHandler,
             userTypingProvider = userTypingProvider,
             healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),
