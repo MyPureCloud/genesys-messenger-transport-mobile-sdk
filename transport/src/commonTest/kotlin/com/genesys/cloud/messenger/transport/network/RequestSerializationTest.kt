@@ -180,7 +180,6 @@ class RequestSerializationTest {
             assertThat(tracingId).isEqualTo(TestValues.TRACING_ID)
             assertThat(deploymentId).isEqualTo(TestValues.DEPLOYMENT_ID)
             assertThat(startNew).isFalse()
-            assertThat(journeyContext).isNull()
             assertThat(data).isEqualTo(expectedData)
         }
         assertThat(decodedData).isEqualTo(expectedData)

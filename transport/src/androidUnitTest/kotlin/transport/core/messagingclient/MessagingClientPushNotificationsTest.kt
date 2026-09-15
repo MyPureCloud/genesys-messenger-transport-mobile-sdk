@@ -66,9 +66,9 @@ class MessagingClientPushNotificationsTest : BaseMessagingClientTest() {
         verifySequence {
             fromIdleToConnectedSequence()
             configureSequence(false)
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockVault.pushConfig
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockStateChangedListener(fromConnectedToConfigured)
         }
         coVerify(exactly = 0) { mockPushService.synchronize(any(), any()) }
@@ -86,9 +86,9 @@ class MessagingClientPushNotificationsTest : BaseMessagingClientTest() {
         verifySequence {
             fromIdleToConnectedSequence()
             configureSequence(false)
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockVault.pushConfig
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockStateChangedListener(fromConnectedToConfigured)
         }
         coVerify(exactly = 0) { mockPushService.synchronize(any(), any()) }
@@ -108,7 +108,7 @@ class MessagingClientPushNotificationsTest : BaseMessagingClientTest() {
         verifySequence {
             fromIdleToConnectedSequence()
             configureSequence(false)
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockVault.pushConfig
             mockStateChangedListener(fromConnectedToConfigured)
         }
@@ -129,7 +129,7 @@ class MessagingClientPushNotificationsTest : BaseMessagingClientTest() {
         verifySequence {
             fromIdleToConnectedSequence()
             configureSequence(false)
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockVault.pushConfig
             mockStateChangedListener(fromConnectedToConfigured)
             mockLogger.e(capture(logSlot))
@@ -150,7 +150,7 @@ class MessagingClientPushNotificationsTest : BaseMessagingClientTest() {
         verifySequence {
             fromIdleToConnectedSequence()
             configureSequence(false)
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockVault.pushConfig
             mockStateChangedListener(fromConnectedToConfigured)
             mockLogger.e(capture(logSlot))
@@ -171,7 +171,7 @@ class MessagingClientPushNotificationsTest : BaseMessagingClientTest() {
         verifySequence {
             fromIdleToConnectedSequence()
             configureSequence(false)
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockVault.pushConfig
             mockStateChangedListener(fromConnectedToConfigured)
             mockLogger.w(capture(logSlot))

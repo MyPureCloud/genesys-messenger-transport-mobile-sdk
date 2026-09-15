@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 internal data class AuthJwtRequest(
     val deploymentId: String,
     val oauth: OAuth,
+    val journeyContext: JourneyContext? = null,
 )
 
 @Serializable

@@ -24,11 +24,21 @@ import kotlinx.coroutines.withContext
  * The entry point to the services provided by the transport SDK.
  *
  * @param vault the storage mechanism for managing session-related data.
+ * @param journeyContextProvider optional provider invoked at session-configure and push-registration
+ *        time to attach a device-scoped customer cookie id. `null` (or returning `null`) omits
+ *        journey context and keeps push identity as the session token.
+ *
+ *        The provider is invoked synchronously on the thread that builds the configure,
+ *        `AuthJwtRequest`, or push-registration payload; it must be cheap and non-blocking.
+ *
+ *        If the provider throws, the exception is caught and logged and the SDK continues
+ *        without journey context so a faulty provider cannot break the session.
  */
 class MessengerTransportSDK(
     private val configuration: Configuration,
     @Deprecated("Use Vault instead.") private val tokenStore: TokenStore?,
     val vault: Vault,
+    private val journeyContextProvider: (() -> JourneyContextInfo?)? = null,
 ) {
     private var deploymentConfig: DeploymentConfig? = null
     private val urls = Urls(configuration.domain, configuration.deploymentId, configuration.application, configuration.customEndpoint)
@@ -72,6 +82,27 @@ class MessengerTransportSDK(
         tokenStore = null,
     )
 
+    constructor(
+        configuration: Configuration,
+        journeyContextProvider: (() -> JourneyContextInfo?)?,
+    ) : this(
+        configuration,
+        null,
+        getVault(configuration),
+        journeyContextProvider,
+    )
+
+    constructor(
+        configuration: Configuration,
+        vault: Vault,
+        journeyContextProvider: (() -> JourneyContextInfo?)?,
+    ) : this(
+        configuration = configuration,
+        tokenStore = null,
+        vault = vault,
+        journeyContextProvider = journeyContextProvider,
+    )
+
     /**
      * Creates an instance of [MessagingClient] based on the provided configuration.
      */
@@ -111,6 +142,7 @@ class MessengerTransportSDK(
                     log.withTag(LogTag.RECONNECTION_HANDLER),
                 ),
             deploymentConfig = this::deploymentConfig,
+            journeyContextProvider = journeyContextProvider,
         )
     }
 
@@ -138,6 +170,7 @@ class MessengerTransportSDK(
         return PushServiceImpl(
             vault = vault,
             api = WebMessagingApi(urls, configuration),
+            journeyContextProvider = journeyContextProvider,
             log = Log(configuration.logging, LogTag.PUSH_SERVICE),
         )
     }

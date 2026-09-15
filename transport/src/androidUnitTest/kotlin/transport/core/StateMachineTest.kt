@@ -58,7 +58,7 @@ class StateMachineTest {
         assertThat(subject.currentState).isConnected()
         assertFalse { subject.isInactive() }
         verifySequence {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockStateListener(State.Connected)
             mockStateChangedListener(expectedStateChange)
         }

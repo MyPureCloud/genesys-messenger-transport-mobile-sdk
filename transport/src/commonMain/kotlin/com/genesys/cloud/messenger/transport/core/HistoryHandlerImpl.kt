@@ -25,12 +25,12 @@ internal class HistoryHandlerImpl(
     }
 
     private fun handleStartOfConversation() {
-        log.i { LogMessages.ALL_HISTORY_FETCHED }
+        log.d { LogMessages.ALL_HISTORY_FETCHED }
         messageStore.updateMessageHistory(emptyList(), messageStore.getConversation().size)
     }
 
     private suspend fun fetchHistoryPage() {
-        log.i { LogMessages.fetchingHistory(messageStore.nextPage) }
+        log.d { LogMessages.fetchingHistory(messageStore.nextPage) }
         val token = jwtTokenProvider()
         val result = api.getMessages(token, messageStore.nextPage)
         handleApiResult(result)

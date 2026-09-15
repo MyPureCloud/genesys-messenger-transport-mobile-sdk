@@ -4,6 +4,7 @@ import com.genesys.cloud.messenger.transport.core.TlsVersion
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import io.ktor.http.Url
 
+@Deprecated("Not for external use. Public access will be removed in 3.0.0.")
 const val DEFAULT_PING_INTERVAL_IN_SECONDS = 15
 
 /**

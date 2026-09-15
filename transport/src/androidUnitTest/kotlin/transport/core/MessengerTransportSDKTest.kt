@@ -3,6 +3,7 @@ package transport.core
 import android.content.Context
 import assertk.assertThat
 import assertk.assertions.isInstanceOf
+import com.genesys.cloud.messenger.transport.core.JourneyContextInfo
 import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
 import com.genesys.cloud.messenger.transport.push.PushService
@@ -76,5 +77,17 @@ class MessengerTransportSDKTest {
         val result = subject.createPushService()
 
         assertThat(result).isInstanceOf(PushService::class.java)
+    }
+
+    @Test
+    fun `when MessengerTransportSDK() is created with provided vault and journeyContextProvider`() {
+        val fakeVault = FakeVault(TestValues.vaultKeys)
+        val givenProvider: () -> JourneyContextInfo? = { null }
+
+        val subject = MessengerTransportSDK(TestValues.configuration, fakeVault, givenProvider)
+
+        assertThat(subject.vault).isInstanceOf(FakeVault::class.java)
+        assertThat(subject.createPushService()).isInstanceOf(PushService::class.java)
+        assertThat(subject.createMessagingClient()).isInstanceOf(MessagingClient::class.java)
     }
 }

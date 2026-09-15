@@ -7,7 +7,16 @@ import com.genesys.cloud.messenger.transport.utility.MessageValues
 internal object Request {
     const val token = "00000000-0000-0000-0000-000000000000"
 
-    fun configureRequest(startNew: Boolean = false) = """{"token":"$token","deploymentId":"deploymentId","startNew":$startNew,"journeyContext":{"customer":{"id":"00000000-0000-0000-0000-000000000000","idType":"cookie"},"customerSession":{"id":"","type":"web"}},"action":"configureSession"}"""
+    fun configureRequest(startNew: Boolean = false) = """{"token":"$token","deploymentId":"deploymentId","startNew":$startNew,"action":"configureSession"}"""
+
+    fun journeyContextFragment(
+        cookieId: String = token,
+        sessionId: String? = "",
+    ) = if (sessionId == null) {
+        """"journeyContext":{"customer":{"id":"$cookieId","idType":"cookie"}}"""
+    } else {
+        """"journeyContext":{"customer":{"id":"$cookieId","idType":"cookie"},"customerSession":{"id":"$sessionId","type":"app"}}"""
+    }
 
     fun isConfigureRequest(json: String, startNew: Boolean = false) =
         json.contains(""""token":"$token"""") &&

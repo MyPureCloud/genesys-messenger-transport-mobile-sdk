@@ -99,7 +99,7 @@ class MessagingClientClearConversationTest : BaseMessagingClientTest() {
         assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
         verifySequence {
             connectSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isClearConversationRequest(it) })
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)
@@ -119,7 +119,7 @@ class MessagingClientClearConversationTest : BaseMessagingClientTest() {
         assertThat(subject.currentState).isReadOnly()
         verifySequence {
             connectToReadOnlySequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isClearConversationRequest(it) })
         }
     }
@@ -155,7 +155,7 @@ class MessagingClientClearConversationTest : BaseMessagingClientTest() {
         assertThat(subject.currentState).isConfigured(connected = true, newSession = true)
         verifySequence {
             connectSequence()
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isClearConversationRequest(it) })
             mockEventHandler.onEvent(expectedEvent)
         }

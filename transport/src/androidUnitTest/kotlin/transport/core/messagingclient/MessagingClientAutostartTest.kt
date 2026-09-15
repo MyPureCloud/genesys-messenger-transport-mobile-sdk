@@ -47,8 +47,8 @@ class MessagingClientAutostartTest : BaseMessagingClientTest() {
         verifySequence {
             connectSequence()
             mockCustomAttributesStore.getCustomAttributesToSend()
-            mockLogger.i(capture(logSlot))
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
+            mockLogger.d(capture(logSlot))
             mockPlatformSocket.sendMessage(match { Request.isAutostartRequest(it) })
         }
         assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.CONNECT)

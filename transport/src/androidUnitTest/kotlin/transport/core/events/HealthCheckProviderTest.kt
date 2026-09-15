@@ -92,7 +92,7 @@ class HealthCheckProviderTest {
 
         val expectedRemainingCooldown = HEALTH_CHECK_COOL_DOWN_MILLISECONDS - 10000
         verify {
-            mockLogger.i(capture(logSlot))
+            mockLogger.d(capture(logSlot))
         }
         assertThat(firstResult).isNotNull()
         assertTrue(Request.isEchoRequest(firstResult!!))
