@@ -1,5 +1,8 @@
 package transport.util
 
+import android.content.res.Configuration
+import android.content.res.Resources
+import android.os.LocaleList
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotEmpty
@@ -11,7 +14,12 @@ import com.genesys.cloud.messenger.transport.util.TokenGenerator
 import com.genesys.cloud.messenger.transport.util.VAULT_KEY
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.WAS_AUTHENTICATED
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import org.junit.Test
+import java.util.Locale
 import kotlin.test.assertTrue
 
 class AndroidPlatformTest {
@@ -74,5 +82,25 @@ class AndroidPlatformTest {
         val result = subject.os
 
         assertThat(result).isEqualTo(expected)
+    }
+
+    @Test
+    fun `when preferredLanguage() is called it resolves from configuration locales`() {
+        val givenLocale = Locale.forLanguageTag("fr-FR")
+        val expected = "fr-fr"
+        val mockResources = mockk<Resources>()
+        val mockConfiguration = mockk<Configuration>()
+        val mockLocaleList = mockk<LocaleList>()
+
+        mockkStatic(Resources::class)
+        every { Resources.getSystem() } returns mockResources
+        every { mockResources.configuration } returns mockConfiguration
+        every { mockConfiguration.locales } returns mockLocaleList
+        every { mockLocaleList.get(0) } returns givenLocale
+
+        val result = subject.preferredLanguage()
+
+        assertThat(result).isEqualTo(expected)
+        unmockkStatic(Resources::class)
     }
 }

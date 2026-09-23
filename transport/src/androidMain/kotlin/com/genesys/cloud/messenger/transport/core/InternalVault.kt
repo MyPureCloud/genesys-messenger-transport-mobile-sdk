@@ -1,7 +1,6 @@
 package com.genesys.cloud.messenger.transport.core
 
 import android.content.SharedPreferences
-import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
@@ -192,28 +191,22 @@ internal class InternalVault(
      * @return The newly generated secret key
      */
     private fun generateSecretKey(): SecretKey {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val keyGenParameterSpec =
-                KeyGenParameterSpec
-                    .Builder(
-                        keyAlias,
-                        KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-                    ).setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-                    .setKeySize(256)
-                    .build()
+        val keyGenParameterSpec =
+            KeyGenParameterSpec
+                .Builder(
+                    keyAlias,
+                    KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+                ).setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .setKeySize(256)
+                .build()
 
-            val keyGenerator =
-                KeyGenerator.getInstance(
-                    KeyProperties.KEY_ALGORITHM_AES,
-                    ANDROID_KEYSTORE
-                )
-            keyGenerator.init(keyGenParameterSpec)
-            return keyGenerator.generateKey()
-        } else {
-            val keyGenerator = KeyGenerator.getInstance("AES")
-            keyGenerator.init(256)
-            return keyGenerator.generateKey()
-        }
+        val keyGenerator =
+            KeyGenerator.getInstance(
+                KeyProperties.KEY_ALGORITHM_AES,
+                ANDROID_KEYSTORE
+            )
+        keyGenerator.init(keyGenParameterSpec)
+        return keyGenerator.generateKey()
     }
 }

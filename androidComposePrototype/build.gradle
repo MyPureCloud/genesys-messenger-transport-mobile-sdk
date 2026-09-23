@@ -48,7 +48,7 @@ android {
     android.buildFeatures.buildConfig true
     defaultConfig {
         applicationId "com.genesys.cloud.webmessaging.androidcomposeprototype"
-        minSdkVersion 21
+        minSdkVersion 24
         compileSdk 35
         targetSdkVersion 35
         versionCode 1
@@ -110,7 +110,7 @@ dependencies {
 
     implementation(project(':transport'))
 
-    // Required by minSdk 21 with Java 17
+    // Required by minSdk 24 with Java 17
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
     implementation 'androidx.core:core-ktx:1.12.0'

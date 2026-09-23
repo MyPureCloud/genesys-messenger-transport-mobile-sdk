@@ -1,6 +1,8 @@
 package transport.core
 
 import android.content.SharedPreferences
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
 import android.util.Base64
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -12,6 +14,7 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkConstructor
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import io.mockk.verify
@@ -167,6 +170,51 @@ class InternalVaultTest {
 
         verify { mockCipher.doFinal(emptyValue.toByteArray(Charsets.UTF_8)) }
         verify { mockSharedPreferencesEditor.putString(testKey, testBase64) }
+    }
+
+    @Test
+    fun `when store() and fetch() succeed with a newly generated key`() {
+        val mockKeyGenerator = mockk<KeyGenerator>(relaxed = true)
+        val mockKeyGenParameterSpec = mockk<KeyGenParameterSpec>()
+        mockkConstructor(KeyGenParameterSpec.Builder::class)
+        every { anyConstructed<KeyGenParameterSpec.Builder>().setBlockModes(any()) } answers { self as KeyGenParameterSpec.Builder }
+        every {
+            anyConstructed<KeyGenParameterSpec.Builder>().setEncryptionPaddings(any())
+        } answers { self as KeyGenParameterSpec.Builder }
+        every { anyConstructed<KeyGenParameterSpec.Builder>().setKeySize(any()) } answers { self as KeyGenParameterSpec.Builder }
+        every { anyConstructed<KeyGenParameterSpec.Builder>().build() } returns mockKeyGenParameterSpec
+        every { mockKeyStore.containsAlias(any()) } returns false
+        every {
+            KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
+        } returns mockKeyGenerator
+        every { mockKeyGenerator.generateKey() } returns mockSecretKey
+        every { mockCipher.iv } returns givenTestIv
+        every { mockCipher.doFinal(any<ByteArray>()) } returns givenTestEncryptedBytes
+        every { Base64.encodeToString(any(), Base64.DEFAULT) } returns testBase64
+
+        subject.store(testKey, testValue)
+
+        verifySequence {
+            mockKeyStore.load(null)
+            mockKeyStore.containsAlias(any())
+            KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
+            mockKeyGenerator.init(mockKeyGenParameterSpec)
+            mockKeyGenerator.generateKey()
+            mockCipher.init(Cipher.ENCRYPT_MODE, mockSecretKey)
+            mockCipher.iv
+            mockCipher.doFinal(testValue.toByteArray(Charsets.UTF_8))
+            Base64.encodeToString(any(), Base64.DEFAULT)
+            mockSharedPreferencesEditor.putString(testKey, testBase64)
+            mockSharedPreferencesEditor.apply()
+        }
+
+        every { mockSharedPreferences.getString(testKey, null) } returns testBase64
+        every { Base64.decode(testBase64, Base64.DEFAULT) } returns givenTestCombined
+        every { mockCipher.doFinal(any<ByteArray>()) } returns testValue.toByteArray(Charsets.UTF_8)
+
+        val result = subject.fetch(testKey)
+
+        assertThat(result).isEqualTo(testValue)
     }
 
     @Test
