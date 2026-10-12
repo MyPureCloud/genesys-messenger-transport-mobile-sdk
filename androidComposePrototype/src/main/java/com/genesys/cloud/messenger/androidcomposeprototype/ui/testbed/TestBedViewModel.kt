@@ -121,6 +121,7 @@ class TestBedViewModel :
     private val quickRepliesMap = mutableMapOf<String, ButtonResponse>()
     private val cardActionsMap = mutableMapOf<String, ButtonResponse>()
     private var latestTimePickerData: Pair<String, Message.TimeSlotPicker>? = null
+    private var latestListPickerData: Pair<String, Message.ListPicker>? = null
     private lateinit var selectFile: (fileAttachmentProfile: FileAttachmentProfile) -> Unit
 
     fun init(
@@ -196,6 +197,7 @@ class TestBedViewModel :
             "sendQuickReply" -> doSendQuickReply(input)
             "sendAction" -> doSendAction(input)
             "submitTimeSlot" -> doSubmitTimeSlot(input)
+            "submitListPicker" -> doSubmitListPicker(input)
             "listActions" -> doListActions()
             "history" -> fetchNextPage()
             "healthCheck" -> doSendHealthCheck()
@@ -374,6 +376,52 @@ class TestBedViewModel :
             Log.e(TAG, failMessage, t)
             onSocketMessageReceived(failMessage)
             commandWaiting = false
+        }
+    }
+
+    private fun doSubmitListPicker(input: String) {
+        val listPickerData = latestListPickerData
+        if (listPickerData == null) {
+            onSocketMessageReceived("No List Picker received yet.")
+            return
+        }
+        val (pickerMessageId, listPicker) = listPickerData
+        val allItems = listPicker.sections.flatMap { it.items }
+        // Comma-separated item ids or titles, e.g. "submitListPicker fork, chair" or "submitListPicker <id>".
+        // Each token matches by id or title; matching by title selects every item with that title, so
+        // two items that share a title are both submitted (they still carry distinct ids). Pass an id to
+        // target one specific item. With no argument, defaults to the first item of every section.
+        val tokens =
+            input.split(",")
+                .map { it.trim() }
+                .filter { it.isNotBlank() }
+        val selectedItems =
+            if (tokens.isEmpty()) {
+                listPicker.sections.mapNotNull { it.items.firstOrNull() }
+            } else {
+                tokens
+                    .flatMap { token -> allItems.filter { it.id == token || it.title == token } }
+                    .distinctBy { it.id }
+            }
+        if (selectedItems.isEmpty()) {
+            onSocketMessageReceived("No matching List Picker items for: $tokens")
+            return
+        }
+        val responses =
+            selectedItems.map { item ->
+                ButtonResponse(
+                    text = item.title,
+                    payload = item.id,
+                    type = "ListPicker",
+                    originatingMessageId = pickerMessageId,
+                )
+            }
+        try {
+            // submitListPicker throws IllegalStateException when the client is not Configured/ReadOnly,
+            // and IllegalArgumentException when the selection list is empty (guarded above via selectedItems).
+            client.submitListPicker(responses)
+        } catch (t: Throwable) {
+            handleException(t, "submit list picker")
         }
     }
 
@@ -662,6 +710,12 @@ class TestBedViewModel :
                     }
                     "TimeSlotPickerReceived with timePicker: ${event.message.timePicker}"
                 }
+
+                is MessageEvent.ListPickerReceived ->
+                    event.message.run {
+                        listPicker?.let { latestListPickerData = id to it }
+                        "ListPickerReceived: text: $text | listPicker: $listPicker"
+                    }
             }
         onSocketMessageReceived(eventMessage)
     }

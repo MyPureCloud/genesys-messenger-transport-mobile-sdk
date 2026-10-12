@@ -76,6 +76,21 @@ internal class MessageStore(private val log: Log) {
         }
     }
 
+    fun prepareListPickerSubmissionMessageWith(
+        token: String,
+        buttonResponses: List<ButtonResponse>,
+        channel: Channel? = null,
+    ): OnMessageRequest {
+        val messageToSend = preparePendingMessage(
+            type = Message.Type.ListPicker,
+            logMessage = { LogMessages.submitListPickerPrepareToSend(it) },
+            extraFields = { copy(buttonResponses = buttonResponses) },
+        )
+        return buildButtonResponseListRequest(token, buttonResponses, messageToSend.id) {
+            StructuredMessage(text = "", content = it, channel = channel)
+        }
+    }
+
     fun preparePostbackMessage(
         token: String,
         buttonResponse: ButtonResponse,
@@ -116,13 +131,26 @@ internal class MessageStore(private val log: Log) {
         buttonResponse: ButtonResponse,
         tracingId: String,
         messageFactory: (List<Message.Content>) -> BaseMessageProtocol,
+    ): OnMessageRequest =
+        buildButtonResponseListRequest(token, listOf(buttonResponse), tracingId, messageFactory)
+
+    /**
+     * Builds an [OnMessageRequest] where each [ButtonResponse] becomes its own
+     * [Message.Content] entry. This supports single, multi-select, and cross-section
+     * List Picker submissions in a single message.
+     */
+    private fun buildButtonResponseListRequest(
+        token: String,
+        buttonResponses: List<ButtonResponse>,
+        tracingId: String,
+        messageFactory: (List<Message.Content>) -> BaseMessageProtocol,
     ): OnMessageRequest {
-        val content = listOf(
+        val content = buttonResponses.map { buttonResponse ->
             Message.Content(
                 contentType = Message.Content.Type.ButtonResponse,
                 buttonResponse = buttonResponse,
             )
-        )
+        }
         return OnMessageRequest(
             token = token,
             message = messageFactory(content),
@@ -222,6 +250,7 @@ private fun Message.toMessageEvent(): MessageEvent =
         Message.Type.QuickReply -> MessageEvent.QuickReplyReceived(this)
         Message.Type.Cards -> MessageEvent.CardMessageReceived(this)
         Message.Type.DatePicker -> MessageEvent.TimeSlotPickerReceived(this)
+        Message.Type.ListPicker -> MessageEvent.ListPickerReceived(this)
         else -> MessageEvent.MessageInserted(this)
     }
 
@@ -291,4 +320,12 @@ sealed class MessageEvent {
      * @property message is the [Message] object with all the time slot picker details.
      */
     class TimeSlotPickerReceived(val message: Message) : MessageEvent()
+
+    /**
+     * Dispatched when a List Picker message was sent by the Bot.
+     * To access the List Picker data (sections and selectable items), refer to [Message.listPicker].
+     *
+     * @property message is the [Message] object with all the List Picker details.
+     */
+    class ListPickerReceived(val message: Message) : MessageEvent()
 }

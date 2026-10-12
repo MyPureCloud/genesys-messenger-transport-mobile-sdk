@@ -16,6 +16,11 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
+private val vaultLock = Any()
+
+internal fun <T> withVaultLock(operation: () -> T): T =
+    synchronized(vaultLock, operation)
+
 /**
  * Internal vault implementation for Android that uses Android KeyStore for encryption
  * and SharedPreferences for storing the encrypted data.
@@ -46,14 +51,16 @@ internal class InternalVault(
         key: String,
         value: String
     ) {
-        try {
-            val encryptedData = encrypt(value)
-            with(sharedPreferences.edit()) {
-                putString(key, encryptedData)
-                apply()
+        withVaultLock {
+            try {
+                val encryptedData = encrypt(value)
+                with(sharedPreferences.edit()) {
+                    putString(key, encryptedData)
+                    apply()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
     }
 
@@ -64,12 +71,18 @@ internal class InternalVault(
      * @return The decrypted string value, or null if it is missing or cannot be decrypted
      */
     fun fetch(key: String): String? {
-        val encryptedData = sharedPreferences.getString(key, null) ?: return null
-        return try {
-            decrypt(encryptedData)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+        return withVaultLock {
+            val encryptedData = sharedPreferences.getString(key, null)
+            if (encryptedData == null) {
+                null
+            } else {
+                try {
+                    decrypt(encryptedData)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    null
+                }
+            }
         }
     }
 
@@ -79,9 +92,11 @@ internal class InternalVault(
      * @param key The key to remove
      */
     fun remove(key: String) {
-        with(sharedPreferences.edit()) {
-            remove(key)
-            apply()
+        withVaultLock {
+            with(sharedPreferences.edit()) {
+                remove(key)
+                apply()
+            }
         }
     }
 

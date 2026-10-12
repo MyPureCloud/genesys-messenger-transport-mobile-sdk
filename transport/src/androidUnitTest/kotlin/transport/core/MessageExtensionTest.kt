@@ -52,6 +52,7 @@ import com.genesys.cloud.messenger.transport.util.extensions.toMessage
 import com.genesys.cloud.messenger.transport.util.extensions.toMessageList
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.CardTestValues
+import com.genesys.cloud.messenger.transport.utility.ListPickerTestValues
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.StructuredMessageValues
@@ -1605,5 +1606,95 @@ internal class MessageExtensionTest {
 
         assertThat(result.quickReplies).size().isEqualTo(1)
         assertThat(result.quickReplies.first().originatingMessageId).isEqualTo(givenMessageId)
+    }
+
+    @Test
+    fun `when StructuredMessage has ListPickerContent then messageType is ListPicker and listPicker is mapped`() {
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                content = listOf(ListPickerTestValues.createListPickerContent())
+            )
+        val expectedMessageType = Type.ListPicker
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result.messageType).isEqualTo(expectedMessageType)
+        assertThat(result.listPicker).isNotNull()
+        assertThat(result.buttonResponses).isEmpty()
+        result.listPicker?.run {
+            assertThat(sections).size().isEqualTo(1)
+            sections.first().run {
+                assertThat(title).isEqualTo(ListPickerTestValues.SECTION_TITLE)
+                assertThat(items).size().isEqualTo(1)
+                items.first().run {
+                    assertThat(id).isEqualTo(ListPickerTestValues.ITEM_ID)
+                    assertThat(title).isEqualTo(ListPickerTestValues.ITEM_TITLE)
+                    assertThat(subtitle).isEqualTo(ListPickerTestValues.ITEM_SUBTITLE)
+                    assertThat(imageUrl).isEqualTo(ListPickerTestValues.ITEM_IMAGE_URL)
+                }
+            }
+            assertThat(receivedMessage).isNotNull()
+            receivedMessage?.run {
+                assertThat(title).isEqualTo(ListPickerTestValues.HEADER_TITLE)
+                assertThat(subtitle).isEqualTo(ListPickerTestValues.HEADER_SUBTITLE)
+                assertThat(imageUrl).isEqualTo(ListPickerTestValues.HEADER_IMAGE_URL)
+            }
+        }
+    }
+
+    @Test
+    fun `when StructuredMessage has ListPickerContent with empty items then items are passed through as-is`() {
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                content =
+                    listOf(
+                        ListPickerTestValues.createListPickerContent(
+                            listPicker =
+                                ListPickerTestValues.createListPicker(
+                                    sections = listOf(ListPickerTestValues.createSection(items = emptyList())),
+                                    receivedMessage = null
+                                )
+                        )
+                    )
+            )
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result.messageType).isEqualTo(Type.ListPicker)
+        assertThat(result.listPicker).isNotNull()
+        result.listPicker?.run {
+            assertThat(sections).size().isEqualTo(1)
+            assertThat(sections.first().items).isEmpty()
+            assertThat(receivedMessage).isNull()
+        }
+    }
+
+    @Test
+    fun `when StructuredMessage has both ListPickerContent and ButtonResponseContent then messageType is ListPicker`() {
+        val givenButton =
+            StructuredMessage.Content.ButtonResponseContent.ButtonResponse(
+                text = QuickReplyTestValues.TEXT_A,
+                payload = QuickReplyTestValues.PAYLOAD_A,
+                type = "buttonresponse",
+            )
+        val givenStructuredMessage =
+            StructuredMessageValues.createStructuredMessageForTesting(
+                type = StructuredMessage.Type.Structured,
+                content =
+                    listOf(
+                        ListPickerTestValues.createListPickerContent(),
+                        StructuredMessage.Content.ButtonResponseContent(
+                            contentType = StructuredMessage.Content.Type.ButtonResponse.name,
+                            buttonResponse = givenButton,
+                        )
+                    )
+            )
+
+        val result = givenStructuredMessage.toMessage()
+
+        assertThat(result.messageType).isEqualTo(Type.ListPicker)
+        assertThat(result.listPicker).isNotNull()
     }
 }

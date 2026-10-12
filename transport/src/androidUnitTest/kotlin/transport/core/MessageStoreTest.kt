@@ -32,6 +32,7 @@ import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.CardTestValues
+import com.genesys.cloud.messenger.transport.utility.ListPickerTestValues
 import com.genesys.cloud.messenger.transport.utility.QuickReplyTestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import com.genesys.cloud.messenger.transport.utility.TimeSlotPickerTestValues
@@ -671,6 +672,106 @@ internal class MessageStoreTest {
     }
 
     @Test
+    fun `when prepareListPickerSubmissionMessageWith() single selection and channel`() {
+        val givenButtonResponses = ListPickerTestValues.singleSelection
+        val givenChannel = Channel(Channel.Metadata(mapOf("A" to "B")))
+        val expectedMessage =
+            subject.pendingMessage.copy(
+                state = State.Sending,
+                messageType = Type.ListPicker,
+                type = Type.ListPicker.name,
+                buttonResponses = givenButtonResponses,
+            )
+        val expectedStructuredMessage =
+            StructuredMessage(
+                text = "",
+                content =
+                    givenButtonResponses.map {
+                        Content(
+                            contentType = Content.Type.ButtonResponse,
+                            buttonResponse = it,
+                        )
+                    },
+                channel = givenChannel,
+            )
+
+        subject.prepareListPickerSubmissionMessageWith(TestValues.TOKEN, givenButtonResponses, givenChannel).run {
+            assertThat(message).isInstanceOf(StructuredMessage::class)
+            val structuredMessage = message as StructuredMessage
+
+            assertThat(token).isEqualTo(givenToken)
+            assertThat(structuredMessage).isEqualTo(expectedStructuredMessage)
+            assertThat(structuredMessage.text).isEqualTo("")
+            assertThat(structuredMessage.content).isEqualTo(expectedStructuredMessage.content)
+            assertThat(structuredMessage.channel).isEqualTo(givenChannel)
+            assertThat(tracingId).isEqualTo(expectedMessage.id)
+            assertThat(time).isNull()
+        }
+        assertThat(subject.getConversation()[0]).isEqualTo(expectedMessage)
+        assertThat(subject.pendingMessage.id).isNotEqualTo(expectedMessage.id)
+        verify { mockMessageListener(capture(messageSlot)) }
+        assertThat((messageSlot.captured as MessageEvent.MessageInserted).message).isEqualTo(expectedMessage)
+    }
+
+    @Test
+    fun `when prepareListPickerSubmissionMessageWith() multi selection then one content entry per item`() {
+        val givenButtonResponses = ListPickerTestValues.multiSelection
+
+        subject.prepareListPickerSubmissionMessageWith(TestValues.TOKEN, givenButtonResponses).run {
+            val structuredMessage = message as StructuredMessage
+            assertThat(structuredMessage.content).containsExactly(
+                *givenButtonResponses.map {
+                    Content(
+                        contentType = Content.Type.ButtonResponse,
+                        buttonResponse = it,
+                    )
+                }.toTypedArray()
+            )
+        }
+    }
+
+    @Test
+    fun `when prepareListPickerSubmissionMessageWith() cross-section selection then all items in one message`() {
+        val givenButtonResponses = ListPickerTestValues.crossSectionSelection
+
+        subject.prepareListPickerSubmissionMessageWith(TestValues.TOKEN, givenButtonResponses).run {
+            val structuredMessage = message as StructuredMessage
+            assertThat(structuredMessage.content).containsExactly(
+                *givenButtonResponses.map {
+                    Content(
+                        contentType = Content.Type.ButtonResponse,
+                        buttonResponse = it,
+                    )
+                }.toTypedArray()
+            )
+        }
+    }
+
+    @Test
+    fun `when prepareListPickerSubmissionMessageWith() no channel then logs and publishes MessageInserted`() {
+        val givenButtonResponses = ListPickerTestValues.singleSelection
+        val expectedMessage =
+            subject.pendingMessage.copy(
+                state = State.Sending,
+                messageType = Type.ListPicker,
+                type = Type.ListPicker.name,
+                buttonResponses = givenButtonResponses,
+            )
+
+        subject.prepareListPickerSubmissionMessageWith(TestValues.TOKEN, givenButtonResponses).run {
+            val structuredMessage = message as StructuredMessage
+            assertThat(structuredMessage.channel).isNull()
+            assertThat(tracingId).isEqualTo(expectedMessage.id)
+        }
+        verify {
+            mockLogger.d(capture(logSlot))
+            mockMessageListener(capture(messageSlot))
+        }
+        assertThat((messageSlot.captured as MessageEvent.MessageInserted).message).isEqualTo(expectedMessage)
+        assertThat(logSlot[0].invoke()).isEqualTo(LogMessages.submitListPickerPrepareToSend(expectedMessage))
+    }
+
+    @Test
     fun `when prepareTimeSlotSubmissionMessageWith() then logs and publishes MessageInserted`() {
         val givenButtonResponse = TimeSlotPickerTestValues.timeSlotButtonResponse
         val expectedMessage =
@@ -791,6 +892,48 @@ internal class MessageStoreTest {
         assertThat(actualEvent).isInstanceOf(MessageEvent.TimeSlotPickerReceived::class.java)
         assertThat((actualEvent as MessageEvent.TimeSlotPickerReceived).message).isEqualTo(givenMessage)
         assertThat(actualEvent.message.timePicker).isEqualTo(givenTimeSlotPicker)
+    }
+
+    @Test
+    fun `when update called with ListPicker message, then ListPickerReceived is published`() {
+        val givenListPicker =
+            Message.ListPicker(
+                sections =
+                    listOf(
+                        Message.ListPicker.Section(
+                            title = ListPickerTestValues.SECTION_TITLE,
+                            multipleSelection = true,
+                            items =
+                                listOf(
+                                    Message.ListPicker.ListItem(
+                                        id = ListPickerTestValues.ITEM_ID,
+                                        title = ListPickerTestValues.ITEM_TITLE,
+                                    )
+                                )
+                        )
+                    ),
+                receivedMessage =
+                    Message.ListPicker.ReceivedMessage(title = ListPickerTestValues.HEADER_TITLE)
+            )
+        val givenMessage =
+            Message(
+                id = "msg_id",
+                direction = Direction.Outbound,
+                state = State.Sent,
+                messageType = Type.ListPicker,
+                text = "Choose from the list",
+                listPicker = givenListPicker,
+                from = Participant(originatingEntity = Participant.OriginatingEntity.Bot),
+            )
+
+        subject.update(givenMessage)
+
+        verify { mockMessageListener.invoke(capture(messageSlot)) }
+
+        val actualEvent = messageSlot.captured
+        assertThat(actualEvent).isInstanceOf(MessageEvent.ListPickerReceived::class.java)
+        assertThat((actualEvent as MessageEvent.ListPickerReceived).message).isEqualTo(givenMessage)
+        assertThat(actualEvent.message.listPicker).isEqualTo(givenListPicker)
     }
 
     @Test

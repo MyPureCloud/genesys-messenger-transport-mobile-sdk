@@ -14,6 +14,7 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.PushErrorResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ButtonResponseContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.DatePickerContent
+import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.ListPickerContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.QuickReplyContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.TimeSlotPickerContent
 import com.genesys.cloud.messenger.transport.shyrka.receive.WebMessagingMessage
@@ -530,6 +531,100 @@ object TimeSlotPickerTestValues {
     internal fun createDatePickerContent(
         datePicker: TimeSlotPickerContent = createTimeSlotPickerContent()
     ) = DatePickerContent(datePicker = datePicker)
+}
+
+object ListPickerTestValues {
+    internal const val SECTION_TITLE = "Choose an option"
+    internal const val ITEM_ID = "item_1"
+    internal const val ITEM_TITLE = "Option One"
+    internal const val ITEM_SUBTITLE = "First option"
+    internal const val ITEM_IMAGE_URL = "https://example.com/item.png"
+    internal const val HEADER_TITLE = "Pick from the list"
+    internal const val HEADER_SUBTITLE = "Select one or more"
+    internal const val HEADER_IMAGE_URL = "https://example.com/header.png"
+
+    internal fun createListItem(
+        id: String = ITEM_ID,
+        title: String = ITEM_TITLE,
+        subtitle: String? = ITEM_SUBTITLE,
+        imageUrl: String? = ITEM_IMAGE_URL,
+    ) = ListPickerContent.ListPicker.ListItem(
+        id = id,
+        title = title,
+        subtitle = subtitle,
+        imageUrl = imageUrl,
+    )
+
+    internal fun createSection(
+        title: String = SECTION_TITLE,
+        multipleSelection: Boolean = false,
+        items: List<ListPickerContent.ListPicker.ListItem> = listOf(createListItem()),
+    ) = ListPickerContent.ListPicker.Section(
+        title = title,
+        multipleSelection = multipleSelection,
+        items = items,
+    )
+
+    internal fun createReceivedMessage(
+        title: String? = HEADER_TITLE,
+        subtitle: String? = HEADER_SUBTITLE,
+        imageUrl: String? = HEADER_IMAGE_URL,
+    ) = ListPickerContent.ListPicker.ReceivedMessage(
+        title = title,
+        subtitle = subtitle,
+        imageUrl = imageUrl,
+    )
+
+    internal fun createListPicker(
+        sections: List<ListPickerContent.ListPicker.Section> = listOf(createSection()),
+        receivedMessage: ListPickerContent.ListPicker.ReceivedMessage? = createReceivedMessage(),
+    ) = ListPickerContent.ListPicker(
+        sections = sections,
+        receivedMessage = receivedMessage,
+    )
+
+    internal fun createListPickerContent(
+        listPicker: ListPickerContent.ListPicker = createListPicker()
+    ) = ListPickerContent(listPicker = listPicker)
+
+    // Outbound submission (ButtonResponse) test values.
+    internal const val LIST_PICKER_TYPE = "ListPicker"
+    internal const val PICKER_MESSAGE_ID = "list_picker_msg_id"
+    internal const val ITEM_ID_2 = "item_2"
+    internal const val ITEM_TITLE_2 = "Option Two"
+    internal const val ITEM_ID_3 = "item_3"
+    internal const val ITEM_TITLE_3 = "Option Three"
+
+    internal val listPickerButtonResponse =
+        ButtonResponse(
+            text = ITEM_TITLE,
+            payload = ITEM_ID,
+            type = LIST_PICKER_TYPE,
+            originatingMessageId = PICKER_MESSAGE_ID,
+        )
+    internal val listPickerButtonResponse2 =
+        ButtonResponse(
+            text = ITEM_TITLE_2,
+            payload = ITEM_ID_2,
+            type = LIST_PICKER_TYPE,
+            originatingMessageId = PICKER_MESSAGE_ID,
+        )
+    internal val listPickerButtonResponse3 =
+        ButtonResponse(
+            text = ITEM_TITLE_3,
+            payload = ITEM_ID_3,
+            type = LIST_PICKER_TYPE,
+            originatingMessageId = PICKER_MESSAGE_ID,
+        )
+
+    /** A single selection from a single-select section. */
+    internal val singleSelection = listOf(listPickerButtonResponse)
+
+    /** Two selections from the same multi-select section. */
+    internal val multiSelection = listOf(listPickerButtonResponse, listPickerButtonResponse2)
+
+    /** Selections spanning more than one section. */
+    internal val crossSectionSelection = listOf(listPickerButtonResponse, listPickerButtonResponse3)
 }
 
 object MockEngineValues {

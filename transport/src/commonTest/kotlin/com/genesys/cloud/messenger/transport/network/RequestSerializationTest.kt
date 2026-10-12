@@ -40,6 +40,7 @@ import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.AuthTest
 import com.genesys.cloud.messenger.transport.utility.CardTestValues
 import com.genesys.cloud.messenger.transport.utility.Journey
+import com.genesys.cloud.messenger.transport.utility.ListPickerTestValues
 import com.genesys.cloud.messenger.transport.utility.TestValues
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -552,5 +553,45 @@ class RequestSerializationTest {
         assertThat(text).isEqualTo(expectedButtonResponse.text)
         assertThat(buttonResponse?.get("payload")?.jsonPrimitive?.content).isEqualTo(expectedButtonResponse.payload)
         assertThat(buttonResponse?.get("type")?.jsonPrimitive?.content).isEqualTo(expectedButtonResponse.type)
+    }
+
+    @Test
+    fun `List Picker submission serializes each selection with originatingMessageId inside buttonResponse`() {
+        val expectedResponses = ListPickerTestValues.crossSectionSelection
+
+        val structuredMessage =
+            StructuredMessage(
+                text = "",
+                content =
+                    expectedResponses.map {
+                        Message.Content(
+                            contentType = Message.Content.Type.ButtonResponse,
+                            buttonResponse = it,
+                        )
+                    },
+            )
+
+        val messageJson =
+            WebMessagingJson.json
+                .encodeToJsonElement(
+                    StructuredMessage.serializer(),
+                    structuredMessage
+                ).jsonObject
+
+        assertThat(messageJson["text"]?.jsonPrimitive?.content).isEqualTo("")
+        val contentArray = messageJson["content"]?.jsonArray
+        // One content entry per selected item (single, multi, and cross-section share this shape).
+        assertThat(contentArray?.size).isEqualTo(expectedResponses.size)
+        contentArray?.forEachIndexed { index, element ->
+            val buttonResponse = element.jsonObject["buttonResponse"]?.jsonObject
+            assertThat(buttonResponse?.get("payload")?.jsonPrimitive?.content)
+                .isEqualTo(expectedResponses[index].payload)
+            assertThat(buttonResponse?.get("type")?.jsonPrimitive?.content)
+                .isEqualTo(ListPickerTestValues.LIST_PICKER_TYPE)
+            // originatingMessageId must be nested inside buttonResponse, not at content level.
+            assertThat(buttonResponse?.get("originatingMessageId")?.jsonPrimitive?.content)
+                .isEqualTo(ListPickerTestValues.PICKER_MESSAGE_ID)
+            assertThat(element.jsonObject["originatingMessageId"]).isNull()
+        }
     }
 }

@@ -146,6 +146,15 @@ final class MessengerInteractor {
         }
     }
 
+    func submitListPicker(buttonResponses: [ButtonResponse]) throws {
+        do {
+            try messagingClient.submitListPicker(listPickerResponses: buttonResponses)
+        } catch {
+            print("submitListPicker(buttonResponses:) failed. \(error.localizedDescription)")
+            throw error
+        }
+    }
+
     func fetchNextPage(completion: ((Error?) -> Void)? = nil) {
         messagingClient.fetchNextPage() { error in
             completion?(error)

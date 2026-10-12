@@ -114,3 +114,4 @@ okta.properties
 .kotlin/
 
 /transport/GenesysCloudMessengerTransport-Dev.podspec
+/transport/GenesysCloudMessengerTransport.podspec

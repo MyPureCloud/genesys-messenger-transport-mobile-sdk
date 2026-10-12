@@ -22,6 +22,7 @@ class TestbedViewController: UIViewController {
     private var quickRepliesMap = [String: ButtonResponse]()
     private var cardActionsMap = [String: ButtonResponse]()
     private var latestTimePickerData: (messageId: String, timePicker: Message.TimeSlotPicker)?
+    private var latestListPickerData: (messageId: String, listPicker: Message.ListPicker)?
     
     // Session duration state
     private var sessionDurationSeconds: Int64? = nil
@@ -69,6 +70,7 @@ class TestbedViewController: UIViewController {
         case shouldAuthorize
         case sendAction
         case submitTimeSlot
+        case submitListPicker
         case listActions
         case synchronizePush
         case unregisterPush
@@ -87,6 +89,7 @@ class TestbedViewController: UIViewController {
             case .refreshAttachment: return "refreshAttachment <attachmentId>"
             case .sendAction: return "sendAction <action>"
             case .submitTimeSlot: return "submitTimeSlot <payload> <text>"
+            case .submitListPicker: return "submitListPicker [<title|id>, ...] (no args = first item of every section)"
             default: return rawValue
             }
         }
@@ -316,6 +319,11 @@ class TestbedViewController: UIViewController {
                 latestTimePickerData = (messageId: timeSlotPicker.message.id, timePicker: timePicker)
             }
             displayMessage = "TimeSlotPickerReceived with timePicker: \(timeSlotPicker.message.timePicker?.description ?? "nil")"
+        case let listPickerReceived as MessageEvent.ListPickerReceived:
+            if let listPicker = listPickerReceived.message.listPicker {
+                latestListPickerData = (messageId: listPickerReceived.message.id, listPicker: listPicker)
+            }
+            displayMessage = "ListPickerReceived with listPicker: \(listPickerReceived.message.listPicker?.description ?? "nil")"
         default:
             break
         }
@@ -706,6 +714,8 @@ extension TestbedViewController : UITextFieldDelegate {
                 }
             case (.submitTimeSlot, let input):
                 doSubmitTimeSlot(input: input)
+            case (.submitListPicker, let input):
+                doSubmitListPicker(input: input)
             case (.listActions, _):
                 self.info.text = "Available card actions: \(Array(cardActionsMap.keys))"
             case (.tlsDefault, _):
@@ -753,6 +763,48 @@ extension TestbedViewController : UITextFieldDelegate {
             )
         } catch {
             self.info.text = "Failed to submit time slot: \(error.localizedDescription)"
+        }
+    }
+
+    private func doSubmitListPicker(input: String?) {
+        guard let listPickerData = latestListPickerData else {
+            self.info.text = "No List Picker received yet."
+            return
+        }
+        let listPicker = listPickerData.listPicker
+        let allItems = listPicker.sections.flatMap { $0.items }
+        // Comma-separated item ids or titles, e.g. "submitListPicker fork, chair" or "submitListPicker <id>".
+        // Each token matches by id or title; matching by title selects every item with that title, so
+        // two items that share a title are both submitted (they still carry distinct ids). Pass an id to
+        // target one specific item. With no argument, defaults to the first item of every section.
+        let tokens = (input ?? "")
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        let matchedItems: [Message.ListPickerListItem] = tokens.isEmpty
+            ? listPicker.sections.compactMap { $0.items.first }
+            : tokens.flatMap { token in allItems.filter { $0.id == token || $0.title == token } }
+        // De-duplicate by id while preserving order (a title typed once can match multiple items).
+        var seenIds = Set<String>()
+        let selectedItems = matchedItems.filter { seenIds.insert($0.id).inserted }
+        guard !selectedItems.isEmpty else {
+            self.info.text = "No matching List Picker items for: \(tokens)"
+            return
+        }
+        let responses = selectedItems.map { item in
+            ButtonResponse(
+                text: item.title,
+                payload: item.id,
+                type: "ListPicker",
+                originatingMessageId: listPickerData.messageId
+            )
+        }
+        do {
+            // submitListPicker throws IllegalArgumentException for an empty list (guarded above)
+            // and IllegalStateException when the client is not Configured/ReadOnly.
+            try messenger.submitListPicker(buttonResponses: responses)
+        } catch {
+            self.info.text = "Failed to submit list picker: \(error.localizedDescription)"
         }
     }
 

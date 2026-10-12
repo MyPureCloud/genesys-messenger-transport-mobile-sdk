@@ -103,6 +103,13 @@ internal object Request {
             json.contains(""""contentType":"ButtonResponse"""") &&
             json.contains(""""type":"DatePicker"""")
 
+    fun isListPickerRequest(json: String) =
+        json.contains(""""token":"$token"""") &&
+            json.contains(""""action":"onMessage"""") &&
+            json.contains(""""contentType":"ButtonResponse"""") &&
+            json.contains(""""type":"ListPicker"""") &&
+            json.contains(""""type":"Structured"""")
+
     fun isStructuredMessageRequest(json: String) =
         json.contains(""""token":"$token"""") &&
             json.contains(""""action":"onMessage"""") &&
