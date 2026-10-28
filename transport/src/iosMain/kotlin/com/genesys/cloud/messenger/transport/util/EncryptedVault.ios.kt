@@ -8,6 +8,10 @@ import com.genesys.cloud.messenger.transport.core.InternalVault
 actual class EncryptedVault actual constructor(keys: Keys) : Vault(keys) {
     private val vault = InternalVault(keys.vaultKey, keys.tokenKey)
 
+    init {
+        migrateFromDefaultVault()
+    }
+
     /**
      * Stores the value with given key into the iOS Keychain.
      *
@@ -35,5 +39,20 @@ actual class EncryptedVault actual constructor(keys: Keys) : Vault(keys) {
      */
     actual override fun remove(key: String) {
         vault.remove(key)
+    }
+
+    // The legacy DefaultVault stored items under the VAULT_KEY Keychain service.
+    // Keychain items can't be enumerated through InternalVault, so the known keys are migrated one by one.
+    private fun migrateFromDefaultVault() {
+        if (keys.vaultKey == VAULT_KEY) return
+        val legacyVault = InternalVault(VAULT_KEY, keys.tokenKey)
+        listOf(keys.tokenKey, keys.authRefreshTokenKey, keys.wasAuthenticated, keys.pushConfigKey)
+            .forEach { key ->
+                legacyVault.string(key)?.let { legacyValue ->
+                    // Keep the legacy entry if the write fails so migration retries on next launch.
+                    val migrated = vault.string(key) != null || vault.set(key, legacyValue)
+                    if (migrated) legacyVault.remove(key)
+                }
+            }
     }
 }

@@ -5,7 +5,7 @@ import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
 import com.genesys.cloud.messenger.androidcomposeprototype.ui.testbed.TestBedViewModel
-import com.genesys.cloud.messenger.transport.util.DefaultVault
+import com.genesys.cloud.messenger.transport.util.EncryptedVault
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.API
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.answerNewConversation
 import com.genesys.cloud.messenger.uitest.support.ApiHelper.checkForConversationMessages
@@ -386,7 +386,7 @@ class ComposePrototypeUITest : BaseTests() {
     fun testSendTypingIndicator() {
         apiHelper.disconnectAllConversations()
         enterDeploymentInfo(testConfig.deploymentId)
-        DefaultVault().store("token", UUID.randomUUID().toString())
+        EncryptedVault().store("token", UUID.randomUUID().toString())
         connect()
         val conversationInfo = apiHelper.answerNewConversation()
         if (conversationInfo != null) {
@@ -405,7 +405,7 @@ class ComposePrototypeUITest : BaseTests() {
         apiHelper.disconnectAllConversations()
         enterDeploymentInfo(testConfig.deploymentId)
         // Force a new session. AutoStart is enabled and newSession is true
-        DefaultVault().store("token", UUID.randomUUID().toString())
+        EncryptedVault().store("token", UUID.randomUUID().toString())
         connect()
         verifyResponse(autoStartEnabledText)
         val conversationInfo = apiHelper.answerNewConversation()

@@ -8,7 +8,7 @@ import kotlinx.serialization.encodeToString
 
 /**
  * Abstract class representing a vault that stores and retrieves sensitive data using a provided set of keys.
- * Users of the library can use the [DefaultVault]
+ * Users of the library can use the [EncryptedVault]
  * implementation for simplicity or create a custom vault by making a concrete implementation
  * of this class and passing it in to the [MessengerTransportSDK] constructor.
  *

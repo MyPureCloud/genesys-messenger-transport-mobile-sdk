@@ -150,13 +150,17 @@ class iosAppTests: XCTestCase {
         }
         
         // Pull the deployment config and ensure that we have an allowedMedia list.
-        guard let deploymentConfig = messengerTester.pullDeploymentConfig() else {
+        guard messengerTester.pullDeploymentConfig() != nil else {
             ApiHelper.shared.sendConnectOrDisconnect(conversationInfo: conversationInfo, connecting: false, wrapup: true)
             messengerTester.disconnectMessenger()
             XCTFail("Failed to pull the deployment config.")
             return
         }
-        XCTAssertTrue(!deploymentConfig.messenger.fileUpload.modes.isEmpty, "The number of allowed media is missing or we were not able to pull the list.")
+        guard let fileAttachmentProfile = messengerTester.messenger.getFileAttachmentProfile() else {
+            XCTFail("Failed to pull the file attachment profile.")
+            return
+        }
+        XCTAssertTrue(!fileAttachmentProfile.allowedFileTypes.isEmpty, "The number of allowed media is missing or we were not able to pull the list.")
         
         // Attempt to attach a file that is not allowed by the Content Profile.
         // application/json should not be allowed right now.

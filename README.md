@@ -18,7 +18,7 @@ implementation 'cloud.genesys:messenger-transport-mobile-sdk-android:<version>'
 
 ### Install Messenger Transport on iOS
 
-Messenger Transport SDK supports versions of iOS 13.0 and up.
+Messenger Transport SDK supports versions of iOS 15.0 and up.
 
 #### Installation with CocoaPods
 

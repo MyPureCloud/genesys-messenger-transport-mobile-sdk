@@ -38,7 +38,7 @@ println("baseVersion: version: $baseVersion")
 println("buildNumber: version: $buildNumber")
 
 val iosFrameworkName = "MessengerTransport"
-val iosMinimumOSVersion = "13.0"
+val iosMinimumOSVersion = "15.0"
 val iosCocoaPodName = "GenesysCloudMessengerTransport"
 
 buildkonfig {
@@ -61,6 +61,7 @@ kotlin {
     androidLibrary {
         namespace = "com.genesys.cloud.messenger"
         compileSdk = libs.versions.transportCompileSdk.get().toInt()
+        minSdk = libs.versions.transportMinSdk.get().toInt()
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
         }
@@ -124,7 +125,7 @@ kotlin {
                 implementation("com.squareup.okhttp3:logging-interceptor:${libs.versions.okhttp.get()}") {
                     exclude(group = "com.squareup.okhttp3", module = "okhttp")
                 }
-                api("io.ktor:ktor-client-okhttp:${libs.versions.ktor.get()}") {
+                implementation("io.ktor:ktor-client-okhttp:${libs.versions.ktor.get()}") {
                     exclude(group = "com.squareup.okhttp3", module = "okhttp")
                 }
                 implementation(libs.ktor.client.logging.jvm)

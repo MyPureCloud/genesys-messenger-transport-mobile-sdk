@@ -14,11 +14,9 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations.Conver
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations.ConversationDisconnect
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations.Notifications
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
-import com.genesys.cloud.messenger.transport.shyrka.receive.FileUpload
 import com.genesys.cloud.messenger.transport.shyrka.receive.JourneyEvents
 import com.genesys.cloud.messenger.transport.shyrka.receive.LauncherButton
 import com.genesys.cloud.messenger.transport.shyrka.receive.Messenger
-import com.genesys.cloud.messenger.transport.shyrka.receive.Mode
 import com.genesys.cloud.messenger.transport.shyrka.receive.Styles
 import com.genesys.cloud.messenger.transport.shyrka.receive.createConversationsVOForTesting
 import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
@@ -42,7 +40,7 @@ class DeploymentConfigTest {
                 )
             )
         val expectedDeploymentConfigAsJson =
-            """{"id":"id","version":"1","languages":["en-us","zh-cn"],"defaultLanguage":"en-us","apiEndpoint":"api_endpoint","messenger":{"enabled":true,"apps":{"conversations":{"messagingEndpoint":"messaging_endpoint","conversationClear":{"enabled":true},"notifications":{"enabled":true,"notificationContentType":"IncludeMessagesContent"}}},"styles":{"primaryColor":"red"},"launcherButton":{"visibility":"On"},"fileUpload":{"enableAttachments":false,"modes":[{"fileTypes":["png"],"maxFileSizeKB":100}]}},"journeyEvents":{"enabled":false},"status":"Active","auth":{"enabled":true,"allowSessionUpgrade":true}}"""
+            """{"id":"id","version":"1","languages":["en-us","zh-cn"],"defaultLanguage":"en-us","apiEndpoint":"api_endpoint","messenger":{"enabled":true,"apps":{"conversations":{"messagingEndpoint":"messaging_endpoint","conversationClear":{"enabled":true},"notifications":{"enabled":true,"notificationContentType":"IncludeMessagesContent"}}},"styles":{"primaryColor":"red"},"launcherButton":{"visibility":"On"}},"journeyEvents":{"enabled":false},"status":"Active","auth":{"enabled":true,"allowSessionUpgrade":true}}"""
 
         val result = WebMessagingJson.json.encodeToString(givenDeploymentConfig)
 
@@ -72,21 +70,14 @@ class DeploymentConfigTest {
             )
         val expectedApps = Apps(conversations = expectedConversations)
         val expectedStyles = Styles(primaryColor = DeploymentConfigValues.PRIMARY_COLOR)
-        val expectedMode =
-            Mode(
-                fileTypes = listOf(DeploymentConfigValues.FILE_TYPE),
-                maxFileSizeKB = DeploymentConfigValues.MAX_FILE_SIZE
-            )
         val expectedLauncherButton =
             LauncherButton(visibility = DeploymentConfigValues.LAUNCHER_BUTTON_VISIBILITY)
-        val expectedFileUpload = FileUpload(enableAttachments = false, modes = listOf(expectedMode))
         val expectedMessenger =
             Messenger(
                 enabled = true,
                 apps = expectedApps,
                 styles = expectedStyles,
                 launcherButton = expectedLauncherButton,
-                fileUpload = expectedFileUpload,
             )
         val expectedLanguages =
             listOf(DeploymentConfigValues.DEFAULT_LANGUAGE, DeploymentConfigValues.SECONDARY_LANGUAGE)
@@ -109,7 +100,6 @@ class DeploymentConfigTest {
                 assertThat(apps).isEqualTo(expectedApps)
                 assertThat(styles).isEqualTo(expectedStyles)
                 assertThat(launcherButton).isEqualTo(expectedLauncherButton)
-                assertThat(fileUpload).isEqualTo(expectedFileUpload)
             }
             assertThat(status).isEqualTo(DeploymentConfigValues.Status)
             assertThat(version).isEqualTo(DeploymentConfigValues.VERSION)
@@ -369,44 +359,6 @@ class DeploymentConfigTest {
     }
 
     @Test
-    fun `when FileUpload serialized`() {
-        val givenMode =
-            Mode(
-                fileTypes = listOf(DeploymentConfigValues.FILE_TYPE),
-                maxFileSizeKB = DeploymentConfigValues.MAX_FILE_SIZE
-            )
-        val givenFileUpload = FileUpload(modes = listOf(givenMode))
-        val expectedFileUploadAsJson = """{"modes":[{"fileTypes":["png"],"maxFileSizeKB":100}]}"""
-
-        val result = WebMessagingJson.json.encodeToString(givenFileUpload)
-
-        assertThat(result).isEqualTo(expectedFileUploadAsJson)
-    }
-
-    @Test
-    fun `when FileUpload deserialized`() {
-        val givenFileUploadAsJson = """{"modes":[{"fileTypes":["png"],"maxFileSizeKB":100}]}"""
-        val expectedFileType = DeploymentConfigValues.FILE_TYPE
-        val expectedFileTypes = listOf(expectedFileType)
-        val expectedModes =
-            listOf(
-                Mode(
-                    fileTypes = expectedFileTypes,
-                    maxFileSizeKB = DeploymentConfigValues.MAX_FILE_SIZE
-                )
-            )
-        val expectedFileUpload = FileUpload(modes = expectedModes)
-
-        val result = WebMessagingJson.json.decodeFromString<FileUpload>(givenFileUploadAsJson)
-
-        assertThat(result).isEqualTo(expectedFileUpload)
-        assertThat(result.modes[0].fileTypes[0]).isEqualTo(DeploymentConfigValues.FILE_TYPE)
-        assertThat(result.modes[0].maxFileSizeKB).isEqualTo(DeploymentConfigValues.MAX_FILE_SIZE)
-        assertThat(result.modes).containsExactly(*expectedModes.toTypedArray())
-        assertThat(result.modes[0].fileTypes).containsExactly(*expectedFileTypes.toTypedArray())
-    }
-
-    @Test
     fun `when JourneyEvents serialized`() {
         val givenJourneyEvents = JourneyEvents(enabled = true)
         val expectedJourneyEventsAsJson = """{"enabled":true}"""
@@ -447,30 +399,6 @@ class DeploymentConfigTest {
 
         assertThat(result).isEqualTo(expectedLauncherButton)
         assertThat(result.visibility).isEqualTo(DeploymentConfigValues.LAUNCHER_BUTTON_VISIBILITY)
-    }
-
-    @Test
-    fun `when Mode serialized`() {
-        val givenFileTypes = listOf(DeploymentConfigValues.FILE_TYPE)
-        val givenMode = Mode(givenFileTypes, DeploymentConfigValues.MAX_FILE_SIZE)
-        val expectedModeAsJson = """{"fileTypes":["png"],"maxFileSizeKB":100}"""
-
-        val result = WebMessagingJson.json.encodeToString(givenMode)
-
-        assertThat(result).isEqualTo(expectedModeAsJson)
-    }
-
-    @Test
-    fun `when Mode deserialized`() {
-        val givenModeAsJson = """{"fileTypes":["png"],"maxFileSizeKB":100}"""
-        val expectedFileTypes = listOf(DeploymentConfigValues.FILE_TYPE)
-        val expectedMode =
-            Mode(listOf(DeploymentConfigValues.FILE_TYPE), DeploymentConfigValues.MAX_FILE_SIZE)
-
-        val result = WebMessagingJson.json.decodeFromString<Mode>(givenModeAsJson)
-
-        assertThat(result).isEqualTo(expectedMode)
-        assertThat(result.fileTypes).containsExactly(*expectedFileTypes.toTypedArray())
     }
 
     @Test

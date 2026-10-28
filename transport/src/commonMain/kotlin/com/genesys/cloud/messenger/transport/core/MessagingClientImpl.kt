@@ -479,7 +479,7 @@ internal class MessagingClientImpl(
     private fun handleSessionResponse(sessionResponse: SessionResponse) =
         sessionResponse.run {
             vault.wasAuthenticated = connectAuthenticated
-            attachmentHandler.fileAttachmentProfile = createFileAttachmentProfile(this)
+            attachmentHandler.fileAttachmentProfile = toFileAttachmentProfile()
             reconnectionHandler.clear()
             jwtHandler.clear()
             internalCustomAttributesStore.maxCustomDataBytes = this.maxCustomDataBytes
@@ -770,10 +770,10 @@ internal class MessagingClientImpl(
     }
 
     private fun considerForceClose() {
-        if (stateMachine.isClosing()) {
+        val state = stateMachine.currentState
+        if (state is State.Closing) {
             log.d { LogMessages.FORCE_CLOSE_WEB_SOCKET }
-            val closingState = stateMachine.currentState as State.Closing
-            socketListener.onClosed(closingState.code, closingState.reason)
+            socketListener.onClosed(state.code, state.reason)
         }
     }
 
@@ -952,12 +952,6 @@ internal class MessagingClientImpl(
             stateMachine.onClosed(code, reason)
             cleanUp()
         }
-    }
-
-    private fun createFileAttachmentProfile(sessionResponse: SessionResponse): FileAttachmentProfile {
-        val fileUpload = deploymentConfig.get()?.messenger?.fileUpload
-        return fileUpload?.enableAttachments?.let { sessionResponse.toFileAttachmentProfile() }
-            ?: fileUpload.toFileAttachmentProfile()
     }
 }
 

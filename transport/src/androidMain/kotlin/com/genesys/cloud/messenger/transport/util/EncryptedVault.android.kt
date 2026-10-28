@@ -21,7 +21,11 @@ actual class EncryptedVault actual constructor(keys: Keys) : Vault(keys) {
                 ?: throw IllegalStateException("Must set EncryptedVault.context before instantiating.")
         sharedPreferences = currentContext.getSharedPreferences(keys.vaultKey, Context.MODE_PRIVATE)
         internalVault = InternalVault(keys.vaultKey, sharedPreferences)
-        migrateFromDefaultVault()
+        internalVault.encryptPlaintextEntries(
+            listOf(keys.tokenKey, keys.authRefreshTokenKey, keys.wasAuthenticated, keys.pushConfigKey)
+        )
+        // Migrating from VAULT_KEY into itself would clear the vault it just wrote to.
+        if (keys.vaultKey != VAULT_KEY) migrateFromDefaultVault()
     }
 
     actual override fun store(
@@ -46,12 +50,12 @@ actual class EncryptedVault actual constructor(keys: Keys) : Vault(keys) {
             val migrationEntries = defaultPrefs.all
 
             if (migrationEntries.isNotEmpty()) {
+                val editor = defaultPrefs.edit()
                 migrationEntries.forEach { (key, value) ->
-                    if (value is String) {
-                        store(key, value)
-                    }
+                    // Keep the legacy entry if the write fails so migration retries on next launch.
+                    if (value !is String || internalVault.store(key, value)) editor.remove(key)
                 }
-                defaultPrefs.edit().clear().apply()
+                editor.apply()
             }
         }
     }

@@ -1,6 +1,8 @@
 package transport.core
 
 import android.content.SharedPreferences
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
 import android.util.Base64
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -15,7 +17,9 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkConstructor
 import io.mockk.mockkStatic
+import io.mockk.slot
 import io.mockk.unmockkAll
 import io.mockk.verify
 import io.mockk.verifySequence
@@ -205,6 +209,10 @@ class InternalVaultTest {
     private val testBase64 = TestValues.VAULT_BASE64
     private val givenTestCombined =
         givenTestIv + TestValues.VAULT_SEPARATOR.toByteArray(Charsets.UTF_8) + givenTestEncryptedBytes
+    private val givenTagBytes = ByteArray(InternalVault.GCM_TAG_LENGTH_BITS / Byte.SIZE_BITS)
+    private val givenEncryptedFormatBytes =
+        givenTestIv + TestValues.VAULT_SEPARATOR.toByteArray(Charsets.UTF_8) + givenTagBytes
+    private val givenStoredEncryptedValue = "$testBase64\n    "
 
     private lateinit var subject: InternalVault
 
@@ -241,7 +249,7 @@ class InternalVaultTest {
         every { mockCipher.doFinal(any<ByteArray>()) } returns givenTestEncryptedBytes
         every { Base64.encodeToString(any(), Base64.DEFAULT) } returns testBase64
 
-        subject.store(testKey, testValue)
+        val result = subject.store(testKey, testValue)
 
         verifySequence {
             mockCipher.init(Cipher.ENCRYPT_MODE, mockSecretKey)
@@ -251,6 +259,7 @@ class InternalVaultTest {
             mockSharedPreferencesEditor.putString(testKey, testBase64)
             mockSharedPreferencesEditor.apply()
         }
+        assertThat(result).isTrue()
     }
 
     @Test
@@ -259,9 +268,10 @@ class InternalVaultTest {
         every { KeyStore.getInstance(any()) } returns testMockKeyStore
         every { testMockKeyStore.load(null) } throws KeyStoreException("Test exception")
 
-        subject.store(testKey, testValue)
+        val result = subject.store(testKey, testValue)
 
         verify(exactly = 0) { mockSharedPreferencesEditor.putString(any(), any()) }
+        assertThat(result).isFalse()
     }
 
     @Test
@@ -334,6 +344,51 @@ class InternalVaultTest {
     }
 
     @Test
+    fun `when store() and fetch() succeed with a newly generated key`() {
+        val mockKeyGenerator = mockk<KeyGenerator>(relaxed = true)
+        val mockKeyGenParameterSpec = mockk<KeyGenParameterSpec>()
+        mockkConstructor(KeyGenParameterSpec.Builder::class)
+        every { anyConstructed<KeyGenParameterSpec.Builder>().setBlockModes(any()) } answers { self as KeyGenParameterSpec.Builder }
+        every {
+            anyConstructed<KeyGenParameterSpec.Builder>().setEncryptionPaddings(any())
+        } answers { self as KeyGenParameterSpec.Builder }
+        every { anyConstructed<KeyGenParameterSpec.Builder>().setKeySize(any()) } answers { self as KeyGenParameterSpec.Builder }
+        every { anyConstructed<KeyGenParameterSpec.Builder>().build() } returns mockKeyGenParameterSpec
+        every { mockKeyStore.containsAlias(any()) } returns false
+        every {
+            KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
+        } returns mockKeyGenerator
+        every { mockKeyGenerator.generateKey() } returns mockSecretKey
+        every { mockCipher.iv } returns givenTestIv
+        every { mockCipher.doFinal(any<ByteArray>()) } returns givenTestEncryptedBytes
+        every { Base64.encodeToString(any(), Base64.DEFAULT) } returns testBase64
+
+        subject.store(testKey, testValue)
+
+        verifySequence {
+            mockKeyStore.load(null)
+            mockKeyStore.containsAlias(any())
+            KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
+            mockKeyGenerator.init(mockKeyGenParameterSpec)
+            mockKeyGenerator.generateKey()
+            mockCipher.init(Cipher.ENCRYPT_MODE, mockSecretKey)
+            mockCipher.iv
+            mockCipher.doFinal(testValue.toByteArray(Charsets.UTF_8))
+            Base64.encodeToString(any(), Base64.DEFAULT)
+            mockSharedPreferencesEditor.putString(testKey, testBase64)
+            mockSharedPreferencesEditor.apply()
+        }
+
+        every { mockSharedPreferences.getString(testKey, null) } returns testBase64
+        every { Base64.decode(testBase64, Base64.DEFAULT) } returns givenTestCombined
+        every { mockCipher.doFinal(any<ByteArray>()) } returns testValue.toByteArray(Charsets.UTF_8)
+
+        val result = subject.fetch(testKey)
+
+        assertThat(result).isEqualTo(testValue)
+    }
+
+    @Test
     fun `test cipher initialization failure during decryption returns null`() {
         every { mockSharedPreferences.getString(testKey, null) } returns testBase64
         every { Base64.decode(testBase64, Base64.DEFAULT) } returns givenTestCombined
@@ -343,5 +398,142 @@ class InternalVaultTest {
         val result = subject.fetch(testKey)
 
         assertThat(result).isNull()
+    }
+
+    @Test
+    fun `when encryptPlaintextEntries() finds a plaintext value`() {
+        every { mockSharedPreferences.all } returns mapOf(testKey to testValue)
+        every { Base64.decode(testValue, Base64.DEFAULT) } throws IllegalArgumentException("bad base-64")
+        every { mockCipher.iv } returns givenTestIv
+        every { mockCipher.doFinal(any<ByteArray>()) } returns givenTestEncryptedBytes
+        every { Base64.encodeToString(any(), Base64.DEFAULT) } returns testBase64
+
+        subject.encryptPlaintextEntries(listOf(testKey))
+
+        verify { mockCipher.doFinal(testValue.toByteArray(Charsets.UTF_8)) }
+        verify { mockSharedPreferencesEditor.putString(testKey, testBase64) }
+    }
+
+    @Test
+    fun `when encryptPlaintextEntries() finds an encrypted value`() {
+        every { mockSharedPreferences.all } returns mapOf(testKey to givenStoredEncryptedValue)
+        every { Base64.decode(givenStoredEncryptedValue, Base64.DEFAULT) } returns givenEncryptedFormatBytes
+        every { Base64.encodeToString(givenEncryptedFormatBytes, Base64.NO_WRAP) } returns testBase64
+
+        subject.encryptPlaintextEntries(listOf(testKey))
+
+        verify(exactly = 0) { mockCipher.doFinal(any<ByteArray>()) }
+        verify(exactly = 0) { mockSharedPreferencesEditor.putString(any(), any()) }
+    }
+
+    @Test
+    fun `when encryptPlaintextEntries() runs again after migrating a plaintext value`() {
+        every { mockSharedPreferences.all } returnsMany
+            listOf(mapOf(testKey to testValue), mapOf(testKey to givenStoredEncryptedValue))
+        every { Base64.decode(testValue, Base64.DEFAULT) } throws IllegalArgumentException("bad base-64")
+        every { Base64.decode(givenStoredEncryptedValue, Base64.DEFAULT) } returns givenEncryptedFormatBytes
+        every { Base64.encodeToString(givenEncryptedFormatBytes, Base64.NO_WRAP) } returns testBase64
+        every { mockCipher.iv } returns givenTestIv
+        every { mockCipher.doFinal(any<ByteArray>()) } returns givenTestEncryptedBytes
+        every { Base64.encodeToString(any(), Base64.DEFAULT) } returns testBase64
+
+        subject.encryptPlaintextEntries(listOf(testKey))
+        subject.encryptPlaintextEntries(listOf(testKey))
+
+        verify(exactly = 1) { mockSharedPreferencesEditor.putString(testKey, testBase64) }
+    }
+
+    @Test
+    fun `when encryptPlaintextEntries() and store() fails because of KeyStoreException`() {
+        every { mockSharedPreferences.all } returns mapOf(testKey to testValue)
+        every { Base64.decode(testValue, Base64.DEFAULT) } throws IllegalArgumentException("bad base-64")
+        every { mockKeyStore.load(null) } throws KeyStoreException("Test exception")
+
+        subject.encryptPlaintextEntries(listOf(testKey))
+
+        verify(exactly = 0) { mockSharedPreferencesEditor.putString(any(), any()) }
+        verify(exactly = 0) { mockSharedPreferencesEditor.remove(any()) }
+    }
+
+    @Test
+    fun `when encryptPlaintextEntries() finds a missing or non-String entry`() {
+        val givenNonStringKey = TestValues.BOOLEAN_KEY
+        every { mockSharedPreferences.all } returns mapOf(givenNonStringKey to true)
+
+        subject.encryptPlaintextEntries(listOf(testKey, givenNonStringKey))
+
+        verify(exactly = 0) { mockCipher.doFinal(any<ByteArray>()) }
+        verify(exactly = 0) { mockSharedPreferencesEditor.putString(any(), any()) }
+    }
+
+    @Test
+    fun `when encryptPlaintextEntries() finds Base64 values without the encrypted format`() {
+        val givenTooShortKey = TestValues.TOKEN_KEY
+        val givenTooShortValue = "tooShortValue\n"
+        val givenMisplacedSeparatorKey = TestValues.AUTH_REFRESH_TOKEN_KEY
+        val givenMisplacedSeparatorValue = "misplacedSeparatorValue\n"
+        every { mockSharedPreferences.all } returns
+            mapOf(
+                givenTooShortKey to givenTooShortValue,
+                givenMisplacedSeparatorKey to givenMisplacedSeparatorValue
+            )
+        every { Base64.decode(givenTooShortValue, Base64.DEFAULT) } returns givenTestCombined
+        every { Base64.decode(givenMisplacedSeparatorValue, Base64.DEFAULT) } returns
+            givenTestIv + givenTagBytes + TestValues.VAULT_SEPARATOR.toByteArray(Charsets.UTF_8)
+        every { mockCipher.iv } returns givenTestIv
+        every { mockCipher.doFinal(any<ByteArray>()) } returns givenTestEncryptedBytes
+        every { Base64.encodeToString(any(), Base64.DEFAULT) } returns testBase64
+
+        subject.encryptPlaintextEntries(listOf(givenTooShortKey, givenMisplacedSeparatorKey))
+
+        verify { mockSharedPreferencesEditor.putString(givenTooShortKey, testBase64) }
+        verify { mockSharedPreferencesEditor.putString(givenMisplacedSeparatorKey, testBase64) }
+    }
+
+    @Test
+    fun `when encryptPlaintextEntries() finds a plaintext value that decodes to the encrypted format`() {
+        val givenPlaintextValue = "{\"deviceToken\":\"lenient-decoded-value\"}\n"
+        every { mockSharedPreferences.all } returns mapOf(testKey to givenPlaintextValue)
+        every { Base64.decode(givenPlaintextValue, Base64.DEFAULT) } returns givenEncryptedFormatBytes
+        every { Base64.encodeToString(givenEncryptedFormatBytes, Base64.NO_WRAP) } returns testBase64
+        every { mockCipher.iv } returns givenTestIv
+        every { mockCipher.doFinal(any<ByteArray>()) } returns givenTestEncryptedBytes
+        every { Base64.encodeToString(any(), Base64.DEFAULT) } returns testBase64
+
+        subject.encryptPlaintextEntries(listOf(testKey))
+
+        verify { mockCipher.doFinal(givenPlaintextValue.toByteArray(Charsets.UTF_8)) }
+        verify { mockSharedPreferencesEditor.putString(testKey, testBase64) }
+    }
+
+    @Test
+    fun `when encryptPlaintextEntries() finds a plaintext value without a line break`() {
+        every { mockSharedPreferences.all } returns mapOf(testKey to testBase64)
+        every { mockCipher.iv } returns givenTestIv
+        every { mockCipher.doFinal(any<ByteArray>()) } returns givenTestEncryptedBytes
+        every { Base64.encodeToString(any(), Base64.DEFAULT) } returns testBase64
+
+        subject.encryptPlaintextEntries(listOf(testKey))
+
+        verify(exactly = 0) { Base64.decode(testBase64, Base64.DEFAULT) }
+        verify { mockSharedPreferencesEditor.putString(testKey, testBase64) }
+    }
+
+    @Test
+    fun `when fetch() decrypts a value whose IV contains the separator byte`() {
+        val givenIvWithSeparator =
+            givenTestIv.copyOf().also { it[0] = TestValues.VAULT_SEPARATOR[0].code.toByte() }
+        val givenCombined =
+            givenIvWithSeparator + TestValues.VAULT_SEPARATOR.toByteArray(Charsets.UTF_8) + givenTestEncryptedBytes
+        val specSlot = slot<GCMParameterSpec>()
+        every { mockSharedPreferences.getString(testKey, null) } returns testBase64
+        every { Base64.decode(testBase64, Base64.DEFAULT) } returns givenCombined
+        every { mockCipher.init(Cipher.DECRYPT_MODE, mockSecretKey, capture(specSlot)) } just Runs
+        every { mockCipher.doFinal(givenTestEncryptedBytes) } returns testValue.toByteArray(Charsets.UTF_8)
+
+        val result = subject.fetch(testKey)
+
+        assertThat(result).isEqualTo(testValue)
+        assertThat(specSlot.captured.iv.contentEquals(givenIvWithSeparator)).isTrue()
     }
 }

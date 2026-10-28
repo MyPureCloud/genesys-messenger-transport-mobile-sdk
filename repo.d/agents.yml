@@ -1,0 +1,7 @@
+---
+agents:
+  reviewRanger:
+    enabled: true
+repo:
+  team: "Digital Mobile SDK"
+  jiraProjectKey: "MTSDK"

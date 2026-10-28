@@ -1,5 +1,6 @@
 package com.genesys.cloud.messenger.transport.network
 
+import com.genesys.cloud.messenger.transport.shyrka.WebMessagingJson
 import com.genesys.cloud.messenger.transport.utility.DEFAULT_TIMEOUT
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -36,7 +37,7 @@ class DeploymentConfigUseCaseTest {
     private fun mockHttpClient(): HttpClient =
         HttpClient(MockEngine) {
             install(ContentNegotiation) {
-                json()
+                json(WebMessagingJson.json)
             }
             engine {
                 val responseHeaders =

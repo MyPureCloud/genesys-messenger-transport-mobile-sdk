@@ -16,7 +16,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.genesys.cloud.messenger.transport.core.FileAttachmentProfile
-import com.genesys.cloud.messenger.transport.util.DefaultVault
+import com.genesys.cloud.messenger.transport.util.EncryptedVault
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -94,7 +94,7 @@ class TestBedFragment : Fragment() {
     }
 
     private fun Uri.getFileName(): String {
-        val cursor = DefaultVault.context?.contentResolver?.query(this, null, null, null, null)
+        val cursor = EncryptedVault.context?.contentResolver?.query(this, null, null, null, null)
         return cursor?.use {
             val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
             it.moveToFirst()

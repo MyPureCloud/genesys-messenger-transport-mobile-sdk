@@ -10,7 +10,7 @@ Pod::Spec.new do |spec|
     spec.summary                  = 'Genesys Cloud Messenger Transport Framework - Local development podspec.'
     spec.vendored_frameworks      = 'build/cocoapods/framework/MessengerTransport.framework'
     spec.libraries                = 'c++'
-    spec.ios.deployment_target    = '13.0'
+    spec.ios.deployment_target    = '15.0'
     
     # Include Kotlin source files for debugging in Xcode (appears in Development Pods like other local pods)
     # Note: These are Kotlin files, but CocoaPods will still add them to the project navigator

@@ -10,9 +10,7 @@ import com.genesys.cloud.messenger.transport.network.defaultHttpClient
 import com.genesys.cloud.messenger.transport.push.PushService
 import com.genesys.cloud.messenger.transport.push.PushServiceImpl
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
-import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.EncryptedVault
-import com.genesys.cloud.messenger.transport.util.TokenStore
 import com.genesys.cloud.messenger.transport.util.Urls
 import com.genesys.cloud.messenger.transport.util.Vault
 import com.genesys.cloud.messenger.transport.util.logs.Log
@@ -36,9 +34,8 @@ import kotlinx.coroutines.withContext
  */
 class MessengerTransportSDK(
     private val configuration: Configuration,
-    @Deprecated("Use Vault instead.") private val tokenStore: TokenStore?,
     val vault: Vault,
-    private val journeyContextProvider: (() -> JourneyContextInfo?)? = null,
+    private val journeyContextProvider: (() -> JourneyContextInfo?)?,
 ) {
     private var deploymentConfig: DeploymentConfig? = null
     private val urls = Urls(configuration.domain, configuration.deploymentId, configuration.application, configuration.customEndpoint)
@@ -48,58 +45,26 @@ class MessengerTransportSDK(
          * The SDK version.
          */
         val sdkVersion = BuildKonfig.sdkVersion
-
-        /**
-         * Creates a vault instance based on the configuration.
-         *
-         * @return A vault instance based on the configuration's encryptedVault property.
-         */
-        private fun getVault(configuration: Configuration): Vault {
-            return if (configuration.encryptedVault) {
-                EncryptedVault()
-            } else {
-                DefaultVault()
-            }
-        }
     }
 
     constructor(configuration: Configuration) : this(
-        configuration,
-        null,
-        getVault(configuration),
-    )
-
-    @Deprecated("Use Vault instead.")
-    constructor(configuration: Configuration, tokenStore: TokenStore) : this(
         configuration = configuration,
-        tokenStore = tokenStore,
-        vault = DefaultVault(),
+        vault = EncryptedVault(),
+        journeyContextProvider = null,
     )
 
     constructor(configuration: Configuration, vault: Vault) : this(
         configuration = configuration,
         vault = vault,
-        tokenStore = null,
+        journeyContextProvider = null,
     )
 
     constructor(
         configuration: Configuration,
-        journeyContextProvider: (() -> JourneyContextInfo?)?,
-    ) : this(
-        configuration,
-        null,
-        getVault(configuration),
-        journeyContextProvider,
-    )
-
-    constructor(
-        configuration: Configuration,
-        vault: Vault,
         journeyContextProvider: (() -> JourneyContextInfo?)?,
     ) : this(
         configuration = configuration,
-        tokenStore = null,
-        vault = vault,
+        vault = EncryptedVault(),
         journeyContextProvider = journeyContextProvider,
     )
 
@@ -116,8 +81,7 @@ class MessengerTransportSDK(
                 DEFAULT_PING_INTERVAL_IN_SECONDS,
                 configuration.minimumWebSocketTlsVersion,
             )
-        // Support old TokenStore. If TokenStore not present fallback to the Vault.
-        val token = tokenStore?.token ?: vault.token
+        val token = vault.token
         val messageStore = MessageStore(log.withTag(LogTag.MESSAGE_STORE))
         val attachmentHandler =
             AttachmentHandlerImpl(

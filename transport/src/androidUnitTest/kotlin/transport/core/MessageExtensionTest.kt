@@ -285,6 +285,40 @@ internal class MessageExtensionTest {
     }
 
     @Test
+    fun `when fromIsoToEpochMilliseconds() on ISO timestamp String without fractional seconds`() {
+        val expectedTimestamp = 1398892191000L
+
+        val result = "2014-04-30T21:09:51Z".fromIsoToEpochMilliseconds()
+
+        assertThat(result).isEqualTo(expectedTimestamp)
+    }
+
+    @Test
+    fun `when fromIsoToEpochMilliseconds() on ISO timestamp String with nanosecond precision`() {
+        val expectedTimestamp = 1398892191411L
+
+        val result = "2014-04-30T21:09:51.411123456Z".fromIsoToEpochMilliseconds()
+
+        assertThat(result).isEqualTo(expectedTimestamp)
+    }
+
+    @Test
+    fun `when fromIsoToEpochMilliseconds() on ISO timestamp String with non UTC offset`() {
+        val expectedTimestamp = 1398892191411L
+
+        val result = "2014-04-30T23:09:51.411+02:00".fromIsoToEpochMilliseconds()
+
+        assertThat(result).isEqualTo(expectedTimestamp)
+    }
+
+    @Test
+    fun `when fromIsoToEpochMilliseconds() on ISO timestamp String without offset`() {
+        val result = "2014-04-30T21:09:51.411".fromIsoToEpochMilliseconds()
+
+        assertThat(result).isNull()
+    }
+
+    @Test
     fun `when fromIsoToEpochMilliseconds() on invalid timestamp String`() {
         val result = "invalid timestamp format".fromIsoToEpochMilliseconds()
 
@@ -448,7 +482,6 @@ internal class MessageExtensionTest {
             Message(
                 id = MessageValues.ID,
                 state = State.Sent,
-                type = Type.QuickReply.name,
                 messageType = Type.QuickReply,
                 quickReplies = listOf(expectedButtonResponse)
             )
@@ -476,7 +509,6 @@ internal class MessageExtensionTest {
             Message(
                 id = MessageValues.ID,
                 state = State.Sent,
-                type = Type.QuickReply.name,
                 messageType = Type.QuickReply,
                 quickReplies = listOf(expectedButtonResponse)
             )
@@ -508,7 +540,6 @@ internal class MessageExtensionTest {
             Message(
                 id = MessageValues.ID,
                 state = State.Sent,
-                type = Type.QuickReply.name,
                 messageType = Type.QuickReply,
                 quickReplies = listOf(expectedButtonResponse)
             )
@@ -529,7 +560,6 @@ internal class MessageExtensionTest {
             Message(
                 id = MessageValues.ID,
                 state = State.Sent,
-                type = Type.Unknown.name,
                 messageType = Type.Unknown,
             )
 

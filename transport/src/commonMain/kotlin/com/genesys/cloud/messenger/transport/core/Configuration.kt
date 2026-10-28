@@ -18,7 +18,6 @@ data class Configuration(
     val logging: Boolean = false,
     val reconnectionTimeoutInSeconds: Long = 60 * 5,
     val autoRefreshTokenWhenExpired: Boolean = true,
-    val encryptedVault: Boolean = false,
     val sessionExpirationNoticeIntervalSeconds: Long = DEFAULT_INTERVAL,
     val minimumWebSocketTlsVersion: TlsVersion = TlsVersion.SYSTEM_DEFAULT
 ) {
@@ -41,7 +40,6 @@ data class Configuration(
         logging = logging,
         reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
         autoRefreshTokenWhenExpired = true,
-        encryptedVault = false,
         sessionExpirationNoticeIntervalSeconds = DEFAULT_INTERVAL,
         minimumWebSocketTlsVersion = TlsVersion.SYSTEM_DEFAULT
     )
@@ -55,14 +53,12 @@ data class Configuration(
         logging: Boolean,
         reconnectionTimeoutInSeconds: Long,
         autoRefreshTokenWhenExpired: Boolean,
-        encryptedVault: Boolean,
     ) : this(
         deploymentId = deploymentId,
         domain = domain,
         logging = logging,
         reconnectionTimeoutInSeconds = reconnectionTimeoutInSeconds,
         autoRefreshTokenWhenExpired = autoRefreshTokenWhenExpired,
-        encryptedVault = encryptedVault,
         sessionExpirationNoticeIntervalSeconds = DEFAULT_INTERVAL,
         minimumWebSocketTlsVersion = TlsVersion.SYSTEM_DEFAULT
     )

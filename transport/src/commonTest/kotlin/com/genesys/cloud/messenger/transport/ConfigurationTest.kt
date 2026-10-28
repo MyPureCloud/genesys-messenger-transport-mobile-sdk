@@ -21,7 +21,6 @@ class ConfigurationTest {
             assertThat(logging).isFalse()
             assertThat(reconnectionTimeoutInSeconds).isEqualTo(expectedReconnectionTimeout)
             assertThat(autoRefreshTokenWhenExpired).isTrue()
-            assertThat(encryptedVault).isFalse()
             assertThat(minimumWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
         }
     }
@@ -39,21 +38,6 @@ class ConfigurationTest {
             assertThat(logging).isTrue()
             assertThat(reconnectionTimeoutInSeconds).isEqualTo(expectedReconnectionTimeout)
             assertThat(autoRefreshTokenWhenExpired).isTrue()
-            assertThat(encryptedVault).isFalse()
-            assertThat(minimumWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
-        }
-    }
-
-    @Test
-    fun `validate constructor with encryptedVault parameter`() {
-        val configuration = TestValues.configuration.copy(encryptedVault = true)
-
-        configuration.run {
-            assertThat(deploymentId).isEqualTo(TestValues.DEPLOYMENT_ID)
-            assertThat(logging).isFalse()
-            assertThat(reconnectionTimeoutInSeconds).isEqualTo(300L)
-            assertThat(autoRefreshTokenWhenExpired).isTrue()
-            assertThat(encryptedVault).isTrue()
             assertThat(minimumWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)
         }
     }
@@ -82,7 +66,7 @@ class ConfigurationTest {
     }
 
     @Test
-    fun `when using 6-param secondary constructor then minimumWebSocketTlsVersion defaults to SYSTEM_DEFAULT`() {
+    fun `when using 5-param secondary constructor then minimumWebSocketTlsVersion defaults to SYSTEM_DEFAULT`() {
         val configuration =
             Configuration(
                 deploymentId = TestValues.DEPLOYMENT_ID,
@@ -90,7 +74,6 @@ class ConfigurationTest {
                 logging = true,
                 reconnectionTimeoutInSeconds = 60,
                 autoRefreshTokenWhenExpired = false,
-                encryptedVault = true,
             )
 
         assertThat(configuration.minimumWebSocketTlsVersion).isEqualTo(TlsVersion.SYSTEM_DEFAULT)

@@ -28,7 +28,6 @@ class MessageTest {
     fun `validate default constructor`() {
         val expectedDirection = Direction.Inbound
         val expectedState = State.Idle
-        val expectedType = MessageValues.TYPE
         val expectedMessageType = Message.Type.Text
         val expectedParticipant =
             Participant(originatingEntity = Participant.OriginatingEntity.Human)
@@ -38,7 +37,6 @@ class MessageTest {
         subject.run {
             assertThat(direction).isEqualTo(expectedDirection)
             assertThat(state).isEqualTo(expectedState)
-            assertThat(type).isEqualTo(expectedType)
             assertThat(messageType).isEqualTo(expectedMessageType)
             assertThat(text).isNull()
             assertThat(timeStamp).isNull()
@@ -62,7 +60,6 @@ class MessageTest {
         val expectedId = MessageValues.ID
         val expectedDirection = Direction.Outbound
         val expectedState = State.Sending
-        val expectedType = "QuickReply"
         val expectedMessageType = Message.Type.QuickReply
         val expectedText = MessageValues.TEXT
         val expectedTimestamp = MessageValues.TIME_STAMP
@@ -82,7 +79,6 @@ class MessageTest {
                 id = MessageValues.ID,
                 direction = Direction.Outbound,
                 state = State.Sending,
-                type = "QuickReply",
                 messageType = Message.Type.QuickReply,
                 text = MessageValues.TEXT,
                 timeStamp = MessageValues.TIME_STAMP,
@@ -103,7 +99,6 @@ class MessageTest {
             assertThat(id).isEqualTo(expectedId)
             assertThat(direction).isEqualTo(expectedDirection)
             assertThat(state).isEqualTo(expectedState)
-            assertThat(type).isEqualTo(expectedType)
             assertThat(messageType).isEqualTo(expectedMessageType)
             assertThat(text).isEqualTo(expectedText)
             assertThat(timeStamp).isEqualTo(expectedTimestamp)

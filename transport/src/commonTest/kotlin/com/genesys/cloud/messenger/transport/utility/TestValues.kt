@@ -166,8 +166,6 @@ object DeploymentConfigValues {
     internal const val MESSAGING_ENDPOINT = "messaging_endpoint"
     internal const val PRIMARY_COLOR = "red"
     internal const val LAUNCHER_BUTTON_VISIBILITY = "On"
-    internal const val MAX_FILE_SIZE = 100L
-    internal const val FILE_TYPE = "png"
     internal val Status = DeploymentConfig.Status.Active
     internal const val VERSION = "1"
 }

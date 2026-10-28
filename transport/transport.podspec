@@ -8,7 +8,7 @@ Pod::Spec.new do |spec|
     spec.summary                  = 'Genesys Cloud Messenger Transport Framework - Development podspec for use with local testbed app.'
     spec.vendored_frameworks      = 'build/cocoapods/framework/MessengerTransport.framework'
     spec.libraries                = 'c++'
-    spec.ios.deployment_target    = '13.0'
+    spec.ios.deployment_target    = '15.0'
                 
                 
     if !Dir.exist?('build/cocoapods/framework/MessengerTransport.framework') || Dir.empty?('build/cocoapods/framework/MessengerTransport.framework')

@@ -12,13 +12,16 @@ import com.genesys.cloud.messenger.transport.core.Message.State
 import com.genesys.cloud.messenger.transport.core.Message.Type
 import com.genesys.cloud.messenger.transport.core.MessageEvent
 import com.genesys.cloud.messenger.transport.core.MessagingClient
+import com.genesys.cloud.messenger.transport.core.StateMachineImpl
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.core.isClosed
 import com.genesys.cloud.messenger.transport.util.extensions.sanitizeText
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
+import com.genesys.cloud.messenger.transport.util.logs.LogTag
 import com.genesys.cloud.messenger.transport.utility.ListPickerTestValues
 import com.genesys.cloud.messenger.transport.utility.MessageValues
 import io.mockk.every
+import io.mockk.spyk
 import io.mockk.verify
 import io.mockk.verifySequence
 import org.junit.Test
@@ -111,7 +114,6 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
                 id = "some_custom_message_id",
                 state = State.Sent,
                 messageType = Type.Text,
-                type = "Text",
                 text = MessageValues.TEXT,
                 timeStamp = 1661196266704,
             )
@@ -253,6 +255,32 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
     }
 
     @Test
+    fun `when socket throws an error and state changes from Closing to Closed between reads`() {
+        val expectedCode = 1000
+        val expectedReason = "The user has closed the connection."
+        val spyStateMachine = spyk(StateMachineImpl(mockLogger.withTag(LogTag.STATE_MACHINE)))
+        var raceArmed = false
+        var stateReads = 0
+        every { spyStateMachine.currentState } answers {
+            if (raceArmed && stateReads++ > 0) {
+                MessagingClient.State.Closed(expectedCode, expectedReason)
+            } else {
+                callOriginal()
+            }
+        }
+        every { mockPlatformSocket.closeSocket(any(), any()) } answers {
+            raceArmed = true
+            slot.captured.onFailure(Exception(), ErrorCode.WebsocketError)
+        }
+        val subject = buildSubject(stateMachine = spyStateMachine)
+
+        subject.connect()
+        subject.disconnect()
+
+        verify(exactly = 1) { mockMessageStore.clear() }
+    }
+
+    @Test
     fun `when SocketListener invoke onMessage with Outbound text message`() {
         val expectedMessage =
             Message(
@@ -260,7 +288,6 @@ class MessagingClientMessageTest : BaseMessagingClientTest() {
                 direction = Direction.Outbound,
                 state = State.Sent,
                 messageType = Type.Text,
-                type = "Text",
                 text = "Hello world!",
                 timeStamp = 1661196266704,
                 from = Participant(originatingEntity = Participant.OriginatingEntity.Unknown),

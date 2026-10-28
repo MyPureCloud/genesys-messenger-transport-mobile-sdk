@@ -30,27 +30,12 @@ fun createDeploymentConfigForTesting(
 
 fun createMessengerVOForTesting(
     apps: Apps = Apps(createConversationsVOForTesting()),
-    fileUpload: FileUpload = createFileUploadVOForTesting(),
 ) = Messenger(
     enabled = true,
     apps = apps,
     styles = Styles(primaryColor = DeploymentConfigValues.PRIMARY_COLOR),
     launcherButton = LauncherButton(visibility = DeploymentConfigValues.LAUNCHER_BUTTON_VISIBILITY),
-    fileUpload = fileUpload
 )
-
-fun createFileUploadVOForTesting(
-    enableAttachments: Boolean? = false,
-    modes: List<Mode> =
-        listOf(
-            Mode(
-                fileTypes = listOf(DeploymentConfigValues.FILE_TYPE),
-                maxFileSizeKB = DeploymentConfigValues.MAX_FILE_SIZE,
-            )
-        ),
-): FileUpload {
-    return FileUpload(enableAttachments, modes)
-}
 
 fun createConversationsVOForTesting(
     autoStart: AutoStart = AutoStart(),

@@ -102,9 +102,8 @@ internal data class StructuredMessage(
             )
         }
 
-        @Deprecated("This will be removed in a future release")
         @Serializable
-        data class ButtonResponseContent(
+        internal data class ButtonResponseContent(
             val contentType: String,
             val buttonResponse: ButtonResponse,
         ) : Content() {

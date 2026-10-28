@@ -13,9 +13,6 @@ import com.genesys.cloud.messenger.transport.core.Message.State
 import com.genesys.cloud.messenger.transport.core.Message.Type
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresignedUrlResponse
 import com.genesys.cloud.messenger.transport.shyrka.receive.UploadSuccessEvent
-import com.genesys.cloud.messenger.transport.shyrka.receive.createDeploymentConfigForTesting
-import com.genesys.cloud.messenger.transport.shyrka.receive.createFileUploadVOForTesting
-import com.genesys.cloud.messenger.transport.shyrka.receive.createMessengerVOForTesting
 import com.genesys.cloud.messenger.transport.util.logs.LogMessages
 import com.genesys.cloud.messenger.transport.utility.AttachmentValues
 import com.genesys.cloud.messenger.transport.utility.ErrorTest
@@ -153,7 +150,6 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
                 direction = Direction.Inbound,
                 state = State.Sent,
                 messageType = Type.Text,
-                type = "Text",
                 timeStamp = null,
                 attachments = mapOf("attachment_id" to expectedAttachment),
                 text = "Hi"
@@ -263,62 +259,6 @@ class MessagingClientAttachmentTest : BaseMessagingClientTest() {
                 blockedFileTypes = listOf(".ade", ".adp"),
                 maxFileSizeKB = 10240,
                 hasWildCard = true,
-            )
-        subject.connect()
-        every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
-
-        slot.captured.onMessage(Response.onMessageWithAttachment())
-
-        assertThat(subject.fileAttachmentProfile).isEqualTo(expectedFileAttachmentProfile)
-    }
-
-    @Test
-    fun `when enableAttachments is null and FileUpload Mode is empty`() {
-        every { mockDeploymentConfig.get() } returns
-            createDeploymentConfigForTesting(
-                createMessengerVOForTesting(
-                    fileUpload =
-                        createFileUploadVOForTesting(
-                            enableAttachments = null,
-                            modes = emptyList(),
-                        )
-                )
-            )
-        val fileAttachmentProfileSlot = createFileAttachmentProfileSlot()
-        every { mockPlatformSocket.sendMessage(Request.configureRequest()) } answers {
-            slot.captured.onMessage(
-                Response.configureSuccess(
-                    allowedMedia = Response.AllowedMedia.listOfFileTypesWithWildcardAndMaxSize,
-                    blockedExtensions = Response.AllowedMedia.listOfBlockedExtensions,
-                )
-            )
-        }
-        val expectedFileAttachmentProfile = FileAttachmentProfile()
-        subject.connect()
-        every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured
-
-        slot.captured.onMessage(Response.onMessageWithAttachment())
-
-        assertThat(subject.fileAttachmentProfile).isEqualTo(expectedFileAttachmentProfile)
-    }
-
-    @Test
-    fun `when enableAttachments is null and FileUpload Mode has entries`() {
-        every { mockDeploymentConfig.get() } returns
-            createDeploymentConfigForTesting(
-                createMessengerVOForTesting(
-                    fileUpload =
-                        createFileUploadVOForTesting(
-                            enableAttachments = null,
-                        )
-                )
-            )
-        val fileAttachmentProfileSlot = createFileAttachmentProfileSlot()
-        val expectedFileAttachmentProfile =
-            FileAttachmentProfile(
-                enabled = true,
-                allowedFileTypes = listOf("png"),
-                maxFileSizeKB = 100
             )
         subject.connect()
         every { mockAttachmentHandler.fileAttachmentProfile } returns fileAttachmentProfileSlot.captured

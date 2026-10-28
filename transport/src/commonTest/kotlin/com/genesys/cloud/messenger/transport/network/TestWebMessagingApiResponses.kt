@@ -4,12 +4,10 @@ import com.genesys.cloud.messenger.transport.shyrka.receive.Apps
 import com.genesys.cloud.messenger.transport.shyrka.receive.Auth
 import com.genesys.cloud.messenger.transport.shyrka.receive.Conversations
 import com.genesys.cloud.messenger.transport.shyrka.receive.DeploymentConfig
-import com.genesys.cloud.messenger.transport.shyrka.receive.FileUpload
 import com.genesys.cloud.messenger.transport.shyrka.receive.JourneyEvents
 import com.genesys.cloud.messenger.transport.shyrka.receive.LauncherButton
 import com.genesys.cloud.messenger.transport.shyrka.receive.MessageEntityList
 import com.genesys.cloud.messenger.transport.shyrka.receive.Messenger
-import com.genesys.cloud.messenger.transport.shyrka.receive.Mode
 import com.genesys.cloud.messenger.transport.shyrka.receive.PresenceEvent
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.receive.StructuredMessage.Content.QuickReplyContent.QuickReply
@@ -75,16 +73,6 @@ object TestWebMessagingApiResponses {
                         ),
                     styles = Styles(primaryColor = "#ff0000"),
                     launcherButton = LauncherButton(visibility = "On"),
-                    fileUpload =
-                        FileUpload(
-                            modes =
-                                listOf(
-                                    Mode(
-                                        fileTypes = listOf("image/png", "image/jpeg", "image/gif"),
-                                        maxFileSizeKB = 10000
-                                    )
-                                )
-                        )
                 ),
             journeyEvents = JourneyEvents(enabled = true),
             status = DeploymentConfig.Status.Active,

@@ -479,7 +479,6 @@ internal class MessageStoreTest {
             subject.pendingMessage.copy(
                 state = State.Sending,
                 messageType = Type.QuickReply,
-                type = Type.QuickReply.name,
                 quickReplies = listOf(givenButtonResponse)
             )
         val expectedTextMessage =
@@ -519,7 +518,6 @@ internal class MessageStoreTest {
             subject.pendingMessage.copy(
                 state = State.Sending,
                 messageType = Type.QuickReply,
-                type = Type.QuickReply.name,
                 quickReplies = listOf(givenButtonResponse)
             )
         val expectedTextMessage =
@@ -597,7 +595,6 @@ internal class MessageStoreTest {
             subject.pendingMessage.copy(
                 state = State.Sending,
                 messageType = Type.DatePicker,
-                type = Type.DatePicker.name,
             )
         val expectedTextMessage =
             TextMessage(
@@ -636,7 +633,6 @@ internal class MessageStoreTest {
             subject.pendingMessage.copy(
                 state = State.Sending,
                 messageType = Type.DatePicker,
-                type = Type.DatePicker.name,
             )
         val expectedTextMessage =
             TextMessage(
@@ -679,7 +675,6 @@ internal class MessageStoreTest {
             subject.pendingMessage.copy(
                 state = State.Sending,
                 messageType = Type.ListPicker,
-                type = Type.ListPicker.name,
                 buttonResponses = givenButtonResponses,
             )
         val expectedStructuredMessage =
@@ -754,7 +749,6 @@ internal class MessageStoreTest {
             subject.pendingMessage.copy(
                 state = State.Sending,
                 messageType = Type.ListPicker,
-                type = Type.ListPicker.name,
                 buttonResponses = givenButtonResponses,
             )
 
@@ -778,7 +772,6 @@ internal class MessageStoreTest {
             subject.pendingMessage.copy(
                 state = State.Sending,
                 messageType = Type.DatePicker,
-                type = Type.DatePicker.name,
             )
 
         val result =
@@ -796,7 +789,6 @@ internal class MessageStoreTest {
         assertThat(actualLog).contains("Message with time slot submission prepared to send:")
         assertThat(actualLog).contains("state=${State.Sending}")
         assertThat(actualLog).contains("messageType=${Type.DatePicker}")
-        assertThat(actualLog).contains("type=${Type.DatePicker.name}")
         assertThat(actualLog).contains("id=${expectedMessage.id}")
 
         val inserted = messageSlot.captured as MessageEvent.MessageInserted
@@ -1041,7 +1033,6 @@ internal class MessageStoreTest {
             subject.pendingMessage.copy(
                 state = State.Sending,
                 messageType = Type.Cards,
-                type = Type.Cards.name,
                 quickReplies =
                     listOf(
                         ButtonResponse(
@@ -1067,7 +1058,6 @@ internal class MessageStoreTest {
         assertThat(actualLog).contains("Message with postback prepared to send:")
         assertThat(actualLog).contains("state=${State.Sending}")
         assertThat(actualLog).contains("messageType=${Type.Cards}")
-        assertThat(actualLog).contains("type=${Type.Cards.name}")
         assertThat(actualLog).contains("id=${expectedMessage.id}")
 
         val inserted = messageSlot.captured as MessageEvent.MessageInserted

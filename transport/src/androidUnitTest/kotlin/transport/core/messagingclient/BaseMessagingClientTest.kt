@@ -14,6 +14,8 @@ import com.genesys.cloud.messenger.transport.core.MessagingClient
 import com.genesys.cloud.messenger.transport.core.MessagingClientImpl
 import com.genesys.cloud.messenger.transport.core.Result
 import com.genesys.cloud.messenger.transport.core.StateChange
+import com.genesys.cloud.messenger.transport.core.StateMachine
+import com.genesys.cloud.messenger.transport.core.StateMachineImpl
 import com.genesys.cloud.messenger.transport.core.events.EventHandler
 import com.genesys.cloud.messenger.transport.core.events.HealthCheckProvider
 import com.genesys.cloud.messenger.transport.core.events.UserTypingProvider
@@ -32,7 +34,7 @@ import com.genesys.cloud.messenger.transport.shyrka.send.OnAttachmentRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.OnMessageRequest
 import com.genesys.cloud.messenger.transport.shyrka.send.StructuredMessage
 import com.genesys.cloud.messenger.transport.shyrka.send.TextMessage
-import com.genesys.cloud.messenger.transport.util.DefaultVault
+import com.genesys.cloud.messenger.transport.util.EncryptedVault
 import com.genesys.cloud.messenger.transport.util.Platform
 import com.genesys.cloud.messenger.transport.util.logs.Log
 import com.genesys.cloud.messenger.transport.util.logs.LogTag
@@ -242,7 +244,7 @@ open class BaseMessagingClientTest {
             every { add(eq(emptyMap())) } returns true.also { dummyCustomAttributes.clear() }
         }
 
-    internal val mockVault: DefaultVault =
+    internal val mockVault: EncryptedVault =
         mockk {
             every { fetch(TOKEN_KEY) } returns testToken
             every { token } returns testToken
@@ -264,7 +266,10 @@ open class BaseMessagingClientTest {
 
     internal val subject = buildSubject()
 
-    internal fun buildSubject(journeyContextProvider: (() -> JourneyContextInfo?)? = null): MessagingClientImpl =
+    internal fun buildSubject(
+        journeyContextProvider: (() -> JourneyContextInfo?)? = null,
+        stateMachine: StateMachine = StateMachineImpl(mockLogger.withTag(LogTag.STATE_MACHINE)),
+    ): MessagingClientImpl =
         MessagingClientImpl(
             log = mockLogger,
             configuration = TestValues.configuration,
@@ -277,6 +282,7 @@ open class BaseMessagingClientTest {
             messageStore = mockMessageStore,
             reconnectionHandler = mockReconnectionHandler,
             journeyContextProvider = journeyContextProvider,
+            stateMachine = stateMachine,
             eventHandler = mockEventHandler,
             userTypingProvider = userTypingProvider,
             healthCheckProvider = HealthCheckProvider(mockk(relaxed = true), mockTimestampFunction),

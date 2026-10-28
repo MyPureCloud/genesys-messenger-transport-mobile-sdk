@@ -35,7 +35,7 @@ SOFTWARE.
   s.author                 = 'Genesys Cloud Services, Inc.'
   s.source                 = { :http => '<SOURCE_HTTP_URL>' }
 
-  s.ios.deployment_target  = '13.0'
+  s.ios.deployment_target  = '15.0'
 
   s.vendored_frameworks    = 'MessengerTransport.xcframework'
   s.libraries              = 'c++'

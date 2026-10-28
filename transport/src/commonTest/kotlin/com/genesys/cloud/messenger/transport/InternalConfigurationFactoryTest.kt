@@ -70,23 +70,6 @@ class InternalConfigurationFactoryTest {
     }
 
     @Test
-    fun `when using backward compatible overload it should default minimumWebSocketTlsVersion to SYSTEM_DEFAULT`() {
-        val config =
-            InternalConfigurationFactory.create(
-                deploymentId = "test-deployment",
-                domain = "test.com",
-                applicationType = ApplicationType.TRANSPORT_SDK,
-                applicationVersion = "0.0.0",
-                logging = true,
-                reconnectionTimeoutInSeconds = 300,
-                autoRefreshTokenWhenExpired = true,
-                encryptedVault = false
-            )
-
-        assertEquals(TlsVersion.SYSTEM_DEFAULT, config.minimumWebSocketTlsVersion)
-    }
-
-    @Test
     fun `when creating configuration it uses default sessionExpirationNoticeIntervalSeconds`() {
         val config =
             InternalConfigurationFactory.create(

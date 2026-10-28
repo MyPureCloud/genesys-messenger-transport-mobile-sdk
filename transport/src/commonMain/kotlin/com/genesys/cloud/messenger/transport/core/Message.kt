@@ -11,7 +11,6 @@ import kotlinx.serialization.Serializable
  *  @property direction the direction in which the message was sent.
  *  @property state the current message state.
  *  @property messageType the message type as enum. The default type is Type.Text.
- *  @property type the message type as String. The default type is "Text".
  *  @property text the text payload of the message.
  *  @property timeStamp the time when the message occurred represented in Unix epoch time, the number of milliseconds since January 1, 1970 UTC.
  *  @property attachments a map of [Attachment] files to the message. Empty by default.
@@ -26,7 +25,6 @@ data class Message(
     val direction: Direction = Direction.Inbound,
     val state: State = State.Idle,
     val messageType: Type = Type.Text,
-    @Deprecated("Use messageType instead.") val type: String = messageType.name,
     val timeStamp: Long? = null,
     val attachments: Map<String, Attachment> = emptyMap(),
     val events: List<Event> = emptyList(),

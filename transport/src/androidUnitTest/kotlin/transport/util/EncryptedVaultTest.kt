@@ -51,7 +51,8 @@ class EncryptedVaultTest {
         EncryptedVault.context = mockContext
 
         mockkConstructor(InternalVault::class)
-        every { anyConstructed<InternalVault>().store(any(), any()) } just Runs
+        every { anyConstructed<InternalVault>().store(any(), any()) } returns true
+        every { anyConstructed<InternalVault>().encryptPlaintextEntries(any()) } just Runs
         every { anyConstructed<InternalVault>().remove(any()) } just Runs
     }
 
@@ -124,7 +125,7 @@ class EncryptedVaultTest {
         every { mockApplicationContext.getSharedPreferences(testKeys.vaultKey, any()) } returns mockSharedPreferences
         every { mockDefaultPrefs.all } returns TestValues.migrationTestData
         every { mockDefaultPrefs.edit() } returns mockDefaultEditor
-        every { mockDefaultEditor.clear() } returns mockDefaultEditor
+        every { mockDefaultEditor.remove(any()) } returns mockDefaultEditor
         every { mockDefaultEditor.apply() } just Runs
 
         EncryptedVault(testKeys)
@@ -137,9 +138,24 @@ class EncryptedVaultTest {
         verify(exactly = 0) { anyConstructed<InternalVault>().store(TestValues.INT_KEY, any()) }
         verify(exactly = 0) { anyConstructed<InternalVault>().store(TestValues.BOOLEAN_KEY, any()) }
 
-        // Verify default vault was cleared
-        verify { mockDefaultEditor.clear() }
+        // Verify every default vault entry was removed
+        TestValues.migrationTestData.keys.forEach { key -> verify { mockDefaultEditor.remove(key) } }
         verify { mockDefaultEditor.apply() }
+    }
+
+    @Test
+    fun `when EncryptedVault migrates from default vault and store() fails`() {
+        val mockDefaultPrefs = mockk<SharedPreferences>(relaxed = true)
+        val mockDefaultEditor = mockk<SharedPreferences.Editor>(relaxed = true)
+        every { mockApplicationContext.getSharedPreferences(VAULT_KEY, any()) } returns mockDefaultPrefs
+        every { mockDefaultPrefs.all } returns mapOf(TestValues.TOKEN_KEY to TestValues.TOKEN)
+        every { mockDefaultPrefs.edit() } returns mockDefaultEditor
+        every { anyConstructed<InternalVault>().store(TestValues.TOKEN_KEY, TestValues.TOKEN) } returns false
+
+        EncryptedVault(testKeys)
+
+        verify(exactly = 0) { mockDefaultEditor.remove(TestValues.TOKEN_KEY) }
+        verify(exactly = 0) { mockDefaultEditor.clear() }
     }
 
     @Test
@@ -154,5 +170,29 @@ class EncryptedVaultTest {
 
         verify(exactly = 0) { anyConstructed<InternalVault>().store(any(), any()) }
         verify(exactly = 0) { mockDefaultPrefs.edit() }
+    }
+
+    @Test
+    fun `when EncryptedVault is constructed with custom keys`() {
+        val expectedMigratedKeys =
+            listOf(
+                TestValues.TOKEN_KEY,
+                TestValues.AUTH_REFRESH_TOKEN_KEY,
+                TestValues.WAS_AUTHENTICATED,
+                TestValues.PUSH_CONFIG_KEY
+            )
+
+        EncryptedVault(testKeys)
+
+        verify { anyConstructed<InternalVault>().encryptPlaintextEntries(expectedMigratedKeys) }
+    }
+
+    @Test
+    fun `when EncryptedVault is constructed with vaultKey equal to VAULT_KEY`() {
+        EncryptedVault(testKeys.copy(vaultKey = VAULT_KEY))
+
+        verify { anyConstructed<InternalVault>().encryptPlaintextEntries(any()) }
+        verify(exactly = 0) { mockSharedPreferences.all }
+        verify(exactly = 0) { mockSharedPreferencesEditor.clear() }
     }
 }

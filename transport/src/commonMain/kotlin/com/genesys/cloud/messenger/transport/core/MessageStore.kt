@@ -114,7 +114,6 @@ internal class MessageStore(private val log: Log) {
         return pendingMessage
             .copy(
                 messageType = type,
-                type = type.name,
                 state = Message.State.Sending,
             )
             .extraFields()

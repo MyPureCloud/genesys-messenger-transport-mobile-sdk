@@ -1,7 +1,6 @@
 package com.genesys.cloud.messenger.transport.core
 
 import android.content.SharedPreferences
-import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
@@ -36,6 +35,9 @@ internal class InternalVault(
         private const val TRANSFORMATION = "AES/GCM/NoPadding"
         private const val IV_SEPARATOR = "]"
         private const val KEY_ALIAS_PREFIX = "GenesysMessengerTransport_"
+        private const val IV_LENGTH_BYTES = 12
+        internal const val GCM_TAG_LENGTH_BITS = 128
+        private const val GCM_TAG_LENGTH_BYTES = GCM_TAG_LENGTH_BITS / Byte.SIZE_BITS
     }
 
     private val keyAlias: String
@@ -46,20 +48,23 @@ internal class InternalVault(
      *
      * @param key The key to store
      * @param value The value to store
+     * @return true if the value was stored, false if encryption failed
      */
     fun store(
         key: String,
         value: String
-    ) {
-        withVaultLock {
+    ): Boolean {
+        return withVaultLock {
             try {
                 val encryptedData = encrypt(value)
                 with(sharedPreferences.edit()) {
                     putString(key, encryptedData)
                     apply()
                 }
+                true
             } catch (e: Exception) {
                 e.printStackTrace()
+                false
             }
         }
     }
@@ -98,6 +103,42 @@ internal class InternalVault(
                 apply()
             }
         }
+    }
+
+    /**
+     * Re-stores in encrypted form any plaintext value found under the given keys,
+     * such as values written by the 2.x DefaultVault or DefaultTokenStore.
+     * Values that fail to encrypt are kept as they are so migration can retry on next launch.
+     *
+     * @param keys The keys to migrate
+     */
+    fun encryptPlaintextEntries(keys: Collection<String>) {
+        withVaultLock {
+            val entries = sharedPreferences.all
+            keys.forEach { key ->
+                val value = entries[key] as? String ?: return@forEach
+                if (!isEncrypted(value)) store(key, value)
+            }
+        }
+    }
+
+    /**
+     * Checks whether a stored value has the format produced by [encrypt], without decrypting it,
+     * so values that can no longer be decrypted are never mistaken for plaintext.
+     * The value must re-encode to itself because [Base64.decode] skips characters outside the alphabet.
+     * Whitespace is ignored because SharedPreferences reads the stored value back with its XML indentation.
+     */
+    private fun isEncrypted(value: String): Boolean {
+        if (!value.contains('\n')) return false
+        val combined =
+            try {
+                Base64.decode(value, Base64.DEFAULT)
+            } catch (e: IllegalArgumentException) {
+                return false
+            }
+        return combined.size >= IV_LENGTH_BYTES + IV_SEPARATOR.length + GCM_TAG_LENGTH_BYTES &&
+            combined[IV_LENGTH_BYTES] == IV_SEPARATOR[0].code.toByte() &&
+            Base64.encodeToString(combined, Base64.NO_WRAP) == value.filterNot { it.isWhitespace() }
     }
 
     /**
@@ -141,17 +182,16 @@ internal class InternalVault(
     private fun decrypt(encryptedData: String): String {
         val combined = Base64.decode(encryptedData, Base64.DEFAULT)
 
-        // Split the combined array into IV and encrypted data
-        val separatorIndex = combined.indexOf(IV_SEPARATOR[0].code.toByte())
-        if (separatorIndex == -1) {
+        // Split at the fixed IV length, since the random IV itself can contain the separator byte
+        if (combined.size <= IV_LENGTH_BYTES || combined[IV_LENGTH_BYTES] != IV_SEPARATOR[0].code.toByte()) {
             throw IllegalArgumentException("Invalid encrypted data format")
         }
 
-        val iv = combined.sliceArray(0 until separatorIndex)
-        val encrypted = combined.sliceArray((separatorIndex + 1) until combined.size)
+        val iv = combined.sliceArray(0 until IV_LENGTH_BYTES)
+        val encrypted = combined.sliceArray((IV_LENGTH_BYTES + 1) until combined.size)
 
         val cipher = Cipher.getInstance(TRANSFORMATION)
-        val spec = GCMParameterSpec(128, iv)
+        val spec = GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv)
         cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), spec)
 
         val decryptedBytes = cipher.doFinal(encrypted)
@@ -207,28 +247,22 @@ internal class InternalVault(
      * @return The newly generated secret key
      */
     private fun generateSecretKey(): SecretKey {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val keyGenParameterSpec =
-                KeyGenParameterSpec
-                    .Builder(
-                        keyAlias,
-                        KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-                    ).setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-                    .setKeySize(256)
-                    .build()
+        val keyGenParameterSpec =
+            KeyGenParameterSpec
+                .Builder(
+                    keyAlias,
+                    KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+                ).setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .setKeySize(256)
+                .build()
 
-            val keyGenerator =
-                KeyGenerator.getInstance(
-                    KeyProperties.KEY_ALGORITHM_AES,
-                    ANDROID_KEYSTORE
-                )
-            keyGenerator.init(keyGenParameterSpec)
-            return keyGenerator.generateKey()
-        } else {
-            val keyGenerator = KeyGenerator.getInstance("AES")
-            keyGenerator.init(256)
-            return keyGenerator.generateKey()
-        }
+        val keyGenerator =
+            KeyGenerator.getInstance(
+                KeyProperties.KEY_ALGORITHM_AES,
+                ANDROID_KEYSTORE
+            )
+        keyGenerator.init(keyGenParameterSpec)
+        return keyGenerator.generateKey()
     }
 }

@@ -23,7 +23,6 @@ import com.genesys.cloud.messenger.transport.core.MessengerTransportSDK
 import com.genesys.cloud.messenger.transport.core.events.Event
 import com.genesys.cloud.messenger.transport.push.PushProvider
 import com.genesys.cloud.messenger.transport.push.PushService
-import com.genesys.cloud.messenger.transport.util.DefaultVault
 import com.genesys.cloud.messenger.transport.util.EncryptedVault
 import com.google.firebase.messaging.FirebaseMessaging
 import io.ktor.http.URLBuilder
@@ -137,14 +136,9 @@ class TestBedViewModel :
                 deploymentId = deploymentId.ifEmpty { BuildConfig.DEPLOYMENT_ID },
                 domain = region.ifEmpty { BuildConfig.DEPLOYMENT_DOMAIN },
                 logging = true,
-                encryptedVault = true
             )
 
-        if (mmsdkConfiguration.encryptedVault) {
-            EncryptedVault.context = context
-        } else {
-            DefaultVault.context = context
-        }
+        EncryptedVault.context = context
         messengerTransport = MessengerTransportSDK(mmsdkConfiguration)
         client = messengerTransport.createMessagingClient()
         pushService = messengerTransport.createPushService()

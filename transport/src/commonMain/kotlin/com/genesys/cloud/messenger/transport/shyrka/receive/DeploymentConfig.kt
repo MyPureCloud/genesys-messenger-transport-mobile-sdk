@@ -30,7 +30,6 @@ data class Messenger(
     val apps: Apps,
     val styles: Styles,
     val launcherButton: LauncherButton,
-    val fileUpload: FileUpload,
 )
 
 @Serializable
@@ -90,19 +89,6 @@ data class Styles(val primaryColor: String)
 
 @Serializable
 data class LauncherButton(val visibility: String)
-
-@Serializable
-@Deprecated("Use [FileAttachmentProfile] instead.")
-data class FileUpload(
-    val enableAttachments: Boolean? = null,
-    val modes: List<Mode> = emptyList(),
-)
-
-@Serializable
-data class Mode(
-    val fileTypes: List<String> = emptyList(),
-    val maxFileSizeKB: Long,
-)
 
 @Serializable
 data class JourneyEvents(val enabled: Boolean)
